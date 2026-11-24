@@ -3,42 +3,44 @@ import { Segmented } from "@/components/kit/Segmented";
 import { cx } from "@/utils/cx";
 import { GapNote, Tile } from "../report/overview/Tile";
 import {
+  extremeOf,
   fiscalYear,
-  peakOf,
-  type Limit,
+  periodList,
   type Measure,
   type MeasureCase,
   type MeasureCell,
-  type WallYear,
+  type ScheduleYear,
 } from "../report/forecastData";
 import { ticks } from "./visualData";
 
-export type PathLimits = { limits: Limit[]; reason: string | null; trace?: ReactNode };
-export type PathWall = {
-  years: WallYear[];
-  wall?: WallYear | null;
+/** The maturity schedule as its module publishes it, drawn on the same fiscal-year axis. */
+export type PathSchedule = {
+  years: ScheduleYear[];
+  offAxis: ScheduleYear[];
   unit?: string;
-  offAxis?: string[];
-  reason: string | null;
+  /** Why there is no schedule, drawn in the designed gap or blocked state by the caller. */
+  gap?: ReactNode;
   trace?: ReactNode;
 };
 
 /** The chart draws at most this many cases against each other, as the cash proxy does. */
 const MOST_CASES = 6;
-/** The axis reaches a maturity wall at most this many years after the last forecast year. */
-const WALL_REACH = 3;
+/** The axis reaches a scheduled maturity at most this many years after the last forecast year. */
+const REACH = 3;
 const SERIES = ["stroke-chart-1", "stroke-chart-2", "stroke-chart-5", "stroke-chart-6"] as const;
 const DOTS = ["fill-chart-1", "fill-chart-2", "fill-chart-5", "fill-chart-6"] as const;
-/** Cases other than the selected one are also told apart by dash, not by colour alone. */
-const DASHES = ["6 3", "2 3", "8 3 2 3", "4 2"] as const;
-const BORDERS = ["border-chart-1", "border-chart-2", "border-chart-5", "border-chart-6"] as const;
-const SWATCH = ["bg-chart-1", "bg-chart-2", "bg-chart-5", "bg-chart-6"] as const;
+/** The cases other than the selected one each have their own dash, so none differs by colour alone. */
+const DASHES = ["7 4", "2 3", "9 3 2 3", "4 2 1 2"] as const;
 
-const BOX = { left: 52, right: 20, top: 36 } as const;
-/** The plot is taller where the tile is wide, so the lead keeps its rank beside a tall neighbour. */
-const plotBottom = (width: number) => (width >= 700 ? 396 : 276);
-const LANE_HEIGHT = 56;
+const TOP = 28;
+const LEFT = 52;
+const BOTTOM = 268;
+const AXIS = BOTTOM + 24;
+const LANE_TOP = BOTTOM + 52;
+const LANE_BASE = BOTTOM + 112;
+const LANE_HEIGHT = 44;
 const THINNEST = 2;
+const LABEL_GAP = 16;
 
 /** The drawing's width in CSS pixels, so text keeps its size at every width. */
 function useMeasuredWidth(fallback: number) {
@@ -61,67 +63,48 @@ function useMeasuredWidth(fallback: number) {
 
 type Slot = { year: number; label: string; forecast: boolean };
 
-/** One slot per fiscal year from the first drawn year to the last, the wall included when near. */
-function axisSlots(measure: Measure, drawn: MeasureCase[], wall: WallYear | null | undefined) {
-  const periods = [...new Set([...measure.periods, ...drawn.flatMap((c) => [...c.cells.keys()])])];
-  const labels = new Map<number, string>();
-  for (const period of periods) {
-    const year = fiscalYear(period);
-    if (year !== null) labels.set(year, period);
-  }
-  const forecastYears = [...labels.keys()];
-  if (!forecastYears.length) return [];
-  const first = Math.min(...forecastYears);
-  const last = Math.max(...forecastYears);
-  const actual = measure.actual ? fiscalYear(measure.actual.period) : null;
-  const start = actual !== null && actual < first ? actual : first;
-  const end = wall && wall.year > last && wall.year - last <= WALL_REACH ? wall.year : last;
-  return Array.from({ length: end - start + 1 }, (_, at): Slot => {
-    const year = start + at;
-    const label =
-      labels.get(year) ??
-      (year === actual
-        ? (measure.actual?.period ?? "")
-        : `FY${String(year)}${year > last || year < first ? "" : "E"}`);
-    return { year, label, forecast: year >= first && year <= last };
-  });
-}
-
+/** The cases drawn: all of them when they share a period, else the selected case alone. */
 function drawnCases(measure: Measure, group: string | undefined) {
   // A selected case the measure has no row for is not replaced by another case.
   const selected =
     group === undefined ? measure.cases[0] : measure.cases.find((item) => item.group === group);
   if (!selected) return { selected: undefined, drawn: [] };
   const all = measure.compared && measure.cases.length <= MOST_CASES;
-  const drawn = all ? measure.cases : [selected];
-  return { selected, drawn };
+  return { selected, drawn: all ? measure.cases : [selected] };
 }
 
-function geometry(width: number, slots: Slot[], values: number[], lane: boolean) {
-  const right = width - BOX.right;
-  const step = (right - BOX.left) / Math.max(1, slots.length);
-  const first = slots[0]?.year ?? 0;
-  const x = (year: number) => BOX.left + (year - first + 0.5) * step;
-  const bottom = plotBottom(width);
-  const scale = ticks(values);
-  const low = scale[0]?.value ?? 0;
-  const high = scale.at(-1)?.value ?? 1;
-  const y = (value: number) => bottom - ((value - low) / (high - low || 1)) * (bottom - BOX.top);
-  const base = bottom + 120;
-  return {
-    x,
-    y,
-    step,
-    right,
-    scale,
-    bottom,
-    axis: bottom + 24,
-    lane: bottom + 54,
-    base,
-    height: lane ? base + 8 : bottom + 36,
-  };
+/**
+ * One slot per fiscal year, from the actual year (when earlier) through the drawn cases' periods,
+ * reaching scheduled maturities up to `REACH` years past the last forecast year. Only the drawn
+ * cases' periods are forecast slots: with no comparison, the selected case's own periods alone.
+ */
+function axisSlots(measure: Measure, drawn: MeasureCase[], schedule: PathSchedule) {
+  const labels = new Map<number, string>();
+  for (const period of drawn.flatMap((item) => [...item.cells.keys()])) {
+    const year = fiscalYear(period);
+    if (year !== null) labels.set(year, period);
+  }
+  const years = [...labels.keys()];
+  if (!years.length) return [];
+  const first = Math.min(...years);
+  const last = Math.max(...years);
+  const actual = measure.actual ? fiscalYear(measure.actual.period) : null;
+  const start = actual !== null && actual < first ? actual : first;
+  const scheduled = schedule.years
+    .map(({ year }) => year)
+    .filter((year) => year > last && year - last <= REACH);
+  const end = Math.max(last, ...scheduled);
+  return Array.from({ length: end - start + 1 }, (_, at): Slot => {
+    const year = start + at;
+    const forecast = year >= first && year <= last;
+    const label =
+      labels.get(year) ??
+      (year === actual
+        ? (measure.actual?.period ?? "")
+        : `FY${String(year)}${forecast ? "E" : ""}`);
+    return { year, label, forecast };
+  });
 }
-type Geometry = ReturnType<typeof geometry>;
 
 function cellAt(item: MeasureCase, slot: Slot): MeasureCell | undefined {
   return [...item.cells.values()].find((cell) => fiscalYear(cell.period) === slot.year);
@@ -139,10 +122,85 @@ function segments(item: MeasureCase, slots: Slot[]) {
   return out;
 }
 
-function Hatch({ id }: { id: string }) {
+function geometry(width: number, slots: Slot[], values: number[], lane: boolean) {
+  const wide = width >= 640;
+  const right = width - (wide ? 132 : 60);
+  const step = (right - LEFT) / Math.max(1, slots.length);
+  const first = slots[0]?.year ?? 0;
+  const x = (year: number) => LEFT + (year - first + 0.5) * step;
+  const scale = ticks(values);
+  const low = scale[0]?.value ?? 0;
+  const high = scale.at(-1)?.value ?? 1;
+  const y = (value: number) => BOTTOM - ((value - low) / (high - low || 1)) * (BOTTOM - TOP);
+  return { x, y, step, right, width, wide, scale, height: lane ? LANE_BASE + 10 : AXIS + 14 };
+}
+type Geometry = ReturnType<typeof geometry>;
+
+/** The style of the case at `at` among the drawn cases; the selected case is solid. */
+function styleOf(drawn: MeasureCase[], selected: MeasureCase, item: MeasureCase) {
+  const at = drawn.indexOf(item);
+  const others = drawn.filter((other) => other !== selected);
+  const dash = item === selected ? undefined : DASHES[others.indexOf(item) % DASHES.length];
+  return {
+    stroke: SERIES[at % SERIES.length] ?? SERIES[0],
+    fill: DOTS[at % DOTS.length] ?? DOTS[0],
+    dash,
+  };
+}
+
+type Label = { key: string; x: number; y: number; text: string; anchor: "start" | "middle" };
+
+/** Pushes labels that share a column apart so none overprints another. */
+function spread(labels: Label[]) {
+  const columns = new Map<number, Label[]>();
+  for (const label of labels) columns.set(label.x, [...(columns.get(label.x) ?? []), label]);
+  for (const column of columns.values()) {
+    column.sort((a, b) => a.y - b.y);
+    column.forEach((label, at) => {
+      const above = column[at - 1];
+      if (above && label.y - above.y < LABEL_GAP) label.y = above.y + LABEL_GAP;
+    });
+    const overflow = (column.at(-1)?.y ?? 0) - (BOTTOM - 4);
+    if (overflow > 0) for (const label of column) label.y -= overflow;
+    const underflow = TOP + 4 - (column[0]?.y ?? TOP + 4);
+    if (underflow > 0) for (const label of column) label.y += underflow;
+  }
+  return labels;
+}
+
+function pointLabels(drawn: MeasureCase[], selected: MeasureCase, slots: Slot[], g: Geometry) {
+  const labels: Label[] = [];
+  for (const item of drawn) {
+    const cells = slots.flatMap((slot) => cellAt(item, slot) ?? []);
+    const last = [...cells].reverse().find((cell) => cell.value !== null);
+    if (last)
+      labels.push({
+        key: `${item.group}-end`,
+        x: g.x(fiscalYear(last.period) ?? 0) + 10,
+        y: g.y(last.value ?? 0) + 4,
+        text: g.wide ? `${last.display} ${item.name}` : last.display,
+        anchor: "start",
+      });
+    if (item !== selected) continue;
+    // The selected case's highest published year, by value and year: a selection, labelled so.
+    const highest = extremeOf(cells, "highest");
+    for (const cell of highest?.cells ?? [])
+      if (cell !== last)
+        labels.push({
+          key: `${item.group}-${cell.period}`,
+          x: g.x(fiscalYear(cell.period) ?? 0),
+          y: g.y(cell.value ?? 0) - 12,
+          text: `${cell.display} · ${cell.period}`,
+          anchor: "middle",
+        });
+  }
+  return spread(labels);
+}
+
+function Hatch() {
   return (
     <pattern
-      id={id}
+      id="forecast-path-hatch"
       width="7"
       height="7"
       patternUnits="userSpaceOnUse"
@@ -160,17 +218,17 @@ function Grid({ g }: { g: Geometry }) {
       {g.scale.map((tick) => (
         <g key={tick.value}>
           <line
-            x1={BOX.left}
+            x1={LEFT}
             x2={g.right}
             y1={g.y(tick.value)}
             y2={g.y(tick.value)}
             className={tick.value === 0 ? "stroke-border-container" : "stroke-border-hairline"}
           />
           <text
-            x={BOX.left - 10}
+            x={LEFT - 10}
             y={g.y(tick.value) + 4}
             textAnchor="end"
-            className="fill-text-tertiary font-mono text-[11px]"
+            className="fill-text-tertiary font-mono text-caption"
           >
             {tick.label}x
           </text>
@@ -180,6 +238,7 @@ function Grid({ g }: { g: Geometry }) {
   );
 }
 
+/** The selected case's years with no figure, hatched in place. */
 function GapColumns({ selected, slots, g }: { selected: MeasureCase; slots: Slot[]; g: Geometry }) {
   return (
     <g>
@@ -187,33 +246,27 @@ function GapColumns({ selected, slots, g }: { selected: MeasureCase; slots: Slot
         .filter((slot) => slot.forecast && cellAt(selected, slot)?.value == null)
         .map((slot) => {
           const cell = cellAt(selected, slot);
-          const cx0 = g.x(slot.year);
-          const half = Math.min(48, g.step * 0.3);
+          const centre = g.x(slot.year);
+          const half = Math.min(46, g.step * 0.32);
           return (
             <g key={slot.year} data-gap={cell?.period ?? slot.label}>
               <rect
-                x={cx0 - half}
-                y={BOX.top}
+                x={centre - half}
+                y={TOP}
                 width={half * 2}
-                height={g.bottom - BOX.top}
+                height={BOTTOM - TOP}
                 rx="6"
                 fill="url(#forecast-path-hatch)"
                 strokeDasharray="4 3"
                 className="stroke-border-gap"
               />
-              <rect
-                x={cx0 - 42}
-                y={g.bottom - 90}
-                width="84"
-                height="20"
-                rx="4"
-                className="fill-surface-canvas"
-              />
               <text
-                x={cx0}
-                y={g.bottom - 76}
+                x={centre}
+                y={BOTTOM - 70}
                 textAnchor="middle"
-                className="fill-gap-text text-[11px]"
+                strokeWidth="4"
+                paintOrder="stroke"
+                className="fill-gap-text stroke-surface-canvas text-caption"
               >
                 {cell ? "Not calculated" : "Not published"}
               </text>
@@ -224,33 +277,39 @@ function GapColumns({ selected, slots, g }: { selected: MeasureCase; slots: Slot
   );
 }
 
-function Limits({ limits, g }: { limits: Limit[]; g: Geometry }) {
+/** A small hatched mark at the foot of each year another case does not give a figure for. */
+function OtherGaps({
+  drawn,
+  selected,
+  slots,
+  g,
+}: {
+  drawn: MeasureCase[];
+  selected: MeasureCase;
+  slots: Slot[];
+  g: Geometry;
+}) {
+  const others = drawn.filter((item) => item !== selected);
   return (
     <g>
-      {limits.map((limit) => (
-        <g key={limit.label} data-limit={limit.label}>
-          <line
-            x1={BOX.left}
-            x2={g.right}
-            y1={g.y(limit.value)}
-            y2={g.y(limit.value)}
-            strokeWidth="1.5"
-            strokeDasharray="6 3"
-            className="stroke-warning-mark"
-          />
-          <text
-            x={BOX.left + 6}
-            y={g.y(limit.value) - 6}
-            textAnchor="start"
-
-            strokeWidth="3"
-            paintOrder="stroke"
-            className="stroke-surface-card fill-warning-text text-[11px]"
-          >
-            {`${limit.text}x ${limit.label}`}
-          </text>
-        </g>
-      ))}
+      {others.flatMap((item, at) =>
+        slots
+          .filter((slot) => slot.forecast && cellAt(item, slot)?.value == null)
+          .map((slot) => (
+            <rect
+              key={`${item.group}-${String(slot.year)}`}
+              data-case-gap={`${item.group} ${cellAt(item, slot)?.period ?? slot.label}`}
+              x={g.x(slot.year) - 5 + at * 12}
+              y={BOTTOM - 14}
+              width="10"
+              height="10"
+              rx="2"
+              fill="url(#forecast-path-hatch)"
+              strokeDasharray="2 1"
+              className={styleOf(drawn, selected, item).stroke}
+            />
+          )),
+      )}
     </g>
   );
 }
@@ -271,7 +330,7 @@ function Lines({
   return (
     <g>
       {order.map((item) => {
-        const at = drawn.indexOf(item);
+        const style = styleOf(drawn, selected, item);
         const on = item === selected;
         return (
           <g key={item.group}>
@@ -283,10 +342,10 @@ function Lines({
                 y1={g.y(from.value ?? 0)}
                 x2={g.x(fiscalYear(to.period) ?? 0)}
                 y2={g.y(to.value ?? 0)}
-                strokeWidth={on ? 2.5 : 1.5}
-                strokeDasharray={on ? undefined : DASHES[at % DASHES.length]}
+                strokeWidth={on ? 2.5 : 1.75}
+                strokeDasharray={style.dash}
                 strokeLinecap="round"
-                className={SERIES[at % SERIES.length]}
+                className={style.stroke}
               />
             ))}
             {slots.map((slot) => {
@@ -296,10 +355,9 @@ function Lines({
                   key={slot.year}
                   cx={g.x(slot.year)}
                   cy={g.y(cell.value)}
-                  r={on ? 5.5 : 3.5}
-
+                  r={on ? 5.5 : 4}
                   strokeWidth="2"
-                  className={cx("stroke-surface-card", DOTS[at % DOTS.length])}
+                  className={cx("stroke-surface-card", style.fill)}
                 />
               );
             })}
@@ -310,24 +368,21 @@ function Lines({
   );
 }
 
-function Labels({ selected, slots, g }: { selected: MeasureCase; slots: Slot[]; g: Geometry }) {
-  const cells = slots.flatMap((slot) => cellAt(selected, slot) ?? []);
-  const peak = peakOf(cells);
-  const last = [...cells].reverse().find((cell) => cell.value !== null);
-  const shown = [...new Set([peak, last])].filter((cell): cell is MeasureCell => cell != null);
+function Labels({ labels }: { labels: Label[] }) {
   return (
-    <g className="stroke-surface-card" strokeWidth="3" paintOrder="stroke">
-      {shown.map((cell) => (
+    <g>
+      {labels.map((label) => (
         <text
-          key={cell.period}
-          x={g.x(fiscalYear(cell.period) ?? 0)}
-          y={g.y(cell.value ?? 0) - 12}
-          textAnchor="middle"
-          className="fill-text-primary font-mono text-[13px] font-medium"
+          key={label.key}
+          data-label={label.key}
+          x={label.x}
+          y={label.y}
+          textAnchor={label.anchor}
+          strokeWidth="4"
+          paintOrder="stroke"
+          className="fill-text-primary stroke-surface-card font-mono text-small font-medium"
         >
-          {cell === peak && cells.filter((c) => c.value !== null).length > 1
-            ? `${cell.display} peak`
-            : cell.display}
+          {label.text}
         </text>
       ))}
     </g>
@@ -336,8 +391,8 @@ function Labels({ selected, slots, g }: { selected: MeasureCase; slots: Slot[]; 
 
 function Actual({ measure, g }: { measure: Measure; g: Geometry }) {
   const actual = measure.actual;
-  const year = actual && fiscalYear(actual.period);
-  if (!actual || actual.value === null || year == null) return null;
+  const year = actual ? fiscalYear(actual.period) : null;
+  if (!actual || actual.value === null || year === null) return null;
   return (
     <g>
       <circle
@@ -351,10 +406,9 @@ function Actual({ measure, g }: { measure: Measure; g: Geometry }) {
         x={g.x(year)}
         y={g.y(actual.value) - 12}
         textAnchor="middle"
-
-        strokeWidth="3"
+        strokeWidth="4"
         paintOrder="stroke"
-        className="stroke-surface-card fill-text-primary font-mono text-[13px] font-medium"
+        className="fill-text-primary stroke-surface-card font-mono text-small font-medium"
       >
         {actual.display}
       </text>
@@ -362,7 +416,7 @@ function Actual({ measure, g }: { measure: Measure; g: Geometry }) {
   );
 }
 
-function Axis({ slots, g, wall }: { slots: Slot[]; g: Geometry; wall?: WallYear | null }) {
+function Axis({ slots, g }: { slots: Slot[]; g: Geometry }) {
   const narrow = g.step < 64;
   return (
     <g>
@@ -370,13 +424,9 @@ function Axis({ slots, g, wall }: { slots: Slot[]; g: Geometry; wall?: WallYear 
         <text
           key={slot.year}
           x={g.x(slot.year)}
-          y={g.axis}
+          y={AXIS}
           textAnchor="middle"
-          className={cx(
-            "font-mono",
-            narrow ? "text-[11px]" : "text-[12px]",
-            wall?.year === slot.year ? "fill-chart-2 font-medium" : "fill-text-secondary",
-          )}
+          className="fill-text-secondary font-mono text-caption"
         >
           {narrow ? slot.label.replace(/^FY\d{2}/u, "FY") : slot.label}
         </text>
@@ -385,63 +435,48 @@ function Axis({ slots, g, wall }: { slots: Slot[]; g: Geometry; wall?: WallYear 
   );
 }
 
-function WallRule({ wall, slots, g }: { wall?: WallYear | null; slots: Slot[]; g: Geometry }) {
-  if (!wall || !slots.some((slot) => slot.year === wall.year)) return null;
-  const x = g.x(wall.year);
-  return (
-    <g data-wall={wall.label}>
-      <line
-        x1={x}
-        x2={x}
-        y1={BOX.top - 8}
-        y2={g.bottom + 8}
-        strokeWidth="1.5"
-        className="stroke-chart-2"
-      />
-      <text
-        x={Math.max(BOX.left + 70, Math.min(x, g.right - 70))}
-        y={BOX.top - 16}
-        textAnchor="middle"
-        className="fill-chart-2 text-[12px] font-medium"
-      >
-        {`${wall.label} maturity wall`}
-      </text>
-    </g>
-  );
-}
-
-function Lane({ wall, slots, g }: { wall: PathWall; slots: Slot[]; g: Geometry }) {
-  const placed = wall.years.filter((item) => slots.some((slot) => slot.year === item.year));
+/** The maturity schedule as written, by fiscal year, under the path on the same axis. */
+function Lane({ schedule, slots, g }: { schedule: PathSchedule; slots: Slot[]; g: Geometry }) {
+  const placed = schedule.years.filter((item) => slots.some((slot) => slot.year === item.year));
   const most = Math.max(0, ...placed.map((item) => item.cell?.value ?? 0));
   const width = Math.min(56, g.step * 0.5);
   return (
     <g>
-      <text x={BOX.left} y={g.lane - 8} className="fill-text-secondary text-[11px]">
-        {`Debt maturing in the year${wall.unit ? `, ${wall.unit}` : ""}`}
+      <text x={LEFT} y={LANE_TOP - 10} className="fill-text-secondary text-caption">
+        {`Debt maturing in the year${schedule.unit ? `, ${schedule.unit}` : ""}`}
       </text>
       <line
-        x1={BOX.left}
+        x1={LEFT}
         x2={g.right}
-        y1={g.base}
-        y2={g.base}
+        y1={LANE_BASE}
+        y2={LANE_BASE}
         className="stroke-border-container"
       />
       {placed.map((item) => {
         const x = g.x(item.year);
-        const amount = item.cell?.value;
         if (!item.cell) return null;
-        if (amount == null)
+        const amount = item.cell.value;
+        if (amount === null)
           return (
-            <rect
-              key={item.year}
-              x={x - width / 2}
-              y={g.base - 10}
-              width={width}
-              height="10"
-              fill="url(#forecast-path-hatch)"
-              strokeDasharray="3 2"
-              className="stroke-border-gap"
-            />
+            <g key={item.year} data-lane-gap={item.label}>
+              <rect
+                x={x - width / 2}
+                y={LANE_BASE - 14}
+                width={width}
+                height="14"
+                fill="url(#forecast-path-hatch)"
+                strokeDasharray="3 2"
+                className="stroke-border-gap"
+              />
+              <text
+                x={x}
+                y={LANE_BASE - 20}
+                textAnchor="middle"
+                className="fill-gap-text text-caption"
+              >
+                Not supplied
+              </text>
+            </g>
           );
         const height =
           most > 0 && amount > 0 ? Math.max(THINNEST, (amount / most) * LANE_HEIGHT) : 0;
@@ -449,16 +484,16 @@ function Lane({ wall, slots, g }: { wall: PathWall; slots: Slot[]; g: Geometry }
           <g key={item.year}>
             <rect
               x={x - width / 2}
-              y={g.base - height}
+              y={LANE_BASE - height}
               width={width}
               height={height}
               className="fill-chart-2"
             />
             <text
               x={x}
-              y={g.base - height - 6}
+              y={LANE_BASE - height - 6}
               textAnchor="middle"
-              className="fill-text-primary font-mono text-[12px]"
+              className="fill-text-primary font-mono text-caption"
             >
               {item.cell.text}
             </text>
@@ -469,106 +504,125 @@ function Lane({ wall, slots, g }: { wall: PathWall; slots: Slot[]; g: Geometry }
   );
 }
 
-function reading(drawn: MeasureCase[], slots: Slot[], limits: Limit[], wall?: WallYear | null) {
+function reading(drawn: MeasureCase[], slots: Slot[], schedule: PathSchedule) {
   const cases = drawn.map(
     (item) =>
       `${item.name}: ${slots
         .filter((slot) => slot.forecast)
-        .map((slot) => `${slot.label} ${cellAt(item, slot)?.display || "not published"}`)
+        .map((slot) => {
+          const cell = cellAt(item, slot);
+          return `${slot.label} ${!cell ? "not published" : cell.value === null ? "not calculated" : cell.display}`;
+        })
         .join(", ")}`,
   );
-  const marks = [
-    ...limits.map((limit) => `limit ${limit.label} ${limit.text}x`),
-    ...(wall?.cell ? [`${wall.label} maturity wall ${wall.cell.text}`] : []),
-  ];
-  return `Net leverage by case. ${cases.join("; ")}.${marks.length ? ` ${marks.join("; ")}.` : ""}`;
+  const placed = schedule.years.filter((item) => slots.some((slot) => slot.year === item.year));
+  const lane = placed.length
+    ? ` Debt maturing: ${placed.map((item) => `${item.label} ${item.cell?.text ?? "no row"}`).join(", ")}.`
+    : "";
+  return `Net leverage by case. ${cases.join("; ")}.${lane}`;
 }
 
-function notes(
-  measure: Measure,
-  selected: MeasureCase,
-  slots: Slot[],
-  limits: PathLimits,
-  wall: PathWall,
-) {
-  const out: { text: string; trace?: ReactNode }[] = [];
-  if (measure.notice) out.push({ text: measure.notice });
+function missingNotes(drawn: MeasureCase[], slots: Slot[]) {
+  return drawn.flatMap((item) => {
+    const absent = slots.filter((slot) => slot.forecast && !cellAt(item, slot));
+    const blank = slots.flatMap((slot) => {
+      const cell = slot.forecast ? cellAt(item, slot) : undefined;
+      return cell && cell.value === null ? [cell] : [];
+    });
+    return [
+      ...(absent.length
+        ? [`${item.name}: ${periodList(absent.map(({ label }) => label))} not published.`]
+        : []),
+      ...blank.map(
+        (cell) => `${item.name}, ${cell.period}: ${cell.reason || "not calculated by the model"}.`,
+      ),
+    ];
+  });
+}
+
+function notes(measure: Measure, drawn: MeasureCase[], slots: Slot[], schedule: PathSchedule) {
+  const out: string[] = [];
+  if (measure.notice) out.push(measure.notice);
   if (measure.cases.length > MOST_CASES && measure.compared)
-    out.push({ text: "More than six cases are published, so only the selected case is drawn." });
-  for (const slot of slots) {
-    const cell = cellAt(selected, slot);
-    if (slot.forecast && cell && cell.value === null)
-      out.push({ text: `${cell.period}: ${cell.reason || "not calculated by the model"}.` });
-  }
-  if (limits.reason) out.push({ text: limits.reason, trace: limits.trace });
-  if (wall.reason) out.push({ text: wall.reason, trace: wall.trace });
-  for (const item of wall.years)
+    out.push("More than six cases are published, so only the selected case is drawn.");
+  if (measure.others.length)
+    out.push(
+      `The model also publishes ${periodList(measure.others)}; this chart reads ${measure.label}.`,
+    );
+  out.push(...missingNotes(drawn, slots));
+  for (const item of schedule.years)
     if (item.cell?.value === null && slots.some((slot) => slot.year === item.year))
-      out.push({ text: `${item.label}: ${item.cell.reason ?? "not supplied"}.` });
-  const beyond = wall.years.filter(
-    (item) => item.cell?.value != null && !slots.some((slot) => slot.year === item.year),
+      out.push(`Debt maturing, ${item.label}: ${item.cell.reason ?? "not supplied"}.`);
+  const beyond = schedule.years.filter(
+    (item) => item.cell && !slots.some((slot) => slot.year === item.year),
   );
   if (beyond.length)
-    out.push({
-      text: `Beyond this axis: ${beyond.map((item) => `${item.label} ${item.cell?.text ?? ""}`).join(", ")}.`,
-    });
-  if (wall.offAxis?.length)
-    out.push({ text: `Not on the fiscal-year axis: ${wall.offAxis.join(", ")}.` });
+    out.push(
+      `Debt maturing beyond this axis: ${beyond.map((item) => `${item.label} ${item.cell?.text ?? ""}`).join(", ")}.`,
+    );
+  if (schedule.offAxis.length)
+    out.push(
+      `Debt maturing, not by fiscal year: ${schedule.offAxis.map((item) => `${item.label} ${item.cell?.text ?? "not supplied"}`).join(", ")}.`,
+    );
   return out;
+}
+
+function Swatch({ dash, stroke }: { dash: string | undefined; stroke: string }) {
+  return (
+    <svg aria-hidden="true" width="24" height="8" className="flex-none">
+      <line
+        x1="1"
+        y1="4"
+        x2="23"
+        y2="4"
+        strokeWidth="2.5"
+        strokeDasharray={dash}
+        strokeLinecap="round"
+        className={stroke}
+      />
+    </svg>
+  );
 }
 
 function Legend({
   drawn,
   selected,
   measure,
-  limits,
-  wall,
-  wallOnAxis,
+  slots,
+  schedule,
 }: {
   drawn: MeasureCase[];
   selected: MeasureCase;
   measure: Measure;
-  limits: PathLimits;
-  wall: PathWall;
-  wallOnAxis: boolean;
+  slots: Slot[];
+  schedule: PathSchedule;
 }) {
-  // The gap key is shown only where a year of the selected case is drawn as a gap.
-  const gap = measure.periods.some((period) => selected.cells.get(period)?.value == null);
+  const gap = slots.some((slot) => slot.forecast && cellAt(selected, slot)?.value == null);
+  const lane = schedule.years.some((item) => slots.some((slot) => slot.year === item.year));
   return (
     <ul className="flex flex-wrap items-center gap-x-4 gap-y-2 text-caption text-text-secondary">
-      {drawn.map((item, at) => (
-        <li key={item.group} className="flex items-center gap-1.5">
-          <span
-            aria-hidden="true"
-            className={
-              item === selected
-                ? cx("h-0.5 w-5 rounded-ds-full", SWATCH[at % SWATCH.length])
-                : cx("w-5 border-t-2 border-dashed", BORDERS[at % BORDERS.length])
-            }
-          />
-          <span className={item === selected ? "font-medium text-text-primary" : undefined}>
-            {item.name}
-          </span>
-        </li>
-      ))}
+      {drawn.map((item) => {
+        const style = styleOf(drawn, selected, item);
+        return (
+          <li key={item.group} className="flex items-center gap-1.5">
+            <Swatch dash={style.dash} stroke={style.stroke} />
+            <span className={item === selected ? "font-medium text-text-primary" : undefined}>
+              {item.name}
+            </span>
+          </li>
+        );
+      })}
       {measure.actual?.value != null && (
         <li className="flex items-center gap-1.5">
           <span aria-hidden="true" className="size-2.5 rounded-ds-full border-2 border-chart-3" />
           Actual, {measure.actual.period}
         </li>
       )}
-      {limits.limits.length > 0 && (
+      {lane && (
         <li className="flex items-center gap-1.5">
-          <span aria-hidden="true" className="w-5 border-t-2 border-dashed border-warning-mark" />
-          Limit, Legal &amp; covenants
-          {limits.trace}
-        </li>
-      )}
-      {wallOnAxis && (
-        <li className="flex items-center gap-1.5">
-          <span aria-hidden="true" className="h-3 w-0.5 bg-chart-2" />
-          Maturity wall, Financial foundation
-          {wall.trace}
+          <span aria-hidden="true" className="h-2.5 w-2 bg-chart-2" />
+          Debt maturing, Financial foundation
+          {schedule.trace}
         </li>
       )}
       {gap && (
@@ -587,12 +641,17 @@ function Legend({
 function PathTable({
   drawn,
   slots,
-  actual,
+  measure,
+  schedule,
 }: {
   drawn: MeasureCase[];
   slots: Slot[];
-  actual: Measure["actual"];
+  measure: Measure;
+  schedule: PathSchedule;
 }) {
+  const actual = measure.actual;
+  const lane = schedule.years.some((item) => slots.some((slot) => slot.year === item.year));
+  const debt = (slot: Slot) => schedule.years.find((item) => item.year === slot.year)?.cell;
   return (
     <div
       role="region"
@@ -614,27 +673,36 @@ function PathTable({
                 {item.name}
               </th>
             ))}
+            {lane && (
+              <th scope="col" className="py-2 pr-4 font-medium">
+                {`Debt maturing${schedule.unit ? `, ${schedule.unit}` : ""}`}
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
-          {actual?.value != null && (
-            <tr className="border-b border-border-hairline">
-              <th scope="row" className="py-2 pr-4 text-left font-mono font-normal">
-                {actual.period}
-              </th>
-              <td colSpan={drawn.length} className="py-2 pr-4 font-mono tabular-nums">
-                {actual.display}
-              </td>
-            </tr>
-          )}
-          {slots
-            .filter((slot) => slot.forecast)
-            .map((slot) => (
+          {slots.map((slot) => {
+            const isActual = actual?.value != null && fiscalYear(actual.period) === slot.year;
+            const owed = debt(slot);
+            if (!slot.forecast && !isActual && !owed) return null;
+            return (
               <tr key={slot.year} className="border-b border-border-hairline">
                 <th scope="row" className="py-2 pr-4 text-left font-mono font-normal">
-                  {slot.label}
+                  {isActual ? actual.period : slot.label}
                 </th>
                 {drawn.map((item) => {
+                  if (isActual)
+                    return (
+                      <td key={item.group} className="py-2 pr-4 font-mono tabular-nums">
+                        {actual.display}
+                      </td>
+                    );
+                  if (!slot.forecast)
+                    return (
+                      <td key={item.group} className="py-2 pr-4 text-gap-text">
+                        After the forecast
+                      </td>
+                    );
                   const cell = cellAt(item, slot);
                   const text = !cell
                     ? "Not published"
@@ -653,8 +721,19 @@ function PathTable({
                     </td>
                   );
                 })}
+                {lane && (
+                  <td
+                    className={cx(
+                      "py-2 pr-4",
+                      owed?.value == null ? "text-gap-text" : "font-mono tabular-nums",
+                    )}
+                  >
+                    {owed ? owed.text : "No row in the schedule"}
+                  </td>
+                )}
               </tr>
-            ))}
+            );
+          })}
         </tbody>
       </table>
     </div>
@@ -665,117 +744,100 @@ function Chart({
   measure,
   selected,
   drawn,
-  limits,
-  wall,
+  slots,
+  schedule,
 }: {
   measure: Measure;
   selected: MeasureCase;
   drawn: MeasureCase[];
-  limits: PathLimits;
-  wall: PathWall;
+  slots: Slot[];
+  schedule: PathSchedule;
 }) {
   const { ref, width } = useMeasuredWidth(872);
-  const slots = axisSlots(measure, drawn, wall.wall);
   const values = [
     ...drawn.flatMap((item) => [...item.cells.values()].map((cell) => cell.value)),
     measure.actual?.value ?? null,
-    ...limits.limits.map((limit) => limit.value),
-  ].filter((v): v is number => v !== null);
-  const lane = wall.years.some((item) => slots.some((slot) => slot.year === item.year));
+  ].filter((value): value is number => value !== null);
+  const lane = schedule.years.some((item) => slots.some((slot) => slot.year === item.year));
   const g = geometry(width, slots, values, lane);
   return (
     <div ref={ref} className="min-w-0">
       <svg
         role="img"
-        aria-label={reading(
-          drawn,
-          slots,
-          limits.limits,
-          slots.some((slot) => slot.year === wall.wall?.year) ? wall.wall : null,
-        )}
+        aria-label={reading(drawn, slots, schedule)}
         width={width}
         height={g.height}
         viewBox={`0 0 ${String(width)} ${String(g.height)}`}
         className="block max-w-full"
       >
         <defs>
-          <Hatch id="forecast-path-hatch" />
+          <Hatch />
         </defs>
         <Grid g={g} />
         <GapColumns selected={selected} slots={slots} g={g} />
-        <Limits limits={limits.limits} g={g} />
-        <WallRule wall={wall.wall} slots={slots} g={g} />
+        <OtherGaps drawn={drawn} selected={selected} slots={slots} g={g} />
         <Actual measure={measure} g={g} />
         <Lines drawn={drawn} selected={selected} slots={slots} g={g} />
-        <Labels selected={selected} slots={slots} g={g} />
-        <Axis slots={slots} g={g} wall={wall.wall} />
-        {lane && <Lane wall={wall} slots={slots} g={g} />}
+        <Labels labels={pointLabels(drawn, selected, slots, g)} />
+        <Axis slots={slots} g={g} />
+        {lane && <Lane schedule={schedule} slots={slots} g={g} />}
       </svg>
     </div>
   );
 }
 
+function absentText(measure: Measure | null, rows: string[], caseName: string | undefined) {
+  if (!measure && rows.length > 1)
+    return `The model publishes ${String(rows.length)} net leverage rows: ${periodList(rows)}. None is on net debt over Adj EBITDA, so none is drawn.`;
+  if (!measure) return "The model publishes no net leverage figure.";
+  if (measure.cases.length === 0) return "The model's net leverage row has no dated forecast year.";
+  return `No net leverage figure for ${caseName ?? "the selected case"}.`;
+}
+
 /**
- * The lead: net leverage by case on a fiscal-year axis, the published leverage limits dashed and
- * the maturity wall marked. A year the selected case does not publish, or publishes without a
- * value, is a hatched column; no line is joined across it.
+ * The lead: net leverage by case on a fiscal-year axis with the maturity schedule under it. A
+ * year the selected case does not publish, or publishes without a value, is a hatched column; no
+ * line is joined across it. Covenant levels are not drawn on the model's path: the model's
+ * figures are not covenant tests.
  */
 export function LeveragePath({
   measure,
+  rows = [],
   group,
   caseName,
-  basis,
-  limits,
-  wall,
+  schedule,
   trace,
 }: {
   measure: Measure | null;
+  /** Every net leverage row the model publishes, to say what is true when none is read. */
+  rows?: string[];
   group: string | undefined;
   caseName: string | undefined;
-  basis: string;
-  limits: PathLimits;
-  wall: PathWall;
+  schedule: PathSchedule;
   trace?: ReactNode;
 }) {
   const [view, setView] = useState("chart");
   const { selected, drawn } = measure
     ? drawnCases(measure, group)
     : { selected: undefined, drawn: [] };
-  const periods = measure?.periods ?? [];
-  const span = periods.length ? `, ${periods[0] ?? ""} to ${periods.at(-1) ?? ""}` : "";
+  const slots = measure && selected ? axisSlots(measure, drawn, schedule) : [];
+  const forecast = slots.filter((slot) => slot.forecast);
+  const span = forecast.length
+    ? `, ${forecast[0]?.label ?? ""} to ${forecast.at(-1)?.label ?? ""}`
+    : "";
   return (
     <Tile
       span={8}
       label="Net leverage path"
-      kicker={basis}
       title={
         drawn.length > 1
           ? `Net leverage by case${span}`
           : `Net leverage, ${caseName ?? selected?.name ?? "model"}${span}`
       }
-      trace={trace}
-    >
-      {!measure || !selected ? (
-        <GapNote>
-          {!measure
-            ? "The model publishes no net leverage figure."
-            : measure.cases.length === 0
-              ? "The model's net leverage row has no dated forecast year."
-              : `No net leverage figure for ${caseName ?? "the selected case"}.`}
-        </GapNote>
-      ) : (
-        <>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Legend
-              drawn={drawn}
-              selected={selected}
-              measure={measure}
-              limits={limits}
-              wall={wall}
-              wallOnAxis={axisSlots(measure, drawn, wall.wall).some(
-                (slot) => slot.year === wall.wall?.year,
-              )}
-            />
+      className="lg:self-start"
+      trace={
+        <div className="flex flex-none items-center gap-2">
+          {measure && selected && (
             <Segmented
               label="Net leverage view"
               segments={[
@@ -785,33 +847,40 @@ export function LeveragePath({
               current={view}
               onSelect={setView}
             />
-          </div>
+          )}
+          {trace}
+        </div>
+      }
+    >
+      {!measure || !selected ? (
+        <GapNote>{absentText(measure, rows, caseName)}</GapNote>
+      ) : (
+        <>
+          <Legend
+            drawn={drawn}
+            selected={selected}
+            measure={measure}
+            slots={slots}
+            schedule={schedule}
+          />
           <figure className="m-0 min-w-0">
             {view === "chart" ? (
               <Chart
                 measure={measure}
                 selected={selected}
                 drawn={drawn}
-                limits={limits}
-                wall={wall}
+                slots={slots}
+                schedule={schedule}
               />
             ) : (
-              <PathTable
-                drawn={drawn}
-                slots={axisSlots(measure, drawn, wall.wall)}
-                actual={measure.actual}
-              />
+              <PathTable drawn={drawn} slots={slots} measure={measure} schedule={schedule} />
             )}
           </figure>
+          {schedule.gap}
           <ul className="grid gap-1 text-small text-text-secondary">
-            {notes(measure, selected, axisSlots(measure, drawn, wall.wall), limits, wall).map(
-              (note) => (
-                <li key={note.text} className="flex items-start gap-2">
-                  <span>{note.text}</span>
-                  {note.trace}
-                </li>
-              ),
-            )}
+            {notes(measure, drawn, slots, schedule).map((note) => (
+              <li key={note}>{note}</li>
+            ))}
           </ul>
         </>
       )}

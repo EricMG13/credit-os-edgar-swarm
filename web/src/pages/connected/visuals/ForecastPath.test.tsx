@@ -1,41 +1,48 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, it } from "vitest";
 import { forecastMeasure } from "../report/forecastData";
-import { LeveragePath, type PathLimits, type PathWall } from "./ForecastPath";
+import { LeveragePath, type PathSchedule } from "./ForecastPath";
 
 const NET = "Net leverage (net debt / Adj EBITDA)";
 const value = (exact: string, display = `${exact}x`) => ({ status: "value", exact, display });
 const notCalculated = (reason: string) => ({ status: "unavailable", display: "n.a.", reason });
 
-type Column = { label: string; group: string };
-function measureOf(columns: Column[], cells: unknown[]) {
+type Column = { label: string; group: string; start?: string; end?: string };
+function measureOf(columns: Column[], cells: unknown[], extra: Record<string, unknown[]> = {}) {
   return forecastMeasure(
     {
       cashflow: {
         columns,
-        rows: [{ label: NET, band: "Leverage", kind: "multiple", total: false, cells }],
+        rows: [
+          { label: NET, band: "Leverage", kind: "multiple", total: false, cells },
+          ...Object.entries(extra).map(([label, row]) => ({
+            label,
+            band: "Leverage",
+            kind: "multiple",
+            total: false,
+            cells: row,
+          })),
+        ],
       },
     },
     /^Net leverage\b/,
+    /net debt \/ Adj EBITDA/,
   );
 }
 const cols = (group: string, labels: string[]) => labels.map((label) => ({ label, group }));
-
-const noLimits: PathLimits = { limits: [], reason: "Legal & covenants states no leverage limit." };
-const noWall: PathWall = { years: [], reason: "Financial foundation did not run in this run." };
+const noSchedule: PathSchedule = { years: [], offAxis: [] };
 
 function draw(
   measure: ReturnType<typeof measureOf>,
-  options: { group?: string; limits?: PathLimits; wall?: PathWall } = {},
+  options: { group?: string; caseName?: string; schedule?: PathSchedule; rows?: string[] } = {},
 ) {
   return render(
     <LeveragePath
       measure={measure}
+      rows={options.rows}
       group={options.group ?? "Base case"}
-      caseName="Base case"
-      basis="Base case · Adj EBITDA (EBITDA As Defined) · USD millions"
-      limits={options.limits ?? noLimits}
-      wall={options.wall ?? noWall}
+      caseName={options.caseName ?? "Base case"}
+      schedule={options.schedule ?? noSchedule}
     />,
   );
 }
@@ -50,13 +57,12 @@ it("joins a case only between consecutive published years and hatches the year i
       [value("5.5"), value("3.05"), value("6"), value("6.5"), value("7")],
     ),
   );
-  const base = container.querySelectorAll('[data-segment="Base case"]');
   // FY2025E and FY2027E are not consecutive: no segment joins them across FY2026E.
-  expect(base).toHaveLength(0);
+  expect(container.querySelectorAll('[data-segment="Base case"]')).toHaveLength(0);
   expect(container.querySelectorAll('[data-segment="Downside case"]')).toHaveLength(2);
-  const gap = container.querySelector('[data-gap="FY2026E"]');
-  expect(gap).not.toBeNull();
+  expect(container.querySelector('[data-gap="FY2026E"]')).not.toBeNull();
   expect(within(screen.getByRole("figure")).getByText("Not published")).toBeInTheDocument();
+  expect(screen.getByText("Base case: FY2026E not published.")).toBeInTheDocument();
 });
 
 it("tells a figure the model did not calculate apart from a period it does not publish", () => {
@@ -68,11 +74,11 @@ it("tells a figure the model did not calculate apart from a period it does not p
   );
   expect(container.querySelector('[data-gap="FY2026E"]')).not.toBeNull();
   expect(screen.getByText("Not calculated")).toBeInTheDocument();
-  expect(screen.getByText(/FY2026E: EBITDA is not positive/)).toBeInTheDocument();
-  expect(screen.queryByText("0.00x")).toBeNull();
+  expect(screen.getByText("Base case, FY2026E: EBITDA is not positive.")).toBeInTheDocument();
+  expect(screen.queryByText(/0\.00x/)).toBeNull();
 });
 
-it("labels the selected case's peak and end with the cells as published", () => {
+it("labels the selected case's highest year by value and year, never as a peak", () => {
   draw(
     measureOf(cols("Base case", ["FY2025E", "FY2026E", "FY2027E"]), [
       value("5.5", "5.50x"),
@@ -81,26 +87,52 @@ it("labels the selected case's peak and end with the cells as published", () => 
     ]),
   );
   const figure = within(screen.getByRole("figure"));
-  expect(figure.getByText("5.65x peak")).toBeInTheDocument();
-  expect(figure.getByText("3.05x")).toBeInTheDocument();
+  expect(figure.getByText("5.65x · FY2026E")).toBeInTheDocument();
+  expect(figure.getByText(/^3\.05x/)).toBeInTheDocument();
+  expect(figure.queryByText(/peak/i)).toBeNull();
 });
 
-it("draws each published leverage limit dashed, and names the reason when there is none", () => {
-  const measure = measureOf(cols("Base case", ["FY2025E"]), [value("4.2")]);
-  const { container, unmount } = draw(measure, {
-    limits: {
-      limits: [{ label: "Net leverage", value: 5, text: "5.0", direction: "Passes at or below" }],
-      reason: null,
-    },
-  });
-  expect(container.querySelector('[data-limit="Net leverage"]')).not.toBeNull();
-  expect(screen.getByText("5.0x Net leverage")).toBeInTheDocument();
-  unmount();
-  draw(measure);
-  expect(screen.getByText("Legal & covenants states no leverage limit.")).toBeInTheDocument();
+it("labels every drawn case's end point and marks another case's missing year", () => {
+  const { container } = draw(
+    measureOf(
+      [
+        ...cols("Base case", ["FY2025E", "FY2026E", "FY2027E"]),
+        ...cols("Downside case", ["FY2025E", "FY2026E", "FY2027E"]),
+        ...cols("Upside", ["FY2025E", "FY2026E", "FY2027E"]),
+      ],
+      [
+        value("2"),
+        value("1.5"),
+        value("1"),
+        value("3"),
+        notCalculated("EBITDA is not positive"),
+        value("2.8"),
+        value("1.9"),
+        value("1.2"),
+        value("0.4"),
+      ],
+    ),
+  );
+  const labels = [...container.querySelectorAll("[data-label]")].map((label) => label.textContent);
+  expect(labels).toEqual(expect.arrayContaining(["1x", "2.8x", "0.4x"]));
+  expect(container.querySelector('[data-case-gap="Downside case FY2026E"]')).not.toBeNull();
+  expect(screen.getByText("Downside case, FY2026E: EBITDA is not positive.")).toBeInTheDocument();
+  // The two cases that are not selected are told apart by dash, not by colour alone.
+  const dash = (group: string) =>
+    container.querySelector(`[data-segment="${group}"]`)?.getAttribute("stroke-dasharray");
+  expect(dash("Base case")).toBeNull();
+  expect(dash("Upside")).not.toBeNull();
+  expect(dash("Downside case")).not.toBeNull();
+  expect(dash("Upside")).not.toBe(dash("Downside case"));
 });
 
-it("marks the maturity wall on the fiscal-year axis and lists maturities beyond it", () => {
+it("draws no covenant level on the model's path", () => {
+  const { container } = draw(measureOf(cols("Base case", ["FY2025E"]), [value("4.2")]));
+  expect(container.querySelector("[data-limit]")).toBeNull();
+  expect(screen.queryByText(/limit/i)).toBeNull();
+});
+
+it("draws the published maturity schedule as written on the axis, naming no single wall", () => {
   const cell = (text: string, amount: number | null, reason: string | null = null) => ({
     text,
     value: amount,
@@ -109,7 +141,7 @@ it("marks the maturity wall on the fiscal-year axis and lists maturities beyond 
   const { container } = draw(
     measureOf(cols("Base case", ["FY2025E", "FY2026E"]), [value("2"), value("1.5")]),
     {
-      wall: {
+      schedule: {
         years: [
           { year: 2026, label: "FY2026", cell: cell("500", 500) },
           {
@@ -120,31 +152,42 @@ it("marks the maturity wall on the fiscal-year axis and lists maturities beyond 
           { year: 2028, label: "FY2028", cell: cell("1,250", 1250) },
           { year: 2034, label: "FY2034", cell: cell("900", 900) },
         ],
-        wall: { year: 2028, label: "FY2028", cell: cell("1,250", 1250) },
+        offAxis: [{ year: 0, label: "Thereafter", cell: cell("4,768", 4768) }],
         unit: "US$m",
-        offAxis: [],
-        reason: null,
       },
     },
   );
   const figure = within(screen.getByRole("figure"));
-  expect(figure.getByText("FY2028 maturity wall")).toBeInTheDocument();
   expect(figure.getByText("1,250")).toBeInTheDocument();
   expect(figure.getByText("500")).toBeInTheDocument();
-  expect(container.querySelector('[data-wall="FY2028"]')).not.toBeNull();
-  expect(screen.getByText(/FY2027: the schedule stops here/)).toBeInTheDocument();
-  expect(screen.getByText(/Beyond this axis: FY2034 900/)).toBeInTheDocument();
+  expect(figure.queryByText(/maturity wall/i)).toBeNull();
+  expect(container.querySelector('[data-lane-gap="FY2027"]')).not.toBeNull();
+  expect(figure.getByText("Not supplied")).toBeInTheDocument();
+  expect(screen.getByText("Debt maturing, FY2027: the schedule stops here.")).toBeInTheDocument();
+  expect(screen.getByText("Debt maturing beyond this axis: FY2034 900.")).toBeInTheDocument();
+  expect(
+    screen.getByText("Debt maturing, not by fiscal year: Thereafter 4,768."),
+  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Table" }));
+  const table = within(screen.getByRole("table", { name: /Net leverage by case/ }));
+  expect(table.getByRole("columnheader", { name: "Debt maturing, US$m" })).toBeInTheDocument();
+  expect(table.getByRole("cell", { name: "1,250" })).toBeInTheDocument();
 });
 
-it("draws only the selected case and says so when the cases share no period", () => {
+it("draws only the selected case's own periods when the cases share none, and says so", () => {
   const { container } = draw(
     measureOf(
-      [...cols("Base case", ["FY2025E", "FY2026E"]), ...cols("Downside case", ["FY2028E"])],
-      [value("1"), value("2"), value("3")],
+      [...cols("Base case", ["FY2025E"]), ...cols("Downside case", ["FY2026E"])],
+      [value("1"), value("2")],
     ),
   );
-  expect(container.querySelectorAll('[data-segment="Base case"]')).toHaveLength(1);
   expect(container.querySelector('[data-segment="Downside case"]')).toBeNull();
+  expect(container.querySelector("[data-gap]")).toBeNull();
+  expect(screen.queryByText(/Not published/)).toBeNull();
+  expect(screen.queryByText(/No figure for/)).toBeNull();
+  expect(screen.getByRole("region", { name: "Net leverage path" })).toHaveTextContent(
+    "Net leverage, Base case, FY2025E to FY2025E",
+  );
   expect(
     screen.getByText("The cases publish no period in common, so no scenario comparison is drawn."),
   ).toBeInTheDocument();
@@ -164,34 +207,35 @@ it("switches to a table of every drawn case, with a period a case does not publi
   expect(table.getByRole("cell", { name: "Not published" })).toBeInTheDocument();
 });
 
-it("draws the gap state in place when the model publishes no net leverage", () => {
-  draw(null);
-  expect(screen.getByRole("region", { name: "Net leverage path" })).toBeInTheDocument();
-  expect(screen.getByText("The model publishes no net leverage figure.")).toBeInTheDocument();
-});
-
-it("draws no other case's line under a selected case the model has no leverage row for", () => {
-  const { container } = draw(measureOf(cols("Base case", ["FY2025E"]), [value("1.5")]), {
-    group: "Downside (CP-2G drivers)",
-  });
-  expect(container.querySelector("[data-segment]")).toBeNull();
-  expect(screen.queryByText("1.5x")).toBeNull();
-  expect(screen.getByText("No net leverage figure for Base case.")).toBeInTheDocument();
-});
-
-it("keeps the wall out of the legend and the reading when it lies beyond the axis", () => {
-  const far = { year: 2035, label: "FY2035", cell: { text: "900", value: 900, reason: null } };
-  draw(measureOf(cols("Base case", ["FY2025E"]), [value("2")]), {
-    wall: { years: [far], wall: far, unit: "US$m", offAxis: [], reason: null },
-  });
-  expect(screen.queryByText("Maturity wall, Financial foundation")).toBeNull();
-  expect(screen.getByRole("img").getAttribute("aria-label")).not.toMatch(/maturity wall/);
-  expect(screen.getByText("Beyond this axis: FY2035 900.")).toBeInTheDocument();
-});
-
-it("says the row has no dated forecast year rather than that it is absent", () => {
-  draw(measureOf(cols("Base case", ["FY26E"]), [value("2")]));
+it("says what is true when the model publishes two net leverage rows", () => {
+  draw(
+    measureOf(cols("Base case", ["FY2025E"]), [value("1.2")], {
+      "Net leverage (covenant basis)": [value("3.4")],
+    }),
+  );
   expect(
-    screen.getByText("The model's net leverage row has no dated forecast year."),
+    screen.getByText(
+      `The model also publishes Net leverage (covenant basis); this chart reads ${NET}.`,
+    ),
   ).toBeInTheDocument();
+  expect(screen.queryByText("3.4x")).toBeNull();
+});
+
+it("draws the gap in place: no row, two unmatched rows, a case without the row", () => {
+  const { unmount } = draw(null);
+  expect(screen.getByText("The model publishes no net leverage figure.")).toBeInTheDocument();
+  unmount();
+  const second = draw(null, { rows: ["Net leverage (one)", "Net leverage (two)"] });
+  expect(
+    screen.getByText(
+      "The model publishes 2 net leverage rows: Net leverage (one) and Net leverage (two). None is on net debt over Adj EBITDA, so none is drawn.",
+    ),
+  ).toBeInTheDocument();
+  second.unmount();
+  draw(measureOf(cols("Base case", ["FY2025E"]), [value("1.5")]), {
+    group: "Downside (CP-2G drivers)",
+    caseName: "Downside drivers",
+  });
+  expect(screen.getByText("No net leverage figure for Downside drivers.")).toBeInTheDocument();
+  expect(screen.queryByText("1.5x")).toBeNull();
 });

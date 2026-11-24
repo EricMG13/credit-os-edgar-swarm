@@ -1,12 +1,16 @@
 import { expect, it } from "vitest";
+import type { OutputEntry } from "../publishedReport";
+import type { ReportView } from "../reportView";
 import {
   cellsOf,
-  driverTable,
   endOf,
   fiscalYear,
   forecastMeasure,
-  peakOf,
-  troughOf,
+  extremeOf,
+  fundingGap,
+  measureRows,
+  modelLimitation,
+  periodList,
   type MeasureCell,
 } from "./forecastData";
 
@@ -110,13 +114,19 @@ const cell = (period: string, value: number | null, display = String(value)): Me
   reason: value === null ? "not calculated" : "",
 });
 
-it("selects the peak, trough and end among published values, the earliest on a tie", () => {
-  const cells = [cell("FY2025E", 2), cell("FY2026E", 3), cell("FY2027E", 3), cell("FY2028E", 1)];
-  expect(peakOf(cells)?.period).toBe("FY2026E");
-  expect(troughOf(cells)?.period).toBe("FY2028E");
-  expect(endOf(cells)?.period).toBe("FY2028E");
-  expect(peakOf([cell("FY2025E", null)])).toBeNull();
+it("names the highest and lowest published years as a selection, with ties and missing years", () => {
+  const cells = [cell("FY2025E", 6), cell("FY2026E", null), cell("FY2027E", 6), cell("FY2029E", 2)];
+  const highest = extremeOf(cells, "highest");
+  expect(highest?.cells.map(({ period }) => period)).toEqual(["FY2025E", "FY2027E"]);
+  expect(highest?.notCalculated).toEqual(["FY2026E"]);
+  expect(highest?.notPublished).toEqual(["FY2028E"]);
+  expect(extremeOf(cells, "lowest")?.cells.map(({ period }) => period)).toEqual(["FY2029E"]);
+  // One figure is not a highest year.
+  expect(extremeOf([cell("FY2025E", 5), cell("FY2026E", null)], "highest")).toBeNull();
+  expect(endOf(cells)?.period).toBe("FY2029E");
   expect(endOf([cell("FY2026E", null), cell("FY2025E", 1)])?.value).toBeNull();
+  expect(periodList(["FY2025E", "FY2027E"])).toBe("FY2025E and FY2027E");
+  expect(periodList(["A", "B", "C"])).toBe("A, B and C");
 });
 
 it("reads a fiscal year from actual and forecast labels only", () => {
@@ -124,78 +134,6 @@ it("reads a fiscal year from actual and forecast labels only", () => {
   expect(fiscalYear("FY2027E")).toBe(2027);
   expect(fiscalYear("LTM")).toBeNull();
   expect(fiscalYear("2026")).toBeNull();
-});
-
-it("tabulates drivers by case, marks a value that differs from base and never assumes base", () => {
-  const table = driverTable({
-    years: [{ year: 2025 }, { year: 2026 }],
-    base_drivers: {
-      revenue_growth: { values: ["0.12", "0.12"] },
-      dividends: { values: ["4348", "2038"] },
-    },
-    upside_drivers: { revenue_growth: { values: ["0.162", "0.162"] } },
-    downside_drivers: { revenue_growth: { values: ["0.12", "0.12"] } },
-    downside_shock: { ebitda_decline: "0.2", rate_increase: "0.0184" },
-  });
-  expect(table.years).toEqual(["2025", "2026"]);
-  expect(table.cases.map(({ name }) => name)).toEqual([
-    "Base case",
-    "Upside case",
-    "Downside drivers",
-  ]);
-  const growth = table.rows.find(({ key }) => key === "revenue_growth");
-  expect(growth?.cells.map(({ text, differs }) => [text, differs])).toEqual([
-    ["12.00% each year", false],
-    ["16.20% each year", true],
-    ["12.00% each year", false],
-  ]);
-  const dividends = table.rows.find(({ key }) => key === "dividends");
-  expect(dividends?.cells.map(({ text, stated }) => [text, stated])).toEqual([
-    ["4348 · 2038", true],
-    ["Not stated", false],
-    ["Not stated", false],
-  ]);
-  const shock = table.rows.find(({ key }) => key === "ebitda_decline");
-  expect(shock?.cells.map(({ text }) => text)).toEqual(["Not stated", "Not stated", "20.00%"]);
-  expect(shock?.cells[2]?.differs).toBe(true);
-});
-
-it("tabulates the retained TransDigm inputs exactly: upside dividends and flat downside sales differ", async () => {
-  // Outdated evidence (TransDigm FY2024, as of 2024-09-30), used for shape only.
-  const { readFileSync } = await import("node:fs");
-  const path = await import("node:path");
-  const block = readFileSync(
-    path.join(
-      import.meta.dirname,
-      "../../../../../tests/fixtures/tdg_sol_high_2026_11_13/CP-2G-forecast-block.md",
-    ),
-    "utf8",
-  );
-  const json = /```json\n([\s\S]*?)\n```/u.exec(block)?.[1] ?? "{}";
-  const table = driverTable(JSON.parse(json) as Record<string, unknown>);
-  expect(table.years).toEqual(["2025", "2026", "2027"]);
-  expect(table.cases.map(({ name }) => name)).toEqual([
-    "Base case",
-    "Upside case",
-    "Downside drivers",
-  ]);
-  const cells = (key: string) =>
-    table.rows.find((item) => item.key === key)?.cells.map(({ text, differs }) => [text, differs]);
-  expect(cells("revenue_growth")).toEqual([
-    ["12.00% each year", false],
-    ["16.20% each year", true],
-    ["0.00% each year", true],
-  ]);
-  expect(cells("dividends")).toEqual([
-    ["4348 · 2038 · 2038", false],
-    ["4348 · 38 · 38", true],
-    ["Not stated", false],
-  ]);
-  expect(cells("rate_increase")).toEqual([
-    ["Not stated", false],
-    ["Not stated", false],
-    ["1.84%", true],
-  ]);
 });
 
 it("gives a case without a row for the measure no cells, never another case's", () => {
@@ -225,16 +163,133 @@ it("keeps a period whose dates differ between cases out of every case's cells", 
   );
   expect(measure?.periods).toEqual(["FY2025E"]);
   expect(measure?.cases.map(({ cells }) => [...cells.keys()])).toEqual([["FY2025E"], ["FY2025E"]]);
-  expect(measure?.notice).toMatch(/FY2026E \(recorded start and end dates do not match/);
+  // Each case keeps its own year for what the page says about that case alone.
+  if (!measure) throw new Error("no measure");
+  expect(cellsOf(measure, "Base case").map(({ period }) => period)).toEqual(["FY2025E", "FY2026E"]);
+  expect(measure.notice).toMatch(/FY2026E \(recorded start and end dates do not match/);
 });
 
-it("lists a shock key a case also states as two rows, each with its own value", () => {
-  const table = driverTable({
-    base_drivers: { ebitda_decline: { values: ["0.1"] } },
-    downside_shock: { ebitda_decline: "0.2" },
+it("reads the row the stated basis names when the model publishes two, and names both", () => {
+  const measure = forecastMeasure(
+    model(cols("Base case", ["FY2025E"]), {
+      [NET]: [value("1.2")],
+      "Net leverage (covenant basis)": [value("3.4")],
+    }),
+    /^Net leverage\b/,
+    /net debt \/ Adj EBITDA/,
+  );
+  expect(measure?.label).toBe(NET);
+  expect(measure?.others).toEqual(["Net leverage (covenant basis)"]);
+  expect(cellsOf(measure ?? never(), "Base case")[0]?.value).toBe(1.2);
+  const both = model(cols("Base case", ["FY2025E"]), {
+    "Net leverage (one)": [value("1")],
+    "Net leverage (two)": [value("2")],
   });
-  expect(table.rows.map(({ id, cells }) => [id, cells.map(({ text }) => text)])).toEqual([
-    ["base_drivers.ebitda_decline", ["10.00%", "Not stated"]],
-    ["downside_shock.ebitda_decline", ["Not stated", "20.00%"]],
+  expect(forecastMeasure(both, /^Net leverage\b/, /net debt \/ Adj EBITDA/)).toBeNull();
+  expect(measureRows(both, /^Net leverage\b/)).toEqual([
+    "Net leverage (one)",
+    "Net leverage (two)",
   ]);
+});
+
+function never(): never {
+  throw new Error("unreachable");
+}
+
+const handoff = (module: string, sections: unknown[]) =>
+  ({
+    selected: true,
+    output: {
+      id: module,
+      sha256: "c".repeat(64),
+      module,
+      label: "",
+      href: "",
+      state: { established: true, declared: null },
+    },
+    sections,
+  }) as unknown as OutputEntry;
+const view = (entries: OutputEntry[]) =>
+  ({
+    catalogue: undefined,
+    lead: undefined,
+    entries,
+    modules: [],
+    models: [],
+  }) as unknown as ReportView;
+const tableSection = (heading: string, line: number, headers: string[], rows: string[][]) => ({
+  heading,
+  level: 3,
+  line,
+  blocks: [
+    {
+      type: "table",
+      line: line + 2,
+      headers,
+      rows: rows.map((cells, at) => ({ line: line + 4 + at, cells })),
+    },
+  ],
+});
+
+it("reads the funding gap the liquidity module states, with its unit, horizon and line", () => {
+  const liquidity = handoff("CP-2D", [
+    tableSection(
+      "T2E.5 Funding gap",
+      40,
+      ["Line", "Value (USD millions)"],
+      [
+        ["Horizon", "2026-03-31"],
+        ["Funding gap", "120.5"],
+      ],
+    ),
+  ]);
+  const { gap } = fundingGap(view([liquidity]));
+  expect(gap).toMatchObject({
+    module: "CP-2D",
+    name: "Liquidity",
+    text: "120.5",
+    value: 120.5,
+    unit: "USD millions",
+    horizon: "2026-03-31",
+    line: 45,
+  });
+});
+
+it("falls back to the refinancing module's repeat, and else names the modules it looked at", () => {
+  const refinancing = handoff("CP-3C", [
+    tableSection(
+      "T3D.2 Refinancing burden",
+      10,
+      ["Line", "Value (EUR millions)"],
+      [["CP-2D funding gap at its horizon end", "200"]],
+    ),
+  ]);
+  expect(fundingGap(view([refinancing])).gap).toMatchObject({ module: "CP-3C", text: "200" });
+  expect(fundingGap(view([])).looked).toEqual([
+    "Liquidity did not run in this run.",
+    "Refinancing & LME did not run in this run.",
+  ]);
+});
+
+it("quotes the forward model's own limitation sentence, not a paraphrase", () => {
+  const forward = handoff("CP-2G", [
+    { heading: "Findings", level: 2, line: 1, blocks: [] },
+    {
+      heading: "Limitations",
+      level: 3,
+      line: 30,
+      blocks: [
+        {
+          type: "text",
+          line: 32,
+          end: 33,
+          text: "- The break tests reuse watch levels, not covenant tests; covenant compliance belongs to the legal module.\n- Debt maturities and refinancing feasibility are not modelled.",
+        },
+      ],
+    },
+  ]);
+  expect(modelLimitation(forward, /refinancing feasibility/u)).toBe(
+    "Debt maturities and refinancing feasibility are not modelled.",
+  );
+  expect(modelLimitation(forward, /nothing like this/u)).toBeNull();
 });

@@ -117,33 +117,49 @@ function measure(label: string, cells: unknown[]) {
   );
 }
 
-it("states peak and end leverage and minimum cover as published, and the shortfall as a gap", () => {
+it("labels its selections as selections: highest and lowest published years, ties and gaps named", () => {
   render(
     <ForecastStats
-      leverage={measure("Net leverage", [value("5.50"), value("5.65"), value("3.05")])}
-      cover={measure("Interest coverage", [value("3.40"), value("3.01"), value("3.90")])}
+      view={view([])}
+      folder="current"
+      leverage={measure("Net leverage", [value("5.65"), value("5.50"), value("5.65")])}
+      cover={measure("Interest coverage", [
+        value("3.40"),
+        { status: "unavailable", display: "n.a.", reason: "Interest is zero" },
+        value("3.90"),
+      ])}
       group="Base case"
       caseName="Base case"
-      basis="Base case · USD millions"
+      basis="Base case · Adj EBITDA"
     />,
   );
   const strip = within(screen.getByLabelText("Forecast figures"));
-  expect(strip.getByText("5.65x")).toBeInTheDocument();
-  // The peak leverage and the minimum cover both fall in FY2026E.
-  expect(strip.getAllByText("FY2026E · Base case")).toHaveLength(2);
+  expect(
+    strip.getByText("Net leverage: highest published forecast year, Base case"),
+  ).toBeInTheDocument();
+  expect(strip.getAllByText("5.65x")).toHaveLength(2);
+  // A tie is named, not resolved silently to one year.
+  expect(strip.getByText("FY2025E and FY2027E")).toBeInTheDocument();
   expect(strip.getByText("Net leverage, FY2027E")).toBeInTheDocument();
-  expect(strip.getByText("3.05x")).toBeInTheDocument();
-  expect(strip.getByText(/from 5.50x in FY2025E/)).toBeInTheDocument();
-  expect(strip.getByText("3.01x")).toBeInTheDocument();
-  expect(strip.getByText("No module states a shortfall figure")).toBeInTheDocument();
+  expect(strip.getByText(/from 5.65x in FY2025E/)).toBeInTheDocument();
+  expect(
+    strip.getByText("Interest cover: lowest published forecast year, Base case"),
+  ).toBeInTheDocument();
+  expect(strip.getByText("3.40x")).toBeInTheDocument();
+  // The year with no figure is named in the same cell.
+  expect(strip.getByText("FY2026E not calculated")).toBeInTheDocument();
+  expect(strip.queryByText(/peak|minimum/i)).toBeNull();
+  expect(strip.getByText("Neither Liquidity nor Refinancing & LME states one")).toBeInTheDocument();
 });
 
-it("says why a stat is empty, never zero", () => {
+it("says why a stat is empty, never zero, and singles out nothing on a one-point path", () => {
   render(
     <ForecastStats
+      view={view([])}
+      folder="current"
       leverage={null}
       cover={measure("Interest coverage", [
-        { status: "unavailable", display: "n.a.", reason: "Interest is zero" },
+        value("3.40"),
         { status: "unavailable", display: "n.a." },
         { status: "unavailable", display: "n.a." },
       ])}
@@ -154,8 +170,10 @@ it("says why a stat is empty, never zero", () => {
   );
   const strip = within(screen.getByLabelText("Forecast figures"));
   expect(strip.getAllByText("The model publishes no net leverage figure")).toHaveLength(2);
-  expect(strip.getByText("Not calculated for Base case")).toBeInTheDocument();
-  expect(strip.queryByText(/^0/)).toBeNull();
+  expect(
+    strip.getByText("One published forecast year only: no interest cover year to single out"),
+  ).toBeInTheDocument();
+  expect(strip.queryByText("3.40x")).toBeNull();
 });
 
 it("offers no way to a forward model the run does not have", () => {

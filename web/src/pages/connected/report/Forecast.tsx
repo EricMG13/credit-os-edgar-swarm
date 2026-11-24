@@ -1,5 +1,5 @@
 import { Button } from "@/components/base/buttons/button";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { moduleName } from "../api";
 import { field, label } from "../layout";
 import {
@@ -14,12 +14,10 @@ import { namedRow, namedTable, type buildReportView } from "../reportView";
 import { amount, items, record, stringsIn, word } from "../visuals/visualData";
 import {
   baseQualifications,
-  CashProxy,
   cashProxyCases,
   forecastCaseOptions,
   forecastCaseNames,
   gridOf,
-  ForecastTrends,
 } from "../visuals/LegacyForecast";
 import { LeveragePath } from "../visuals/ForecastPath";
 import { RunCharts } from "./RunCharts";
@@ -35,14 +33,15 @@ import {
   cellsOf,
   earningsBasis,
   forecastMeasure,
-  leverageLimits,
-  maturityWall,
+  maturitySchedule,
+  measureRows,
 } from "./forecastData";
-import { ForecastHeader, ForecastStats, type CaseChoice } from "./ForecastHeader";
+import { CaseFigure, ForecastHeader, ForecastStats, type CaseChoice } from "./ForecastHeader";
+import { ModuleGap } from "./ForecastGaps";
 import { WhatBreaks } from "./ForecastBreaks";
 import { AssumptionsByCase } from "./ForecastAssumptions";
 import { UsesOfCash } from "./ForecastCash";
-import { CaseFigures, ForecastScopeTiles } from "./ForecastScopeTile";
+import { ForecastScopeTiles } from "./ForecastScopeTile";
 import { Bento, GapNote, Tile } from "./overview/Tile";
 
 type Model = ReturnType<typeof buildReportView>["models"][number];
@@ -135,44 +134,6 @@ function BasisNote({
   );
 }
 
-function ForecastTrendsSection({
-  model,
-  selectedCase,
-  selectedRawGroup,
-  source,
-}: {
-  model: Model;
-  selectedCase?: string;
-  selectedRawGroup?: string;
-  source?: ForecastSource;
-}) {
-  const cashflow = record(model.cashflow);
-  const grid = gridOf(cashflow);
-  const other = gridOf(cashflow.other);
-  if (!grid) return null;
-  const names = forecastCaseNames(cashflow);
-  const selectedGroup =
-    selectedRawGroup ?? [...names.keys()].find((group) => names.get(group) === selectedCase);
-  const forecasts = other?.columns.some(({ group }) => group === selectedGroup) ? other : grid;
-  return (
-    <details className="border-t border-border-hairline pt-3">
-      <summary className="cursor-pointer text-small font-medium text-text-primary">
-        Cash flow trends by line item
-      </summary>
-      <div className="mt-4">
-        <ForecastTrends
-          grid={forecasts}
-          units={word(cashflow.units)}
-          source={source}
-          selectedCase={selectedCase}
-          selectedRawGroup={selectedGroup}
-          caseNames={names}
-        />
-      </div>
-    </details>
-  );
-}
-
 function PublishedModelSelect({
   models,
   selected,
@@ -197,7 +158,7 @@ function PublishedModelSelect({
     <label className={`${label} max-w-xs`}>
       Published model
       <select
-        className={field}
+        className={`${field} min-h-8 max-[480px]:min-h-11`}
         value={selected}
         onChange={(event) => {
           setSelected(Number(event.target.value));
@@ -256,13 +217,10 @@ function forecastSources(
 }
 
 type View = ReturnType<typeof buildReportView>;
+type Ready = { state: "ready"; entry: OutputEntry; descriptor: Record<string, unknown> };
 
-/** A trace to one module's chart table, for a mark drawn from another module. */
-function tableTrace(
-  folder: string,
-  source: ReturnType<typeof leverageLimits>["source"],
-  name: string,
-) {
+/** A trace to one module's chart table, for a figure drawn from another module. */
+function tableTrace(folder: string, source: Ready | { state: "gap" }, name: string) {
   if (source.state !== "ready") return undefined;
   const line = typeof source.descriptor.table === "number" ? source.descriptor.table : undefined;
   return (
@@ -276,14 +234,18 @@ function tableTrace(
   );
 }
 
+const NET_LEVERAGE = /^Net leverage\b/u;
+const ON_ADJ_EBITDA = /net debt \/ Adj EBITDA/u;
+const COVER = /^Interest coverage\b/u;
+const COVER_ON_ADJ_EBITDA = /Adj EBITDA \/ (?:cash )?interest/u;
+
 function caseChoices(
   options: ReturnType<typeof forecastCaseOptions>,
   leverage: ReturnType<typeof forecastMeasure>,
 ): CaseChoice[] {
   const drawn = (group: string) =>
     leverage?.cases.some(
-      (item) =>
-        item.group === group && [...item.cells.values()].some(({ value }) => value !== null),
+      (item) => item.group === group && [...item.own.values()].some(({ value }) => value !== null),
     ) ?? false;
   if (options.length)
     return options.map(({ name, rawGroup }) => ({ name, rawGroup, hatched: !drawn(rawGroup) }));
@@ -296,6 +258,7 @@ function caseChoices(
 
 function basisItems(model: Model, leverage: ReturnType<typeof forecastMeasure>, group?: string) {
   const units = word(record(model.cashflow).units);
+  // The selected case's own published years, compared with other cases or not.
   const cells = leverage ? cellsOf(leverage, group) : [];
   const first = cells[0];
   const last = cells.at(-1);
@@ -319,7 +282,6 @@ function ModelTiles({
   group,
   caseName,
   selectedCase,
-  caseOptions,
   input,
   handoff,
   href,
@@ -332,38 +294,39 @@ function ModelTiles({
   group: string | undefined;
   caseName: string;
   selectedCase: string | undefined;
-  caseOptions: ReturnType<typeof forecastCaseOptions>;
   input: ReturnType<typeof forecastInput>;
   handoff: OutputEntry | undefined;
   href: (line: number) => string;
   source: ForecastSource;
-  select: React.ReactNode;
+  select: ReactNode;
 }) {
-  const leverage = forecastMeasure(model, /^Net leverage\b/u);
-  const cover = forecastMeasure(model, /^Interest coverage\b/u);
-  const units = word(record(model.cashflow).units);
-  const basis = `${caseName} · ${earningsBasis(model) ?? "earnings basis not recorded"} · ${unitLabel(units) || "units not recorded"}`;
-  const limits = leverageLimits(view);
-  const wall = maturityWall(view);
-  const limitTrace = tableTrace(run.folder, limits.source, "leverage limits");
-  const wallTrace = tableTrace(run.folder, wall.source, "the maturity schedule");
+  const cashflow = record(model.cashflow);
+  const leverage = forecastMeasure(model, NET_LEVERAGE, ON_ADJ_EBITDA);
+  const cover = forecastMeasure(model, COVER, COVER_ON_ADJ_EBITDA);
+  const schedule = maturitySchedule(view);
+  const scheduleTrace = tableTrace(run.folder, schedule.source, "the maturity schedule");
+  const scheduleGap =
+    schedule.reason && !schedule.years.length ? (
+      <ModuleGap entry={schedule.source.entry}>{schedule.reason}</ModuleGap>
+    ) : undefined;
   return (
     <>
       <ForecastStats
+        view={view}
+        folder={run.folder}
         leverage={leverage}
         cover={cover}
         group={group}
         caseName={caseName}
         source={source}
-        basis={basis}
+        basis={`${caseName} · ${earningsBasis(model) ?? "earnings basis not recorded"}`}
       />
       <LeveragePath
         measure={leverage}
+        rows={measureRows(model, NET_LEVERAGE)}
         group={group}
         caseName={caseName}
-        basis={basis}
-        limits={{ ...limits, trace: limitTrace }}
-        wall={{ ...wall, trace: wallTrace }}
+        schedule={{ ...schedule, gap: scheduleGap, trace: scheduleTrace }}
         trace={
           leverage ? source("Net leverage path", { row: leverage.label, case: "" }) : undefined
         }
@@ -372,13 +335,18 @@ function ModelTiles({
         view={view}
         folder={run.folder}
         model={model}
+        handoff={handoff}
         group={group}
         caseName={caseName}
-        wall={{ ...wall, trace: wallTrace }}
-        units={units}
+        schedule={{ ...schedule, entry: schedule.source.entry, trace: scheduleTrace }}
       />
-      <AssumptionsByCase document={input?.value ?? null} source={source} />
-      <UsesOfCash model={model} group={group} caseName={caseName} units={units} source={source} />
+      <AssumptionsByCase
+        document={input?.value ?? null}
+        source={source}
+        caseNames={forecastCaseNames(cashflow)}
+        downsideNote={stringsIn(cashflow.notes).find((note) => note.startsWith("Downside case is"))}
+      />
+      <UsesOfCash model={model} group={group} caseName={caseName} source={source} />
       <Tile
         span={8}
         label="Forecast grid"
@@ -396,13 +364,12 @@ function ModelTiles({
             selectedRawGroup={group}
             source={source}
           />
-          <ForecastTrendsSection
-            model={model}
-            selectedCase={selectedCase}
-            selectedRawGroup={group}
-            source={source}
-          />
-          <Button href="#evidence/record" color="link-gray" size="sm" className="w-fit">
+          <Button
+            href="#evidence/record"
+            color="link-gray"
+            size="sm"
+            className="w-fit min-h-8 max-[480px]:min-h-11"
+          >
             Model notes and limitations
           </Button>
         </div>
@@ -415,29 +382,6 @@ function ModelTiles({
         register={Boolean(model.register)}
         select={select}
       />
-      <Tile
-        span={12}
-        label="Cash proxy by case"
-        title="Cash proxy by case"
-        kicker="The model's cash proxy, not issuer free cash flow, for each case it publishes"
-      >
-        <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
-          <CaseFigures
-            options={caseOptions}
-            shownQualifications={baseQualifications(model)}
-            source={source}
-          />
-          <section aria-label="Scenario comparison" className="grid min-w-0 gap-3">
-            <CashProxy
-              model={model}
-              selectedCase={selectedCase}
-              selectedRawGroup={group}
-              sourceFor={source}
-              unified
-            />
-          </section>
-        </div>
-      </Tile>
     </>
   );
 }
@@ -445,7 +389,6 @@ function ModelTiles({
 export function Forecast({
   view,
   run,
-  section,
   preview = false,
 }: {
   view: View;
@@ -459,12 +402,11 @@ export function Forecast({
   const { models, entries } = view;
   const model = models[selected] ?? models[0];
   const caseOptions = model ? forecastCaseOptions(model) : [];
-  const leverage = model ? forecastMeasure(model, /^Net leverage\b/u) : null;
+  const leverage = model ? forecastMeasure(model, NET_LEVERAGE, ON_ADJ_EBITDA) : null;
   const cases = caseChoices(caseOptions, leverage);
   const current = cases.find(({ name }) => name === chosenCase) ?? cases[0];
-  const selectedCase = caseOptions.some(({ name }) => name === current?.name)
-    ? current?.name
-    : undefined;
+  const option = caseOptions.find(({ name }) => name === current?.name);
+  const selectedCase = option?.name;
   // The selected case's raw group, resolved once here: two raw groups can share one label.
   const group = current?.rawGroup;
   const handoff = model && forecastHandoff(model, entries, run.folder);
@@ -484,6 +426,16 @@ export function Forecast({
         onSelect={setChosenCase}
         basis={model ? basisItems(model, leverage, group) : []}
         hasModel={Boolean(model)}
+        caseFigure={
+          model && caseOptions.length > 1 ? (
+            <CaseFigure
+              option={option}
+              notice={caseOptions[0]?.comparisonNotice}
+              shownQualifications={baseQualifications(model)}
+              source={source}
+            />
+          ) : undefined
+        }
       >
         {!model && <GapNote>No forecast model was published for this run.</GapNote>}
         {model && !input && (
@@ -501,7 +453,6 @@ export function Forecast({
           group={group}
           caseName={current?.name ?? "the published model"}
           selectedCase={selectedCase}
-          caseOptions={caseOptions}
           input={input}
           handoff={handoff}
           href={href}
@@ -521,14 +472,7 @@ export function Forecast({
         tabIndex={-1}
         className="min-w-0 scroll-mt-4 rounded-ds-lg border border-border-subtle bg-surface-card p-5 focus:outline-2 focus:outline-offset-2 focus:outline-focus sm:p-6 lg:col-span-12"
       >
-        <details open={section === "run-charts"} className="group">
-          <summary className="cursor-pointer text-small font-medium text-text-primary">
-            Charts from the other modules of this run
-          </summary>
-          <div className="mt-4">
-            <RunCharts view={view} folder={run.folder} />
-          </div>
-        </details>
+        <RunCharts view={view} folder={run.folder} />
       </div>
     </Bento>
   );

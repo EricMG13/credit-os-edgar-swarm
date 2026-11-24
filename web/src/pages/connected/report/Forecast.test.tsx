@@ -50,6 +50,15 @@ function entry(
   };
 }
 
+/** A chart's list row in the run-chart tables, found by its title. */
+function chartRow(title: string) {
+  const row = screen
+    .getAllByRole("listitem")
+    .find((item) => item.querySelector(":scope > div > span")?.textContent === title);
+  if (!row) throw new Error(`No chart row for ${title}`);
+  return row;
+}
+
 it("draws the designated run figure with a same-output trace even when no model was published", () => {
   const alternative = entry("CP-1", "Retained maturity schedule", { selected: false, value: "75" });
   const selected = entry("CP-1", "Debt maturities");
@@ -71,21 +80,26 @@ it("draws the designated run figure with a same-output trace even when no model 
   };
   render(<Forecast view={view} run={run} />);
   expect(screen.getByText(/No forecast model was published/)).toBeInTheDocument();
-  const figure = within(screen.getByRole("figure", { name: "Debt maturities" }));
-  expect(figure.getByRole("link", { name: "Source table" })).toHaveAttribute(
+  const row = within(chartRow("Debt maturities"));
+  expect(row.getByRole("link", { name: "Source table" })).toHaveAttribute(
     "href",
     `/report/current#evidence/Debt%20maturities~${"d".repeat(64)}-21`,
   );
-  fireEvent.click(figure.getByRole("radio", { name: "Table" }));
-  expect(figure.getByRole("cell", { name: "0.00" })).toBeInTheDocument();
-  expect(figure.getByRole("cell", { name: "Not supplied: schedule ends" })).toBeInTheDocument();
+  fireEvent.click(row.getByText("Table for Debt maturities"));
+  const table = within(row.getByRole("region", { name: "Debt maturities table" }));
+  expect(table.getByRole("cell", { name: "0.00" })).toBeInTheDocument();
+  expect(table.getByRole("cell", { name: "Not supplied: schedule ends" })).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Financial foundation" })).toHaveAttribute(
     "href",
     "#modules/CP-1",
   );
   expect(screen.getAllByText("No dated proposal was evaluated").length).toBeGreaterThanOrEqual(2);
   expect(screen.getByText("Module not assessable.")).toBeInTheDocument();
-  expect(screen.queryByRole("figure", { name: "Liquidity bridge" })).toBeNull();
+  // The withheld module's chart is listed with its reason and offers no table.
+  expect(
+    within(chartRow("Liquidity bridge")).getByText("Module not assessable."),
+  ).toBeInTheDocument();
+  expect(screen.queryByText("Table for Liquidity bridge")).toBeNull();
   expect(screen.queryByText("237")).toBeNull();
   expect(screen.queryByText("Retained maturity schedule")).toBeNull();
   expect(screen.queryByText("Issuer dates")).toBeNull();
@@ -108,9 +122,7 @@ it("spells out a ratio chart caption while retaining its stored x unit", () => {
     modules: [{ id: "CP-2G", name: "Forward credit model", state: "Delivered", outputs: [ratio] }],
   };
   render(<Forecast view={view} run={run} />);
-  expect(
-    within(screen.getByRole("figure", { name: "Interest cover" })).getByText("x (times)"),
-  ).toBeInTheDocument();
+  expect(within(chartRow("Interest cover")).getByText("x (times)")).toBeInTheDocument();
   expect(descriptor.unit).toBe("x");
   expect(table.rows[0]?.cells[2]).toBe("x");
 });
@@ -129,7 +141,7 @@ it("shows the recorded build rejection and keeps its raw table in Evidence", () 
     modules: [{ id: "CP-4", name: "Legal terms", state: "Delivered", outputs: [returned] }],
   };
   render(<Forecast view={view} run={run} />);
-  expect(screen.getByRole("heading", { name: "Figures" })).toBeInTheDocument();
+  expect(within(chartRow("Figures")).getByText("Not established for this run")).toBeInTheDocument();
   expect(
     screen.getByText("The chart data did not fit the required table form, so no chart is drawn."),
   ).toBeInTheDocument();
@@ -137,7 +149,7 @@ it("shows the recorded build rejection and keeps its raw table in Evidence", () 
     "href",
     `/report/current#evidence/Covenants~${"d".repeat(64)}-21`,
   );
-  expect(screen.queryByRole("figure")).toBeNull();
+  expect(screen.queryByRole("table")).toBeNull();
   expect(screen.queryByText("725")).toBeNull();
 });
 

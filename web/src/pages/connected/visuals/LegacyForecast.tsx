@@ -529,6 +529,22 @@ function basePassages(cashflow: Record<string, unknown>) {
   return scopePassages(stringsIn(cashflow.notes).filter((note) => note.startsWith("Base case is")));
 }
 
+function limitPassages(cashflow: Record<string, unknown>) {
+  return scopePassages(
+    stringsIn(cashflow.limits).filter((limit) =>
+      /unreviewed|not analytical review|base period|base interest|not comparable|not modelled|standalone|perimeter|machine input.*zero/i.test(
+        limit,
+      ),
+    ),
+  );
+}
+
+/** The qualifications `ForecastScope` draws, each with the recorded passage it comes from. */
+export function scopeQualifications(model: unknown) {
+  const cashflow = record(record(model).cashflow);
+  return { base: basePassages(cashflow), limits: limitPassages(cashflow) };
+}
+
 /** The base-case qualifications `ForecastScope` promotes, as the reader sees them. */
 export function baseQualifications(model: unknown) {
   return basePassages(record(record(model).cashflow)).map(({ text }) => text);
@@ -545,13 +561,7 @@ export function ForecastScope({
 }) {
   const cashflow = record(record(model).cashflow);
   const base = basePassages(cashflow);
-  const limits = scopePassages(
-    stringsIn(cashflow.limits).filter((limit) =>
-      /unreviewed|not analytical review|base period|base interest|not comparable|not modelled|standalone|perimeter|machine input.*zero/i.test(
-        limit,
-      ),
-    ),
-  );
+  const limits = limitPassages(cashflow);
   function qualification({ text, recorded }: ReturnType<typeof scopePassages>[number]) {
     return (
       <div

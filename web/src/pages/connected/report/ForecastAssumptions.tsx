@@ -1,16 +1,48 @@
-import { driverTable } from "./forecastData";
+import { driverTable } from "./forecastDrivers";
 import { RecordedForecastAssumptions, type ForecastSource } from "./ForecastRecord";
 import { GapNote, Tile } from "./overview/Tile";
 
 const SPAN = "Assumptions by case";
+const SHOCKED_CASE = "Downside case";
 
-/** The forward model's drivers by case: one row per driver, one column per case, read-only. */
+/** "Not stated": the gap chip. */
+function NotStated() {
+  return (
+    <span className="gap-hatch inline-flex items-center rounded-ds-xs border border-dashed border-border-gap px-2 py-0.5 text-caption text-gap-text">
+      Not stated
+    </span>
+  );
+}
+
+/** The small accent mark that, with the words, says a recorded value differs from base. */
+function Mark() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 12 12" className="size-3 shrink-0" fill="none">
+      <path
+        d="M6 1.8 10.6 10.2H1.4Z"
+        className="stroke-action"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+/**
+ * The forward model's drivers by case: one row per driver, one column per case, read-only. Values
+ * are the module's recorded fractions or amounts. `caseNames` is the model's one case naming and
+ * `downsideNote` its note saying which drivers the downside shock is applied to.
+ */
 export function AssumptionsByCase({
   document,
   source,
+  caseNames = new Map<string, string>(),
+  downsideNote,
 }: {
   document: Record<string, unknown> | null;
   source?: ForecastSource;
+  caseNames?: ReadonlyMap<string, string>;
+  downsideNote?: string | undefined;
 }) {
   const tile = {
     span: 7,
@@ -24,8 +56,8 @@ export function AssumptionsByCase({
         <GapNote>No recorded inputs to tabulate: the inputs record is not matched.</GapNote>
       </Tile>
     );
-  const { years, cases, rows } = driverTable(document);
-  const caseNames = cases.map(({ name }) => name).join(" · ");
+  const { years, cases, rows } = driverTable(document, caseNames.get(SHOCKED_CASE) ?? SHOCKED_CASE);
+  const joined = cases.map(({ name }) => name).join(" · ");
   if (!rows.length)
     return (
       <Tile {...tile}>
@@ -39,14 +71,19 @@ export function AssumptionsByCase({
           <span className="flex items-center gap-2">
             <span
               aria-hidden="true"
-              className="inline-block size-3 rounded-ds-xs bg-warning-fill"
-            />
+              className="grid size-4 place-items-center rounded-ds-xs border border-action-subtle-hover bg-surface-selected"
+            >
+              <Mark />
+            </span>
             Differs from base
           </span>
-          <span>
-            Not stated: the inputs do not give this driver for the case; nothing is assumed
+          <span>Only this case states it: base does not give the driver</span>
+          <span className="flex items-center gap-2">
+            <NotStated />
+            the inputs do not give this driver for the case; nothing is assumed
           </span>
         </p>
+        <p>Values are the module&apos;s recorded fractions (0.05 is 5%) or amounts, as recorded.</p>
         {years.length > 0 && <p>Planning years: {years.join(" · ")}</p>}
       </div>
       <div
@@ -85,31 +122,37 @@ export function AssumptionsByCase({
                 <tr key={row.id} className="border-t border-border-hairline align-top">
                   <th scope="row" className="py-2 pr-3 text-left font-medium text-text-primary">
                     {row.name}
+                    <span className="block text-caption font-normal text-text-tertiary">
+                      {row.unit}
+                    </span>
                   </th>
                   {row.cells.map((cell, at) => (
                     <td
                       key={cases[at]?.key}
                       className={`px-3 py-2 font-mono tabular-nums ${
-                        cell.differs
-                          ? "bg-warning-fill text-warning-text"
-                          : cell.stated
-                            ? "text-text-primary"
-                            : "text-gap-text"
+                        cell.differs ? "bg-surface-selected text-text-primary" : "text-text-primary"
                       }`}
                     >
-                      {cell.text}
-                      {cell.differs && (
+                      {cell.stated ? (
                         <>
-                          <span aria-hidden="true" className="ml-1">
-                            ≠
+                          <span className="inline-flex items-center gap-1.5">
+                            {cell.differs && <Mark />}
+                            {cell.text}
                           </span>
-                          <span className="sr-only">, differs from base</span>
+                          {cell.differs && <span className="sr-only">, differs from base</span>}
+                          {cell.only && (
+                            <span className="block font-sans text-caption text-text-secondary">
+                              only this case states it
+                            </span>
+                          )}
                         </>
+                      ) : (
+                        <NotStated />
                       )}
                     </td>
                   ))}
                   <td className="py-2 pl-3">
-                    {source?.(`${row.name} assumptions`, { case: caseNames, inputPath: path })}
+                    {source?.(`${row.name} assumptions`, { case: joined, inputPath: path })}
                   </td>
                 </tr>
               );
@@ -117,8 +160,11 @@ export function AssumptionsByCase({
           </tbody>
         </table>
       </div>
-      <details>
-        <summary className="cursor-pointer text-small font-medium text-text-link">
+      {downsideNote !== undefined && cases.some(({ shock }) => shock) && (
+        <p className="text-small text-text-secondary">{downsideNote}</p>
+      )}
+      <details open>
+        <summary className="flex min-h-8 cursor-pointer items-center rounded-ds-sm text-small font-medium text-text-link outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2 max-[480px]:min-h-11">
           Recorded drivers, rationale and limitations
         </summary>
         <div className="mt-3">

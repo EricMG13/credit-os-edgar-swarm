@@ -3,50 +3,92 @@ import { expect, it } from "vitest";
 import { AssumptionsByCase } from "./ForecastAssumptions";
 
 const document = {
+  currency: "USD",
+  scale: 1,
   years: [{ year: 2025 }, { year: 2026 }, { year: 2027 }],
   base_drivers: {
     revenue_growth: { values: [0.05, 0.05, 0.05] },
-    ebitda_margin: { values: [0.4, 0.41, 0.42] },
+    ebitda_margin: { values: ["0.40", "0.41", "0.42"] },
+    interest_rate: { values: ["0.04125", "0.04125", "0.04125"] },
+    dividends: { values: ["4348", "2038", "2038"] },
   },
   upside_drivers: {
     revenue_growth: { values: [0.08, 0.08, 0.08] },
     ebitda_margin: { values: [0.4, 0.41, 0.42] },
+    interest_rate: { values: ["0.04125", "0.04125", "0.04125"] },
+    debt_repayment: { values: ["10", "10", "10"] },
   },
   downside_shock: { ebitda_decline: 0.15 },
 };
+const names = new Map([["Downside case", "Downside (EBITDA -15%)"]]);
+const note = "Downside case is the base case with an EBITDA decline applied to EBITDA and margin.";
 
 const region = () => screen.getByRole("region", { name: "Assumptions by case table" });
 const rowOf = (name: string) =>
   within(region()).getByRole("row", { name: new RegExp(`^${name}`, "u") });
+const texts = (row: HTMLElement) =>
+  within(row)
+    .getAllByRole("cell")
+    .map((cell) => cell.textContent.replace(/\s+/gu, " ").trim());
 
-it("marks a differing cell with a visible glyph and screen-reader text, and not a base cell", () => {
+it("shows recorded values as recorded and marks only a real difference, with words and not colour", () => {
   render(<AssumptionsByCase document={document} />);
-  const growth = rowOf("Revenue growth");
-  const cells = within(growth).getAllByRole("cell");
-  expect(cells[0]?.textContent).toContain("5.00% each year");
-  expect(cells[0]?.textContent).not.toContain("differs from base");
-  expect(cells[1]?.textContent).toContain("8.00% each year");
-  expect(cells[1]?.textContent).toContain("differs from base");
-  expect(cells[1]?.textContent).toContain("≠");
-  const margin = within(rowOf("EBITDA margin")).getAllByRole("cell");
-  expect(margin[1]?.textContent).not.toContain("differs from base");
+  const growth = within(rowOf("Revenue growth")).getAllByRole("cell");
+  expect(growth[0]?.textContent).toContain("0.05 each year");
+  expect(growth[0]?.textContent).not.toContain("differs from base");
+  expect(growth[1]?.textContent).toContain("0.08 each year");
+  expect(growth[1]?.textContent).toContain("differs from base");
+  expect(growth[1]).toHaveClass("bg-surface-selected");
+  expect(growth[1]?.className).not.toContain("warning");
+  expect(growth[1]?.querySelector('[aria-hidden="true"]')).not.toBeNull();
+  // 0.40 and 0.4 are the same recorded number; 0.04125 is not rounded to 4.13%.
+  expect(texts(rowOf("EBITDA margin"))[1]).not.toContain("differs");
+  expect(texts(rowOf("Interest rate"))[0]).toBe("0.04125 each year");
+  expect(region().textContent).not.toContain("%");
 });
 
-it("says Not stated for a driver a case does not give, and puts shock rows only in downside", () => {
+it("says only this case states it for a driver base does not give, never differs", () => {
   render(<AssumptionsByCase document={document} />);
+  const repayment = texts(rowOf("Debt repayment"));
+  expect(repayment[0]).toBe("Not stated");
+  expect(repayment[1]).toContain("only this case states it");
+  expect(repayment[1]).not.toContain("differs");
+});
+
+it("gives the shock its own column named by the model's case name, with the downside note", () => {
+  render(<AssumptionsByCase document={document} caseNames={names} downsideNote={note} />);
   expect(
     within(region())
       .getAllByRole("columnheader")
       .map((head) => head.textContent),
-  ).toEqual(["Driver", "Base case", "Upside case", "Downside drivers", "Trace"]);
-  const decline = within(rowOf("Downside EBITDA decline")).getAllByRole("cell");
-  expect(decline.map((cell) => cell.textContent.replace(/\s+/gu, " ").trim())).toEqual([
-    "Not stated",
-    "Not stated",
-    expect.stringContaining("15.00%"),
-    "",
-  ]);
-  expect(screen.getByText("Planning years: 2025 · 2026 · 2027")).toBeTruthy();
+  ).toEqual(["Driver", "Base case", "Upside case", "Downside (EBITDA -15%)", "Trace"]);
+  expect(texts(rowOf("Downside EBITDA decline"))).toEqual(["Not stated", "Not stated", "0.15", ""]);
+  expect(texts(rowOf("Revenue growth"))[2]).toBe("Not stated");
+  expect(screen.getByText(note)).toBeInTheDocument();
+  expect(screen.getByText("Planning years: 2025 · 2026 · 2027")).toBeInTheDocument();
+});
+
+it("falls back to the raw case name and adds a downside drivers column only when it states something", () => {
+  render(
+    <AssumptionsByCase
+      document={{ ...document, downside_drivers: { revenue_growth: { values: ["0", "0", "0"] } } }}
+    />,
+  );
+  expect(
+    within(region())
+      .getAllByRole("columnheader")
+      .map((head) => head.textContent),
+  ).toEqual(["Driver", "Base case", "Upside case", "Downside drivers", "Downside case", "Trace"]);
+  expect(screen.queryByText(note)).toBeNull();
+});
+
+it("states the unit of monetary drivers and draws Not stated as a gap chip in the legend and table", () => {
+  render(<AssumptionsByCase document={document} />);
+  expect(rowOf("Dividends").textContent).toContain("USD millions");
+  expect(rowOf("Revenue growth").textContent).toContain("Fraction");
+  const chips = screen.getAllByText("Not stated");
+  expect(chips.length).toBeGreaterThan(1);
+  for (const chip of chips) expect(chip).toHaveClass("gap-hatch", "border-border-gap");
 });
 
 it("renders the trace control once per row", () => {
@@ -64,9 +106,11 @@ it("renders the trace control once per row", () => {
   expect(seen).toContain("Downside EBITDA decline assumptions|downside_shock.ebitda_decline");
 });
 
-it("keeps the recorded drivers behind a disclosure", () => {
+it("opens the recorded drivers disclosure by default, with a focus-ringed 32px summary", () => {
   render(<AssumptionsByCase document={document} />);
-  expect(screen.getByText("Recorded drivers, rationale and limitations")).toBeTruthy();
+  const summary = screen.getByText("Recorded drivers, rationale and limitations");
+  expect(summary.closest("details")).toHaveAttribute("open");
+  expect(summary).toHaveClass("min-h-8", "max-[480px]:min-h-11", "focus-visible:outline-2");
   expect(screen.getAllByText("Recorded forecast drivers").length).toBeGreaterThan(0);
 });
 

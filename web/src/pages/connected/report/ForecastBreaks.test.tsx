@@ -91,90 +91,216 @@ function downside(bottomLine = "The issuer withstands the cost shock."): OutputE
 const view = (entries: OutputEntry[]) =>
   ({ catalogue: undefined, lead: undefined, entries, modules: [], models: [] }) as ReportView;
 
-const wall = {
-  years: [{ year: 2028, label: "FY2028", cell: { text: "1,250", value: 1250, reason: null } }],
-  wall: { year: 2028, label: "FY2028", cell: { text: "1,250", value: 1250, reason: null } },
-  unit: "USD millions",
+function entryOf(module: string, sections: unknown[], established = true): OutputEntry {
+  return {
+    selected: true,
+    output: {
+      id: module,
+      sha256: "e".repeat(64),
+      module,
+      label: "",
+      href: "",
+      state: { established, declared: null },
+      charts:
+        module === "CP-4"
+          ? [
+              {
+                title: "Covenant headroom",
+                table: 43,
+                kind: "bullet",
+                direction: 4,
+                label: [0],
+                threshold: 1,
+                current: 2,
+                headroom: 3,
+                unit: "",
+                columns: [1, 2],
+              },
+            ]
+          : [],
+    },
+    sections,
+  } as unknown as OutputEntry;
+}
+const bottom = (text: string) => ({
+  heading: "Bottom line",
+  level: 3,
+  line: 18,
+  blocks: [{ type: "text", line: 20, end: 20, text }],
+});
+const findings = { heading: "Findings", level: 2, line: 16, blocks: [] };
+
+const liquidity = entryOf("CP-2D", [
+  findings,
+  bottom("Liquidity lasts to the horizon."),
+  {
+    heading: "T2E.5 Funding gap",
+    level: 3,
+    line: 40,
+    blocks: [
+      table(
+        42,
+        ["Line", "Value (USD millions)"],
+        [
+          ["Horizon", "2026-03-31"],
+          ["Funding gap", "120.5"],
+        ],
+      ),
+    ],
+  },
+]);
+const legal = entryOf("CP-4", [
+  findings,
+  bottom("The covenants hold."),
+  {
+    heading: "Chart data: covenant headroom",
+    level: 3,
+    line: 41,
+    blocks: [
+      table(
+        43,
+        [
+          "Test",
+          "Threshold",
+          "Current",
+          "Headroom",
+          "Direction",
+          "Reporting unit",
+          "Basis and limitation",
+        ],
+        [["Net leverage", "5.0", "4.2", "0.8x", "Passes at or below", "x", "Synthetic."]],
+      ),
+    ],
+  },
+]);
+const forward = entryOf("CP-2G", [
+  findings,
+  bottom("The view."),
+  {
+    heading: "Limitations",
+    level: 3,
+    line: 30,
+    blocks: [
+      {
+        type: "text",
+        line: 32,
+        end: 33,
+        text: "- The break tests reuse watch levels, not covenant tests; covenant compliance belongs to the legal module.\n- Debt maturities and refinancing feasibility are not modelled; the maturity wall and funding gap belong to the liquidity and refinancing modules.",
+      },
+    ],
+  },
+]);
+
+const schedule = {
+  years: [
+    { year: 2026, label: "FY2026", cell: { text: "500", value: 500, reason: null } },
+    { year: 2028, label: "FY2028", cell: { text: "1,250", value: 1250, reason: null } },
+  ],
   offAxis: [],
+  unit: "US$m",
   reason: null,
 };
 
-it("sets liquidity before the wall beside the wall, both as published, and draws no shortfall", () => {
-  render(
+function breaks(entries: OutputEntry[], cells = [value("212"), value("295"), value("397")]) {
+  return render(
     <WhatBreaks
-      view={view([])}
+      view={view(entries)}
       folder="current"
-      model={model([value("212"), value("295"), value("397")])}
+      model={model(cells)}
+      handoff={entries.find(({ output }) => output.module === "CP-2G")}
       group="Base case"
       caseName="Base case"
-      wall={wall}
-      units="USD millions"
+      schedule={schedule}
     />,
   );
-  const tile = within(screen.getByRole("region", { name: "What breaks, and when" }));
-  expect(tile.getByText("397")).toBeInTheDocument();
-  expect(tile.getByText(/Accessible liquidity, FY2027E/)).toBeInTheDocument();
-  expect(tile.getByText("1,250")).toBeInTheDocument();
-  expect(tile.getByText(/Debt maturing, FY2028/)).toBeInTheDocument();
-  expect(tile.getByText("No module states a shortfall figure at the wall.")).toBeInTheDocument();
-  // Delivery computes no difference of the two figures.
-  expect(tile.queryByText(/853/)).toBeNull();
+}
+
+it("states the liquidity module's funding gap as that module's figure, with horizon, unit and trace", () => {
+  breaks([liquidity]);
+  const part = within(screen.getByRole("region", { name: "Funding gap" }));
+  expect(part.getByText("120.5")).toBeInTheDocument();
+  expect(
+    part.getByText("Liquidity's figure · at its horizon end, 2026-03-31 · USD millions"),
+  ).toBeInTheDocument();
+  expect(part.getByRole("link", { name: "Source for the funding gap" })).toHaveAttribute(
+    "href",
+    expect.stringContaining("-45") as string,
+  );
+  expect(screen.queryByText(/No module states a shortfall/)).toBeNull();
 });
 
-it("draws stress scenarios as small multiples with each cell as published and gaps in words", () => {
-  render(
-    <WhatBreaks
-      view={view([downside()])}
-      folder="current"
-      model={model([value("212"), value("295"), value("397")])}
-      group="Base case"
-      caseName="Base case"
-      wall={wall}
-      units="USD millions"
-    />,
-  );
+it("names the modules it looked at when neither states a funding gap", () => {
+  breaks([]);
+  expect(
+    within(screen.getByRole("region", { name: "Funding gap" })).getByText(
+      "Neither Liquidity nor Refinancing & LME states a funding gap figure. Looked at: Liquidity did not run in this run. Refinancing & LME did not run in this run.",
+    ),
+  ).toBeInTheDocument();
+});
+
+it("shows the liquidity path and the maturity schedule apart, with the model's own limit between", () => {
+  breaks([forward]);
+  const path = within(screen.getByRole("region", { name: "Accessible liquidity, Base case" }));
+  for (const [year, figure] of [
+    ["FY2025E", "212"],
+    ["FY2026E", "295"],
+    ["FY2027E", "397"],
+  ] as const) {
+    expect(path.getByText(year)).toBeInTheDocument();
+    expect(path.getByText(figure)).toBeInTheDocument();
+  }
+  const debt = within(screen.getByRole("region", { name: "Debt maturing" }));
+  expect(debt.getByText("FY2028")).toBeInTheDocument();
+  expect(debt.getByText("1,250")).toBeInTheDocument();
+  expect(path.queryByText("1,250")).toBeNull();
+  expect(
+    screen.getByText(
+      "Debt maturities and refinancing feasibility are not modelled; the maturity wall and funding gap belong to the liquidity and refinancing modules.",
+    ),
+  ).toBeInTheDocument();
+});
+
+it("shows each covenant test as the legal module writes it, with the model's caveat in words", () => {
+  breaks([legal, forward]);
+  const part = within(screen.getByRole("region", { name: "Covenant tests" }));
+  expect(part.getByText("Net leverage")).toBeInTheDocument();
+  expect(part.getByText("5.0 x")).toBeInTheDocument();
+  expect(part.getByText("4.2 x")).toBeInTheDocument();
+  expect(part.getByText("0.8x")).toBeInTheDocument();
+  expect(part.getByText("Passes at or below")).toBeInTheDocument();
+  expect(
+    part.getByText(
+      "The break tests reuse watch levels, not covenant tests; covenant compliance belongs to the legal module.",
+    ),
+  ).toBeInTheDocument();
+});
+
+it("draws the legal module blocked in the designed blocked state with its reason", () => {
+  const blockedLegal = entryOf("CP-4", [
+    findings,
+    bottom("Not assessable: no executed governing document available."),
+  ]);
+  breaks([blockedLegal]);
+  const part = within(screen.getByRole("region", { name: "Covenant tests" }));
+  expect(part.getByText("Not assessable")).toBeInTheDocument();
+  expect(part.getByText(/no executed governing document available/)).toBeInTheDocument();
+});
+
+it("draws the stress scenarios as one small multiple with each cell's figure and gaps in words", () => {
+  breaks([downside()]);
   const stress = within(screen.getByRole("group", { name: "Point-in-time stress" }));
-  expect(stress.getByText("All-in cover (x)")).toBeInTheDocument();
-  expect(stress.getByText("3.10")).toBeInTheDocument();
-  expect(stress.getByText("2.00")).toBeInTheDocument();
-  expect(stress.getAllByText("Cost shock").length).toBeGreaterThan(0);
+  const reading = stress.getByRole("img").getAttribute("aria-label") ?? "";
+  expect(reading).toContain("Control (unstressed): All-in cover (x) 3.10");
+  expect(reading).toContain("Cost shock: All-in cover (x) 2.00, Net leverage (x) not calculated");
   expect(
     stress.getByText(/Cost shock, Net leverage \(x\): net debt is missing/),
   ).toBeInTheDocument();
 });
 
-it("names why a part cannot be drawn: no wall, no downside module", () => {
-  render(
-    <WhatBreaks
-      view={view([])}
-      folder="current"
-      model={model([value("212")], ["FY2025E"])}
-      group="Base case"
-      caseName="Base case"
-      wall={{ years: [], reason: "Financial foundation did not run in this run." }}
-      units="USD millions"
-    />,
-  );
-  expect(screen.getByText("Financial foundation did not run in this run.")).toBeInTheDocument();
+it("names why a part cannot be drawn: no downside module, no liquidity for the case", () => {
+  breaks([], []);
   expect(screen.getByText("Downside did not run in this run.")).toBeInTheDocument();
-});
-
-it("puts liquidity and a far wall on no shared scale, and says why", () => {
-  const far = { year: 2031, label: "FY2031", cell: { text: "1,250", value: 1250, reason: null } };
-  render(
-    <WhatBreaks
-      view={view([])}
-      folder="current"
-      model={model([value("212"), value("295"), value("397")])}
-      group="Base case"
-      caseName="Base case"
-      wall={{ years: [far], wall: far, unit: "USD millions", offAxis: [], reason: null }}
-      units="USD millions"
-    />,
-  );
   expect(
-    screen.getByText(
-      "The two figures are not drawn on one scale: the last forecast year is not the year before the wall.",
-    ),
+    screen.getByText("The model publishes no accessible liquidity figure."),
   ).toBeInTheDocument();
 });

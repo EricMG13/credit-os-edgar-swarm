@@ -5,10 +5,12 @@ import {
   isDatedForecastPeriod,
   scenarioComparisonNotice,
 } from "../visuals/scenarioPeriods";
-import { amount, items, record, word } from "../visuals/visualData";
+import { amount, record, word } from "../visuals/visualData";
+import { containsReference, readerText, type OutputEntry } from "../publishedReport";
 import type { ReportView } from "../reportView";
-import { figureSource, unitOf, type Cell } from "./overview/figureData";
-import { headroomTests } from "./overview/stressData";
+import { figureSource, moduleSource, unitOf, type Cell } from "./overview/figureData";
+import { passageParagraphs } from "./overview/read";
+import { headroomTests, type HeadroomTest } from "./overview/stressData";
 import { wallSlots } from "./overview/structureData";
 
 /** One published cell of a forecast measure, as the model wrote it. */
@@ -23,7 +25,17 @@ export type MeasureCell = {
   reason: string;
 };
 
-export type MeasureCase = { group: string; name: string; cells: Map<string, MeasureCell> };
+/**
+ * One case of a measure. `cells` are the periods the case keeps in the comparison of cases (what
+ * the lead chart draws); `own` are every period the case itself publishes once, compared or not
+ * (what the page states about the selected case).
+ */
+export type MeasureCase = {
+  group: string;
+  name: string;
+  cells: Map<string, MeasureCell>;
+  own: Map<string, MeasureCell>;
+};
 
 const FISCAL = /^FY(\d{4})E?$/u;
 
@@ -48,26 +60,46 @@ function measureCell(
   };
 }
 
-function singleRow(grid: Grid, pattern: RegExp) {
+function grids(model: unknown) {
+  const cashflow = record(record(model).cashflow);
+  return [gridOf(cashflow), gridOf(cashflow.other)].flatMap((grid) => (grid ? [grid] : []));
+}
+
+/** Every row label of the model matching `pattern`, once each. */
+export function measureRows(model: unknown, pattern: RegExp) {
+  return [
+    ...new Set(
+      grids(model).flatMap((grid) =>
+        grid.rows.filter((row) => pattern.test(row.label)).map(({ label }) => label),
+      ),
+    ),
+  ];
+}
+
+/** The grid's one row for the measure: the only match, or the only match of `prefer`. */
+function measureRow(grid: Grid, pattern: RegExp, prefer?: RegExp) {
   const rows = grid.rows.filter((row) => pattern.test(row.label));
-  return rows.length === 1 ? rows[0] : undefined;
+  if (rows.length === 1) return rows[0];
+  const preferred = prefer ? rows.filter((row) => prefer.test(row.label)) : [];
+  return preferred.length === 1 ? preferred[0] : undefined;
 }
 
 const BASE = "Base case";
 const byBaseFirst = (a: string, b: string) => Number(b === BASE) - Number(a === BASE);
+const toEntry = ({ period, start, end, display, value, reason }: MeasureCell) =>
+  [period, { period, start, end, display, value, reason }] as const;
 
 /**
- * One measure of the published model, by case: the cells of the one row whose label matches
- * `pattern` in each forecast column of the main grid and the `other` grid. Periods go through the
- * same eligibility as the cash proxy comparison (`analyzeScenarioPeriods`): a period a case does
- * not publish is absent from that case, never filled. Null when no grid has exactly one such row.
+ * One measure of the published model, by case: the cells of the grid's row for it in each
+ * forecast column of the main grid and the `other` grid. Where a grid has several matching rows,
+ * the one `prefer` names is read; none is chosen otherwise. Periods go through the same
+ * eligibility as the cash proxy comparison (`analyzeScenarioPeriods`): a period a case does not
+ * publish is absent from that case, never filled. Null when no grid has one such row.
  */
-export function forecastMeasure(model: unknown, pattern: RegExp) {
-  const cashflow = record(record(model).cashflow);
-  const grids = [gridOf(cashflow), gridOf(cashflow.other)].flatMap((grid) => (grid ? [grid] : []));
-  const names = forecastCaseNames(cashflow);
-  const read = grids.flatMap((grid) => {
-    const row = singleRow(grid, pattern);
+export function forecastMeasure(model: unknown, pattern: RegExp, prefer?: RegExp) {
+  const names = forecastCaseNames(record(record(model).cashflow));
+  const read = grids(model).flatMap((grid) => {
+    const row = measureRow(grid, pattern, prefer);
     return row ? [{ grid, row }] : [];
   });
   const [first] = read;
@@ -81,35 +113,30 @@ export function forecastMeasure(model: unknown, pattern: RegExp) {
   );
   const analysis = analyzeScenarioPeriods(observations);
   const groups = [...new Set(observations.map(({ group }) => group))].sort(byBaseFirst);
-  // With several cases, only a period kept for the comparison is drawn for the cases that keep
-  // it: a period left out (dates that do not match, a duplicate) is in no case's cells.
+  // With several cases, only a period kept for the comparison is compared, for the cases that
+  // keep it: a period left out (dates that do not match, a duplicate) is in no case's `cells`.
   const kept = new Set(
     analysis.periods.flatMap(({ period, groups: keeping }) =>
       keeping.map((group) => `${period}\0${group}`),
     ),
   );
-  const several = new Set(observations.map(({ group }) => group)).size > 1;
-  const cases: MeasureCase[] = groups.map((group) => ({
-    group,
-    name: names.get(group) ?? group,
-    cells: new Map(
-      analysis.uniqueObservations
-        .filter(
-          (observation) =>
-            observation.group === group &&
-            (!several || kept.has(`${observation.period}\0${group}`)),
-        )
-        .map(({ period, start, end, display, value, reason }) => [
-          period,
-          { period, start, end, display, value, reason },
-        ]),
-    ),
-  }));
+  const several = groups.length > 1;
+  const cases: MeasureCase[] = groups.map((group) => {
+    const own = analysis.uniqueObservations.filter((item) => item.group === group);
+    return {
+      group,
+      name: names.get(group) ?? group,
+      own: new Map(own.map(toEntry)),
+      cells: new Map(
+        own.filter((item) => !several || kept.has(`${item.period}\0${group}`)).map(toEntry),
+      ),
+    };
+  });
   const single = cases.length === 1 ? cases[0] : undefined;
   const periods = single
     ? [...single.cells.keys()].sort()
     : analysis.periods.map(({ period }) => period);
-  // The latest actual fiscal year with a value, drawn as the start every case shares.
+  // The latest actual fiscal year with a value: an actual, never mixed into a forecast selection.
   const actual =
     first.grid.columns
       .flatMap((column, at) =>
@@ -120,6 +147,8 @@ export function forecastMeasure(model: unknown, pattern: RegExp) {
       .at(-1) ?? null;
   return {
     label: first.row.label,
+    /** Other rows the model publishes for this measure, not read here. */
+    others: measureRows(model, pattern).filter((label) => label !== first.row.label),
     cases,
     periods,
     actual,
@@ -130,198 +159,183 @@ export function forecastMeasure(model: unknown, pattern: RegExp) {
 
 export type Measure = NonNullable<ReturnType<typeof forecastMeasure>>;
 
-/** The case's cells in period order; none for a case the measure has no row for. Without a
- * selected case, the measure's first case. */
+/**
+ * The case's own published cells in period order, compared or not; none for a case the measure
+ * has no row for. Without a selected case, the measure's first case.
+ */
 export function cellsOf(measure: Measure, group: string | undefined) {
   const found =
     group === undefined ? measure.cases[0] : measure.cases.find((item) => item.group === group);
-  return found ? [...found.cells.values()].sort((a, b) => a.period.localeCompare(b.period)) : [];
+  return found ? [...found.own.values()].sort((a, b) => a.period.localeCompare(b.period)) : [];
 }
 
-function pick(cells: MeasureCell[], better: (a: number, b: number) => boolean) {
-  let chosen: MeasureCell | null = null;
-  for (const cell of cells)
-    if (cell.value !== null && (chosen?.value == null || better(cell.value, chosen.value)))
-      chosen = cell;
-  return chosen;
+/** Forecast years inside a case's span that it publishes no column for. */
+function unpublishedYears(cells: MeasureCell[]) {
+  const years = cells.flatMap((cell) => fiscalYear(cell.period) ?? []);
+  if (!years.length) return [];
+  const first = Math.min(...years);
+  const last = Math.max(...years);
+  return Array.from({ length: last - first + 1 }, (_, at) => first + at)
+    .filter((year) => !years.includes(year))
+    .map((year) => `FY${String(year)}E`);
 }
 
-/** The largest published value, the earliest period on a tie; null when none is a value. */
-export const peakOf = (cells: MeasureCell[]) => pick(cells, (a, b) => a > b);
-/** The smallest published value, the earliest period on a tie. */
-export const troughOf = (cells: MeasureCell[]) => pick(cells, (a, b) => a < b);
+/**
+ * The highest or lowest value among a case's published forecast years, as a selection the page
+ * makes and says it makes: every year tied at that value, and every year of the case with no
+ * figure. Null for fewer than two published values: one figure is not a highest year.
+ */
+export function extremeOf(cells: MeasureCell[], kind: "highest" | "lowest") {
+  const values = cells.filter((cell) => cell.value !== null);
+  if (values.length < 2) return null;
+  const pick = kind === "highest" ? Math.max : Math.min;
+  const extreme = pick(...values.map((cell) => cell.value ?? 0));
+  return {
+    kind,
+    cells: values.filter((cell) => cell.value === extreme),
+    notCalculated: cells.filter((cell) => cell.value === null).map((cell) => cell.period),
+    notPublished: unpublishedYears(cells),
+  };
+}
+
 /** The last period's cell, whatever its state. */
 export const endOf = (cells: MeasureCell[]) =>
   [...cells].sort((a, b) => a.period.localeCompare(b.period)).at(-1) ?? null;
 
-/** The model's earnings basis as its grid names it: the Adj EBITDA row label. */
-export function earningsBasis(model: unknown) {
-  const grid = gridOf(record(record(model).cashflow));
-  return grid?.rows.find((row) => /^Adj EBITDA\b/u.test(row.label))?.label ?? null;
+/** Periods joined in reader words: "FY2025E", "FY2025E and FY2027E", "A, B and C". */
+export function periodList(periods: readonly string[]) {
+  if (periods.length < 2) return periods.join("");
+  return `${periods.slice(0, -1).join(", ")} and ${periods.at(-1) ?? ""}`;
 }
 
-export type Limit = { label: string; value: number; text: string; direction: string };
+/** The model's earnings basis as its grid names it: the Adj EBITDA row label. */
+export function earningsBasis(model: unknown) {
+  return grids(model)[0]?.rows.find((row) => /^Adj EBITDA\b/u.test(row.label))?.label ?? null;
+}
 
-/** Leverage limits as Legal & covenants publishes them: tests in x whose label names leverage. */
-export function leverageLimits(view: ReportView) {
+/** The forward model's own limitation that matches `pattern`, in its words. */
+export function modelLimitation(entry: OutputEntry | undefined, pattern: RegExp) {
+  if (!entry) return null;
+  const lines = passageParagraphs(entry, "Limitations").flatMap(({ text }) =>
+    (text ?? "").split(/\n|(?<=\.)\s+-\s+/u),
+  );
+  const found = lines
+    .map((line) => line.replace(/^\s*-\s*/u, "").trim())
+    .find((line) => pattern.test(line));
+  return found && !containsReference(found) ? readerText(found) : null;
+}
+
+/** The covenant tests as Legal & covenants writes them: level, current figure, direction. */
+export function covenantTests(view: ReportView) {
   const name = moduleName("CP-4");
   const source = figureSource(view, "CP-4", "Covenant headroom", name);
-  if (source.state === "gap") return { limits: [] as Limit[], reason: source.reason, source };
+  if (source.state === "gap") return { tests: [] as HeadroomTest[], reason: source.reason, source };
   const tests = headroomTests(source.table, source.descriptor) ?? [];
-  const limits = tests.flatMap((test): Limit[] =>
-    /leverage/iu.test(test.label) && test.unit.trim() === "x" && test.threshold.value !== null
-      ? [
-          {
-            label: test.label,
-            value: test.threshold.value,
-            text: test.threshold.text,
-            direction: test.direction,
-          },
-        ]
-      : [],
-  );
   return {
-    limits,
-    reason: limits.length ? null : `${name} states no leverage limit.`,
+    tests,
+    reason: tests.length ? null : `${name} states no covenant test.`,
     source,
   };
 }
 
-export type WallYear = { year: number; label: string; cell: Cell | null };
+export type ScheduleYear = { year: number; label: string; cell: Cell | null };
 
-/** The maturity schedule by fiscal year, and the largest dated amount as the wall. */
-export function maturityWall(view: ReportView) {
+/** The maturity schedule as Financial foundation publishes it, by fiscal year and as written. */
+export function maturitySchedule(view: ReportView) {
   const name = moduleName("CP-1");
   const source = figureSource(view, "CP-1", "Debt maturities", name);
-  if (source.state === "gap") return { years: [] as WallYear[], reason: source.reason, source };
+  if (source.state === "gap")
+    return {
+      years: [] as ScheduleYear[],
+      offAxis: [] as ScheduleYear[],
+      reason: source.reason,
+      source,
+    };
   const unit = unitOf(source.descriptor);
   const slots = wallSlots(source.table, source.descriptor, unit);
   if (!slots)
     return {
-      years: [] as WallYear[],
+      years: [] as ScheduleYear[],
+      offAxis: [] as ScheduleYear[],
+      unit,
       reason: "The maturity schedule states no amount for any period.",
       source,
     };
-  const years = slots.dated.flatMap((slot): WallYear[] => {
-    const year = /^FY\d{4}$/u.test(slot.label) ? fiscalYear(slot.label) : null;
+  const dated = (label: string) => (/^FY\d{4}$/u.test(label) ? fiscalYear(label) : null);
+  const years = slots.dated.flatMap((slot): ScheduleYear[] => {
+    const year = dated(slot.label);
     return year === null ? [] : [{ year, label: slot.label, cell: slot.cell }];
   });
-  const wall = years.reduce<WallYear | null>(
-    (most, slot) =>
-      slot.cell?.value != null && (most?.cell?.value == null || slot.cell.value > most.cell.value)
-        ? slot
-        : most,
-    null,
-  );
+  // Rows not labelled by fiscal year are kept as written, beside the axis.
   const offAxis = [...slots.dated, ...slots.undated]
-    .filter((slot) => !/^FY\d{4}$/u.test(slot.label))
-    .map((slot) => slot.label);
+    .filter((slot) => dated(slot.label) === null)
+    .map((slot) => ({ year: 0, label: slot.label, cell: slot.cell }));
   return {
     years,
-    wall,
-    unit,
     offAxis,
-    reason: years.length ? null : "The maturity schedule is not by fiscal year.",
+    unit,
+    reason: years.length || offAxis.length ? null : "The maturity schedule is not by fiscal year.",
     source,
   };
 }
 
-const DRIVER_NAMES: Record<string, string> = {
-  revenue_growth: "Revenue growth",
-  ebitda_margin: "EBITDA margin",
-  capex_pct_revenue: "Capital expenditure, share of revenue",
-  tax_wc_pct_revenue: "Tax and working capital, share of revenue",
-  interest_rate: "Interest rate",
-  dividends: "Dividends",
-  debt_repayment: "Debt repayment",
-  ebitda_decline: "Downside EBITDA decline",
-  rate_increase: "Downside cash-interest increase",
+export type FundingGap = {
+  module: string;
+  name: string;
+  entry: OutputEntry;
+  line: number;
+  label: string;
+  /** The cell as written: a figure, or the module's words for why there is none. */
+  text: string;
+  value: number | null;
+  unit: string;
+  horizon: string | null;
 };
-const FRACTIONS = new Set([
-  "revenue_growth",
-  "ebitda_margin",
-  "capex_pct_revenue",
-  "tax_wc_pct_revenue",
-  "interest_rate",
-  "ebitda_decline",
-  "rate_increase",
-]);
-const DRIVER_CASES = [
-  ["base_drivers", "Base case"],
-  ["upside_drivers", "Upside case"],
-  ["downside_drivers", "Downside drivers"],
-] as const;
 
-/** A recorded fraction as a percentage with two decimals; anything else as recorded. */
-function shown(key: string, text: string) {
-  if (!FRACTIONS.has(key) || !/^-?\d+(?:\.\d+)?$/u.test(text)) return text;
-  return `${(Number(text) * 100).toFixed(2)}%`;
+const FUNDING_GAP = /^(?:CP-2D\s+)?funding gap\b/iu;
+const HORIZON = /^(?:CP-2D\s+)?horizon\b/iu;
+
+function gapIn(entry: OutputEntry, module: string): FundingGap | null {
+  for (const table of entry.sections.flatMap(({ blocks }) =>
+    blocks.flatMap((block) => (block.type === "table" ? [block] : [])),
+  )) {
+    const row = table.rows.find(({ cells }) => FUNDING_GAP.test(cells[0] ?? ""));
+    if (!row) continue;
+    const at = row.cells.findIndex((cell, index) => index > 0 && cell.trim() && cell !== "—");
+    const text = at > 0 ? (row.cells[at] ?? "") : "";
+    const header = at > 0 ? (table.headers[at] ?? "") : "";
+    const unitAt = table.headers.findIndex((name) => /^(?:Reporting unit|Unit)$/iu.test(name));
+    const unit =
+      /\(([^()]+)\)\s*$/u.exec(header)?.[1] ?? (unitAt >= 0 ? (row.cells[unitAt] ?? "") : "");
+    const horizon = table.rows.find(({ cells }) => HORIZON.test(cells[0] ?? ""));
+    const horizonText = horizon?.cells.slice(1).find((cell) => cell.trim() && cell !== "—") ?? null;
+    return {
+      module,
+      name: moduleName(module),
+      entry,
+      line: row.line,
+      label: readerText(row.cells[0] ?? ""),
+      text: readerText(text),
+      value: amount(text.replaceAll("−", "-")),
+      unit,
+      horizon: horizonText,
+    };
+  }
+  return null;
 }
-
-function recordedValues(raw: unknown): string[] | null {
-  if (raw === undefined || raw === null) return null;
-  if (typeof raw === "string" || typeof raw === "number") return [String(raw)];
-  const values = record(raw).values;
-  return Array.isArray(values) ? values.map((item) => word(item) || String(item)) : null;
-}
-
-export type DriverCell = { text: string; stated: boolean; differs: boolean };
 
 /**
- * The forecast inputs' drivers as a table: one row per driver any case states, one column per
- * case group the inputs carry, and the downside shock as two rows of the downside column. A
- * driver a case does not state reads "Not stated": no inheritance from base is inferred. A cell
- * differs when it is stated and its recorded values are not the base cell's.
+ * The funding gap as the liquidity module states it, else as the refinancing module repeats it:
+ * the figure, its unit and horizon, named as that module's. With neither, the modules looked at
+ * and why each gave none.
  */
-export function driverTable(document: Record<string, unknown>) {
-  const years = items(document.years).map((entry) => {
-    const year = record(entry).year;
-    return typeof year === "number" ? String(year) : word(year);
-  });
-  const shock = record(document.downside_shock);
-  const hasShock = Object.keys(shock).length > 0;
-  const cases = DRIVER_CASES.filter(
-    ([key], at) =>
-      at === 0 ||
-      Object.keys(record(document[key])).length > 0 ||
-      (key === "downside_drivers" && hasShock),
-  ).map(([key, name]) => ({ key, name }));
-  const keys = [
-    ...[...new Set(cases.flatMap(({ key }) => Object.keys(record(document[key]))))].map((key) => ({
-      key,
-      isShock: false,
-    })),
-    ...Object.keys(shock).map((key) => ({ key, isShock: true })),
-  ];
-  const rows = keys.map(({ key, isShock }) => {
-    const values = cases.map(({ key: group }) =>
-      isShock
-        ? group === "downside_drivers"
-          ? recordedValues(shock[key])
-          : null
-        : recordedValues(record(document[group])[key]),
-    );
-    const base = values[0] ?? null;
-    const cells = values.map((recorded, at): DriverCell => {
-      if (!recorded) return { text: "Not stated", stated: false, differs: false };
-      const parts = recorded.map((text) => shown(key, text));
-      const same = parts.length > 1 && parts.every((part) => part === parts[0]);
-      return {
-        text: same ? `${parts[0] ?? ""} each year` : parts.join(" · "),
-        stated: true,
-        differs: at > 0 && (base === null || base.join("\0") !== recorded.join("\0")),
-      };
-    });
-    const id = isShock
-      ? `downside_shock.${key}`
-      : `${cases.find(({ key: group }) => record(document[group])[key] !== undefined)?.key ?? ""}.${key}`;
-    return {
-      id,
-      key,
-      name: DRIVER_NAMES[key] ?? key.replaceAll("_", " "),
-      shock: isShock,
-      cells,
-    };
-  });
-  return { years, cases, rows };
+export function fundingGap(view: ReportView) {
+  const looked: string[] = [];
+  for (const module of ["CP-2D", "CP-3C"]) {
+    const { entry, reason } = moduleSource(view, module, moduleName(module));
+    const found = entry && !reason ? gapIn(entry, module) : null;
+    if (found) return { gap: found, looked };
+    looked.push(reason ?? `${moduleName(module)} states no funding gap figure.`);
+  }
+  return { gap: null, looked };
 }

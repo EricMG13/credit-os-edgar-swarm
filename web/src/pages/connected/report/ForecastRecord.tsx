@@ -382,8 +382,11 @@ export function RecordedForecastAssumptions({
   const amountUnits = recordedAmountUnits(document);
   return (
     <div className="grid min-w-0 gap-5 wrap-anywhere">
-      <section aria-label="Recorded forecast drivers" className={`${card} min-w-0`}>
-        <h3 className={heading}>Recorded forecast drivers</h3>
+      <section
+        aria-label="Recorded forecast drivers"
+        className="flex min-w-0 flex-col gap-3 border-t border-border-hairline pt-3"
+      >
+        <h3 className="text-small font-medium text-text-primary">Recorded forecast drivers</h3>
         <p className="text-small text-text-secondary">
           Driver values below are the module's recorded fractions or amounts, in their stated
           planning years.
@@ -451,8 +454,11 @@ export function RecordedForecastAssumptions({
           <p>No forecast drivers were recorded in the matched inputs.</p>
         )}
       </section>
-      <section aria-label="Recorded downside shock" className={`${card} min-w-0`}>
-        <h3 className={heading}>Recorded downside shock</h3>
+      <section
+        aria-label="Recorded downside shock"
+        className="flex min-w-0 flex-col gap-3 border-t border-border-hairline pt-3"
+      >
+        <h3 className="text-small font-medium text-text-primary">Recorded downside shock</h3>
         {Object.keys(shock).length ? (
           <dl className="grid gap-3 sm:grid-cols-2">
             <div className={TRACE_HOST}>
@@ -476,8 +482,11 @@ export function RecordedForecastAssumptions({
           <p>No downside shock was recorded.</p>
         )}
       </section>
-      <section aria-label="Recorded facilities" className={`${card} min-w-0`}>
-        <h3 className={heading}>Recorded facilities</h3>
+      <section
+        aria-label="Recorded facilities"
+        className="flex min-w-0 flex-col gap-3 border-t border-border-hairline pt-3"
+      >
+        <h3 className="text-small font-medium text-text-primary">Recorded facilities</h3>
         <p className="text-small text-text-secondary">
           {amountUnits} Other fields are shown as recorded.
         </p>

@@ -2,13 +2,16 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { expect, it } from "vitest";
 import { UsesOfCash } from "./ForecastCash";
 
-const columns = ["FY2025E", "FY2026E", "FY2027E"].map((label, at) => ({
-  label,
-  group: "Base case",
-  start: `${String(2025 + at)}-01-01`,
-  end: `${String(2025 + at)}-12-31`,
-}));
+const columnsFor = (labels: string[], group = "Base case") =>
+  labels.map((label) => ({
+    label,
+    group,
+    start: `${label.slice(2, 6)}-01-01`,
+    end: `${label.slice(2, 6)}-12-31`,
+  }));
+const columns = columnsFor(["FY2025E", "FY2026E", "FY2027E"]);
 const value = (exact: string) => ({ status: "value", exact, display: exact });
+const na = (reason: string) => ({ status: "na", display: "n.a.", reason });
 const row = (label: string, cells: unknown[]) => ({
   label,
   band: "Cash",
@@ -16,20 +19,24 @@ const row = (label: string, cells: unknown[]) => ({
   total: false,
   cells,
 });
-const model = (rows: unknown[]) => ({ cashflow: { units: "USD millions", columns, rows } });
+const model = (rows: unknown[], cols = columns, units = "USD millions") => ({
+  cashflow: { units, columns: cols, rows },
+});
 
 const full = model([
   row("Distributions", [value("20"), value("0"), value("30")]),
-  row("Debt repayment", [
-    value("50"),
-    { status: "na", display: "n.a.", reason: "Repayment not modelled" },
-    value("40"),
-  ]),
+  row("Debt repayment", [value("50"), na("Repayment not modelled"), value("40")]),
 ]);
 
-const view = (rows = full) => (
-  <UsesOfCash model={rows} group="Base case" caseName="Base case" units="USD millions" />
+const view = (rows: unknown = full, extra: { units?: string } = {}) => (
+  <UsesOfCash model={rows} group="Base case" caseName="Base case" {...extra} />
 );
+const part = (chart: Element, name: string) => {
+  const found = chart.querySelector(`[data-part="${name}"]`);
+  if (!found) throw new Error(`no part ${name}`);
+  return found;
+};
+const num = (node: Element, attr: string) => Number(node.getAttribute(attr));
 
 it("labels segments with their exact displays and prints no total", () => {
   render(view());
@@ -39,20 +46,75 @@ it("labels segments with their exact displays and prints no total", () => {
   expect(chart.textContent).toContain("20");
   expect(chart.textContent).toContain("50");
   expect(chart.textContent).not.toMatch(/\b70\b/u);
-  expect(screen.getByText("USD millions")).toBeTruthy();
 });
 
 it("draws zero as a zero-height segment, not a gap", () => {
   render(view());
   const chart = screen.getByRole("img");
   expect(chart.getAttribute("aria-label")).toContain("Distributions FY2026E 0");
-  expect(chart.textContent).toContain("0");
+  expect(num(part(chart, "Distributions FY2026E"), "height")).toBe(0);
+});
+
+it("draws a missing part as a labelled hatched block above the stated parts, never under them", () => {
+  render(
+    view(
+      model([
+        row("Distributions", [na("Dividends not modelled"), value("20"), value("30")]),
+        row("Debt repayment", [value("50"), value("10"), value("40")]),
+      ]),
+    ),
+  );
+  const chart = screen.getByRole("img");
+  const axis = num(chart.querySelector("[data-axis]") as Element, "y1");
+  const repayment = part(chart, "Debt repayment FY2025E");
+  // The stated repayment starts at the baseline, as if distributions were not zero but unknown.
+  expect(num(repayment, "y") + num(repayment, "height")).toBeCloseTo(axis, 5);
+  const missing = part(chart, "Distributions FY2025E n.a.");
+  expect(num(missing, "y") + num(missing, "height")).toBeCloseTo(num(repayment, "y"), 5);
+  expect(num(missing, "height")).toBe(18);
+  expect(chart.textContent).toContain("Distributions");
+  expect(chart.textContent).toContain("n.a.");
+  expect(screen.getByText(/FY2025E Distributions: Dividends not modelled/u)).toBeTruthy();
+  // Stated distributions sit first, repayments above them.
+  const dist = part(chart, "Distributions FY2026E");
+  expect(num(dist, "y") + num(dist, "height")).toBeCloseTo(axis, 5);
 });
 
 it("shows a missing value as n.a. with its reason in the notes", () => {
   render(view());
   expect(screen.getByRole("img").textContent).toContain("n.a.");
   expect(screen.getByText(/FY2026E Debt repayment: Repayment not modelled/u)).toBeTruthy();
+});
+
+it("keeps a slot for a fiscal year the case has no column for, drawn as the labelled gap", () => {
+  const gapped = model(
+    [
+      row("Distributions", [value("20"), value("30")]),
+      row("Debt repayment", [value("50"), value("40")]),
+    ],
+    columnsFor(["FY2025E", "FY2027E"]),
+  );
+  render(view(gapped));
+  const chart = screen.getByRole("img");
+  expect(chart.textContent).toContain("FY2026E");
+  expect(chart.textContent.match(/n\.a\./gu)?.length).toBe(2);
+  expect(screen.getByText("FY2026E Distributions: Not published for this case")).toBeTruthy();
+  expect(screen.getByText("FY2026E Debt repayment: Not published for this case")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Table" }));
+  expect(screen.getAllByRole("row").map((item) => item.textContent)).toContain(
+    "FY2026ENot published for this caseNot published for this case",
+  );
+});
+
+it("draws the gap state, not empty axes, for a case with no dated cells", () => {
+  render(
+    <UsesOfCash model={full} group="Downside case" caseName="Downside case" units="USD millions" />,
+  );
+  expect(
+    screen.getByText("The model publishes no distributions or debt repayment for Downside case."),
+  ).toBeTruthy();
+  expect(screen.queryByRole("img")).toBeNull();
+  expect(screen.queryByRole("table")).toBeNull();
 });
 
 it("lists a negative value in the notes instead of stacking it", () => {
@@ -81,4 +143,45 @@ it("states a gap when neither row exists", () => {
   expect(
     screen.getByText("The model publishes no distributions or debt repayment rows."),
   ).toBeTruthy();
+});
+
+it("traces each row with its own row name and the case", () => {
+  const seen: unknown[] = [];
+  render(
+    <UsesOfCash
+      model={full}
+      group="Base case"
+      caseName="Base"
+      source={(name, selection) => {
+        seen.push([name, selection]);
+        return <button type="button">trace {selection?.row}</button>;
+      }}
+    />,
+  );
+  expect(seen).toEqual([
+    ["Distributions", { case: "Base", rawGroup: "Base case", row: "Distributions" }],
+    ["Debt repayment", { case: "Base", rawGroup: "Base case", row: "Debt repayment" }],
+  ]);
+  expect(screen.getByRole("button", { name: "trace Debt repayment" })).toBeTruthy();
+});
+
+it("lays the chart out at the measured width with token styling and no scroll wrapper", () => {
+  const { container } = render(view());
+  const chart = screen.getByRole("img");
+  expect(chart.getAttribute("width")).toBe("600");
+  expect(chart.getAttribute("viewBox")).toBe(`0 0 600 ${chart.getAttribute("height") ?? ""}`);
+  expect(screen.queryByRole("region", { name: "Uses of cash chart" })).toBeNull();
+  const html = container.innerHTML;
+  expect(html).not.toContain("min-w-[30rem]");
+  expect(html).not.toContain("fill-white");
+  expect(html).not.toContain("text-[11px]");
+  expect(html).not.toMatch(/style=|#[0-9a-f]{3,8}\b/iu);
+});
+
+it("shows units once in the kicker, and nothing when none are recorded", () => {
+  const { unmount } = render(view(full, { units: "USD millions" }));
+  expect(screen.getAllByText(/USD millions/u)).toHaveLength(1);
+  unmount();
+  render(view(full));
+  expect(screen.queryByText(/Units not recorded/u)).toBeNull();
 });

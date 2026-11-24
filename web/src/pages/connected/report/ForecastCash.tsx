@@ -1,6 +1,12 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Segmented } from "@/components/kit/Segmented";
-import { cellsOf, forecastMeasure, type Measure, type MeasureCell } from "./forecastData";
+import {
+  cellsOf,
+  fiscalYear,
+  forecastMeasure,
+  type Measure,
+  type MeasureCell,
+} from "./forecastData";
 import type { ForecastSource } from "./ForecastRecord";
 import { GapNote, Tile } from "./overview/Tile";
 
@@ -9,17 +15,37 @@ const VIEWS = [
   { key: "table", label: "Table" },
 ] as const;
 
-const W = 524;
-const H = 252;
+const FALLBACK_WIDTH = 524;
+const PLOT = 160;
 const LEFT = 44;
 const RIGHT = 8;
-const TOP = 20;
-const BASELINE = 208;
+const TOP = 12;
+const FOOT = 30;
 const STUB = 18;
+const LABEL = 30;
 const MIN_INSIDE = 16;
 
 type Part = { name: string; cell: MeasureCell | undefined };
 type Slot = { period: string; parts: [Part, Part] };
+
+/** The drawing's own width, so that its text keeps its size at any container width. */
+function useMeasuredWidth(fallback: number) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(fallback);
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const next = Math.round(entry?.contentRect.width ?? 0);
+      if (next > 0) setWidth(Math.max(300, next));
+    });
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+  return { ref, width };
+}
 
 /** A round tick step so that about four steps cover `max`. */
 function stepFor(max: number) {
@@ -34,8 +60,10 @@ function reasonOf(cell: MeasureCell | undefined) {
 }
 
 const isNegative = (cell: MeasureCell | undefined) => (cell?.value ?? 0) < 0;
+const isMissing = (cell: MeasureCell | undefined) => cell?.value == null;
 
 function Chart({ slots }: { slots: Slot[] }) {
+  const { ref, width } = useMeasuredWidth(FALLBACK_WIDTH);
   const stacked = (slot: Slot) =>
     slot.parts.reduce((sum, { cell }) => sum + Math.max(cell?.value ?? 0, 0), 0);
   const max = Math.max(0, ...slots.map(stacked));
@@ -44,9 +72,15 @@ function Chart({ slots }: { slots: Slot[] }) {
   const ticks = Array.from({ length: Math.round(top / step) + 1 }, (_, at) =>
     Number((at * step).toPrecision(12)),
   );
-  const scale = (BASELINE - TOP) / top;
-  const slotWidth = (W - LEFT - RIGHT) / slots.length;
-  const barWidth = Math.min(56, slotWidth * 0.5);
+  const missing = Math.max(
+    0,
+    ...slots.map(({ parts }) => parts.filter(({ cell }) => isMissing(cell)).length),
+  );
+  const baseline = TOP + missing * (STUB + LABEL) + PLOT;
+  const height = baseline + FOOT;
+  const scale = PLOT / top;
+  const slotWidth = (width - LEFT - RIGHT) / slots.length;
+  const barWidth = Math.min(56, slotWidth * 0.45);
   const description = slots
     .flatMap(({ period, parts }) =>
       parts.map(
@@ -55,124 +89,166 @@ function Chart({ slots }: { slots: Slot[] }) {
     )
     .join(", ");
   return (
-    <svg
-      role="img"
-      aria-label={description}
-      viewBox={`0 0 ${String(W)} ${String(H)}`}
-      className="h-auto w-full min-w-[30rem]"
-    >
-      <defs>
-        <pattern id="uses-of-cash-stub" width="6" height="6" patternUnits="userSpaceOnUse">
-          <path d="M0 6 L6 0" className="stroke-border-container" strokeWidth="1" />
-        </pattern>
-      </defs>
-      {ticks.map((tick) => (
-        <g key={tick}>
-          <line
-            x1={LEFT}
-            x2={W - RIGHT}
-            y1={BASELINE - tick * scale}
-            y2={BASELINE - tick * scale}
-            className="stroke-border-hairline"
-          />
-          <text
-            x={LEFT - 6}
-            y={BASELINE - tick * scale + 4}
-            textAnchor="end"
-            className="fill-text-tertiary font-mono text-[11px]"
-          >
-            {tick}
-          </text>
-        </g>
-      ))}
-      {slots.map((slot, at) => {
-        const x = LEFT + slotWidth * at + (slotWidth - barWidth) / 2;
-        let level = 0;
-        return (
-          <g key={slot.period}>
-            {slot.parts.map(({ name, cell }, index) => {
-              const fill = index === 0 ? "fill-chart-2" : "fill-chart-1";
-              if (isNegative(cell)) return null;
-              if (cell?.value == null) {
-                const y = BASELINE - level * scale - STUB;
-                return (
-                  <g key={name}>
-                    <rect
-                      x={x}
-                      y={y}
-                      width={barWidth}
-                      height={STUB}
-                      fill="url(#uses-of-cash-stub)"
-                      className="stroke-border-gap"
-                      strokeDasharray="3 3"
-                    />
-                    <text
-                      x={x + barWidth + 4}
-                      y={y + STUB / 2 + 4}
-                      className="fill-text-secondary font-mono text-[11px]"
-                    >
-                      n.a.
-                    </text>
-                  </g>
-                );
-              }
-              const height = cell.value * scale;
-              const y = BASELINE - level * scale - height;
-              level += cell.value;
-              const inside = height >= MIN_INSIDE;
+    <div ref={ref} className="min-w-0">
+      <svg
+        role="img"
+        aria-label={description}
+        width={width}
+        height={height}
+        viewBox={`0 0 ${String(width)} ${String(height)}`}
+        className="block max-w-full"
+      >
+        <defs>
+          <pattern id="uses-of-cash-stub" width="6" height="6" patternUnits="userSpaceOnUse">
+            <path d="M0 6 L6 0" className="stroke-border-container" strokeWidth="1" />
+          </pattern>
+        </defs>
+        {ticks.map((tick) => (
+          <g key={tick}>
+            <line
+              x1={LEFT}
+              x2={width - RIGHT}
+              y1={baseline - tick * scale}
+              y2={baseline - tick * scale}
+              className="stroke-border-hairline"
+            />
+            <text
+              x={LEFT - 6}
+              y={baseline - tick * scale + 4}
+              textAnchor="end"
+              className="fill-text-tertiary font-mono text-caption"
+            >
+              {tick}
+            </text>
+          </g>
+        ))}
+        {slots.map((slot, at) => {
+          const middle = LEFT + slotWidth * at + slotWidth / 2;
+          const x = middle - barWidth / 2;
+          let level = 0;
+          const stated = slot.parts.flatMap(({ name, cell }, index) => {
+            if (cell?.value == null || isNegative(cell)) return [];
+            const barHeight = cell.value * scale;
+            const y = baseline - level * scale - barHeight;
+            level += cell.value;
+            const inside = barHeight >= MIN_INSIDE;
+            return [
+              <g key={name}>
+                <rect
+                  data-part={`${name} ${slot.period}`}
+                  x={x}
+                  y={y}
+                  width={barWidth}
+                  height={barHeight}
+                  className={index === 0 ? "fill-chart-2" : "fill-chart-1"}
+                />
+                <text
+                  x={inside ? middle : x + barWidth + 4}
+                  y={y + barHeight / 2 + 4}
+                  textAnchor={inside ? "middle" : "start"}
+                  className={`font-mono text-caption ${inside ? "fill-surface-card" : "fill-text-secondary"}`}
+                >
+                  {cell.display}
+                </text>
+              </g>,
+            ];
+          });
+          // A part with no value is a hatched block above everything stated, never under it.
+          const gaps = slot.parts
+            .filter(({ cell }) => isMissing(cell))
+            .map(({ name }, index) => {
+              const y = baseline - level * scale - (index + 1) * STUB - index * LABEL;
               return (
                 <g key={name}>
-                  <rect x={x} y={y} width={barWidth} height={height} className={fill} />
+                  <rect
+                    data-part={`${name} ${slot.period} n.a.`}
+                    x={x}
+                    y={y}
+                    width={barWidth}
+                    height={STUB}
+                    fill="url(#uses-of-cash-stub)"
+                    className="stroke-border-gap"
+                    strokeDasharray="3 3"
+                  />
                   <text
-                    x={inside ? x + barWidth / 2 : x + barWidth + 4}
-                    y={y + height / 2 + 4}
-                    textAnchor={inside ? "middle" : "start"}
-                    className={`font-mono text-[11px] ${inside ? "fill-white" : "fill-text-secondary"}`}
+                    x={middle}
+                    y={y - 18}
+                    textAnchor="middle"
+                    className="fill-text-secondary text-caption"
                   >
-                    {cell.display}
+                    {name}
+                  </text>
+                  <text
+                    x={middle}
+                    y={y - 4}
+                    textAnchor="middle"
+                    className="fill-text-secondary font-mono text-caption"
+                  >
+                    n.a.
                   </text>
                 </g>
               );
-            })}
-            <text
-              x={x + barWidth / 2}
-              y={BASELINE + 18}
-              textAnchor="middle"
-              className="fill-text-tertiary font-mono text-[11px]"
-            >
-              {slot.period}
-            </text>
-          </g>
-        );
-      })}
-      <line
-        x1={LEFT}
-        x2={W - RIGHT}
-        y1={BASELINE}
-        y2={BASELINE}
-        className="stroke-border-container"
-      />
-    </svg>
+            });
+          return (
+            <g key={slot.period}>
+              {stated}
+              {gaps}
+              <text
+                x={middle}
+                y={baseline + 20}
+                textAnchor="middle"
+                className="fill-text-tertiary font-mono text-caption"
+              >
+                {slot.period}
+              </text>
+            </g>
+          );
+        })}
+        <line
+          data-axis=""
+          x1={LEFT}
+          x2={width - RIGHT}
+          y1={baseline}
+          y2={baseline}
+          className="stroke-border-container"
+        />
+      </svg>
+    </div>
   );
 }
 
-function Legend() {
+function Legend({ debtTrace }: { debtTrace: ReactNode }) {
+  const swatch = (color: string) => (
+    <span aria-hidden="true" className={`inline-block size-3 rounded-ds-xs ${color}`} />
+  );
   return (
-    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-small text-text-secondary">
-      {[
-        ["bg-chart-2", "Distributions"],
-        ["bg-chart-1", "Debt repayment"],
-      ].map(([swatch, name]) => (
-        <li key={name} className="flex items-center gap-2">
-          <span
-            aria-hidden="true"
-            className={`inline-block size-3 rounded-ds-xs ${swatch ?? ""}`}
-          />
-          {name}
-        </li>
-      ))}
+    <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-small text-text-secondary">
+      <li className="flex items-center gap-2">
+        {swatch("bg-chart-2")}
+        Distributions
+      </li>
+      <li className="flex items-center gap-2">
+        {swatch("bg-chart-1")}
+        Debt repayment
+        {debtTrace}
+      </li>
     </ul>
   );
+}
+
+/** One slot per fiscal year from the case's first to its last year; a year with no column keeps
+ * its slot. A period that is not a fiscal year follows, in order. */
+function yearSlots(periods: string[]) {
+  const years = periods.flatMap((period) => fiscalYear(period) ?? []);
+  const first = Math.min(...years);
+  const last = Math.max(...years);
+  const axis = years.length
+    ? Array.from({ length: last - first + 1 }, (_, at) => {
+        const year = first + at;
+        return periods.find((period) => fiscalYear(period) === year) ?? `FY${String(year)}E`;
+      })
+    : [];
+  return [...axis, ...periods.filter((period) => fiscalYear(period) === null)];
 }
 
 /** Distributions and debt repayments by year, stacked from zero on one scale; never summed. */
@@ -186,7 +262,7 @@ export function UsesOfCash({
   model: unknown;
   group: string | undefined;
   caseName: string | undefined;
-  units: string;
+  units?: string;
   source?: ForecastSource;
 }) {
   const [view, setView] = useState("chart");
@@ -194,12 +270,13 @@ export function UsesOfCash({
     ["Distributions", forecastMeasure(model, /^Distributions$/u)],
     ["Debt repayment", forecastMeasure(model, /^Debt repayment$/u)],
   ];
+  const trace = (row: string) => source?.(row, { case: caseName, rawGroup: group, row });
   const tile = {
     span: 5,
     label: "Uses of cash",
     title: `Uses of cash, ${caseName ?? "selected case"}`,
-    kicker: "Distributions and debt repayments by year as the model publishes them",
-    trace: source?.("Uses of cash", { case: caseName, rawGroup: group, row: "Distributions" }),
+    kicker: `Distributions and debt repayments by year as the model publishes them${units ? ` · ${units}` : ""}`,
+    trace: trace("Distributions"),
   } as const;
   if (measures.every(([, measure]) => measure === null))
     return (
@@ -212,7 +289,16 @@ export function UsesOfCash({
     cells: new Map((measure ? cellsOf(measure, group) : []).map((cell) => [cell.period, cell])),
   }));
   const periods = [...new Set(byName.flatMap(({ cells }) => [...cells.keys()]))].sort();
-  const slots: Slot[] = periods.map((period) => ({
+  if (!periods.length)
+    return (
+      <Tile {...tile}>
+        <GapNote>
+          The model publishes no distributions or debt repayment for{" "}
+          {caseName ?? "the selected case"}.
+        </GapNote>
+      </Tile>
+    );
+  const slots: Slot[] = yearSlots(periods).map((period) => ({
     period,
     parts: byName.map(({ name, cells }) => ({ name, cell: cells.get(period) })) as [Part, Part],
   }));
@@ -220,7 +306,7 @@ export function UsesOfCash({
     parts.flatMap(({ name, cell }) =>
       isNegative(cell)
         ? [`${period} ${name}: ${cell?.display ?? ""} (negative, not stacked)`]
-        : cell?.value == null
+        : isMissing(cell)
           ? [`${period} ${name}: ${reasonOf(cell)}`]
           : [],
     ),
@@ -228,22 +314,12 @@ export function UsesOfCash({
   return (
     <Tile {...tile}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Legend />
+        <Legend debtTrace={trace("Debt repayment")} />
         <Segmented label="Uses of cash view" segments={VIEWS} current={view} onSelect={setView} />
       </div>
-      <p className="text-caption text-text-tertiary">{units || "Units not recorded"}</p>
       {view === "chart" ? (
         <>
-          <div
-            role="region"
-            aria-label="Uses of cash chart"
-            // At a phone's width the chart keeps legible labels and scrolls inside its tile.
-            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
-            tabIndex={0}
-            className="relative min-w-0 overflow-x-auto"
-          >
-            <Chart slots={slots} />
-          </div>
+          <Chart slots={slots} />
           {notes.length > 0 && (
             <ul className="list-disc pl-5 text-small text-text-secondary">
               {notes.map((note) => (
