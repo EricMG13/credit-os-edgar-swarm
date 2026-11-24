@@ -1737,8 +1737,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1357615-kbr-inc-kbr",
       "context": "/home/user/swarm-root/inputs/contexts/1357615-kbr-inc-kbr.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-kbr",
-      "status": "pending",
-      "attempts": 0
+      "status": "running",
+      "attempts": 0,
+      "claimed_at": "2026-11-18T13:20:47+00:00",
+      "claims": 1
     },
     {
       "issuer_id": "hri",
@@ -1748,8 +1750,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1364479-herc-holdings-inc-hri",
       "context": "/home/user/swarm-root/inputs/contexts/1364479-herc-holdings-inc-hri.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-hri",
-      "status": "pending",
-      "attempts": 0
+      "status": "running",
+      "attempts": 0,
+      "claimed_at": "2026-11-18T13:20:47+00:00",
+      "claims": 1
     },
     {
       "issuer_id": "ebs-1367644",
@@ -1759,8 +1763,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1367644-emergent-biosolutions-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1367644-emergent-biosolutions-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ebs-1367644",
-      "status": "pending",
-      "attempts": 0
+      "status": "running",
+      "attempts": 0,
+      "claimed_at": "2026-11-18T13:20:47+00:00",
+      "claims": 1
     },
     {
       "issuer_id": "cvi",
@@ -1770,8 +1776,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1376139-cvr-energy-inc-cvi",
       "context": "/home/user/swarm-root/inputs/contexts/1376139-cvr-energy-inc-cvi.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cvi",
-      "status": "pending",
-      "attempts": 0
+      "status": "running",
+      "attempts": 0,
+      "claimed_at": "2026-11-18T13:20:47+00:00",
+      "claims": 1
     },
     {
       "issuer_id": "ats",
