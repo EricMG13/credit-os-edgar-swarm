@@ -64,6 +64,20 @@ it("draws a blocked module as Not assessable with its reason and what unlocks it
   expect(tile).toHaveClass("border-dashed");
 });
 
+it("does not repeat Not assessable when the module's reason starts with it", () => {
+  render(
+    <LeadBlocked
+      span={12}
+      label="Covenant headroom"
+      title="Covenant headroom"
+      reason="not assessable, no executed governing document available"
+    />,
+  );
+  const tile = screen.getByRole("region", { name: "Covenant headroom" });
+  expect(within(tile).getByText("No executed governing document available")).toBeVisible();
+  expect(within(tile).getAllByText(/not assessable/i)).toHaveLength(1);
+});
+
 it("draws a node map as lists: each node once, its edges under it", () => {
   render(
     <NodeList

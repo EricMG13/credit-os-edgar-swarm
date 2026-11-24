@@ -85,84 +85,91 @@ function Scatter({ points, label }: { points: Placed[]; label: string }) {
   const x = (time: number) => W.left + ((time - low) / (high - low)) * (W.right - W.left);
   const y = (value: number) => W.base - (value / (top || 1)) * (W.base - W.top);
   return (
-    <svg
-      viewBox={`0 0 ${String(W.width)} ${String(W.height)}`}
-      width="100%"
-      role="img"
-      aria-label={label}
-      className="block"
-    >
-      {scale.map((tick) => (
-        <Fragment key={tick.value}>
-          <line
-            x1={W.left}
-            x2={W.right}
-            y1={y(tick.value)}
-            y2={y(tick.value)}
-            className={tick.value === 0 ? "stroke-connector" : "stroke-border-hairline"}
-          />
-          <text
-            x={W.left - 6}
-            y={y(tick.value) + 4}
-            textAnchor="end"
-            fontSize="11"
-            className="fill-text-tertiary font-mono"
-          >
-            {tick.label}
-          </text>
-        </Fragment>
-      ))}
-      {dateTicks(low, high, points).map(({ label: date, time }) => (
-        <Fragment key={date}>
-          <line
-            x1={x(time)}
-            x2={x(time)}
-            y1={W.base}
-            y2={W.base + 4}
-            className="stroke-connector"
-          />
-          <text
-            x={x(time)}
-            y={W.base + 18}
-            textAnchor="middle"
-            fontSize="11"
-            className="fill-text-tertiary font-mono"
-          >
-            {date}
-          </text>
-        </Fragment>
-      ))}
-      {points.map((point) => {
-        const cx = x(point.day);
-        const cy = y(point.value);
-        const left = cx > W.right - 150;
-        const name = point.name.length > 26 ? `${point.name.slice(0, 25)}…` : point.name;
-        return (
-          <g key={point.index}>
-            <circle data-point={point.name} cx={cx} cy={cy} r="4" className="fill-chart-1" />
+    <div className="grid min-w-0 grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <svg
+        viewBox={`0 0 ${String(W.width)} ${String(W.height)}`}
+        width="100%"
+        role="img"
+        aria-label={label}
+        className="block"
+      >
+        {scale.map((tick) => (
+          <Fragment key={tick.value}>
+            <line
+              x1={W.left}
+              x2={W.right}
+              y1={y(tick.value)}
+              y2={y(tick.value)}
+              className={tick.value === 0 ? "stroke-connector" : "stroke-border-hairline"}
+            />
             <text
-              x={left ? cx - 7 : cx + 7}
-              y={cy - 6}
-              textAnchor={left ? "end" : "start"}
-              fontSize="11"
-              className="fill-text-secondary font-body"
-            >
-              {name}
-              <title>{point.name}</title>
-            </text>
-            <text
-              x={left ? cx - 7 : cx + 7}
-              y={cy + 8}
-              textAnchor={left ? "end" : "start"}
+              x={W.left - 6}
+              y={y(tick.value) + 4}
+              textAnchor="end"
               fontSize="12"
-              className="fill-text-primary font-mono font-medium"
+              className="fill-text-tertiary font-mono"
             >
-              {withUnit(point.cell.text, point.unit)}
+              {tick.label}
             </text>
-          </g>
-        );
-      })}
-    </svg>
+          </Fragment>
+        ))}
+        {dateTicks(low, high, points).map(({ label: date, time }) => (
+          <Fragment key={date}>
+            <line
+              x1={x(time)}
+              x2={x(time)}
+              y1={W.base}
+              y2={W.base + 4}
+              className="stroke-connector"
+            />
+            <text
+              x={x(time)}
+              y={W.base + 18}
+              textAnchor="middle"
+              fontSize="12"
+              className="fill-text-tertiary font-mono"
+            >
+              {date}
+            </text>
+          </Fragment>
+        ))}
+        {points.map((point, at) => {
+          const cx = x(point.day);
+          const cy = y(point.value);
+          return (
+            <g key={point.index}>
+              <circle data-point={point.name} cx={cx} cy={cy} r="4.5" className="fill-chart-1" />
+              <text
+                x={cx}
+                y={cy - 9}
+                textAnchor="middle"
+                fontSize="12"
+                className="fill-text-primary font-mono font-medium"
+              >
+                {at + 1}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      <ol aria-label="Instruments by maturity" className="flex min-w-0 flex-col">
+        {points.map((point, at) => (
+          <li
+            key={point.index}
+            className="grid grid-cols-[1.5rem_minmax(0,1fr)_auto] items-baseline gap-2 border-t border-border-hairline py-2 first:border-t-0 first:pt-0"
+          >
+            <span className="font-mono text-small text-text-tertiary">{at + 1}</span>
+            <span className="flex min-w-0 flex-col">
+              <span className="text-small wrap-anywhere text-text-primary">{point.name}</span>
+              <span className="font-mono text-caption text-text-tertiary">{point.maturity}</span>
+            </span>
+            <span className="font-mono text-small font-medium text-text-primary tabular-nums">
+              {withUnit(point.cell.text, point.unit)}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }
 

@@ -87,8 +87,16 @@ it("draws each quoted instrument as a point on a true maturity-date axis, labell
   ]);
   const [early, late] = points.map((point) => Number(point.getAttribute("cx")));
   expect(early).toBeLessThan(late ?? 0);
-  expect(within(figure).getByText("6.80%")).toBeInTheDocument();
-  expect(within(figure).getByText("6.12%")).toBeInTheDocument();
+  const key = within(tile).getByRole("list", { name: "Instruments by maturity" });
+  expect(
+    within(key)
+      .getAllByRole("listitem")
+      .map((item) => item.textContent),
+  ).toEqual([
+    "1Synthetic subordinated notes 20272027-11-156.80%",
+    "2Synthetic secured notes 20282028-08-156.12%",
+  ]);
+  expect(within(key).queryByText(/term loan/)).toBeNull();
   expect(within(figure).getByText("2028")).toBeInTheDocument();
   expect(within(figure).getByText("0")).toBeInTheDocument();
   expect(within(figure).queryByText(/term loan/)).toBeNull();

@@ -141,6 +141,12 @@ export function LeadGap({
   );
 }
 
+/** The reason without a leading "Not assessable", which the badge already says. */
+function withoutState(reason: string) {
+  const rest = reason.replace(/^not assessable\s*[,:;.]\s*/i, "");
+  return rest ? rest.charAt(0).toUpperCase() + rest.slice(1) : reason;
+}
+
 /** A module that could not run, in place of its lead: Not assessable, why, and what would fix it. */
 export function LeadBlocked({
   span,
@@ -164,7 +170,7 @@ export function LeadBlocked({
     >
       <div className="flex flex-col gap-3">
         <StatusBadge set="Module state" state="Not assessable" className="w-fit" />
-        <p className="text-lead text-balance text-text-primary">{reason}</p>
+        <p className="text-lead text-balance text-text-primary">{withoutState(reason)}</p>
         {unlock && <p className="text-small text-text-secondary">{unlock}</p>}
       </div>
     </Tile>
