@@ -5,14 +5,17 @@ tests show the schedule, the cap and the byte-identity of what a run retains and
 are not a measurement of a live run's time.
 """
 
+import errno
 import faulthandler
 import hashlib
 import json
+import os
 import re
 import shutil
 import sys
 import threading
 import time
+import warnings
 from decimal import Decimal, localcontext
 from pathlib import Path
 
@@ -2137,6 +2140,16 @@ def _events(folder: Path, name: str) -> list[dict]:
     return [e for e in read_events(log) if e["event"] == name] if log.exists() else []
 
 
+def _turns(folder: Path) -> list[tuple[str, str, int]]:
+    """The `turn` and `turn_not_sent` events of the log, in order: (event, module, turn)."""
+    log = folder / EVENTS
+    return [
+        (e["event"], e["module"], e["turn"])
+        for e in (read_events(log) if log.exists() else [])
+        if e["event"] in {"turn", "turn_not_sent"}
+    ]
+
+
 def _peer_unknown_charge(budget: Budget) -> None:
     """Another module's call, on its own thread, settles with an unknown charge: the shared
     ledger is stopped."""
@@ -2216,12 +2229,100 @@ def test_a_stop_that_arrives_while_the_turn_event_is_written_stops_the_call(
     _released_unsent(executor, tmp_path / "live", stop)
 
 
-def test_a_turn_not_sent_that_cannot_be_written_never_replaces_the_refusal(tmp_path, monkeypatch):
-    """The same halt, and the `turn_not_sent` event cannot be written: the module still raises
-    its halt, the failed write noted on it, and the hold is released."""
+@pytest.mark.parametrize(
+    ("look", "logged"), [(1, []), (2, [("turn", "CP-1A", 1), ("turn_not_sent", "CP-1A", 1)])]
+)
+def test_a_halt_reported_while_the_ledger_check_waits_for_its_lock_stops_the_call(
+    tmp_path, monkeypatch, look, logged
+):
+    """Each look before a call checks the shared ledger, which takes the ledger's lock (another
+    module may hold it across a marker write and its fsyncs), and the module. A halt reported
+    while the ledger check waits, with no stop in the ledger, still stops the call: the module's
+    check, which takes no lock, comes last. At the look after the reserve no `turn` event is
+    written; at the look before dispatch a `turn_not_sent` event follows the `turn`. Nothing is
+    sent, the hold is released, and the module raises its own halt."""
+    halted = threading.Event()
+    executor = HandoffExecutor(
+        tmp_path / "live",
+        adapter=_NeverCalled(),
+        cap_usd=Decimal(20),
+        check=lambda task, raw: (),
+        events=tmp_path,
+    )
+    check_running, asked = Budget.check_running, []
+
+    def halted_while_it_waits(budget: Budget) -> None:
+        asked.append(1)
+        if len(asked) == look:
+            halted.set()  # CP-OS takes a peer's failure report meanwhile
+        check_running(budget)  # and the ledger has no stop
+
+    def proceed() -> None:
+        if halted.is_set():
+            raise ModuleHalted(HALTED)
+
+    monkeypatch.setattr(Budget, "check_running", halted_while_it_waits)
+    with pytest.raises(ModuleHalted, match=HALTED) as raised:
+        executor(_task("CP-1A", proceed))
+    assert type(raised.value) is ModuleHalted and not getattr(raised.value, "__notes__", [])
+    assert len(asked) == look
+    assert _turns(tmp_path) == logged
+    _released_unsent(executor, tmp_path / "live", "halt")
+
+
+class _NotSent:
+    """The adapter reports the exchange was never sent (a rate limit before the request left)."""
+
+    config_id = "sol-medium"
+    ruling = None
+
+    def complete(self, request, **_identity):
+        return NOT_SENT
+
+
+def test_a_reply_the_adapter_did_not_send_is_logged_as_a_turn_not_sent(tmp_path):
+    """The `turn` event is written before the call is handed to the adapter. When the adapter
+    replies `not_sent`, its hold is released and a `turn_not_sent` event follows that `turn`, as
+    when a look refuses the call; the module still stops as before and its call is recorded once,
+    unpriced and charged nothing."""
+    executor = HandoffExecutor(
+        tmp_path / "live",
+        adapter=_NotSent(),
+        cap_usd=Decimal(20),
+        check=lambda task, raw: (),
+        events=tmp_path,
+    )
+    with pytest.raises(RuntimeError, match="cpos_live_stopped: not_sent; charge=0; ") as raised:
+        executor(_task("CP-1A"))
+    assert type(raised.value) is RuntimeError and not getattr(raised.value, "__notes__", [])
+    assert _turns(tmp_path) == [("turn", "CP-1A", 1), ("turn_not_sent", "CP-1A", 1)]
+    (row,) = [json.loads(n) for n in (tmp_path / "live/calls.jsonl").read_text().splitlines()]
+    assert (row["settled_usd"], row["error_class"]) == ("0", "RateLimited")
+    _released_unsent(executor, tmp_path / "live", "halt")
+
+
+class _DiskFull:
+    """`os` as `run_events` sees it: once `full` is set, the fsync of an event write fails as a
+    full disk does (`append_event` then cuts the line back and skips it)."""
+
+    full = False
+
+    def __getattr__(self, name: str):
+        return getattr(os, name)
+
+    def fsync(self, descriptor: int) -> None:
+        if self.full:
+            raise OSError(errno.ENOSPC, "No space left on device")
+        os.fsync(descriptor)
+
+
+def _halted_with_the_disk_full(tmp_path: Path, monkeypatch) -> pytest.ExceptionInfo:
+    """The module is halted while its `turn` event is written, and the disk is full from then on,
+    so the real `append_event` cannot write the `turn_not_sent` event."""
+    from deploy_workflow import run_events
     from deploy_workflow.model import handoff
 
-    halted = threading.Event()
+    halted, disk = threading.Event(), _DiskFull()
     executor = HandoffExecutor(
         tmp_path / "live",
         adapter=_NeverCalled(),
@@ -2231,28 +2332,56 @@ def test_a_turn_not_sent_that_cannot_be_written_never_replaces_the_refusal(tmp_p
     )
     append = handoff.append_event
 
-    def unwritable_after_the_turn(directory, event, **fields):
-        if event == "turn_not_sent":
-            raise RuntimeError("log unwritable")
+    def full_after_the_turn(directory, event, **fields):
         append(directory, event, **fields)
         if event == "turn":
+            disk.full = True
             halted.set()
 
     def proceed() -> None:
         if halted.is_set():
             raise ModuleHalted(HALTED)
 
-    monkeypatch.setattr(handoff, "append_event", unwritable_after_the_turn)
+    monkeypatch.setattr(run_events, "os", disk)
+    monkeypatch.setattr(handoff, "append_event", full_after_the_turn)
     with pytest.raises(ModuleHalted, match=HALTED) as raised:
         executor(_task("CP-1A", proceed))
-    (note,) = raised.value.__notes__
-    assert note == "its turn_not_sent event was not written: RuntimeError: log unwritable"
     assert [e["module"] for e in _events(tmp_path, "turn")] == ["CP-1A"]
+    assert _events(tmp_path, "turn_not_sent") == []  # the log is still readable, line by line
     _released_unsent(executor, tmp_path / "live", "halt")
+    return raised
+
+
+def test_a_turn_not_sent_the_full_disk_refuses_is_missing_and_the_refusal_is_unchanged(
+    tmp_path, monkeypatch
+):
+    """`append_event` is fail-open: the disk refusing the `turn_not_sent` write (an OSError in
+    the write) only emits a RuntimeWarning. The event is missing, the hold is released, and the
+    module raises its halt unchanged, with nothing noted on it."""
+    with pytest.warns(RuntimeWarning, match="run event not recorded: turn_not_sent: .*No space"):
+        raised = _halted_with_the_disk_full(tmp_path, monkeypatch)
+    assert type(raised.value) is ModuleHalted and not getattr(raised.value, "__notes__", [])
+
+
+def test_a_turn_not_sent_whose_warning_is_made_an_error_never_replaces_the_refusal(
+    tmp_path, monkeypatch
+):
+    """Where a warnings filter makes that RuntimeWarning an error (`-W error`), `append_event`
+    raises it. It is noted on the module's halt, which is still what the module raises, and the
+    hold is released."""
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        raised = _halted_with_the_disk_full(tmp_path, monkeypatch)
+    assert type(raised.value) is ModuleHalted
+    (note,) = raised.value.__notes__
+    assert note.startswith(
+        "its turn_not_sent event was not written: RuntimeWarning: "
+        "run event not recorded: turn_not_sent: [Errno 28] No space left on device"
+    )
 
 
 @pytest.mark.parametrize("stop", ["halt", "ledger"])
-def test_a_call_refused_before_its_turn_event_leaves_none(tmp_path, stop):
+def test_a_call_refused_before_its_turn_event_leaves_none(tmp_path, monkeypatch, stop):
     """A module halted, or the shared ledger stopped, once its hold is reserved (the reserve may
     have waited for another module's settlement) is refused before the `turn` event is written:
     the log shows no turn for it, sent or not, and its hold is released."""
@@ -2263,17 +2392,18 @@ def test_a_call_refused_before_its_turn_event_leaves_none(tmp_path, stop):
         check=lambda task, raw: (),
         events=tmp_path,
     )
-    peer_stopped = []
+    reserve = Budget.reserve
+
+    def reserved_then_stopped(budget: Budget, call_id: str, *more, **named) -> None:
+        reserve(budget, call_id, *more, **named)
+        if stop == "ledger" and call_id != "call-peer":
+            _peer_unknown_charge(budget)  # before this module's look
 
     def proceed() -> None:
-        if executor.budget.reserved == 0:
-            return  # asked before the reserve
-        if stop == "halt":
+        if stop == "halt" and executor.budget.reserved > 0:  # not when asked before the reserve
             raise ModuleHalted(HALTED)
-        if not peer_stopped:
-            peer_stopped.append(True)
-            _peer_unknown_charge(executor.budget)
 
+    monkeypatch.setattr(Budget, "reserve", reserved_then_stopped)
     kind, reason = REFUSED[stop]
     with pytest.raises(kind, match=reason) as raised:
         executor(_task("CP-1A", proceed))
