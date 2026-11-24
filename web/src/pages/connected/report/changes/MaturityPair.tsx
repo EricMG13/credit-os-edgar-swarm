@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { ChartTable } from "@/components/chart/ChartTable";
 import { Segmented } from "@/components/kit/Segmented";
 import { cx } from "@/utils/cx";
 import type { MaturityProfile } from "../../publishedReport";
@@ -12,6 +11,8 @@ type Traces = ReturnType<typeof maturityTraces>;
 type Row = MaturityProfile["rows"][number];
 
 const HEIGHT = 128;
+const LABEL = 56;
+const MIN_BAR = 6;
 
 /** Whether the profile can be drawn: a unit, distinct periods and at least one stated figure. */
 export function usableProfile(profile: MaturityProfile) {
@@ -28,61 +29,89 @@ export function usableProfile(profile: MaturityProfile) {
   );
 }
 
-/** One side of one period: a bar when the cell is a number, its own words when it is not, a gap when absent. */
-function Bar({
+type Axis = { low: number; high: number };
+
+const FILL = {
+  current: "bg-chart-1",
+  earlier: "border-2 border-chart-3 bg-surface-card",
+} as const;
+
+/**
+ * One side of one period, drawn in two slots that share one baseline across every column: the part
+ * above the baseline (label directly over its bar) and the part below (bar, then label). A stated
+ * zero is a tick on the baseline with its "0"; a cell that is not a number keeps its own words over a
+ * hatched stub; an absent cell says so.
+ */
+function Side({
   cell,
-  value,
   axis,
   current,
+  zone,
 }: {
   cell: string | null;
-  value: number | null;
-  axis: { low: number; high: number };
+  axis: Axis;
   current: boolean;
+  zone: "above" | "below";
 }) {
+  const value = cell === null ? null : amount(cell);
   const span = axis.high - axis.low || 1;
+  const px = (v: number) => (Math.abs(v) / span) * HEIGHT;
+  const above = (axis.high / span) * HEIGHT;
+  const below = (-axis.low / span) * HEIGHT;
+  const side = current ? "current" : "earlier";
   const label = (
     <Figure className="max-w-16 text-center text-caption leading-tight wrap-anywhere">
       {cell ?? "Not stated"}
     </Figure>
   );
-  if (value === null)
+  const bar = (height: number, zone: "above" | "below") => (
+    <span
+      data-bar={side}
+      data-zone={zone}
+      className={cx(
+        "block w-16",
+        FILL[side],
+        zone === "above" ? "rounded-t-ds-xs" : "rounded-b-ds-xs",
+      )}
+      style={{ height: `${String(Math.max(height, MIN_BAR))}px` }}
+    />
+  );
+  const tick = (
+    <span data-bar={side} data-zone="zero" className="block h-0.5 w-16 bg-text-tertiary" />
+  );
+  if (zone === "above")
     return (
-      <div className="flex w-16 flex-col items-center justify-end gap-1">
-        {label}
-        <span
-          className="gap-hatch block h-8 w-full rounded-t-ds-xs border border-dashed border-border-gap"
-          data-gap
-        />
+      <div
+        className="flex w-16 flex-col items-center justify-end gap-0.5"
+        style={{ height: `${String(LABEL + above)}px` }}
+      >
+        {value === null ? (
+          <>
+            {label}
+            <span
+              data-gap
+              className="gap-hatch block h-6 w-16 rounded-t-ds-xs border border-dashed border-border-gap"
+            />
+          </>
+        ) : value >= 0 ? (
+          <>
+            {label}
+            {value === 0 ? tick : bar(px(value), "above")}
+          </>
+        ) : null}
       </div>
     );
-  const up = (Math.max(value, 0) / span) * HEIGHT;
-  const down = (Math.max(-value, 0) / span) * HEIGHT;
   return (
-    <div className="flex w-16 flex-col items-center">
-      {label}
-      <div className="flex flex-col" style={{ height: `${String(HEIGHT)}px` }}>
-        <div
-          className="flex flex-col justify-end"
-          style={{ height: `${String((axis.high / span) * HEIGHT)}px` }}
-        >
-          <span
-            data-bar={current ? "current" : "earlier"}
-            className={cx(
-              "block w-16 rounded-t-ds-xs",
-              current ? "bg-chart-1" : "border-2 border-chart-3 bg-surface-subtle",
-            )}
-            style={{ height: `${String(Math.max(up, value > 0 ? 2 : 0))}px` }}
-          />
-        </div>
-        <span
-          className={cx(
-            "block w-16 rounded-b-ds-xs",
-            current ? "bg-chart-1" : "border-2 border-chart-3 bg-surface-subtle",
-          )}
-          style={{ height: `${String(down)}px` }}
-        />
-      </div>
+    <div
+      className="flex w-16 flex-col items-center justify-start gap-0.5"
+      style={{ height: `${String(below + LABEL)}px` }}
+    >
+      {value !== null && value < 0 ? (
+        <>
+          {bar(px(value), "below")}
+          {label}
+        </>
+      ) : null}
     </div>
   );
 }
@@ -96,14 +125,11 @@ function Walls({ rows }: { rows: readonly Row[] }) {
     <div className="grid gap-3">
       <p className="flex flex-wrap items-center gap-x-5 gap-y-1 text-caption text-text-secondary">
         <span className="flex items-center gap-1.5">
-          <span
-            aria-hidden="true"
-            className="size-3 rounded-ds-xs border-2 border-chart-3 bg-surface-subtle"
-          />
+          <span aria-hidden="true" className={cx("size-3 rounded-ds-xs", FILL.earlier)} />
           Earlier run: outlined bar
         </span>
         <span className="flex items-center gap-1.5">
-          <span aria-hidden="true" className="size-3 rounded-ds-xs bg-chart-1" />
+          <span aria-hidden="true" className={cx("size-3 rounded-ds-xs", FILL.current)} />
           This run: solid bar
         </span>
       </p>
@@ -116,12 +142,19 @@ function Walls({ rows }: { rows: readonly Row[] }) {
       >
         <div className="flex min-w-max gap-3 pb-1">
           {rows.map((row) => (
-            <div key={row.period} className="flex min-w-36 flex-1 flex-col gap-2">
-              <div className="flex items-end justify-center gap-2 border-b border-border-container">
-                <Bar cell={row.prior} value={amount(row.prior ?? "")} axis={axis} current={false} />
-                <Bar cell={row.current} value={amount(row.current ?? "")} axis={axis} current />
+            <div key={row.period} className="flex min-w-36 flex-1 flex-col items-stretch">
+              <div className="flex items-end justify-center gap-2">
+                <Side cell={row.prior} axis={axis} current={false} zone="above" />
+                <Side cell={row.current} axis={axis} current zone="above" />
               </div>
-              <span className="text-center font-mono text-caption text-text-secondary wrap-anywhere">
+              <span aria-hidden="true" className="block h-px w-full bg-border-container" />
+              {axis.low < 0 && (
+                <div className="flex items-start justify-center gap-2">
+                  <Side cell={row.prior} axis={axis} current={false} zone="below" />
+                  <Side cell={row.current} axis={axis} current zone="below" />
+                </div>
+              )}
+              <span className="mt-1 text-center font-mono text-caption text-text-secondary wrap-anywhere">
                 {row.period}
               </span>
             </div>
@@ -187,23 +220,50 @@ export function MaturityPair({ profile, traces }: { profile: MaturityProfile; tr
       {view === "chart" ? (
         <Walls rows={profile.rows} />
       ) : (
-        <ChartTable
-          caption="Debt maturity schedules"
-          head={["Period", "Earlier run", "Current run"]}
-          endHeading="Sources"
-          rows={profile.rows.map((row) => {
-            const prior = traces?.prior?.row(row.period, row.prior, profile.unit);
-            const current = traces?.current.row(row.period, row.current, profile.unit);
-            return {
-              label: row.period,
-              cells: [row.prior, row.current],
-              end:
-                prior || current ? (
-                  <Sources name={row.period} prior={prior} current={current} />
-                ) : undefined,
-            };
-          })}
-        />
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-small">
+            <caption className="sr-only">Debt maturity schedules</caption>
+            <thead>
+              <tr className="text-left text-caption text-text-tertiary">
+                <th scope="col" className="pb-2 font-normal">
+                  Period
+                </th>
+                <th scope="col" className="pb-2 text-right font-normal">
+                  Earlier run
+                </th>
+                <th scope="col" className="pb-2 text-right font-normal">
+                  Current run
+                </th>
+                <th scope="col" className="pb-2 font-normal">
+                  <span className="sr-only">Sources</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {profile.rows.map((row) => {
+                const prior = traces?.prior?.row(row.period, row.prior, profile.unit);
+                const current = traces?.current.row(row.period, row.current, profile.unit);
+                return (
+                  <tr key={row.period} className="border-t border-border-hairline">
+                    <th scope="row" className="py-2 pr-3 text-left font-normal">
+                      {row.period}
+                    </th>
+                    {[row.prior, row.current].map((cell, at) => (
+                      <td key={at} className="py-2 text-right font-mono tabular-nums">
+                        {cell ?? <span className="text-gap-text">Not stated</span>}
+                      </td>
+                    ))}
+                    <td className="py-2 pl-3">
+                      {(prior || current) && (
+                        <Sources name={row.period} prior={prior} current={current} />
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
     </Tile>
   );

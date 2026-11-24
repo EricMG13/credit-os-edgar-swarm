@@ -1,27 +1,44 @@
+import { PublishedSource } from "../PublishedTrace";
 import { GapNote } from "../overview/Tile";
-import type { LedgerItem } from "./model";
+import { LINK } from "./PassageTile";
+import type { LedgerGroup } from "./model";
 
-/** One short list of the ledger: what was added or what closed, each in the module's words. */
-export function LedgerList({ label, items }: { label: string; items: readonly LedgerItem[] }) {
-  return items.length === 0 ? (
-    <GapNote>None recorded</GapNote>
-  ) : (
-    <ul aria-label={label} className="grid gap-3">
-      {items.map(({ text, note, line, href }) => (
-        <li key={line} className="grid gap-0.5">
-          {text === null ? (
-            <a
-              className="text-link text-small underline underline-offset-2 max-[480px]:py-3"
-              href={href}
-            >
-              Read this limitation in Evidence
-            </a>
-          ) : (
-            <span className="reading-copy text-small text-text-primary">{text}</span>
-          )}
-          {note && <span className="text-caption text-text-secondary">Closed by: {note}</span>}
-        </li>
-      ))}
-    </ul>
+/** The ledger's rows of one status, each in the module's words with its trace. */
+export function LedgerList({ group }: { group: LedgerGroup }) {
+  const { heading, items } = group;
+  return (
+    <section className="grid content-start gap-3" aria-label={heading}>
+      <h4 className="text-caption text-text-tertiary">
+        {heading} ({items.length})
+      </h4>
+      <ul className="grid gap-3">
+        {items.map(({ text, note, line, href }) => (
+          <li key={line} className="flex items-start justify-between gap-3">
+            <span className="grid min-w-0 gap-0.5">
+              {text === null ? (
+                <a className={LINK} href={href}>
+                  Read this limitation in Evidence
+                </a>
+              ) : (
+                <span className="reading-copy text-small text-text-primary">{text}</span>
+              )}
+              {note && (
+                <span className="text-caption text-text-secondary">
+                  {group.status === "Closed" ? "Closed by: " : ""}
+                  {note}
+                </span>
+              )}
+            </span>
+            <PublishedSource href={href} name={text ?? "This limitation"}>
+              Source
+            </PublishedSource>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
+}
+
+export function EmptyLedger() {
+  return <GapNote>None recorded</GapNote>;
 }

@@ -17,6 +17,21 @@ export const EVENT_HEADERS = [
 
 export const EVENT_LANES = ["Historical", "Scheduled", "Scenario", "User reminder"] as const;
 const DAY = 86_400_000;
+
+/** A day event is a point; one that only records a period keeps the period's width. */
+export const isPeriod = (event: { from: number; to: number }) => event.to > event.from;
+/** The end of the drawn extent: a period runs to the end of its last day. */
+export const endOf = (event: { from: number; to: number }) =>
+  isPeriod(event) ? event.to + DAY : event.from;
+
+/** How a span is drawn, by recorded status category. */
+export const SPAN_STYLE: Record<(typeof EVENT_LANES)[number], string> = {
+  Historical: "border-text-tertiary bg-surface-subtle",
+  Scheduled: "border-action bg-chart-1/50",
+  Scenario: "border-dashed border-action bg-surface-card",
+  "User reminder": "border-action bg-surface-card",
+};
+
 function dayOf(text: string) {
   const date = Date.parse(text);
   return Number.isFinite(date) && new Date(date).toISOString().slice(0, 10) === text ? date : null;

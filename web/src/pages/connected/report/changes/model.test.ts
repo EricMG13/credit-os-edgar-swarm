@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { OutputEntry, PublishedChanges, Section } from "../../publishedReport";
-import { classifyMeasures, ledgerLists, statusColumn, verdictOf } from "./model";
+import { classifyMeasures, issuerFacts, ledgerOf, statusColumn, verdictOf } from "./model";
 
 const side = (value: string, unit = "x", period = "FY2025") => ({ value, unit, period });
 const measure = (key: string, prior: string, current: string, difference: number, extra = {}) => ({
@@ -158,31 +158,73 @@ describe("statusColumn", () => {
   });
 });
 
-describe("ledgerLists", () => {
+describe("ledgerOf", () => {
   const rows = [
     ["E1", "—", "Revolver terms unavailable", "**Closed**", "Amended agreement supplied"],
     ["—", "C2", "Hedge book not provided", "New", "—"],
     ["E3", "C3", "Lease schedule open", "Remaining", ""],
     ["—", "C4", "Per filing.pdf p. 3 the swap is unclear", "New", "—"],
+    ["E5", "—", "Pension terms old", "Watching", ""],
+    ["E6", "—", "Segment margins", "Parked", ""],
   ];
   const headers = ["Earlier ref", "Current ref", "Limitation", "Status", "What closed it"];
+  const ledger = (h = headers, r = rows) =>
+    ledgerOf(entryWith([table("Limitations ledger", h, r)]), "cur");
 
-  it("lists New limitations as added and Closed as removed, with what closed them", () => {
-    const lists = ledgerLists(entryWith([table("Limitations ledger", headers, rows)]), "cur");
-    expect(lists?.added.map((item) => item.text)).toEqual(["Hedge book not provided", null]);
-    expect(lists?.removed).toMatchObject([
-      { text: "Revolver terms unavailable", note: "Amended agreement supplied", line: 12 },
+  it("groups every status: added and removed first, then Remaining, Parked, the rest by name", () => {
+    const result = ledger();
+    if (!result || "table" in result) throw new Error("expected groups");
+    expect(result.groups.map((g) => [g.heading, g.items.length])).toEqual([
+      ["Added", 2],
+      ["Removed", 1],
+      ["Remaining", 1],
+      ["Parked", 1],
+      ["Watching", 1],
     ]);
+    expect(result.groups[1]?.items[0]).toMatchObject({
+      text: "Revolver terms unavailable",
+      note: "Amended agreement supplied",
+    });
   });
 
   it("keeps a row that cites a source as a link to Evidence, not a missing row", () => {
-    const lists = ledgerLists(entryWith([table("Limitations ledger", headers, rows)]), "cur");
-    expect(lists?.added[1]?.href).toMatch(/^\/report\/cur#evidence\//);
+    const result = ledger();
+    if (!result || "table" in result) throw new Error("expected groups");
+    expect(result.groups[0]?.items[1]).toMatchObject({ text: null });
+    expect(result.groups[0]?.items[1]?.href).toMatch(/^\/report\/cur#evidence\//);
   });
 
-  it("is empty without a ledger", () => {
-    expect(ledgerLists(entryWith([]), "cur")).toBeNull();
-    expect(ledgerLists(undefined, "cur")).toBeNull();
+  it("falls back to the table when a Status column is missing", () => {
+    const result = ledger(headers.slice(0, 3), [["E1", "C1", "Margins"]]);
+    expect(result).toHaveProperty("table");
+  });
+
+  it("is null without a ledger", () => {
+    expect(ledgerOf(entryWith([]), "cur")).toBeNull();
+    expect(ledgerOf(undefined, "cur")).toBeNull();
+  });
+});
+
+describe("issuerFacts", () => {
+  it("returns the issuer-table rows that are not pack measures, with a link each", () => {
+    const entry = entryWith([
+      table(
+        "What changed: the issuer",
+        ["Measure or fact", "Earlier", "Current", "Cause", "Effect on the credit view"],
+        [
+          ["Net leverage", "6x", "7x", "Unresolved", "Worse"],
+          ["New term loan B of US$600m signed", "—", "Signed", "New source", "More debt"],
+        ],
+      ),
+    ]);
+    const facts = issuerFacts(entry, "cur", new Set(["net leverage"]));
+    expect(facts).toHaveLength(1);
+    expect(facts[0]).toMatchObject({
+      label: { kind: "written", text: "New term loan B of US$600m signed" },
+      before: { kind: "absent" },
+      after: { kind: "written", text: "Signed" },
+    });
+    expect(facts[0]?.href).toMatch(/^\/report\/cur#evidence\//);
   });
 });
 
@@ -203,29 +245,34 @@ describe("verdictOf", () => {
       },
     ]);
 
-  it("is the first sentence, with the rest of the passage as body", () => {
+  it("is the first paragraph whole, never split at a full stop", () => {
     const verdict = verdictOf(
-      bottom("Credit is weaker than before. Leverage rose by half a turn.", "Cover fell."),
+      bottom(
+        "About the same: net leverage is approx. 7x. Cover is steady.",
+        "Worse: Acme Inc. rose.",
+      ),
       "cur",
     );
-    expect(verdict).toMatchObject({
-      sentence: "Credit is weaker than before.",
-      body: ["Leverage rose by half a turn.", "Cover fell."],
-      referenced: false,
-    });
-  });
-
-  it("does not split on a decimal", () => {
-    expect(verdictOf(bottom("Leverage is 3.5x higher."), "cur")?.sentence).toBe(
-      "Leverage is 3.5x higher.",
+    expect(verdict?.first.text).toBe(
+      "About the same: net leverage is approx. 7x. Cover is steady.",
     );
+    expect(verdict?.body).toHaveLength(1);
   });
 
-  it("links to Evidence instead of claiming no verdict when the first paragraph cites a source", () => {
-    expect(verdictOf(bottom("See filing.pdf p. 3 for the position."), "cur")).toMatchObject({
-      sentence: null,
-      referenced: true,
-    });
+  it("keeps a clean second paragraph and links a later one that cites a source", () => {
+    const verdict = verdictOf(
+      bottom(
+        "See filing.pdf p. 3 for the position.",
+        "Cover is steady.",
+        "Per report.pdf p. 2 more.",
+      ),
+      "cur",
+    );
+    expect(verdict?.first.text).toBeNull();
+    expect(verdict?.body.map((item) => (item.kind === "text" ? item.text : "table"))).toEqual([
+      "Cover is steady.",
+      null,
+    ]);
   });
 
   it("is null without a Bottom line", () => {

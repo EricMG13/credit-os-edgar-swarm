@@ -49,7 +49,7 @@ describe("MaturityPair", () => {
       earlier?.parentElement,
     );
     expect(Number.parseFloat(current?.style.height ?? "0")).toBeGreaterThan(0);
-    expect(Number.parseFloat(earlier?.style.height ?? "1")).toBe(0);
+    expect(Number.parseFloat(earlier?.style.height ?? "0")).toBeGreaterThan(0);
   });
 
   it("is unusable without a unit, distinct periods or any stated figure", () => {
@@ -116,5 +116,36 @@ describe("ModuleMatrix", () => {
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute("aria-expanded", "true");
     expect(document.getElementById("matrix-CP-1")).not.toHaveAttribute("hidden");
+  });
+});
+
+describe("MaturityPair baseline", () => {
+  const draw = (rows: { period: string; prior: string | null; current: string | null }[]) =>
+    render(<MaturityPair profile={{ unit: "US$m", rows }} />).container;
+
+  it("draws a stated zero as a tick with its figure, never as a bar", () => {
+    const c = draw([{ period: "FY2026", prior: "0", current: "100" }]);
+    expect(c.querySelector('[data-bar="earlier"]')?.getAttribute("data-zone")).toBe("zero");
+    expect(c.querySelector('[data-bar="current"]')?.getAttribute("data-zone")).toBe("above");
+  });
+
+  it("draws all-zero as ticks, not slabs", () => {
+    const c = draw([{ period: "FY2026", prior: "0", current: "0" }]);
+    expect([...c.querySelectorAll("[data-bar]")].map((n) => n.getAttribute("data-zone"))).toEqual([
+      "zero",
+      "zero",
+    ]);
+  });
+
+  it("keeps a small non-zero figure a visible outline, and all-negative sets below the baseline", () => {
+    const c = draw([
+      { period: "FY2026", prior: "-35", current: "-100" },
+      { period: "FY2027", prior: "12", current: "2800" },
+    ]);
+    const bars = [...c.querySelectorAll<HTMLElement>("[data-bar]")];
+    expect(
+      bars.every((b) => Number.parseFloat(b.style.height) >= 6 || b.dataset["zone"] === "zero"),
+    ).toBe(true);
+    expect(bars.slice(0, 2).map((b) => b.dataset["zone"])).toEqual(["below", "below"]);
   });
 });

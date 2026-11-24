@@ -1,27 +1,70 @@
 import type { ReactNode } from "react";
+import { evidencePath, type OutputEntry } from "../../publishedReport";
+import { PublishedTable } from "../../ReportContent";
 import { PublishedSource } from "../PublishedTrace";
 import { GapNote, Tile } from "../overview/Tile";
-import type { Paragraph } from "./model";
+import type { PassageItem } from "./model";
 
-const LINK = "text-link text-small underline underline-offset-2 max-[480px]:py-3";
+export const LINK =
+  "inline-flex min-h-8 items-center text-link text-small underline underline-offset-2 max-[480px]:min-h-11";
 
 /** One written paragraph with its single trace control; a paragraph that cites a source is a link instead. */
-function ParagraphLine({ item, noun }: { item: Paragraph; noun: string }) {
+function ParagraphLine({ text, href, noun }: { text: string | null; href: string; noun: string }) {
   return (
     <div className="flex items-start justify-between gap-3">
-      {item.text === null ? (
-        <a className={LINK} href={item.href}>
+      {text === null ? (
+        <a className={LINK} href={href}>
           Read this {noun} in Evidence
         </a>
       ) : (
-        <p className="reading-copy min-w-0 text-body text-text-primary">{item.text}</p>
+        <p className="reading-copy min-w-0 text-body text-text-primary">{text}</p>
       )}
-      {item.text !== null && (
-        <PublishedSource href={item.href} name={`This ${noun}`}>
+      {text !== null && (
+        <PublishedSource href={href} name={`This ${noun}`}>
           Source
         </PublishedSource>
       )}
     </div>
+  );
+}
+
+/** The blocks of a passage in order: paragraphs with a trace each, tables with a trace per row. */
+export function PassageBody({
+  items,
+  noun,
+  entry,
+  folder,
+  numbered = false,
+}: {
+  items: PassageItem[];
+  noun: string;
+  entry: OutputEntry;
+  folder: string;
+  numbered?: boolean;
+}) {
+  const List = numbered ? "ol" : "ul";
+  return (
+    <List className={numbered ? "grid list-decimal gap-3 pl-5 marker:font-mono" : "grid gap-3"}>
+      {items.map((item) => (
+        <li
+          key={item.kind === "text" ? item.line : item.table.line}
+          className={item.kind === "table" ? "list-none -ml-5" : undefined}
+        >
+          {item.kind === "text" ? (
+            <ParagraphLine text={item.text} href={item.href} noun={noun} />
+          ) : (
+            <PublishedTable
+              table={item.table}
+              rowSource={(line, label) => (
+                <PublishedSource href={evidencePath(folder, entry, line)} name={label}>
+                  Source
+                </PublishedSource>
+              )}
+            />
+          )}
+        </li>
+      ))}
+    </List>
   );
 }
 
@@ -30,35 +73,28 @@ export function PassageTile({
   span,
   title,
   noun,
-  paragraphs,
+  items,
+  entry,
+  folder,
   tone = "plain",
   numbered = false,
 }: {
   span: 5 | 7 | 12;
   title: string;
   noun: string;
-  paragraphs: Paragraph[] | null;
+  items: PassageItem[] | null;
+  entry: OutputEntry;
+  folder: string;
   tone?: "plain" | "counter";
   numbered?: boolean;
 }) {
   let body: ReactNode;
-  if (paragraphs === null || paragraphs.length === 0)
+  if (items === null || items.length === 0)
     body = <GapNote>Not established for this run: the handoff has no such passage.</GapNote>;
-  else {
-    const List = numbered ? "ol" : "ul";
+  else
     body = (
-      <List
-        className={numbered ? "grid list-decimal gap-3 pl-5 marker:font-mono" : "grid gap-3"}
-        aria-label={title}
-      >
-        {paragraphs.map((item) => (
-          <li key={item.line}>
-            <ParagraphLine item={item} noun={noun} />
-          </li>
-        ))}
-      </List>
+      <PassageBody items={items} noun={noun} entry={entry} folder={folder} numbered={numbered} />
     );
-  }
   return (
     <Tile span={span} label={title} title={title} tone={tone}>
       {body}

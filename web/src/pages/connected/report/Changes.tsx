@@ -13,15 +13,24 @@ import {
   type Snapshot,
 } from "../publishedReport";
 import { PublishedTable } from "../ReportContent";
-import { LedgerList } from "./changes/LedgerLists";
 import { MaturityPair, usableProfile } from "./changes/MaturityPair";
 import { MeasureList } from "./changes/MeasureList";
 import { ModuleMatrix } from "./changes/ModuleMatrix";
-import { classifyMeasures, ledgerLists, passageParagraphs, verdictOf } from "./changes/model";
-import { PassageTile } from "./changes/PassageTile";
+import {
+  analysisRows,
+  classifyMeasures,
+  issuerFacts,
+  ledgerOf,
+  passageItems,
+  verdictOf,
+} from "./changes/model";
+import { LINK, PassageBody, PassageTile } from "./changes/PassageTile";
+import { AnalysisTile, FactsTile, LedgerTile } from "./changes/Registers";
 import { comparisonTrace, maturityTraces } from "./comparisonTrace";
 import { Bento, GapNote, Tile } from "./overview/Tile";
 import { PublishedSource } from "./PublishedTrace";
+
+const BUTTON = "min-h-8 max-[480px]:min-h-11";
 
 export function ComparisonTable({
   rows,
@@ -78,8 +87,6 @@ function noComparisonSentence(raw: string | null | undefined) {
   return "No comparison was recorded for this run.";
 }
 
-const LINK = "text-link text-small underline underline-offset-2 max-[480px]:py-3";
-
 export function ReportChanges({
   snapshot,
   run,
@@ -102,7 +109,14 @@ export function ReportChanges({
       <>
         <h2 className="font-display text-h3 text-text-primary">Changes since the last run</h2>
         <NoComparison change={change} />
-        {entry && <Passages entry={entry} folder={run.folder} withBottomLine />}
+        {entry && (
+          <Bento>
+            <Passages entry={entry} folder={run.folder} withBottomLine />
+            <FactsTile facts={issuerFacts(entry, run.folder, new Set())} />
+            <AnalysisTile rows={analysisRows(entry, run.folder)} />
+            <LedgerTile ledger={ledgerOf(entry, run.folder)} entry={entry} folder={run.folder} />
+          </Bento>
+        )}
       </>
     );
   return (
@@ -114,6 +128,7 @@ export function ReportChanges({
           color="link-gray"
           size="sm"
           iconTrailing={ArrowRight}
+          className={BUTTON}
         >
           Review comparison evidence
         </Button>
@@ -148,7 +163,7 @@ function ComparedDates({ change }: { change: PublishedChanges }) {
   );
 }
 
-/** Row 1: the first sentence of the Bottom line is the verdict, in the largest type; the rest is its body. */
+/** Row 1: the first paragraph of the Bottom line, whole, is the verdict; the rest of the passage is its body. */
 function Verdict({
   change,
   entry,
@@ -170,8 +185,8 @@ function Verdict({
         </span>
       }
       trace={
-        verdict && !verdict.referenced ? (
-          <PublishedSource href={verdict.href} name="The verdict">
+        verdict?.first.text ? (
+          <PublishedSource href={verdict.first.href} name="The verdict">
             Source
           </PublishedSource>
         ) : undefined
@@ -179,28 +194,32 @@ function Verdict({
     >
       <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="grid content-start gap-3">
-          {verdict?.sentence ? (
-            <p className="reading-copy font-display text-h2 text-balance text-text-primary sm:text-h1">
-              {verdict.sentence}
+          {verdict?.first.text ? (
+            <p className="reading-copy font-display text-h3 text-balance text-text-primary sm:text-h2">
+              {verdict.first.text}
             </p>
-          ) : verdict?.referenced ? (
-            <a className={LINK} href={verdict.href}>
+          ) : verdict ? (
+            <a className={LINK} href={verdict.first.href}>
               Read the verdict in Evidence
             </a>
           ) : (
             <GapNote>The comparison does not state a verdict in a sentence.</GapNote>
           )}
-          {verdict?.body.map((text) => (
-            <p key={text} className="reading-copy text-body text-text-secondary">
-              {text}
-            </p>
-          ))}
+          {verdict && entry && verdict.body.length > 0 && (
+            <PassageBody items={verdict.body} noun="passage" entry={entry} folder={folder} />
+          )}
           <ComparedDates change={change} />
         </div>
         <GapNote>Stance, earlier → current: the comparison does not state it</GapNote>
       </div>
     </Tile>
   );
+}
+
+function noMovement(groups: ReturnType<typeof classifyMeasures>) {
+  if (groups.revised.length > 0) return null;
+  if (groups.unmoved.length > 0) return "No comparable measure moved between the two runs.";
+  return "No measure could be assessed between the two runs.";
 }
 
 function Measures({
@@ -222,6 +241,7 @@ function Measures({
       </Tile>
     );
   const { moved, revised, notAssessable } = groups;
+  const none = noMovement(groups);
   return (
     <Tile
       span={7}
@@ -248,10 +268,15 @@ function Measures({
         </section>
       ) : (
         <>
+          {!entry && (
+            <p className="text-small text-gap-text">
+              The comparison module did not run for this report, so no cause is stated.
+            </p>
+          )}
           {moved.length > 0 ? (
             <MeasureList label="Measures that moved" items={moved} evidence={trace.handoff} />
           ) : (
-            <GapNote>No measure moved between the two runs.</GapNote>
+            none && <GapNote>{none}</GapNote>
           )}
           <MeasureGroup
             title="Revised for the same period"
@@ -307,8 +332,12 @@ function Comparison({
 }) {
   const pack = change.pack;
   const { unmoved } = classifyMeasures(change, trace.measure, entry);
-  const ledger = ledgerLists(entry, run.folder);
   const folder = run.folder;
+  const labels = new Set(
+    (pack?.measures ?? []).map(({ label }) =>
+      label.replaceAll("**", "").trim().replace(/\s+/g, " ").toLowerCase(),
+    ),
+  );
   return (
     <Bento>
       <Verdict change={change} entry={entry} folder={folder} />
@@ -328,28 +357,8 @@ function Comparison({
         omitted={pack?.omitted?.maturity_profile}
         traces={pack?.maturity_profile ? maturityTraces(snapshot, run, entries, change) : undefined}
       />
-      {entry && (
-        <>
-          <PassageTile
-            span={7}
-            title="Key findings"
-            noun="finding"
-            numbered
-            paragraphs={passageParagraphs(entry, "Key findings", folder)}
-          />
-          <PassageTile
-            span={5}
-            title="Contrary evidence and what would change the view"
-            noun="passage"
-            tone="counter"
-            paragraphs={passageParagraphs(
-              entry,
-              "Contrary evidence and what would change the view",
-              folder,
-            )}
-          />
-        </>
-      )}
+      {entry && <Passages entry={entry} folder={folder} />}
+      <FactsTile facts={issuerFacts(entry, folder, labels)} />
       {unmoved.length > 0 && (
         <Tile span={12} label="Measures that did not move" title="Measures that did not move">
           <details>
@@ -367,24 +376,7 @@ function Comparison({
           </details>
         </Tile>
       )}
-      {ledger && (
-        <>
-          <Tile span={6} label="Limitations added" title="Limitations added">
-            <LedgerList label="Limitations added" items={ledger.added} />
-          </Tile>
-          <Tile span={6} label="Limitations removed" title="Limitations removed">
-            <LedgerList label="Limitations removed" items={ledger.removed} />
-          </Tile>
-        </>
-      )}
-      {entry && (
-        <PassageTile
-          span={12}
-          title="Limitations of this comparison"
-          noun="limitation"
-          paragraphs={passageParagraphs(entry, "Limitations", folder)}
-        />
-      )}
+      {entry && <LedgerTile ledger={ledgerOf(entry, folder)} entry={entry} folder={folder} />}
     </Bento>
   );
 }
@@ -399,41 +391,29 @@ function Passages({
   folder: string;
   withBottomLine?: boolean;
 }) {
+  const tile = (
+    span: 5 | 7 | 12,
+    title: string,
+    noun: string,
+    extra: { numbered?: boolean; tone?: "counter" } = {},
+  ) => (
+    <PassageTile
+      span={span}
+      title={title}
+      noun={noun}
+      items={passageItems(entry, title, folder)}
+      entry={entry}
+      folder={folder}
+      {...extra}
+    />
+  );
   return (
-    <Bento>
-      {withBottomLine && (
-        <PassageTile
-          span={12}
-          title="Bottom line"
-          noun="passage"
-          paragraphs={passageParagraphs(entry, "Bottom line", folder)}
-        />
-      )}
-      <PassageTile
-        span={7}
-        title="Key findings"
-        noun="finding"
-        numbered
-        paragraphs={passageParagraphs(entry, "Key findings", folder)}
-      />
-      <PassageTile
-        span={5}
-        title="Contrary evidence and what would change the view"
-        noun="passage"
-        tone="counter"
-        paragraphs={passageParagraphs(
-          entry,
-          "Contrary evidence and what would change the view",
-          folder,
-        )}
-      />
-      <PassageTile
-        span={12}
-        title="Limitations of this comparison"
-        noun="limitation"
-        paragraphs={passageParagraphs(entry, "Limitations", folder)}
-      />
-    </Bento>
+    <>
+      {withBottomLine && tile(12, "Bottom line", "passage")}
+      {tile(7, "Key findings", "finding", { numbered: true })}
+      {tile(5, "Contrary evidence and what would change the view", "passage", { tone: "counter" })}
+      {tile(12, "Limitations", "limitation")}
+    </>
   );
 }
 
@@ -479,10 +459,16 @@ function NoComparison({ change }: { change: PublishedChanges | null | undefined 
           <GapNote>{sentence}</GapNote>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-3">
-          <Button href="#overview" color="secondary" size="sm">
+          <Button href="#overview" color="secondary" size="sm" className={BUTTON}>
             Open the Overview
           </Button>
-          <Button href="#evidence/record" color="link-gray" size="sm" iconTrailing={ArrowRight}>
+          <Button
+            href="#evidence/record"
+            color="link-gray"
+            size="sm"
+            iconTrailing={ArrowRight}
+            className={BUTTON}
+          >
             Review comparison evidence
           </Button>
         </div>
@@ -503,7 +489,7 @@ function FirstRun() {
         <p className="reading-copy text-body text-text-secondary">
           Only reports already listed when this run was made can be used for comparison.
         </p>
-        <Button href="#overview" color="secondary">
+        <Button href="#overview" color="secondary" className={BUTTON}>
           Open the Overview
         </Button>
       </Tile>

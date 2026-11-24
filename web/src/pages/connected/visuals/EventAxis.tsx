@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { cx } from "@/utils/cx";
-import { EVENT_LANES, Legend, Mark, type EventRecord } from "./EventLane";
+import { VerticalAxis } from "./EventAxisVertical";
+import {
+  endOf,
+  EVENT_LANES,
+  isPeriod,
+  Legend,
+  Mark,
+  SPAN_STYLE,
+  type EventRecord,
+} from "./EventLane";
 
 const DAY = 86_400_000;
 /** The plot's width before it is measured (the axis scrolls below 720px, so the plot is this wide at least). */
@@ -10,19 +19,29 @@ const ROW_PX = 52;
 /** Half the widest hit area, so neighbouring targets never overlap. */
 const HALF_HIT_PX = 22;
 const LABEL_GAP_PX = 6;
-const LABEL_MAX_PX = 240;
+/** A label may reach this far past the plot into its margin. */
+const BOUND_PX = 12;
+/** The least width worth drawing a truncated label in. */
+const MIN_LABEL_PX = 56;
+/** A crowded label is narrowed to these widths before it takes a row of its own beyond the cap. */
+const NARROW_PX = [160, 112, 84];
+/** Rows a lane fills, narrowing labels, before it grows another row for a full-width label. */
+const ROW_CAP = 3;
+/** A period bar this wide can carry its own label. */
+const INSIDE_MIN_PX = 72;
 const TICK_GAP_PX = 72;
 const PAD_DAYS = 30;
+/** The phone layout draws the axis down the page. */
+const PHONE_QUERY = "(max-width: 640px)";
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 /** Under about two years the axis is ticked by month, otherwise by year. */
 const MONTH_TICK_RANGE = 2 * 366 * DAY;
 
 type Category = EventRecord["category"];
 
-/** A day event is a point; one that only records a period keeps the period's width. */
-const isPeriod = (event: EventRecord) => event.to > event.from;
-const endOf = (event: EventRecord) => (isPeriod(event) ? event.to + DAY : event.from);
 const isoDate = (time: number) => new Date(time).toISOString().slice(0, 10);
+
+type Side = "right" | "left" | "inside";
 
 type Placed = {
   event: EventRecord;
@@ -31,28 +50,82 @@ type Placed = {
   /** A period's recorded width, percent of the plot; 0 for a day. */
   width: number;
   row: number;
-  flip: boolean;
-  /** Pixels the label may take. */
+  side: Side;
+  /** The most pixels the label may take; the text decides the rest. */
   labelPx: number;
+  /** A crowded label gives up its date (the title and the table keep it) to keep the name. */
+  dateless: boolean;
 };
 
-/** What a label takes: the date in mono and the name, estimated per character. */
-const labelWidth = (event: EventRecord) =>
-  Math.min(LABEL_MAX_PX, event.date.length * 7.4 + 8 + event.event.length * 7);
+/** Text widths: measured on a canvas in the page's own fonts, estimated where there is no canvas. */
+type Measure = (text: string, mono: boolean) => number;
+
+const ESTIMATE: Measure = (text, mono) => text.length * (mono ? 7.4 : 7.2);
+
+/** A 2d canvas for measuring text, or null where there is none (jsdom reports one as an error). */
+function measuringContext() {
+  if (typeof navigator !== "undefined" && /jsdom/i.test(navigator.userAgent)) return null;
+  try {
+    return document.createElement("canvas").getContext("2d");
+  } catch {
+    return null;
+  }
+}
+
+const fontOf = (element: Element | null) => {
+  if (!element) return "";
+  const { fontStyle, fontWeight, fontSize, fontFamily } = getComputedStyle(element);
+  return fontSize && fontFamily ? `${fontStyle} ${fontWeight} ${fontSize} ${fontFamily}` : "";
+};
+
+type Fonts = { canvas: CanvasRenderingContext2D; mono: string; name: string };
+
+/** A measuring function for the label fonts; it re-reads them when the page's fonts finish loading. */
+function useTextWidth() {
+  const mono = useRef<HTMLSpanElement>(null);
+  const name = useRef<HTMLSpanElement>(null);
+  const [fonts, setFonts] = useState<Fonts | null>(null);
+  useEffect(() => {
+    const canvas = measuringContext();
+    if (!canvas) return;
+    const read = () => {
+      setFonts({ canvas, mono: fontOf(mono.current), name: fontOf(name.current) });
+    };
+    read();
+    void document.fonts?.ready.then(read);
+  }, []);
+  const measure: Measure = (text, isMono) => {
+    const font = fonts?.[isMono ? "mono" : "name"];
+    if (!fonts || !font) return ESTIMATE(text, isMono);
+    fonts.canvas.font = font;
+    return fonts.canvas.measureText(text).width;
+  };
+  const probes = (
+    <>
+      <span
+        ref={mono}
+        aria-hidden="true"
+        className="invisible absolute font-mono text-caption tabular-nums"
+      />
+      <span ref={name} aria-hidden="true" className="invisible absolute text-small font-medium" />
+    </>
+  );
+  return { measure, probes };
+}
+
+/** What a label takes: the date in mono, a gap, then the name. */
+const labelWidth = (event: EventRecord, measure: Measure) =>
+  Math.ceil(measure(event.date, true) + 6 + measure(event.event, false)) + 2;
 
 type Extent = { left: number; right: number };
 
-function extentOf(
-  event: EventRecord,
-  startPx: number,
-  widthPx: number,
-  flip: boolean,
-  label: number,
-) {
-  const period = isPeriod(event);
+type Frame = { startPx: number; widthPx: number; period: boolean };
+
+function extentOf({ startPx, widthPx, period }: Frame, side: Side, label: number): Extent {
   const left = period ? startPx : startPx - HALF_HIT_PX;
   const right = period ? startPx + Math.max(widthPx, 2 * HALF_HIT_PX) : startPx + HALF_HIT_PX;
-  return flip
+  if (side === "inside") return { left, right };
+  return side === "left"
     ? { left: left - LABEL_GAP_PX - label, right }
     : { left, right: right + LABEL_GAP_PX + label };
 }
@@ -60,29 +133,91 @@ function extentOf(
 const overlaps = (a: Extent, b: Extent) =>
   a.left < b.right + LABEL_GAP_PX && b.left < a.right + LABEL_GAP_PX;
 
+/** A side, the width its label takes in the packing, and the most it may use before it truncates. */
+type Choice = { side: Side; label: number; max: number; dateless?: boolean };
+
+/** The sides a label can take, best first, each with the room it has inside the plot. */
+function choices(frame: Frame, wanted: number, plotPx: number): Choice[] {
+  const hit = extentOf(frame, "inside", 0);
+  const sides = [
+    { side: "right" as const, room: Math.floor(plotPx + BOUND_PX - hit.right - LABEL_GAP_PX) },
+    { side: "left" as const, room: Math.floor(hit.left - LABEL_GAP_PX + BOUND_PX) },
+  ];
+  const whole = sides
+    .filter(({ room }) => room >= wanted)
+    .map(({ side, room }) => ({ side, label: wanted, max: room }));
+  if (whole.length) return whole;
+  const inside = Math.floor(frame.widthPx - 10);
+  const roomy = frame.period && frame.widthPx >= INSIDE_MIN_PX;
+  const within: Choice = { side: "inside", label: inside, max: inside };
+  if (roomy && inside >= wanted * 0.6) return [within];
+  const [best] = [...sides].sort((a, b) => b.room - a.room);
+  if (best && best.room >= MIN_LABEL_PX)
+    return [{ side: best.side, label: best.room, max: best.room }];
+  const side = best?.side ?? "right";
+  return roomy ? [within] : [{ side, label: MIN_LABEL_PX, max: MIN_LABEL_PX }];
+}
+
+type Option = Choice & { extent: Extent };
+
+/** The same choices with each whole label narrowed to a width, without its date; squeezed ones stay. */
+const narrowed = (options: Choice[], wanted: number, width: number) =>
+  options.map((option) =>
+    option.label === wanted ? { ...option, label: width, max: width, dateless: true } : option,
+  );
+
+/** The first row and choice where nothing overlaps; narrower labels fill the capped rows first. */
+function slot(rows: Extent[][], sets: Option[][]) {
+  const free = (row: number, option: Option) =>
+    (rows[row] ?? []).every((other) => !overlaps(option.extent, other));
+  const [full] = sets;
+  const narrowest = sets.at(-1);
+  for (let row = 0; ; row += 1) {
+    const tried = row < ROW_CAP ? sets : narrowest ? [narrowest] : [];
+    for (const options of tried) {
+      const option = options.find((candidate) => free(row, candidate));
+      if (option) return { row, option };
+    }
+    if (row > 1000) return { row, option: full?.[0] };
+  }
+}
+
 /** Stack labelled marks into sub-rows so no label or hit area covers another. */
-function place(events: EventRecord[], min: number, range: number, plotPx: number): Placed[] {
+function place(
+  events: EventRecord[],
+  min: number,
+  range: number,
+  plotPx: number,
+  measure: Measure,
+): Placed[] {
   const pct = (time: number) => (time - min) / range;
   const rows: Extent[][] = [];
   return [...events]
     .sort((a, b) => a.from - b.from || a.to - b.to || a.index - b.index)
     .map((event) => {
       const start = pct(event.from) * 100;
-      const startPx = (start / 100) * plotPx;
       const width = isPeriod(event) ? (pct(endOf(event)) - pct(event.from)) * 100 : 0;
-      const widthPx = (width / 100) * plotPx;
-      const wanted = labelWidth(event);
-      const rightFits = extentOf(event, startPx, widthPx, false, wanted).right <= plotPx + 16;
-      const flip = !rightFits && startPx > plotPx - startPx;
-      const room = flip
-        ? startPx - HALF_HIT_PX - LABEL_GAP_PX + 16
-        : plotPx - (startPx + Math.max(widthPx, HALF_HIT_PX)) - LABEL_GAP_PX + 16;
-      const labelPx = Math.max(60, Math.min(wanted, room));
-      const extent = extentOf(event, startPx, widthPx, flip, labelPx);
-      const free = rows.findIndex((row) => row.every((other) => !overlaps(extent, other)));
-      const row = free === -1 ? rows.length : free;
-      (rows[row] ??= []).push(extent);
-      return { event, start, width, row, flip, labelPx };
+      const frame = {
+        startPx: (start / 100) * plotPx,
+        widthPx: (width / 100) * plotPx,
+        period: isPeriod(event),
+      };
+      const wanted = labelWidth(event, measure);
+      const base = choices(frame, wanted, plotPx);
+      const name = Math.ceil(measure(event.event, false)) + 2;
+      const widths = [wanted, ...[name, ...NARROW_PX].filter((px) => px < wanted)];
+      const sets = widths.map((px) =>
+        (px === wanted ? base : narrowed(base, wanted, px)).map((choice) => ({
+          ...choice,
+          extent: extentOf(frame, choice.side, choice.label),
+        })),
+      );
+      const { row, option } = slot(rows, sets);
+      if (!option)
+        return { event, start, width, row, side: "right" as Side, labelPx: 0, dateless: false };
+      (rows[row] ??= []).push(option.extent);
+      const { side, max, dateless = false } = option;
+      return { event, start, width, row, side, labelPx: max, dateless };
     });
 }
 
@@ -153,27 +288,46 @@ function usePlotWidth() {
   return [ref, px] as const;
 }
 
-const SPAN_STYLE: Record<Category, string> = {
-  Historical: "border-text-tertiary bg-surface-subtle",
-  Scheduled: "border-action bg-chart-1/50",
-  Scenario: "border-dashed border-action bg-surface-card",
-  "User reminder": "border-action bg-surface-card",
-};
-
-function EventLabel({ event, flip, px }: { event: EventRecord; flip: boolean; px: number }) {
+function EventLabel({
+  event,
+  side,
+  px,
+  dateless,
+}: {
+  event: EventRecord;
+  side: Side;
+  px: number;
+  dateless: boolean;
+}) {
   return (
     <span
       aria-hidden="true"
+      data-event-label=""
+      data-label-side={side}
       className={cx(
-        "pointer-events-none absolute top-1/2 flex -translate-y-1/2 items-baseline gap-1.5 overflow-hidden whitespace-nowrap",
-        flip ? "right-full mr-1.5 flex-row-reverse text-right" : "left-full ml-1.5 text-left",
+        "pointer-events-none absolute flex items-baseline gap-1.5 overflow-hidden whitespace-nowrap",
+        side === "inside" && "top-1/2 left-1.5 -translate-y-1/2 text-caption",
+        side === "left" && "top-1/2 right-full mr-1.5 -translate-y-1/2 flex-row-reverse text-right",
+        side === "right" && "top-1/2 left-full ml-1.5 -translate-y-1/2 text-left",
       )}
-      style={{ width: `${String(px)}px` }}
+      style={{ maxWidth: `${String(px)}px` }}
     >
-      <span className="flex-none font-mono text-caption text-text-secondary tabular-nums">
-        {event.date}
-      </span>
-      <span className="min-w-0 truncate text-small font-medium text-text-primary">
+      {dateless ? null : (
+        <span
+          className={cx(
+            "flex-none font-mono text-text-secondary tabular-nums",
+            side !== "inside" && "text-caption",
+          )}
+        >
+          {event.date}
+        </span>
+      )}
+      <span
+        className={cx(
+          "min-w-0 truncate font-medium text-text-primary",
+          side !== "inside" && "text-small",
+        )}
+      >
         {event.event}
       </span>
     </span>
@@ -191,7 +345,7 @@ function EventButton({
   plotPx: number;
   onSelect: () => void;
 }) {
-  const { event, start, width, row, flip, labelPx } = item;
+  const { event, start, width, row, side, labelPx, dateless } = item;
   const { date, precision, status, category } = event;
   const period = isPeriod(event);
   return (
@@ -230,7 +384,7 @@ function EventButton({
           <Mark category={category} />
         </span>
       )}
-      <EventLabel event={event} flip={flip} px={labelPx} />
+      <EventLabel event={event} side={side} px={labelPx} dateless={dateless} />
     </button>
   );
 }
@@ -256,33 +410,48 @@ function axisRange(events: EventRecord[], asOf: number | null) {
   };
 }
 
-/**
- * The calendar on one true time axis: a lane per recorded status category, x proportional to
- * date, every event labelled with its date and name. A day event is a mark; an event with only a
- * period is a span of the recorded width.
- */
-export function EventAxis({
+type AsOf = { time: number; text: string };
+type Range = ReturnType<typeof axisRange>;
+
+/** Whether the viewport is a phone's, where the axis runs down the page instead of across. */
+function usePhone() {
+  const [phone, setPhone] = useState(
+    () => typeof window.matchMedia === "function" && window.matchMedia(PHONE_QUERY).matches,
+  );
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const query = window.matchMedia(PHONE_QUERY);
+    const read = () => {
+      setPhone(query.matches);
+    };
+    read();
+    query.addEventListener("change", read);
+    return () => {
+      query.removeEventListener("change", read);
+    };
+  }, []);
+  return phone;
+}
+
+function HorizontalAxis({
   events,
   asOf,
+  hidden,
+  label,
+  range: { min, max, range, firstDay, lastDay },
   rowId,
   onSelect,
 }: {
   events: EventRecord[];
-  /** The run's as-of date as a timestamp and its text, already validated. */
-  asOf: { time: number; text: string } | null;
+  asOf: AsOf | null;
+  hidden: ReadonlySet<Category>;
+  label: string;
+  range: Range;
   rowId: (index: number) => string;
   onSelect: (index: number) => void;
 }) {
-  const [hidden, setHidden] = useState<ReadonlySet<Category>>(new Set());
   const [plot, plotPx] = usePlotWidth();
-  const toggle = (category: Category) => {
-    setHidden((prev) => {
-      const next = new Set(prev);
-      if (!next.delete(category)) next.add(category);
-      return next;
-    });
-  };
-  const { min, max, range, firstDay, lastDay } = axisRange(events, asOf?.time ?? null);
+  const { measure, probes } = useTextWidth();
   const x = (time: number) => ((time - min) / range) * 100;
   const lanes = EVENT_LANES.filter(
     (lane) => !hidden.has(lane) && events.some((event) => event.category === lane),
@@ -292,32 +461,27 @@ export function EventAxis({
       min,
       range,
       plotPx,
+      measure,
     );
     return { lane, placed, rows: Math.max(...placed.map(({ row }) => row)) + 1 };
   });
   const ticks = axisTicks(min, max, plotPx);
   const right = asOf !== null && x(asOf.time) > 80;
-  const count = events.length === 1 ? "1 event" : `${String(events.length)} events`;
   return (
-    <div className="grid min-w-0 gap-3">
-      <Legend events={events} hidden={hidden} onToggle={toggle} />
-      {lanes.length ? null : (
-        <p role="status" className="text-small text-text-secondary">
-          No categories are selected.
-        </p>
-      )}
+    <>
       <div
         role="group"
-        aria-label={`Events on a time axis: ${count}, ${firstDay} to ${lastDay}`}
+        aria-label={label}
         className="overflow-x-auto"
         data-testid="event-axis"
         // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
         tabIndex={0}
       >
         <div className="relative min-w-[720px]">
+          {probes}
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute inset-y-0 right-0 left-28"
+            className="pointer-events-none absolute top-0 right-0 bottom-7 left-28"
           >
             <div className="absolute inset-y-0 right-4 left-4">
               {ticks.map(({ key, time }) => (
@@ -328,25 +492,32 @@ export function EventAxis({
                   style={{ left: `${String(x(time))}%` }}
                 />
               ))}
-              {asOf ? (
+            </div>
+          </div>
+          {asOf ? (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute top-6 right-0 bottom-7 left-28"
+            >
+              <div className="absolute inset-y-0 right-4 left-4">
                 <div
                   data-as-of-rule={asOf.text}
                   className="absolute inset-y-0 border-l-2 border-action"
                   style={{ left: `${String(x(asOf.time))}%` }}
                 />
-              ) : null}
+              </div>
             </div>
-          </div>
+          ) : null}
           <div className="relative flex h-6 items-end text-caption text-text-tertiary">
             <span className="w-28 flex-none" />
             <div ref={plot} className="relative mx-4 h-full flex-1">
-              {ticks.map(({ key, label, time }) => (
+              {ticks.map(({ key, label: tick, time }) => (
                 <span
                   key={key}
                   className="absolute bottom-0 pl-1 whitespace-nowrap tabular-nums"
                   style={{ left: `${String(x(time))}%` }}
                 >
-                  {label}
+                  {tick}
                 </span>
               ))}
             </div>
@@ -406,6 +577,69 @@ export function EventAxis({
       <p className="hidden text-caption text-text-tertiary max-[720px]:block">
         Scroll the axis sideways to see its whole range.
       </p>
+    </>
+  );
+}
+
+/**
+ * The calendar on one true time axis: a lane per recorded status category, x proportional to
+ * date, every event labelled with its date and name. A day event is a mark; an event with only a
+ * period is a span of the recorded width. On a phone the axis runs down the page instead.
+ */
+export function EventAxis({
+  events,
+  asOf,
+  rowId,
+  onSelect,
+}: {
+  events: EventRecord[];
+  /** The run's as-of date as a timestamp and its text, already validated. */
+  asOf: AsOf | null;
+  rowId: (index: number) => string;
+  onSelect: (index: number) => void;
+}) {
+  const [hidden, setHidden] = useState<ReadonlySet<Category>>(new Set());
+  const phone = usePhone();
+  const toggle = (category: Category) => {
+    setHidden((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(category)) next.add(category);
+      return next;
+    });
+  };
+  const range = axisRange(events, asOf?.time ?? null);
+  const count = events.length === 1 ? "1 event" : `${String(events.length)} events`;
+  const label = `Events on a time axis: ${count}, ${range.firstDay} to ${range.lastDay}`;
+  const shown = events.filter((event) => !hidden.has(event.category));
+  return (
+    <div className="grid min-w-0 gap-3">
+      <Legend events={events} hidden={hidden} onToggle={toggle} />
+      {shown.length ? null : (
+        <p role="status" className="text-small text-text-secondary">
+          No categories are selected.
+        </p>
+      )}
+      {phone ? (
+        <VerticalAxis
+          events={shown}
+          asOf={asOf}
+          label={label}
+          firstDay={range.firstDay}
+          lastDay={range.lastDay}
+          rowId={rowId}
+          onSelect={onSelect}
+        />
+      ) : (
+        <HorizontalAxis
+          events={events}
+          asOf={asOf}
+          hidden={hidden}
+          label={label}
+          range={range}
+          rowId={rowId}
+          onSelect={onSelect}
+        />
+      )}
     </div>
   );
 }

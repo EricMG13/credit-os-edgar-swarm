@@ -12,7 +12,8 @@ const TONE = {
   flat: "text-text-secondary",
 } as const;
 
-const LINK = "text-link text-small underline underline-offset-2 max-[480px]:py-3";
+const LINK =
+  "inline-flex min-h-8 items-center text-link text-small underline underline-offset-2 max-[480px]:min-h-11";
 
 /** The stated cause in words. "Unresolved" is the one word set apart; a long cause is plain text. */
 function CauseLine({ cause, href }: { cause: Cause; href: string | undefined }) {
