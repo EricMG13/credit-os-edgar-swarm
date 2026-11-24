@@ -1,6 +1,6 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import type { Run } from "../api";
+import type { ConnectedRun as Run } from "../api";
 import type { OutputEntry, PublishedRun } from "../publishedReport";
 import { ReportRecord } from "./Record";
 

@@ -5,10 +5,12 @@ import path from "node:path";
 import { test } from "node:test";
 import {
   defaultAddressProblems,
+  checkRoutes,
   domProblems,
   libraryDeclaresHome,
   visitsFor,
 } from "./route-visits.mjs";
+import { pathsIn } from "./route-paths.mjs";
 
 function withStubGroup(routesSource, body) {
   const root = mkdtempSync(path.join(tmpdir(), "credit-os-visits-"));
@@ -48,6 +50,29 @@ test("a group with no home gets no bare-address visit", () => {
       ["#/signal/a"],
     );
   });
+});
+
+test("route arrays are read only from exported routes declarations", () => {
+  const source = `
+    const unrelated = [{ path: "/ignored" }];
+    export const libraryRoutes: readonly Route[] = [
+      { path: "/library/:issuer", title: "A ] label" },
+      { path: "/library/home" },
+    ];
+  `;
+  assert.deepEqual(pathsIn(source), ["/library/:issuer", "/library/home"]);
+  assert.deepEqual(pathsIn('export const routes = [{ path: "/fixture" }];'), ["/fixture"]);
+  assert.deepEqual(
+    pathsIn('export const modelRoutes = [{ path: "/model/a]b", label: `text ]` }];'),
+    ["/model/a]b"],
+  );
+  assert.deepEqual(
+    pathsIn(`export const signalRoutes = [
+      { path: "/signal/feed", label: "a ] bracket" }, // comment has ] too
+      { path: "/signal/settings" },
+    ];`),
+    ["/signal/feed", "/signal/settings"],
+  );
 });
 
 test("Not built yet fails a bare address only; a page may contain those words", () => {
@@ -90,9 +115,90 @@ test("the default address of a library with a home must be one real page", () =>
 test("libraryDeclaresHome reads the library group's routes.tsx", () => {
   withStubGroup("export const routes = [];", (pages) => {
     mkdirSync(path.join(pages, "library"));
-    writeFileSync(path.join(pages, "library", "routes.tsx"), 'const r = [{ home: "/library/x" }];');
+    writeFileSync(
+      path.join(pages, "library", "routes.tsx"),
+      'export const libraryRoutes = [{ home: "/library/x" }];',
+    );
     assert.equal(libraryDeclaresHome(pages), true);
-    writeFileSync(path.join(pages, "library", "routes.tsx"), "const r = [];");
+    writeFileSync(path.join(pages, "library", "routes.tsx"), "export const libraryRoutes = [];");
     assert.equal(libraryDeclaresHome(pages), false);
+  });
+});
+
+function withRouteProofFolder(body) {
+  const root = mkdtempSync(path.join(tmpdir(), "credit-os-route-proof-"));
+  const folder = path.join(root, "built");
+  const work = path.join(root, "work");
+  mkdirSync(folder);
+  try {
+    writeFileSync(path.join(folder, "index.html"), "<!doctype html>");
+    body({ folder, work });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+}
+
+function captureConsole(body) {
+  const original = console.log;
+  const lines = [];
+  console.log = (...parts) => lines.push(parts.join(" "));
+  try {
+    return { result: body(), lines };
+  } finally {
+    console.log = original;
+  }
+}
+
+test("the route checker passes every declared address and unknown hash", () => {
+  withRouteProofFolder(({ folder, work }) => {
+    const visits = [];
+    const { result, lines } = captureConsole(() =>
+      checkRoutes({
+        browser: "test",
+        folder,
+        work,
+        dumpPage: (_browser, _folder, hash) => {
+          visits.push(hash);
+          return {
+            dom:
+              hash === "#/no-such-page"
+                ? "<main><h1>Page not found</h1></main>"
+                : "<main><h1>Route</h1></main>",
+            log: "",
+          };
+        },
+        problems: () => [],
+      }),
+    );
+    assert.equal(result, true);
+    assert.ok(visits.length > 1);
+    assert.ok(lines.some((line) => line.includes("an unknown hash expects")));
+  });
+});
+
+test("the route checker fails a visit with a bad DOM and a browser error", () => {
+  withRouteProofFolder(({ folder, work }) => {
+    let first = true;
+    const { result, lines } = captureConsole(() =>
+      checkRoutes({
+        browser: "test",
+        folder,
+        work,
+        dumpPage: (_browser, _folder, hash) => {
+          if (hash === "#/no-such-page")
+            return { dom: "<main><h1>Page not found</h1></main>", log: "" };
+          if (first) {
+            first = false;
+            return { dom: "<main></main>", log: "Uncaught page error" };
+          }
+          return { dom: "<main><h1>Route</h1></main>", log: "" };
+        },
+        problems: (log) => (log ? ["Uncaught"] : []),
+      }),
+    );
+    assert.equal(result, false);
+    assert.ok(lines.some((line) => line.includes("FAIL route")));
+    assert.ok(lines.some((line) => line.includes("stderr contains")));
+    assert.ok(lines.some((line) => line.includes("expected exactly 1")));
   });
 });

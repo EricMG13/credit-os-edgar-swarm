@@ -2,6 +2,8 @@ import { LIBRARY_ADDRESS, request, snapshotAddress } from "./ahead";
 import { moduleName, pathwayName, RequestError } from "./api";
 import { asOfDate } from "./runFigures";
 import { changeText } from "./signal";
+import { withUnit } from "./moneyUnits";
+export { unitLabel, withUnit } from "./moneyUnits";
 
 export type Row = { line: number; cells: string[] };
 export type Table = { type: "table"; line: number; headers: string[]; rows: Row[] };
@@ -121,7 +123,7 @@ type ModuleComparison = {
   prior_bottom_line: string | null;
   current_bottom_line: string | null;
 };
-export type Changes = {
+export type PublishedChanges = {
   first_run?: boolean | null;
   note?: string | null;
   problem?: string | null;
@@ -190,7 +192,7 @@ export type PublishedRun = {
   record?: {
     steps: { module: string; started?: string | null; accepted?: string | null }[];
   } | null;
-  changes?: Changes | null;
+  changes?: PublishedChanges | null;
   /** The methods that changed since this run ran, one "<module>: <detail>" line each (the store's
    * `method_changes`); none or empty when the run is on today's methods. */
   methodChanges?: string[] | null;
@@ -332,28 +334,6 @@ export function runTiming(run: Pick<PublishedRun, "asOf" | "period">) {
   return [date, run.period !== run.asOf ? run.period : ""].filter(Boolean).join(" · ");
 }
 
-const moneyUnit = /^(USD|US\$|[A-Z]{3})(?: millions|m)$/;
-const moneySymbol = (code: string) => (code === "USD" || code === "US$" ? "US$" : `${code} `);
-
-export function unitLabel(unit: string) {
-  const code = moneyUnit.exec(unit)?.[1];
-  return code ? `${code === "USD" || code === "US$" ? "US$" : code}m` : unit;
-}
-
-export function withUnit(value: string | number, unit?: string | null) {
-  const code = unit ? moneyUnit.exec(unit)?.[1] : undefined;
-  if (code) {
-    const text = String(value);
-    if (!/^-?(\d+|\d{1,3}(,\d{3})+)(\.\d+)?$/.test(text)) return text;
-    const [plain = "", fraction] = text.replace(/^-/, "").split(".");
-    const integer = plain.replace(/,/g, "");
-    const grouped = integer.replace(/\B(?=(\d{3})+$)/g, ",");
-    const sign = text.startsWith("-") ? "-" : "";
-    return `${sign}${moneySymbol(code)}${grouped}${fraction === undefined ? "" : `.${fraction}`}m`;
-  }
-  return unit ? `${String(value)}${/^[x%]$/.test(unit) ? "" : " "}${unit}` : String(value);
-}
-
 export function comparisonForRun(run: PublishedRun, runs: Record<string, PublishedRun>) {
   const change = run.changes;
   if (!change?.pack || change.problem) return change;
@@ -414,7 +394,10 @@ function comparisonDifference(
   return { revision, delta };
 }
 
-export function comparisonRows(changes: Changes, purpose: "evidence" | "reader" = "evidence") {
+export function comparisonRows(
+  changes: PublishedChanges,
+  purpose: "evidence" | "reader" = "evidence",
+) {
   const side = (item: Side | null | undefined) =>
     item?.value == null
       ? "Not stated"
@@ -607,10 +590,20 @@ const REGISTER_ID = /\bCP-[A-Z0-9]+-(?:GAP|MON|FACT|CALC|EVID|SRC|ASSUMPTION)-[A
 const GAP_ID = /∅\s*\[?G\d+\b/;
 const RUN_CODE = /\b\d{8}-\d{6}-\d{2}\b/;
 
-function parenthesizedGap(text: string) {
-  return [...text.matchAll(/\(G\d+\)/gi)].some((match) => {
+function contextualMatch(
+  text: string,
+  pattern: RegExp,
+  classify: (match: RegExpMatchArray, before: string, after: string) => boolean,
+) {
+  return [...text.matchAll(pattern)].some((match) => {
     const before = text.slice(0, match.index);
     const after = text.slice(match.index + match[0].length);
+    return classify(match, before, after);
+  });
+}
+
+function parenthesizedGap(text: string) {
+  return contextualMatch(text, /\(G\d+\)/gi, (_match, before, after) => {
     const namedLabel =
       /(?:\bgroup of \p{L}+(?:-\p{L}+)?|\b(?:economies|currencies)|\b(?:series|class|gen|tranche)\s+[\w-]+(?:\s+[\w-]+)?)\s*$/iu.test(
         before,
@@ -628,21 +621,23 @@ function parenthesizedGap(text: string) {
 // have no preceding quantity. Explicit locator cues take precedence. Word fragments, S&P and
 // p.p. are excluded at the token boundary; "front page 2025" is a headline, not a locator.
 function pageCitation(text: string) {
-  return [...text.matchAll(/(?<![\w&.-])(p|pg|pp|pages?)\.?\s*(\d+)\b/gi)].some((match) => {
-    const before = text.slice(0, match.index);
-    const after = text.slice(match.index + match[0].length);
-    const marker = match[1]?.toLowerCase();
-    if (/\b(?:see|at|on|as)\s*$/i.test(before)) return true;
-    if (marker === "pp") {
-      if (/\d\s*$/.test(before)) return false;
-      if (
-        /\p{L}\s*$/u.test(before) &&
-        /^\s+(?:\p{L}+(?:-\p{L}+)*\s+)*(?:days?|weeks?|months?|quarters?|years?)\b/iu.test(after)
-      )
-        return false;
-    }
-    return !(marker === "page" && /\bfront\s+$/i.test(before));
-  });
+  return contextualMatch(
+    text,
+    /(?<![\w&.-])(p|pg|pp|pages?)\.?\s*(\d+)\b/gi,
+    (match, before, after) => {
+      const marker = match[1]?.toLowerCase();
+      if (/\b(?:see|at|on|as)\s*$/i.test(before)) return true;
+      if (marker === "pp") {
+        if (/\d\s*$/.test(before)) return false;
+        if (
+          /\p{L}\s*$/u.test(before) &&
+          /^\s+(?:\p{L}+(?:-\p{L}+)*\s+)*(?:days?|weeks?|months?|quarters?|years?)\b/iu.test(after)
+        )
+          return false;
+      }
+      return !(marker === "page" && /\bfront\s+$/i.test(before));
+    },
+  );
 }
 
 export function containsReference(text: string) {

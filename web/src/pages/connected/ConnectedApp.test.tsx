@@ -161,6 +161,18 @@ describe("connected run start", () => {
     expect(screen.getByRole("heading", { name: "Documents" })).toHaveFocus();
   });
 
+  it("opens the folder input and adds its files to the intake", async () => {
+    testingFetch();
+    render(<ConnectedApp path="/start" mode="synthetic" />);
+    const folder = await screen.findByLabelText<HTMLInputElement>("Document folder");
+    const click = vi.spyOn(folder, "click");
+    fireEvent.click(screen.getByRole("button", { name: "Choose a folder" }));
+    expect(click).toHaveBeenCalledOnce();
+    fireEvent.change(folder, { target: { files: [file] } });
+    expect(screen.getByText(file.name)).toBeInTheDocument();
+    expect(folder.value).toBe("");
+  });
+
   it("accepts a drop, displays actual reading progress, and keeps confirmation local", async () => {
     const fetchMock = testingFetch();
     const { container } = render(<ConnectedApp path="/start" mode="synthetic" />);

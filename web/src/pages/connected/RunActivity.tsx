@@ -18,7 +18,7 @@ import {
   type Activity,
   type EndedRun,
   type LiveRun,
-  type ModuleState,
+  type ConnectedModuleState,
 } from "./api";
 import { heading } from "./layout";
 import { finishedFigure, stamp } from "./runFigures";
@@ -29,7 +29,7 @@ const STEP = {
   running: "Running",
   stopped: "Interrupted",
   waiting: "Queued",
-} as const satisfies Record<ModuleState, string>;
+} as const satisfies Record<ConnectedModuleState, string>;
 const ENDED = {
   failed: "Failed",
   capped: "Capped",

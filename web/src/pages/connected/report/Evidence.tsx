@@ -27,17 +27,11 @@ import {
   type ScriptCheckRecord,
   type Table,
 } from "../publishedReport";
-import {
-  HandoffDownload,
-  PublishedTable,
-  plainText,
-  richParts,
-  traceDetails,
-  traceForLine,
-} from "../ReportContent";
+import { HandoffDownload, PublishedTable, traceDetails, traceForLine } from "../ReportContent";
 import { ArtifactDownloads } from "./ArtifactDownloads";
 import { ReportRecord } from "./Record";
 import { namedTable } from "../reportView";
+import { plainText, richParts } from "../richText";
 import { forecastHandoff, RecordedModelQualifications, type ForecastModel } from "./ForecastRecord";
 import { ScriptChecks } from "./ScriptChecks";
 

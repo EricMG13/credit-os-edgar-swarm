@@ -36,7 +36,7 @@ import {
 } from "./publishedReport";
 import { ReportFindings } from "./ReportContent";
 import { ReportEvidence } from "./report/Evidence";
-import { getRun, moduleName, RequestError, type Mode, type Run } from "./api";
+import { getRun, moduleName, RequestError, type Mode, type ConnectedRun } from "./api";
 import { LegacyVisuals } from "./visuals";
 import {
   actionBias,
@@ -53,7 +53,7 @@ import {
 
 const TILE_KEYS: readonly MetricKey[] = ["liquidity", "freeCashFlow", "leverage", "maturities"];
 import { Calendar, buildCalendar, upcomingCalendarRows } from "./report/Calendar";
-import { Changes, ComparisonTable } from "./report/Changes";
+import { ReportChanges, ComparisonTable } from "./report/Changes";
 import { Forecast } from "./report/Forecast";
 import { IdentityBand } from "./report/IdentityBand";
 import { MetricGrid } from "./report/MetricGrid";
@@ -511,7 +511,7 @@ const ReportPage = memo(function ReportPage({
           )}
           {tab === "calendar" && calendar && <Calendar calendar={calendar} />}
           {tab === "changes" && (
-            <Changes snapshot={snapshot} run={run} entries={view.entries} change={change} />
+            <ReportChanges snapshot={snapshot} run={run} entries={view.entries} change={change} />
           )}
           {tab === "modules" && (
             <Modules
@@ -640,7 +640,7 @@ function ReaderHeader({
 type Loaded =
   | { snapshot: Snapshot | null }
   | { failure: "unreachable" | "failed" }
-  | { failure: "unpublished"; run: Run | null };
+  | { failure: "unpublished"; run: ConnectedRun | null };
 
 async function loadReport(signal: AbortSignal, id: string): Promise<Loaded> {
   try {
@@ -664,7 +664,7 @@ type Notice = {
   actions: ("retry" | "run" | "library")[];
 };
 
-function unpublishedNotice(run: Run | null): Notice {
+function unpublishedNotice(run: ConnectedRun | null): Notice {
   if (!run)
     return {
       tone: "warning",

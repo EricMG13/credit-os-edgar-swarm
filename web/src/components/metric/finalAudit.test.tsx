@@ -1,8 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import { expect, it } from "vitest";
 import { MetricCard } from "./MetricCard";
-import { MetricTile as LibraryMetricTile } from "@/pages/library/parts/MetricTile";
-import { MetricTile as ModelMetricTile } from "@/pages/model/parts/MetricTile";
+import { LibraryMetricTile } from "@/pages/library/parts/MetricTile";
+import { ModelMetricTile } from "@/pages/model/parts/MetricTile";
 import { ProgressSteps } from "@/components/steps/ProgressSteps";
 import { Timeline } from "@/components/timeline/Timeline";
 it("uses the same40px metric token,12px radius,24px padding and shadow across all three metric cards", () => {

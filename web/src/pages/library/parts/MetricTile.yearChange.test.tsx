@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { expect, it } from "vitest";
 import { RunContext } from "./RunContext";
-import { MetricTile } from "./MetricTile";
+import { LibraryMetricTile as MetricTile } from "./MetricTile";
 
 it("draws the year comparator, with the tone as a visible word and a shape on a tile that has one", () => {
   render(

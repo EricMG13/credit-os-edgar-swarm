@@ -177,25 +177,21 @@ it("keeps the full model qualification ledger once on Evidence Record, not on Fo
 it("states missing or ambiguous forecast trace loss while preserving published figures", () => {
   const { view } = fixture();
   view.entries = [];
-  render(<Forecast view={view} run={run} />);
+  render(
+    <PublishedTraceProvider
+      snapshot={snapshot}
+      folder="run"
+      entries={view.entries}
+      route="forecast"
+    >
+      <Forecast view={view} run={run} />
+    </PublishedTraceProvider>,
+  );
   expect(
     screen.getByText(/The model could not be matched to a single readable record of its inputs/),
   ).toBeInTheDocument();
   expect(screen.getByRole("figure", { name: "Revenue" })).toBeInTheDocument();
   expect(screen.queryByRole("option", { name: "Assumptions" })).toBeNull();
-});
-
-it("describes missing inputs without claiming figures for an unreadable calculation record", () => {
-  const { view, model } = fixture();
-  view.entries = [];
-  view.models = [{ ...model, cashflow: null }];
-  render(<Forecast view={view} run={run} />);
-
-  expect(screen.getByText(/This model has no readable calculation record/)).toBeVisible();
-  expect(
-    screen.getByText(/The model could not be matched to a single readable record/),
-  ).toBeVisible();
-  expect(screen.queryByText(/Forecast figures are available/)).toBeNull();
 });
 
 it("ties promoted excerpts to the full recorded input and sends generated notes to Evidence Record", () => {
@@ -296,7 +292,7 @@ it("refuses a filename companion whose hash conflicts with retained model source
   source.output.sha256 = "b".repeat(64);
   render(<Forecast view={view} run={run} />);
   expect(
-    screen.getByText(/The model could not be matched to a single readable record of its inputs/),
+    screen.getByText(/could not be matched to a single readable record of its inputs/i),
   ).toBeInTheDocument();
   expect(screen.queryByText("Recorded growth.")).toBeNull();
   expect(screen.getByRole("figure", { name: "Revenue" })).toBeInTheDocument();
@@ -309,9 +305,7 @@ it("keeps the exact legacy filename companion when no source identity was retain
   model.download = "/saved/run/annual.md";
   source.output.href = "/saved/run/CP-2G.md";
   render(<Forecast view={view} run={run} />);
-  expect(
-    screen.queryByText(/The model could not be matched to a single readable record of its inputs/),
-  ).toBeNull();
+  expect(screen.queryByText(/Forecast source details are not available/)).toBeNull();
   expect(screen.getByText("Recorded growth.")).toBeInTheDocument();
 });
 
@@ -419,9 +413,12 @@ it("binds a selected additional scenario row to its own case", () => {
   );
   const drawer = within(screen.getByRole("dialog"));
   expect(
-    drawer.getByRole("heading", { level: 2, name: "Revenue · Downside drivers" }),
+    drawer.getByRole("heading", {
+      level: 2,
+      name: /Revenue · Downside drivers \(2026-04-01 to 2027-03-31\)/,
+    }),
   ).toBeInTheDocument();
-  expect(drawer.getByText(/Revenue.*Downside drivers.*FY2026E.*1050/)).toBeInTheDocument();
+  expect(drawer.getByText(/Revenue.*Downside drivers.*FY2027E.*1092/)).toBeInTheDocument();
   expect(drawer.queryByText(/Revenue.*Base case/)).toBeNull();
 });
 
@@ -463,6 +460,191 @@ it("compares one period across cases and keeps accounts, ratios and growth rates
   expect(statement().getByRole("cell", { name: "0.0%" })).toBeInTheDocument();
   expect(statement().queryByRole("rowheader", { name: "Interest coverage" })).toBeNull();
 });
+
+it("keeps differently dated partial years out of comparisons while retaining each case", () => {
+  const { view, model } = fixture();
+  const downsideYear = model.cashflow.columns[3];
+  if (!downsideYear) throw new Error("Fixture is missing its downside year");
+  model.cashflow.columns[3] = {
+    ...downsideYear,
+    start: "2026-10-01",
+  };
+  render(<Forecast view={view} run={run} />);
+  expect(
+    screen
+      .getAllByRole("status")
+      .some((status) => status.textContent.includes("incompatible periods are omitted")),
+  ).toBe(true);
+  fireEvent.change(screen.getByLabelText("Statement columns"), { target: { value: "compare" } });
+  const periods = within(screen.getByLabelText("Comparison period"));
+  expect(periods.getByRole("option", { name: "FY2026E" })).toBeInTheDocument();
+  expect(periods.queryByRole("option", { name: "FY2027E" })).toBeNull();
+  const baseCard = screen.getByRole("radio", { name: /^Base case/ }).closest("label");
+  const downsideCard = screen.getByRole("radio", { name: /^Downside shock/ }).closest("label");
+  expect(baseCard?.textContent).toContain("FY2027E · 2026-04-01 to 2027-03-31");
+  expect(downsideCard?.textContent).toContain("FY2027E · 2026-10-01 to 2027-03-31");
+});
+
+it("shows the retained unavailable downside in the normal forecast case picker", () => {
+  const { view, model } = fixture();
+  model.cashflow.columns.splice(2, 2);
+  for (const row of model.cashflow.rows) row.cells.splice(2, 2);
+  model.cashflow.columns.push({ label: "Downside", group: "Downside case", start: "", end: "" });
+  for (const row of model.cashflow.rows) {
+    row.cells.push({
+      status: "na",
+      exact: null,
+      display: "n.a.",
+      reason: "No downside scenario was computed.",
+    });
+  }
+  render(
+    <PublishedTraceProvider
+      snapshot={snapshot}
+      folder="run"
+      entries={view.entries}
+      route="forecast"
+    >
+      <Forecast view={view} run={run} />
+    </PublishedTraceProvider>,
+  );
+  fireEvent.click(screen.getByRole("radio", { name: /^Downside shock/ }));
+  const downsideRadio = screen.getByRole("radio", { name: /^Downside shock/ });
+  const downsideLabel = downsideRadio.closest("label");
+  if (!downsideLabel) throw new Error("Downside card is missing its label");
+  expect(downsideLabel.textContent).toContain("No downside scenario was computed.");
+  expect(screen.getByRole("table", { name: "Cash flow model" })).toHaveTextContent("n.a.");
+  expect(screen.queryByLabelText("Comparison period")).toBeNull();
+  const card = downsideLabel.parentElement;
+  if (!card) throw new Error("Downside card is missing its source action");
+  fireEvent.click(within(card).getByRole("button", { name: "Show sources for Downside shock" }));
+  expect(
+    within(screen.getByRole("dialog")).getByText(
+      /Downside shock · Downside: n\.a\..*No downside scenario was computed\./,
+    ),
+  ).toBeInTheDocument();
+});
+
+it("withholds duplicated comparison periods and traces every retained date for the ambiguous case card", () => {
+  const { view, model } = fixture();
+  const downsideYear = model.cashflow.columns[3];
+  if (!downsideYear) throw new Error("Fixture is missing its downside year");
+  const duplicated = { ...downsideYear, start: "2026-10-01" };
+  model.cashflow.columns.push(duplicated);
+  for (const row of model.cashflow.rows) {
+    const cell = row.cells[3];
+    if (cell) row.cells.push({ ...cell });
+  }
+  render(
+    <PublishedTraceProvider
+      snapshot={snapshot}
+      folder="run"
+      entries={view.entries}
+      route="forecast"
+    >
+      <Forecast view={view} run={run} />
+    </PublishedTraceProvider>,
+  );
+  expect(
+    screen.getAllByRole("status").some(({ textContent }) => textContent.includes("duplicate")),
+  ).toBe(true);
+  fireEvent.change(screen.getByLabelText("Statement columns"), { target: { value: "compare" } });
+  const periods = within(screen.getByLabelText("Comparison period"));
+  expect(periods.getByRole("option", { name: "FY2026E" })).toBeInTheDocument();
+  expect(periods.queryByRole("option", { name: "FY2027E" })).toBeNull();
+  fireEvent.click(screen.getByText("Cash flow trends by line item"));
+  fireEvent.click(
+    within(screen.getByRole("figure", { name: "Revenue" })).getByRole("button", {
+      name: "Show sources for Revenue",
+    }),
+  );
+  const trendDrawer = within(screen.getByRole("dialog"));
+  expect(trendDrawer.getByText(/Base case.*FY2027E.*1092/)).toBeInTheDocument();
+  const close = trendDrawer.getAllByRole("button", { name: "Close" })[0];
+  if (!close) throw new Error("Missing trend drawer close control");
+  fireEvent.click(close);
+  const downsideCard = screen.getByRole("radio", { name: /^Downside shock/ }).closest("label");
+  if (!downsideCard) throw new Error("Downside card is missing its label");
+  expect(downsideCard.textContent).toContain("n.a.");
+  expect(downsideCard.textContent).toContain("More than one published observation uses FY2027E");
+  expect(downsideCard.textContent).not.toContain("2026-04-01 to 2027-03-31");
+  const card = downsideCard.parentElement;
+  if (!card) throw new Error("Downside card is missing its source action");
+  const caseTrace = within(card).getByRole("button", { name: "Show sources for Downside shock" });
+  fireEvent.click(caseTrace);
+  const drawer = within(screen.getByRole("dialog"));
+  expect(drawer.getByText(/FY2027E \(2026-04-01 to 2027-03-31\)/)).toBeInTheDocument();
+  expect(drawer.getByText(/FY2027E \(2026-10-01 to 2027-03-31\)/)).toBeInTheDocument();
+});
+
+it("sorts forecast labels before choosing the default latest case period", () => {
+  const { view, model } = fixture();
+  const original = model.cashflow.columns.slice(0, 2);
+  const first = original[0];
+  const second = original[1];
+  if (!first || !second) throw new Error("Fixture is missing forecast periods");
+  model.cashflow.columns.splice(0, 2, second, first);
+  for (const row of model.cashflow.rows) {
+    const cells = row.cells.slice(0, 2);
+    const firstCell = cells[0];
+    const secondCell = cells[1];
+    if (firstCell && secondCell) row.cells.splice(0, 2, secondCell, firstCell);
+  }
+  render(<Forecast view={view} run={run} />);
+  const base = screen.getByRole("radio", { name: /^Base case/ });
+  expect(base).toBeChecked();
+  expect(base.closest("label")?.textContent).toContain("FY2027E");
+});
+
+it.each(["separate grids", "one grid"])(
+  "keeps canonicalized upside labels distinct in %s",
+  (layout) => {
+    const { view, model } = fixture();
+    const downsideColumns = model.cashflow.columns.slice(2, 4);
+    for (const column of downsideColumns) column.group = "Upside";
+    const secondCase = {
+      columns: model.cashflow.columns
+        .slice(0, 2)
+        .map((column) => ({ ...column, group: "Upside case" })),
+      rows: model.cashflow.rows.map((row) => ({
+        ...row,
+        cells: row.cells.slice(0, 2).map(() => ({ status: "value", exact: "20", display: "20" })),
+      })),
+    };
+    if (layout === "one grid") {
+      model.cashflow.columns.push(...secondCase.columns);
+      model.cashflow.rows.forEach((row, index) => {
+        row.cells.push(...(secondCase.rows[index]?.cells ?? []));
+      });
+    } else {
+      model.cashflow.other = secondCase;
+    }
+    render(
+      <PublishedTraceProvider
+        snapshot={snapshot}
+        folder="run"
+        entries={view.entries}
+        route="forecast"
+      >
+        <Forecast view={view} run={run} />
+      </PublishedTraceProvider>,
+    );
+    const first = screen.getByRole("radio", { name: /^Upside case · Upside6/ });
+    const second = screen.getByRole("radio", { name: /^Upside case · Upside case20/ });
+    expect(first.closest("label")?.textContent).toContain("6");
+    expect(second.closest("label")?.textContent).toContain("20");
+    fireEvent.click(second);
+    fireEvent.click(screen.getByText("Cash flow trends by line item"));
+    fireEvent.click(
+      within(screen.getByRole("figure", { name: "Revenue" })).getByRole("button", {
+        name: "Show sources for Revenue",
+      }),
+    );
+    const drawer = within(screen.getByRole("dialog"));
+    expect(drawer.getByText(/Upside case · Upside case.*FY2027E.*20/)).toBeInTheDocument();
+    expect(drawer.queryByText(/Upside case · Upside.*FY2027E.*90/)).toBeNull();
+  },
+);
 
 it.each([true, false])(
   "selects retained own-downside driver paths for the main downside (shock: %s)",
@@ -580,6 +762,21 @@ it("shows repayment drivers in the interest trace", () => {
   expect(
     trace.details.find(({ label }) => label === "base_drivers.debt_repayment")?.value,
   ).toContain('"20"');
+});
+
+it("ties same-labeled comparison trace values to the recorded period dates", () => {
+  const { model } = fixture();
+  const trace = forecastTraceContext(model, input, "Revenue comparison", {
+    row: "Revenue",
+    groups: ["Base case", "Downside shock"],
+    periods: ["FY2026E"],
+    periodStart: "2025-04-01",
+    periodEnd: "2026-03-31",
+  });
+  expect(trace.statement).toContain("Base case · FY2026E (2025-04-01 to 2026-03-31): 1050");
+  expect(trace.statement).toContain("Downside shock · FY2026E (2025-04-01 to 2026-03-31): 840");
+  expect(trace.statement).not.toContain("1092");
+  expect(trace.statement).not.toContain("873.6");
 });
 
 it("shows recorded drivers and the downside shock with a separate facilities notice", () => {

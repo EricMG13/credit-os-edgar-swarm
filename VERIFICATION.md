@@ -4,6 +4,14 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-24 — Performance fixes on main `13b7d43b`
+
+- Recovered staged code from the earlier integration and applied it to current main. The two overlaps shared route parsing between preloading and rendering, and retained the run-chart memo boundary. Astra reproduced a same-grid Forecast crash when `Upside` and `Upside case` got different names in the chart and table. Both now share the resolved name. The new same-grid test failed before the fix and passed after it, alongside the existing split-grid test. Astra cleared that fix and both overlaps in patch `b1a24422`.
+- Confidence review checked read-only routes, one-use preload data, report chart output, exact Evidence links, and distinct scenario values and dates. The Chrome and Edge synthetic workflow exercised desktop and mobile Forecast, cash and debt figures, and keyboard source traces in `run-YRqxgd`. Its scope was the synthetic workspace.
+- Passed 1,882 connected and route tests, 3,468 offline web tests, 581 targeted Python tests, and 76 Node script checks. Build, ESLint, formatting, the changed-code Python gate and 126 offline route probes passed. The Python rerun used a short temporary directory to stay within the app's 80-character workspace limit.
+- Fallow found zero dead-code issues or duplicate groups. The six structural complexity findings also appear on main with the same scores.
+- In the earlier integration on `2e488751`, six pages of the retained Caesars preview matched at 1440 × 900. Forecast preserved all 118 controls and showed the four recorded FY2029E date spans. The earlier scanner benchmark over the same 9,537 tokens took 41–43 ms versus 84–85 ms at `1112176d`. Other prototype results were 326 to 1.4 ms for the 25-run library index, 323 to 151 ms for a repeated identical report response, and 770 to 693 ms for cold Chrome Overview rendering.
+
 ## 2026-11-18 — Modules at once: an opt-in, off by default
 
 - Scope: synthetic adapters and canned replies only, one shared Linux container. Nothing above
@@ -964,31 +972,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
 - Updated read-only actual Caesars preview is at port 58337, run
   `20261115-114658-01`; original Test preview/admission qualification remains.
   ZIP was not rebuilt or published. Chrome and Edge work-PC acceptance is pending.
-
-## 2026-11-16 — Four remaining Fallow findings resolved
-
-- Split Forecast case cards and assumptions into components; split browser intake
-  checks and browser execution from resource ownership. Reclassified the Vite
-  Tailwind plugin as a development dependency after tracing its sole import to
-  vite.config.ts. All locked versions, resolutions and integrity values unchanged.
-- Fallow audit against `b3a607f`: PASS, zero introduced or inherited findings.
-  No suppressions or threshold changes. Native RBOT-HTML and Python pins still
-  match `256101a`. No provider execution, Signal work or tournaments.
-- Confidence review, ranked: (1) weakened proof or submission races — all 167
-  assertion/wait expressions preserved by AST comparison; response listeners
-  remain before actions, cancellation and exactly-one-submit pass in both browsers;
-  (2) case state and source identity — state remains in Forecast, exact row and
-  hash lookup unchanged, 15 focused boundary/Forecast tests pass;
-  (3) build dependency classification — clean offline npm ci and production build
-  pass with every package version unchanged; (4) design drift — all Forecast
-  class expressions and compiled CSS unchanged, desktop/mobile intake and debt
-  screenshots pixel-identical to the preceding proof, revenue chart visually checked.
-  Verified fine within this scope; Windows work-PC execution remains open.
-- TypeScript, ESLint, Prettier and changed-code quality gate pass (zero findings).
-  Built source tree `0fb3973faa8494c2b51093afbdbe71b20f1dfb36` in an isolated
-  directory with a fresh dependency install. Chrome 157.0.8103.78 run
-  `20261116-024417-01` and Edge 157.0.4341.60 run `20261116-024434-01` each passed
-  all 30 synthetic checks on macOS. Proof: `proof-artifacts/run-D9auAO/proof.json`.
-- This is source-snapshot proof, not Windows or archive acceptance. The held ZIP
-  was not regenerated or published; release still requires Chrome and Edge passes
-  on the Windows work PC. Oldest complete entries trimmed; git retains them.

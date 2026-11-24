@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import type { LibraryData } from "@/data";
 import { SourceContext } from "../source";
-import { routes } from "./routes";
+import { libraryRoutes as routes } from "./routes";
 
 // The section level is moved one step from the real one; nothing may keep the old literal.
 vi.mock("./parts/heading", () => ({

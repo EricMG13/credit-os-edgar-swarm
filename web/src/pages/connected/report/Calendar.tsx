@@ -123,53 +123,99 @@ function placeEvents(block: Table, entry: OutputEntry, folder: string, owner: st
   return { rows, reason, unplaced };
 }
 
-function tableProblem(block: Table, blocks: Block[], readable: boolean) {
+function tableProblem(block: Table, blocks: Block[], readable: ReturnType<typeof publishedTables>) {
   if (blocks.filter((item) => item.type === "table" && item.line === block.line).length > 1) {
     return "The event table could not be read.";
   }
   if (block.headers.join("\0") === EVENT_HEADERS.join("\0")) return null;
-  return readable ? UNPLACED_REASON : "The event table could not be read.";
+  return readable.has(block.line) ? UNPLACED_REASON : "The event table could not be read.";
 }
 
 export function buildCalendar(entries: OutputEntry[], folder: string) {
-  const rows: CalendarRow[] = [];
-  const gaps: CalendarGap[] = [];
-  entries.forEach((entry) => {
-    const { output, sections, selected } = entry;
-    if (!selected || !output.events?.length || output.parseError) return;
-    const owner = [moduleName(output.module), output.state?.declared].filter(Boolean).join(" · ");
-    const assessable = output.state?.established !== false && !blocked(entry);
-    const tables = publishedTables(sections);
-    const blocks = sections.flatMap((section) => section.blocks);
-    const seen = new Set<number>();
-    for (const descriptor of output.events) {
-      const title = word(descriptor.lane);
-      if (!title || descriptor.table <= 0 || seen.has(descriptor.table)) continue;
-      const block = blocks.find((item) => item.type === "table" && item.line === descriptor.table);
-      if (block?.type !== "table" || !block.rows.length) continue;
-      seen.add(block.line);
-      const href = evidencePath(folder, entry, block.line);
-      const gap = word(descriptor.gap);
-      if (gap) {
-        gaps.push({ owner, href, title, reason: gap });
-        continue;
-      }
-      if (!assessable) continue;
-      const problem = tableProblem(block, blocks, tables.has(block.line));
-      if (problem) {
-        gaps.push({ owner, href, title, reason: problem });
-        continue;
-      }
-      const placed = placeEvents(block, entry, folder, owner);
-      rows.push(...placed.rows);
-      if (placed.reason) {
-        const unplaced = placed.unplaced.length ? placed.unplaced : undefined;
-        gaps.push({ owner, href, title, reason: placed.reason, unplaced });
-      }
-    }
-  });
+  const calendars = entries.map((entry) => entryCalendar(entry, folder));
+  const rows = calendars.flatMap(({ rows }) => rows);
+  const gaps = calendars.flatMap(({ gaps }) => gaps);
   rows.sort((a, b) => a.from - b.from || a.to - b.to);
   return { rows, gaps };
+}
+
+function entryCalendar(entry: OutputEntry, folder: string) {
+  const rows: CalendarRow[] = [];
+  const gaps: CalendarGap[] = [];
+  const { output, sections, selected } = entry;
+  if (!selected || !output.events?.length || output.parseError) return { rows, gaps };
+  const owner = [moduleName(output.module), output.state?.declared].filter(Boolean).join(" · ");
+  const assessable = output.state?.established !== false && !blocked(entry);
+  const tables = publishedTables(sections);
+  const blocks = sections.flatMap((section) => section.blocks);
+  const seen = new Set<number>();
+  for (const descriptor of output.events) {
+    addCalendarEvent(
+      descriptor,
+      entry,
+      folder,
+      owner,
+      assessable,
+      tables,
+      blocks,
+      seen,
+      rows,
+      gaps,
+    );
+  }
+  return { rows, gaps };
+}
+
+function addCalendarEvent(
+  descriptor: NonNullable<OutputEntry["output"]["events"]>[number],
+  entry: OutputEntry,
+  folder: string,
+  owner: string,
+  assessable: boolean,
+  tables: ReturnType<typeof publishedTables>,
+  blocks: Block[],
+  seen: Set<number>,
+  rows: CalendarRow[],
+  gaps: CalendarGap[],
+) {
+  const title = word(descriptor.lane);
+  if (!title || descriptor.table <= 0 || seen.has(descriptor.table)) return;
+  const block = blocks.find((item) => item.type === "table" && item.line === descriptor.table);
+  if (block?.type !== "table" || !block.rows.length) return;
+  seen.add(block.line);
+  const href = evidencePath(folder, entry, block.line);
+  const gap = word(descriptor.gap);
+  if (gap) {
+    gaps.push({ owner, href, title, reason: gap });
+    return;
+  }
+  if (!assessable) return;
+  addPlacedEvents(block, entry, folder, owner, href, title, tables, blocks, rows, gaps);
+}
+
+function addPlacedEvents(
+  block: Table,
+  entry: OutputEntry,
+  folder: string,
+  owner: string,
+  href: string,
+  title: string,
+  tables: ReturnType<typeof publishedTables>,
+  blocks: Block[],
+  rows: CalendarRow[],
+  gaps: CalendarGap[],
+) {
+  const problem = tableProblem(block, blocks, tables);
+  if (problem) {
+    gaps.push({ owner, href, title, reason: problem });
+    return;
+  }
+  const placed = placeEvents(block, entry, folder, owner);
+  rows.push(...placed.rows);
+  if (placed.reason) {
+    const unplaced = placed.unplaced.length ? placed.unplaced : undefined;
+    gaps.push({ owner, href, title, reason: placed.reason, unplaced });
+  }
 }
 
 export function upcomingCalendarRows(rows: CalendarRow[], asOf: string | null) {

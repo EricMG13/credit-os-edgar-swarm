@@ -22,28 +22,33 @@ function dayOf(text: string) {
   return Number.isFinite(date) && new Date(date).toISOString().slice(0, 10) === text ? date : null;
 }
 
-function dateSpan(date: string, precision: string) {
-  if (precision === "day") {
-    const from = /^\d{4}-\d{2}-\d{2}$/.test(date) ? dayOf(date) : null;
-    return from === null ? null : { from, to: from };
-  }
-  const match =
-    precision === "year"
-      ? /^(\d{4})$/.exec(date)
-      : precision === "quarter"
-        ? /^(\d{4})-Q([1-4])$/.exec(date)
-        : precision === "month"
-          ? /^(\d{4})-(0[1-9]|1[0-2])$/.exec(date)
-          : null;
+function periodParts(date: string, precision: string) {
+  const patterns: Partial<Record<string, RegExp>> = {
+    year: /^(\d{4})$/,
+    quarter: /^(\d{4})-Q([1-4])$/,
+    month: /^(\d{4})-(0[1-9]|1[0-2])$/,
+  };
+  const pattern = Object.hasOwn(patterns, precision) ? patterns[precision] : undefined;
+  const match = pattern?.exec(date);
   if (!match) return null;
   const year = Number(match[1]);
   const part = Number(match[2]);
   const month = precision === "year" ? 1 : precision === "quarter" ? (part - 1) * 3 + 1 : part;
   const length = precision === "year" ? 12 : precision === "quarter" ? 3 : 1;
-  const from = dayOf(`${match[1] ?? ""}-${String(month).padStart(2, "0")}-01`);
+  return { year, month, length };
+}
+
+function dateSpan(date: string, precision: string) {
+  if (precision === "day") {
+    const from = /^\d{4}-\d{2}-\d{2}$/.test(date) ? dayOf(date) : null;
+    return from === null ? null : { from, to: from };
+  }
+  const period = periodParts(date, precision);
+  if (!period) return null;
+  const from = dayOf(`${String(period.year)}-${String(period.month).padStart(2, "0")}-01`);
   if (from === null) return null;
   const end = new Date(from);
-  end.setUTCFullYear(year, month - 1 + length, 1);
+  end.setUTCFullYear(period.year, period.month - 1 + period.length, 1);
   return { from, to: end.getTime() - DAY };
 }
 

@@ -4,7 +4,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { LibraryData } from "@/data";
 import { SourceContext } from "../source";
 import { appliedLabel } from "./parts/FilterBar";
-import { routes } from "./routes";
+import { libraryRoutes as routes } from "./routes";
 
 type Json = Record<string, unknown>;
 type Slice = { home: Json & { cards: Json[] }; issuers: Json[] };

@@ -94,28 +94,77 @@ function reportFolder(path: string) {
 
 const RUN = /^\/run\/([a-zA-Z0-9][a-zA-Z0-9_.-]{0,79})\/?$/;
 
+type Route =
+  | { kind: "library" }
+  | { kind: "run-list" }
+  | { kind: "run"; id: string }
+  | { kind: "report"; id: string }
+  | { kind: "start" }
+  | { kind: "missing" };
+
+function routeOf(path: string): Route {
+  if (path === "/" || path === "/index.html") return { kind: "library" };
+  if (path === "/runs" || path === "/runs/") return { kind: "run-list" };
+  if (path === "/start" || path === "/start/") return { kind: "start" };
+  const run = RUN.exec(path)?.[1];
+  if (run) return { kind: "run", id: run };
+  const report = reportFolder(path);
+  return report ? { kind: "report", id: report } : { kind: "missing" };
+}
+
 /**
- * Asks, ahead of the first drawing, for the page file that drawing `path` will ask for, and for no
- * other. The promise settles when that file has loaded or failed. Once the library or a report has
- * loaded, what it reads first is asked for too, while the page is drawn.
+ * Ask for the file that draws this route. For the library and reports, start their first data
+ * request once the file arrives, while React draws the page.
  */
 export function preloadPage(path: string, readOnly: boolean): Promise<unknown> {
+  const route = routeOf(path);
   const reads = (address: string) => () => {
     askAhead(address);
   };
   const unloaded = () => undefined;
-  if (path === "/" || path === "/index.html")
-    return ReportLibrary.ask().then(reads(LIBRARY_ADDRESS), unloaded);
-  const start = path === "/start" || path === "/start/";
-  const runs = path === "/runs" || path === "/runs/";
-  const run = RUN.test(path);
-  if (readOnly && (start || runs || run)) return Promise.resolve();
-  if (start) return StartRun.ask().catch(unloaded);
-  if (runs) return RunActivity.ask().catch(unloaded);
-  if (run) return RunProgress.ask().catch(unloaded);
-  const report = reportFolder(path);
-  if (report === null) return Promise.resolve();
-  return ReportReader.ask().then(reads(snapshotAddress(report)), unloaded);
+  if (route.kind === "library") return ReportLibrary.ask().then(reads(LIBRARY_ADDRESS), unloaded);
+  if (route.kind === "report")
+    return ReportReader.ask().then(reads(snapshotAddress(route.id)), unloaded);
+  if (readOnly) return Promise.resolve();
+  if (route.kind === "start") return StartRun.ask().catch(unloaded);
+  if (route.kind === "run-list") return RunActivity.ask().catch(unloaded);
+  if (route.kind === "run") return RunProgress.ask().catch(unloaded);
+  return Promise.resolve();
+}
+
+function routeTitle(route: Route) {
+  if (route.kind === "start") return "Start a run";
+  if (route.kind === "run-list") return "Run activity";
+  if (route.kind === "run") return "Run progress";
+  if (route.kind === "report") return "Credit report";
+  return "Library";
+}
+
+function CurrentPage({
+  route,
+  prior,
+  mode,
+  readOnly,
+  navigate,
+}: {
+  route: Route;
+  prior: string | null;
+  mode: Mode;
+  readOnly: boolean;
+  navigate: (path: string) => void;
+}) {
+  if (route.kind === "library") return <ReportLibrary readOnly={readOnly} />;
+  if (readOnly && ["start", "run-list", "run"].includes(route.kind)) {
+    return (
+      <PageHeader title="Read-only preview" actions={<Button href="/">Back to Library</Button>} />
+    );
+  }
+  if (route.kind === "start")
+    return <StartRun key={prior} mode={mode} navigate={navigate} from={prior ?? undefined} />;
+  if (route.kind === "run-list") return <RunActivity />;
+  if (route.kind === "run") return <RunProgress key={route.id} id={route.id} mode={mode} />;
+  if (route.kind === "report") return <ReportReader key={route.id} id={route.id} mode={mode} />;
+  return <PageHeader title="Page not found" actions={<Button href="/">Library</Button>} />;
 }
 
 export function ConnectedApp({
@@ -131,24 +180,14 @@ export function ConnectedApp({
   readOnly?: boolean;
   navigate?: (path: string) => void;
 }) {
-  const run = RUN.exec(path)?.[1];
-  const report = reportFolder(path);
-  const start = path === "/start" || path === "/start/";
+  const route = routeOf(path);
   const prior = new URLSearchParams(search).get("from");
-  const runs = path === "/runs" || path === "/runs/";
+  const title = routeTitle(route);
   useEffect(() => {
-    const title = start
-      ? "Start a run"
-      : runs
-        ? "Run activity"
-        : run
-          ? "Run progress"
-          : report
-            ? "Credit report"
-            : "Library";
     document.title = `${title} — Credit OS`;
-  }, [path, start, runs, run, report]);
-  const current = start || run || runs ? "run" : "library";
+  }, [title]);
+  const current =
+    route.kind === "start" || route.kind === "run-list" || route.kind === "run" ? "run" : "library";
   return (
     <Shell
       current={current}
@@ -156,24 +195,13 @@ export function ConnectedApp({
       symbol="/symbol.svg"
     >
       <Suspense fallback={<LoadingPage />}>
-        {path === "/" || path === "/index.html" ? (
-          <ReportLibrary readOnly={readOnly} />
-        ) : readOnly && current === "run" ? (
-          <PageHeader
-            title="Read-only preview"
-            actions={<Button href="/">Back to Library</Button>}
-          />
-        ) : start ? (
-          <StartRun key={prior} mode={mode} navigate={navigate} from={prior ?? undefined} />
-        ) : runs ? (
-          <RunActivity />
-        ) : run ? (
-          <RunProgress key={run} id={run} mode={mode} />
-        ) : report ? (
-          <ReportReader key={report} id={report} mode={mode} />
-        ) : (
-          <PageHeader title="Page not found" actions={<Button href="/">Library</Button>} />
-        )}
+        <CurrentPage
+          route={route}
+          prior={prior}
+          mode={mode}
+          readOnly={readOnly}
+          navigate={navigate}
+        />
       </Suspense>
     </Shell>
   );

@@ -4,7 +4,7 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { LibraryData } from "@/data";
 import { SourceContext } from "../source";
-import { routes } from "./routes";
+import { libraryRoutes as routes } from "./routes";
 
 const fixture = JSON.parse(
   readFileSync(path.resolve(import.meta.dirname, "../../../fixtures/library.json"), "utf8"),

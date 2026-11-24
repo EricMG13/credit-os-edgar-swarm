@@ -1,7 +1,7 @@
 import {
   evidencePath,
   outputEntries,
-  type Changes,
+  type PublishedChanges,
   type OutputEntry,
   type PublishedRun,
   type Snapshot,
@@ -76,7 +76,7 @@ export function maturityTraces(
   snapshot: Snapshot,
   run: PublishedRun,
   entries: OutputEntry[],
-  change: Changes,
+  change: PublishedChanges,
 ) {
   const priorFolder = change.pack?.prior?.run;
   const earlier = priorFolder

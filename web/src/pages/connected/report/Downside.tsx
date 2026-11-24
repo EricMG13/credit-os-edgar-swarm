@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ComparisonChart, type ComparisonPanel } from "@/components/chart/ComparisonChart";
+import { ComparisonChart, type ChartComparisonPanel } from "@/components/chart/ComparisonChart";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import { card, field, heading, label } from "../layout";
 import {
@@ -115,7 +115,7 @@ function comparison(
     const min = Math.min(0, first, second);
     const max = Math.max(0, first, second) || (min === 0 ? 1 : 0);
     if (!Number.isFinite(max - min)) return [];
-    const panel: ComparisonPanel = {
+    const panel: ChartComparisonPanel = {
       measure: measure.replace(
         /\(([A-Z]{3}) millions\)$/,
         (_, code: string) => `(${unitLabel(`${code} millions`)})`,

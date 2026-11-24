@@ -15,7 +15,7 @@ import {
   containsReference,
   readerText,
   readParagraph,
-  type Changes as PublishedChanges,
+  type PublishedChanges,
   type MaturityProfile,
   type OutputEntry,
   type PublishedRun,
@@ -92,7 +92,7 @@ function noComparisonSentence(raw: string | null | undefined) {
   return "No comparison was recorded for this run.";
 }
 
-export function Changes({
+export function ReportChanges({
   snapshot,
   run,
   entries,
@@ -110,148 +110,309 @@ export function Changes({
   const note = noComparisonSentence(change?.note);
   const [presentation, setPresentation] = useState<"cards" | "table">("cards");
   if (change?.first_run === true && !change.pack && !change.problem && !change.note)
-    return (
-      <section className={`${card} min-h-76 justify-center py-14`}>
-        <EmptyState>
-          <EmptyState.Header>
-            <EmptyState.FeaturedIcon icon={ClockRewind} />
-          </EmptyState.Header>
-          <EmptyState.Content>
-            <EmptyState.Title as="h2">No earlier run to compare.</EmptyState.Title>
-            <EmptyState.Description>
-              This is the first listed run for this issuer on this pathway.
-            </EmptyState.Description>
-            <p className="reading-copy text-body text-text-secondary">
-              Only reports already listed when this run was made can be used for comparison.
-            </p>
-          </EmptyState.Content>
-          <EmptyState.Footer>
-            <Button href="#overview" color="secondary">
-              Open the Overview
-            </Button>
-          </EmptyState.Footer>
-        </EmptyState>
-      </section>
-    );
+    return <FirstRunNotice />;
+  return (
+    <ChangesReport
+      snapshot={snapshot}
+      run={run}
+      entries={entries}
+      change={change}
+      entry={entry}
+      entryIndex={entryIndex}
+      rows={rows}
+      note={note}
+      trace={trace}
+      presentation={presentation}
+      setPresentation={setPresentation}
+    />
+  );
+}
+
+function ChangesReport({
+  snapshot,
+  run,
+  entries,
+  change,
+  entry,
+  entryIndex,
+  rows,
+  note,
+  trace,
+  presentation,
+  setPresentation,
+}: {
+  snapshot: Snapshot;
+  run: PublishedRun;
+  entries: OutputEntry[];
+  change: PublishedChanges | null | undefined;
+  entry: OutputEntry | undefined;
+  entryIndex: number;
+  rows: string[][];
+  note: string;
+  trace: ReturnType<typeof comparisonTrace>;
+  presentation: "cards" | "table";
+  setPresentation: (value: "cards" | "table") => void;
+}) {
   return (
     <>
-      <section className={rows.length > 0 ? "grid gap-4" : card}>
-        <h2 className={heading}>Changes since the last run</h2>
-        {change?.problem ? (
-          <p>
-            {containsReference(change.problem)
-              ? "The comparison could not be read."
-              : change.problem}
-          </p>
-        ) : !change?.pack ? (
-          <p>{note}</p>
-        ) : null}
-        {(change?.problem || !change?.pack) && (
-          <div className="flex flex-wrap items-center gap-3">
-            <Button href="#overview" color="secondary" size="sm">
-              Open the Overview
-            </Button>
-            <Button href="#evidence/record" color="link-gray" size="sm" iconTrailing={ArrowRight}>
-              Review comparison evidence
-            </Button>
-          </div>
-        )}
-        {rows.length > 0 && (
-          <>
-            <div className="flex justify-end">
-              <ButtonGroup
-                aria-label="Presentation"
-                size="sm"
-                disallowEmptySelection
-                selectedKeys={[presentation]}
-                onSelectionChange={(keys) => {
-                  const [key] = keys;
-                  if (key === "cards" || key === "table") setPresentation(key);
-                }}
-              >
-                <ButtonGroupItem id="cards">Cards</ButtonGroupItem>
-                <ButtonGroupItem id="table">Table</ButtonGroupItem>
-              </ButtonGroup>
-            </div>
-            {presentation === "cards" ? (
-              <ul className="grid gap-4 lg:grid-cols-3">
-                {rows.map(
-                  (
-                    [label = "", before = "", after = "", delta, reason = "", analysis = ""],
-                    index,
-                  ) => {
-                    const href = trace.measure(label);
-                    const kind = reason.endsWith("Same-period analysis change")
-                      ? "Same-period analysis change"
-                      : delta && delta !== "—"
-                        ? "Comparable"
-                        : "Not assessable";
-                    return (
-                      <ChangeCard
-                        key={index}
-                        source={
-                          href && (
-                            <PublishedSource href={href} name={label}>
-                              Comparison row
-                            </PublishedSource>
-                          )
-                        }
-                        change={{
-                          measure: label,
-                          kind,
-                          current: cell(after),
-                          from: cell(before),
-                          change: delta && delta !== "—" ? delta : null,
-                          direction: "none",
-                          tone:
-                            kind === "Comparable"
-                              ? cardTone(change?.pack?.measures?.[index])
-                              : undefined,
-                          cause: containsReference(reason) ? "See comparison evidence." : reason,
-                          effect: containsReference(analysis) ? "" : analysis,
-                          trace: null,
-                        }}
-                      />
-                    );
-                  },
-                )}
-              </ul>
-            ) : (
-              <section aria-label="Earlier against current">
-                <ComparisonTable rows={rows} source={trace.measure} />
-              </section>
-            )}
-          </>
-        )}
-        {change?.pack && !change.problem && (
-          <Button
-            href={trace.handoff ?? "#evidence/trace/CP-8"}
-            color="link-gray"
-            size="sm"
-            iconTrailing={ArrowRight}
-          >
-            Review comparison evidence
-          </Button>
-        )}
-      </section>
-      {!change?.problem && change?.pack && (
-        <ComparisonMaturities
-          profile={change.pack.maturity_profile}
-          omitted={change.pack.omitted?.maturity_profile}
-          traces={
-            change.pack.maturity_profile
-              ? maturityTraces(snapshot, run, entries, change)
-              : undefined
-          }
-        />
+      <ComparisonPanel
+        change={change}
+        rows={rows}
+        note={note}
+        trace={trace}
+        presentation={presentation}
+        setPresentation={setPresentation}
+      />
+      <ComparisonSupplements
+        snapshot={snapshot}
+        run={run}
+        entries={entries}
+        change={change}
+        entry={entry}
+        entryIndex={entryIndex}
+        trace={trace}
+      />
+    </>
+  );
+}
+
+function ComparisonPanel({
+  change,
+  rows,
+  note,
+  trace,
+  presentation,
+  setPresentation,
+}: {
+  change: PublishedChanges | null | undefined;
+  rows: string[][];
+  note: string;
+  trace: ReturnType<typeof comparisonTrace>;
+  presentation: "cards" | "table";
+  setPresentation: (value: "cards" | "table") => void;
+}) {
+  return (
+    <section className={rows.length > 0 ? "grid gap-4" : card}>
+      <h2 className={heading}>Changes since the last run</h2>
+      <ComparisonStatus change={change} note={note} />
+      <ComparisonFallbackLinks change={change} />
+      {rows.length > 0 && (
+        <>
+          <PresentationToggle value={presentation} onChange={setPresentation} />
+          <ComparisonRows rows={rows} presentation={presentation} change={change} trace={trace} />
+        </>
       )}
-      {!change?.problem && change?.pack?.modules?.length && (
-        <ComparedModules change={change} source={trace.module} />
-      )}
+      <ComparisonEvidenceLink change={change} handoff={trace.handoff} />
+    </section>
+  );
+}
+
+function ComparisonSupplements({
+  snapshot,
+  run,
+  entries,
+  change,
+  entry,
+  entryIndex,
+  trace,
+}: {
+  snapshot: Snapshot;
+  run: PublishedRun;
+  entries: OutputEntry[];
+  change: PublishedChanges | null | undefined;
+  entry: OutputEntry | undefined;
+  entryIndex: number;
+  trace: ReturnType<typeof comparisonTrace>;
+}) {
+  if (change?.problem || !change?.pack)
+    return entry ? (
+      <ReportFindings snapshot={snapshot} run={run} entry={entry} entryIndex={entryIndex} />
+    ) : null;
+  return (
+    <>
+      <ComparisonMaturities
+        profile={change.pack.maturity_profile}
+        omitted={change.pack.omitted?.maturity_profile}
+        traces={
+          change.pack.maturity_profile ? maturityTraces(snapshot, run, entries, change) : undefined
+        }
+      />
+      {change.pack.modules?.length && <ComparedModules change={change} source={trace.module} />}
       {entry && (
         <ReportFindings snapshot={snapshot} run={run} entry={entry} entryIndex={entryIndex} />
       )}
     </>
+  );
+}
+
+function FirstRunNotice() {
+  return (
+    <section className={`${card} min-h-76 justify-center py-14`}>
+      <EmptyState>
+        <EmptyState.Header>
+          <EmptyState.FeaturedIcon icon={ClockRewind} />
+        </EmptyState.Header>
+        <EmptyState.Content>
+          <EmptyState.Title as="h2">No earlier run to compare.</EmptyState.Title>
+          <EmptyState.Description>
+            This is the first listed run for this issuer on this pathway.
+          </EmptyState.Description>
+          <p className="reading-copy text-body text-text-secondary">
+            Only reports already listed when this run was made can be used for comparison.
+          </p>
+        </EmptyState.Content>
+        <EmptyState.Footer>
+          <Button href="#overview" color="secondary">
+            Open the Overview
+          </Button>
+        </EmptyState.Footer>
+      </EmptyState>
+    </section>
+  );
+}
+
+function ComparisonStatus({
+  change,
+  note,
+}: {
+  change: PublishedChanges | null | undefined;
+  note: string;
+}) {
+  if (change?.problem)
+    return (
+      <p>
+        {containsReference(change.problem) ? "The comparison could not be read." : change.problem}
+      </p>
+    );
+  return change?.pack ? null : <p>{note}</p>;
+}
+
+function PresentationToggle({
+  value,
+  onChange,
+}: {
+  value: "cards" | "table";
+  onChange: (value: "cards" | "table") => void;
+}) {
+  return (
+    <div className="flex justify-end">
+      <ButtonGroup
+        aria-label="Presentation"
+        size="sm"
+        disallowEmptySelection
+        selectedKeys={[value]}
+        onSelectionChange={(keys) => {
+          const [key] = keys;
+          if (key === "cards" || key === "table") onChange(key);
+        }}
+      >
+        <ButtonGroupItem id="cards">Cards</ButtonGroupItem>
+        <ButtonGroupItem id="table">Table</ButtonGroupItem>
+      </ButtonGroup>
+    </div>
+  );
+}
+
+function ComparisonRows({
+  rows,
+  presentation,
+  change,
+  trace,
+}: {
+  rows: string[][];
+  presentation: "cards" | "table";
+  change: PublishedChanges | null | undefined;
+  trace: ReturnType<typeof comparisonTrace>;
+}) {
+  if (presentation === "table")
+    return (
+      <section aria-label="Earlier against current">
+        <ComparisonTable rows={rows} source={trace.measure} />
+      </section>
+    );
+  return (
+    <ul className="grid gap-4 lg:grid-cols-3">
+      {rows.map((row, index) => (
+        <ComparisonCard key={index} row={row} index={index} change={change} trace={trace} />
+      ))}
+    </ul>
+  );
+}
+
+function ComparisonCard({
+  row,
+  index,
+  change,
+  trace,
+}: {
+  row: string[];
+  index: number;
+  change: PublishedChanges | null | undefined;
+  trace: ReturnType<typeof comparisonTrace>;
+}) {
+  const [label = "", before = "", after = "", delta, reason = "", analysis = ""] = row;
+  const href = trace.measure(label);
+  const kind = reason.endsWith("Same-period analysis change")
+    ? "Same-period analysis change"
+    : delta && delta !== "—"
+      ? "Comparable"
+      : "Not assessable";
+  return (
+    <ChangeCard
+      source={
+        href && (
+          <PublishedSource href={href} name={label}>
+            Comparison row
+          </PublishedSource>
+        )
+      }
+      change={{
+        measure: label,
+        kind,
+        current: cell(after),
+        from: cell(before),
+        change: delta && delta !== "—" ? delta : null,
+        direction: "none",
+        tone: kind === "Comparable" ? cardTone(change?.pack?.measures?.[index]) : undefined,
+        cause: containsReference(reason) ? "See comparison evidence." : reason,
+        effect: containsReference(analysis) ? "" : analysis,
+        trace: null,
+      }}
+    />
+  );
+}
+
+function ComparisonEvidenceLink({
+  change,
+  handoff,
+}: {
+  change: PublishedChanges | null | undefined;
+  handoff: string | undefined;
+}) {
+  if (!change?.pack || change.problem) return null;
+  return (
+    <Button
+      href={handoff ?? "#evidence/trace/CP-8"}
+      color="link-gray"
+      size="sm"
+      iconTrailing={ArrowRight}
+    >
+      Review comparison evidence
+    </Button>
+  );
+}
+
+function ComparisonFallbackLinks({ change }: { change: PublishedChanges | null | undefined }) {
+  if (!change?.problem && change?.pack) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <Button href="#overview" color="secondary" size="sm">
+        Open the Overview
+      </Button>
+      <Button href="#evidence/record" color="link-gray" size="sm" iconTrailing={ArrowRight}>
+        Review comparison evidence
+      </Button>
+    </div>
   );
 }
 

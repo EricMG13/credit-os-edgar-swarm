@@ -19,7 +19,7 @@ import {
   RequestError,
   serviceText,
   type Mode,
-  type Run,
+  type ConnectedRun,
   type RunStatus,
 } from "./api";
 import { Breadcrumb } from "./layout";
@@ -95,7 +95,7 @@ const REPORT_PROBLEMS = {
 } as const;
 
 export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
-  const [run, setRun] = useState<Run>();
+  const [run, setRun] = useState<ConnectedRun>();
   useEffect(() => {
     document.title = `${run?.issuer_name || "Run progress"}${run?.issuer_name ? " run" : ""} — Credit OS`;
   }, [run?.issuer_name]);

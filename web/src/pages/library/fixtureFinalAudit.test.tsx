@@ -4,8 +4,8 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import type { LibraryData } from "@/data";
 import { SourceContext } from "../source";
 import { readSlice } from "./read";
-import { routes } from "./routes";
-import type { LibrarySlice, Run, TreeNode } from "./slice";
+import { libraryRoutes as routes } from "./routes";
+import type { Cell, LibrarySlice, Run, TreeNode } from "./slice";
 
 const fixture = JSON.parse(
   readFileSync(path.resolve(import.meta.dirname, "../../../fixtures/library.json"), "utf8"),
@@ -32,6 +32,34 @@ const full = () => filled("halden-aerostructures", "2026-09-30");
 const hasSource = (node: TreeNode): boolean =>
   node.label === "Source" || node.children.some(hasSource);
 const sourceGap = (text: string | null) => /source details.*not recorded/i.test(text ?? "");
+
+function assertFacilityFact(
+  run: ReturnType<typeof full>,
+  group: { name: string | null },
+  row: {
+    trace: string | null;
+    label: string;
+    value: Cell;
+  },
+) {
+  if (row.trace === null) throw new Error("facility fact has no trace");
+  const trace = run.traces[row.trace];
+  expect(trace?.heading).toContain(`${String(group.name)} · ${row.label}`);
+  if (row.value?.kind === "value") expect(trace?.derivation.value).toContain(row.value.text);
+  else expect(trace?.derivation.value).toBe(row.value === null ? "n.a." : "Withheld");
+  return row.trace;
+}
+
+function assertFacilityFactsHaveMatchingTraces(run: ReturnType<typeof full>): void {
+  const module = run.modules.find((m) => m.id === "capital-structure");
+  if (module?.body.kind !== "delivered") throw new Error("no capital structure");
+  const facts = module.body.records.find((b) => b.kind === "facts");
+  if (facts?.kind !== "facts") throw new Error("no facts");
+  const keys = facts.groups.flatMap((group) =>
+    group.rows.map((row) => assertFacilityFact(run, group, row)),
+  );
+  expect(new Set(keys).size).toBe(keys.length);
+}
 
 afterEach(cleanup);
 
@@ -122,23 +150,7 @@ describe("final audit fixture consistency", () => {
   });
 
   it("gives every facility fact the matching heading and Result (S3-036)", () => {
-    const run = full();
-    const module = run.modules.find((m) => m.id === "capital-structure");
-    if (module?.body.kind !== "delivered") throw new Error("no capital structure");
-    const facts = module.body.records.find((b) => b.kind === "facts");
-    if (facts?.kind !== "facts") throw new Error("no facts");
-    const keys: string[] = [];
-    for (const group of facts.groups) {
-      for (const row of group.rows) {
-        if (row.trace === null) throw new Error("facility fact has no trace");
-        keys.push(row.trace);
-        const trace = run.traces[row.trace];
-        expect(trace?.heading).toContain(`${String(group.name)} · ${row.label}`);
-        if (row.value?.kind === "value") expect(trace?.derivation.value).toContain(row.value.text);
-        else expect(trace?.derivation.value).toBe(row.value === null ? "n.a." : "Withheld");
-      }
-    }
-    expect(new Set(keys).size).toBe(keys.length);
+    assertFacilityFactsHaveMatchingTraces(full());
   });
 
   it("counts actual calculation derivations and states their scope (S4-001)", () => {

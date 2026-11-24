@@ -1,7 +1,7 @@
 // S1-001: the run group has an address of its own for starting a run, #/run/start, so that a
 // "Start a run" link needs no draft id. It draws the slice's first draft, where a new run begins.
 import { screen } from "@testing-library/react";
-import { routes } from "./routes";
+import { runRoutes as routes } from "./routes";
 import { fixture, show, showFixture } from "./test-helpers";
 
 type Drafts = { drafts: { id: string; step: string }[] };

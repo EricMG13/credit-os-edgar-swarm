@@ -5,7 +5,7 @@ import type { LibraryData } from "@/data";
 import { SourceContext } from "../source";
 import { useSourcesOn } from "./parts/SourcesSwitch";
 import { moduleViewKey } from "./Module";
-import { routes } from "./routes";
+import { libraryRoutes as routes } from "./routes";
 
 type Json = Record<string, unknown>;
 

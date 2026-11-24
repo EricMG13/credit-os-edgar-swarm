@@ -31,30 +31,44 @@ export interface SourceTable {
   evidenceInDrawer?: boolean;
 }
 
+function sourceRows(rows: unknown, width: number) {
+  const sourceRows = items(rows).map(record);
+  const cells = sourceRows.map((row) => row.cells);
+  if (
+    cells.length === 0 ||
+    !cells.every((row): row is string[] => strings(row) && row.length === width)
+  )
+    return null;
+  return {
+    cells,
+    rowLines: sourceRows.map(({ line: at }) =>
+      typeof at === "number" && Number.isSafeInteger(at) && at > 0 ? at : undefined,
+    ),
+  };
+}
+
+function sourceTable(raw: unknown): SourceTable | null {
+  const { type, line, headers, rows } = record(raw);
+  if (type !== "table" || typeof line !== "number" || !Number.isSafeInteger(line)) return null;
+  if (!strings(headers) || headers.length < 2) return null;
+  const content = sourceRows(rows, headers.length);
+  return content ? { line, headers, rows: content.cells, rowLines: content.rowLines } : null;
+}
+
 export function publishedTables(sections: unknown) {
   const tables = new Map<number, SourceTable>();
-  const duplicates = new Set<number>();
+  const seen = new Set<number>();
   for (const section of items(sections)) {
     for (const raw of items(record(section).blocks)) {
-      const { type, line, headers, rows } = record(raw);
+      const { type, line } = record(raw);
       if (type !== "table" || typeof line !== "number" || !Number.isSafeInteger(line)) continue;
-      if (tables.has(line) || duplicates.has(line)) {
+      if (seen.has(line)) {
         tables.delete(line);
-        duplicates.add(line);
         continue;
       }
-      if (!strings(headers) || headers.length < 2) continue;
-      const sourceRows = items(rows).map(record);
-      const cells = sourceRows.map((row) => row.cells);
-      if (
-        cells.length > 0 &&
-        cells.every((row): row is string[] => strings(row) && row.length === headers.length)
-      ) {
-        const rowLines = sourceRows.map(({ line: at }) =>
-          typeof at === "number" && Number.isSafeInteger(at) && at > 0 ? at : undefined,
-        );
-        tables.set(line, { line, headers, rows: cells, rowLines });
-      }
+      seen.add(line);
+      const table = sourceTable(raw);
+      if (table) tables.set(line, table);
     }
   }
   return tables;

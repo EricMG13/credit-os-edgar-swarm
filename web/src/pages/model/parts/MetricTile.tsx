@@ -11,7 +11,7 @@ import { TraceControl } from "./TraceControl";
  * and the delivered delta line. A missing value draws "n.a." and a withheld one the kit's Withheld,
  * each with its delivered sentence. The shared MetricCard supplies the visual frame; this adapter preserves the delivered forms.
  */
-export function MetricTile({ metric }: { metric: Metric }) {
+export function ModelMetricTile({ metric }: { metric: Metric }) {
   const { value } = metric;
   return (
     <MetricCard
