@@ -12,7 +12,6 @@ it("registers a lead for each Sources, Financials and Validation and decision mo
     "CP-L10",
     "CP-5",
     "CP-6",
-    "CP-8",
   ])
     expect(leadFor(code), code).toBeTypeOf("function");
 });

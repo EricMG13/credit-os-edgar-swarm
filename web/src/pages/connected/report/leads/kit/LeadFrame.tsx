@@ -6,24 +6,42 @@ import { FigureNotes, FigureSourceControl, Key } from "../../overview/figurePart
 import { Bento, GapNote, Tile } from "../../overview/Tile";
 import type { LeadProps } from "../types";
 
-/** The designed gap, for a lead whose module is blocked, absent or unreadable: one tile, the reason in words. */
-function LeadGap({ label, reason }: { label: string; reason: string }) {
+/**
+ * The one gap pattern of every lead: a plain tile holding a gap note, the tile's name inside the
+ * note's solid chip, then what is not known and why. Used wherever a readable module lacks a table.
+ */
+export function GapTile({
+  span,
+  label,
+  kicker,
+  className,
+  children,
+}: {
+  span: ComponentProps<typeof Tile>["span"];
+  label: string;
+  kicker: string;
+  className?: string;
+  children: ReactNode;
+}) {
   return (
-    <Tile span={12} label={label} kicker="Not assessable" tone="gap">
-      <GapNote>{reason}</GapNote>
+    <Tile span={span} label={label} className={cx("self-start", className)}>
+      <GapNote>
+        <span className="font-medium">{kicker}</span>
+        {" \u00b7 "}
+        {children}
+      </GapNote>
     </Tile>
   );
 }
 
-/** The bento a lead is drawn in; a blocked or unreadable module draws the one gap tile instead. */
+/**
+ * The bento a lead is drawn in. A blocked, absent or unreadable module draws nothing here: the
+ * module frame states it in the header with the reason.
+ */
 export function LeadFrame({ props, children }: { props: LeadProps; children: ReactNode }) {
   const module = props.entry.output.module;
   const { reason } = moduleSource(props.view, module, moduleName(module));
-  return (
-    <Bento>
-      {reason ? <LeadGap label={`${moduleName(module)} lead`} reason={reason} /> : children}
-    </Bento>
-  );
+  return reason ? null : <Bento>{children}</Bento>;
 }
 
 /** A figure that is derived (an exact difference or sum of stated figures), said as a word. */

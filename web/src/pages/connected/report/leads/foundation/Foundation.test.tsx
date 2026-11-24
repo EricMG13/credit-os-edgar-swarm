@@ -14,13 +14,9 @@ it("draws the six figure tiles and the periods gap for the retained TransDigm ha
   expect(screen.getAllByRole("link", { name: /^Source for / })).toHaveLength(6);
 });
 
-it("says why when the run's CP-1 is blocked, and draws no figure", () => {
+it("draws nothing for a blocked or unreadable module: the frame states it in the header", () => {
   const entry = cp1Entry();
-  const props = leadProps({
-    ...entry,
-    output: { ...entry.output, parseError: "unreadable" },
-  });
-  render(<FoundationLead {...props} />);
-  expect(screen.queryAllByRole("img")).toHaveLength(0);
-  expect(screen.getByText("Not assessable")).toBeInTheDocument();
+  const props = leadProps({ ...entry, output: { ...entry.output, parseError: "unreadable" } });
+  const { container } = render(<FoundationLead {...props} />);
+  expect(container).toBeEmptyDOMElement();
 });
