@@ -11,7 +11,17 @@ type Traces = ReturnType<typeof maturityTraces>;
 type Row = MaturityProfile["rows"][number];
 
 const HEIGHT = 128;
-const LABEL = 56;
+const CHARS_PER_LINE = 12;
+const LINE = 14;
+
+/** Room above a bar for its label and a hatched stub: enough for the longest cell text in the profile. */
+function labelRoom(rows: readonly Row[]) {
+  const longest = Math.max(
+    ...rows.flatMap((row) => [row.prior, row.current]).map((cell) => (cell ?? "Not stated").length),
+    1,
+  );
+  return Math.max(56, Math.ceil(longest / CHARS_PER_LINE) * LINE + 32);
+}
 const MIN_BAR = 6;
 
 /** Whether the profile can be drawn: a unit, distinct periods and at least one stated figure. */
@@ -29,7 +39,7 @@ export function usableProfile(profile: MaturityProfile) {
   );
 }
 
-type Axis = { low: number; high: number };
+type Axis = { low: number; high: number; room: number };
 
 const FILL = {
   current: "bg-chart-1",
@@ -60,7 +70,7 @@ function Side({
   const below = (-axis.low / span) * HEIGHT;
   const side = current ? "current" : "earlier";
   const label = (
-    <Figure className="max-w-16 text-center text-caption leading-tight wrap-anywhere">
+    <Figure className="max-w-24 text-center text-caption leading-tight wrap-anywhere">
       {cell ?? "Not stated"}
     </Figure>
   );
@@ -82,8 +92,8 @@ function Side({
   if (zone === "above")
     return (
       <div
-        className="flex w-16 flex-col items-center justify-end gap-0.5"
-        style={{ height: `${String(LABEL + above)}px` }}
+        className="flex w-24 flex-col items-center justify-end gap-0.5"
+        style={{ height: `${String(axis.room + above)}px` }}
       >
         {value === null ? (
           <>
@@ -103,8 +113,8 @@ function Side({
     );
   return (
     <div
-      className="flex w-16 flex-col items-center justify-start gap-0.5"
-      style={{ height: `${String(below + LABEL)}px` }}
+      className="flex w-24 flex-col items-center justify-start gap-0.5"
+      style={{ height: `${String(below + axis.room)}px` }}
     >
       {value !== null && value < 0 ? (
         <>
@@ -120,7 +130,7 @@ function Walls({ rows }: { rows: readonly Row[] }) {
   const values = rows
     .flatMap((row) => [amount(row.prior ?? ""), amount(row.current ?? "")])
     .filter((value): value is number => value !== null);
-  const axis = { low: Math.min(0, ...values), high: Math.max(0, ...values) };
+  const axis = { low: Math.min(0, ...values), high: Math.max(0, ...values), room: labelRoom(rows) };
   return (
     <div className="grid gap-3">
       <p className="flex flex-wrap items-center gap-x-5 gap-y-1 text-caption text-text-secondary">
@@ -133,6 +143,11 @@ function Walls({ rows }: { rows: readonly Row[] }) {
           This run: solid bar
         </span>
       </p>
+      {rows.length > 2 && (
+        <p className="text-caption text-text-tertiary min-[721px]:hidden">
+          Scroll the chart sideways to see every period.
+        </p>
+      )}
       <div
         className="overflow-x-auto"
         role="region"
@@ -142,7 +157,7 @@ function Walls({ rows }: { rows: readonly Row[] }) {
       >
         <div className="flex min-w-max gap-3 pb-1">
           {rows.map((row) => (
-            <div key={row.period} className="flex min-w-36 flex-1 flex-col items-stretch">
+            <div key={row.period} className="flex min-w-52 flex-1 flex-col items-stretch">
               <div className="flex items-end justify-center gap-2">
                 <Side cell={row.prior} axis={axis} current={false} zone="above" />
                 <Side cell={row.current} axis={axis} current zone="above" />

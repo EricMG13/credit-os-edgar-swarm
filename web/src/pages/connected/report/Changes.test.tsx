@@ -427,7 +427,10 @@ describe("connected report Changes", () => {
     expect(ledger().getByText("Closed by: Amended credit agreement supplied")).toBeVisible();
     expect(ledger().getByText("Lease schedule not reconciled")).toBeVisible();
     expect(ledger().queryByText(/^(E1|E2|E3|C1|C2)$/)).toBeNull();
-    expect(ledger().getAllByRole("link", { name: "Source" })).toHaveLength(4);
+    expect(ledger().getAllByRole("link", { name: /^Source for / })).toHaveLength(4);
+    expect(
+      ledger().getByRole("link", { name: "Source for Revolver terms were unavailable" }),
+    ).toBeVisible();
   });
 
   it("names the module in a ledger cell instead of drawing its code", () => {
@@ -498,6 +501,16 @@ describe("connected report Changes", () => {
     ).toBeVisible();
     expect(document.body.textContent).not.toMatch(/\(CP-/);
     expect(ledger().getByText("Covenant view from Financial foundation is stale")).toBeVisible();
+    // Emphasis marks are flattened on purpose: the page draws the module's words, not its markdown.
+    expect(
+      ledger().getByText("Updated in Liquidity and Credit (Fundamental credit)"),
+    ).toBeVisible();
+    expect(
+      ledger().getByRole("link", {
+        name: "Source for Covenant view from Financial foundation is stale",
+      }),
+    ).toBeVisible();
+    expect(ledger().queryByText(/\*\*/)).toBeNull();
   });
 
   it("titles the ledger and falls back to the table when a column is missing", () => {
@@ -724,5 +737,124 @@ describe("connected report Changes", () => {
     expect(screen.getAllByText("A refinancing would reverse it.")).toHaveLength(1);
     expect(screen.getAllByText("The earlier run is compared in substance only.")).toHaveLength(1);
     expect(screen.queryByRole("heading", { name: "What changed: the issuer" })).toBeNull();
+  });
+
+  it("draws the contract's no-change row as the module's statement, not as a changed fact", () => {
+    const entry = cp8([]);
+    entry.sections.push({
+      heading: "What changed: the issuer",
+      level: 3,
+      line: 30,
+      blocks: [
+        {
+          type: "table",
+          headers: ["Measure or fact", "Earlier", "Current", "Cause", "Effect on the credit view"],
+          line: 31,
+          rows: [
+            {
+              line: 32,
+              cells: ["No material change", "—", "—", "None", "No fact at the issuer moved."],
+            },
+          ],
+        },
+      ],
+    });
+    renderChanges(withPack, [entry]);
+    const tile = within(screen.getByRole("region", { name: "At the issuer" }));
+    expect(tile.getByText(/No material change at the issuer\./)).toHaveTextContent(
+      "No fact at the issuer moved.",
+    );
+    expect(screen.queryByRole("region", { name: "Also changed at the issuer" })).toBeNull();
+    expect(document.body.textContent).not.toMatch(/Not stated → Not stated/);
+  });
+
+  it("draws what a handoff carries off-contract: prose under a register, an extra section, a bare table", () => {
+    const entry = cp8([]);
+    entry.sections.push(
+      {
+        heading: "What changed: the issuer",
+        level: 3,
+        line: 30,
+        blocks: [
+          {
+            type: "table",
+            headers: ["Measure or fact", "Earlier"],
+            line: 31,
+            rows: [{ line: 32, cells: ["Rating", "B1"] }],
+          },
+          { type: "text", line: 34, end: 34, text: "Ratings are as at the earlier date." },
+        ],
+      },
+      {
+        heading: "Unresolved differences",
+        level: 3,
+        line: 40,
+        blocks: [{ type: "text", line: 41, end: 41, text: "Two segment figures still differ." }],
+      },
+    );
+    renderChanges(withPack, [entry]);
+    const rest = within(screen.getByRole("region", { name: "More from the comparison" }));
+    expect(rest.getByText("Ratings are as at the earlier date.")).toBeVisible();
+    expect(rest.getByText("Two segment figures still differ.")).toBeVisible();
+    expect(rest.getByText("B1")).toBeVisible();
+  });
+
+  it("lists analysis rows for a module the pack does not compare", () => {
+    const entry = cp8([]);
+    entry.sections.push({
+      heading: "What changed: the analysis",
+      level: 3,
+      line: 40,
+      blocks: [
+        {
+          type: "table",
+          headers: ["Module", "Status", "Cause", "Why"],
+          line: 41,
+          rows: [{ line: 42, cells: ["Liquidity (CP-2D)", "New", "New source", "Newly run"] }],
+        },
+      ],
+    });
+    renderChanges(withPack, [entry]);
+    expect(
+      within(screen.getByRole("region", { name: "Also compared in the analysis" })).getByText(
+        "Liquidity",
+      ),
+    ).toBeVisible();
+  });
+
+  it("sets a long verdict smaller on a phone than a short one, whole in both", () => {
+    const verdictClass = (text: string) => {
+      const entry = cp8([]);
+      entry.sections.splice(1, 0, {
+        heading: "Bottom line",
+        level: 3,
+        line: 2,
+        blocks: [{ type: "text", line: 3, end: 3, text }],
+      });
+      const { unmount } = renderChanges(withPack, [entry]);
+      const cls = within(screen.getByRole("region", { name: "Verdict" })).getByText(text).className;
+      unmount();
+      return cls;
+    };
+    expect(verdictClass("Credit is steady.")).toMatch(/\btext-h3\b/);
+    expect(verdictClass("Credit is steady and cover is wide. ".repeat(8).trim())).toMatch(
+      /\btext-h4\b/,
+    );
+  });
+
+  it("hints that the maturity chart scrolls when it has more than two periods", () => {
+    renderChanges({
+      pack: {
+        maturity_profile: {
+          unit: "US$m",
+          rows: ["FY2026", "FY2027", "FY2028"].map((period) => ({
+            period,
+            prior: "1",
+            current: "2",
+          })),
+        },
+      },
+    });
+    expect(screen.getByText("Scroll the chart sideways to see every period.")).toBeInTheDocument();
   });
 });

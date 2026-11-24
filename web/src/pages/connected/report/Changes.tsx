@@ -1,6 +1,7 @@
 import { ArrowRight, ClockRewind } from "@untitledui/icons";
 import { useState } from "react";
 import { Button } from "@/components/base/buttons/button";
+import { cx } from "@/utils/cx";
 import { Segmented } from "@/components/kit/Segmented";
 import { changesSentence } from "../api";
 import {
@@ -20,12 +21,14 @@ import {
   analysisRows,
   classifyMeasures,
   issuerFacts,
+  labelKey,
   ledgerOf,
+  leftovers,
   passageItems,
   verdictOf,
 } from "./changes/model";
 import { LINK, PassageBody, PassageTile } from "./changes/PassageTile";
-import { AnalysisTile, FactsTile, LedgerTile } from "./changes/Registers";
+import { AnalysisTile, FactsTile, LeftoverTile, LedgerTile } from "./changes/Registers";
 import { comparisonTrace, maturityTraces } from "./comparisonTrace";
 import { Bento, GapNote, Tile } from "./overview/Tile";
 import { PublishedSource } from "./PublishedTrace";
@@ -112,9 +115,14 @@ export function ReportChanges({
         {entry && (
           <Bento>
             <Passages entry={entry} folder={run.folder} withBottomLine />
-            <FactsTile facts={issuerFacts(entry, run.folder, new Set())} />
+            <FactsTile result={issuerFacts(entry, run.folder, new Set())} />
             <AnalysisTile rows={analysisRows(entry, run.folder)} />
             <LedgerTile ledger={ledgerOf(entry, run.folder)} entry={entry} folder={run.folder} />
+            <LeftoverTile
+              sections={leftovers(entry, run.folder)}
+              entry={entry}
+              folder={run.folder}
+            />
           </Bento>
         )}
       </>
@@ -186,7 +194,11 @@ function Verdict({
       }
       trace={
         verdict?.first.text ? (
-          <PublishedSource href={verdict.first.href} name="The verdict">
+          <PublishedSource
+            href={verdict.first.href}
+            name="The verdict"
+            linkLabel="Source for the verdict"
+          >
             Source
           </PublishedSource>
         ) : undefined
@@ -195,7 +207,12 @@ function Verdict({
       <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="grid content-start gap-3">
           {verdict?.first.text ? (
-            <p className="reading-copy font-display text-h3 text-balance text-text-primary sm:text-h2">
+            <p
+              className={cx(
+                "reading-copy font-display text-balance text-text-primary sm:text-h2",
+                verdict.first.text.length > 240 ? "text-h4" : "text-h3",
+              )}
+            >
               {verdict.first.text}
             </p>
           ) : verdict ? (
@@ -333,11 +350,7 @@ function Comparison({
   const pack = change.pack;
   const { unmoved } = classifyMeasures(change, trace.measure, entry);
   const folder = run.folder;
-  const labels = new Set(
-    (pack?.measures ?? []).map(({ label }) =>
-      label.replaceAll("**", "").trim().replace(/\s+/g, " ").toLowerCase(),
-    ),
-  );
+  const labels = new Set((pack?.measures ?? []).map(({ label }) => labelKey(label)));
   return (
     <Bento>
       <Verdict change={change} entry={entry} folder={folder} />
@@ -358,7 +371,7 @@ function Comparison({
         traces={pack?.maturity_profile ? maturityTraces(snapshot, run, entries, change) : undefined}
       />
       {entry && <Passages entry={entry} folder={folder} />}
-      <FactsTile facts={issuerFacts(entry, folder, labels)} />
+      <FactsTile result={issuerFacts(entry, folder, labels)} />
       {unmoved.length > 0 && (
         <Tile span={12} label="Measures that did not move" title="Measures that did not move">
           <details>
@@ -376,7 +389,18 @@ function Comparison({
           </details>
         </Tile>
       )}
+      {entry && (
+        <AnalysisTile
+          rows={analysisRows(
+            entry,
+            folder,
+            new Set((pack?.modules ?? []).map((item) => item.module)),
+          )}
+          title="Also compared in the analysis"
+        />
+      )}
       {entry && <LedgerTile ledger={ledgerOf(entry, folder)} entry={entry} folder={folder} />}
+      {entry && <LeftoverTile sections={leftovers(entry, folder)} entry={entry} folder={folder} />}
     </Bento>
   );
 }

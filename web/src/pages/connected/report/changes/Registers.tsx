@@ -3,7 +3,8 @@ import { PublishedSource } from "../PublishedTrace";
 import { Tile } from "../overview/Tile";
 import { EmptyLedger, LedgerList } from "./LedgerLists";
 import { LINK } from "./PassageTile";
-import type { Cell, issuerFacts, analysisRows, ledgerOf } from "./model";
+import type { Cell, issuerFacts, analysisRows, leftovers, ledgerOf } from "./model";
+import { PassageBody } from "./PassageTile";
 import { PublishedTable } from "../../ReportContent";
 import { evidencePath } from "../../publishedReport";
 
@@ -18,13 +19,36 @@ function CellText({ cell, href }: { cell: Cell; href: string }) {
         </a>
       );
     default:
-      return <span className="text-gap-text">Not stated</span>;
+      return <span className="text-text-tertiary">—</span>;
   }
 }
 
-/** Facts the comparison states that are not one of the pack's measures: a new facility, an outlook. */
-export function FactsTile({ facts }: { facts: ReturnType<typeof issuerFacts> }) {
-  if (facts.length === 0) return null;
+/**
+ * Facts the comparison states that are not one of the pack's measures (a new facility, an outlook).
+ * A run with no changed fact carries the contract's "No material change" row: the module's own
+ * statement and its reason, on one line, under a heading that does not say "changed".
+ */
+export function FactsTile({ result }: { result: ReturnType<typeof issuerFacts> }) {
+  const { facts, noChange } = result;
+  if (facts.length === 0 && !noChange) return null;
+  if (facts.length === 0 && noChange)
+    return (
+      <Tile span={12} label="At the issuer" title="At the issuer">
+        <div className="flex items-start justify-between gap-3">
+          <p className="reading-copy text-body text-text-primary">
+            No material change at the issuer.{" "}
+            <CellText cell={noChange.reason} href={noChange.href} />
+          </p>
+          <PublishedSource
+            href={noChange.href}
+            name="This statement"
+            linkLabel="Source for this statement"
+          >
+            Source
+          </PublishedSource>
+        </div>
+      </Tile>
+    );
   return (
     <Tile span={12} label="Also changed at the issuer" title="Also changed at the issuer">
       <ul className="grid">
@@ -37,19 +61,23 @@ export function FactsTile({ facts }: { facts: ReturnType<typeof issuerFacts> }) 
               <h4 className="min-w-0 text-body font-medium wrap-anywhere">
                 <CellText cell={label} href={href} />
               </h4>
-              <PublishedSource href={href} name="This fact">
+              <PublishedSource href={href} name="This fact" linkLabel="Source for this fact">
                 Source
               </PublishedSource>
             </div>
             <p className="font-mono text-small text-text-secondary">
               <CellText cell={before} href={href} /> → <CellText cell={after} href={href} />
             </p>
-            <p className="reading-copy text-small text-text-secondary">
-              Cause: <CellText cell={cause} href={href} />
-            </p>
-            <p className="reading-copy text-small text-text-secondary">
-              Effect on the credit view: <CellText cell={effect} href={href} />
-            </p>
+            {cause.kind !== "absent" && (
+              <p className="reading-copy text-small text-text-secondary">
+                Cause: <CellText cell={cause} href={href} />
+              </p>
+            )}
+            {effect.kind !== "absent" && (
+              <p className="reading-copy text-small text-text-secondary">
+                Effect on the credit view: <CellText cell={effect} href={href} />
+              </p>
+            )}
           </li>
         ))}
       </ul>
@@ -58,10 +86,16 @@ export function FactsTile({ facts }: { facts: ReturnType<typeof issuerFacts> }) 
 }
 
 /** The analysis comparison's rows, where there is no pack to draw the module matrix from. */
-export function AnalysisTile({ rows }: { rows: ReturnType<typeof analysisRows> }) {
+export function AnalysisTile({
+  rows,
+  title = "What changed in the analysis",
+}: {
+  rows: ReturnType<typeof analysisRows>;
+  title?: string;
+}) {
   if (rows.length === 0) return null;
   return (
-    <Tile span={12} label="What changed in the analysis" title="What changed in the analysis">
+    <Tile span={12} label={title} title={title}>
       <ul className="grid">
         {rows.map(({ line, href, module, status, cause, why }) => (
           <li
@@ -72,7 +106,7 @@ export function AnalysisTile({ rows }: { rows: ReturnType<typeof analysisRows> }
               <h4 className="text-body font-medium">
                 <CellText cell={module} href={href} />
               </h4>
-              <PublishedSource href={href} name="This module">
+              <PublishedSource href={href} name="This module" linkLabel="Source for this module">
                 Source
               </PublishedSource>
             </div>
@@ -106,7 +140,11 @@ export function LedgerTile({
         <PublishedTable
           table={ledger.table}
           rowSource={(line, label) => (
-            <PublishedSource href={evidencePath(folder, entry, line)} name={label}>
+            <PublishedSource
+              href={evidencePath(folder, entry, line)}
+              name={label}
+              linkLabel={`Source for ${label}`}
+            >
               Source
             </PublishedSource>
           )}
@@ -138,5 +176,28 @@ function Empty({ heading }: { heading: string }) {
       <h4 className="text-caption text-text-tertiary">{heading} (none)</h4>
       <EmptyLedger />
     </section>
+  );
+}
+
+/** What the comparison wrote that no other tile draws, as written, so nothing it carries is dropped. */
+export function LeftoverTile({
+  sections,
+  entry,
+  folder,
+}: {
+  sections: ReturnType<typeof leftovers>;
+  entry: OutputEntry;
+  folder: string;
+}) {
+  if (sections.length === 0) return null;
+  return (
+    <Tile span={12} label="More from the comparison" title="More from the comparison">
+      {sections.map(({ heading, items }) => (
+        <section key={heading} className="grid gap-3" aria-label={heading}>
+          <h4 className="text-caption text-text-tertiary">{heading}</h4>
+          <PassageBody items={items} noun="passage" entry={entry} folder={folder} />
+        </section>
+      ))}
+    </Tile>
   );
 }

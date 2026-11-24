@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 import type { OutputEntry, PublishedChanges, Section } from "../../publishedReport";
-import { classifyMeasures, issuerFacts, ledgerOf, statusColumn, verdictOf } from "./model";
+import {
+  analysisRows,
+  classifyMeasures,
+  issuerFacts,
+  ledgerOf,
+  leftovers,
+  statusColumn,
+  verdictOf,
+} from "./model";
 
 const side = (value: string, unit = "x", period = "FY2025") => ({ value, unit, period });
 const measure = (key: string, prior: string, current: string, difference: number, extra = {}) => ({
@@ -217,7 +225,7 @@ describe("issuerFacts", () => {
         ],
       ),
     ]);
-    const facts = issuerFacts(entry, "cur", new Set(["net leverage"]));
+    const { facts } = issuerFacts(entry, "cur", new Set(["net leverage"]));
     expect(facts).toHaveLength(1);
     expect(facts[0]).toMatchObject({
       label: { kind: "written", text: "New term loan B of US$600m signed" },
@@ -278,5 +286,128 @@ describe("verdictOf", () => {
   it("is null without a Bottom line", () => {
     expect(verdictOf(entryWith([]), "cur")).toBeNull();
     expect(verdictOf(undefined, "cur")).toBeNull();
+  });
+});
+
+describe("issuerFacts placeholders and labels", () => {
+  const issuer = (rows: string[][]) =>
+    entryWith([
+      table(
+        "What changed: the issuer",
+        ["Measure or fact", "Earlier", "Current", "Cause", "Effect on the credit view"],
+        rows,
+      ),
+    ]);
+
+  it("recognises the contract's no-change row and keeps its reason, not a changed fact", () => {
+    const result = issuerFacts(
+      issuer([["No material change", "—", "—", "None", "Nothing at the issuer moved."]]),
+      "cur",
+      new Set(),
+    );
+    expect(result.facts).toEqual([]);
+    expect(result.noChange).toMatchObject({
+      reason: { kind: "written", text: "Nothing at the issuer moved." },
+    });
+  });
+
+  it("matches a measure's row after units and case are trimmed, so it is drawn once", () => {
+    const entry = issuer([["Net Leverage (x)", "6x", "7x", "New period", ""]]);
+    const change: PublishedChanges = {
+      pack: { measures: [measure("net_leverage", "6", "7", 1, { label: "Net leverage" })] },
+      verdicts: verdicts(["net_leverage"]),
+    };
+    expect(classifyMeasures(change, () => undefined, entry).moved[0]?.cause).toEqual({
+      kind: "written",
+      text: "New period",
+    });
+    expect(issuerFacts(entry, "cur", new Set(["net leverage"])).facts).toEqual([]);
+  });
+});
+
+describe("ledgerOf statuses", () => {
+  const headers = ["Earlier ref", "Current ref", "Limitation", "Status", "What closed it"];
+  it("matches statuses case-insensitively after marks, and keeps a New row's note", () => {
+    const result = ledgerOf(
+      entryWith([
+        table("Limitations ledger", headers, [
+          ["E1", "—", "A", "Closed ✓", "Filed"],
+          ["E2", "—", "B", "CLOSED", "Filed too"],
+          ["—", "C1", "C", "new", "Arrived with the new facility"],
+          ["—", "C2", "D", "New", "—"],
+        ]),
+      ]),
+      "cur",
+    );
+    if (!result || "table" in result) throw new Error("expected groups");
+    expect(result.groups.map((g) => [g.heading, g.items.length])).toEqual([
+      ["Added", 2],
+      ["Removed", 2],
+    ]);
+    expect(result.groups[0]?.items[0]).toMatchObject({
+      status: "new",
+      note: "Arrived with the new facility",
+    });
+    expect(result.groups[1]?.items[0]?.status).toBe("Closed ✓");
+  });
+});
+
+describe("leftovers and unlisted analysis rows", () => {
+  it("returns prose under a register, extra sections and an off-contract table as written", () => {
+    const entry = entryWith([
+      { heading: "Findings", level: 2, line: 1, blocks: [] },
+      {
+        heading: "What changed: the issuer",
+        level: 3,
+        line: 10,
+        blocks: [
+          {
+            type: "table",
+            headers: ["Measure or fact", "Earlier"],
+            line: 11,
+            rows: [{ line: 12, cells: ["X", "1"] }],
+          },
+          { type: "text", line: 14, end: 14, text: "A note under the register." },
+        ],
+      },
+      {
+        heading: "Unresolved differences",
+        level: 3,
+        line: 20,
+        blocks: [{ type: "text", line: 21, end: 21, text: "Two figures still differ." }],
+      },
+    ]);
+    const rest = leftovers(entry, "cur");
+    expect(rest.map((section) => section.heading)).toEqual([
+      "What changed: the issuer",
+      "Unresolved differences",
+    ]);
+    expect(rest[0]?.items.map((item) => item.kind)).toEqual(["table", "text"]);
+  });
+
+  it("does not repeat a table a tile already draws", () => {
+    const entry = entryWith([
+      { heading: "Findings", level: 2, line: 1, blocks: [] },
+      table(
+        "What changed: the issuer",
+        ["Measure or fact", "Earlier", "Current", "Cause", "Effect on the credit view"],
+        [["X", "1", "2", "None", ""]],
+      ),
+    ]);
+    expect(leftovers(entry, "cur")).toEqual([]);
+  });
+
+  it("lists analysis rows whose module is not in the pack", () => {
+    const entry = entryWith([
+      table(
+        "What changed: the analysis",
+        ["Module", "Status", "Cause", "Why"],
+        [
+          ["Fundamental credit (CP-2)", "Weakened", "New period", "x"],
+          ["Liquidity (CP-2D)", "New", "New source", "y"],
+        ],
+      ),
+    ]);
+    expect(analysisRows(entry, "cur", new Set(["CP-2"])).map((row) => row.line)).toEqual([13]);
   });
 });

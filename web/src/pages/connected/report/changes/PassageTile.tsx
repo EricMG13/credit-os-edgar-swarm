@@ -20,7 +20,7 @@ function ParagraphLine({ text, href, noun }: { text: string | null; href: string
         <p className="reading-copy min-w-0 text-body text-text-primary">{text}</p>
       )}
       {text !== null && (
-        <PublishedSource href={href} name={`This ${noun}`}>
+        <PublishedSource href={href} name={`This ${noun}`} linkLabel={`Source for this ${noun}`}>
           Source
         </PublishedSource>
       )}
@@ -56,7 +56,11 @@ export function PassageBody({
             <PublishedTable
               table={item.table}
               rowSource={(line, label) => (
-                <PublishedSource href={evidencePath(folder, entry, line)} name={label}>
+                <PublishedSource
+                  href={evidencePath(folder, entry, line)}
+                  name={label}
+                  linkLabel={`Source for ${label}`}
+                >
                   Source
                 </PublishedSource>
               )}

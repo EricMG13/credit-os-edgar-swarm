@@ -149,3 +149,19 @@ describe("MaturityPair baseline", () => {
     expect(bars.slice(0, 2).map((b) => b.dataset["zone"])).toEqual(["below", "below"]);
   });
 });
+
+describe("MaturityPair headroom", () => {
+  it("reserves room for a long unparsed cell when no value is positive", () => {
+    const { container } = render(
+      <MaturityPair
+        profile={{
+          unit: "US$m",
+          rows: [{ period: "FY2026", prior: "-5", current: "Not supplied: schedule absent" }],
+        }}
+      />,
+    );
+    const above = [...container.querySelectorAll<HTMLElement>("[data-gap]")][0]?.parentElement;
+    expect(Number.parseFloat(above?.style.height ?? "0")).toBeGreaterThanOrEqual(66);
+    expect(container.querySelector("[data-gap]")?.className).toMatch(/h-6/);
+  });
+});

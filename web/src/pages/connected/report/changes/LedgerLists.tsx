@@ -12,7 +12,7 @@ export function LedgerList({ group }: { group: LedgerGroup }) {
         {heading} ({items.length})
       </h4>
       <ul className="grid gap-3">
-        {items.map(({ text, note, line, href }) => (
+        {items.map(({ text, note, status, line, href }) => (
           <li key={line} className="flex items-start justify-between gap-3">
             <span className="grid min-w-0 gap-0.5">
               {text === null ? (
@@ -22,6 +22,9 @@ export function LedgerList({ group }: { group: LedgerGroup }) {
               ) : (
                 <span className="reading-copy text-small text-text-primary">{text}</span>
               )}
+              {status !== group.status && group.heading !== status && (
+                <span className="text-caption text-text-tertiary">Status: {status}</span>
+              )}
               {note && (
                 <span className="text-caption text-text-secondary">
                   {group.status === "Closed" ? "Closed by: " : ""}
@@ -29,7 +32,11 @@ export function LedgerList({ group }: { group: LedgerGroup }) {
                 </span>
               )}
             </span>
-            <PublishedSource href={href} name={text ?? "This limitation"}>
+            <PublishedSource
+              href={href}
+              name={text ?? "This limitation"}
+              linkLabel={`Source for ${text ?? "this limitation"}`}
+            >
               Source
             </PublishedSource>
           </li>

@@ -1,4 +1,5 @@
 import {
+  classifySections,
   comparisonRows,
   containsReference,
   evidencePath,
@@ -10,7 +11,7 @@ import {
   type PublishedChanges,
 } from "../../publishedReport";
 import { namedTable } from "../../reportView";
-import type { Table } from "../../publishedReport";
+import type { Block, Table } from "../../publishedReport";
 import { changeSign, tone } from "../../signal";
 import { amount } from "../../visuals/visualData";
 
@@ -69,6 +70,13 @@ function written(cell: string | undefined) {
   return nothing(text) || containsReference(text) ? null : text;
 }
 
+/** A measure's name compared across registers: module names applied, marks, case and a trailing unit dropped. */
+export const labelKey = (text = "") =>
+  readerText(plain(text))
+    .toLowerCase()
+    .replace(/\s*\([^)]*\)\s*$/, "")
+    .trim();
+
 function issuerRows(entry: OutputEntry | undefined) {
   const table =
     entry &&
@@ -79,7 +87,7 @@ function issuerRows(entry: OutputEntry | undefined) {
       "Cause",
       "Effect on the credit view",
     ]);
-  return new Map(table?.rows.map(({ cells }) => [plain(cells[0]).toLowerCase(), cells] as const));
+  return new Map(table?.rows.map(({ cells }) => [labelKey(cells[0]), cells] as const));
 }
 
 /** The pack's own reading of comparability, as `comparisonRows` applies it. */
@@ -108,7 +116,7 @@ export function classifyMeasures(
   (change.pack?.measures ?? []).forEach((measure, index) => {
     const [label = measure.label, before = "", after = "", delta = "—", reason = "", effect = ""] =
       rows[index] ?? [];
-    const issuer = causes.get(plain(label).toLowerCase());
+    const issuer = causes.get(labelKey(label));
     const sign = measure.difference == null ? null : changeSign(String(measure.difference));
     const shown = delta !== "—";
     const toned = shown && sign !== null ? tone(measure.key, String(measure.difference)) : "none";
@@ -164,11 +172,14 @@ export type Cell = Cause;
 
 const cellOf = causeOf;
 
-/** The issuer-table rows that are not one of the pack's measures: facts such as a new facility or outlook. */
+/**
+ * The issuer-table rows that are not one of the pack's measures (a new facility, an outlook), and the
+ * contract's own "No material change" row, which is the module saying nothing changed, not a fact.
+ */
 export function issuerFacts(
   entry: OutputEntry | undefined,
   folder: string,
-  measureLabels: ReadonlySet<string>,
+  measureKeys: ReadonlySet<string>,
 ) {
   const table =
     entry &&
@@ -179,82 +190,130 @@ export function issuerFacts(
       "Cause",
       "Effect on the credit view",
     ]);
-  if (!entry || !table) return [];
-  return table.rows
-    .filter(({ cells }) => !measureLabels.has(plain(cells[0]).toLowerCase()))
-    .map(({ cells, line }) => ({
+  const facts: {
+    line: number;
+    href: string;
+    label: Cell;
+    before: Cell;
+    after: Cell;
+    cause: Cell;
+    effect: Cell;
+  }[] = [];
+  let noChange: { reason: Cell; href: string } | null = null;
+  if (!entry || !table) return { facts, noChange };
+  for (const { cells, line } of table.rows) {
+    const key = labelKey(cells[0]);
+    if (measureKeys.has(key)) continue;
+    const href = evidencePath(folder, entry, line);
+    if (key === "no material change") {
+      noChange = { reason: cellOf(cells[4]), href };
+      continue;
+    }
+    facts.push({
       line,
-      href: evidencePath(folder, entry, line),
+      href,
       label: cellOf(cells[0]),
       before: cellOf(cells[1]),
       after: cellOf(cells[2]),
       cause: cellOf(cells[3]),
       effect: cellOf(cells[4]),
-    }));
+    });
+  }
+  return { facts, noChange };
 }
 
 /** The analysis-table rows, drawn where there is no pack to supply the module matrix. */
-export function analysisRows(entry: OutputEntry | undefined, folder: string) {
+export function analysisRows(
+  entry: OutputEntry | undefined,
+  folder: string,
+  knownCodes: ReadonlySet<string> = new Set(),
+) {
   const table =
     entry && namedTable(entry, "What changed: the analysis", ["Module", "Status", "Cause", "Why"]);
   if (!entry || !table) return [];
-  return table.rows.map(({ cells, line }) => ({
-    line,
-    href: evidencePath(folder, entry, line),
-    module: cellOf(cells[0]),
-    status: cellOf(cells[1]),
-    cause: cellOf(cells[2]),
-    why: cellOf(cells[3]),
-  }));
+  const code = (cell: string | undefined) => /\((CP-[^)]+)\)\s*$/.exec(plain(cell))?.[1] ?? "";
+  return table.rows
+    .filter(({ cells }) => !knownCodes.has(code(cells[0])))
+    .map(({ cells, line }) => ({
+      line,
+      href: evidencePath(folder, entry, line),
+      module: cellOf(cells[0]),
+      status: cellOf(cells[1]),
+      cause: cellOf(cells[2]),
+      why: cellOf(cells[3]),
+    }));
 }
 
 /** A ledger row: its text in the module's words, or null where it cites a source (then `href` is the link). */
-type LedgerItem = { text: string | null; note: string | null; line: number; href: string };
+type LedgerItem = {
+  text: string | null;
+  note: string | null;
+  /** The status as the row wrote it. */
+  status: string;
+  line: number;
+  href: string;
+};
 export type LedgerGroup = { status: string; heading: string; items: LedgerItem[] };
 
-const NAMED = ["New", "Closed", "Remaining", "Parked"];
-const HEADING: Record<string, string> = { New: "Added", Closed: "Removed" };
+const NAMED = ["new", "closed", "remaining", "parked"];
+const HEADING: Record<string, string> = { new: "Added", closed: "Removed" };
+const statusKey = (text: string) =>
+  text
+    .replace(/[^\p{L}\s]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
 
 /**
- * CP-8's limitations ledger grouped by every status it uses: what was added and what was removed
- * first, then the rest. A ledger without its Limitation or Status column comes back as the table.
+ * CP-8's limitations ledger grouped by every status it uses, matched without case or marks: what was
+ * added and what was removed first, then the rest. A ledger without its Limitation or Status column
+ * comes back as the table as written.
  */
 export function ledgerOf(
   entry: OutputEntry | undefined,
   folder: string,
 ): { groups: LedgerGroup[] } | { table: Table } | null {
   if (!entry) return null;
-  const tables = entry.sections
-    .filter((section) => section.heading === "Limitations ledger")
-    .flatMap(({ blocks }) => blocks)
-    .filter((block): block is Table => block.type === "table");
-  const table = tables.length === 1 ? tables[0] : undefined;
+  const table = ledgerTable(entry);
   if (!table) return null;
   const at = (name: string) => table.headers.indexOf(name);
   const [limitation, status, closed] = [at("Limitation"), at("Status"), at("What closed it")];
   if (limitation < 0 || status < 0) return { table };
-  const byStatus = new Map<string, LedgerItem[]>();
+  const byStatus = new Map<string, { heading: string; items: LedgerItem[] }>();
   for (const { cells, line } of table.rows) {
     if (nothing(plain(cells[limitation]))) continue;
-    const kind = readerText(plain(cells[status])) || "Not stated";
-    const item = {
+    const asWritten = readerText(plain(cells[status])) || "Not stated";
+    const key = statusKey(asWritten) || "not stated";
+    const item: LedgerItem = {
       text: written(cells[limitation]),
       note: closed < 0 ? null : written(cells[closed]),
+      status: asWritten,
       line,
       href: evidencePath(folder, entry, line),
     };
-    byStatus.set(kind, [
-      ...(byStatus.get(kind) ?? []),
-      kind === "New" ? { ...item, note: null } : item,
-    ]);
+    const group = byStatus.get(key) ?? { heading: HEADING[key] ?? asWritten, items: [] };
+    group.items.push(item);
+    byStatus.set(key, group);
   }
-  const rest = [...byStatus.keys()].filter((kind) => !NAMED.includes(kind)).sort();
-  const groups = [...NAMED.filter((kind) => byStatus.has(kind)), ...rest].map((kind) => ({
-    status: kind,
-    heading: HEADING[kind] ?? kind,
-    items: byStatus.get(kind) ?? [],
+  const rest = [...byStatus.keys()]
+    .filter((key) => !NAMED.includes(key))
+    .sort((a, b) => a.localeCompare(b));
+  const groups = [...NAMED.filter((key) => byStatus.has(key)), ...rest].map((key) => ({
+    status:
+      key === "new" ? "New" : key === "closed" ? "Closed" : (byStatus.get(key)?.heading ?? key),
+    heading: byStatus.get(key)?.heading ?? key,
+    items: byStatus.get(key)?.items ?? [],
   }));
   return { groups };
+}
+
+/** The one ledger table of the handoff; more than one is left to `leftovers`, as written. */
+function ledgerTable(entry: OutputEntry) {
+  const tables = entry.sections
+    .filter((section) => section.heading === "Limitations ledger")
+    .flatMap(({ blocks }) => blocks)
+    .filter((block): block is Table => block.type === "table");
+  return tables.length === 1 ? tables[0] : undefined;
 }
 
 type Paragraph = { line: number; text: string | null; href: string };
@@ -297,4 +356,62 @@ export function verdictOf(entry: OutputEntry | undefined, folder: string) {
   const first = items.find((item) => item.kind === "text");
   if (first?.kind !== "text") return null;
   return { first, body: items.filter((item) => item !== first) };
+}
+
+const REGISTER_HEADINGS = new Set([
+  "What changed: the issuer",
+  "What changed: the analysis",
+  "Limitations ledger",
+]);
+
+function blockItems(blocks: Block[], entry: OutputEntry, folder: string): PassageItem[] {
+  return blocks.flatMap((block): PassageItem[] => {
+    if (block.type === "table") return [{ kind: "table", table: block }];
+    if (block.type !== "text" || methodNote(block.text)) return [];
+    const body = plain(readParagraph(block.text).body);
+    if (!body) return [];
+    return [
+      {
+        kind: "text",
+        line: block.line,
+        text: containsReference(body) ? null : readerText(body),
+        href: evidencePath(folder, entry, block.line),
+      },
+    ];
+  });
+}
+
+/**
+ * Whatever the comparison module wrote that no tile draws: prose under a register, an extra section,
+ * a table that does not follow the contract. Drawn as written, so nothing a handoff carries is dropped.
+ */
+export function leftovers(entry: OutputEntry | undefined, folder: string) {
+  if (!entry) return [];
+  const used = new Set<Block>(
+    [
+      namedTable(entry, "What changed: the issuer", [
+        "Measure or fact",
+        "Earlier",
+        "Current",
+        "Cause",
+        "Effect on the credit view",
+      ]),
+      namedTable(entry, "What changed: the analysis", ["Module", "Status", "Cause", "Why"]),
+      ledgerTable(entry),
+    ].filter((block): block is Table => block !== undefined),
+  );
+  return classifySections(entry.sections)
+    .filter(
+      ({ section, role }) =>
+        section.level >= 3 && (role === "finding" || REGISTER_HEADINGS.has(section.heading)),
+    )
+    .map(({ section }) => ({
+      heading: section.heading,
+      items: blockItems(
+        section.blocks.filter((block) => !used.has(block)),
+        entry,
+        folder,
+      ),
+    }))
+    .filter(({ items }) => items.length > 0);
 }
