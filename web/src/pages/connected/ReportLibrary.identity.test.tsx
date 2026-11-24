@@ -147,16 +147,16 @@ it("draws each rating as a chip in the run facts, in order, with facility beside
   expect(within(el).queryByText("Ratings not entered for this run")).toBeNull();
 });
 
-it("says the ratings were entered at run start in each chip's title, not as visible text", async () => {
+it("captions the ratings as entered at run start, once and visibly, only when there are ratings", async () => {
   const el = await band(fixture({ ratings }));
   expect(ratingChips(el)).toHaveLength(2);
-  expect(within(el).queryByText("Entered at run start")).toBeNull();
-  expect(el.textContent).not.toContain("Entered at run start");
+  expect(within(el).getAllByText("Ratings entered at run start")).toHaveLength(1);
+  expect(within(el).getByText("Ratings entered at run start")).toBeVisible();
   cleanup();
   const none = await band(fixture());
   expect(ratingChips(none)).toHaveLength(0);
-  expect(within(none).queryByText("Ratings not entered for this run")).toBeNull();
-  expect(facts(none).querySelector("[title]")).toBeNull();
+  expect(within(none).queryByText("Ratings entered at run start")).toBeNull();
+  expect(within(facts(none)).getByText("Ratings not entered")).toBeVisible();
 });
 
 it("draws the sector exactly, and no business description, from the handoff", async () => {
@@ -228,12 +228,11 @@ it("prefers the company_description register's Sector cell over the profile's se
   expect(within(el).queryByText("Profile sector")).toBeNull();
 });
 
-it("draws no sector line and no rating chip with no CP-1A, no catalogue sector and no ratings", async () => {
+it("shows the ratings gap and no sector line with no CP-1A, no catalogue sector and no ratings", async () => {
   const el = await band(fixture());
   expect(el.querySelector("p")).toBeNull();
   expect(ratingChips(el)).toHaveLength(0);
-  expect(within(el).queryByText(/not in this run|not entered/)).toBeNull();
-  expect(within(facts(el)).getAllByRole("listitem").length).toBeGreaterThan(0);
+  expect(within(facts(el)).getByText("Ratings not entered")).toBeVisible();
 });
 
 it("shows the unambiguous profile sector when Business rows are ambiguous", async () => {
@@ -296,12 +295,12 @@ it("draws the heading, the sector, the run facts and the section control in that
 /** The outlook's own span inside a rating chip; its class carries the colour. */
 const outlookStatus = (el: HTMLElement, word: string) => {
   const holder = within(el).getByText(new RegExp(`${word}$`));
-  return ["text-success-text", "text-warning-text"].filter((name) =>
+  return ["text-success-text", "text-warning-text", "text-error-text"].filter((name) =>
     holder.className.includes(name),
   );
 };
 
-it("colours the outlook only for Positive and Negative, by its first word", async () => {
+it("draws every outlook neutral, in the analyst's words, with no direction of the page's own", async () => {
   const outlooks = ["Positive", "Negative watch", "Stable", "Developing"];
   const el = await band(
     fixture({
@@ -314,10 +313,11 @@ it("colours the outlook only for Positive and Negative, by its first word", asyn
       })),
     }),
   );
-  expect(outlookStatus(el, "Positive")).toEqual(["text-success-text"]);
-  expect(outlookStatus(el, "Negative watch")).toEqual(["text-warning-text"]);
-  expect(outlookStatus(el, "Stable")).toEqual([]);
-  expect(outlookStatus(el, "Developing")).toEqual([]);
+  for (const outlook of outlooks) expect(outlookStatus(el, outlook)).toEqual([]);
+  expect(facts(el).querySelector("svg")).toBeNull();
+  expect(ratingChips(el).map((chip) => chip.textContent)).toEqual(
+    outlooks.map((outlook, index) => `Agency ${String(index)} R${String(index)} · ${outlook}`),
+  );
 });
 
 it("draws the catalogue sector as entered", async () => {

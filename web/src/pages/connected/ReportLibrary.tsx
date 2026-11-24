@@ -408,17 +408,22 @@ function FactChips({
   const test = facts.preview ? "Test preview" : facts.mode === "synthetic" ? "Synthetic test" : "";
   return (
     <ul aria-label="Run facts" className="flex flex-wrap items-center gap-2">
-      {plain.filter(Boolean).map((fact) => (
-        <li key={fact} className={cx(CHIP, QUIET)}>
+      {plain.filter(Boolean).map((fact, index) => (
+        <li key={`fact-${String(index)}`} className={cx(CHIP, QUIET)}>
           {fact}
         </li>
       ))}
       {ratings.map((rating, index) => (
-        <RatingChip key={index} rating={rating} className={cx(CHIP, QUIET)} />
+        <RatingChip key={`rating-${String(index)}`} rating={rating} className={cx(CHIP, QUIET)} />
       ))}
+      {ratings.length > 0 ? (
+        <li className="text-caption text-text-tertiary">Ratings entered at run start</li>
+      ) : (
+        <li className={cx(CHIP, QUIET)}>Ratings not entered</li>
+      )}
       {test && <li className={cx(CHIP, TEST)}>{test}</li>}
-      {facts.labels.map((label) => (
-        <li key={label} className={cx(CHIP, QUIET)}>
+      {facts.labels.map((label, index) => (
+        <li key={`label-${String(index)}`} className={cx(CHIP, QUIET)}>
           {label}
         </li>
       ))}

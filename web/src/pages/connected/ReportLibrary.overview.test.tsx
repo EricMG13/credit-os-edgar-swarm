@@ -188,6 +188,7 @@ it("heads every report page with the breadcrumb, the name, the sector line and q
     expect.stringMatching(/^As of 31 Mar\w* 2026 · FY2025$/u),
     "US$m",
     "Moody's B1 · Negative",
+    "Ratings entered at run start",
     "Synthetic test",
   ]);
   expect(within(header).getByRole("link", { name: "Run progress" })).toHaveAttribute(

@@ -1,22 +1,6 @@
 import { expect, it } from "vitest";
 import type { PublishedRun, Section, Snapshot } from "../../publishedReport";
-import { changeVerdict, earlierStance, runStance } from "./changeData";
-
-it("reads the verdict only from the opening words the changes method asks for", () => {
-  expect(changeVerdict("About the same: the credit picture has not changed.")).toBe(
-    "About the same",
-  );
-  expect(changeVerdict("Worse since the earlier run, because leverage rose.")).toBe("Worse");
-  expect(changeVerdict("Better: cover improved.")).toBe("Better");
-  expect(changeVerdict("About the same — no change in the picture.")).toBe("About the same");
-  expect(changeVerdict("About the same since the earlier run.")).toBe("About the same");
-  expect(changeVerdict("Better, worse or about the same cannot be judged: no pack.")).toBeNull();
-  expect(changeVerdict("Worse, if the refinancing fails; otherwise about the same.")).toBeNull();
-  expect(changeVerdict("Better margins lifted EBITDA.")).toBeNull();
-  expect(changeVerdict("The credit is about the same.")).toBeNull();
-  expect(changeVerdict("")).toBeNull();
-  expect(changeVerdict(null)).toBeNull();
-});
+import { earlierStance, runStance } from "./changeData";
 
 const decision = (bias: string): Section[] => [
   {

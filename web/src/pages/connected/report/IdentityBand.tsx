@@ -1,6 +1,3 @@
-import { ArrowDownRight, ArrowRight, ArrowUpRight } from "@untitledui/icons";
-import type { FC } from "react";
-import type { IconProps } from "@/utils/is-react-component";
 import { Button } from "@/components/base/buttons/button";
 import {
   blocked,
@@ -15,17 +12,6 @@ import { moduleName } from "../api";
 import { namedRow, namedTable } from "../reportView";
 
 const DESCRIPTION = "Business description";
-
-const outlookIcons: Record<string, FC<IconProps>> = {
-  positive: ArrowUpRight,
-  negative: ArrowDownRight,
-  stable: ArrowRight,
-};
-
-const outlookColour: Record<string, string> = {
-  positive: "text-success-text",
-  negative: "text-warning-text",
-};
 
 const filled = (text: string | undefined) => (text?.trim() ? text : undefined);
 
@@ -104,10 +90,11 @@ function differingAgencies(entry: OutputEntry | undefined, ratings: CatalogueRat
   return [...new Set(differing)];
 }
 
-/** An entered rating as one header chip: agency, rating and outlook, the outlook's direction drawn. */
+/**
+ * An entered rating as one header chip: agency, rating and outlook in the analyst's words, all
+ * neutral; whether an outlook is good or bad is not the page's to say.
+ */
 export function RatingChip({ rating, className }: { rating: CatalogueRating; className: string }) {
-  const word = rating.outlook.trim().split(/\s+/)[0]?.toLowerCase() ?? "";
-  const Icon = outlookIcons[word];
   const facility = rating.scope === "facility" ? " facility" : "";
   return (
     <li
@@ -118,13 +105,7 @@ export function RatingChip({ rating, className }: { rating: CatalogueRating; cla
     >
       {`${rating.agency}${facility} `}
       <span className="font-mono font-medium text-text-primary">{rating.label}</span>
-      {rating.outlook.trim() && (
-        <span className={`flex items-center gap-0.5 ${outlookColour[word] ?? ""}`}>
-          {" · "}
-          {Icon && <Icon aria-hidden="true" className="size-3 shrink-0" />}
-          {rating.outlook}
-        </span>
-      )}
+      {rating.outlook.trim() && <span>{` · ${rating.outlook}`}</span>}
     </li>
   );
 }

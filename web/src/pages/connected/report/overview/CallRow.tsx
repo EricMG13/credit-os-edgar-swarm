@@ -1,12 +1,5 @@
-import {
-  AlertTriangle,
-  ArrowNarrowRight,
-  ArrowRight,
-  ClockRewind,
-  Eye,
-  Plus,
-} from "@untitledui/icons";
-import type { ReactNode } from "react";
+import { ArrowNarrowRight, ArrowRight, ClockRewind } from "@untitledui/icons";
+import { useMemo, type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { cx } from "@/utils/cx";
@@ -19,17 +12,21 @@ import {
   unitLabel,
   type OutputEntry,
 } from "../../publishedReport";
-import { actionBias, moduleState, runMoneyUnit, type ReportView } from "../../reportView";
+import {
+  actionBias,
+  moduleBottomLines,
+  moduleState,
+  runMoneyUnit,
+  type ReportView,
+} from "../../reportView";
+import { TextLink } from "../../../run/TextLink";
 import { PublishedSource } from "../PublishedTrace";
-import { changeVerdict, earlierStance } from "./changeData";
+import { earlierStance } from "./changeData";
 import { bottomLine, entryOf, type Passage, type RowProps } from "./read";
 import { Figure, GapNote, Tile } from "./Tile";
 
-const SIGNAL = "border-warning-edge bg-warning-fill text-warning-text";
-const POSITIVE = "border-success-edge bg-success-fill text-success-text";
-/** The two stances that add exposure; every other stance is drawn in the signal colour. */
-const ADDING = /^(?:Starter Position|Add Exposure)$/i;
-const CAUTION_BANDS = /^(?:Low|Insufficient Information)$/i;
+/** Stances, bands and outlooks are the modules' words: one neutral style, no good/bad grouping. */
+const NEUTRAL = "border-border-container bg-surface-card text-text-primary";
 
 function Source({
   run,
@@ -77,34 +74,63 @@ function Sentence({
   return <p className={className}>{passage.text}</p>;
 }
 
-/** How many modules ran, and by name and state the ones that were not delivered. */
-function moduleCount(view: ReportView) {
-  const total = String(view.modules.length);
-  if (view.modules.length === 0) return "No module ran";
-  const others = view.modules.filter(({ state }) => !state.startsWith("Delivered"));
-  if (others.length === 0) return `${total} · all delivered`;
-  if (others.length === view.modules.length) return `${total} · none delivered`;
-  const named = others.map(({ name, state }) => `${name} (${state.toLowerCase()})`);
-  return `${total} · all delivered except ${named.join(", ")}`;
+/** The modules of the run as the pipeline draws them: the lead, then every other but the changes module. */
+function pipelineModules(run: RowProps["run"], view: ReportView) {
+  const lead = view.lead ? [{ name: moduleName(view.lead.output.module), entry: view.lead }] : [];
+  return [...lead, ...moduleBottomLines(view, run).map(({ name, entry }) => ({ name, entry }))];
 }
+
+/** A module's state in words; a handoff that could not be read says so, not "not assessable". */
+const stateWord = (entry: OutputEntry) =>
+  entry.output.parseError ? "could not be read" : moduleState(entry).toLowerCase();
+
+/** How many modules ran, by the pipeline's count, and by name each one that was not delivered. */
+function moduleCount(run: RowProps["run"], view: ReportView) {
+  const all = pipelineModules(run, view);
+  if (all.length === 0) return "No module ran";
+  const groups = new Map<string, string[]>();
+  for (const { name, entry } of all) {
+    const word = stateWord(entry);
+    groups.set(word, [...(groups.get(word) ?? []), name]);
+  }
+  const delivered = groups.get("delivered")?.length ?? 0;
+  const total = String(all.length);
+  if (delivered === all.length) return `${total} · all delivered`;
+  const others = [...groups]
+    .filter(([word]) => word !== "delivered")
+    .map(([word, names]) => `${word}: ${names.join(", ")}`);
+  return `${total} · ${[`${String(delivered)} delivered`, ...others].join("; ")}`;
+}
+
+const LINK_CLASS = "inline-flex min-h-8 items-center max-[480px]:min-h-11";
 
 function RunFacts({ run, view }: Pick<RowProps, "run" | "view">) {
   const unit = runMoneyUnit(view.catalogue);
   const facts = [
     ["Pathway", runPathway(run, view.catalogue)],
-    ["Financials as of", runTiming(run)],
+    ["Timing", runTiming(run)],
     ["Currency", unit ? unitLabel(unit) : ""],
-    ["Modules", moduleCount(view)],
+    ["Modules", moduleCount(run, view)],
   ].filter(([, value]) => value);
   return (
-    <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border-hairline pt-5 sm:grid-cols-4">
-      {facts.map(([term, value]) => (
-        <div key={term} className="flex min-w-0 flex-col gap-1">
-          <dt className="text-caption text-text-tertiary">{term}</dt>
-          <dd className="text-small text-text-primary">{value}</dd>
-        </div>
-      ))}
-    </dl>
+    <div className="flex flex-col gap-3 border-t border-border-hairline pt-5">
+      <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+        {facts.map(([term, value]) => (
+          <div key={term} className="flex min-w-0 flex-col gap-1">
+            <dt className="text-caption text-text-tertiary">{term}</dt>
+            <dd className="text-small wrap-anywhere text-text-primary">{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <nav aria-label="On this page" className="flex flex-wrap gap-x-5 text-small">
+        <TextLink className={LINK_CLASS} href="#overview/limitations">
+          What this run could not do
+        </TextLink>
+        <TextLink className={LINK_CLASS} href="#overview/dates">
+          Dates to watch
+        </TextLink>
+      </nav>
+    </div>
   );
 }
 
@@ -123,21 +149,16 @@ function Head({ children, trace }: { children: ReactNode; trace?: ReactNode }) {
   );
 }
 
-/** A stated stance as a word chip: the adding stances in teal, every other in the signal colour. */
+/** A stated stance as a word chip, neutral: the word is the committee's, any grouping would be ours. */
 export function StanceChip({ stance, large = false }: { stance: string; large?: boolean }) {
-  const adding = ADDING.test(stance);
-  const Icon = adding ? Plus : Eye;
   return (
     <span
       className={cx(
         "flex items-center rounded-ds-sm border",
-        large
-          ? "h-10 gap-2.5 pr-4 pl-3 text-h3 font-semibold"
-          : "h-6 gap-1 px-2 text-caption font-medium",
-        adding ? POSITIVE : SIGNAL,
+        large ? "min-h-10 px-4 text-h3 font-semibold" : "min-h-6 px-2 text-caption font-medium",
+        NEUTRAL,
       )}
     >
-      <Icon aria-hidden="true" className={large ? "size-[18px]" : "size-3"} />
       {stance}
     </span>
   );
@@ -185,14 +206,22 @@ function CallTile({ run, view }: Pick<RowProps, "run" | "view">) {
             passage={first}
             className="max-w-[840px] text-h1 font-medium text-pretty text-text-primary"
           />
-          {rest.map(
-            (passage) =>
-              passage.text !== null && (
-                <p key={passage.line} className="reading-copy text-body text-text-secondary">
-                  {passage.text}
-                </p>
-              ),
-          )}
+          {rest.map((passage, at) => (
+            <div key={passage.line} className="flex items-start justify-between gap-3">
+              <Sentence
+                run={run}
+                entry={lead}
+                passage={passage}
+                className="reading-copy text-body text-text-secondary"
+              />
+              <Source
+                run={run}
+                entry={lead}
+                line={passage.line}
+                name={`paragraph ${String(at + 2)} of the bottom line`}
+              />
+            </div>
+          ))}
         </div>
       </div>
       <RunFacts run={run} view={view} />
@@ -202,6 +231,8 @@ function CallTile({ run, view }: Pick<RowProps, "run" | "view">) {
 
 type Score = { value: number; band: string };
 type Scored = { name: string; score: Score };
+/** The second module marked on the meter: its score, or its name when it recorded none. */
+type Second = Scored | { name: string; score: null } | null;
 
 /** The meter's reading in words: the score, its band, and the second module's score where marked. */
 const meterReading = (first: Scored, second: Scored | null) =>
@@ -214,35 +245,21 @@ const meterReading = (first: Scored, second: Scored | null) =>
  * A 0 to 100 meter: the score as the filled length, a second module's score as a tick. The two
  * scores are named on a line under the bar, so their labels never collide or leave the scale.
  */
-function Meter({
-  first,
-  second,
-  caution,
-}: {
-  first: Scored;
-  second: Scored | null;
-  caution: boolean;
-}) {
+function Meter({ first, second }: { first: Scored; second: Second }) {
   const x = (score: number) => (Math.min(Math.max(score, 0), 100) / 100) * 408;
-  const tick = second?.score.value ?? null;
+  const scored = second?.score ? (second as Scored) : null;
+  const tick = scored?.score.value ?? null;
   return (
     <div className="flex flex-col gap-1.5">
       <svg
         viewBox="0 0 408 32"
         width="100%"
         role="img"
-        aria-label={meterReading(first, second)}
+        aria-label={meterReading(first, scored)}
         className="block overflow-visible"
       >
         <rect x="0" y="6" width="408" height="6" rx="3" className="fill-border-hairline" />
-        <rect
-          x="0"
-          y="6"
-          width={x(first.score.value)}
-          height="6"
-          rx="3"
-          className={caution ? "fill-warning-mark" : "fill-chart-1"}
-        />
+        <rect x="0" y="6" width={x(first.score.value)} height="6" rx="3" className="fill-chart-1" />
         {tick !== null && (
           <line
             x1={x(tick)}
@@ -260,20 +277,19 @@ function Meter({
           100
         </text>
       </svg>
-      <p
-        aria-hidden="true"
-        className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-text-secondary"
-      >
+      <p className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-text-secondary">
         <span className="flex items-center gap-1.5">
-          <span
-            className={cx("h-1.5 w-3 rounded-ds-full", caution ? "bg-warning-mark" : "bg-chart-1")}
-          />
+          <span aria-hidden="true" className="h-1.5 w-3 rounded-ds-full bg-chart-1" />
           <span>{`${first.name} ${String(first.score.value)}`}</span>
         </span>
         {second && (
           <span className="flex items-center gap-1.5">
-            <span className="h-3 border-l-[1.5px] border-text-primary" />
-            <span>{`${second.name} ${String(second.score.value)}`}</span>
+            <span aria-hidden="true" className="h-3 border-l-[1.5px] border-text-primary" />
+            <span>
+              {scored
+                ? `${scored.name} ${String(scored.score.value)} · ${scored.score.band}`
+                : `${second.name}: no score recorded`}
+            </span>
           </span>
         )}
       </p>
@@ -298,7 +314,7 @@ function ConfidenceTile({ run, view }: Pick<RowProps, "run" | "view">) {
     );
   const selection = lead.output.module === "CP-3" ? undefined : entryOf(view, "CP-3");
   const second = scoreOf(selection);
-  const caution = CAUTION_BANDS.test(score.band);
+
   return (
     <Tile span={12} label="Confidence" className="gap-2">
       <Head
@@ -315,23 +331,12 @@ function ConfidenceTile({ run, view }: Pick<RowProps, "run" | "view">) {
       </Head>
       <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <Figure className="text-display font-medium">{score.value}</Figure>
-        <span
-          className={cx(
-            "flex items-center gap-1.5 text-body font-medium",
-            caution ? "text-warning-text" : "text-success-text",
-          )}
-        >
-          {caution && <AlertTriangle aria-hidden="true" className="size-3.5" />}
-          {score.band}
-        </span>
+        <span className="text-body font-medium text-text-primary">{score.band}</span>
         <span className="text-caption text-text-tertiary">{moduleName(lead.output.module)}</span>
       </p>
       <Meter
         first={{ name: moduleName(lead.output.module), score }}
-        second={
-          selection && second ? { name: moduleName(selection.output.module), score: second } : null
-        }
-        caution={caution}
+        second={selection ? { name: moduleName(selection.output.module), score: second } : null}
       />
     </Tile>
   );
@@ -379,6 +384,7 @@ function ClearanceTile({ run, view }: Pick<RowProps, "run" | "view">) {
 }
 
 function ChangesBody({ snapshot, run, view }: RowProps): ReactNode {
+  const was = useMemo(() => earlierStance(snapshot, run), [snapshot, run]);
   const change = comparisonForRun(run, snapshot.workspace.runs);
   const entry = entryOf(view, "CP-8");
   if (change?.problem) return <GapNote>{change.problem}</GapNote>;
@@ -393,41 +399,47 @@ function ChangesBody({ snapshot, run, view }: RowProps): ReactNode {
       </p>
     );
   const [first] = bottomLine(entry);
-  const verdict = changeVerdict(first?.text);
-  const was = earlierStance(snapshot, run);
   const now = view.lead ? actionBias(view.lead) : undefined;
   return (
     <>
-      {(verdict ?? (was && now)) && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          {verdict && <span className="text-h3 font-medium text-text-primary">{verdict}</span>}
-          {was && now && <StanceMove was={was} now={now} />}
-        </div>
-      )}
       <Sentence
         run={run}
         entry={entry}
         passage={first}
-        className="text-small text-text-secondary"
+        className="text-body font-medium text-pretty text-text-primary"
       />
+      <StanceMove was={was} now={now} />
     </>
   );
 }
 
-/** The stance in the earlier run and in this one, as two chips; the move in words for a reader. */
-function StanceMove({ was, now }: { was: string; now: string }) {
+const NOT_STATED = "Not stated";
+
+/** One side of the stance move: the committee's word, or that the run states none. */
+function Side({ stance }: { stance: string | undefined }) {
+  if (stance) return <StanceChip stance={stance} />;
   return (
-    <span className="flex items-center gap-1.5">
-      <span className="sr-only">{`Stance was ${was}, now ${now}.`}</span>
-      <span
-        aria-hidden="true"
-        className="flex h-6 items-center rounded-ds-xs border border-border-container px-2 text-caption text-text-secondary"
-      >
-        {was}
+    <span className="flex min-h-6 items-center rounded-ds-xs border border-dashed border-border-gap px-2 text-caption text-gap-text">
+      {NOT_STATED}
+    </span>
+  );
+}
+
+/** The stance in the earlier run and in this one, as two chips; a side not stated says so. */
+function StanceMove({ was, now }: { was: string | undefined; now: string | undefined }) {
+  const words = (stance: string | undefined) => stance ?? NOT_STATED.toLowerCase();
+  return (
+    <span className="flex flex-wrap items-center gap-1.5">
+      <span className="sr-only">{`Stance was ${words(was)}, now ${words(now)}.`}</span>
+      <span aria-hidden="true" className="text-caption text-text-tertiary">
+        Stance
+      </span>
+      <span aria-hidden="true">
+        <Side stance={was} />
       </span>
       <ArrowNarrowRight aria-hidden="true" className="size-3.5 text-text-secondary" />
       <span aria-hidden="true">
-        <StanceChip stance={now} />
+        <Side stance={now} />
       </span>
     </span>
   );
