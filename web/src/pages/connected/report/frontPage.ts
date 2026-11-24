@@ -1,3 +1,4 @@
+import { moduleName } from "../api";
 import { issuerPassageBody, publishedLead, reportDate, scopeLabel } from "../issuerEntry";
 import {
   blocked,
@@ -24,7 +25,13 @@ type Passage = { owner: Owner; line: number; body: string | null };
 export type SpecialistOverview = {
   title: string;
   findings: (Omit<Passage, "body"> & { body: string })[];
-  restriction: { label: string; reason: string; source?: Omit<Passage, "body"> };
+  /** `screenReason` is the reason as it reads on a screen page, where it differs from the PDF's. */
+  restriction?: {
+    label: string;
+    reason: string;
+    screenReason?: string;
+    source?: Omit<Passage, "body">;
+  };
 };
 type OwnedTable = { owner: Owner; table: Table; title: string; qualification?: Passage };
 type Figure = {
@@ -46,7 +53,15 @@ type Headline = {
   line: number;
 };
 type DecisionStatus = "withheld" | "not shown" | "unavailable";
-type Action = { label: string; reason: string; status: DecisionStatus; owner?: Owner };
+type Action = {
+  module: "CP-3" | "CP-6";
+  label: string;
+  reason: string;
+  screenReason?: string;
+  status: DecisionStatus;
+  held: boolean;
+  owner?: Owner;
+};
 
 export function selectedOutput(view: ReportView, module: string, allowBlocked = false) {
   const matches = view.entries.filter((entry) => entry.selected && entry.output.module === module);
@@ -58,9 +73,21 @@ export function selectedOutput(view: ReportView, module: string, allowBlocked = 
     : undefined;
 }
 
+// A PDF holds no module page, so there the decision is not shown in the report at all.
 export const NOT_SHOWN_DECISION =
   "This decision is not shown in this report because no clearance for it is recorded.";
 export const UNAVAILABLE_DECISION = "A published decision is unavailable for this run.";
+
+type DecisionTreatment = {
+  status: DecisionStatus;
+  /** The reason as a PDF prints it. */
+  reason: string;
+  /** The reason as a screen page draws it, where the same report has the module's own page. */
+  screenReason?: string;
+  /** A hold is recorded for this output, whether or not its reason can be printed. */
+  held: boolean;
+  entry: OutputEntry;
+};
 
 /**
  * How a CP-3 or CP-6 decision is described: a recorded hold with a printable reason is withheld;
@@ -73,22 +100,28 @@ export function decisionTreatment(
   code: "CP-3" | "CP-6",
   scope: "instrument" | "committee",
   printable: (reason: string) => string,
-): { status: DecisionStatus; reason: string; entry: OutputEntry } | undefined {
+): DecisionTreatment | undefined {
   const entry = selectedOutput(view, code, true);
   if (!entry) return undefined;
   const hold = run.actionTreatment?.[code];
-  const recorded =
+  const held =
     hold?.state === "withheld" &&
     hold.scope === scope &&
     hold.output === entry.output.id &&
     hold.sha256 === entry.output.sha256;
-  const reason = recorded ? printable(hold.reason) : "";
-  if (reason) return { status: "withheld", reason, entry };
+  const reason = held ? printable(hold.reason) : "";
+  if (reason) return { status: "withheld", reason, held, entry };
   const readable =
     selectedOutput(view, code) === entry && entry.sections.some(({ blocks }) => blocks.length);
-  return !recorded && readable
-    ? { status: "not shown", reason: NOT_SHOWN_DECISION, entry }
-    : { status: "unavailable", reason: UNAVAILABLE_DECISION, entry };
+  if (held || !readable)
+    return { status: "unavailable", reason: UNAVAILABLE_DECISION, held, entry };
+  return {
+    status: "not shown",
+    reason: NOT_SHOWN_DECISION,
+    screenReason: `This decision is not shown on this page because no clearance for it is recorded. The ${moduleName(code)} page under Modules shows that module's findings.`,
+    held,
+    entry,
+  };
 }
 
 function ownerOf({ output: { id, sha256, module } }: OutputEntry): Owner {
@@ -828,14 +861,17 @@ function actions(view: ReportView, run: PublishedRun): Action[] {
       reason.trim() && !containsReference(reason) ? readerText(reason) : "",
     );
     if (treatment) {
-      const { status, reason, entry } = treatment;
-      return [{ label, status, reason, owner: status === "withheld" ? ownerOf(entry) : undefined }];
+      const { entry, ...described } = treatment;
+      const owner = described.status === "withheld" ? ownerOf(entry) : undefined;
+      return [{ module: code, label, ...described, owner }];
     }
     if (
       (code === "CP-3" && run.pathway === "relative_value") ||
       (code === "CP-6" && run.pathway === "portfolio_decision")
     )
-      return [{ label, status: "unavailable", reason: UNAVAILABLE_DECISION }];
+      return [
+        { module: code, label, status: "unavailable", reason: UNAVAILABLE_DECISION, held: false },
+      ];
     return [];
   });
 }

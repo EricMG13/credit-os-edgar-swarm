@@ -335,15 +335,27 @@ function SpecialistDecision({
           lead={index === 0}
         />
       ))}
-      <div className={`${TRACE_HOST} flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm`}>
-        <p className="font-semibold">{restriction.label}</p>
-        <p className="text-text-secondary">{richParts(restriction.reason, readerText)}</p>
-        {restriction.source && (
-          <Source context={context} {...restriction.source} label={restriction.label} />
-        )}
-      </div>
+      {restriction && (
+        <div className={`${TRACE_HOST} flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm`}>
+          <p className="font-semibold">{restriction.label}</p>
+          <p className="text-text-secondary">
+            {richParts(placedReason(restriction, context), readerText)}
+          </p>
+          {restriction.source && (
+            <Source context={context} {...restriction.source} label={restriction.label} />
+          )}
+        </div>
+      )}
     </>
   );
+}
+
+/** A reason is drawn in the wording that is true where it is read: the PDF's or the screen page's. */
+function placedReason(
+  { reason, screenReason }: { reason: string; screenReason?: string },
+  context: TraceContext,
+) {
+  return context.print ? reason : (screenReason ?? reason);
 }
 
 function ActionRows({
@@ -358,14 +370,18 @@ function ActionRows({
   if (!actions.length) return null;
   return (
     <dl className={compact ? "issuer-brief-actions flex flex-wrap gap-x-3 gap-y-1" : "grid gap-2"}>
-      {actions.map(({ label, reason, status, owner }) => (
+      {actions.map(({ label, status, owner, ...reasons }) => (
         <div
           key={label}
           className={`${TRACE_HOST} flex flex-wrap items-baseline gap-x-2 gap-y-1 text-sm`}
         >
           <dt className="font-semibold">{label}</dt>
           <dd className="text-text-secondary">
-            {compact ? (status === "withheld" ? "Withheld" : "Not shown") : reason}
+            {compact
+              ? status === "withheld"
+                ? "Withheld"
+                : "Not shown"
+              : placedReason(reasons, context)}
           </dd>
           {owner && (
             <dd>

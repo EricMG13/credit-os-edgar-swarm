@@ -65,12 +65,15 @@ export function ModuleBottomLines({
   );
 }
 
+/** `elsewhere` names the modules whose limitations are left out of this list. */
 export function RunLimitations({
   run,
   rows,
+  elsewhere = [],
 }: {
   run: PublishedRun;
   rows: ReturnType<typeof runLimitations>;
+  elsewhere?: string[];
 }) {
   const groups = new Map<string, typeof rows>();
   for (const row of rows) {
@@ -128,6 +131,12 @@ export function RunLimitations({
           </details>
         ))
       )}
+      {elsewhere.map((name) => (
+        <p key={name} className="text-body text-text-secondary">
+          Limitations recorded by {name} are not in this list. That module's page shows what it
+          recorded.
+        </p>
+      ))}
     </section>
   );
 }

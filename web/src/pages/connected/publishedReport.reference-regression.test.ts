@@ -138,3 +138,36 @@ it.each(["Leverage rose to 3:1 by year end.", "Ratio 2:1 // compared with prior"
     expect(containsReference(text)).toBe(false);
   },
 );
+
+it.each([
+  "Saved to //server/share/file",
+  "Saved to (//a/b)",
+  "Saved to C:/Users/x",
+  "Saved to C:/x",
+  "Read file:/x",
+  "Read onedrive:/x",
+])(
+  "reads a forward-slash share, drive or single-slash scheme address as a reference: %s",
+  (text) => {
+    expect(containsReference(text)).toBe(true);
+  },
+);
+
+it.each([
+  "Leverage is 3:1 at year end.",
+  "Ratio 2.5x:1",
+  "The call is at 10:30 on Tuesday.",
+  "Total: //",
+  "See note: /a",
+  "Either // or neither",
+  "S&P: B/Stable",
+  "Moody's: B2 / S&P: B",
+  "USD/JPY: /spot/ 150",
+  "EBITDA/interest: /cash/ 3.2x",
+  "debt/EBITDA of 4.5x/3.2x",
+  "on 12/31/2025",
+  "net debt /EBITDA",
+  "(/share)",
+])("does not read a ratio, a time or a spaced slash as an address: %s", (text) => {
+  expect(containsReference(text)).toBe(false);
+});

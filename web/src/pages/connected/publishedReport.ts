@@ -615,8 +615,10 @@ const FILE_REFERENCE = new RegExp(
   "i",
 );
 const LONG_HASH = /\b(?=[0-9a-f]*[a-f])[0-9a-f]{32,}\b/i;
+// A drive, `file:` or other scheme written with one slash (`C:/x`, `file:/x`) is an address: a
+// letter, a colon and a slash with no space. A share written with forward slashes is `//host/path`.
 const ADDRESS_REFERENCE =
-  /(?:\b[a-z][a-z0-9+.-]*:\/\/|\bwww\.|(?:^|[\s(`"':])(?:(?:~|\.{1,2})\/\S|\/[^\s/]+\/\S|[a-z]:\\\S|\\\\\S))/i;
+  /(?:\b[a-z][a-z0-9+.-]*:\/\/|[a-z]:\/\S|\bwww\.|(?:^|[\s(`"':])(?:(?:~|\.{1,2})\/\S|\/{1,2}[^\s/]+\/\S|[a-z]:\\\S|\\\\\S))/i;
 const REGISTER_ID = /\bCP-[A-Z0-9]+-(?:GAP|MON|FACT|CALC|EVID|SRC|ASSUMPTION)-[A-Z0-9-]+\b/i;
 
 // A gap id as the modules spell a gap, the report-wide id after the empty-set mark ("∅ G12",

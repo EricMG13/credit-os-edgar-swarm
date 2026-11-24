@@ -185,12 +185,15 @@ const sameLimitation = (text: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
-/** Each limitation of the run once, in module order; a module that could not assess writes none. */
-export function runLimitations(view: ReportView, run: PublishedRun) {
+/**
+ * Each limitation of the run once, in module order; a module that could not assess writes none.
+ * A module in `omit` is not read, so a limitation it shares with another module stays with that one.
+ */
+export function runLimitations(view: ReportView, run: PublishedRun, omit: readonly string[] = []) {
   const seen = new Set<string>();
   return overviewModules(run).flatMap((id) => {
     const entry = designated(view, id);
-    if (!entry || blocked(entry)) return [];
+    if (!entry || blocked(entry) || omit.includes(id)) return [];
     const written = passageTexts(entry, "Limitations");
     // An earlier-format handoff has no Limitations passage; its summary carries the limitation.
     const items = passages(entry.sections).some((section) => section.heading === "Limitations")

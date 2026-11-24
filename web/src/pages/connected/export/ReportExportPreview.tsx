@@ -77,6 +77,28 @@ function chartLayoutReady(root: HTMLElement) {
   });
 }
 
+const INLINE_TAGS = new Set(
+  "a abbr b bdi bdo cite code data dfn em i kbd mark q s samp small span strong sub sup time u var tspan textpath".split(
+    " ",
+  ),
+);
+
+/**
+ * The text of each paragraph, cell, heading or chart label on its own. Inline elements stay with
+ * the block that holds them, so a reference is read whole inside one block and never across two.
+ */
+function blockTexts(root: HTMLElement) {
+  const blocks = new Map<Element, string>();
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    let block = node.parentElement;
+    while (block && block !== root && INLINE_TAGS.has(block.localName.toLowerCase()))
+      block = block.parentElement;
+    if (block) blocks.set(block, (blocks.get(block) ?? "") + (node.textContent ?? ""));
+  }
+  return [...blocks.values()];
+}
+
 function cssText(text: string) {
   return `"${text.replace(/\s+/g, " ").replace(/["\\]/g, "\\$&")}"`;
 }
@@ -106,7 +128,7 @@ function PrintPaper({ report }: { report: Extract<ReportExport, { state: "ready"
       const text = element.innerText || element.textContent || "";
       const unsafe =
         element.querySelector("a[href], svg a") ||
-        containsReference(text) ||
+        blockTexts(element).some(containsReference) ||
         containsRunIdentifier(text, privateIds);
       setLayout(unsafe ? "blocked" : "ready");
     };

@@ -4,6 +4,15 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-24 — Review fixes on the issuer front page and report exports
+
+- Scope: eleven of the thirteen findings of the review of this branch, then the medium and high findings of two spec reviews and one adversarial review of those fixes. All under `web/src/pages/connected/`. Synthetic fixtures only; no provider was called, no retained handoff was read and no browser was used.
+- A report sentence the delivery writes now says only what the document shows, and is tied to the same lookup as the exhibit it names. Module passages print whole: the cuts of amounts and qualifications, and a prefix capture that could stop inside a figure, are removed. A passage left out by the reference check is counted in its section. An unshown decision reads "not shown in this report" in the PDF and "not shown on this page" on Overview, which names the module page. A held decision's limitations are left out of the Overview list with a pointer to the module.
+- References: a slash after a space is no longer a path; any `scheme://`, `//server/share`, drive and `file:/` forms are. The print check reads each block on its own, so neighbouring cells no longer block a PDF, and a content block has its own message.
+- Also: specialist Overviews keep Key charts; unparsed debt terms show as written; cash and undrawn facilities stay when their basis cannot be shown; the differing-rating notice stays on Overview; a specialist card's finding is cached per publication.
+- Checks on the final tree: 1,977 connected-page tests, TypeScript, lint and format on the changed files. The Python gate was not run; no Python changed.
+- Not changed: the selectors written for one retained case, which need a module-side contract. Known limitations left as low: single-segment and bare relative paths are not caught as references; "P50" and similar read as page citations; some PDF text still says "available in Evidence"; a promoted second bottom-line paragraph carries no notice; a readable action output with no decision in it is still described as "this decision".
+
 ## 2026-11-24 — Issuer front page and report exports
 
 - On the branch based on main `96bd0ef3`, the connected reader and chart suite passed 2,178 tests, and 371 targeted offline Python checks passed across the scheduler, publication and service runs. TypeScript, changed-file lint and formatting, the production build, the unused and duplication checks, and the changed-code Python gate passed. Chrome rechecked the retained TransDigm Overview, exact CP-1 row trace and 390 px layout. The saved A4 PDF preserved all four tranche terms and gross funded debt on page one, with zero link annotations.
@@ -969,29 +978,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   Retained CP-2G bytes match the prior SHA-256; preview stays read-only with its
   Test preview/admission qualification. No providers, Signal work or tournaments.
 - ZIP not built or published; Chrome and Edge work-PC acceptance remains pending.
-
-## 2026-11-16 — Five Caesars design critique priorities implemented
-
-- Preserved Credit OS React components and RBOT-HTML source/Python pins at
-  `256101a`; React dependencies unchanged. No providers, Signal work or tournaments.
-- Forecast now promotes exact reference-free scope/basis sentences before case
-  selection, with traces and the complete original notes retained below. Case
-  cards say Forecast cases; descriptions come from retained notes or explicit gaps.
-  Comparison keeps every case, highlights the selection and retains row traces;
-  the chart and its table still follow the selected case, including missing values.
-- Forecast axes use readable labels without changing series/table values; close
-  ticks fall back to exact labels rather than merge through display rounding.
-- Dates to watch uses the run as-of date, excludes Historical events, retains
-  recorded precision/status/source identity and qualifies overlapping partial dates.
-  Narrow Modules uses a native selector and collapsible section jump; desktop
-  navigation is preserved, with complementary 1000/1001px visibility boundaries.
-- Confidence review ranked (1) analytical fidelity/reference leakage, (2) case
-  selection versus comparison, (3) date/status ambiguity, (4) keyboard/navigation
-  boundaries, (5) rounded values/missing versus zero. Tests and Astra reviewers
-  confirmed and repaired false absence wording, missing-case comparison vanishing,
-  historical partial dates appearing upcoming, first-section activation failing,
-  and the breakpoint overlap. Numeric inputs and retained handoffs were untouched.
-- Astra verified the retained Caesars Forecast bridge and source trace, the November watch dates,
-  and narrow module navigation. The focused suite passed 61 checks. Chrome and Edge passed
-  32 synthetic workflow checks on macOS. The retained preview was read-only.
-  Packaged Windows verification remained open.

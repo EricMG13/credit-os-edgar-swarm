@@ -36,6 +36,8 @@ import { printableTable } from "./printTable";
 type SafeText = (text: string) => string;
 type PurposePassage = SpecialistOverview["findings"][number];
 type Exhibit = { title: string; table: Table; notes: string[] };
+/** `withheld` counts the module passages of this section that the reference check left out. */
+type PurposeSection = { title: string; bodies: string[]; withheld?: number };
 type Purpose = {
   title: string;
   decision: string[];
@@ -43,7 +45,7 @@ type Purpose = {
   charts?: ReactElement[];
   gap?: string;
   exhibits?: Exhibit[];
-  passages?: { title: string; bodies: string[] }[];
+  passages?: PurposeSection[];
   overview?: SpecialistOverview;
 };
 
@@ -125,13 +127,14 @@ function PurposeReport({ purpose }: { purpose: Purpose }) {
         </section>
       ))}
       {passages?.map(
-        ({ title, bodies }) =>
-          bodies.length > 0 && (
+        ({ title, bodies, withheld = 0 }) =>
+          (bodies.length > 0 || withheld > 0) && (
             <section key={title} className="issuer-front-page-passages grid gap-2">
               <h3 className="font-display text-h4">{title}</h3>
               {bodies.map((body) => (
                 <p key={body}>{richParts(body, readerText)}</p>
               ))}
+              {withheld > 0 && <p>{withheldLine(withheld)}</p>}
             </section>
           ),
       )}
@@ -139,13 +142,20 @@ function PurposeReport({ purpose }: { purpose: Purpose }) {
   );
 }
 
+function withheldLine(count: number) {
+  const passages = count === 1 ? "passage in this section is" : "passages in this section are";
+  return `${String(count)} ${passages} not shown in this report.`;
+}
+
 function locatedPassage(entry: OutputEntry, line: number, body: string): PurposePassage {
   const { id, module, sha256 } = entry.output;
   return { owner: { id, module, sha256 }, line, body };
 }
 
-function sectionPassages(entry: OutputEntry, headings: readonly string[], safe: SafeText) {
-  return classifySections(entry.sections)
+/** The passages under the headings that pass the reference check, and how many it left out. */
+function readPassages(entry: OutputEntry, headings: readonly string[], safe: SafeText) {
+  let withheld = 0;
+  const passages = classifySections(entry.sections)
     .filter(
       ({ role, section }) =>
         (role === "finding" || role === "passage") && headings.includes(section.heading),
@@ -154,15 +164,49 @@ function sectionPassages(entry: OutputEntry, headings: readonly string[], safe: 
       section.blocks.flatMap((block) => {
         if (block.type !== "text") return [];
         const { body } = readParagraph(block.text);
-        return body && !methodNote(plainText(body)) && safe(body)
-          ? [locatedPassage(entry, block.line, body)]
-          : [];
+        if (!body || methodNote(plainText(body))) return [];
+        if (safe(body)) return [locatedPassage(entry, block.line, body)];
+        withheld += 1;
+        return [];
       }),
     );
+  return { passages, withheld };
+}
+
+function sectionPassages(entry: OutputEntry, headings: readonly string[], safe: SafeText) {
+  return readPassages(entry, headings, safe).passages;
 }
 
 function sectionBodies(entry: OutputEntry, headings: readonly string[], safe: SafeText) {
   return sectionPassages(entry, headings, safe).map(({ body }) => body);
+}
+
+/** A printed section of every passage under the headings, with the count that was left out. */
+function passageSection(
+  title: string,
+  entry: OutputEntry | undefined,
+  headings: readonly string[],
+  safe: SafeText,
+): PurposeSection {
+  if (!entry) return { title, bodies: [] };
+  const { passages, withheld } = readPassages(entry, headings, safe);
+  return { title, bodies: passages.map(({ body }) => body), withheld };
+}
+
+/**
+ * A section of the one passage chosen from the headings. When the module has none that passes the
+ * reference check, the section carries the count of those left out.
+ */
+function chosenSection(
+  title: string,
+  chosen: string | undefined,
+  lead: string,
+  entry: OutputEntry | undefined,
+  headings: readonly string[],
+  safe: SafeText,
+): PurposeSection {
+  if (chosen) return { title, bodies: chosen === lead ? [] : [chosen] };
+  return { title, bodies: [], withheld: entry ? readPassages(entry, headings, safe).withheld : 0 };
 }
 
 function findingTable(
@@ -213,12 +257,12 @@ function exhibit(
   safe: SafeText,
   note?: string,
   qualifications: readonly string[] = [],
-  basisMissing = false,
+  missing?: "basis" | "unit",
 ): Exhibit[] {
   if (!table?.rows.length || table.headers.some((header) => !safe(header)) || (note && !safe(note)))
     return [];
   const released = qualifications.filter((body) => Boolean(safe(body)));
-  const unresolved = basisMissing || released.length !== qualifications.length;
+  const unresolved = Boolean(missing) || released.length !== qualifications.length;
   const data = printableTable(table, unresolved).table;
   const rows = data.rows.map((row) =>
     row.cells.every((cell) => !cell.trim() || safe(cell))
@@ -229,7 +273,11 @@ function exhibit(
         },
   );
   const notes = [...(note ? [note] : []), ...released];
-  if (basisMissing) notes.push("The observation basis for this table is not shown in this report.");
+  // The basis sentence is printed only where no note of the table is: beside a printed note that
+  // lacks the unit sentence, the line speaks of the unit note alone.
+  if (missing === "unit" && released.length)
+    notes.push("No reporting-unit note for this table is shown in this report.");
+  else if (missing) notes.push("The observation basis for this table is not shown in this report.");
   else if (unresolved)
     notes.push("Some observation qualifications are only available in Evidence.");
   return [{ title, table: { ...data, rows }, notes }];
@@ -351,11 +399,12 @@ function legacyEarnings(entry: OutputEntry, safe: SafeText): Purpose | null {
     body.startsWith("Amounts are USD millions except reported percentages."),
   );
   const locator = / \(H4 table \d+\)| \(text \d+\)/g;
-  const variance = sectionBodies(
+  const mechanics = readPassages(
     entry,
     ["Variance mechanics and comparative credit evaluation"],
     (body) => safe(body.replace(locator, "")),
-  ).map((body) => body.replace(locator, ""));
+  );
+  const variance = mechanics.passages.map(({ body }) => body.replace(locator, ""));
   const lead = variance.find((body) => body.startsWith("OCF increased"));
   const challenge = variance.find((body) => body.startsWith("The cash buffer nevertheless fell:"));
   if (!table || !basis?.[1] || !basis[2] || !definitions || !lead || !challenge) return null;
@@ -374,7 +423,7 @@ function legacyEarnings(entry: OutputEntry, safe: SafeText): Purpose | null {
     gap: "No results chart is shown in this report.",
     exhibits: exhibit({ ...table, headers }, "Prior and current results", safe, note),
     passages: [
-      { title: "Variance drivers and guidance", bodies: drivers },
+      { title: "Variance drivers and guidance", bodies: drivers, withheld: mechanics.withheld },
       { title: "Reporting basis and limitations", bodies: [definitions] },
       {
         title: "What to watch",
@@ -407,15 +456,14 @@ export function earningsUpdate(
     charts,
     gap: charts.length ? undefined : "No results chart is shown in this report.",
     passages: [
-      {
-        title: "Variance drivers and key findings",
-        bodies: sectionBodies(entry, ["Key findings"], safe),
-      },
-      {
-        title: "Contrary evidence and change triggers",
-        bodies: sectionBodies(entry, ["Contrary evidence and what would change the view"], safe),
-      },
-      { title: "Limitations", bodies: sectionBodies(entry, ["Limitations"], safe) },
+      passageSection("Variance drivers and key findings", entry, ["Key findings"], safe),
+      passageSection(
+        "Contrary evidence and change triggers",
+        entry,
+        ["Contrary evidence and what would change the view"],
+        safe,
+      ),
+      passageSection("Limitations", entry, ["Limitations"], safe),
     ],
     exhibits: headings.flatMap((heading) =>
       chartExhibit(entry, heading, heading.replace("Chart data: ", ""), safe),
@@ -496,19 +544,20 @@ function archivedRelativeValue(
       findings.push({ ...passage, body });
   }
   const treatment = decisionTreatment(view, run, "CP-3", "instrument", safe);
-  const title = `Instrument preference ${treatment?.status ?? "unavailable"}`;
+  const status = treatment?.status ?? "unavailable";
+  // The module's disposition is printed. With no recorded hold, no label says it is not shown.
+  const label = status === "not shown" ? undefined : `Instrument preference ${status}`;
   const gap = "The entry level and executable yield curve are not shown in this report.";
   const hold = treatment?.status === "withheld" ? treatment.reason : "";
-  const reason = hold || gap;
   return {
-    title,
+    title: label ?? "Market-implied view",
     decision: [...findings.map(({ body }) => body), ...(hold ? [hold] : [])],
     passages: [{ title: "What would change the view", bodies: archivedPriceTrigger(entry) }],
-    restrictions: [title],
+    restrictions: label ? [label] : [],
     overview: {
       title: "Published market comparison",
       findings,
-      restriction: { label: title, reason },
+      restriction: label ? { label, reason: hold || gap } : undefined,
     },
     charts,
     gap,
@@ -778,10 +827,14 @@ export function relativeValue(view: ReportView, run: PublishedRun, safe: SafeTex
     title: status === "withheld" ? label : "Market-implied view",
     decision: [reason],
     restrictions: [label],
-    overview: { title: "Dated market observations", findings, restriction: { label, reason } },
+    overview: {
+      title: "Dated market observations",
+      findings,
+      restriction: { label, reason, screenReason: treatment?.screenReason },
+    },
     charts: marketYieldChart(market, observations.table),
     gap: observations.omitted
-      ? "Other yield observations are not shown in this report."
+      ? "Other rows of the module's yield table are not shown in this report."
       : undefined,
     exhibits: exhibit(observations.table, "Dated market observations", safe),
   };
@@ -800,6 +853,9 @@ function publishedCharts(
     ownerChart(selectedOutput(view, module), heading, safe),
   );
 }
+
+// The sentence a table note opens with when it states the reporting unit of the table's amounts.
+const UNIT_NOTE = /^Amounts are .+? unless stated otherwise\./;
 
 function precedingTableNote(entry: OutputEntry | undefined, table: Table | undefined) {
   if (!entry || !table) return "";
@@ -835,16 +891,14 @@ export function covenantRefinancing(
     "Decision driver",
     "Evidence-supported base",
   ]);
-  const runwayBasis =
-    /^(Amounts are .+? unless stated otherwise\. Opening liquidity is .+?\.)/.exec(
-      precedingTableNote(cash, runway),
-    )?.[1];
+  // A table's note is printed whole or not at all, and only over the table it precedes.
+  const runwayNote = precedingTableNote(cash, runway);
+  const runwayBasis = UNIT_NOTE.test(runwayNote) && safe(runwayNote) ? runwayNote : undefined;
   const scenarios = findingTable(cash, "Funding gap", [
     "Case / horizon",
     "Floor-preserving revolver requirement",
   ]);
-  const scenarioBasis = precedingTableNote(cash, scenarios);
-  const scenarioUnit = /^(Amounts are .+? unless stated otherwise\.)/.exec(runwayBasis ?? "")?.[1];
+  const scenarioNote = precedingTableNote(cash, scenarios);
   // The not-shown sentence is decided by the same lookups that draw the headroom chart and table.
   const headroomHeading = "Chart data: covenant headroom";
   const headroomChart = ownerChart(legal, headroomHeading, safe);
@@ -873,35 +927,45 @@ export function covenantRefinancing(
       : "No maturity, covenant headroom or liquidity chart is shown in this report.",
     exhibits: [
       ...exhibit(maturities, "Refinancing need by maturity", safe),
-      ...exhibit(runway, "Liquidity and cash runway", safe, runwayBasis, [], !runwayBasis),
+      ...exhibit(
+        runway,
+        "Liquidity and cash runway",
+        safe,
+        runwayBasis,
+        [],
+        runwayBasis ? undefined : "basis",
+      ),
       ...exhibit(
         scenarios,
         "Funding gap illustrations",
         safe,
-        scenarioUnit,
-        scenarioBasis ? [scenarioBasis] : [],
-        !scenarioBasis || !scenarioUnit,
+        undefined,
+        scenarioNote ? [scenarioNote] : [],
+        !scenarioNote ? "basis" : UNIT_NOTE.test(scenarioNote) ? undefined : "unit",
       ),
       ...headroomTable,
     ],
     passages: [
-      {
-        title: "Refinancing need",
-        bodies: refinancing && refinancing !== lead ? [refinancing] : [],
-      },
-      { title: "Covenant view", bodies: covenant && covenant !== lead ? [covenant] : [] },
-      {
-        title: "Contrary evidence and funding risks",
-        bodies: namedPassage(
-          cash,
-          [
-            "Contrary evidence and what would change the view",
-            "Assessment, pinch point and contrary case",
-          ],
-          safe,
-        ),
-      },
-      { title: "Limitations", bodies: namedPassage(funding, ["Limitations"], safe) },
+      chosenSection("Liquidity view", opening, lead, cash, ["Bottom line", "Liquidity view"], safe),
+      chosenSection(
+        "Refinancing need",
+        refinancing,
+        lead,
+        funding,
+        ["Bottom line", "Funding gap view"],
+        safe,
+      ),
+      chosenSection("Covenant view", covenant, lead, legal, ["Bottom line"], safe),
+      passageSection(
+        "Contrary evidence and funding risks",
+        cash,
+        [
+          "Contrary evidence and what would change the view",
+          "Assessment, pinch point and contrary case",
+        ],
+        safe,
+      ),
+      passageSection("Limitations", funding, ["Limitations"], safe),
     ],
   };
 }
@@ -932,6 +996,15 @@ export function distressedRestructuring(
   const recoveryHeading = "Chart data: recovery by class";
   const recoveryChart = ownerChart(workout, recoveryHeading, safe);
   const recoveryTable = chartExhibit(workout, recoveryHeading, "Recovery by class", safe);
+  const contrary = passageSection(
+    "Contrary evidence and change triggers",
+    downside,
+    [
+      "Contrary evidence and what would change the view",
+      "Interpretation, causal sequence and strongest challenge",
+    ],
+    safe,
+  );
   const charts = [
     ...recoveryChart,
     ...publishedCharts(
@@ -961,23 +1034,23 @@ export function distressedRestructuring(
       ...recoveryTable,
     ],
     passages: [
-      { title: "Restructuring path", bodies: path && path !== lead ? [path] : [] },
+      chosenSection(
+        "Distress gate",
+        opening,
+        lead,
+        downside,
+        ["Bottom line", "Distress gate"],
+        safe,
+      ),
+      chosenSection("Restructuring path", path, lead, workout, ["Bottom line"], safe),
+      passageSection("Downside view", downside, ["Downside view", "Key findings"], safe),
       {
-        title: "Downside view",
-        bodies: namedPassage(downside, ["Downside view", "Key findings"], safe),
+        ...contrary,
+        bodies: contrary.bodies.map((body) =>
+          body.replace(/ The forward path belongs to the forecast consumer\.$/, ""),
+        ),
       },
-      {
-        title: "Contrary evidence and change triggers",
-        bodies: namedPassage(
-          downside,
-          [
-            "Contrary evidence and what would change the view",
-            "Interpretation, causal sequence and strongest challenge",
-          ],
-          safe,
-        ).map((body) => body.replace(/ The forward path belongs to the forecast consumer\.$/, "")),
-      },
-      { title: "Limitations", bodies: namedPassage(downside, ["Limitations"], safe) },
+      passageSection("Limitations", downside, ["Limitations"], safe),
     ],
   };
 }
@@ -1248,23 +1321,25 @@ export function portfolioDecision(
     ...(archive ? [archive] : []),
     ...(position?.observed ? [position.observed] : []),
   ];
-  const label = `Portfolio action and size ${treatment?.status ?? "unavailable"}`;
+  const status = treatment?.status ?? "unavailable";
+  // Only an archived disposition is printed with no recorded hold. Beside it, no label or reason
+  // says the decision is not shown; the module's sizing-constraint row keeps its own label.
+  const label = status === "not shown" ? undefined : `Portfolio action and size ${status}`;
+  const source = constraint && { owner: constraint.owner, line: constraint.line };
+  const restriction = !label
+    ? constraint && { label: "Sizing constraint", reason: constraint.body, source }
+    : hold
+      ? { label, reason: hold }
+      : constraint
+        ? { label, reason: constraint.body, source }
+        : { label, reason: UNAVAILABLE_DECISION };
   const gap = "No portfolio limits chart is shown in this report.";
   const title = "Portfolio decision and sizing";
   return {
     title,
     decision: [...findings.map(({ body }) => body), ...(hold ? [hold] : [])],
-    restrictions: [label],
-    overview: {
-      title,
-      findings,
-      restriction: {
-        label,
-        reason: hold || constraint?.body || (treatment?.reason ?? UNAVAILABLE_DECISION),
-        source:
-          !hold && constraint ? { owner: constraint.owner, line: constraint.line } : undefined,
-      },
-    },
+    restrictions: label ? [label] : [],
+    overview: { title, findings, restriction },
     charts,
     gap: charts.length ? undefined : gap,
     exhibits: position?.exhibits,

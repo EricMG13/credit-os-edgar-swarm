@@ -128,10 +128,12 @@ type Options = {
   maps?: boolean;
   lead?: boolean;
   cp3?: string;
+  hold?: string;
+  cp6Limit?: string;
 };
 
 /** A verified run; the handoffs are written to the shapes the Overview reads. */
-function fullSnapshot({ pathway, foundation, maps, lead, cp3 }: Options) {
+function fullSnapshot({ pathway, foundation, maps, lead, cp3, hold, cp6Limit }: Options) {
   const base = snapshot() as unknown as {
     workspace: {
       runs: Record<string, Record<string, unknown>>;
@@ -147,7 +149,26 @@ function fullSnapshot({ pathway, foundation, maps, lead, cp3 }: Options) {
     ...(lead
       ? { lead: { module: "CP-2", output: "acme/cp2", sha256: SHA2, line: 4, text: LEAD } }
       : {}),
+    ...(hold
+      ? {
+          actionTreatment: {
+            "CP-6": {
+              output: "acme/cp6",
+              sha256: SHA6,
+              scope: "committee",
+              state: "withheld",
+              reason: hold,
+            },
+          },
+        }
+      : {}),
   };
+  if (cp6Limit)
+    handoffs[SHA6] = [
+      h("Findings", 2, 1),
+      h("Bottom line", 3, 3, [text(4, "Add one percent of NAV.")]),
+      h("Limitations", 3, 6, [text(7, cp6Limit)]),
+    ];
   if (!maps) outputs["acme/cp2"] = { ...outputs["acme/cp2"], maps: [] };
   handoffs[SHA2] = [
     h("Findings", 2, 1),
@@ -230,4 +251,78 @@ it("points the Key charts link at a heading that exists wherever it is shown", a
   await overview({ pathway: "earnings_update", maps: true, lead: true });
   expect(screen.getAllByRole("link", { name: "Key charts" })).toHaveLength(1);
   expect(document.getElementById("overview-key-charts")).not.toBeNull();
+});
+
+const HOLD = "The owner restricted this output and field-specific clearance is unavailable.";
+const SIZED_LIMIT = "The recommended add of 1.00% NAV at 98.5 is sized on one unaudited quarter.";
+const CP3_LIMIT = "Quote depth was not observed.";
+const ELSEWHERE =
+  "Limitations recorded by Committee decision are not in this list. That module's page shows what it recorded.";
+
+it("leaves a held decision's limitations out of the Overview list and says where they are", async () => {
+  await overview({
+    pathway: "credit_snapshot",
+    lead: true,
+    cp3: CP3_LIMIT,
+    hold: HOLD,
+    cp6Limit: SIZED_LIMIT,
+  });
+  expect(screen.getByText("Withheld")).toBeInTheDocument();
+  expect(screen.getByText(HOLD)).toBeInTheDocument();
+  expect(document.body.textContent).not.toMatch(/1\.00% NAV|98\.5/);
+  expect(screen.getAllByText(ELSEWHERE)).toHaveLength(1);
+  expect(screen.getByText(CP3_LIMIT)).toBeInTheDocument();
+});
+
+it("lists the committee limitation when no hold is recorded, with no pointer line", async () => {
+  await overview({ pathway: "credit_snapshot", lead: true, cp3: CP3_LIMIT, cp6Limit: SIZED_LIMIT });
+  expect(screen.getByText(SIZED_LIMIT)).toBeInTheDocument();
+  expect(screen.getByText(CP3_LIMIT)).toBeInTheDocument();
+  expect(screen.queryByText(ELSEWHERE)).toBeNull();
+});
+
+it("leaves the limitations out when the recorded hold's reason cannot be shown", async () => {
+  await overview({
+    pathway: "credit_snapshot",
+    lead: true,
+    hold: "The hold is set out in committee.pdf.",
+    cp6Limit: SIZED_LIMIT,
+  });
+  expect(screen.getByText("A published decision is unavailable for this run.")).toBeInTheDocument();
+  expect(document.body.textContent).not.toMatch(/1\.00% NAV|98\.5|committee\.pdf/);
+  expect(screen.getAllByText(ELSEWHERE)).toHaveLength(1);
+});
+
+it("says on Overview that an unheld decision is not shown on this page, and shows it on the module page it names", async () => {
+  const data = fullSnapshot({ pathway: "credit_snapshot", lead: true });
+  vi.stubGlobal("fetch", () => Promise.resolve(Response.json(data)));
+  window.history.replaceState(null, "", "/#overview");
+  const first = render(<ReportReader id="acme" mode="synthetic" />);
+  await screen.findByText(LEAD);
+  expect(
+    screen.getByText(
+      "This decision is not shown on this page because no clearance for it is recorded. The Committee decision page under Modules shows that module's findings.",
+    ),
+  ).toBeInTheDocument();
+  expect(document.body.textContent).not.toMatch(/in this report|Add one percent of NAV/);
+  first.unmount();
+  window.history.replaceState(null, "", "/#modules/CP-6");
+  render(<ReportReader id="acme" mode="synthetic" />);
+  expect(await screen.findByRole("heading", { name: "Committee decision" })).toBeInTheDocument();
+  expect(screen.getByText("Add one percent of NAV.")).toBeInTheDocument();
+});
+
+it("keeps another module's limitation that a held module also states", async () => {
+  await overview({
+    pathway: "credit_snapshot",
+    lead: true,
+    cp3: CP3_LIMIT,
+    hold: HOLD,
+    cp6Limit: CP3_LIMIT,
+  });
+  expect(screen.getAllByText(CP3_LIMIT)).toHaveLength(1);
+  expect(screen.getByText("Security selection (1)")).toBeInTheDocument();
+  expect(screen.queryByText(/^Committee decision \(/)).toBeNull();
+  // Nothing the held module recorded is missing from the list, so no line says so.
+  expect(screen.queryByText(ELSEWHERE)).toBeNull();
 });

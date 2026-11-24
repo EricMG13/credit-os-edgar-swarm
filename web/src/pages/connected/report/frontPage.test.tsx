@@ -701,25 +701,38 @@ it.each(["Basis is in issuer.pdf, section 4.", "page:12"])(
 
 const NOT_SHOWN =
   "This decision is not shown in this report because no clearance for it is recorded.";
+const NOT_SHOWN_ON_SCREEN =
+  "This decision is not shown on this page because no clearance for it is recorded. The Committee decision page under Modules shows that module's findings.";
 const UNAVAILABLE = "A published decision is unavailable for this run.";
 
-it("calls a readable decision with no recorded hold not shown, on screen and in print, and keeps unavailable otherwise", () => {
+it("calls a readable decision with no recorded hold not shown in the report when printed and not shown on the page on screen, and keeps unavailable otherwise", () => {
   const { view, run } = inputs();
   const free = buildIssuerFrontPage(view, { ...run, actionTreatment: {} });
   if (!free) throw new Error("Expected a front page");
   expect(free.actions).toEqual([
-    { label: "Committee action and size", status: "not shown", reason: NOT_SHOWN },
+    {
+      module: "CP-6",
+      label: "Committee action and size",
+      status: "not shown",
+      reason: NOT_SHOWN,
+      screenReason: NOT_SHOWN_ON_SCREEN,
+      held: false,
+    },
   ]);
   const { container, unmount } = render(<IssuerFrontPage page={free} print />);
   expect(screen.getByText(NOT_SHOWN)).toBeVisible();
-  expect(container).not.toHaveTextContent(/Overview|holds|clearance is not recorded/);
+  expect(container).not.toHaveTextContent(
+    /Overview|holds|clearance is not recorded|on this page|under Modules/,
+  );
   const compact = container.querySelector<HTMLElement>(".issuer-brief-actions");
   if (!compact) throw new Error("Expected the compact decision line");
   expect(compact).toHaveTextContent("Committee action and sizeNot shown");
   unmount();
   const onScreen = render(<IssuerFrontPage page={free} />);
-  expect(screen.getByText(NOT_SHOWN)).toBeVisible();
-  expect(onScreen.container).not.toHaveTextContent(/holds|clearance is not recorded/);
+  expect(screen.getByText(NOT_SHOWN_ON_SCREEN)).toBeVisible();
+  expect(onScreen.container).not.toHaveTextContent(
+    /in this report|holds|clearance is not recorded/,
+  );
   onScreen.unmount();
 
   const committee = view.entries[2];
@@ -741,7 +754,13 @@ it("calls a readable decision with no recorded hold not shown, on screen and in 
     ),
   };
   expect(buildIssuerFrontPage(blockedView, { ...run, actionTreatment: {} })?.actions).toEqual([
-    { label: "Committee action and size", status: "unavailable", reason: UNAVAILABLE },
+    {
+      module: "CP-6",
+      label: "Committee action and size",
+      status: "unavailable",
+      reason: UNAVAILABLE,
+      held: false,
+    },
   ]);
   const emptyView = {
     ...view,
@@ -762,7 +781,13 @@ it("calls a readable decision with no recorded hold not shown, on screen and in 
     actionTreatment: { "CP-6": { ...hold, reason: "The hold is set out in committee.pdf." } },
   };
   expect(buildIssuerFrontPage(view, unprintable)?.actions).toEqual([
-    { label: "Committee action and size", status: "unavailable", reason: UNAVAILABLE },
+    {
+      module: "CP-6",
+      label: "Committee action and size",
+      status: "unavailable",
+      reason: UNAVAILABLE,
+      held: true,
+    },
   ]);
 });
 

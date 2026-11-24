@@ -365,3 +365,84 @@ it("keeps the layout message and a retry when the print layout does not become r
   );
   expect(screen.getByRole("button", { name: "Try again" })).toBeVisible();
 });
+
+async function previewWith(build: (paper: Element) => void) {
+  let fontsReady: () => void = () => {};
+  Object.defineProperty(document, "fonts", {
+    configurable: true,
+    value: {
+      ready: new Promise<void>((resolve) => {
+        fontsReady = resolve;
+      }),
+    },
+  });
+  open("#export/credit-snapshot");
+  const button = await screen.findByRole("button", { name: "Print / Save PDF" });
+  const paper = document.querySelector(".report-export-paper");
+  if (!paper) throw new Error("Expected the paper");
+  build(paper);
+  fontsReady();
+  return button;
+}
+
+it("does not read a reference across two cells or two paragraphs", async () => {
+  const button = await previewWith((paper) => {
+    const table = document.createElement("table");
+    const row = table.createTBody().insertRow();
+    row.insertCell().textContent = "EBITDA margin change, pp";
+    row.insertCell().textContent = "1.2";
+    const first = document.createElement("p");
+    first.textContent = "The filing runs to 300 pages.";
+    const second = document.createElement("p");
+    second.textContent = "2025 guidance is unchanged.";
+    paper.append(table, first, second);
+  });
+  await waitFor(() => {
+    expect(button).toBeEnabled();
+  });
+  expect(screen.queryByRole("alert")).toBeNull();
+});
+
+const svg = (name: string) => document.createElementNS("http://www.w3.org/2000/svg", name);
+
+it.each([
+  [
+    "one table cell",
+    (paper: Element) => {
+      const table = document.createElement("table");
+      const row = table.createTBody().insertRow();
+      row.insertCell().textContent = "Leverage";
+      row.insertCell().textContent = "3.2x, see p. 12";
+      paper.append(table);
+    },
+  ],
+  [
+    "one paragraph split by inline emphasis",
+    (paper: Element) => {
+      const paragraph = document.createElement("p");
+      const strong = document.createElement("strong");
+      strong.textContent = "12";
+      paragraph.append("The covenant is on page ", strong, ".");
+      paper.append(paragraph);
+    },
+  ],
+  [
+    "one chart label split into spans",
+    (paper: Element) => {
+      const label = svg("text");
+      const [first, second] = [svg("tspan"), svg("tspan")];
+      first.textContent = "see annual-";
+      second.textContent = "report.pdf";
+      label.append(first, second);
+      const chart = svg("svg");
+      chart.append(label);
+      paper.append(chart);
+    },
+  ],
+])("still withholds print for a reference inside %s", async (_case, build) => {
+  const button = await previewWith(build);
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "This PDF cannot be printed because its text contains a link, a reference or a run identifier.",
+  );
+  expect(button).toBeDisabled();
+});

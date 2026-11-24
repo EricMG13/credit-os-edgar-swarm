@@ -336,6 +336,20 @@ function Overview({
   const frontPage = buildIssuerFrontPage(view, run);
   const specialist = reportSpecialistOverview(view, run, routeKey);
   const actionModules = ["CP-3", "CP-3D", "CP-5", "CP-6"];
+  // A limitation of a module whose decision is held can restate that decision, so it stays on the
+  // module's own page.
+  const heldModules: string[] = (frontPage?.actions ?? []).flatMap(({ held, module }) =>
+    held ? [module] : [],
+  );
+  const limitations = runLimitations(view, run, heldModules).filter(
+    ({ id, line }) =>
+      !frontPage?.limitations.some(
+        (limitation) => limitation.owner.module === id && limitation.line === line,
+      ),
+  );
+  const leftOut = runLimitations(view, run).filter(
+    ({ id, text }) => heldModules.includes(id) && !limitations.some((row) => row.text === text),
+  );
   const calendar = buildCalendar(view.entries, run.folder);
   const watchRows = upcomingCalendarRows(calendar.rows, run.asOf);
   const keyCharts = overviewCharts(view, run);
@@ -394,12 +408,8 @@ function Overview({
       />
       <RunLimitations
         run={run}
-        rows={runLimitations(view, run).filter(
-          ({ id, line }) =>
-            !frontPage?.limitations.some(
-              (limitation) => limitation.owner.module === id && limitation.line === line,
-            ),
-        )}
+        rows={limitations}
+        elsewhere={[...new Set(leftOut.map(({ name }) => name))]}
       />
       {(!frontPage || (!ownFigures && keyCharts.length > 0)) && (
         <KeyCharts run={run} charts={keyCharts} />
