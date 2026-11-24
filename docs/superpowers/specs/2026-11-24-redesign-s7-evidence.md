@@ -1,0 +1,192 @@
+# Redesign S7: Evidence page and trace drawer
+
+2026-11-24. Branch `claude/redesign-s7-evidence`. Package S7 of
+`docs/superpowers/plans/2026-11-24-frontend-redesign.md`. Phase 1 (spec); Verification at the
+end is filled in during phase 2.
+
+## 1. Screen-map rows covered
+
+"Report · Evidence" (`docs/design/screen-map.md`), reader: Reviewer. Arrives from one figure and
+asks "is this supported, and what is missing?". Evidence is the one page where machinery
+(file names, hashes, ids, registers, gap ledgers, run codes) belongs.
+
+| Rank | What | Form | Where | Needs |
+|---|---|---|---|---|
+| P1 | The trace asked for: sentence or figure, its source passage and location | Split view, claim left, source right | Top, when arrived from a trace control | Code |
+| P1 | Gaps by severity | Three counts, then the list, most severe first | Summary tab | Code |
+| P2 | Sources: used, and supplied but not used | Table: file, type, pages, hash, used by | Sources tab | Code |
+| P2 | Script checks: pass, fail, not run | Matrix of check × module | Checks tab | Code |
+| P3 | Handoffs, calculation JSON and Model downloads | File list with hashes | Record tab | Code |
+| P3 | Run record: calls, cap, spend, models, timings | Key-value table, closed by default | Record tab | Code |
+
+"On every screen", trace control row: "One small icon button, the same everywhere, top right of
+its item." The trace drawer is the working-page side of the same data: it holds the claim, its
+source passage with location, the basis line and one link into Evidence (Interfaces table: every
+other page depends on `evidencePath`, `evidenceHref`, `PublishedSource`, `PublishedTraceProvider`;
+signatures and behaviour unchanged).
+
+Rank notes. Pages are not a bento (a reviewer reads down, not across); P1 is first and largest,
+P2 follows, P3 is behind a disclosure or a lower tab. "Pages" in the Sources row: the handoff
+carries cited pages only on a citation, so the page cell draws them where a citation records them
+(see 4).
+
+## 2. Blocks
+
+All blocks are new files beside `Evidence.tsx` unless stated; the kit parts used are `Segmented`,
+`StatsStrip`, `BarCell` (components/kit) and `Tile`, `Well`, `GapNote`, `Figure`
+(`report/overview/Tile.tsx`). No second copy of a kit part, no hex colour, no inline style.
+
+### 2.1 Frame: `Evidence.tsx` (`ReportEvidence`, props unchanged)
+
+Header row: `h2 Evidence`, the Module `<select>` (kept: it keeps the module in the address) and
+the `Segmented` control "Evidence sections" with Summary · Trace · Sources · Gaps · Checks ·
+Record. Segments are links to the existing addresses `#evidence/summary|trace|sources|gaps|checks|record[/MODULE]`
+(unchanged routing, `evidenceRoute` is kept). Checks keeps its accessible name "Script checks, n of m"
+and its segment is absent when the run holds no script checks (as today: the address falls back to
+Summary). States: `data`, `empty` (no records: each tab shows its designed empty state with the
+reason), `invalid address` (the existing alert). Loading: only the downloads and the run record
+load (they load their own resources and say so as a status).
+
+1440 px: single column, `max-w-6xl`; blocks full width. 390 px: single column; the segmented
+control wraps (it is `flex-wrap`); tables sit in a labelled, focusable scroll region so the page
+itself never scrolls sideways.
+
+### 2.2 Summary tab (P1 gaps, then the run's evidence)
+
+1. `GapCounts` (new file `EvidenceGaps.tsx`): a `StatsStrip` of High · Medium · Low counts, plus one
+   more stat "Other or not stated" only when a gap carries another or no severity (the handoff's
+   own term is never relabelled). Zero is the number 0 for a module that wrote gaps; with no
+   gap records at all, the designed empty state, not three zeros.
+2. `GapLedger`: the list, most severe first, grouped as today (`severityGroups`: High, Medium, Low,
+   other stated terms, none stated), each row: severity badge, the gap's own words, the module (and
+   alternate-handoff label), and "Open handoff line" (the existing link). The Summary draws the
+   ledger without the recorded detail; the Gaps tab draws it with it (one component, `detail` prop).
+3. "Run evidence" `Tile`: handoffs, source files, recorded gaps, script checks that ran, handoffs with
+   an unlocated Basis (the existing sentences, same text).
+4. Handoffs: the handoff list with its ZIP (existing `EvidenceHandoffs`, restyled as a table
+   with the module, the handoff's SHA-256 from `output.sha256`, its download). Present on Summary,
+   Trace (nothing chosen) and Record, as before (a behaviour test pins that).
+
+### 2.3 Trace tab
+
+When arrived from a trace control (`#evidence/<id>~<sha>-<line>`): `TraceSplit` (new file
+`TraceSplit.tsx`) at the top. Left, "The claim": module · section heading, the statement, the basis
+line, the qualification. Right, "The source": the source passage (quoted excerpt) with its
+location (file, pages as `citedSourcePages`, the cited source's hash where the chip carries one)
+for every chip the line cites; when none: the gap state "No source passage recorded for this
+item" with the Basis line's own words. 7/5 split at 1440 (`lg:grid-cols-[7fr_5fr]`), claim above
+source at 390. Under the split, the existing derivation tree and source records
+(`TraceDetailsView`) and the handoff's own section(s) (`EvidenceLocation`), unchanged in content.
+The claim and the source are drawn from the same `Trace` the drawer draws (`traceForLine`), so
+drawer and page cannot disagree.
+
+Arrived at a handoff without a line: its heading, download and sections as today. No handoff
+chosen: the instruction sentence (kept word for word) and the handoff list; for CP-8 the
+comparison measures block passed in as `comparison` (kept).
+
+### 2.4 Sources tab (P2)
+
+One table per group, in the ruled order: "Used by a module", "Supplied, not used", "Not recorded as
+used". Columns File (name; the module-written warning under it), Type, Document date, Cited
+pages (where a citation in this module's handoffs names the file: from `snapshot.chips` through
+`citedSourcePages`; otherwise the cell states "Not cited"), Used by ("Read by all N modules" or
+the module names), SHA-256 (mono). The groups are kept apart by their headings and a count
+badge; "supplied, not used" is never merged with the used rows. Missing type, date, hash keep
+their words ("Document type n.a." etc.); no cell is blank. Module filter as today.
+
+### 2.5 Gaps tab
+
+`GapCounts` + `GapLedger detail`, as 2.2, with the recorded detail column and the module filter.
+
+### 2.6 Checks tab (P2) — `ScriptChecks.tsx`
+
+`ScriptCheckMatrix` (new file): rows are the checks (the title the check card already uses:
+register · figure), columns are the modules that hold a record; each cell is the status word in a
+badge with an icon (agreed teal; disagreed, contradicted, missing orange; not checked gray; any
+other status literal), with the number when a cell holds several outcomes; an empty cell is "—"
+with the screen-reader text "no check recorded". The column header links to
+`#evidence/checks/MODULE`. A `StatsStrip` above counts outcomes by the recorded status word.
+Under the matrix the existing per-module disclosures (accepted attempt, response hash, scripts
+and their hashes, each outcome's stated and recomputed figures) are kept unchanged in content;
+they are the matrix's drill-down. The two explanatory sentences are kept word for word.
+
+### 2.7 Record tab (P3)
+
+Order: the handoff list and ZIP (2.2 item 4); model and calculation downloads
+(`ArtifactDownloads`, same fetch, same statuses, same two notes; the buttons stay in a wrapping row);
+`RecordedModelQualifications` and assumption registers for CP-2G (unchanged); then "Run record" as
+a heading over one `<details>` that is closed by default and holds `ReportRecord` (S2's file,
+unchanged: calls, cap, spend, models). Its summary line says what is inside. Existing test order
+"Run record before Handoffs" in a heading list is a layout pin and is rewritten (see 3).
+
+### 2.8 Trace drawer — `TraceDrawer.tsx` and `TraceParts.tsx`
+
+Same props, same `SlideoutMenu`, same Close and "Open in Evidence" controls (one link into Evidence,
+`onPress={onClose}`). Content, in the reviewer's order: header (heading, subtitle, module · line);
+"The claim" (statement; the qualification as its own captioned line); "Source passage" (quote,
+with its location: source name and pages; sources are plain text, never a link); "Basis" (the
+basis line from the derivation tree's Basis node, or the gap state "Basis was not recorded for
+this item"); "How it was derived" (the existing `DerivationTree`, open); cited sources. The drawer
+and `TraceSplit` share `TraceParts.tsx` (`TraceClaim`, `TraceSourcePassage`, `TraceBasis`,
+`CitedSources`) so there is one drawing of each.
+
+Caption texts "Source excerpt" and "Qualification" are kept (tests for the library drawer pin
+them).
+
+## 3. Files and tests
+
+Add: `report/EvidenceGaps.tsx`, `report/EvidenceSources.tsx`, `report/EvidenceHandoffs.tsx`,
+`report/TraceSplit.tsx`, `report/ScriptCheckMatrix.tsx`, `library/parts/TraceParts.tsx`, with a
+test file each (written before the block). Change: `report/Evidence.tsx` (frame; moves blocks
+out), `report/ScriptChecks.tsx`, `report/ArtifactDownloads.tsx` (tile in the new look, same
+behaviour), `report/PublishedTrace.tsx` (only if the context shape needs a field; signatures
+unchanged), `library/parts/TraceDrawer.tsx`. Delete: nothing.
+
+Tests kept as they are: `Evidence.test` (gap counting, linking, filters, stale address, retained
+files, citation identity), `Evidence.contracts`, `Evidence.t21`, `Evidence.t21-fix1`,
+`Evidence.finalAudit`, `Evidence.handoff-title`, `ScriptChecks`, `ArtifactDownloads.states`,
+`TraceControl.missing`, `TraceReadable`, the drawer assertions in `RunFrame.test`,
+`ConnectedApp.test`, `LibraryIndex.metricTrace`, `Confidence.recovery`, `Forecast.recovery`.
+Rewritten (they pin layout, class names or the old nesting) and recorded in the report: the
+download row class test if the row moves, "Run record before Handoffs" heading order, any
+`closest("section")` icon test for the empty states if the container changes, and tests that read
+a Run record value without opening the closed disclosure (they open it first; the assertion is
+unchanged). Each rewrite keeps its assertion about values, links or states.
+
+New tests: split view shows claim and source side by side and a gap when no passage;
+gap counts exact and "Other or not stated" only when present; ledger order; used and not-used
+sources stay in separate groups with exact hash; Checks matrix cell for each status incl. empty,
+exact counts, header link; Record disclosure closed by default and opens; drawer shows the five
+sections in order, basis gap, one Evidence link; every address and download still resolves
+(`evidencePath` round trip into the new Trace tab).
+
+## 4. What is drawn as a gap today, and why
+
+| Gap state | Why |
+|---|---|
+| "Cited pages" cell for a file no citation names | The handoff names pages only on a citation; the page is never inferred. "Not cited" in the gap treatment |
+| A source passage for a line whose chips carry no excerpt | The handoff records no passage; the Basis line's words are drawn beside the gap state |
+| Run-record timings for a run whose log could not be read | `ReportRecord` already states it; unchanged |
+| Typed severity counts for CP-5's own clearance | Method change (screen-map: CP-5 typed counts); this page counts the gap rows modules wrote |
+
+No new figure is computed: counts are of rows the handoffs wrote, matrix cells are the recorded
+status words.
+
+## 5. Sub-agent plan
+
+- Spec and data-reading blocks (`GapLedger`/`GapCounts`, `TraceSplit`, drawer, matrix): this
+  session on Sonnet, high effort, tests first.
+- Presentational restyle of `ArtifactDownloads` and `EvidenceHandoffs` and the sources table,
+  and rewrite of tests that pin layout: Sonnet sub-agent, medium.
+- One independent review of the session's diff (given the code, not this conclusion) on Opus,
+  high, before reporting: numbers not in a handoff, missing shown as zero, a source reference
+  on a working page, a weakened behaviour test, 390 px overflow, keyboard.
+
+## 6. Requests to the coordinator
+
+None blocking. Noted: `report/Record.tsx` (S2) is wrapped, not edited; if S2 renames
+`ReportRecord`'s props the wrapper changes.
+
+## 7. Verification
+
+(filled in during phase 2)
