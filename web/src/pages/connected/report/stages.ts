@@ -15,7 +15,7 @@ const OTHER = "Other";
 /** Rows grouped by stage, in stage order; a module no stage names is drawn last under Other. */
 export function byStage<Row extends { id: string }>(rows: readonly Row[]) {
   const known = new Set<string>(STAGES.flatMap((stage) => stage.modules));
-  const groups = STAGES.map((stage) => ({
+  const groups: { name: string; rows: Row[] }[] = STAGES.map((stage) => ({
     name: stage.name,
     rows: rows.filter((row) => (stage.modules as readonly string[]).includes(row.id)),
   }));
