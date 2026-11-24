@@ -102,7 +102,8 @@ export function netDebtLayout(view: NetDebtView) {
     const net = valueOf(p.net);
     const cash = valueOf(p.cash);
     const gross = valueOf(p.gross);
-    const netEnd = net === null ? at(0) + ND.gapSlot : at(net);
+    // A cash gap is drawn past the net debt bar on the positive side, never over it.
+    const netEnd = net === null ? at(0) + ND.gapSlot : at(Math.max(net, 0));
     const parts = [stated(p.net, "net"), stated(p.cash, "cash"), stated(p.gross, "gross debt")];
     const named = [
       ["net debt", p.net],

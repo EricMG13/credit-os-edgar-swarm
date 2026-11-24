@@ -95,12 +95,12 @@ export function ratioAxis(values: number[]) {
 
 /** Layout of the left panel, in viewBox units. Text is 11 px or more at the 1440 layout. */
 export const ED = {
-  width: 780,
+  width: 800,
   labelEnd: 146,
   x0: 156,
   x1: 572,
   g0: 640,
-  g1: 712,
+  g1: 736,
   top: 52,
   row: 42,
   debtGap: 14,
@@ -218,6 +218,19 @@ function reasonsOf(measure: EarningsMeasure, priorLabel: string, currentLabel: s
   );
 }
 
+/**
+ * The growth column is narrow: label its two ends and zero only, and drop a label that would
+ * touch one already kept (zero and the far end are kept first).
+ */
+export function sparse<T extends { value: number; x: number }>(marks: T[]) {
+  const ends = [marks.find((m) => m.value === 0), marks.at(-1), marks[0]];
+  const kept: T[] = [];
+  for (const mark of ends)
+    if (mark && !kept.includes(mark) && kept.every((k) => Math.abs(k.x - mark.x) >= 28))
+      kept.push(mark);
+  return kept.sort((a, b) => a.x - b.x);
+}
+
 /** Every row of the dumbbell panel on one scale; heights and positions are proportional to the stated figures. */
 export function dumbbellLayout(data: EarningsAgainstDebt) {
   const values = data.measures.flatMap((m) =>
@@ -259,6 +272,7 @@ export function dumbbellLayout(data: EarningsAgainstDebt) {
     ticks: money.ticks,
     zero: money.at(0),
     growthTicks: growthValues.length ? growth.ticks : [],
+    growthLabels: growthValues.length ? sparse(growth.ticks) : [],
     growthZero: growth.at(0),
     separator,
     axisY,
@@ -293,19 +307,23 @@ export function leverageLayout(leverage: Leverage) {
   if (!values.length) return null;
   const axis = ratioAxis(values);
   const y = linear([axis.lo, axis.hi], [LEV.bottom, LEV.top]);
-  const mark = (cell: Reading, x: number): RatioMark => {
+  const [p, c] = cells.map((cell) => (cell.kind === "number" ? cell.value : null));
+  // A label sits on the side away from the connector: below a mark whose partner is higher.
+  const mark = (cell: Reading, x: number, other: number | null | undefined): RatioMark => {
     if (cell.kind !== "number") return { kind: "gap", x, reason: reasonOf(cell) };
     const at = y(cell.value);
+    const below = other != null && other > cell.value ? at + 24 : null;
+    const above = at - 14 < LEV.top - 18 ? at + 24 : at - 14;
     return {
       kind: "value",
       x,
       y: at,
       text: `${group(cell.text)}x`,
-      labelY: at - 14 < LEV.top - 18 ? at + 24 : at - 14,
+      labelY: below !== null && below <= LEV.bottom + 6 ? below : above,
     };
   };
-  const prior = mark(leverage.pair.prior.cell, LEV.prior);
-  const current = mark(leverage.pair.current.cell, LEV.current);
+  const prior = mark(leverage.pair.prior.cell, LEV.prior, c);
+  const current = mark(leverage.pair.current.cell, LEV.current, p);
   return {
     axis,
     fromZero: axis.lo === 0,

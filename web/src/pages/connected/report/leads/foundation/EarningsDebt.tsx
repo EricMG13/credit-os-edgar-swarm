@@ -179,18 +179,26 @@ function DumbbellPanel({ data, layout }: { data: EarningsAgainstDebt; layout: Du
         </g>
       ))}
       {layout.growthTicks.map((tick) => (
-        <g key={`g${String(tick.value)}`}>
-          <line
-            x1={tick.x}
-            x2={tick.x}
-            y1={top}
-            y2={layout.axisY}
-            className={tick.value === 0 ? "stroke-border-container" : "stroke-border-hairline"}
-          />
-          <text x={tick.x} y={layout.axisY + 18} textAnchor="middle" fontSize="11" className={TICK}>
-            {tick.label}
-          </text>
-        </g>
+        <line
+          key={`g${String(tick.value)}`}
+          x1={tick.x}
+          x2={tick.x}
+          y1={top}
+          y2={layout.axisY}
+          className={tick.value === 0 ? "stroke-border-container" : "stroke-border-hairline"}
+        />
+      ))}
+      {layout.growthLabels.map((tick) => (
+        <text
+          key={`gl${String(tick.value)}`}
+          x={tick.x}
+          y={layout.axisY + 18}
+          textAnchor="middle"
+          fontSize="11"
+          className={TICK}
+        >
+          {tick.label}
+        </text>
       ))}
       {layout.separator !== null && (
         <line
@@ -408,7 +416,7 @@ export function EarningsDebtTile({ lead }: { lead: LeadProps }) {
       notes={notes}
       table={earningsTable(data)}
     >
-      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,780fr)_minmax(0,296fr)] lg:gap-6">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,800fr)_minmax(0,296fr)] lg:gap-6">
         {layout ? <DumbbellPanel data={data} layout={layout} /> : <GapNote>{NO_MEASURES}</GapNote>}
         {!data.leverage ? (
           <GapNote>{NO_LEVERAGE}</GapNote>

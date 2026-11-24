@@ -196,6 +196,20 @@ describe("MaturityTile states", () => {
       ),
     ).toBeVisible();
     expect(within(tile).queryByRole("img")).toBeNull();
+    cleanup();
+    // The wall places a row by its year: "2026" is FY2026 again, and one of them would be lost.
+    const same = draw(
+      wall([
+        ["FY2026", "500"],
+        ["2026", "600"],
+        ["FY2027", "700"],
+      ]),
+    );
+    expect(
+      within(same).getByText(
+        "The maturity schedule states 2026 more than once; the wall is not drawn.",
+      ),
+    ).toBeVisible();
   });
   it("keeps a reason that names a source in Evidence", () => {
     const tile = draw(

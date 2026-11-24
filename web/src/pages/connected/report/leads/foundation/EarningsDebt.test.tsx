@@ -186,9 +186,7 @@ describe("EarningsDebtTile on the retained handoff", () => {
 
   it("draws no source reference anywhere on the tile", () => {
     const tile = draw();
-    for (const text of [...tile.querySelectorAll("text, p, h3, td")].map(
-      (n) => n.textContent ?? "",
-    ))
+    for (const text of [...tile.querySelectorAll("text, p, h3, td")].map((n) => n.textContent))
       expect(containsReference(text)).toBe(false);
   });
 });

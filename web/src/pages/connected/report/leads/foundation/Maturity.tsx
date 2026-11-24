@@ -19,6 +19,8 @@ const SX = BOX.width / WALL.width;
 const SY = (BOX.base - BOX.top) / (WALL.base - WALL.top);
 /** Below this slot width an amount label would run into its neighbour; the table view has it. */
 const CROWDED = 44;
+/** A dated period label, as the wall reads it (`structureData`). */
+const YEAR = /^\D*(\d{4})\D?$/;
 
 type Ready = Extract<FigureSource, { state: "ready" }>;
 type WallMark = ReturnType<typeof wallGeometry>["marks"][number];
@@ -216,7 +218,9 @@ function MaturityFigure({ lead, source }: { lead: LeadProps; source: Ready }) {
   const unit = unitOf(source.descriptor);
   const kicker = unitLabel(unit) ? `${LABEL} · ${unitLabel(unit)}` : LABEL;
   const labels = source.table.rows.map((row) => row[0] ?? "");
-  const twice = labels.find((label, at) => labels.indexOf(label) !== at);
+  // The wall places a dated row by its year, so "FY2026" and "2026" are the same period.
+  const periods = labels.map((label) => YEAR.exec(label)?.[1] ?? label);
+  const twice = labels.find((_, at) => periods.indexOf(periods[at] ?? "") !== at);
   const slots = wallSlots(source.table, source.descriptor, unit);
   const common = {
     props: lead,
