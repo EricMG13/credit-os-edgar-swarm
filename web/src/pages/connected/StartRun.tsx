@@ -57,6 +57,8 @@ import {
   latestIssuerInputs,
   type Attachment,
   type IntakeView,
+  type LastReview,
+  missingAtLastReview,
   intakeDocuments,
   readinessRows,
   accessibleText,
@@ -190,7 +192,10 @@ function useIntakeReviewState() {
   const [fieldError, setFieldError] = useState<FieldProblem>();
   const [otherProblems, setOtherProblems] = useState<readonly string[]>([]);
   const [submitUncertain, setSubmitUncertain] = useState(false);
+  const [lastReview, setLastReview] = useState<LastReview>();
   return {
+    lastReview,
+    setLastReview,
     review,
     setReview,
     accepted,
@@ -412,6 +417,8 @@ function IntakeForm({
     setOtherProblems,
     submitUncertain,
     setSubmitUncertain,
+    lastReview,
+    setLastReview,
   } = reviewState;
   const { draftRef, reviewedRef, activeRef, focusedBeforeRef, submittedRef } = useIntakeSession();
   const { folderInput, moved, setMoved, changeNotice, setChangeNotice } = useIntakeViewState();
@@ -679,6 +686,7 @@ function IntakeForm({
     setPurposeChosen(false);
     setCustomSlug(prior.issuer_id);
     reviewedRef.current = null;
+    setLastReview(undefined);
     setLevel(Object.hasOwn(LEVELS, prior.level) ? prior.level : "basic");
     setTurns(String(prior.max_turns || 32));
     setModel("gpt");
@@ -882,6 +890,12 @@ function IntakeForm({
       cap: shownCap,
       attachmentNames: { portfolio_workbook: attachments.portfolio_workbook },
     });
+    setLastReview({
+      pathway: answers.context.run.pathway,
+      issuerId: answers.context.identity.issuer_id,
+      modules: summary.modules,
+      items: summary.items,
+    });
   }
 
   async function makeReview() {
@@ -1028,6 +1042,7 @@ function IntakeForm({
   }
 
   function resetIssuer() {
+    setLastReview(undefined);
     setCopy(undefined);
     reviewedRef.current = null;
     setContext(startingContext(template));
@@ -1245,6 +1260,7 @@ function IntakeForm({
     toggleModule,
     problem: fieldError,
     idNote: reviewIssuerNote(review, settledSlug),
+    missing: missingAtLastReview(lastReview, run.pathway, issuerId),
     useIssuerId: (id) => {
       clearProblem("issuer_id");
       setCustomSlug(id);

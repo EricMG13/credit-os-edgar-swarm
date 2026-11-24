@@ -23,7 +23,7 @@ import {
   type ModuleOptionsForm,
   type ValuationForm,
 } from "./valuation";
-import { decided, groupLimits, needsCheck } from "./limits";
+import { decided, groupLimits, needsCheck, type LimitGroup } from "./limits";
 import { ATTACHMENTS, documentDescription, LEGAL_CHOICES, PURPOSE_STEP, storedName } from "./plain";
 import { asSentence, errorText, isUnreachable } from "../useResource";
 import type { FieldProblem } from "./fields";
@@ -144,8 +144,36 @@ export type DocumentRow = {
   copied?: boolean;
 };
 
+/**
+ * The last summary the form received, kept after the analyst leaves the review so every step can
+ * draw what the service said then. It is drawn only for the same pathway and Issuer ID, and is
+ * presentation only: nothing sent depends on it.
+ */
+export type LastReview = {
+  pathway: string;
+  issuerId: string;
+  modules: readonly string[];
+  items: readonly ReadinessItem[];
+};
+
+/** The last review's limit groups for the pathway and Issuer ID now shown; undefined when none. */
+export function missingAtLastReview(
+  last: LastReview | undefined,
+  pathway: string,
+  issuerId: string,
+): LimitGroup[] | undefined {
+  if (!last || last.pathway !== pathway || last.issuerId !== issuerId) return undefined;
+  return groupLimits(last.items).groups;
+}
+
 export type IntakeView = {
   step: FormStep;
+  /**
+   * What the last review of this pathway and Issuer ID said would limit the run, as decision
+   * groups (`groupLimits`); undefined before any such review. Drawn on Documents as what is
+   * missing for the modules.
+   */
+  missing?: readonly LimitGroup[];
   busy?: "review" | "submit" | "documents" | "copy";
   canRead: boolean;
   copy?: { run: string; prior: PriorInputs };
