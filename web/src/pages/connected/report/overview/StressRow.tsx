@@ -307,48 +307,59 @@ function Downside({ entry }: { entry: OutputEntry }) {
     .join(". ");
   return (
     <>
-      <svg
-        viewBox={`0 0 ${String(DOWNSIDE.width)} ${String(height)}`}
-        width="100%"
-        role="img"
-        aria-label={`Downside scenarios. ${reading}.`}
+      {/* On a phone the cases keep their type size and the figure scrolls sideways in its tile. */}
+      <div
+        role="region"
+        aria-label="Downside scenarios figure, scrolls sideways on a narrow screen"
+        // A scrolled region must take keyboard focus so it can be scrolled without a pointer.
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+        tabIndex={0}
+        className="-mx-1 overflow-x-auto rounded-ds-sm px-1 outline-focus-ring focus-visible:outline-2"
       >
-        <defs>
-          <GapPattern id="downside-gap" />
-        </defs>
-        {cases.map((item, row) => (
-          <Fragment key={item.id}>
-            {row > 0 && (
-              <line
-                x1="0"
-                y1={DOWNSIDE.head + row * DOWNSIDE.row}
-                x2={DOWNSIDE.width}
-                y2={DOWNSIDE.head + row * DOWNSIDE.row}
-                className="stroke-border-hairline"
-              />
-            )}
-            <text
-              x="0"
-              y={DOWNSIDE.head + row * DOWNSIDE.row + 15}
-              fontSize="12"
-              className={
-                item.control ? "fill-text-secondary font-body" : "fill-text-primary font-body"
-              }
-            >
-              {item.name}
-            </text>
-          </Fragment>
-        ))}
-        {panels.map((panel, at) => (
-          <PanelBars
-            key={panel.measure}
-            panel={panel}
-            x={at * (room + DOWNSIDE.gutter)}
-            room={room}
-            first={at === 0}
-          />
-        ))}
-      </svg>
+        <svg
+          viewBox={`0 0 ${String(DOWNSIDE.width)} ${String(height)}`}
+          width="100%"
+          role="img"
+          aria-label={`Downside scenarios. ${reading}.`}
+          className="min-w-[460px] sm:min-w-0"
+        >
+          <defs>
+            <GapPattern id="downside-gap" />
+          </defs>
+          {cases.map((item, row) => (
+            <Fragment key={item.id}>
+              {row > 0 && (
+                <line
+                  x1="0"
+                  y1={DOWNSIDE.head + row * DOWNSIDE.row}
+                  x2={DOWNSIDE.width}
+                  y2={DOWNSIDE.head + row * DOWNSIDE.row}
+                  className="stroke-border-hairline"
+                />
+              )}
+              <text
+                x="0"
+                y={DOWNSIDE.head + row * DOWNSIDE.row + 15}
+                fontSize="12"
+                className={
+                  item.control ? "fill-text-secondary font-body" : "fill-text-primary font-body"
+                }
+              >
+                {item.name}
+              </text>
+            </Fragment>
+          ))}
+          {panels.map((panel, at) => (
+            <PanelBars
+              key={panel.measure}
+              panel={panel}
+              x={at * (room + DOWNSIDE.gutter)}
+              room={room}
+              first={at === 0}
+            />
+          ))}
+        </svg>
+      </div>
       <FigureNotes notes={[...data.assumptions, ...gaps]} />
     </>
   );

@@ -175,7 +175,7 @@ it("draws the wall at the frame's own width on a narrow screen, and at full widt
     { label: "FY2026", cell: { text: "500", value: 500, reason: null } },
     { label: "FY2027", cell: { text: "1,250", value: 1250, reason: null } },
   ];
-  const narrow = wallGeometry(slots as never, [], 342);
+  const narrow = wallGeometry(slots, [], 342);
   expect(narrow.marks.at(-1)?.centre).toBeLessThan(342);
   expect(wallGeometry(slots as never, [], WALL.width).marks.at(-1)?.centre).toBeGreaterThan(600);
 });

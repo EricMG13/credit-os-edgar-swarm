@@ -71,7 +71,7 @@ function snapshot(): Snapshot {
       models: [],
     },
     chips: {},
-  } as unknown as Snapshot;
+  };
 }
 
 it("reads each run's stance from its own committee decision, and the earlier run's through the comparison", () => {
