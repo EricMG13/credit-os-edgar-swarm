@@ -547,7 +547,9 @@ describe("the overview carries every module's bottom line and the run's limitati
       "href",
       "#modules/CP-2D",
     );
-    expect(within(lines).getAllByText("Not assessable").length).toBeGreaterThan(0);
+    expect(
+      within(within(lines).getByRole("link", { name: /^Liquidity/ })).getByText("Not assessable"),
+    ).toBeVisible();
     expect(within(bottomLines).getByText(/no liquidity schedule was supplied/)).toBeVisible();
     expect(
       within(bottomLines).getByText(/Leverage is high; Liquidity covers two years\./),
