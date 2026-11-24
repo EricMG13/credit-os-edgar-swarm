@@ -74,7 +74,7 @@ export function selectedOutput(view: ReportView, module: string, allowBlocked = 
 }
 
 // A PDF holds no module page, so there the decision is not shown in the report at all.
-export const NOT_SHOWN_DECISION =
+const NOT_SHOWN_DECISION =
   "This decision is not shown in this report because no clearance for it is recorded.";
 export const UNAVAILABLE_DECISION = "A published decision is unavailable for this run.";
 
