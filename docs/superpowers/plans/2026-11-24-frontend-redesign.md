@@ -131,6 +131,13 @@ For each branch as it reports done, the coordinator, on Fable:
    compares Overview, the CP-1 module page and Forecast with the mockups.
 4. Sends confirmed findings to the session; the session fixes and pushes; repeat until clean.
 
+### Reviewer model (owner, 2026-11-24)
+
+"Switch to opus xhigh reviewers after current tasks, and final fable review before merge."
+Review rounds launched from now on run on Opus at xhigh effort; rounds already running finish
+as launched. A branch that an Opus round passes then gets one final review on Fable before it
+is merged; findings from the final review go back to the session like any other.
+
 ## Phase 4: integration
 
 Merge order: S10, S2, S3, S4, S1, S5, S6, S7, S8, S9. After each merge: typecheck and the
