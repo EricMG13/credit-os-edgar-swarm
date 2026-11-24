@@ -138,7 +138,7 @@ function StressPart({ view, folder }: { view: ReportView; folder: string }) {
                 return (
                   <li
                     key={scenario?.id ?? at}
-                    className="grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)] items-center gap-2"
+                    className="grid grid-cols-[minmax(0,9.5rem)_minmax(0,1fr)] items-center gap-2"
                   >
                     <span className="text-caption text-text-secondary">{scenario?.name}</span>
                     {cell.value === null ? (

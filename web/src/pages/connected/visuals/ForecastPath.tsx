@@ -31,7 +31,9 @@ const SERIES = ["stroke-chart-1", "stroke-chart-2", "stroke-chart-5", "stroke-ch
 const DOTS = ["fill-chart-1", "fill-chart-2", "fill-chart-5", "fill-chart-6"] as const;
 const SWATCH = ["bg-chart-1", "bg-chart-2", "bg-chart-5", "bg-chart-6"] as const;
 
-const BOX = { left: 52, right: 20, top: 36, bottom: 276, axis: 300, lane: 330, base: 396 } as const;
+const BOX = { left: 52, right: 20, top: 36 } as const;
+/** The plot is taller where the tile is wide, so the lead keeps its rank beside a tall neighbour. */
+const plotBottom = (width: number) => (width >= 700 ? 396 : 276);
 const LANE_HEIGHT = 56;
 const THINNEST = 2;
 
@@ -95,12 +97,24 @@ function geometry(width: number, slots: Slot[], values: number[], lane: boolean)
   const step = (right - BOX.left) / Math.max(1, slots.length);
   const first = slots[0]?.year ?? 0;
   const x = (year: number) => BOX.left + (year - first + 0.5) * step;
+  const bottom = plotBottom(width);
   const scale = ticks(values);
   const low = scale[0]?.value ?? 0;
   const high = scale.at(-1)?.value ?? 1;
-  const y = (value: number) =>
-    BOX.bottom - ((value - low) / (high - low || 1)) * (BOX.bottom - BOX.top);
-  return { x, y, step, right, scale, height: lane ? BOX.base + 8 : BOX.axis + 12 };
+  const y = (value: number) => bottom - ((value - low) / (high - low || 1)) * (bottom - BOX.top);
+  const base = bottom + 120;
+  return {
+    x,
+    y,
+    step,
+    right,
+    scale,
+    bottom,
+    axis: bottom + 24,
+    lane: bottom + 54,
+    base,
+    height: lane ? base + 8 : bottom + 36,
+  };
 }
 type Geometry = ReturnType<typeof geometry>;
 
@@ -176,7 +190,7 @@ function GapColumns({ selected, slots, g }: { selected: MeasureCase; slots: Slot
                 x={cx0 - half}
                 y={BOX.top}
                 width={half * 2}
-                height={BOX.bottom - BOX.top}
+                height={g.bottom - BOX.top}
                 rx="6"
                 fill="url(#forecast-path-hatch)"
                 strokeDasharray="4 3"
@@ -184,7 +198,7 @@ function GapColumns({ selected, slots, g }: { selected: MeasureCase; slots: Slot
               />
               <rect
                 x={cx0 - 42}
-                y={BOX.bottom - 90}
+                y={g.bottom - 90}
                 width="84"
                 height="20"
                 rx="4"
@@ -192,7 +206,7 @@ function GapColumns({ selected, slots, g }: { selected: MeasureCase; slots: Slot
               />
               <text
                 x={cx0}
-                y={BOX.bottom - 76}
+                y={g.bottom - 76}
                 textAnchor="middle"
                 className="fill-gap-text text-[11px]"
               >
@@ -350,7 +364,7 @@ function Axis({ slots, g, wall }: { slots: Slot[]; g: Geometry; wall?: WallYear 
         <text
           key={slot.year}
           x={g.x(slot.year)}
-          y={BOX.axis}
+          y={g.axis}
           textAnchor="middle"
           className={cx(
             "font-mono",
@@ -374,7 +388,7 @@ function WallRule({ wall, slots, g }: { wall?: WallYear | null; slots: Slot[]; g
         x1={x}
         x2={x}
         y1={BOX.top - 8}
-        y2={BOX.bottom + 8}
+        y2={g.bottom + 8}
         strokeWidth="1.5"
         className="stroke-chart-2"
       />
@@ -396,14 +410,14 @@ function Lane({ wall, slots, g }: { wall: PathWall; slots: Slot[]; g: Geometry }
   const width = Math.min(56, g.step * 0.5);
   return (
     <g>
-      <text x={BOX.left} y={BOX.lane - 8} className="fill-text-secondary text-[11px]">
+      <text x={BOX.left} y={g.lane - 8} className="fill-text-secondary text-[11px]">
         {`Debt maturing in the year${wall.unit ? `, ${wall.unit}` : ""}`}
       </text>
       <line
         x1={BOX.left}
         x2={g.right}
-        y1={BOX.base}
-        y2={BOX.base}
+        y1={g.base}
+        y2={g.base}
         className="stroke-border-container"
       />
       {placed.map((item) => {
@@ -415,7 +429,7 @@ function Lane({ wall, slots, g }: { wall: PathWall; slots: Slot[]; g: Geometry }
             <rect
               key={item.year}
               x={x - width / 2}
-              y={BOX.base - 10}
+              y={g.base - 10}
               width={width}
               height="10"
               fill="url(#forecast-path-hatch)"
@@ -429,14 +443,14 @@ function Lane({ wall, slots, g }: { wall: PathWall; slots: Slot[]; g: Geometry }
           <g key={item.year}>
             <rect
               x={x - width / 2}
-              y={BOX.base - height}
+              y={g.base - height}
               width={width}
               height={height}
               className="fill-chart-2"
             />
             <text
               x={x}
-              y={BOX.base - height - 6}
+              y={g.base - height - 6}
               textAnchor="middle"
               className="fill-text-primary font-mono text-[12px]"
             >
@@ -510,6 +524,8 @@ function Legend({
   limits: PathLimits;
   wall: PathWall;
 }) {
+  // The gap key is shown only where a year of the selected case is drawn as a gap.
+  const gap = measure.periods.some((period) => selected.cells.get(period)?.value == null);
   return (
     <ul className="flex flex-wrap items-center gap-x-4 gap-y-2 text-caption text-text-secondary">
       {drawn.map((item, at) => (
@@ -543,13 +559,15 @@ function Legend({
           {wall.trace}
         </li>
       )}
-      <li className="flex items-center gap-1.5">
-        <span
-          aria-hidden="true"
-          className="gap-hatch size-3 rounded-ds-xs border border-dashed border-border-gap"
-        />
-        No figure for {selected.name}
-      </li>
+      {gap && (
+        <li className="flex items-center gap-1.5">
+          <span
+            aria-hidden="true"
+            className="gap-hatch size-3 rounded-ds-xs border border-dashed border-border-gap"
+          />
+          No figure for {selected.name}
+        </li>
+      )}
     </ul>
   );
 }
