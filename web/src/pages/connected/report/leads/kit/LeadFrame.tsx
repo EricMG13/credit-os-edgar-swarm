@@ -167,15 +167,20 @@ export function ScrollFigure({
   children: ReactNode;
 }) {
   return (
-    <div
-      role="group"
-      aria-label={label}
-      // A scrolling box must be reachable by keyboard (WCAG 2.1.1, scrollable-region-focusable).
-      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
-      tabIndex={0}
-      className="max-w-full overflow-x-auto rounded-ds-xs focus-visible:outline-2 focus-visible:outline-focus"
-    >
-      <div className={SCROLL_MIN[size]}>{children}</div>
-    </div>
+    <>
+      <p className="text-caption text-text-tertiary sm:hidden">
+        Scroll sideways to see the whole figure.
+      </p>
+      <div
+        role="group"
+        aria-label={label}
+        // A scrolling box must be reachable by keyboard (WCAG 2.1.1, scrollable-region-focusable).
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+        tabIndex={0}
+        className="max-w-full overflow-x-auto rounded-ds-xs focus-visible:outline-2 focus-visible:outline-focus"
+      >
+        <div className={SCROLL_MIN[size]}>{children}</div>
+      </div>
+    </>
   );
 }

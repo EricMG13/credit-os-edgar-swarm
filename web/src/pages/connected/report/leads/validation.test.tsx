@@ -328,4 +328,25 @@ describe("ClearanceLead", () => {
     const { container } = render5(full());
     expect(container.textContent).not.toMatch(/use restriction|committee use/i);
   });
+  it("gives every pip svg an explicit size and keeps Material off the teal 'better' colour", () => {
+    const { container } = render5(full());
+    const svgs = [...container.querySelectorAll("svg[data-group]")];
+    expect(svgs).toHaveLength(3);
+    for (const svg of svgs) {
+      expect(Number(svg.getAttribute("width"))).toBeGreaterThanOrEqual(12);
+      expect(Number(svg.getAttribute("height"))).toBeGreaterThanOrEqual(12);
+      expect(svg.getAttribute("class")).toContain("flex-none");
+    }
+    // Two Material pips, each 22 px of the row: the svg is as wide as its pips.
+    expect(container.querySelector('svg[data-group="Material"]')?.getAttribute("width")).toBe("44");
+    const material = container.querySelectorAll('[data-pip][data-severity="Material"]');
+    expect(material).toHaveLength(2);
+    for (const pip of material) {
+      expect(pip.getAttribute("class")).not.toContain("fill-chart-1");
+      expect(pip.getAttribute("class")).toContain("warning-mark");
+    }
+    const critical = container.querySelector('[data-pip][data-severity="Critical"]');
+    expect(critical?.getAttribute("class")).toContain("fill-warning-mark");
+    expect(critical?.getAttribute("class")).not.toBe(material[0]?.getAttribute("class"));
+  });
 });

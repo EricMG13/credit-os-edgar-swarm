@@ -23,8 +23,10 @@ export const NO_BRIDGE = "No variance bridge in this handoff.";
 const NOT_A_BRIDGE =
   "The variance bridge in this handoff does not add up, so it is not drawn as a bridge.";
 
-const W = 400;
-const PAD = 14;
+// The strip is about 580 px wide in the tile at 1440 px, so one drawing unit is about one pixel there
+// and 11-unit tick text is about 11 px. PAD leaves room for the widest tick label at each end.
+export const W = 580;
+export const PAD = 44;
 const MID = 14;
 const MINUS = "−";
 
@@ -50,7 +52,7 @@ function Grid({ axis, place: x }: { axis: Axis; place: (value: number) => number
           x2={x(tick)}
           y1="0"
           y2="28"
-          className={tick === 0 && axis.lo < 0 ? "stroke-text-tertiary" : "stroke-border-hairline"}
+          className={tick === 0 ? "stroke-text-tertiary" : "stroke-border-hairline"}
         />
       ))}
     </>
@@ -66,7 +68,7 @@ function AxisRow({ axis, unit, truncated }: { axis: Axis; unit: string; truncate
         viewBox={`0 0 ${String(W)} 20`}
         width="100%"
         aria-hidden="true"
-        className="col-span-2 block sm:col-span-1 sm:col-start-2"
+        className="col-span-2 block min-w-[220px] sm:col-span-1 sm:col-start-2"
       >
         {axis.ticks.map((tick) => (
           <text
@@ -74,7 +76,7 @@ function AxisRow({ axis, unit, truncated }: { axis: Axis; unit: string; truncate
             x={x(tick)}
             y="14"
             textAnchor="middle"
-            fontSize="12"
+            fontSize="11"
             className="fill-text-tertiary font-mono"
           >
             {mark(tick, unit)}
@@ -154,7 +156,7 @@ function DumbbellRow({ pair, axis, unit }: { pair: Pair; axis: Axis; unit: strin
         role="img"
         aria-label={pairReading(pair, unit)}
         data-pair={pair.label}
-        className="col-span-2 block sm:col-span-1 sm:col-start-2 sm:row-start-1"
+        className="col-span-2 block min-w-[220px] sm:col-span-1 sm:col-start-2 sm:row-start-1"
       >
         <Grid axis={axis} place={x} />
         {!flat && (
@@ -421,7 +423,7 @@ function StepRow({ step, axis, unit }: { step: Step; axis: Axis; unit: string })
         role="img"
         aria-label={stepReading(step, unit)}
         data-step={step.label}
-        className="col-span-2 block sm:col-span-1 sm:col-start-2 sm:row-start-1"
+        className="col-span-2 block min-w-[220px] sm:col-span-1 sm:col-start-2 sm:row-start-1"
       >
         <Grid axis={axis} place={x} />
         <rect

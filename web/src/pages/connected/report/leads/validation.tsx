@@ -94,9 +94,9 @@ function inkOf(severity: Severity) {
 }
 
 const FILL = {
-  critical: "fill-warning-mark",
-  material: "fill-chart-1",
-  minor: "fill-chart-3",
+  critical: "fill-warning-mark stroke-text-primary",
+  material: "fill-warning-fill stroke-warning-mark",
+  minor: "fill-chart-3 stroke-chart-3",
   neutral: "fill-surface-card stroke-chart-3",
 } as const;
 
@@ -158,9 +158,10 @@ function PipRow({ group, hatch }: { group: Group; hatch: string }) {
       <svg
         viewBox={`0 0 ${String(PER_LINE * PIP)} ${String(lines * PIP)}`}
         width={Math.min(group.pips.length, PER_LINE) * PIP}
+        height={lines * PIP}
         role="img"
         aria-label={groupLabel(group)}
-        className="block max-w-full"
+        className="block max-w-full flex-none"
         data-group={group.severity.word}
       >
         <defs>

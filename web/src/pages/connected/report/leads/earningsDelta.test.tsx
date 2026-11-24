@@ -389,9 +389,9 @@ describe("EarningsDeltaLead on the retained handoff", () => {
     const current = revenue.querySelector("[data-current]");
     expect(prior?.getAttribute("data-prior")).toBe("6585");
     expect(current?.getAttribute("data-current")).toBe("7940");
-    // The scale is -5000 to 10000 over x 14 to 386 (the drawing's width less its padding).
-    expect(cx(prior)).toBeCloseTo(14 + ((6585 + 5000) / 15000) * 372, 6);
-    expect(cx(current)).toBeCloseTo(14 + ((7940 + 5000) / 15000) * 372, 6);
+    // The scale is -5000 to 10000 over x 44 to 536 (the drawing's width less its padding).
+    expect(cx(prior)).toBeCloseTo(44 + ((6585 + 5000) / 15000) * 492, 6);
+    expect(cx(current)).toBeCloseTo(44 + ((7940 + 5000) / 15000) * 492, 6);
     // The axis holds a negative: zero is marked as its own line.
     expect(revenue.querySelector('[data-tick="0"]')?.getAttribute("class")).toContain(
       "stroke-text-tertiary",
@@ -461,8 +461,8 @@ describe("EarningsDeltaLead on the retained handoff", () => {
     expect(strip(container, "Gross margin").getAttribute("aria-label")).toBe(
       "Gross margin, %: prior 58.3% (FY2023), current 58.8% (FY2024), up 0.5 percentage points.",
     );
-    // 45 to 60 over 372: 0.5 points is 0.5/15 of the width.
-    expect(spanOf(strip(container, "Gross margin"))).toBeCloseTo((0.5 / 15) * 372, 6);
+    // 45 to 60 over 492: 0.5 points is 0.5/15 of the width.
+    expect(spanOf(strip(container, "Gross margin"))).toBeCloseTo((0.5 / 15) * 492, 6);
     expect(within(tile).queryByText(/derived/)).toBeNull();
   });
   it("has one trace control per figure and no source reference on the page", () => {
@@ -482,6 +482,49 @@ describe("EarningsDeltaLead on the retained handoff", () => {
     ).toBeVisible();
     expect(screen.queryByRole("list", { name: /Ranked movers/ })).toBeNull();
     expect(screen.getByRole("region", { name: "Margins and KPIs" })).toBeInTheDocument();
+  });
+});
+
+describe("the axis text", () => {
+  const axisTexts = (container: HTMLElement) =>
+    [...container.querySelectorAll("svg[aria-hidden='true']")].map((svg) => ({
+      width: Number(svg.getAttribute("viewBox")?.split(" ")[2]),
+      texts: [...svg.querySelectorAll("text")].map((text) => ({
+        x: Number(text.getAttribute("x")),
+        label: text.textContent ?? "",
+        size: Number(text.getAttribute("fontSize")),
+      })),
+    }));
+  it("keeps every tick label inside its drawing, at about 7 px a character", () => {
+    const { container } = lead(cp1bEntry());
+    const axes = axisTexts(container);
+    expect(axes).toHaveLength(2);
+    for (const { width, texts } of axes)
+      for (const { x, label } of texts) {
+        const half = (label.length * 7) / 2;
+        expect(x - half, label).toBeGreaterThanOrEqual(0);
+        expect(x + half, label).toBeLessThanOrEqual(width);
+      }
+    expect(axes[0]?.texts.map((text) => text.label)).toEqual(["−5,000", "0", "5,000", "10,000"]);
+  });
+  it("sets the tick text at about 11 px where the strip is about 580 px wide", () => {
+    const { container } = lead(cp1bEntry());
+    for (const { width, texts } of axisTexts(container)) {
+      expect(width).toBe(580);
+      for (const { size } of texts) expect(size).toBe(11);
+    }
+  });
+  it("draws the zero line and labels it 0 when the scale holds a negative", () => {
+    const { container } = lead(cp1bEntry());
+    const strip = container.querySelector('svg[data-pair="Discretionary cash flow"]');
+    const zero = strip?.querySelector('[data-tick="0"]');
+    expect(zero?.getAttribute("class")).toContain("stroke-text-tertiary");
+    expect(axisTexts(container)[0]?.texts.map((text) => text.label)).toContain("0");
+  });
+  it("never lets a strip collapse below 220 px", () => {
+    const { container } = lead(cp1bEntry());
+    for (const svg of container.querySelectorAll("svg"))
+      expect(svg.getAttribute("class")).toContain("min-w-[220px]");
   });
 });
 
@@ -533,7 +576,7 @@ describe("EarningsDeltaLead on chart tables", () => {
     );
     const svg = strip(container, "Revenue");
     expect(svg.querySelector("[data-prior]")?.getAttribute("data-prior")).toBe("0");
-    expect(cx(svg.querySelector("[data-prior]"))).toBe(14);
+    expect(cx(svg.querySelector("[data-prior]"))).toBe(44);
   });
   it("reads the states of the margin table: absent, with a gap, all gaps", () => {
     lead(delta(results(MONEY)));
@@ -597,9 +640,9 @@ describe("EarningsDeltaLead with a variance bridge", () => {
     ).toBeVisible();
     const bar = (label: string) =>
       container.querySelector(`svg[data-step="${label}"] rect`) as SVGRectElement;
-    // Axis 90 to 120 over 372: 20 is 20/30 of it, and a step of -5 spans 5/30 of it.
-    expect(Number(bar("Organic growth").getAttribute("width"))).toBeCloseTo((20 / 30) * 372, 6);
-    expect(Number(bar("Disposals").getAttribute("width"))).toBeCloseTo((5 / 30) * 372, 6);
+    // Axis 90 to 120 over 492: 20 is 20/30 of it, and a step of -5 spans 5/30 of it.
+    expect(Number(bar("Organic growth").getAttribute("width"))).toBeCloseTo((20 / 30) * 492, 6);
+    expect(Number(bar("Disposals").getAttribute("width"))).toBeCloseTo((5 / 30) * 492, 6);
     expect(bar("Organic growth").getAttribute("data-from")).toBe("100");
     expect(bar("Organic growth").getAttribute("data-to")).toBe("120");
     expect(bar("Disposals").getAttribute("data-from")).toBe("120");
