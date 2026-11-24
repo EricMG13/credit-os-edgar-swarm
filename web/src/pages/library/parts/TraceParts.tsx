@@ -34,9 +34,12 @@ export function TraceClaim({ trace }: { trace: Trace }) {
   );
 }
 
-/** The passage the claim rests on and where it was read; the gap state when the handoff recorded none. */
-export function TraceSourcePassage({ trace }: { trace: Trace }) {
-  if (trace.excerpt === null)
+/** The passage the claim rests on and where it was read; with `gap`, the gap state when the handoff recorded none. */
+export function TraceSourcePassage({ trace, gap = false }: { trace: Trace; gap?: boolean }) {
+  if (trace.excerpt === null) {
+    // Only a page that holds the handoff line can say none was recorded; a trace that carries no
+    // passage by design (a Model item, a confidence fallback) says nothing.
+    if (!gap) return null;
     return (
       <div className="flex min-w-0 flex-col gap-1.5">
         <span className={CAPTION}>Source</span>
@@ -45,6 +48,7 @@ export function TraceSourcePassage({ trace }: { trace: Trace }) {
         </p>
       </div>
     );
+  }
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
       <span className={CAPTION}>Source excerpt</span>

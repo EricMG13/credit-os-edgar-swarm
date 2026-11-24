@@ -72,7 +72,7 @@ it("lists supplied source files with no link to open them", () => {
     ],
   });
   expect(screen.getByText("portfolio.xlsx")).toBeVisible();
-  expect(screen.getByText(fileHash)).toHaveClass("font-mono");
+  expect(screen.getByText(fileHash).tagName).toBe("CODE");
   expect(document.querySelector('a[href*="/connected/sources/"]')).toBeNull();
 });
 

@@ -127,6 +127,7 @@ it("keeps unknown statuses and hostile text literal, and filters modules without
   const shown = show([record, other], "checks/CP-2");
   // The strip, the matrix cell and the module's card each draw the status word as recorded.
   expect(screen.getAllByText("unrecognised")).toHaveLength(3);
+  for (const node of screen.getAllByText("unrecognised")) expect(node).toBeVisible();
   expect(screen.getByText("<img src=x onerror=alert(1)>")).toBeVisible();
   expect(screen.queryByRole("img")).toBeNull();
   expect(screen.queryByText("Net debt = gross debt - cash")).toBeNull();

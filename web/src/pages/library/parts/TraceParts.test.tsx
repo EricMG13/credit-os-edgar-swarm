@@ -42,8 +42,13 @@ it("draws the source passage with its location", () => {
   expect(screen.getByText("annual-report.pdf · p. 84")).toBeVisible();
 });
 
-it("draws the gap state, not a blank, when no passage was recorded", () => {
-  render(<TraceSourcePassage trace={trace({ excerpt: null })} />);
+it("draws nothing for a trace that carries no passage, unless asked to state the gap", () => {
+  const { container } = render(<TraceSourcePassage trace={trace({ excerpt: null })} />);
+  expect(container).toBeEmptyDOMElement();
+});
+
+it("draws the gap state, not a blank, when the page holds the line and no passage was recorded", () => {
+  render(<TraceSourcePassage trace={trace({ excerpt: null })} gap />);
   expect(screen.queryByText("Source excerpt")).toBeNull();
   const gap = screen.getByText("No source passage was recorded for this item.");
   expect(gap).toBeVisible();

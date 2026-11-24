@@ -226,3 +226,15 @@ closed), `Evidence.finalAudit` (group headings carry a count; handoff container 
 `article`), `Evidence.t21` and `Evidence.t21-fix1` (same container change; hash drawn in mono rather than a
 `code` element), `Evidence.test` (opens the closed run record), `ScriptChecks.test` (a status word now shows in
 the strip, the matrix and the card). No test was deleted or skipped.
+
+### Independent review (Opus, given the diff only) and what changed
+
+Confirmed and fixed: cited pages on Sources were read from every run's chips and matched by file name
+only (now only this run's handoffs for the chosen module, matched on name and hash, with a test for another
+run's and another module's citations); the drawer said "No source passage was recorded" for traces that carry
+no passage by design (Model items, confidence fallback), so that sentence now shows only on the Evidence
+Trace tab, where the handoff line is known; a second `Bento` nested in the Record disclosure; the hash is
+a `<code>` element again (the old assertion is restored); the Sources group headings are h4. Left as
+designed: the drawer shows the Basis line and the derivation tree also holds it; matrix rows without a
+register or figure merge under "Check". `eslint` reports one pre-existing error in `report/stages.ts` (S2/S1
+territory), not changed.

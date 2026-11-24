@@ -468,12 +468,11 @@ function AssumptionRegister({
   const handoff = forecastHandoff(model, entries, folder);
   const lines = assumptionSourceLines(handoff, register);
   return (
-    <Tile
-      span={12}
-      label={`Assumption register: ${model.id}`}
-      kicker="Recorded forecast assumptions"
-      title={register.heading}
+    <section
+      aria-label={`Assumption register: ${model.id}`}
+      className="grid min-w-0 gap-3 rounded-ds-md border border-border-hairline p-4"
     >
+      <h4 className="text-h4 font-medium text-text-primary">{register.heading}</h4>
       <p>Model {model.id}</p>
       {register.intro && <p>{register.intro}</p>}
       {/* A recorded register can be wider than the viewport. */}
@@ -527,7 +526,7 @@ function AssumptionRegister({
           </tbody>
         </table>
       </div>
-    </Tile>
+    </section>
   );
 }
 
@@ -620,6 +619,7 @@ export function ReportEvidence({
             sourceGroups={sourceGroups}
             module={module}
             modules={[...new Set(entries.map((item) => item.output.module))]}
+            entries={entries}
             snapshot={snapshot}
           />
         )}
@@ -644,10 +644,8 @@ export function ReportEvidence({
               </span>
             </summary>
             <div className="mt-4">
-              <Bento>
-                <div className="grid min-w-0 gap-4 lg:col-span-12">
-                  <RecordedModelQualifications models={models} />
-                </div>
+              <div className="grid min-w-0 gap-4">
+                <RecordedModelQualifications models={models} />
                 {models.map((model) => (
                   <AssumptionRegister
                     key={model.id}
@@ -656,7 +654,7 @@ export function ReportEvidence({
                     folder={run.folder}
                   />
                 ))}
-              </Bento>
+              </div>
             </div>
           </details>
         )}

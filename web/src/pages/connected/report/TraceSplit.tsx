@@ -60,7 +60,7 @@ export function TraceSplit({
         <TraceBasis trace={trace} />
       </Tile>
       <Tile span={5} label="The source" kicker="What it rests on">
-        <TraceSourcePassage trace={trace} />
+        <TraceSourcePassage trace={trace} gap />
         <CitedSources links={trace.sourceLinks ?? []} />
       </Tile>
       <div

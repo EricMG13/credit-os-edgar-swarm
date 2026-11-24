@@ -3,24 +3,37 @@ import { Badge } from "@/components/base/badges/badges";
 import { FileSearch02 } from "@untitledui/icons";
 import { moduleName } from "../api";
 import { citedSourcePages } from "../sourceFiles";
-import type { PublishedRun, Snapshot } from "../publishedReport";
+import type { OutputEntry, PublishedRun, Snapshot } from "../publishedReport";
 import { Tile } from "./overview/Tile";
 
 export type SourceGroup = { label: string; rows: PublishedRun["evidence"]["sources"] };
 type SourceRow = SourceGroup["rows"][number];
 
-/** The pages each file is cited at, from the citations the handoffs recorded for it. */
-export function citedPagesBySource(snapshot: Snapshot) {
+/**
+ * The pages each file is cited at, from the citations recorded in the given handoffs only (the
+ * snapshot holds other runs' chips too), keyed by the file's name and, where recorded, its hash.
+ */
+export function citedPagesBySource(snapshot: Snapshot, entries: OutputEntry[]) {
+  const ids = new Set(entries.map((entry) => entry.output.id));
   const pages = new Map<string, Set<string>>();
   for (const [key, chips] of Object.entries(snapshot.chips)) {
-    const folder = key.slice(0, key.lastIndexOf(":")).split("/")[0] ?? "";
+    const id = key.slice(0, key.lastIndexOf(":"));
+    if (!ids.has(id)) continue;
+    const folder = id.split("/")[0] ?? "";
     for (const chip of chips) {
       const name = chip.file ?? chip.source;
       const label = name ? citedSourcePages(folder, chip) : null;
-      if (name && label) pages.set(name, new Set([...(pages.get(name) ?? []), label]));
+      if (!name || !label) continue;
+      const at = `${name}\u0000${chip.sha256 ?? ""}`;
+      pages.set(at, new Set([...(pages.get(at) ?? []), label]));
     }
   }
   return pages;
+}
+
+function pagesOf(pages: Map<string, Set<string>>, source: SourceRow) {
+  const hit = (hash: string) => pages.get(`${source.name}\u0000${hash}`) ?? [];
+  return [...new Set([...hit(source.sha256 ?? ""), ...(source.sha256 ? hit("") : [])])];
 }
 
 function UsedBy({ source, modules }: { source: SourceRow; modules: string[] }) {
@@ -46,12 +59,12 @@ function SourceTable({
 }) {
   return (
     <div className="grid min-w-0 gap-2">
-      <h3 className="flex items-center gap-2 text-h4 font-medium text-text-primary">
+      <h4 className="flex items-center gap-2 text-h4 font-medium text-text-primary">
         {group.label}
         <Badge size="sm" color="gray">
           {String(group.rows.length)}
         </Badge>
-      </h3>
+      </h4>
       <div
         role="region"
         aria-label={`${group.label}: files`}
@@ -82,7 +95,7 @@ function SourceTable({
           </thead>
           <tbody>
             {group.rows.map((source) => {
-              const cited = [...(pages.get(source.name) ?? [])];
+              const cited = pagesOf(pages, source);
               return (
                 <tr key={source.name} className="border-t border-border-hairline align-top">
                   <th scope="row" className="px-4 py-3 font-medium wrap-anywhere text-text-primary">
@@ -110,7 +123,9 @@ function SourceTable({
                     <UsedBy source={source} modules={modules} />
                   </td>
                   <td className="max-w-72 px-4 py-3 font-mono text-mono wrap-anywhere text-text-tertiary">
-                    {source.sha256 ?? (
+                    {source.sha256 ? (
+                      <code>{source.sha256}</code>
+                    ) : (
                       <span className="font-sans text-gap-text">No hash recorded</span>
                     )}
                   </td>
@@ -129,11 +144,13 @@ export function EvidenceSources({
   sourceGroups,
   module,
   modules,
+  entries,
   snapshot,
 }: {
   sourceGroups: SourceGroup[];
   module?: string;
   modules: string[];
+  entries: OutputEntry[];
   snapshot: Snapshot;
 }) {
   const shown = sourceGroups
@@ -142,7 +159,10 @@ export function EvidenceSources({
       rows: group.rows.filter((source) => !module || source.readBy.includes(module)),
     }))
     .filter(({ rows }) => rows.length > 0);
-  const pages = citedPagesBySource(snapshot);
+  const pages = citedPagesBySource(
+    snapshot,
+    entries.filter((entry) => !module || entry.output.module === module),
+  );
   return (
     <Tile
       span={12}
