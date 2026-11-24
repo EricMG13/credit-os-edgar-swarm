@@ -590,31 +590,83 @@ function addressState(): { view: View; field: string; filters: Filters } {
   };
 }
 
-function Dashboard({ data }: { data: Data }) {
-  const [start] = useState(addressState);
-  const [view, setView] = useState<View>(start.view);
-  const [filters, setFilters] = useState<Filters>(start.filters);
-  const [fieldId, setFieldId] = useState(start.field);
-  const [periodPick, setPeriodPick] = useState("");
-  const [order, setOrder] = useState<"high" | "low">("high");
-  const [by, setBy] = useState("none");
-  const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
-  const [onlyChosen, setOnlyChosen] = useState(false);
-  const [open, setOpen] = useState<string | null>(null);
-  const [groups, setGroups] = useState<SavedGroup[]>(readGroups);
-  const [groupName, setGroupName] = useState("");
+type SetFilters = (change: Partial<Filters>) => void;
+type Titles = ReadonlyMap<string, string>;
 
-  const titles = useMemo(
-    () => new Map(data.columns.map((column) => [column.code, named(column)])),
-    [data],
+/** A filter list that keeps a value taken from the link even when no issuer has it. */
+function KnownChoice({
+  name,
+  value,
+  known,
+  onChange,
+}: {
+  name: string;
+  value: string;
+  known: string[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <Choice name={name} value={value} onChange={onChange}>
+      <option value="all">All</option>
+      {value !== "all" && !known.includes(value) && (
+        <option value={value}>{value} (unavailable)</option>
+      )}
+      {known.map((item) => (
+        <option key={item}>{item}</option>
+      ))}
+    </Choice>
   );
-  const numbers = data.fields.filter((item) => item.kind === "number" && item.series !== "row");
+}
+
+function ModuleFilters({ data, filters, set }: { data: Data; filters: Filters; set: SetFilters }) {
+  return (
+    <>
+      <Choice
+        name="Module"
+        value={filters.module}
+        onChange={(module) => {
+          set({ module });
+        }}
+      >
+        <option value="all">Any</option>
+        {data.columns.map((column) => (
+          <option key={column.code} value={column.code}>
+            {named(column)}
+          </option>
+        ))}
+      </Choice>
+      {filters.module !== "all" && (
+        <Choice
+          name="Module state"
+          value={filters.state}
+          onChange={(state) => {
+            set({ state: state as Filters["state"] });
+          }}
+        >
+          <option value="all">Any</option>
+          {Object.entries(STATE_WORDS).map(([state, word]) => (
+            <option key={state} value={state}>
+              {word}
+            </option>
+          ))}
+        </Choice>
+      )}
+    </>
+  );
+}
+
+function ConfidenceFilters({
+  data,
+  filters,
+  set,
+  titles,
+}: {
+  data: Data;
+  filters: Filters;
+  set: SetFilters;
+  titles: Titles;
+}) {
   const choices = data.fields.filter((item) => item.kind === "choice");
-  const field = numbers.find((item) => item.id === fieldId) ?? numbers[0];
-  const sectors = [...new Set(data.issuers.flatMap((issuer) => issuer.sector ?? []))].sort();
-  const pathways = [
-    ...new Set(data.issuers.flatMap((issuer) => latestRun(issuer)?.pathwayTitle ?? [])),
-  ].sort();
   const words =
     filters.choice === "all"
       ? []
@@ -623,7 +675,212 @@ function Dashboard({ data }: { data: Data }) {
             data.facts.filter((fact) => fact.field === filters.choice).map((fact) => fact.text),
           ),
         ].sort();
+  return (
+    <>
+      {choices.length > 0 && (
+        <Choice
+          name="Module confidence"
+          value={filters.choice}
+          onChange={(choice) => {
+            set({ choice, word: "all" });
+          }}
+        >
+          <option value="all">Any</option>
+          <FieldOptions fields={choices} titles={titles} />
+        </Choice>
+      )}
+      {filters.choice !== "all" && (
+        <Choice
+          name="Is"
+          value={filters.word}
+          onChange={(word) => {
+            set({ word });
+          }}
+        >
+          <option value="all">Any</option>
+          {words.map((item) => (
+            <option key={item}>{item}</option>
+          ))}
+        </Choice>
+      )}
+    </>
+  );
+}
 
+function FilterBar({
+  data,
+  filters,
+  set,
+  titles,
+}: {
+  data: Data;
+  filters: Filters;
+  set: SetFilters;
+  titles: Titles;
+}) {
+  const sectors = [...new Set(data.issuers.flatMap((issuer) => issuer.sector ?? []))].sort();
+  const pathways = [
+    ...new Set(data.issuers.flatMap((issuer) => latestRun(issuer)?.pathwayTitle ?? [])),
+  ].sort();
+  return (
+    <section aria-label="Filters" className="flex flex-wrap items-end gap-3">
+      <label className={`${label} w-full max-w-md sm:min-w-40 sm:flex-1`}>
+        Search issuers and module text
+        <input
+          type="search"
+          value={filters.query}
+          onChange={(event) => {
+            set({ query: event.currentTarget.value });
+          }}
+          className={control}
+        />
+      </label>
+      <KnownChoice
+        name="Sector"
+        value={filters.sector}
+        known={sectors}
+        onChange={(sector) => {
+          set({ sector });
+        }}
+      />
+      <KnownChoice
+        name="Pathway"
+        value={filters.pathway}
+        known={pathways}
+        onChange={(pathway) => {
+          set({ pathway });
+        }}
+      />
+      <ModuleFilters data={data} filters={filters} set={set} />
+      <ConfidenceFilters data={data} filters={filters} set={set} titles={titles} />
+    </section>
+  );
+}
+
+function BoundInputs({ filters, set }: { filters: Filters; set: SetFilters }) {
+  return (
+    <>
+      {(["min", "max"] as const).map((side) => (
+        <label key={side} className={`${label} w-28`}>
+          {side === "min" ? "At least" : "At most"}
+          <input
+            inputMode="decimal"
+            value={filters[side]}
+            aria-invalid={readBound(filters[side]).invalid || undefined}
+            onChange={(event) => {
+              set({ [side]: event.currentTarget.value });
+            }}
+            className={control}
+          />
+          {readBound(filters[side]).invalid && (
+            <span className="text-sm font-normal text-error-primary">Enter a number</span>
+          )}
+        </label>
+      ))}
+    </>
+  );
+}
+
+function RankControls({
+  choices,
+  titles,
+  order,
+  setOrder,
+  by,
+  setBy,
+}: {
+  choices: Field[];
+  titles: Titles;
+  order: "high" | "low";
+  setOrder: (order: "high" | "low") => void;
+  by: string;
+  setBy: (by: string) => void;
+}) {
+  return (
+    <>
+      <Choice
+        name="Order"
+        value={order}
+        onChange={(next) => {
+          setOrder(next === "low" ? "low" : "high");
+        }}
+      >
+        <option value="high">Highest first</option>
+        <option value="low">Lowest first</option>
+      </Choice>
+      <Choice name="Group by" value={by} onChange={setBy}>
+        <option value="none">No grouping</option>
+        <option value="sector">Sector</option>
+        <option value="pathway">Pathway</option>
+        <FieldOptions fields={choices} titles={titles} />
+      </Choice>
+    </>
+  );
+}
+
+function GroupBar({
+  groups,
+  chosen,
+  groupName,
+  onlyChosen,
+  setGroupName,
+  setOnlyChosen,
+  pick,
+  save,
+  clear,
+}: {
+  groups: SavedGroup[];
+  chosen: ReadonlySet<string>;
+  groupName: string;
+  onlyChosen: boolean;
+  setGroupName: (name: string) => void;
+  setOnlyChosen: (only: boolean) => void;
+  pick: (name: string) => void;
+  save: () => void;
+  clear: () => void;
+}) {
+  return (
+    <section aria-label="Groups" className="flex flex-wrap items-end gap-3">
+      <label className="flex items-center gap-2 py-2 text-sm font-medium">
+        <input
+          type="checkbox"
+          checked={onlyChosen}
+          onChange={(event) => {
+            setOnlyChosen(event.currentTarget.checked);
+          }}
+        />
+        Only the {String(chosen.size)} issuers ticked to compare
+      </label>
+      {groups.length > 0 && (
+        <Choice name="Saved group" value="" onChange={pick}>
+          <option value="">Choose a group</option>
+          {groups.map((group) => (
+            <option key={group.name}>{group.name}</option>
+          ))}
+        </Choice>
+      )}
+      <label className={`${label} w-56`}>
+        Save ticked issuers as
+        <input
+          value={groupName}
+          onChange={(event) => {
+            setGroupName(event.currentTarget.value);
+          }}
+          className={control}
+        />
+      </label>
+      <Button color="secondary" isDisabled={!groupName.trim() || chosen.size === 0} onPress={save}>
+        Save group
+      </Button>
+      <Button color="tertiary" onPress={clear}>
+        Clear filters
+      </Button>
+    </section>
+  );
+}
+
+/** Keeps the view, figure and filters in the address so the page can be linked to. */
+function useAddress(view: View, field: Field | undefined, filters: Filters) {
   useEffect(() => {
     const address = new URL(window.location.href);
     const values = {
@@ -639,17 +896,133 @@ function Dashboard({ data }: { data: Data }) {
     }
     window.history.replaceState(window.history.state, "", address);
   }, [view, field, filters]);
+}
 
-  const set = (change: Partial<Filters>) => {
-    setFilters((previous) => ({ ...previous, ...change }));
-  };
+function ViewBody({
+  data,
+  view,
+  issuers,
+  filters,
+  titles,
+  field,
+  period,
+  order,
+  by,
+  chosen,
+  toggle,
+  open,
+  setOpen,
+}: {
+  data: Data;
+  view: View;
+  issuers: Issuer[];
+  filters: Filters;
+  titles: Titles;
+  field: Field | undefined;
+  period: string | null;
+  order: "high" | "low";
+  by: string;
+  chosen: ReadonlySet<string>;
+  toggle: (key: string) => void;
+  open: string | null;
+  setOpen: (key: string | null) => void;
+}) {
+  if (issuers.length === 0) return <p className={card}>No issuers match these filters.</p>;
+  if (view === "rank")
+    return (
+      <RankView data={data} issuers={issuers} field={field} period={period} order={order} by={by} />
+    );
+  if (view === "find")
+    return <FindView data={data} issuers={issuers} query={filters.query} titles={titles} />;
+  if (view === "trend") return <TrendView data={data} issuers={issuers} field={field} />;
+  const detail = issuers.find((issuer) => issuer.key === open);
+  return (
+    <>
+      <Matrix
+        data={data}
+        issuers={issuers}
+        chosen={chosen}
+        toggle={toggle}
+        open={open}
+        setOpen={setOpen}
+      />
+      {detail && <IssuerDetail data={data} issuer={detail} />}
+    </>
+  );
+}
+
+function ViewPicker({ view, setView }: { view: View; setView: (view: View) => void }) {
+  return (
+    <ButtonGroup
+      aria-label="View"
+      size="sm"
+      disallowEmptySelection
+      selectedKeys={[view]}
+      onSelectionChange={(keys) => {
+        const [key] = keys;
+        const next = VIEWS.find((item) => item.id === key);
+        if (next) setView(next.id);
+      }}
+    >
+      {VIEWS.map((item) => (
+        <ButtonGroupItem key={item.id} id={item.id}>
+          {item.name}
+        </ButtonGroupItem>
+      ))}
+    </ButtonGroup>
+  );
+}
+
+function FigureBar({
+  data,
+  view,
+  filters,
+  set,
+  titles,
+  field,
+  period,
+  setFieldId,
+  setPeriodPick,
+  rank,
+}: {
+  data: Data;
+  view: View;
+  filters: Filters;
+  set: SetFilters;
+  titles: Titles;
+  field: Field | undefined;
+  period: string | null;
+  setFieldId: (id: string) => void;
+  setPeriodPick: (period: string) => void;
+  rank: ReactNode;
+}) {
+  const numbers = data.fields.filter((item) => item.kind === "number" && item.series !== "row");
+  if (numbers.length === 0) return null;
   const stated = field ? periodsOf(data, data.issuers, field.id) : [];
-  const period =
-    stated.find((item) => item === periodPick) ??
-    (field ? commonPeriod(data, data.issuers, field.id) : null);
-  // Trend draws every period, so the bounds, which read one period, are not applied there.
-  const matched = matchIssuers(data, filters, field?.id ?? null, view === "trend" ? null : period);
-  const shown = onlyChosen ? matched.filter((issuer) => chosen.has(issuer.key)) : matched;
+  return (
+    <section aria-label="Figure" className="flex flex-wrap items-end gap-3">
+      <Choice name="Figure" value={field?.id ?? ""} onChange={setFieldId}>
+        <FieldOptions fields={numbers} titles={titles} />
+      </Choice>
+      {stated.length > 0 && view !== "trend" && (
+        <Choice name="Period" value={period ?? ""} onChange={setPeriodPick}>
+          {stated.map((item) => (
+            <option key={item}>{item}</option>
+          ))}
+        </Choice>
+      )}
+      {view !== "trend" && <BoundInputs filters={filters} set={set} />}
+      {view === "rank" && rank}
+    </section>
+  );
+}
+
+/** The tickable issuers and the groups saved in this browser. */
+function useGroups() {
+  const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
+  const [onlyChosen, setOnlyChosen] = useState(false);
+  const [groups, setGroups] = useState<SavedGroup[]>(readGroups);
+  const [groupName, setGroupName] = useState("");
   const toggle = (key: string) => {
     setChosen((previous) => {
       const next = new Set(previous);
@@ -657,7 +1030,7 @@ function Dashboard({ data }: { data: Data }) {
       return next;
     });
   };
-  const saveGroup = () => {
+  const save = () => {
     const name = groupName.trim();
     if (!name || chosen.size === 0) return;
     const next = [...groups.filter((group) => group.name !== name), { name, issuers: [...chosen] }];
@@ -665,7 +1038,64 @@ function Dashboard({ data }: { data: Data }) {
     writeGroups(next);
     setGroupName("");
   };
-  const detail = shown.find((issuer) => issuer.key === open);
+  const pick = (name: string) => {
+    const group = groups.find((item) => item.name === name);
+    if (!group) return;
+    setChosen(new Set(group.issuers));
+    setOnlyChosen(true);
+  };
+  return { chosen, onlyChosen, setOnlyChosen, groups, groupName, setGroupName, toggle, save, pick };
+}
+
+/** The period the figure is read at, and the issuers that pass every filter. */
+function select(
+  data: Data,
+  view: View,
+  filters: Filters,
+  field: Field | undefined,
+  periodPick: string,
+  group: { onlyChosen: boolean; chosen: ReadonlySet<string> },
+) {
+  const stated = field ? periodsOf(data, data.issuers, field.id) : [];
+  const period =
+    stated.find((item) => item === periodPick) ??
+    (field ? commonPeriod(data, data.issuers, field.id) : null);
+  // Trend draws every period, so the bounds, which read one period, are not applied there.
+  const matched = matchIssuers(data, filters, field?.id ?? null, view === "trend" ? null : period);
+  const shown = group.onlyChosen
+    ? matched.filter((issuer) => group.chosen.has(issuer.key))
+    : matched;
+  return { period, shown };
+}
+
+function Dashboard({ data }: { data: Data }) {
+  const [start] = useState(addressState);
+  const [view, setView] = useState<View>(start.view);
+  const [filters, setFilters] = useState<Filters>(start.filters);
+  const [fieldId, setFieldId] = useState(start.field);
+  const [periodPick, setPeriodPick] = useState("");
+  const [order, setOrder] = useState<"high" | "low">("high");
+  const [by, setBy] = useState("none");
+  const [open, setOpen] = useState<string | null>(null);
+  const group = useGroups();
+
+  const titles = useMemo(
+    () => new Map(data.columns.map((column) => [column.code, named(column)])),
+    [data],
+  );
+  const numbers = data.fields.filter((item) => item.kind === "number" && item.series !== "row");
+  const choices = data.fields.filter((item) => item.kind === "choice");
+  const field = numbers.find((item) => item.id === fieldId) ?? numbers[0];
+  useAddress(view, field, filters);
+
+  const set: SetFilters = (change) => {
+    setFilters((previous) => ({ ...previous, ...change }));
+  };
+  const { period, shown } = select(data, view, filters, field, periodPick, group);
+  const clearFilters = () => {
+    setFilters(NO_FILTERS);
+    group.setOnlyChosen(false);
+  };
 
   return (
     <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5">
@@ -674,258 +1104,58 @@ function Dashboard({ data }: { data: Data }) {
         its module wrote it; this page only selects, sorts and groups them. Portfolio views read
         each issuer’s newest run.
       </p>
-      <ButtonGroup
-        aria-label="View"
-        size="sm"
-        disallowEmptySelection
-        selectedKeys={[view]}
-        onSelectionChange={(keys) => {
-          const [key] = keys;
-          const next = VIEWS.find((item) => item.id === key);
-          if (next) setView(next.id);
-        }}
-      >
-        {VIEWS.map((item) => (
-          <ButtonGroupItem key={item.id} id={item.id}>
-            {item.name}
-          </ButtonGroupItem>
-        ))}
-      </ButtonGroup>
-
-      <section aria-label="Filters" className="flex flex-wrap items-end gap-3">
-        <label className={`${label} w-full max-w-md sm:min-w-40 sm:flex-1`}>
-          Search issuers and module text
-          <input
-            type="search"
-            value={filters.query}
-            onChange={(event) => {
-              set({ query: event.currentTarget.value });
-            }}
-            className={control}
+      <ViewPicker view={view} setView={setView} />
+      <FilterBar data={data} filters={filters} set={set} titles={titles} />
+      <FigureBar
+        data={data}
+        view={view}
+        filters={filters}
+        set={set}
+        titles={titles}
+        field={field}
+        period={period}
+        setFieldId={setFieldId}
+        setPeriodPick={setPeriodPick}
+        rank={
+          <RankControls
+            choices={choices}
+            titles={titles}
+            order={order}
+            setOrder={setOrder}
+            by={by}
+            setBy={setBy}
           />
-        </label>
-        <Choice
-          name="Sector"
-          value={filters.sector}
-          onChange={(sector) => {
-            set({ sector });
-          }}
-        >
-          <option value="all">All</option>
-          {filters.sector !== "all" && !sectors.includes(filters.sector) && (
-            <option value={filters.sector}>{filters.sector} (unavailable)</option>
-          )}
-          {sectors.map((item) => (
-            <option key={item}>{item}</option>
-          ))}
-        </Choice>
-        <Choice
-          name="Pathway"
-          value={filters.pathway}
-          onChange={(pathway) => {
-            set({ pathway });
-          }}
-        >
-          <option value="all">All</option>
-          {filters.pathway !== "all" && !pathways.includes(filters.pathway) && (
-            <option value={filters.pathway}>{filters.pathway} (unavailable)</option>
-          )}
-          {pathways.map((item) => (
-            <option key={item}>{item}</option>
-          ))}
-        </Choice>
-        <Choice
-          name="Module"
-          value={filters.module}
-          onChange={(module) => {
-            set({ module });
-          }}
-        >
-          <option value="all">Any</option>
-          {data.columns.map((column) => (
-            <option key={column.code} value={column.code}>
-              {named(column)}
-            </option>
-          ))}
-        </Choice>
-        {filters.module !== "all" && (
-          <Choice
-            name="Module state"
-            value={filters.state}
-            onChange={(state) => {
-              set({ state: state as Filters["state"] });
-            }}
-          >
-            <option value="all">Any</option>
-            {Object.entries(STATE_WORDS).map(([state, word]) => (
-              <option key={state} value={state}>
-                {word}
-              </option>
-            ))}
-          </Choice>
-        )}
-        {choices.length > 0 && (
-          <Choice
-            name="Module confidence"
-            value={filters.choice}
-            onChange={(choice) => {
-              set({ choice, word: "all" });
-            }}
-          >
-            <option value="all">Any</option>
-            <FieldOptions fields={choices} titles={titles} />
-          </Choice>
-        )}
-        {filters.choice !== "all" && (
-          <Choice
-            name="Is"
-            value={filters.word}
-            onChange={(word) => {
-              set({ word });
-            }}
-          >
-            <option value="all">Any</option>
-            {words.map((item) => (
-              <option key={item}>{item}</option>
-            ))}
-          </Choice>
-        )}
-      </section>
-
-      {numbers.length > 0 && (
-        <section aria-label="Figure" className="flex flex-wrap items-end gap-3">
-          <Choice name="Figure" value={field?.id ?? ""} onChange={setFieldId}>
-            <FieldOptions fields={numbers} titles={titles} />
-          </Choice>
-          {stated.length > 0 && view !== "trend" && (
-            <Choice name="Period" value={period ?? ""} onChange={setPeriodPick}>
-              {stated.map((item) => (
-                <option key={item}>{item}</option>
-              ))}
-            </Choice>
-          )}
-          {view !== "trend" &&
-            (["min", "max"] as const).map((side) => (
-              <label key={side} className={`${label} w-28`}>
-                {side === "min" ? "At least" : "At most"}
-                <input
-                  inputMode="decimal"
-                  value={filters[side]}
-                  aria-invalid={readBound(filters[side]).invalid || undefined}
-                  onChange={(event) => {
-                    set({ [side]: event.currentTarget.value });
-                  }}
-                  className={control}
-                />
-                {readBound(filters[side]).invalid && (
-                  <span className="text-sm font-normal text-error-primary">Enter a number</span>
-                )}
-              </label>
-            ))}
-          {view === "rank" && (
-            <>
-              <Choice
-                name="Order"
-                value={order}
-                onChange={(next) => {
-                  setOrder(next === "low" ? "low" : "high");
-                }}
-              >
-                <option value="high">Highest first</option>
-                <option value="low">Lowest first</option>
-              </Choice>
-              <Choice name="Group by" value={by} onChange={setBy}>
-                <option value="none">No grouping</option>
-                <option value="sector">Sector</option>
-                <option value="pathway">Pathway</option>
-                <FieldOptions fields={choices} titles={titles} />
-              </Choice>
-            </>
-          )}
-        </section>
-      )}
-
-      <section aria-label="Groups" className="flex flex-wrap items-end gap-3">
-        <label className="flex items-center gap-2 py-2 text-sm font-medium">
-          <input
-            type="checkbox"
-            checked={onlyChosen}
-            onChange={(event) => {
-              setOnlyChosen(event.currentTarget.checked);
-            }}
-          />
-          Only the {String(chosen.size)} issuers ticked to compare
-        </label>
-        {groups.length > 0 && (
-          <Choice
-            name="Saved group"
-            value=""
-            onChange={(name) => {
-              const group = groups.find((item) => item.name === name);
-              if (!group) return;
-              setChosen(new Set(group.issuers));
-              setOnlyChosen(true);
-            }}
-          >
-            <option value="">Choose a group</option>
-            {groups.map((group) => (
-              <option key={group.name}>{group.name}</option>
-            ))}
-          </Choice>
-        )}
-        <label className={`${label} w-56`}>
-          Save ticked issuers as
-          <input
-            value={groupName}
-            onChange={(event) => {
-              setGroupName(event.currentTarget.value);
-            }}
-            className={control}
-          />
-        </label>
-        <Button
-          color="secondary"
-          isDisabled={!groupName.trim() || chosen.size === 0}
-          onPress={saveGroup}
-        >
-          Save group
-        </Button>
-        <Button
-          color="tertiary"
-          onPress={() => {
-            setFilters(NO_FILTERS);
-            setOnlyChosen(false);
-          }}
-        >
-          Clear filters
-        </Button>
-      </section>
-
+        }
+      />
+      <GroupBar
+        groups={group.groups}
+        chosen={group.chosen}
+        groupName={group.groupName}
+        onlyChosen={group.onlyChosen}
+        setGroupName={group.setGroupName}
+        setOnlyChosen={group.setOnlyChosen}
+        pick={group.pick}
+        save={group.save}
+        clear={clearFilters}
+      />
       <p role="status" className="text-sm text-text-secondary">
         {String(shown.length)} of {String(data.issuers.length)} issuers shown
       </p>
-
-      {shown.length === 0 ? (
-        <p className={card}>No issuers match these filters.</p>
-      ) : view === "matrix" ? (
-        <>
-          <Matrix
-            data={data}
-            issuers={shown}
-            chosen={chosen}
-            toggle={toggle}
-            open={open}
-            setOpen={setOpen}
-          />
-          {detail && <IssuerDetail data={data} issuer={detail} />}
-        </>
-      ) : view === "rank" ? (
-        <RankView data={data} issuers={shown} field={field} period={period} order={order} by={by} />
-      ) : view === "find" ? (
-        <FindView data={data} issuers={shown} query={filters.query} titles={titles} />
-      ) : (
-        <TrendView data={data} issuers={shown} field={field} />
-      )}
+      <ViewBody
+        data={data}
+        view={view}
+        issuers={shown}
+        filters={filters}
+        titles={titles}
+        field={field}
+        period={period}
+        order={order}
+        by={by}
+        chosen={group.chosen}
+        toggle={group.toggle}
+        open={open}
+        setOpen={setOpen}
+      />
     </div>
   );
 }
