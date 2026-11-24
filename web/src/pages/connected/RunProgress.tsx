@@ -94,11 +94,80 @@ const REPORT_PROBLEMS = {
   },
 } as const;
 
-export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
+type Sinks = {
+  setRun: (run: ConnectedRun) => void;
+  setProblem: (problem: Problem | undefined) => void;
+  setReport: (state: ReportState) => void;
+  setNotAssessable: (update: (current: string[]) => string[]) => void;
+};
+
+/** Polls the run (and, once finished, its report) until it settles; returns the stop function. */
+function startPolling(id: string, rechecks: number, sinks: Sinks): () => void {
+  const { setRun, setProblem, setReport, setNotAssessable } = sinks;
+  const controller = new AbortController();
+  const { signal } = controller;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  // Pressing "Check for report" asks once and is answered at once; only the first look waits.
+  let finishedAt: number | undefined = rechecks > 0 ? 0 : undefined;
+  const cancelled = () => signal.aborted;
+  const waitOver = () => Date.now() - (finishedAt ?? Date.now()) >= REPORT_WAIT_MS;
+  function schedule() {
+    if (!cancelled())
+      timer = setTimeout(() => {
+        void poll();
+      }, POLL_MS);
+  }
+  async function reportState(giveUp: boolean): Promise<ReportState> {
+    try {
+      const publication = await getReport(id, signal);
+      if (!cancelled())
+        setNotAssessable((current) => [
+          ...new Set([...current, ...(publication.not_assessable ?? [])]),
+        ]);
+      return "ready";
+    } catch (failure) {
+      if (isPendingReport(failure)) return giveUp ? "absent" : "pending";
+      return isUnreachable(failure) ? "unreachable" : "failed";
+    }
+  }
+  async function finishedLook() {
+    finishedAt ??= Date.now();
+    // Decided once per look: the same answer chooses the state and whether to look again.
+    const giveUp = waitOver();
+    const state = await reportState(giveUp);
+    if (cancelled()) return;
+    setReport(state);
+    if (state !== "ready" && state !== "absent" && !giveUp) schedule();
+  }
+  async function poll() {
+    try {
+      const next = await getRun(id, signal);
+      if (cancelled()) return;
+      setRun(next);
+      setNotAssessable(() =>
+        (next.module_outputs ?? [])
+          .filter((output) => output.assessment === "not-assessable")
+          .map((output) => output.module),
+      );
+      setProblem(undefined);
+      if (next.status === "queued" || next.status === "running") schedule();
+      else if (next.status === "finished") await finishedLook();
+    } catch (failure) {
+      if (cancelled()) return;
+      const found = problemOf(failure);
+      setProblem(found);
+      if (found !== "missing") schedule();
+    }
+  }
+  void poll();
+  return () => {
+    controller.abort();
+    clearTimeout(timer);
+  };
+}
+
+function useRunPolling(id: string) {
   const [run, setRun] = useState<ConnectedRun>();
-  useEffect(() => {
-    document.title = `${run?.issuer_name || "Run progress"}${run?.issuer_name ? " run" : ""} — Credit OS`;
-  }, [run?.issuer_name]);
   // Reading the run and reading its report fail apart, so one poll never clears the other's
   // alert: an alert that is removed and inserted again is announced again.
   const [problem, setProblem] = useState<Problem>();
@@ -107,69 +176,10 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
   // Counts of presses of "Try again" (the run) and "Check for report" (the report); each restarts the poll.
   const [retries, setRetries] = useState(0);
   const [rechecks, setRechecks] = useState(0);
-  useEffect(() => {
-    const controller = new AbortController();
-    const { signal } = controller;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    // Pressing "Check for report" asks once and is answered at once; only the first look waits.
-    let finishedAt: number | undefined = rechecks > 0 ? 0 : undefined;
-    const cancelled = () => signal.aborted;
-    const waitOver = () => Date.now() - (finishedAt ?? Date.now()) >= REPORT_WAIT_MS;
-    function schedule() {
-      if (!cancelled())
-        timer = setTimeout(() => {
-          void poll();
-        }, POLL_MS);
-    }
-    async function reportState(giveUp: boolean): Promise<ReportState> {
-      try {
-        const publication = await getReport(id, signal);
-        if (!cancelled())
-          setNotAssessable((current) => [
-            ...new Set([...current, ...(publication.not_assessable ?? [])]),
-          ]);
-        return "ready";
-      } catch (failure) {
-        if (isPendingReport(failure)) return giveUp ? "absent" : "pending";
-        return isUnreachable(failure) ? "unreachable" : "failed";
-      }
-    }
-    async function poll() {
-      try {
-        const next = await getRun(id, signal);
-        if (cancelled()) return;
-        setRun(next);
-        setNotAssessable(
-          (next.module_outputs ?? [])
-            .filter((output) => output.assessment === "not-assessable")
-            .map((output) => output.module),
-        );
-        setProblem(undefined);
-        if (next.status === "queued" || next.status === "running") {
-          schedule();
-        } else if (next.status === "finished") {
-          finishedAt ??= Date.now();
-          // Decided once per look: the same answer chooses the state and whether to look again.
-          const giveUp = waitOver();
-          const state = await reportState(giveUp);
-          if (cancelled()) return;
-          setReport(state);
-          if (state !== "ready" && state !== "absent" && !giveUp) schedule();
-        }
-      } catch (failure) {
-        if (cancelled()) return;
-        const found = problemOf(failure);
-        setProblem(found);
-        if (found !== "missing") schedule();
-      }
-    }
-    void poll();
-    return () => {
-      controller.abort();
-      clearTimeout(timer);
-    };
-  }, [id, retries, rechecks]);
-
+  useEffect(
+    () => startPolling(id, rechecks, { setRun, setProblem, setReport, setNotAssessable }),
+    [id, retries, rechecks],
+  );
   // The alert stays until the new answer arrives, so the button that was pressed keeps its place.
   const tryAgain = () => {
     setRetries((count) => count + 1);
@@ -177,10 +187,11 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
   const checkAgain = () => {
     setRechecks((count) => count + 1);
   };
-  const restartable = run && RESTARTABLE.includes(run.status);
-  const live = run?.status === "queued" || run?.status === "running";
-  const lines = run ? feedLines(run) : [];
-  const assessmentGaps =
+  return { run, problem, report, notAssessable, tryAgain, checkAgain };
+}
+
+function assessmentGapsOf(run: ConnectedRun | undefined, notAssessable: string[]): string[] {
+  return (
     run?.modules
       .filter(
         ([code, state]) =>
@@ -191,12 +202,203 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
             (output) => output.module === code && output.assessment !== null,
           ),
       )
-      .map(([code]) => moduleName(code)) ?? [];
+      .map(([code]) => moduleName(code)) ?? []
+  );
+}
+
+function RunBadges({ run, mode }: { run: ConnectedRun; mode: Mode }) {
+  return (
+    <>
+      <span role="status">
+        <StatusBadge set="Run states" state={WORDS[run.status]} />
+      </span>
+      <Badge color="brand">{pathwayName(run.pathway)}</Badge>
+      {mode === "synthetic" && <Badge color="gray">Synthetic test</Badge>}
+      {run.as_of && (
+        <Badge color="gray">
+          <span>
+            As of{" "}
+            <time className="tabular-nums" dateTime={run.as_of}>
+              {asOfDate(run.as_of)}
+            </time>
+          </span>
+        </Badge>
+      )}
+    </>
+  );
+}
+
+function RunProblemAlert({
+  problem,
+  onRetry,
+}: {
+  problem: Problem | undefined;
+  onRetry: () => void;
+}) {
   const runProblem = problem && RUN_PROBLEMS[problem];
+  if (!runProblem) return null;
+  return (
+    <div className="mt-6">
+      <Alert
+        tone={runProblem.tone}
+        title={runProblem.title}
+        action={
+          problem === "missing" ? (
+            <TextLink href="/runs">Back to Run activity</TextLink>
+          ) : (
+            <Button size="sm" color="secondary" onPress={onRetry}>
+              Try again
+            </Button>
+          )
+        }
+      >
+        {runProblem.text}
+      </Alert>
+    </div>
+  );
+}
+
+function RunNotices({
+  run,
+  live,
+  report,
+  onCheckAgain,
+}: {
+  run: ConnectedRun;
+  live: boolean;
+  report: ReportState;
+  onCheckAgain: () => void;
+}) {
   const reportProblem =
-    run?.status === "finished" && report !== "pending" && report !== "ready"
+    run.status === "finished" && report !== "pending" && report !== "ready"
       ? REPORT_PROBLEMS[report]
       : undefined;
+  return (
+    <>
+      {run.reason && (
+        <Alert
+          tone={run.status === "capped" ? "warning" : "error"}
+          title="Why this run ended without a report"
+        >
+          <span className="wrap-anywhere">{serviceText(run.reason)}</span>
+        </Alert>
+      )}
+      {live && run.held_reason && (
+        <Alert tone="warning" title="Held by the service">
+          <span className="wrap-anywhere">{serviceText(run.held_reason)}</span>
+        </Alert>
+      )}
+      {run.status === "queued" && !run.held_reason && !run.reason && (
+        <p className="reading-copy text-body text-text-secondary">
+          Waiting for an available run slot.
+        </p>
+      )}
+      {run.stalled && (
+        <p className="reading-copy text-body text-text-secondary">
+          No activity has been recorded in the last hour.
+        </p>
+      )}
+      {run.status === "finished" && report === "pending" && (
+        <p role="status" className="reading-copy text-body text-text-secondary">
+          Waiting for the report to become available…
+        </p>
+      )}
+      {reportProblem && (
+        <Alert
+          tone={reportProblem.tone}
+          title={reportProblem.title}
+          action={
+            <Button size="sm" color="secondary" onPress={onCheckAgain}>
+              Check for report
+            </Button>
+          }
+        >
+          {reportProblem.text}
+        </Alert>
+      )}
+    </>
+  );
+}
+
+function ActivityCard({ run }: { run: ConnectedRun }) {
+  const lines = feedLines(run);
+  return (
+    <Card title="Activity">
+      {run.events === null && (
+        <p className="pb-3 text-sm text-text-secondary">The activity log is unavailable.</p>
+      )}
+      {lines.length > 0 ? (
+        <Feed lines={lines} />
+      ) : (
+        run.events !== null && (
+          <p className="text-sm text-text-secondary">No activity recorded yet.</p>
+        )
+      )}
+    </Card>
+  );
+}
+
+function RunActivity({
+  run,
+  report,
+  notAssessable,
+  onCheckAgain,
+}: {
+  run: ConnectedRun;
+  report: ReportState;
+  notAssessable: string[];
+  onCheckAgain: () => void;
+}) {
+  const live = run.status === "queued" || run.status === "running";
+  const assessmentGaps = assessmentGapsOf(run, notAssessable);
+  return (
+    <section aria-label="Run activity" className="mt-6 grid gap-6">
+      <RunNotices run={run} live={live} report={report} onCheckAgain={onCheckAgain} />
+      <Summary
+        spendCaption="Cap usage"
+        run={{
+          spend: spendFigure(run),
+          finished: finishedFigure(run),
+          elapsed: elapsedFigure(run),
+        }}
+      />
+      <div className="grid min-w-0 items-start gap-6 xl:grid-cols-2">
+        <Card title="Modules and report delivery">
+          <ModuleSteps live={live} steps={moduleSteps(run, live, notAssessable)} />
+          {assessmentGaps.length > 0 && (
+            <p className="mt-4 text-sm text-text-secondary">
+              No assessment status is recorded for {assessmentGaps.join(", ")}.
+            </p>
+          )}
+        </Card>
+        <ActivityCard run={run} />
+      </div>
+    </section>
+  );
+}
+
+function RunSkeleton() {
+  return (
+    <div role="status" aria-label="Loading run progress" className="mt-6 grid gap-6">
+      <Skeleton lines={2} />
+      <div className="grid gap-6 xl:grid-cols-2">
+        {[0, 1].map((key) => (
+          <Card key={key}>
+            <Skeleton lines={7} />
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
+  const { run, problem, report, notAssessable, tryAgain, checkAgain } = useRunPolling(id);
+  useEffect(() => {
+    document.title = `${run?.issuer_name || "Run progress"}${run?.issuer_name ? " run" : ""} — Credit OS`;
+  }, [run?.issuer_name]);
+  const restartable = run && RESTARTABLE.includes(run.status);
+  const offerInputs = restartable || report === "ready" || report === "absent";
   return (
     <>
       <Breadcrumb href="/runs" root="Run activity">
@@ -204,33 +406,13 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
       </Breadcrumb>
       <PageHeader
         title={run?.issuer_name || "Run"}
-        badges={
-          run && (
-            <>
-              <span role="status">
-                <StatusBadge set="Run states" state={WORDS[run.status]} />
-              </span>
-              <Badge color="brand">{pathwayName(run.pathway)}</Badge>
-              {mode === "synthetic" && <Badge color="gray">Synthetic test</Badge>}
-              {run.as_of && (
-                <Badge color="gray">
-                  <span>
-                    As of{" "}
-                    <time className="tabular-nums" dateTime={run.as_of}>
-                      {asOfDate(run.as_of)}
-                    </time>
-                  </span>
-                </Badge>
-              )}
-            </>
-          )
-        }
+        badges={run && <RunBadges run={run} mode={mode} />}
         actions={
           <>
             {report === "ready" && (
               <Button href={`/report/${encodeURIComponent(id)}`}>Open report</Button>
             )}
-            {(restartable || report === "ready" || report === "absent") && (
+            {offerInputs && (
               <Button
                 color="secondary"
                 href={`/start?from=${encodeURIComponent(id)}`}
@@ -242,117 +424,21 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
           </>
         }
       />
-      {(restartable || report === "ready" || report === "absent") && (
+      {offerInputs && (
         <p id="run-restart-note" className="reading-copy mt-3 text-body text-text-secondary">
           Review the inputs in a new draft. The new run has its own spending cap.
         </p>
       )}
-      {runProblem && (
-        <div className="mt-6">
-          <Alert
-            tone={runProblem.tone}
-            title={runProblem.title}
-            action={
-              problem === "missing" ? (
-                <TextLink href="/runs">Back to Run activity</TextLink>
-              ) : (
-                <Button size="sm" color="secondary" onPress={tryAgain}>
-                  Try again
-                </Button>
-              )
-            }
-          >
-            {runProblem.text}
-          </Alert>
-        </div>
-      )}
+      <RunProblemAlert problem={problem} onRetry={tryAgain} />
       {run ? (
-        <section aria-label="Run activity" className="mt-6 grid gap-6">
-          {run.reason && (
-            <Alert
-              tone={run.status === "capped" ? "warning" : "error"}
-              title="Why this run ended without a report"
-            >
-              <span className="wrap-anywhere">{serviceText(run.reason)}</span>
-            </Alert>
-          )}
-          {live && run.held_reason && (
-            <Alert tone="warning" title="Held by the service">
-              <span className="wrap-anywhere">{serviceText(run.held_reason)}</span>
-            </Alert>
-          )}
-          {run.status === "queued" && !run.held_reason && !run.reason && (
-            <p className="reading-copy text-body text-text-secondary">
-              Waiting for an available run slot.
-            </p>
-          )}
-          {run.stalled && (
-            <p className="reading-copy text-body text-text-secondary">
-              No activity has been recorded in the last hour.
-            </p>
-          )}
-          {run.status === "finished" && report === "pending" && (
-            <p role="status" className="reading-copy text-body text-text-secondary">
-              Waiting for the report to become available…
-            </p>
-          )}
-          {reportProblem && (
-            <Alert
-              tone={reportProblem.tone}
-              title={reportProblem.title}
-              action={
-                <Button size="sm" color="secondary" onPress={checkAgain}>
-                  Check for report
-                </Button>
-              }
-            >
-              {reportProblem.text}
-            </Alert>
-          )}
-          <Summary
-            spendCaption="Cap usage"
-            run={{
-              spend: spendFigure(run),
-              finished: finishedFigure(run),
-              elapsed: elapsedFigure(run),
-            }}
-          />
-          <div className="grid min-w-0 items-start gap-6 xl:grid-cols-2">
-            <Card title="Modules and report delivery">
-              <ModuleSteps live={live} steps={moduleSteps(run, live, notAssessable)} />
-              {assessmentGaps.length > 0 && (
-                <p className="mt-4 text-sm text-text-secondary">
-                  No assessment status is recorded for {assessmentGaps.join(", ")}.
-                </p>
-              )}
-            </Card>
-            <Card title="Activity">
-              {run.events === null && (
-                <p className="pb-3 text-sm text-text-secondary">The activity log is unavailable.</p>
-              )}
-              {lines.length > 0 ? (
-                <Feed lines={lines} />
-              ) : (
-                run.events !== null && (
-                  <p className="text-sm text-text-secondary">No activity recorded yet.</p>
-                )
-              )}
-            </Card>
-          </div>
-        </section>
+        <RunActivity
+          run={run}
+          report={report}
+          notAssessable={notAssessable}
+          onCheckAgain={checkAgain}
+        />
       ) : (
-        !problem && (
-          <div role="status" aria-label="Loading run progress" className="mt-6 grid gap-6">
-            <Skeleton lines={2} />
-            <div className="grid gap-6 xl:grid-cols-2">
-              {[0, 1].map((key) => (
-                <Card key={key}>
-                  <Skeleton lines={7} />
-                </Card>
-              ))}
-            </div>
-          </div>
-        )
+        !problem && <RunSkeleton />
       )}
     </>
   );
