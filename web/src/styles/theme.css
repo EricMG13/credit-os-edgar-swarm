@@ -378,6 +378,27 @@ body {
     }
   }
 
+  @keyframes pipeline-flow {
+    from {
+      background-position: 0 0;
+    }
+    to {
+      background-position: 8px 0;
+    }
+  }
+
+  /* The Overview's one loop: a slow dash along the edges leaving a delivered module. */
+  .pipeline-flow {
+    background-color: transparent;
+    background-image: repeating-linear-gradient(
+      90deg,
+      var(--color-action) 0 4px,
+      transparent 4px 8px
+    );
+    background-size: 8px 1px;
+    animation: pipeline-flow 1.2s linear infinite;
+  }
+
   .status-halo {
     animation: status-halo 1.6s ease-in-out infinite;
   }
