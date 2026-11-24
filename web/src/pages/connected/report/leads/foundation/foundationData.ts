@@ -12,9 +12,11 @@ import {
   periodRows,
   rowStarting,
   statementColumns,
+  tableName,
   tableUnder,
   tableWith,
   unionPeriods,
+  type Ordered,
   type Period,
 } from "../kit/tables";
 
@@ -52,7 +54,7 @@ function periodTable(entry: OutputEntry, heading: string, what: string): PeriodT
   const table = tableUnder(entry, heading);
   if (!table) return NOT_IN(what);
   const ordered = periodRows(table);
-  if ("reason" in ordered) return `${what}: ${ordered.reason}`;
+  if ("reason" in ordered) return `${tableName(heading)}: ${ordered.reason}`;
   const unitAt = columnOf(table, "Reporting unit");
   const units = new Set(ordered.periods.map(({ item }) => item.cells[unitAt] ?? ""));
   const [unit] = [...units];
@@ -79,9 +81,9 @@ type Statement = { table: Table; columns: { period: Period; at: number }[] };
 
 function statement(entry: OutputEntry, heading: string): Statement | string {
   const table = tableUnder(entry, heading);
-  if (!table) return NOT_IN(heading.replace(/^T\d+\.\d+ /, ""));
+  if (!table) return NOT_IN(tableName(heading));
   const ordered = statementColumns(table);
-  if ("reason" in ordered) return ordered.reason;
+  if ("reason" in ordered) return `${tableName(heading)}: ${ordered.reason}`;
   return { table, columns: ordered.periods.map(({ period, item }) => ({ period, at: item })) };
 }
 
@@ -161,9 +163,9 @@ export type StatedPeriods = {
   /** The two periods the figures compare, or null (one period is drawn as itself). */
   comparison: Comparison;
   /** Which figure table states which periods, in handoff order. */
-  tables: { heading: string; labels: string[] }[];
+  tables: { table: string; labels: string[] }[];
   /** Figure tables whose periods cannot be read, with the reason (a repeated year, an undated label). */
-  gaps: { heading: string; reason: string }[];
+  gaps: { table: string; reason: string }[];
 };
 
 const ROW_TABLES = [
@@ -179,14 +181,16 @@ export function statedPeriods(entry: OutputEntry): StatedPeriods {
   const tables: StatedPeriods["tables"] = [];
   const gaps: StatedPeriods["gaps"] = [];
   const add = (heading: string, read: Ordered<unknown>) => {
-    if ("reason" in read) gaps.push({ heading, reason: read.reason });
-    else tables.push({ heading, labels: read.periods.map(({ period }) => period.label) });
+    const table = tableName(heading);
+    if ("reason" in read) gaps.push({ table, reason: read.reason });
+    else tables.push({ table, labels: read.periods.map(({ period }) => period.label) });
   };
   const found = allTables(entry);
   for (const heading of [...ROW_TABLES, ...STATEMENTS]) {
     const same = found.filter((item) => item.heading === heading);
     const [only] = same;
-    if (same.length > 1) gaps.push({ heading, reason: "The table is stated more than once." });
+    if (same.length > 1)
+      gaps.push({ table: tableName(heading), reason: "The table is stated more than once." });
     else if (only)
       add(
         heading,
@@ -210,8 +214,6 @@ export function statedPeriods(entry: OutputEntry): StatedPeriods {
     gaps,
   };
 }
-
-type Ordered<T> = ReturnType<typeof orderByPeriod<T>>;
 
 // ---------------------------------------------------------------------------------------------
 // Tile 1: earnings against debt and leverage
@@ -305,7 +307,13 @@ export function earningsAgainstDebt(entry: OutputEntry): EarningsAgainstDebt | n
   const comparison = comparisonOf(periods);
   const measures = ready.map(({ key, read }): EarningsMeasure => {
     const values = onto(periods, read.values);
-    return { key, label: read.label, values, change: changeOf(values, comparison), line: read.line };
+    return {
+      key,
+      label: read.label,
+      values,
+      change: changeOf(values, comparison),
+      line: read.line,
+    };
   });
   let leverage: LeverageSeries | null = null;
   let leverageBasis: string | null = null;
@@ -397,16 +405,76 @@ type LadderSpec = {
 // dividends and equivalents"). The after-distributions level is the module's own measure: before
 // acquisitions, so acquisitions follow it and no level follows them.
 const LADDER: readonly LadderSpec[] = [
-  { key: "ebitda", kind: "level", name: "EBITDA (Adjusted)", prefixes: ["EBITDA Adjusted"], sign: null },
-  { key: "interest", kind: "deduction", name: "Cash interest paid", prefixes: ["Cash interest paid"], sign: "paid" },
-  { key: "taxes", kind: "deduction", name: "Cash taxes paid", prefixes: ["Cash taxes paid"], sign: "paid" },
-  { key: "cfo", kind: "level", name: "Net cash from operating activities", prefixes: ["Net cash from operating activities"], sign: null },
-  { key: "capex", kind: "deduction", name: "Capital expenditures", prefixes: ["Capital expenditures"], sign: "signed" },
-  { key: "fcf", kind: "level", name: "Free cash flow after capex", prefixes: ["Levered free cash flow", "Free cash flow levered"], sign: null },
-  { key: "dividends", kind: "deduction", name: "Dividends", prefixes: ["Dividends"], sign: "signed" },
-  { key: "repurchases", kind: "deduction", name: "Share repurchases", prefixes: ["Repurchases of", "Share repurchases"], sign: "signed" },
-  { key: "afterDistributions", kind: "level", name: "Cash flow after distributions", prefixes: ["Discretionary cash flow after"], sign: null },
-  { key: "acquisitions", kind: "deduction", name: "Acquisitions", prefixes: ["Acquisition of businesses", "Acquisitions"], sign: "signed" },
+  {
+    key: "ebitda",
+    kind: "level",
+    name: "EBITDA (Adjusted)",
+    prefixes: ["EBITDA Adjusted"],
+    sign: null,
+  },
+  {
+    key: "interest",
+    kind: "deduction",
+    name: "Cash interest paid",
+    prefixes: ["Cash interest paid"],
+    sign: "paid",
+  },
+  {
+    key: "taxes",
+    kind: "deduction",
+    name: "Cash taxes paid",
+    prefixes: ["Cash taxes paid"],
+    sign: "paid",
+  },
+  {
+    key: "cfo",
+    kind: "level",
+    name: "Net cash from operating activities",
+    prefixes: ["Net cash from operating activities"],
+    sign: null,
+  },
+  {
+    key: "capex",
+    kind: "deduction",
+    name: "Capital expenditures",
+    prefixes: ["Capital expenditures"],
+    sign: "signed",
+  },
+  {
+    key: "fcf",
+    kind: "level",
+    name: "Free cash flow after capex",
+    prefixes: ["Levered free cash flow", "Free cash flow levered"],
+    sign: null,
+  },
+  {
+    key: "dividends",
+    kind: "deduction",
+    name: "Dividends",
+    prefixes: ["Dividends"],
+    sign: "signed",
+  },
+  {
+    key: "repurchases",
+    kind: "deduction",
+    name: "Share repurchases",
+    prefixes: ["Repurchases of", "Share repurchases"],
+    sign: "signed",
+  },
+  {
+    key: "afterDistributions",
+    kind: "level",
+    name: "Cash flow after distributions",
+    prefixes: ["Discretionary cash flow after"],
+    sign: null,
+  },
+  {
+    key: "acquisitions",
+    kind: "deduction",
+    name: "Acquisitions",
+    prefixes: ["Acquisition of businesses", "Acquisitions"],
+    sign: "signed",
+  },
 ];
 
 /** The ladder from the handoff's own stated levels and deductions, every period; no plug, no end level. */
@@ -515,18 +583,16 @@ function adjustmentsOf(entry: OutputEntry) {
   const [first] = table.rows;
   if (table.rows.length === 1 && first && text(first, "Event") === NO_ADJUSTMENT)
     return { adjustments: [], none: { event: NO_ADJUSTMENT, basis: basisOf(first) } };
-  const adjustments = table.rows.map(
-    (row): ProForma => ({
-      event: text(row, "Event"),
-      date: readCell(text(row, "Date")),
-      amount: readCell(text(row, "Amount")),
-      netDebt: readCell(text(row, "Pro forma net debt")),
-      leverage: readCell(text(row, "Pro forma net leverage")),
-      unit: unitLabel(text(row, "Reporting unit")),
-      basis: basisOf(row),
-      line: row.line,
-    }),
-  );
+  const adjustments = table.rows.map((row): ProForma => ({
+    event: text(row, "Event"),
+    date: readCell(text(row, "Date")),
+    amount: readCell(text(row, "Amount")),
+    netDebt: readCell(text(row, "Pro forma net debt")),
+    leverage: readCell(text(row, "Pro forma net leverage")),
+    unit: unitLabel(text(row, "Reporting unit")),
+    basis: basisOf(row),
+    line: row.line,
+  }));
   return { adjustments, none: null };
 }
 
@@ -643,14 +709,12 @@ export function ebitdaBridge(entry: OutputEntry): EbitdaBridge | null {
   const [unit] = [...units];
   if (amount < 0 || unitAt < 0 || units.size !== 1 || !unit) return null;
   const last = table.rows.length - 1;
-  const steps = table.rows.map(
-    (row, at): BridgeStep => ({
-      label: (row.cells[0] ?? "").trim(),
-      cell: readCell(row.cells[amount] ?? ""),
-      line: row.line,
-      kind: at === 0 ? "opening" : at === last ? "closing" : "change",
-    }),
-  );
+  const steps = table.rows.map((row, at): BridgeStep => ({
+    label: (row.cells[0] ?? "").trim(),
+    cell: readCell(row.cells[amount] ?? ""),
+    line: row.line,
+    kind: at === 0 ? "opening" : at === last ? "closing" : "change",
+  }));
   const total = sum(steps.slice(0, -1).map((step) => step.cell.text));
   const closing = steps.at(-1)?.cell;
   const reconciles =
@@ -683,7 +747,13 @@ export type SegmentView = {
   tableLine: number;
 };
 
-type SegmentCell = { name: string; measure: "sales" | "ebitda"; label: string; cell: Reading; line: number };
+type SegmentCell = {
+  name: string;
+  measure: "sales" | "ebitda";
+  label: string;
+  cell: Reading;
+  line: number;
+};
 type SegmentRead = {
   table: Table;
   cells: SegmentCell[];
@@ -768,7 +838,9 @@ function wideSchedule(table: Table): SegmentRead | null {
       line: row.line,
     })),
   );
-  const ebitdaLabel = read.flatMap(({ row }) => EBITDA_WORDS.exec(row.cells[0] ?? "")?.[0] ?? [])[0];
+  const ebitdaLabel = read.flatMap(
+    ({ row }) => EBITDA_WORDS.exec(row.cells[0] ?? "")?.[0] ?? [],
+  )[0];
   const salesWord = read.flatMap(({ row }) => SALES_WORDS.exec(row.cells[0] ?? "")?.[0] ?? [])[0];
   return {
     table,
@@ -786,11 +858,6 @@ function segmentSchedule(entry: OutputEntry): SegmentRead | null {
   if (!table) return null;
   const at = (name: string) => columnOf(table, name);
   return at("Period") >= 0 ? longSchedule(table, at) : wideSchedule(table);
-}
-
-function segmentPeriods(entry: OutputEntry): Ordered<null> | null {
-  const read = segmentSchedule(entry);
-  return read ? { periods: read.periods.map((period) => ({ period, item: null })) } : null;
 }
 
 const isApart = (name: string) => /^unallocated|\bcorporate\b|\beliminations?\b/i.test(name);

@@ -2,6 +2,8 @@
 // (outdated evidence: shape and scope only), not computed by the code under test. The bridges built
 // with `bridgeEntry` are synthetic, built from the module contract (foundationData.ts ebitdaBridge,
 // `Chart data: EBITDA bridge` with Step | Amount | Reporting unit); not a real handoff.
+// Round 2 (ruling i): the data layer returns no add-back total; tests that asserted the "+360"
+// bracket, the "Add-backs total" row or a title stating the sum were updated (marked "ruling i").
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import {
@@ -14,7 +16,7 @@ import { entry as synthetic, section, table } from "../../overview/rows.fixture"
 import { cp1Entry, leadProps } from "../fixtures/load";
 import { bridgeAxis, bridgeGeometry, largestStep } from "./bridgeGeometry";
 import { EbitdaBridgeTile } from "./EbitdaBridge";
-import { ebitdaBridge } from "./foundationData";
+import { ebitdaBridge } from "./legacyData";
 
 afterEach(cleanup);
 
@@ -126,19 +128,11 @@ describe("EbitdaBridgeTile on the retained handoff", () => {
       within(tile).getByText("Axis starts at 3,600, marked on the two total bars."),
     ).toBeVisible();
     const svg = within(tile).getByRole("img");
-    for (const label of [
-      "+70",
-      "+217",
-      "+58",
-      "+15",
-      "3,813",
-      "4,173",
-      "Add-backs total",
-      "3,600",
-      "4,200",
-    ])
+    for (const label of ["+70", "+217", "+58", "+15", "3,813", "4,173", "3,600", "4,200"])
       expect(within(svg).getByText(label)).toBeInTheDocument();
-    expect(tile.querySelector("[data-bracket]")?.textContent).toBe("Add-backs total+360, derived");
+    // Ruling i: no add-back total bracket.
+    expect(tile.querySelector("[data-bracket]")).toBeNull();
+    expect(within(tile).queryByText(/Add-backs total/)).toBeNull();
     expect(
       within(tile).getByText(
         "Largest step: Non-cash stock and deferred compensation expense, +217.",
@@ -150,13 +144,13 @@ describe("EbitdaBridgeTile on the retained handoff", () => {
   it("titles from the stated totals and the exact sum, and reads every step aloud", () => {
     const { tile } = draw(base);
     expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(
-      "Add-backs lift EBITDA (Reported) by 360 (derived) to EBITDA (Adjusted)",
+      "EBITDA (Reported) to EBITDA (Adjusted), steps stated",
     );
     expect(within(tile).getByText("Reported to adjusted EBITDA · US$m")).toBeVisible();
     expect(within(tile).getByRole("img").getAttribute("aria-label")).toBe(
       "EBITDA bridge, US$m: EBITDA (Reported) 3,813, plus Acquisition transaction and integration-related expenses 70, " +
         "plus Non-cash stock and deferred compensation expense 217, plus Refinancing costs 58, plus Other, net 15, " +
-        "equals EBITDA (Adjusted) 4,173. Add-backs total +360, derived. Axis starts at 3,600.",
+        "equals EBITDA (Adjusted) 4,173. Axis starts at 3,600.",
     );
     expect(within(tile).getByRole("img")).toHaveAttribute("width", "100%");
   });
@@ -178,7 +172,7 @@ describe("EbitdaBridgeTile on the retained handoff", () => {
     expect(rows[1]).toEqual(["EBITDA (Reported)", "3,813", "opening total"]);
     expect(rows[3]).toEqual(["Non-cash stock and deferred compensation expense", "+217", "change"]);
     expect(rows[6]).toEqual(["EBITDA (Adjusted)", "4,173", "closing total"]);
-    expect(rows[7]).toEqual(["Add-backs total", "+360", "derived: sum of the changes"]);
+    expect(rows[7]).toBeUndefined(); // ruling i: no add-back total row
     const text = view.container.textContent;
     expect(containsReference(text)).toBe(false);
     // The handoff's basis cells cite pages ("annual p71"); none is drawn.
@@ -239,7 +233,7 @@ describe("EbitdaBridgeTile states", () => {
       "less Cut 20, plus Add 50",
     );
     expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(
-      "Add-backs lift Opening by 30 (derived) to Closing",
+      "Opening to Closing, steps stated",
     );
     expect(within(tile).getByText("Largest step: Add, +50.")).toBeVisible();
   });

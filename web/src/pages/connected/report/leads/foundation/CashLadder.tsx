@@ -4,7 +4,7 @@ import { GapPattern } from "../../overview/figureParts";
 import { GapNote, Tile } from "../../overview/Tile";
 import { FigureTile, ScrollFigure } from "../kit/LeadFrame";
 import type { LeadProps } from "../types";
-import { cashLadder, type CashLadder } from "./foundationData";
+import { cashLadder, type CashLadder } from "./legacyData";
 import {
   LADDER,
   ladderConnectors,

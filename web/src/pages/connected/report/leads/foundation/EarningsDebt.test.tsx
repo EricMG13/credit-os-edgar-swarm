@@ -1,11 +1,13 @@
 // Expected values are written out by hand from the retained TransDigm FY2024 CP-1 handoff
 // (leads/fixtures/cp1_tdg_fy2024.json), not computed by the code under test. The handoff is outdated
 // evidence: shape and scope only. The adversarial cases edit cells of that handoff.
+// Round 2 (ruling i): the data layer returns no growth rate; tests that asserted growth figures were
+// updated or removed (each marked "ruling i"). This tile is being rebuilt on foundationData's contract.
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import type { Block, OutputEntry, Table } from "../../../publishedReport";
 import { containsReference } from "../../../publishedReport";
-import { cp1Entry, leadProps } from "../fixtures/load";
+import { cp1Entry, leadProps, relativeValueCp1Entry } from "../fixtures/load";
 import { EarningsDebtTile, NO_EARNINGS, NO_LEVERAGE } from "./EarningsDebt";
 import { ED, LEV, inSentence, movement, ratioAxis } from "./earningsDebtGeometry";
 
@@ -88,9 +90,9 @@ describe("EarningsDebtTile on the retained handoff", () => {
   it("states the reading of each panel with every number, derived figures named", () => {
     const [left, right] = svgs(draw());
     expect(left?.getAttribute("aria-label")).toBe(
-      "FY2023 to FY2024 on one US$m scale from zero: net sales 6,585 to 7,940, up 20.58% (derived); " +
-        "reported EBITDA 3,148 to 3,813, up 21.12% (derived); EBITDA As Defined 3,395 to 4,173, up 22.92% (derived); " +
-        "gross debt 19,750 to 24,880, up 25.97% (derived).",
+      "FY2023 to FY2024 on one US$m scale from zero: net sales 6,585 to 7,940, up 1,355 (derived); " +
+        "reported EBITDA 3,148 to 3,813, up 665 (derived); EBITDA As Defined 3,395 to 4,173, up 778 (derived); " +
+        "gross debt 19,750 to 24,880, up 5,130 (derived).",
     );
     expect(right?.getAttribute("aria-label")).toBe(
       "Total debt to EBITDA on its own scale from 6.2x, not from zero: 6.27x to 6.53x, +0.26x (derived), worse.",
@@ -114,18 +116,11 @@ describe("EarningsDebtTile on the retained handoff", () => {
     const [left] = svgs(tile);
     for (const label of ["6,585", "7,940", "3,148", "3,813", "19,750", "24,880"])
       expect(within(left as HTMLElement).getByText(label)).toBeInTheDocument();
-    expect(within(left as HTMLElement).getByText("Growth, derived")).toBeInTheDocument();
+    // Ruling i: no growth column.
+    expect(within(left as HTMLElement).queryByText("Growth, derived")).toBeNull();
   });
 
-  it("draws growth bars proportional to the derived growth, with signed labels", () => {
-    const tile = draw();
-    const width = (name: string) => num(tile.querySelector(`[data-growth="${name}"]`), "width");
-    expect(width("Gross debt") / width("Net sales")).toBeCloseTo(25.97 / 20.58, 6);
-    expect(width("EBITDA As Defined") / width("Reported EBITDA")).toBeCloseTo(22.92 / 21.12, 6);
-    const [left] = svgs(tile);
-    for (const label of ["+20.58%", "+21.12%", "+22.92%", "+25.97%"])
-      expect(within(left as HTMLElement).getByText(label)).toBeInTheDocument();
-  });
+  // Ruling i: "draws growth bars proportional to the derived growth" is removed; no growth is derived.
 
   it("draws leverage on its own scale, not from zero, with an arrow and the word worse", () => {
     const tile = draw();
@@ -176,10 +171,11 @@ describe("EarningsDebtTile on the retained handoff", () => {
           .map((cell) => cell.textContent),
       );
     expect(rows).toEqual([
-      ["Net sales", "6,585", "7,940", "+1,355", "+20.58%"],
-      ["Reported EBITDA", "3,148", "3,813", "+665", "+21.12%"],
-      ["EBITDA As Defined", "3,395", "4,173", "+778", "+22.92%"],
-      ["Gross debt", "19,750", "24,880", "+5,130", "+25.97%"],
+      // Ruling i: no growth is derived.
+      ["Net sales", "6,585", "7,940", "+1,355", "Not derived"],
+      ["Reported EBITDA", "3,148", "3,813", "+665", "Not derived"],
+      ["EBITDA As Defined", "3,395", "4,173", "+778", "Not derived"],
+      ["Gross debt", "19,750", "24,880", "+5,130", "Not derived"],
       ["Total debt / EBITDA", "6.27x", "6.53x", "+0.26x, worse", "Not applicable: a ratio"],
     ]);
   });
@@ -239,7 +235,7 @@ describe("EarningsDebtTile states", () => {
       ),
     );
     expect(tile.querySelector("[data-absent]")).toHaveTextContent(
-      "Gross debt is stated in a different unit.",
+      "Gross debt is stated in another unit.",
     );
   });
 
@@ -248,7 +244,7 @@ describe("EarningsDebtTile states", () => {
     expect(num(mark(tile, "Net sales prior"), "cx")).toBeCloseTo(ED.x0, 6);
     expect(tile.querySelector('[data-gap^="Net sales"]')).toBeNull();
     expect(tile.querySelector('[data-growth="Net sales"]')).toBeNull();
-    expect(within(tile).getByText("not calculable")).toBeInTheDocument();
+    expect(within(tile).getAllByText("not calculable").length).toBeGreaterThan(0);
     expect(svgs(tile)[0]?.getAttribute("aria-label")).toContain(
       "net sales 0 to 7,940, up 7,940 (derived)",
     );
@@ -260,10 +256,9 @@ describe("EarningsDebtTile states", () => {
     const zero = within(left as HTMLElement).getByText("0");
     expect(num(mark(tile, "Net sales current"), "cx")).toBeLessThan(num(zero, "x"));
     expect(within(left as HTMLElement).getByText("−200")).toBeInTheDocument();
-    // −6,785 on 6,585 is −103.04%: the growth bar runs left of its zero.
-    expect(within(left as HTMLElement).getByText("−103.04%")).toBeInTheDocument();
+    // Ruling i: no growth; the change is the exact −6,785.
     expect(left?.getAttribute("aria-label")).toContain(
-      "net sales 6,585 to −200, down 103.04% (derived)",
+      "net sales 6,585 to −200, down 6,785 (derived)",
     );
   });
 
@@ -291,12 +286,20 @@ describe("EarningsDebtTile states", () => {
     expect(svgs(tile)).toHaveLength(1);
   });
 
-  it("draws the gap tile, with no figure, when only one period is stated", () => {
+  it("names a measure stated for one period only while the other tables state two", () => {
+    // Round 2: the figure's periods are every period its tables state, so FY2023 stays drawn.
     const tile = draw(
       edited((table, at) =>
         at === "Chart data: revenue and EBITDA" ? { ...table, rows: table.rows.slice(1) } : table,
       ),
     );
+    expect(tile.querySelector("[data-absent]")).toHaveTextContent(
+      "Net sales is stated for different periods.",
+    );
+  });
+
+  it("draws the gap tile on the single-period relative value handoff (the old tile compares two)", () => {
+    const tile = draw(relativeValueCp1Entry());
     expect(within(tile).getByText(NO_EARNINGS)).toBeVisible();
     expect(within(tile).queryByRole("img")).toBeNull();
   });

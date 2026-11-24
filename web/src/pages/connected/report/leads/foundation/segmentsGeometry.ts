@@ -1,7 +1,7 @@
 import { ticks } from "../../../visuals/visualData";
 import { linear } from "../kit/geometry";
 import type { Reading } from "../kit/numbers";
-import type { Segment } from "./foundationData";
+import type { Segment } from "./legacyData";
 
 const DECIMAL = /^(-?)(\d+)(?:\.(\d+))?$/;
 

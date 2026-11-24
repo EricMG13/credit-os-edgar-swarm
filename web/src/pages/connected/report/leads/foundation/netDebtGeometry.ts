@@ -2,7 +2,7 @@ import { tone } from "../../../signal";
 import { linear } from "../kit/geometry";
 import { difference, group, readCell, signOf, sum, type Reading } from "../kit/numbers";
 import { clean, direction, ratioAxis, reasonOf, valueScale } from "./earningsDebtGeometry";
-import type { NetDebtPeriod, NetDebtView, ProForma } from "./foundationData";
+import type { NetDebtPeriod, NetDebtView, ProForma } from "./legacyData";
 
 /** Where a reading line starts: under the bars, or at the left edge when it is long. */
 export const readingX = (text: string) => (text.length > 46 ? 0 : ND.x0);

@@ -1,7 +1,7 @@
 import { ticks } from "../../../visuals/visualData";
 import { linear } from "../kit/geometry";
 import { group, sum } from "../kit/numbers";
-import type { BridgeStep, EbitdaBridge } from "./foundationData";
+import type { BridgeStep, EbitdaBridge } from "./legacyData";
 import { readerSafe, wrapLines } from "./ladderGeometry";
 
 /** The layout of the bridge, in viewBox units. */

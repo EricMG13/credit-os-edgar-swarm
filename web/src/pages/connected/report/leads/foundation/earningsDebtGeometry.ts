@@ -2,7 +2,7 @@ import { containsReference, readerText } from "../../../publishedReport";
 import { ticks } from "../../../visuals/visualData";
 import { linear } from "../kit/geometry";
 import { group, signOf, type Reading } from "../kit/numbers";
-import type { EarningsAgainstDebt, EarningsMeasure } from "./foundationData";
+import type { EarningsAgainstDebt, EarningsMeasure } from "./legacyData";
 
 const EVIDENCE = "Detail is in Evidence.";
 

@@ -2,7 +2,16 @@ import { cx } from "@/utils/cx";
 import { fittingTicks, niceAxis, type NiceAxis } from "./axis";
 import { GapSlot } from "./GapSlot";
 import { LINE, NARROW, SIZE, signedText, textWidth, wrap } from "./text";
-import { AxisNote, Legend, TickLabels, legendHeight, type LegendItem } from "./parts";
+import {
+  AxisNote,
+  Grid,
+  HALO,
+  HALO_CLASS,
+  Legend,
+  TickLabels,
+  legendHeight,
+  type LegendItem,
+} from "./parts";
 
 /**
  * One row of a waterfall, in the handoff's order. A `level` (an opening or a stated intermediate
@@ -205,7 +214,8 @@ function Bar({ one, f, base, cut }: { one: Laid; f: Frame; base: number; cut: bo
         y={one.barY + 12}
         textAnchor={spot.anchor}
         fontSize={SIZE.value}
-        className={cx("fill-text-primary font-mono", total && "font-medium")}
+        {...HALO}
+        className={cx("fill-text-primary font-mono", HALO_CLASS, total && "font-medium")}
       >
         {text}
       </text>
@@ -221,7 +231,12 @@ function RowLabel({ one }: { one: Laid }) {
       x="0"
       y={one.top + 12}
       fontSize={SIZE.label}
-      className={cx("font-body", total ? "fill-text-primary font-medium" : "fill-text-secondary")}
+      {...HALO}
+      className={cx(
+        "font-body",
+        HALO_CLASS,
+        total ? "fill-text-primary font-medium" : "fill-text-secondary",
+      )}
     >
       {one.labelLines.map((line, at) => (
         <tspan key={`${String(at)}-${line}`} x="0" y={one.top + 12 + at * LINE}>
@@ -312,16 +327,22 @@ export function Waterfall({ rows, unit, width, axisStart, label, legend }: Water
       className="block"
     >
       <Legend items={items} width={width} />
-      {kept.map((tick) => (
-        <line
-          key={tick.value}
-          x1={f.x(tick.value)}
-          x2={f.x(tick.value)}
-          y1={plotTop}
-          y2={plotBottom}
-          className={tick.value === base ? "stroke-text-tertiary" : "stroke-border-hairline"}
-        />
-      ))}
+      <Grid
+        ticks={kept}
+        x={f.x}
+        strong={base}
+        bands={
+          f.narrow
+            ? laid.flatMap((one) =>
+                one.row.kind === "gap"
+                  ? [[one.barY, one.barY + SLOT + 4] as const]
+                  : one.to === null
+                    ? []
+                    : [[one.barY - 3, one.barY + BAR + 3] as const],
+              )
+            : [[plotTop, plotBottom] as const]
+        }
+      />
       <path
         d={connectors(laid, f)}
         fill="none"

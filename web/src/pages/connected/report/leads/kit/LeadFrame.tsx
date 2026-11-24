@@ -90,11 +90,11 @@ function TableButton({ disclosure, caption }: { disclosure: Disclosure; caption:
       onClick={disclosure.toggle}
       className={cx(
         TARGET,
-        "inline-flex flex-none cursor-pointer items-center gap-1.5 rounded-ds-sm border border-border-subtle bg-surface-card px-2.5 text-caption font-medium whitespace-nowrap text-text-secondary transition duration-100 ease-linear hover:bg-surface-subtle hover:text-text-primary max-[480px]:px-3",
+        "inline-flex flex-none cursor-pointer items-center gap-1.5 rounded-ds-sm border border-border-subtle bg-surface-card px-2.5 text-caption font-medium whitespace-nowrap text-text-secondary transition duration-100 ease-linear hover:bg-surface-subtle hover:text-text-primary max-[480px]:min-w-11 max-[480px]:justify-center max-[480px]:px-2",
       )}
     >
       <TableIcon aria-hidden="true" className="size-3.5 flex-none" />
-      Table view
+      <span className="max-[480px]:sr-only">Table view</span>
       <ChevronDown
         aria-hidden="true"
         data-marker=""
@@ -170,7 +170,7 @@ function TablePanel({ disclosure, table }: { disclosure: Disclosure; table: Tabl
     <div
       id={disclosure.id}
       hidden={!disclosure.open}
-      className="min-w-0 text-small text-text-secondary"
+      className="w-full min-w-0 text-small text-text-secondary"
     >
       <TableScroll label={`${table.caption}, table`}>
         <Table {...table} />
@@ -186,7 +186,7 @@ function TablePanel({ disclosure, table }: { disclosure: Disclosure; table: Tabl
 export function TableView(table: TableViewData) {
   const disclosure = useDisclosure();
   return (
-    <div className="flex min-w-0 flex-col items-start gap-2">
+    <div className="flex w-full min-w-0 flex-col gap-2 [&>button]:self-start">
       <TableButton disclosure={disclosure} caption={table.caption} />
       <TablePanel disclosure={disclosure} table={table} />
     </div>

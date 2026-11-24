@@ -1,5 +1,4 @@
 import type { OutputEntry, Row, Table } from "../../../publishedReport";
-import { readCell } from "./numbers";
 
 /** Every table of the entry, in the order the handoff wrote them, with its section's heading. */
 export function allTables(entry: OutputEntry) {
@@ -125,7 +124,7 @@ export function orderByPeriod<T>(items: readonly { cell: string; item: T }[]): O
 
 /** The rows of a period-rows table (`Chart data: …`, `Net debt data`), ordered by period; see `orderByPeriod`. */
 export function periodRows(table: Table, column = 0): Ordered<Row> {
-  if (table.rows.length === 0) return { reason: "The table states no period." };
+  if (table.rows.length === 0) return { reason: "No period is stated." };
   return orderByPeriod(table.rows.map((row) => ({ cell: row.cells[column] ?? "", item: row })));
 }
 
@@ -134,7 +133,7 @@ export function statementColumns(table: Table): Ordered<number> {
   const columns = table.headers.flatMap((header, at) =>
     at > 0 && periodOf(header) ? [{ cell: header.trim(), item: at }] : [],
   );
-  if (columns.length === 0) return { reason: "The table states no period column." };
+  if (columns.length === 0) return { reason: "No period column is stated." };
   return orderByPeriod(columns);
 }
 
@@ -177,5 +176,8 @@ export function periodColumns(table: Table) {
   return a.year < b.year ? { prior: a, current: b } : { prior: b, current: a };
 }
 
-/** A cell of a statement row read as a number, a stated gap or words. */
-export const cellAt = (row: Row, at: number) => readCell(row.cells[at] ?? "");
+/** A table's heading as a reader's name: no register id, no "Chart data:" ("T4.5 Cash flow statement" → "Cash flow statement"). */
+export function tableName(heading: string) {
+  const name = heading.replace(/^T[A-Z]*\d+[A-Z]?\.\d+\s+/, "").replace(/^Chart data:\s*/, "");
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}

@@ -5,7 +5,7 @@ import { plain } from "../kit/geometry";
 import { FigureTile, ScrollFigure } from "../kit/LeadFrame";
 import { difference, group, signOf, type Reading } from "../kit/numbers";
 import type { LeadProps } from "../types";
-import { segmentView, type Segment, type SegmentView } from "./foundationData";
+import { segmentView, type Segment, type SegmentView } from "./legacyData";
 import { SEG, ratioPercent, segmentGeometry, type BarMark } from "./segmentsGeometry";
 
 const LABEL = "Segments";

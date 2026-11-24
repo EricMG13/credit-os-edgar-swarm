@@ -59,6 +59,22 @@ export function bulletReading(props: BulletProps) {
  * proposed figure (a ring), on one scale from zero. A figure beyond the limit carries the word,
  * never colour alone; a value the module did not state is the hatched slot with its reason.
  */
+type Spot = { x: number; anchor: "start" | "end"; inside: boolean } | null;
+
+/**
+ * Where the value's figure goes: beside the bar's end when no other mark is in the way; inside
+ * the bar's end when the bar is long enough and the limit is not under the text; otherwise not on
+ * the mark (`null`: it is written in the line under the scale).
+ */
+function valueSpot(end: number, zero: number, others: readonly number[], size: number): Spot {
+  const after = others.filter((at) => at > end + 1).map((at) => at - end);
+  if (!after.length || Math.min(...after) >= size + 14)
+    return { x: end + 6, anchor: "start", inside: false };
+  const under = others.some((at) => at >= end - size - 12 && at <= end + 1);
+  if (end - zero >= size + 12 && !under) return { x: end - 6, anchor: "end", inside: true };
+  return null;
+}
+
 export function Bullet(props: BulletProps) {
   const { name, value, limit, proposed, width, limitKind = "max" } = props;
   const word = props.beyond ?? (limitKind === "max" ? "above the limit" : "below the limit");
@@ -66,41 +82,53 @@ export function Bullet(props: BulletProps) {
   const narrow = width < NARROW;
   const figures = [value, limit, proposed].filter(stated).map((one) => one.value);
   const axis = niceAxis(figures, { zero: true });
-  const valueText = stated(value) ? value.text : "";
   const nameWidth = narrow ? width : Math.min(textWidth(name) + 16, Math.round(width * 0.28));
   const nameLines = wrap(name, nameWidth - (narrow ? 0 : 12));
   const plotLeft = narrow ? 1 : nameWidth;
-  const plotRight = width - textWidth(valueText, SIZE.value) - 14;
+  const valueSize = stated(value) ? textWidth(value.text, SIZE.value) : 0;
+  const plotRight = width - valueSize - 14;
   const x = (figure: number) => axis.place(figure, plotLeft, plotRight);
   const top = narrow ? nameLines.length * LINE + 4 : 0;
-  const limitY = top + 12;
   const bandY = top + 20;
   const mid = bandY + BAND / 2;
+  const zero = x(0);
+  const limitX = x(limit.value);
+  const proposedX = stated(proposed) ? x(proposed.value) : null;
+  const end = stated(value) ? x(value.value) : zero;
   const valueBeyond = isBeyond(value, limit.value, limitKind);
   const proposedBeyond = isBeyond(proposed, limit.value, limitKind);
-  const below = [
+  const spot = stated(value)
+    ? valueSpot(end, zero, [limitX, ...(proposedX === null ? [] : [proposedX - 6])], valueSize)
+    : null;
+  const lines: { text: string; gap: boolean }[] = [
+    ...(stated(value) && (!spot || valueBeyond)
+      ? [{ text: `${names.value} ${value.text}${valueBeyond ? `, ${word}` : ""}`, gap: false }]
+      : []),
+    ...(stated(value) ? [] : [{ text: `${names.value}: ${value.gap}`, gap: true }]),
     ...(stated(proposed)
-      ? [`${names.proposed} ${proposed.text}${proposedBeyond ? `, ${word}` : ""}`]
+      ? [
+          {
+            text: `${names.proposed} ${proposed.text}${proposedBeyond ? `, ${word}` : ""}`,
+            gap: false,
+          },
+        ]
       : proposed
-        ? [`${names.proposed} not stated: ${proposed.gap}`]
+        ? [{ text: `${names.proposed}: ${proposed.gap}`, gap: true }]
         : []),
-    ...(valueBeyond ? [`${names.value} ${valueText}, ${word}`] : []),
-    ...(stated(value) ? [] : [`${names.value} not stated: ${value.gap}`]),
-  ].flatMap((text) => wrap(text, width - plotLeft));
-  const belowY = bandY + BAND + 18;
-  const ticksY = belowY + below.length * LINE + 4;
-  const height = ticksY + 6;
+  ];
+  const below = lines.flatMap((line) =>
+    wrap(line.text, width - plotLeft).map((text) => ({ text, gap: line.gap })),
+  );
+  const ticksY = bandY + BAND + 4;
+  const belowY = ticksY + 36;
+  const height = belowY + Math.max(0, below.length - 1) * LINE + (below.length ? 6 : -10);
   const limitText = `${names.limit} ${limit.text}`;
-  const limitX = x(limit.value);
   const half = textWidth(limitText) / 2;
   const limitAnchor = limitX - half < plotLeft ? "start" : limitX + half > width ? "end" : "middle";
-  const zero = x(0);
   const kept = fittingTicks(axis, plotLeft, plotRight, (text) => textWidth(text, SIZE.tick));
-  const end = stated(value) ? x(value.value) : zero;
-  const farthest = Math.max(end, limitX, stated(proposed) ? x(proposed.value) + 6 : 0);
   return (
     <svg
-      viewBox={`0 0 ${String(width)} ${String(height + 12)}`}
+      viewBox={`0 0 ${String(width)} ${String(height)}`}
       width="100%"
       role="img"
       aria-label={props.label ?? bulletReading(props)}
@@ -173,18 +201,18 @@ export function Bullet(props: BulletProps) {
       <text
         data-part="limit"
         x={limitAnchor === "start" ? Math.max(limitX, plotLeft) : limitX}
-        y={limitY}
+        y={top + 12}
         textAnchor={limitAnchor}
         fontSize={SIZE.label}
         className="fill-text-secondary font-body"
       >
         {limitText}
       </text>
-      {stated(proposed) && (
+      {proposedX !== null && (
         <circle
           data-mark="proposed"
-          data-value={proposed.value}
-          cx={x(proposed.value)}
+          data-value={stated(proposed) ? proposed.value : undefined}
+          cx={proposedX}
           cy={mid}
           r="5"
           strokeWidth="2"
@@ -194,45 +222,46 @@ export function Bullet(props: BulletProps) {
           )}
         />
       )}
-      {stated(value) && (
+      {stated(value) && spot && (
         <text
           data-part="value"
-          x={farthest + 8}
+          x={spot.x}
           y={mid + 4}
+          textAnchor={spot.anchor}
           fontSize={SIZE.value}
-          className="fill-text-primary font-mono font-medium"
-        >
-          {valueText}
-        </text>
-      )}
-      {below.map((line, at) => (
-        <text
-          key={`${String(at)}-${line}`}
-          data-part="below"
-          x={plotLeft}
-          y={belowY + at * LINE}
-          fontSize={SIZE.label}
           className={cx(
-            "font-body",
-            /not stated/.test(line) ? "fill-gap-text" : "fill-text-secondary",
+            "font-mono font-medium",
+            spot.inside ? "fill-surface-card" : "fill-text-primary",
           )}
         >
-          {line}
+          {value.text}
         </text>
-      ))}
-      <g transform={`translate(0 ${String(ticksY - 4)})`}>
+      )}
+      <g data-part="scale">
         {kept.map((tick) => (
           <line
             key={tick.value}
             x1={x(tick.value)}
             x2={x(tick.value)}
-            y1="0"
-            y2="4"
+            y1={ticksY}
+            y2={ticksY + 4}
             className="stroke-border-container"
           />
         ))}
-        <TickLabels ticks={kept} x={x} y={16} width={width} />
+        <TickLabels ticks={kept} x={x} y={ticksY + 16} width={width} />
       </g>
+      {below.map((line, at) => (
+        <text
+          key={`${String(at)}-${line.text}`}
+          data-part={line.gap ? "reason" : "below"}
+          x={plotLeft}
+          y={belowY + at * LINE}
+          fontSize={SIZE.label}
+          className={cx("font-body", line.gap ? "fill-gap-text" : "fill-text-secondary")}
+        >
+          {line.text}
+        </text>
+      ))}
     </svg>
   );
 }

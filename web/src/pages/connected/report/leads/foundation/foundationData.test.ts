@@ -1,348 +1,856 @@
-// Expected values are written out by hand from the retained TransDigm FY2024 CP-1 handoff
-// (tests/fixtures/live_2026_11_15/earnings_update-CP-1-draft3-accepted.md), not computed by the code
-// under test. The handoff is outdated evidence: shape and scope only.
+// Expected values are written out by hand from the retained TransDigm CP-1 handoffs
+// (tests/fixtures/live_2026_11_15/: earnings_update-CP-1-draft3-accepted.md, relative_value-CP-1-draft1.md,
+// distressed-CP-1-draft1.md, earnings_update-CP-1-draft1.md), not computed by the code under test.
+// The handoffs are outdated evidence (FY2024): shape and scope only. Mutated entries
+// (fixtures/mutations.ts) are test inputs, not real handoffs.
 import { describe, expect, it } from "vitest";
-import type { Block, OutputEntry, Table } from "../../../publishedReport";
-import { cp1Entry } from "../fixtures/load";
+import type { OutputEntry } from "../../../publishedReport";
+import type { Reading } from "../kit/numbers";
 import {
+  cp1Entry,
+  distressedCp1Entry,
+  earningsUpdateCp1Draft1Entry,
+  relativeValueCp1Entry,
+} from "../fixtures/load";
+import {
+  addRow,
+  dropTable,
+  edited,
+  ltmCp1,
+  setCell,
+  setLabelled,
+  threePeriodCp1,
+  withRows,
+} from "../fixtures/mutations";
+import {
+  basisText,
+  bridgeKind,
+  bridgeKinds,
   cashLadder,
   earningsAgainstDebt,
   ebitdaBridge,
+  NO_ADJUSTMENT,
   netDebtView,
   segmentView,
+  statedPeriods,
+  type PeriodCell,
 } from "./foundationData";
 
-const entry = cp1Entry();
+const accepted = cp1Entry();
+const relative = relativeValueCp1Entry();
+const distressed = distressedCp1Entry();
+const draft1 = earningsUpdateCp1Draft1Entry();
 
-/** The same handoff with one table replaced or a cell edited, for the adversarial cases. */
-function edited(change: (table: Table, heading: string) => Table | null): OutputEntry {
-  return {
-    ...entry,
-    sections: entry.sections.map((section) => ({
-      ...section,
-      blocks: section.blocks.flatMap((block): Block[] => {
-        if (block.type !== "table") return [block];
-        const next = change(block, section.heading);
-        return next ? [next] : [];
-      }),
-    })),
-  };
-}
-const setCell = (heading: string, row: number, column: string, text: string) =>
-  edited((table, at) => {
-    if (at !== heading) return table;
-    const index = table.headers.indexOf(column);
-    return {
-      ...table,
-      rows: table.rows.map((item, n) =>
-        n === row
-          ? { ...item, cells: item.cells.map((cell, m) => (m === index ? text : cell)) }
-          : item,
-      ),
-    };
+/** A reading as a short string: the number text, `gap: <reason>`, `text: <words>`, or null. */
+const shown = (cell: Reading | null | undefined) => {
+  if (!cell) return null;
+  if (cell.kind === "gap") return `gap: ${cell.reason}`;
+  return cell.kind === "text" ? `text: ${cell.text}` : cell.text;
+};
+const cells = (values: readonly PeriodCell[] | undefined) =>
+  values?.map((value) => [value.label, shown(value.cell)]);
+
+// ------------------------------------------------------------------------------------------------
+
+describe("statedPeriods: the periods the figures cover", () => {
+  it("lists FY2023 and FY2024 for the accepted handoff, annual, compared", () => {
+    const periods = statedPeriods(accepted);
+    expect(periods.labels).toEqual(["FY2023", "FY2024"]);
+    expect(periods.kind).toBe("annual");
+    expect(periods.comparison).toEqual({ from: "FY2023", to: "FY2024" });
+    expect(periods.gaps).toEqual([]);
+    expect(periods.tables.map((t) => t.table)).toEqual([
+      "Revenue and EBITDA",
+      "Net debt data",
+      "Leverage",
+      "Liquidity",
+      "Income statement",
+      "Cash flow statement",
+      "Segment schedule",
+    ]);
   });
-const dropTable = (heading: string) => edited((table, at) => (at === heading ? null : table));
+  it("lists the one period of the relative value handoff and draws no comparison", () => {
+    const periods = statedPeriods(relative);
+    expect(periods.labels).toEqual(["FY2024"]);
+    expect(periods.kind).toBe("annual");
+    expect(periods.comparison).toBeNull();
+  });
+  it("lists all three periods of the three-period mutation, FY2022 first", () => {
+    const periods = statedPeriods(threePeriodCp1());
+    expect(periods.labels).toEqual(["FY2022", "FY2023", "FY2024"]);
+    expect(periods.comparison).toEqual({ from: "FY2023", to: "FY2024" });
+  });
+  it("lists an LTM period as its own kind beside the annual periods", () => {
+    const periods = statedPeriods(ltmCp1());
+    expect(periods.labels).toEqual(["FY2023", "FY2024", "LTM Dec-2024"]);
+    expect(periods.periods.map((p) => p.kind)).toEqual(["annual", "annual", "other"]);
+    expect(periods.kind).toBe("other");
+    expect(periods.comparison).toEqual({ from: "FY2023", to: "FY2024" });
+  });
+  it("states a repeated year as a gap for that table, with the reason", () => {
+    const twice = addRow(accepted, "Net debt data", [
+      "FY2024 / 2024-09-30",
+      "1",
+      "1",
+      "0",
+      "US$m",
+      "Mutation.",
+    ]);
+    expect(statedPeriods(twice).gaps).toEqual([
+      { table: "Net debt data", reason: "FY2024 is stated more than once." },
+    ]);
+    expect(statedPeriods(twice).labels).toEqual(["FY2023", "FY2024"]);
+  });
+});
+
+// ------------------------------------------------------------------------------------------------
 
 describe("earningsAgainstDebt", () => {
-  const data = earningsAgainstDebt(entry);
-  it("reads the four money measures of both periods on one unit", () => {
+  it("reads the four measures of both accepted periods on US$m, with each exact change", () => {
+    const data = earningsAgainstDebt(accepted);
     expect(data?.unit).toBe("US$m");
-    expect(data?.priorLabel).toBe("FY2023");
-    expect(data?.currentLabel).toBe("FY2024");
-    const row = (key: string) => data?.measures.find((m) => m.key === key);
-    expect([row("sales")?.pair.prior.cell.text, row("sales")?.pair.current.cell.text]).toEqual([
-      "6585",
-      "7940",
+    expect(data?.periods.map((p) => p.label)).toEqual(["FY2023", "FY2024"]);
+    expect(data?.comparison).toEqual({ from: "FY2023", to: "FY2024" });
+    expect(data?.measures.map((m) => [m.key, m.label, ...cells(m.values)!, m.change])).toEqual([
+      ["sales", "Revenue", ["FY2023", "6585"], ["FY2024", "7940"], "1355"],
+      ["reportedEbitda", "EBITDA (Reported)", ["FY2023", "3148"], ["FY2024", "3813"], "665"],
+      ["adjustedEbitda", "Adjusted EBITDA", ["FY2023", "3395"], ["FY2024", "4173"], "778"],
+      ["grossDebt", "Gross debt", ["FY2023", "19750"], ["FY2024", "24880"], "5130"],
     ]);
-    expect([
-      row("reportedEbitda")?.pair.prior.cell.text,
-      row("reportedEbitda")?.pair.current.cell.text,
-    ]).toEqual(["3148", "3813"]);
-    expect([
-      row("adjustedEbitda")?.pair.prior.cell.text,
-      row("adjustedEbitda")?.pair.current.cell.text,
-    ]).toEqual(["3395", "4173"]);
-    expect([
-      row("grossDebt")?.pair.prior.cell.text,
-      row("grossDebt")?.pair.current.cell.text,
-    ]).toEqual(["19750", "24880"]);
+    expect(data?.absent).toEqual([]);
   });
-  it("derives each change exactly and the growth to two decimals", () => {
-    const row = (key: string) => data?.measures.find((m) => m.key === key);
-    expect(row("sales")?.change).toBe("1355");
-    expect(row("sales")?.growth).toBe("20.58");
-    expect(row("reportedEbitda")?.change).toBe("665");
-    expect(row("reportedEbitda")?.growth).toBe("21.12");
-    expect(row("adjustedEbitda")?.growth).toBe("22.92");
-    expect(row("grossDebt")?.change).toBe("5130");
-    expect(row("grossDebt")?.growth).toBe("25.97");
+  it("returns no growth rate: the module writes none (ruling i)", () => {
+    const measure = earningsAgainstDebt(accepted)?.measures[0];
+    expect(measure && "growth" in measure).toBe(false);
   });
-  it("reads total debt / EBITDA with the owner's tone: a rise is worse", () => {
-    expect(data?.leverage?.pair.prior.cell.text).toBe("6.27");
-    expect(data?.leverage?.pair.current.cell.text).toBe("6.53");
-    expect(data?.leverage?.change).toBe("0.26");
-    expect(data?.leverage?.tone).toBe("worse");
+  it("reads total debt / EBITDA with the owner's tone: a rise of 0.26 is worse", () => {
+    const leverage = earningsAgainstDebt(accepted)?.leverage;
+    expect(cells(leverage?.values)).toEqual([
+      ["FY2023", "6.27"],
+      ["FY2024", "6.53"],
+    ]);
+    expect(leverage?.change).toBe("0.26");
+    expect(leverage?.tone).toBe("worse");
+  });
+  it("reads the leverage basis from the table's own cell, leaving out the clause that cites pages", () => {
+    const data = earningsAgainstDebt(accepted);
+    expect(data?.leverageBasis).toBe(
+      "Carrying debt; reported EBITDA; dividend-only pro forma 6.02x after 2024-10-18.",
+    );
+    expect(data?.leverage?.bases).toEqual([
+      "Carrying debt; reported EBITDA; before subsequent events.",
+      "Carrying debt; reported EBITDA; dividend-only pro forma 6.02x after 2024-10-18.",
+    ]);
+  });
+  it("gives figures for the single-period relative value handoff, and no comparison", () => {
+    const data = earningsAgainstDebt(relative);
+    expect(data?.periods.map((p) => p.label)).toEqual(["FY2024"]);
+    expect(data?.comparison).toBeNull();
+    expect(data?.measures.map((m) => [m.key, ...cells(m.values)!, m.change])).toEqual([
+      ["sales", ["FY2024", "7940"], null],
+      ["reportedEbitda", ["FY2024", "3813"], null],
+      ["adjustedEbitda", ["FY2024", "4173"], null],
+      ["grossDebt", ["FY2024", "24880"], null],
+    ]);
+    expect(cells(data?.leverage?.values)).toEqual([["FY2024", "6.53"]]);
+    expect(data?.leverage?.change).toBeNull();
+    expect(data?.leverage?.tone).toBe("none");
+    expect(data?.leverageBasis).toBe(
+      "Carrying debt and reported EBITDA, not EBITDA As Defined; Before October payments and draw; subsequent-event table keeps adjustments separate.",
+    );
+  });
+  it("reads the distressed handoff's basis without its calculation id or page citation", () => {
+    const data = earningsAgainstDebt(distressed);
+    expect(data?.measures.map((m) => m.change)).toEqual(["1355", "665", "778", "5130"]);
+    expect(data?.leverageBasis).toBe(
+      "Carrying-value debt divided by issuer unadjusted EBITDA 3813 US$m; October distribution excluded.",
+    );
+  });
+  it("reads the draft 1 handoff the same as the accepted one", () => {
+    const data = earningsAgainstDebt(draft1);
+    expect(data?.measures.map((m) => m.change)).toEqual(["1355", "665", "778", "5130"]);
+    expect(data?.tableLine).toBe(392);
+  });
+  it("draws every period of the three-period mutation, gaps in place with their reason", () => {
+    const data = earningsAgainstDebt(threePeriodCp1());
+    expect(data?.periods.map((p) => p.label)).toEqual(["FY2022", "FY2023", "FY2024"]);
+    expect(data?.measures.map((m) => cells(m.values))).toEqual([
+      [
+        ["FY2022", "gap: outside the comparison scope"],
+        ["FY2023", "6585"],
+        ["FY2024", "7940"],
+      ],
+      [
+        ["FY2022", "2646"],
+        ["FY2023", "3148"],
+        ["FY2024", "3813"],
+      ],
+      [
+        ["FY2022", "2646"],
+        ["FY2023", "3395"],
+        ["FY2024", "4173"],
+      ],
+      [
+        ["FY2022", "gap: outside the comparison scope"],
+        ["FY2023", "19750"],
+        ["FY2024", "24880"],
+      ],
+    ]);
+    expect(data?.measures.map((m) => m.change)).toEqual(["1355", "665", "778", "5130"]);
+    expect(cells(data?.leverage?.values)?.[0]).toEqual([
+      "FY2022",
+      "gap: outside the comparison scope",
+    ]);
+  });
+  it("still reads the annual periods beside an LTM row, and lists the LTM period", () => {
+    const data = earningsAgainstDebt(ltmCp1());
+    expect(data?.periods.map((p) => p.label)).toEqual(["FY2023", "FY2024", "LTM Dec-2024"]);
+    expect(data?.comparison).toEqual({ from: "FY2023", to: "FY2024" });
+    const sales = data?.measures.find((m) => m.key === "sales");
+    expect(cells(sales?.values)).toEqual([
+      ["FY2023", "6585"],
+      ["FY2024", "7940"],
+      ["LTM Dec-2024", "8000"],
+    ]);
+    expect(sales?.change).toBe("1355");
+    const reported = data?.measures.find((m) => m.key === "reportedEbitda");
+    expect(reported?.values[2]).toEqual({ label: "LTM Dec-2024", cell: null, line: null });
   });
   it("names a measure the handoff does not carry instead of drawing it", () => {
-    const gone = earningsAgainstDebt(dropTable("Net debt data"));
+    const gone = earningsAgainstDebt(dropTable(accepted, "Net debt data"));
     expect(gone?.measures.map((m) => m.key)).toEqual(["sales", "reportedEbitda", "adjustedEbitda"]);
     expect(gone?.absent).toEqual([
       { label: "Gross debt", reason: "Gross debt is not in the handoff." },
     ]);
   });
-  it("keeps a stated gap as a gap: no change, no growth, never zero", () => {
+  it("keeps a stated gap as a gap: no change, never zero", () => {
     const gap = earningsAgainstDebt(
-      setCell("Net debt data", 1, "Gross debt", "Not supplied: not extracted"),
+      setCell(accepted, "Net debt data", 1, "Gross debt", "Not supplied: not extracted"),
     );
     const debt = gap?.measures.find((m) => m.key === "grossDebt");
-    expect(debt?.pair.current.cell).toMatchObject({ kind: "gap", reason: "not extracted" });
+    expect(shown(debt?.values[1]?.cell)).toBe("gap: not extracted");
     expect(debt?.change).toBeNull();
-    expect(debt?.growth).toBeNull();
   });
-  it("refuses a measure stated for other periods or in another unit", () => {
-    const unit = earningsAgainstDebt(
-      edited((table, at) =>
-        at === "Net debt data"
-          ? {
-              ...table,
-              rows: table.rows.map((r) => ({
-                ...r,
-                cells: r.cells.map((c) => (c === "US$m" ? "GBPm" : c)),
-              })),
-            }
-          : table,
+  it("keeps words where a number is expected as words, with no change", () => {
+    const words = earningsAgainstDebt(
+      setCell(accepted, "Chart data: revenue and EBITDA", 1, "Revenue", "about 7,900"),
+    );
+    const sales = words?.measures.find((m) => m.key === "sales");
+    expect(shown(sales?.values[1]?.cell)).toBe("text: about 7,900");
+    expect(sales?.change).toBeNull();
+  });
+  it("keeps a stated zero as a value and a negative change as negative", () => {
+    const zero = earningsAgainstDebt(
+      setCell(accepted, "Chart data: revenue and EBITDA", 1, "Revenue", "0"),
+    );
+    const sales = zero?.measures.find((m) => m.key === "sales");
+    expect(shown(sales?.values[1]?.cell)).toBe("0");
+    expect(sales?.change).toBe("-6585");
+  });
+  it("refuses a measure in another unit, or in more than one unit", () => {
+    const allGbp = edited(accepted, (table, at) =>
+      at === "Net debt data"
+        ? {
+            ...table,
+            rows: table.rows.map((r) => ({
+              ...r,
+              cells: r.cells.map((c) => (c === "US$m" ? "GBPm" : c)),
+            })),
+          }
+        : table,
+    );
+    expect(earningsAgainstDebt(allGbp)?.absent).toEqual([
+      { label: "Gross debt", reason: "Gross debt is stated in another unit." },
+    ]);
+    const mixed = setCell(accepted, "Net debt data", 0, "Reporting unit", "GBPm");
+    expect(earningsAgainstDebt(mixed)?.absent).toEqual([
+      { label: "Gross debt", reason: "Gross debt is not stated in one unit." },
+    ]);
+  });
+  it("names a repeated year as the reason a measure is not drawn", () => {
+    const twice = addRow(accepted, "Net debt data", [
+      "FY2024 / 2024-09-30",
+      "1",
+      "1",
+      "0",
+      "US$m",
+      "Mutation.",
+    ]);
+    expect(earningsAgainstDebt(twice)?.absent).toEqual([
+      { label: "Gross debt", reason: "Net debt data: FY2024 is stated more than once." },
+    ]);
+  });
+  it("draws an empty or gap-only table as stated: empty is a reason, gaps stay gaps", () => {
+    const empty = earningsAgainstDebt(withRows(accepted, "Net debt data", []));
+    expect(empty?.absent).toEqual([
+      { label: "Gross debt", reason: "Net debt data: No period is stated." },
+    ]);
+    const gapsOnly = earningsAgainstDebt(
+      withRows(accepted, "Net debt data", [
+        [
+          "FY2024 / 2024-09-30",
+          "Not supplied: x",
+          "Not supplied: x",
+          "Not supplied: x",
+          "US$m",
+          "-",
+        ],
+      ]),
+    );
+    const debt = gapsOnly?.measures.find((m) => m.key === "grossDebt");
+    expect(cells(debt?.values)).toEqual([
+      ["FY2023", null],
+      ["FY2024", "gap: x"],
+    ]);
+  });
+  it("asserts no leverage basis the table does not state", () => {
+    const noBasis = earningsAgainstDebt(
+      setCell(accepted, "Chart data: leverage", 1, "Basis and limitation", ""),
+    );
+    expect(noBasis?.leverageBasis).toBeNull();
+    const cited = earningsAgainstDebt(
+      setCell(accepted, "Chart data: leverage", 1, "Basis and limitation", "Annual p120."),
+    );
+    expect(cited?.leverageBasis).toBe("Detail is in Evidence.");
+  });
+  it("returns nothing when no measure table is readable", () => {
+    let none: OutputEntry = accepted;
+    for (const heading of [
+      "Chart data: revenue and EBITDA",
+      "Net debt data",
+      "T4.4 Income statement",
+    ])
+      none = dropTable(none, heading);
+    expect(earningsAgainstDebt(none)).toBeNull();
+  });
+});
+
+// ------------------------------------------------------------------------------------------------
+
+describe("basisText", () => {
+  it("keeps the module's clauses and leaves out those that cite a source or calculation", () => {
+    expect(basisText("Reported cash; annual p120, p152; excludes receivables.")).toBe(
+      "Reported cash; excludes receivables.",
+    );
+    expect(basisText("Calculated C3; annual filing pages 71 and 120.")).toBe(
+      "Detail is in Evidence.",
+    );
+    expect(basisText("")).toBeNull();
+  });
+});
+
+// ------------------------------------------------------------------------------------------------
+
+type Ladder = NonNullable<ReturnType<typeof cashLadder>>;
+const ladderRows = (ladder: Ladder | null) =>
+  ladder?.steps.map((s) => [s.key, s.kind, s.label, ...s.values.map((v) => shown(v.cell))]);
+
+describe("cashLadder: the handoff's own levels and deductions, as written", () => {
+  it("walks the accepted handoff's stated rows for FY2023 and FY2024, no plug and no end level", () => {
+    const ladder = cashLadder(accepted);
+    expect(ladder?.unit).toBe("US$m");
+    expect(ladder?.periods.map((p) => p.label)).toEqual(["FY2023", "FY2024"]);
+    expect(ladder?.comparison).toEqual({ from: "FY2023", to: "FY2024" });
+    expect(ladderRows(ladder)).toEqual([
+      ["ebitda", "level", "EBITDA (Adjusted)", "3395", "4173"],
+      ["interest", "deduction", "Cash Interest Paid", "1160", "1158"],
+      ["taxes", "deduction", "Cash taxes paid", "260", "539"],
+      ["cfo", "level", "Net Cash from Operating Activities", "1375", "2045"],
+      ["capex", "deduction", "Capital expenditures", "-139", "-165"],
+      ["fcf", "level", "Levered free cash flow", "1236", "1880"],
+      ["dividends", "deduction", "Dividends and dividend equivalent payments", "-38", "-2038"],
+      [
+        "repurchases",
+        "deduction",
+        "Repurchases of common stock",
+        "gap: source dash",
+        "gap: source dash",
+      ],
+      [
+        "afterDistributions",
+        "level",
+        "Discretionary cash flow after distributions",
+        "1198",
+        "-158",
+      ],
+      [
+        "acquisitions",
+        "deduction",
+        "Acquisition of businesses, net of cash acquired",
+        "-762",
+        "-2347",
+      ],
+    ]);
+  });
+  it("says how each deduction is written: paid amounts positive, other outflows signed", () => {
+    expect(cashLadder(accepted)?.steps.map((s) => s.sign)).toEqual([
+      null,
+      "paid",
+      "paid",
+      null,
+      "signed",
+      null,
+      "signed",
+      "signed",
+      null,
+      "signed",
+    ]);
+  });
+  it('matches the distressed handoff\'s "Cash taxes paid, net of refunds" and keeps the stated repurchase gap', () => {
+    const ladder = cashLadder(distressed);
+    expect(ladderRows(ladder)).toEqual([
+      ["ebitda", "level", "EBITDA (Adjusted)", "3395", "4173"],
+      ["interest", "deduction", "Cash Interest Paid", "1160", "1158"],
+      ["taxes", "deduction", "Cash taxes paid, net of refunds", "260", "539"],
+      ["cfo", "level", "Net Cash from Operating Activities", "1375", "2045"],
+      ["capex", "deduction", "Capital expenditures", "-139", "-165"],
+      ["fcf", "level", "Levered free cash flow", "1236", "1880"],
+      ["dividends", "deduction", "Dividends and dividend equivalent payments", "-38", "-2038"],
+      [
+        "repurchases",
+        "deduction",
+        "Repurchases of common stock",
+        "gap: source dash",
+        "gap: source dash",
+      ],
+      ["afterDistributions", "level", "Cash flow after distributions", null, null],
+      [
+        "acquisitions",
+        "deduction",
+        "Acquisition of businesses, net of cash acquired",
+        "-762",
+        "-2347",
+      ],
+    ]);
+    const after = ladder?.steps.find((s) => s.key === "afterDistributions");
+    expect(after?.stated).toBe(false);
+    expect(after?.absent).toBe("Cash flow after distributions is not in the handoff.");
+  });
+  it("reads the single-period relative value ladder with its own label forms", () => {
+    expect(ladderRows(cashLadder(relative))).toEqual([
+      ["ebitda", "level", "EBITDA (Adjusted)", "4173"],
+      ["interest", "deduction", "Cash Interest Paid", "1158"],
+      ["taxes", "deduction", "Cash Taxes Paid", "539"],
+      ["cfo", "level", "Net Cash from Operating Activities", "2045"],
+      ["capex", "deduction", "Capital expenditures", "-165"],
+      ["fcf", "level", "Free cash flow, levered after working capital", "1880"],
+      ["dividends", "deduction", "Dividends and dividend equivalent payments", "-2038"],
+      ["repurchases", "deduction", "Repurchases of common stock", "gap: source dash"],
+      [
+        "afterDistributions",
+        "level",
+        "Discretionary cash flow after dividends and equivalents",
+        "-158",
+      ],
+      ["acquisitions", "deduction", "Acquisition of businesses, net of cash acquired", "-2347"],
+    ]);
+    expect(cashLadder(relative)?.comparison).toBeNull();
+  });
+  it("carries every period of the three-period mutation: FY2022 all stated gaps", () => {
+    const ladder = cashLadder(threePeriodCp1());
+    expect(ladder?.periods.map((p) => p.label)).toEqual(["FY2022", "FY2023", "FY2024"]);
+    expect(ladder?.steps.map((s) => shown(s.values[0]?.cell))).toEqual(
+      Array(10).fill("gap: outside the comparison scope"),
+    );
+    expect(shown(ladder?.steps[0]?.values[2]?.cell)).toBe("4173");
+  });
+  it("shows a stated tax gap in place with its reason", () => {
+    const gap = cashLadder(
+      setLabelled(
+        accepted,
+        "T4.5 Cash flow statement",
+        "Cash taxes paid",
+        "FY2024",
+        "Not supplied: refund netting unclear",
       ),
     );
-    expect(unit?.absent.map((a) => a.reason)).toContain(
-      "Gross debt is stated in a different unit.",
-    );
+    const taxes = gap?.steps.find((s) => s.key === "taxes");
+    expect(cells(taxes?.values)).toEqual([
+      ["FY2023", "260"],
+      ["FY2024", "gap: refund netting unclear"],
+    ]);
   });
-  it("returns nothing when the anchor table is missing", () => {
-    expect(earningsAgainstDebt(dropTable("Chart data: revenue and EBITDA"))).toBeNull();
+  it("requires one match: two tax rows make the step absent with the reason", () => {
+    const twice = addRow(accepted, "T4.5 Cash flow statement", [
+      "Cash taxes paid, foreign",
+      "1",
+      "1",
+      "USD millions",
+      "Mutation",
+      "-",
+    ]);
+    const taxes = cashLadder(twice)?.steps.find((s) => s.key === "taxes");
+    expect(taxes?.stated).toBe(false);
+    expect(taxes?.absent).toBe("Cash taxes paid matches more than one row of the statement.");
+    expect(taxes?.values.map((v) => v.cell)).toEqual([null, null]);
+  });
+  it("refuses a step in another unit", () => {
+    const other = setLabelled(
+      accepted,
+      "T4.5 Cash flow statement",
+      "Capital expenditures",
+      "Unit",
+      "EUR millions",
+    );
+    const capex = cashLadder(other)?.steps.find((s) => s.key === "capex");
+    expect(capex?.stated).toBe(false);
+    expect(capex?.absent).toBe("Capital expenditures is stated in another unit.");
+  });
+  it("keeps the ladder when the income statement is missing, with the EBITDA step absent", () => {
+    const ladder = cashLadder(dropTable(accepted, "T4.4 Income statement"));
+    expect(ladder?.steps[0]).toMatchObject({
+      key: "ebitda",
+      stated: false,
+      absent: "EBITDA (Adjusted): Income statement is not in the handoff.",
+    });
+  });
+  it("is absent when the cash flow statement is", () => {
+    expect(cashLadder(dropTable(accepted, "T4.5 Cash flow statement"))).toBeNull();
   });
 });
 
-describe("cashLadder", () => {
-  const ladder = cashLadder(entry);
-  it("walks FY2024 from EBITDA As Defined to free cash flow after acquisitions and distributions", () => {
-    expect(ladder?.currentLabel).toBe("FY2024");
-    expect(ladder?.steps.map((s) => s.key)).toEqual([
-      "start",
-      "interest",
-      "taxes",
-      "remainder",
-      "cfo",
-      "capex",
-      "fcf",
-      "outflows",
-      "end",
-    ]);
-    expect(ladder?.steps.map((s) => s.current.text)).toEqual([
-      "4173",
-      "-1158",
-      "-539",
-      "-431",
-      "2045",
-      "-165",
-      "1880",
-      "-4385",
-      "-2505",
-    ]);
-  });
-  it("carries FY2023 beneath: 3,395, 1,375, 1,236 and 436 as the levels", () => {
-    expect(ladder?.steps.map((s) => s.prior.text)).toEqual([
-      "3395",
-      "-1160",
-      "-260",
-      "-600",
-      "1375",
-      "-139",
-      "1236",
-      "-800",
-      "436",
-    ]);
-  });
-  it("labels exactly the derived steps: the remainder, the outflow sum and the end level", () => {
-    expect(ladder?.steps.filter((s) => s.current.derived).map((s) => s.key)).toEqual([
-      "remainder",
-      "outflows",
-      "end",
-    ]);
-    expect(ladder?.outflowParts.current).toEqual(["-2347", "-2038"]);
-  });
-  it("shows a missing tax line as a gap and does not derive the remainder from it", () => {
-    const table = entry.sections.find((s) => s.heading === "T4.5 Cash flow statement")?.blocks[0];
-    if (table?.type !== "table") throw new Error("fixture lost T4.5");
-    const index = table.rows.findIndex((r) => r.cells[0] === "Cash taxes paid");
-    const gap = cashLadder(
-      setCell("T4.5 Cash flow statement", index, "FY2024", "Not supplied: refund netting unclear"),
-    );
-    const taxes = gap?.steps.find((s) => s.key === "taxes");
-    expect(taxes?.current).toMatchObject({ value: null, reason: "refund netting unclear" });
-    expect(gap?.steps.find((s) => s.key === "remainder")?.current.value).toBeNull();
-    expect(gap?.steps.find((s) => s.key === "cfo")?.current.text).toBe("2045");
-    expect(gap?.steps.find((s) => s.key === "end")?.current.text).toBe("-2505");
-  });
-  it("is absent when the statement or its anchor rows are", () => {
-    expect(cashLadder(dropTable("T4.5 Cash flow statement"))).toBeNull();
-  });
-});
+// ------------------------------------------------------------------------------------------------
 
 describe("netDebtView", () => {
-  const view = netDebtView(entry);
-  it("reads gross debt, cash and net debt for both periods", () => {
+  it("reads gross debt, cash, net debt and net leverage for every accepted period", () => {
+    const view = netDebtView(accepted);
     expect(view?.unit).toBe("US$m");
-    expect(view?.periods.map((p) => [p.label, p.gross.text, p.cash.text, p.net.text])).toEqual([
-      ["FY2023", "19750", "3472", "16278"],
-      ["FY2024", "24880", "6261", "18619"],
+    expect(
+      view?.periods.map((p) => [p.label, p.gross.text, p.cash.text, p.net.text, p.leverage?.text]),
+    ).toEqual([
+      ["FY2023", "19750", "3472", "16278", "5.17"],
+      ["FY2024", "24880", "6261", "18619", "4.88"],
     ]);
+    expect(view?.comparison).toEqual({ from: "FY2023", to: "FY2024" });
   });
-  it("reads net debt / EBITDA for each period from the leverage table", () => {
-    expect(view?.periods.map((p) => p.leverage?.text)).toEqual(["5.17", "4.88"]);
-  });
-  it("draws the largest stated adjustment as the pro forma and lists the others in words", () => {
-    expect(view?.proForma).toMatchObject({
-      event: "Special dividend and dividend equivalent settlement",
-      date: "2024-10-18",
-    });
-    expect(view?.proForma?.amount.text).toBe("4348");
-    expect(view?.proForma?.netDebt.text).toBe("22967");
-    expect(view?.proForma?.leverage.text).toBe("6.02");
-    expect(view?.otherAdjustments.map((a) => a.event)).toEqual([
-      "Remaining securitization draw",
-      "Common-stock repurchases",
-      "Raptor acquisition working-capital settlement received",
-      "CPI acquisition working-capital settlement paid",
+  it("lists every stated adjustment in handoff order, dates as written with a gap's reason", () => {
+    const view = netDebtView(accepted);
+    expect(
+      view?.adjustments.map((a) => [
+        a.event,
+        shown(a.date),
+        a.amount.text,
+        a.netDebt.text,
+        a.leverage.text,
+        a.unit,
+      ]),
+    ).toEqual([
+      ["Remaining securitization draw", "text: 2024-10-16", "0", "18619", "4.88", "US$m"],
+      [
+        "Special dividend and dividend equivalent settlement",
+        "text: 2024-10-18",
+        "4348",
+        "22967",
+        "6.02",
+        "US$m",
+      ],
+      [
+        "Common-stock repurchases",
+        "gap: the source states first quarter FY2025 only",
+        "316",
+        "18935",
+        "4.97",
+        "US$m",
+      ],
+      [
+        "Raptor acquisition working-capital settlement received",
+        "gap: the source states first quarter FY2025 only",
+        "-1",
+        "18618",
+        "4.88",
+        "US$m",
+      ],
+      [
+        "CPI acquisition working-capital settlement paid",
+        "gap: the source states first quarter FY2025 only",
+        "1",
+        "18620",
+        "4.88",
+        "US$m",
+      ],
     ]);
+    expect(view?.adjustments[0]?.amount).toEqual({ kind: "number", text: "0", value: 0 });
+    expect(view?.noAdjustments).toBe(false);
+    expect(view?.noAdjustmentsWords).toBeNull();
   });
-  it("states liquidity cash and undrawn facilities per period", () => {
+  it("states liquidity per period and the handoff's own cash plus available revolver figure", () => {
+    const view = netDebtView(accepted);
     expect(view?.liquidity.map((l) => [l.label, l.cash.text, l.undrawn.text])).toEqual([
       ["FY2023", "3472", "755"],
       ["FY2024", "6261", "843"],
     ]);
+    expect(view?.liquidityTotal?.label).toBe("Cash plus available revolver");
+    expect(cells(view?.liquidityTotal?.values)).toEqual([
+      ["FY2023", "4227"],
+      ["FY2024", "7104"],
+    ]);
   });
-  it("draws no pro forma when no adjustment row states one", () => {
-    const none = netDebtView(dropTable("Post-balance-sheet adjustments"));
-    expect(none?.proForma).toBeNull();
-    expect(none?.otherAdjustments).toEqual([]);
+  it("gives the relative value handoff's one period, its two stated adjustments and no liquidity total", () => {
+    const view = netDebtView(relative);
+    expect(
+      view?.periods.map((p) => [p.label, p.gross.text, p.cash.text, p.net.text, p.leverage?.text]),
+    ).toEqual([["FY2024", "24880", "6261", "18619", "4.88"]]);
+    expect(view?.comparison).toBeNull();
+    expect(
+      view?.adjustments.map((a) => [
+        a.event,
+        shown(a.date),
+        a.amount.text,
+        a.netDebt.text,
+        a.leverage.text,
+      ]),
+    ).toEqual([
+      [
+        "Special dividend and vested dividend equivalents paid",
+        "gap: the source states October 2024 only for the combined payment",
+        "4348",
+        "22967",
+        "6.02",
+      ],
+      [
+        "Remaining securitization availability drawn",
+        "gap: the source states October 2024 only",
+        "0",
+        "22967",
+        "6.02",
+      ],
+    ]);
+    expect(view?.liquidity.map((l) => [l.label, l.cash.text, l.undrawn.text])).toEqual([
+      ["FY2024", "6261", "1006"],
+    ]);
+    expect(view?.liquidityTotal).toBeNull();
   });
-  it("ignores an adjustment whose pro forma net debt is a gap", () => {
+  it("reads the distressed handoff's adjustments in its own order", () => {
+    expect(netDebtView(distressed)?.adjustments.map((a) => [a.event, shown(a.date)])).toEqual([
+      ["Remaining securitization availability drawn", "text: 2024-10-16"],
+      ["Special dividend and vested dividend equivalents paid", "text: 2024-10-18"],
+    ]);
+  });
+  it("returns no adjustment, and the module's words, for the contract's none row", () => {
+    const none = netDebtView(
+      withRows(accepted, "Post-balance-sheet adjustments", [
+        [
+          NO_ADJUSTMENT,
+          "—",
+          "—",
+          "—",
+          "—",
+          "US$m",
+          "Synthetic; the annual report and its notes were read.",
+        ],
+      ]),
+    );
+    expect(none?.adjustments).toEqual([]);
+    expect(none?.noAdjustments).toBe(true);
+    expect(none?.noAdjustmentsWords).toEqual({
+      event: "None found in the sources read",
+      basis: "Synthetic; the annual report and its notes were read.",
+    });
+  });
+  it("returns no adjustment and no none row when the table is absent", () => {
+    const gone = netDebtView(dropTable(accepted, "Post-balance-sheet adjustments"));
+    expect(gone?.adjustments).toEqual([]);
+    expect(gone?.noAdjustments).toBe(false);
+  });
+  it("keeps an adjustment whose pro forma is a stated gap, with its reason", () => {
     const gap = netDebtView(
       setCell(
-        "Post-balance-sheet adjustments",
-        1,
-        "Pro forma net debt",
-        "Not supplied: not stated",
-      ),
-    );
-    expect(gap?.proForma?.event).not.toBe("Special dividend and dividend equivalent settlement");
-  });
-});
-
-describe("ebitdaBridge", () => {
-  const bridge = ebitdaBridge(entry);
-  it("reads the steps in order with opening, changes and closing", () => {
-    expect(bridge?.steps.map((s) => [s.kind, s.cell.text])).toEqual([
-      ["opening", "3813"],
-      ["change", "70"],
-      ["change", "217"],
-      ["change", "58"],
-      ["change", "15"],
-      ["closing", "4173"],
-    ]);
-  });
-  it("reconciles exactly and totals the add-backs as 360", () => {
-    expect(bridge?.reconciles).toBe(true);
-    expect(bridge?.addBacks).toBe("360");
-  });
-  it("does not call a bridge reconciled when a step is altered", () => {
-    const off = ebitdaBridge(setCell("Chart data: EBITDA bridge", 2, "Amount", "218"));
-    expect(off?.reconciles).toBe(false);
-  });
-  it("has no add-back total when a step is a gap", () => {
-    const gap = ebitdaBridge(
-      setCell("Chart data: EBITDA bridge", 2, "Amount", "Not supplied: not stated"),
-    );
-    expect(gap?.reconciles).toBe(false);
-    expect(gap?.addBacks).toBeNull();
-  });
-});
-
-describe("segmentView", () => {
-  const view = segmentView(entry);
-  it("reads the latest period only, one row per business unit", () => {
-    expect(view?.period).toBe("FY2024");
-    expect(view?.segments.map((s) => [s.name, s.sales.text, s.ebitda.text])).toEqual([
-      ["Power & Control", "3941", "2236"],
-      ["Airframe", "3809", "1962"],
-      ["Non-aviation", "190", "81"],
-    ]);
-  });
-  it("lists unallocated corporate apart, with its stated EBITDA and no sales", () => {
-    expect(view?.apart.map((s) => [s.name, s.ebitda.text])).toEqual([
-      ["Unallocated corporate", "-106"],
-    ]);
-    expect(view?.apart[0]?.sales.kind).toBe("gap");
-  });
-  it("sums segment sales to 7,940 and EBITDA including corporate to 4,173 (derived)", () => {
-    expect(view?.salesTotal).toBe("7940");
-    expect(view?.ebitdaTotal).toBe("4173");
-    expect(view?.groupSales?.text).toBe("7940");
-    expect(view?.groupEbitda?.text).toBe("4173");
-  });
-  it("keeps a business unit whose sales are a gap as a unit with the gap, and gives no sales total", () => {
-    const gap = segmentView(setCell("Segment schedule", 1, "Net sales", "Not supplied: no line"));
-    expect(gap?.segments.map((s) => s.name)).toEqual([
-      "Power & Control",
-      "Airframe",
-      "Non-aviation",
-    ]);
-    expect(gap?.segments[1]?.sales).toMatchObject({ kind: "gap", reason: "no line" });
-    expect(gap?.salesTotal).toBeNull();
-  });
-});
-
-describe("review fixes", () => {
-  it("reads prior and current by year when Net debt data lists the later year first", () => {
-    const flipped = edited((table, at) =>
-      at === "Net debt data" ? { ...table, rows: [...table.rows].reverse() } : table,
-    );
-    const view = netDebtView(flipped);
-    expect(view?.periods.map((p) => [p.label, p.net.text])).toEqual([
-      ["FY2023", "16278"],
-      ["FY2024", "18619"],
-    ]);
-  });
-  it("keeps an adjustment whose pro forma is a stated gap, listed with its reason, never dropped", () => {
-    const gap = netDebtView(
-      setCell(
+        accepted,
         "Post-balance-sheet adjustments",
         1,
         "Pro forma net debt",
         "Not supplied: pricing pending",
       ),
     );
-    const listed = [gap?.proForma, ...(gap?.otherAdjustments ?? [])].map((a) => a?.event);
-    expect(listed).toContain("Special dividend and dividend equivalent settlement");
-    const dividend = gap?.otherAdjustments.find((a) => a.event.startsWith("Special dividend"));
-    expect(dividend?.netDebt).toMatchObject({ kind: "gap", reason: "pricing pending" });
+    expect(shown(gap?.adjustments[1]?.netDebt)).toBe("gap: pricing pending");
   });
-  it("calls a bridge reconciled when the sum equals the closing figure numerically (3148.0 + 1025 = 4173)", () => {
-    const decimals = edited((table, at) =>
-      at === "Chart data: EBITDA bridge"
-        ? {
-            ...table,
-            rows: [
-              ["EBITDA (Reported)", "3148.0"],
-              ["Add-backs", "1025"],
-              ["EBITDA (Adjusted)", "4173"],
-            ].map(([label, amount], at) => ({
-              line: table.line + 2 + at,
-              cells: [label ?? "", amount ?? "", "US$m", "x"],
-            })),
-          }
-        : table,
+  it("reads every period of the three-period mutation, FY2022's gaps in place", () => {
+    const view = netDebtView(threePeriodCp1());
+    expect(view?.periods.map((p) => [p.label, shown(p.net), shown(p.leverage)])).toEqual([
+      ["FY2022", "gap: outside the comparison scope", "gap: outside the comparison scope"],
+      ["FY2023", "16278", "5.17"],
+      ["FY2024", "18619", "4.88"],
+    ]);
+  });
+  it("orders by year when the table lists the later year first", () => {
+    const flipped = edited(accepted, (table, at) =>
+      at === "Net debt data" ? { ...table, rows: [...table.rows].reverse() } : table,
     );
+    expect(netDebtView(flipped)?.periods.map((p) => [p.label, p.net.text])).toEqual([
+      ["FY2023", "16278"],
+      ["FY2024", "18619"],
+    ]);
+  });
+  it("is a gap for a repeated year or an empty table", () => {
+    const twice = addRow(accepted, "Net debt data", [
+      "FY2024 / 2024-09-30",
+      "1",
+      "1",
+      "0",
+      "US$m",
+      "-",
+    ]);
+    expect(netDebtView(twice)).toBeNull();
+    expect(netDebtView(withRows(accepted, "Net debt data", []))).toBeNull();
+  });
+});
+
+// ------------------------------------------------------------------------------------------------
+
+describe("ebitdaBridge", () => {
+  it("reads the accepted steps as written, reconciles exactly, and returns no add-back total", () => {
+    const bridge = ebitdaBridge(accepted);
+    expect(bridge?.steps.map((s) => [s.kind, s.label, s.cell.text])).toEqual([
+      ["opening", "EBITDA (Reported)", "3813"],
+      ["change", "Acquisition transaction and integration-related expenses", "70"],
+      ["change", "Non-cash stock and deferred compensation expense", "217"],
+      ["change", "Refinancing costs", "58"],
+      ["change", "Other, net", "15"],
+      ["closing", "EBITDA (Adjusted)", "4173"],
+    ]);
+    expect(bridge?.reconciles).toBe(true);
+    expect(bridge && "addBacks" in bridge).toBe(false);
+    expect(bridge && bridgeKinds(bridge)).toEqual(["opening", "increase", "closing"]);
+  });
+  it("reads the distressed and relative value bridges with their own step labels", () => {
+    expect(ebitdaBridge(distressed)?.steps.map((s) => s.label)).toEqual([
+      "FY2024 reported EBITDA",
+      "Acquisition transaction and integration-related expenses",
+      "Non-cash stock and deferred compensation expense",
+      "Refinancing costs",
+      "Other, net",
+      "FY2024 EBITDA As Defined",
+    ]);
+    expect(ebitdaBridge(distressed)?.reconciles).toBe(true);
+    expect(ebitdaBridge(relative)?.reconciles).toBe(true);
+  });
+  it("calls a negative step a decrease and a stated zero no change, never an add-back", () => {
+    const bridge = ebitdaBridge(
+      withRows(accepted, "Chart data: EBITDA bridge", [
+        ["EBITDA (Reported)", "100", "US$m", "-"],
+        ["Disposal", "-10", "US$m", "-"],
+        ["Other", "0", "US$m", "-"],
+        ["EBITDA (Adjusted)", "90", "US$m", "-"],
+      ]),
+    );
+    expect(bridge?.steps.map((s) => bridgeKind(s))).toEqual([
+      "opening",
+      "decrease",
+      "no change",
+      "closing",
+    ]);
+    expect(bridge?.reconciles).toBe(true);
+  });
+  it("does not reconcile a bridge whose step is altered or a gap; the gap is its own kind", () => {
+    expect(
+      ebitdaBridge(setCell(accepted, "Chart data: EBITDA bridge", 2, "Amount", "218"))?.reconciles,
+    ).toBe(false);
+    const gap = ebitdaBridge(
+      setCell(accepted, "Chart data: EBITDA bridge", 2, "Amount", "Not supplied: not stated"),
+    );
+    expect(gap?.reconciles).toBe(false);
+    expect(gap && bridgeKinds(gap)).toEqual(["opening", "increase", "gap", "closing"]);
+  });
+  it("reconciles numerically equal decimals (3148.0 + 1025 = 4173)", () => {
+    const decimals = withRows(accepted, "Chart data: EBITDA bridge", [
+      ["EBITDA (Reported)", "3148.0", "US$m", "x"],
+      ["Add-backs", "1025", "US$m", "x"],
+      ["EBITDA (Adjusted)", "4173", "US$m", "x"],
+    ]);
     expect(ebitdaBridge(decimals)?.reconciles).toBe(true);
+  });
+});
+
+// ------------------------------------------------------------------------------------------------
+
+type View = NonNullable<ReturnType<typeof segmentView>>;
+const segmentRows = (view: View | null, part: "segments" | "apart" = "segments") =>
+  view?.[part].map((s) => [
+    s.name,
+    ...s.sales.map((v) => shown(v.cell)),
+    ...s.ebitda.map((v) => shown(v.cell)),
+  ]);
+
+describe("segmentView: net sales and EBITDA per segment as written, no sum, no ratio", () => {
+  it("reads the accepted schedule's two periods by year, corporate apart", () => {
+    const view = segmentView(accepted);
+    expect(view?.unit).toBe("US$m");
+    expect(view?.periods.map((p) => p.label)).toEqual(["FY2023", "FY2024"]);
+    expect([view?.salesLabel, view?.ebitdaLabel]).toEqual(["Net sales", "EBITDA As Defined"]);
+    expect(segmentRows(view)).toEqual([
+      ["Power & Control", "3316", "3941", "1866", "2236"],
+      ["Airframe", "3094", "3809", "1547", "1962"],
+      ["Non-aviation", "175", "190", "71", "81"],
+    ]);
+    expect(segmentRows(view, "apart")).toEqual([
+      [
+        "Unallocated corporate",
+        "gap: no separate revenue line",
+        "gap: no separate revenue line",
+        "-89",
+        "-106",
+      ],
+    ]);
+    expect(view && ("salesTotal" in view || "ebitdaTotal" in view)).toBe(false);
+  });
+  it("reads the distressed schedule written one row per segment and measure", () => {
+    const view = segmentView(distressed);
+    expect([view?.salesLabel, view?.ebitdaLabel]).toEqual(["Revenue", "EBITDA As Defined"]);
+    expect(segmentRows(view)).toEqual([
+      ["Power & Control", "3316", "3941", "1866", "2236"],
+      ["Airframe", "3094", "3809", "1547", "1962"],
+      ["Non-aviation", "175", "190", "71", "81"],
+    ]);
+    expect(segmentRows(view, "apart")).toEqual([
+      [
+        "Corporate and eliminations",
+        "gap: no separate revenue row",
+        "gap: no separate revenue row",
+        "-89",
+        "-106",
+      ],
+    ]);
+  });
+  it("reads the relative value schedule's one period: segment totals, never the sub-lines summed", () => {
+    const view = segmentView(relative);
+    expect(view?.periods.map((p) => p.label)).toEqual(["FY2024"]);
+    expect(view?.comparison).toBeNull();
+    expect(segmentRows(view)).toEqual([
+      ["Power & Control", "3941", "2236"],
+      ["Airframe", "3809", "1962"],
+      ["Non-aviation", "190", "81"],
+    ]);
+    expect(segmentRows(view, "apart")).toEqual([
+      ["Corporate and eliminations", "gap: no monetary corporate revenue line", null],
+      ["Unallocated corporate", null, "-106"],
+    ]);
+  });
+  it("keeps a business unit whose sales are a gap as a unit with the gap", () => {
+    const gap = segmentView(
+      setCell(accepted, "Segment schedule", 1, "Net sales", "Not supplied: no line"),
+    );
+    expect(gap?.segments.map((s) => s.name)).toEqual([
+      "Power & Control",
+      "Airframe",
+      "Non-aviation",
+    ]);
+    expect(shown(gap?.segments[1]?.sales[1]?.cell)).toBe("gap: no line");
+  });
+  it("is a gap when one figure is stated twice", () => {
+    const twice = addRow(accepted, "Segment schedule", [
+      "Airframe",
+      "FY2024",
+      "1",
+      "1",
+      "USD millions",
+      "-",
+      "-",
+    ]);
+    expect(segmentView(twice)).toBeNull();
+  });
+  it("is a gap when the schedule is in more than one unit", () => {
+    expect(
+      segmentView(setCell(accepted, "Segment schedule", 0, "Unit", "EUR millions")),
+    ).toBeNull();
   });
 });

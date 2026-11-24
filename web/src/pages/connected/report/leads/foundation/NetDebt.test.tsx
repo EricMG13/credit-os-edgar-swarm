@@ -324,12 +324,19 @@ describe("NetDebtTile states", () => {
     expect(within(tile).getByText(/^Net debt · EURm, FY2023 → FY2024/)).toBeVisible();
   });
 
-  it("draws the gap tile, with no figure, when only one period is stated", () => {
+  it("draws one stated period as a figure, not a gap (round 2: one period is a valid shape)", () => {
     const tile = draw(
       edited((table, heading) =>
         heading === NET ? { ...table, rows: table.rows.slice(1) } : table,
       ),
     );
+    expect(within(tile).queryByText(NO_NET_DEBT)).toBeNull();
+    expect(within(tile).getByText(/^Net debt · US\$m, FY2024, with the pro forma/)).toBeVisible();
+    expect(within(tile).getAllByRole("img").length).toBeGreaterThan(0);
+  });
+
+  it("draws the gap tile when the net debt table is absent", () => {
+    const tile = draw(edited((table, heading) => (heading === NET ? null : table)));
     expect(within(tile).getByText(NO_NET_DEBT)).toBeVisible();
     expect(within(tile).queryByRole("img")).toBeNull();
   });

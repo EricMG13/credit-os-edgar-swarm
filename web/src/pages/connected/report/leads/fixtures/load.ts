@@ -6,6 +6,9 @@ import cp1 from "./cp1_tdg_fy2024.json";
 import cp1b from "./cp1b_tdg_fy2024.json";
 import cp5 from "./cp5_synthetic.json";
 import cp6 from "./cp6_synthetic.json";
+import distressedCp1 from "./distressed_cp1.json";
+import earningsUpdateCp1Draft1 from "./earnings_update_cp1_draft1.json";
+import relativeValueCp1 from "./relative_value_cp1.json";
 
 type Fixture = { module: string; charts: unknown[]; sections: unknown[] };
 
@@ -38,6 +41,12 @@ export function leadProps(entry: OutputEntry, models: unknown[] = []): LeadProps
 
 /** TransDigm FY2024 CP-1 (retained, outdated evidence: shape and scope only). */
 export const cp1Entry = () => fixtureEntry(cp1);
+/** TransDigm CP-1 on the relative value pathway, draft 1 (retained, outdated): one period, FY2024, and wide segment rows. */
+export const relativeValueCp1Entry = () => fixtureEntry(relativeValueCp1);
+/** TransDigm CP-1 on the distressed pathway, draft 1 (retained, outdated): FY2023 and FY2024, segment rows by measure. */
+export const distressedCp1Entry = () => fixtureEntry(distressedCp1);
+/** TransDigm CP-1 earnings update, draft 1 (retained, outdated): the accepted draft's shapes, earlier lines. */
+export const earningsUpdateCp1Draft1Entry = () => fixtureEntry(earningsUpdateCp1Draft1);
 /** TransDigm FY2024 CP-1B, the T4.4 and T4.6 tables only. */
 export const cp1bEntry = () => fixtureEntry(cp1b);
 export const cp0Entry = () => fixtureEntry(cp0);

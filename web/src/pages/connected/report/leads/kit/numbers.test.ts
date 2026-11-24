@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { difference, group, numberOf, percentOf, readCell, sum } from "./numbers";
+import { difference, group, numberOf, readCell, sum } from "./numbers";
 
 describe("readCell", () => {
   it("reads a plain number, with commas and a unicode minus", () => {
@@ -42,20 +42,14 @@ describe("exact arithmetic", () => {
     expect(difference("5", "20.6% reported")).toBeNull();
     expect(sum([])).toBeNull();
   });
-  it("states a share of two stated figures to two decimals", () => {
-    expect(percentOf("2236", "3941")).toBe("56.74");
-    expect(percentOf("1", "0")).toBeNull();
-    expect(percentOf("Not supplied: x", "5")).toBeNull();
-  });
 });
 
-describe("percentOf is exact decimal arithmetic, rounded half up to two places", () => {
-  it("rounds 1.005 / 100 to 1.01, which floating point gets wrong", () => {
-    expect(percentOf("1.005", "100")).toBe("1.01");
-  });
-  it("keeps the retained growth figures", () => {
-    expect(percentOf("1355", "6585")).toBe("20.58");
-    expect(percentOf("665", "3148")).toBe("21.12");
-    expect(percentOf("-5", "8")).toBe("-62.50");
+// percentOf is removed (ruling i, 2026-11-24): the leads print no ratio or growth rate the module did not write.
+
+describe("a stated zero and a negative stay values", () => {
+  it("reads 0 as the number zero, never a gap, and keeps a minus", () => {
+    expect(readCell("0")).toEqual({ kind: "number", text: "0", value: 0 });
+    expect(readCell("-2,347")).toEqual({ kind: "number", text: "-2347", value: -2347 });
+    expect(difference("0", "0")).toBe("0");
   });
 });

@@ -18,7 +18,7 @@ import {
   type DumbbellRow,
   type RatioMark,
 } from "./earningsDebtGeometry";
-import { earningsAgainstDebt, type EarningsAgainstDebt } from "./foundationData";
+import { earningsAgainstDebt, type EarningsAgainstDebt } from "./legacyData";
 
 const LABEL = "Earnings against debt and leverage";
 export const NO_EARNINGS =

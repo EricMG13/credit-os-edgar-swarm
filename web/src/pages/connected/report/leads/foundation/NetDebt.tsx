@@ -4,7 +4,7 @@ import { Figure, GapNote, Tile } from "../../overview/Tile";
 import { Derived, FigureTile, ScrollFigure } from "../kit/LeadFrame";
 import { group } from "../kit/numbers";
 import type { LeadProps } from "../types";
-import { netDebtView, type NetDebtView } from "./foundationData";
+import { netDebtView, type NetDebtView } from "./legacyData";
 import {
   ND,
   NL,

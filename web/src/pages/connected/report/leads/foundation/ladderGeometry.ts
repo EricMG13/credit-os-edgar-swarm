@@ -2,7 +2,7 @@ import { containsReference, readerText } from "../../../publishedReport";
 import { ticks } from "../../../visuals/visualData";
 import { linear } from "../kit/geometry";
 import { difference, group, sum } from "../kit/numbers";
-import type { CashLadder, LadderStep, LadderValue } from "./foundationData";
+import type { CashLadder, LadderStep, LadderValue } from "./legacyData";
 
 /** Handoff text as a reader sees it, or the pointer to Evidence when it names a source. */
 export function readerSafe(text: string) {

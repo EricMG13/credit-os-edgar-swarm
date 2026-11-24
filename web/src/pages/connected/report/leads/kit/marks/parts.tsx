@@ -163,3 +163,45 @@ export function AxisNote({ lines, y }: { lines: readonly string[]; y: number }) 
     </text>
   );
 }
+
+/**
+ * Grid lines at the kept ticks, drawn only over `bands` (the whole plot when wide; each row's mark
+ * band when narrow, so no line runs through a label above its mark). `strong` is the base line.
+ */
+export function Grid({
+  ticks,
+  x,
+  bands,
+  strong,
+}: {
+  ticks: readonly AxisTick[];
+  x: (value: number) => number;
+  bands: readonly (readonly [number, number])[];
+  strong: number | null;
+}) {
+  return (
+    <g data-part="grid">
+      {ticks.flatMap((tick) =>
+        bands.map(([top, bottom]) => (
+          <line
+            key={`${String(tick.value)}-${String(top)}`}
+            x1={x(tick.value)}
+            x2={x(tick.value)}
+            y1={top}
+            y2={bottom}
+            className={tick.value === strong ? "stroke-text-tertiary" : "stroke-border-hairline"}
+          />
+        )),
+      )}
+    </g>
+  );
+}
+
+/** A card-coloured outline behind text, so a connector crossing a label never cuts its words. */
+export const HALO = {
+  strokeWidth: 5,
+  strokeLinejoin: "round",
+  paintOrder: "stroke",
+} as const;
+/** The class that colours `HALO`. */
+export const HALO_CLASS = "stroke-surface-card";

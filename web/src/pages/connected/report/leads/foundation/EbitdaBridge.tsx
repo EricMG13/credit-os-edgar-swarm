@@ -14,7 +14,7 @@ import {
   type BridgeBar,
   type BridgeGeometry,
 } from "./bridgeGeometry";
-import { ebitdaBridge, type EbitdaBridge } from "./foundationData";
+import { ebitdaBridge, type EbitdaBridge } from "./legacyData";
 import { readerSafe } from "./ladderGeometry";
 
 const LABEL = "EBITDA bridge";

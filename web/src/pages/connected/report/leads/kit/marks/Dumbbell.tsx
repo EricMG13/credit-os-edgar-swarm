@@ -2,7 +2,16 @@ import { cx } from "@/utils/cx";
 import type { MarkTone } from "../../../overview/marks";
 import { fittingTicks, niceAxis, type NiceAxis } from "./axis";
 import { GapSlot } from "./GapSlot";
-import { AxisNote, Legend, TickLabels, legendHeight, type LegendItem } from "./parts";
+import {
+  AxisNote,
+  Grid,
+  HALO,
+  HALO_CLASS,
+  Legend,
+  TickLabels,
+  legendHeight,
+  type LegendItem,
+} from "./parts";
 import { LINE, NARROW, SIZE, textWidth, wrap } from "./text";
 
 /** One side of a pair: a stated figure, or the module's reason it is not stated. */
@@ -63,18 +72,25 @@ export function dumbbellReading(
   return `${unit}, ${periods.prior} to ${periods.current}: ${parts.join("; ")}.${start}`;
 }
 
-/** Which stated figure sits on which side, so each label goes outward, away from the other mark. */
-function sides(row: DumbbellRow) {
+type Spot = { text: string; current: boolean } | null;
+
+/**
+ * Which stated figure is written on which side, so each goes outward, away from the other mark.
+ * Equal figures are written once, on the right, as the current figure.
+ */
+function sides(row: DumbbellRow): { left: Spot; right: Spot } {
   const [prior, current] = [row.prior, row.current];
   if (known(prior) && known(current)) {
-    const priorLeft = prior.value <= current.value;
-    return {
-      left: priorLeft ? prior.text : current.text,
-      right: priorLeft ? current.text : prior.text,
-    };
+    if (prior.value === current.value)
+      return { left: null, right: { text: current.text, current: true } };
+    const priorLeft = prior.value < current.value;
+    const p = { text: prior.text, current: false };
+    const c = { text: current.text, current: true };
+    return priorLeft ? { left: p, right: c } : { left: c, right: p };
   }
-  const one = [prior, current].find(known);
-  return { left: "", right: one?.text ?? "" };
+  if (known(current)) return { left: null, right: { text: current.text, current: true } };
+  if (known(prior)) return { left: null, right: { text: prior.text, current: false } };
+  return { left: null, right: null };
 }
 
 type Frame = {
@@ -82,16 +98,18 @@ type Frame = {
   labelWidth: number;
   changeX: number;
   changeWidth: number;
-  plotLeft: number;
-  plotRight: number;
+  /** The inner range the scale runs over, inside room for the outward figures. */
+  inner: readonly [number, number];
   x: (value: number) => number;
 };
+
+const spotWidth = (spot: Spot) => (spot ? textWidth(spot.text, SIZE.value) : 0);
 
 function frame(rows: readonly DumbbellRow[], axis: NiceAxis, width: number): Frame {
   const narrow = width < NARROW;
   const placed = rows.map(sides);
-  const padLeft = Math.max(0, ...placed.map((one) => textWidth(one.left, SIZE.value))) + 16;
-  const padRight = Math.max(0, ...placed.map((one) => textWidth(one.right, SIZE.value))) + 16;
+  const padLeft = Math.max(0, ...placed.map((one) => spotWidth(one.left))) + 16;
+  const padRight = Math.max(0, ...placed.map((one) => spotWidth(one.right))) + 16;
   const longest = Math.max(...rows.map((row) => textWidth(row.label)));
   const changes = rows.map((row) =>
     Math.max(textWidth(row.change ?? ""), textWidth(row.note ?? "")),
@@ -104,20 +122,21 @@ function frame(rows: readonly DumbbellRow[], axis: NiceAxis, width: number): Fra
   const labelWidth = narrow ? width : Math.min(longest + 16, Math.round(width * 0.28));
   const plotLeft = narrow ? 0 : labelWidth;
   const plotRight = narrow ? width : width - changeWidth;
-  const inner: [number, number] = [
+  const inner = [
     plotLeft + padLeft,
     Math.max(plotLeft + padLeft + 40, plotRight - padRight),
-  ];
+  ] as const;
   return {
     narrow,
     labelWidth,
     changeX: narrow ? 0 : plotRight + 12,
     changeWidth: narrow ? width : changeWidth - 12,
-    plotLeft,
-    plotRight,
+    inner,
     x: (value) => axis.place(value, inner[0], inner[1]),
   };
 }
+
+type SideLine = { kind: "change" | "note" | "reason"; text: string; note?: string };
 
 type Laid = {
   row: DumbbellRow;
@@ -126,9 +145,9 @@ type Laid = {
   cy: number;
   labelLines: string[];
   /** Change, note and gap reasons, each line with its kind. */
-  side: { text: string; kind: "change" | "note" | "reason" }[];
-  /** The narrow layout puts a short change on the label's line, right-aligned. */
-  inline: boolean;
+  side: SideLine[];
+  /** The narrow layout puts the change on the label's line, right-aligned, where it fits. */
+  inline: SideLine | null;
 };
 
 function reasons(row: DumbbellRow, periods: DumbbellProps["periods"]) {
@@ -137,6 +156,19 @@ function reasons(row: DumbbellRow, periods: DumbbellProps["periods"]) {
     known(row.current) ? null : `${periods.current}: ${row.current.gap}`,
   ].filter((text): text is string => text !== null);
 }
+
+/** The change slot: wide, the change and its note on two lines; narrow, one line. */
+function changeLines(row: DumbbellRow, narrow: boolean): SideLine[] {
+  if (!row.change && !row.note) return [];
+  if (narrow) return [{ kind: "change", text: row.change ?? "", note: row.note }];
+  return [
+    ...(row.change ? [{ kind: "change" as const, text: row.change }] : []),
+    ...(row.note ? [{ kind: "note" as const, text: row.note }] : []),
+  ];
+}
+
+const lineWidth = (line: SideLine) =>
+  textWidth(line.text) + (line.note ? textWidth(` ${line.note}`) : 0);
 
 function lay(
   rows: readonly DumbbellRow[],
@@ -147,15 +179,17 @@ function lay(
   let y = top;
   return rows.map((row): Laid => {
     const labelLines = wrap(row.label, f.labelWidth - (f.narrow ? 0 : 12));
-    const change = row.change ?? "";
+    const changes = changeLines(row, f.narrow);
+    const [first] = changes;
     const inline =
       f.narrow &&
+      first &&
       labelLines.length === 1 &&
-      !row.note &&
-      textWidth(row.label) + textWidth(change) + 16 <= f.changeWidth;
+      textWidth(row.label) + lineWidth(first) + 16 <= f.changeWidth
+        ? first
+        : null;
     const side = [
-      ...(row.change && !inline ? [{ text: row.change, kind: "change" as const }] : []),
-      ...(row.note ? [{ text: row.note, kind: "note" as const }] : []),
+      ...(inline ? [] : changes),
       ...reasons(row, periods).flatMap((text) =>
         wrap(text, f.changeWidth).map((line) => ({ text: line, kind: "reason" as const })),
       ),
@@ -172,6 +206,38 @@ function lay(
   });
 }
 
+function Figure({
+  spot,
+  x,
+  anchor,
+  cy,
+}: {
+  spot: Spot;
+  x: number;
+  anchor: "start" | "end";
+  cy: number;
+}) {
+  if (!spot) return null;
+  return (
+    <text
+      data-part="value"
+      data-side={spot.current ? "current" : "prior"}
+      x={x}
+      y={cy + 4}
+      textAnchor={anchor}
+      fontSize={SIZE.value}
+      {...HALO}
+      className={cx(
+        "font-mono",
+        HALO_CLASS,
+        spot.current ? "fill-text-primary font-medium" : "fill-text-secondary",
+      )}
+    >
+      {spot.text}
+    </text>
+  );
+}
+
 function Pair({ one, f, reason }: { one: Laid; f: Frame; reason: string }) {
   const { row, cy } = one;
   const [prior, current] = [row.prior, row.current];
@@ -180,14 +246,26 @@ function Pair({ one, f, reason }: { one: Laid; f: Frame; reason: string }) {
   const { left, right } = sides(row);
   const points = [prior, current].filter(known).map((side) => f.x(side.value));
   const [low, high] = [Math.min(...points), Math.max(...points)];
-  const gap = !both;
+  const reach = flat ? 14 : 12;
+  // Two figures closer than a mark's width: the ring is drawn hollow over the dot, so both show.
+  const close = both && !flat && high - low < 12;
+  const ring = known(prior) ? (
+    <circle
+      data-prior={prior.value}
+      cx={f.x(prior.value)}
+      cy={cy}
+      r={flat ? 8 : 5}
+      strokeWidth="2"
+      className={cx(close ? "fill-none" : "fill-surface-card", "stroke-chart-3")}
+    />
+  ) : null;
   return (
     <g data-row={row.label}>
-      {gap && (
+      {!both && (
         <GapSlot
-          x={f.plotLeft}
+          x={f.inner[0]}
           y={points.length ? cy + 9 : cy - 7}
-          width={f.plotRight - f.plotLeft}
+          width={f.inner[1] - f.inner[0]}
           height={points.length ? 8 : 14}
           reason={reason}
         />
@@ -195,16 +273,7 @@ function Pair({ one, f, reason }: { one: Laid; f: Frame; reason: string }) {
       {both && !flat && (
         <line x1={low} x2={high} y1={cy} y2={cy} strokeWidth="2" className="stroke-chart-3" />
       )}
-      {known(prior) && (
-        <circle
-          data-prior={prior.value}
-          cx={f.x(prior.value)}
-          cy={cy}
-          r={flat ? 8 : 5}
-          strokeWidth="2"
-          className="fill-surface-card stroke-chart-3"
-        />
-      )}
+      {known(prior) && !close && ring}
       {known(current) && (
         <circle
           data-current={current.value}
@@ -214,30 +283,44 @@ function Pair({ one, f, reason }: { one: Laid; f: Frame; reason: string }) {
           className={row.tone === "worse" ? "fill-warning-mark" : "fill-chart-1"}
         />
       )}
-      {left && (
-        <text
-          data-part="value"
-          x={low - (flat ? 14 : 12)}
-          y={cy + 4}
-          textAnchor="end"
-          fontSize={SIZE.value}
-          className="fill-text-secondary font-mono"
-        >
-          {left}
-        </text>
-      )}
-      {right && (
-        <text
-          data-part="value"
-          x={high + (flat ? 14 : 12)}
-          y={cy + 4}
-          fontSize={SIZE.value}
-          className="fill-text-primary font-mono font-medium"
-        >
-          {right}
-        </text>
-      )}
+      {known(prior) && close && ring}
+      <Figure spot={left} x={low - reach} anchor="end" cy={cy} />
+      <Figure spot={right} x={high + reach} anchor="start" cy={cy} />
     </g>
+  );
+}
+
+function SideText({
+  line,
+  x,
+  y,
+  anchor,
+}: {
+  line: SideLine;
+  x: number;
+  y: number;
+  anchor?: "end";
+}) {
+  return (
+    <text
+      data-part={line.kind}
+      x={x}
+      y={y}
+      textAnchor={anchor}
+      fontSize={SIZE.value}
+      className={cx(
+        line.kind === "change" && "fill-text-primary font-mono font-medium",
+        line.kind === "note" && "fill-text-secondary font-body",
+        line.kind === "reason" && "fill-gap-text font-body",
+      )}
+    >
+      {line.text}
+      {line.note && (
+        <tspan data-part="note" className="fill-text-secondary font-body font-normal">
+          {line.text ? ` ${line.note}` : line.note}
+        </tspan>
+      )}
+    </text>
   );
 }
 
@@ -258,33 +341,14 @@ function Words({ one, f, width }: { one: Laid; f: Frame; width: number }) {
           </tspan>
         ))}
       </text>
-      {one.inline && one.row.change && (
-        <text
-          data-part="change"
-          x={width}
-          y={one.top + 12}
-          textAnchor="end"
-          fontSize={SIZE.value}
-          className="fill-text-primary font-mono font-medium"
-        >
-          {one.row.change}
-        </text>
-      )}
+      {one.inline && <SideText line={one.inline} x={width} y={one.top + 12} anchor="end" />}
       {one.side.map((line, at) => (
-        <text
+        <SideText
           key={`${String(at)}-${line.text}`}
-          data-part={line.kind}
+          line={line}
           x={f.changeX}
           y={first + at * LINE}
-          fontSize={SIZE.value}
-          className={cx(
-            line.kind === "change" && "fill-text-primary font-mono font-medium",
-            line.kind === "note" && "fill-text-secondary font-body",
-            line.kind === "reason" && "fill-gap-text font-body",
-          )}
-        >
-          {line.text}
-        </text>
+        />
       ))}
     </g>
   );
@@ -339,16 +403,16 @@ export function Dumbbell({
       className="block"
     >
       <Legend items={items} width={width} />
-      {kept.map((tick) => (
-        <line
-          key={tick.value}
-          x1={f.x(tick.value)}
-          x2={f.x(tick.value)}
-          y1={plotTop}
-          y2={plotBottom}
-          className={tick.value === 0 ? "stroke-text-tertiary" : "stroke-border-hairline"}
-        />
-      ))}
+      <Grid
+        ticks={kept}
+        x={f.x}
+        strong={axis.cut ? null : 0}
+        bands={
+          f.narrow
+            ? laid.map((one) => [one.cy - 9, one.cy + 9] as const)
+            : [[plotTop, plotBottom] as const]
+        }
+      />
       {laid.map((one, at) => (
         <g key={`${String(at)}-${one.row.label}`}>
           <Words one={one} f={f} width={width} />

@@ -5,7 +5,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { entry, section, table } from "../../overview/rows.fixture";
 import { cp1Entry, leadProps } from "../fixtures/load";
-import { percentOf, readCell } from "../kit/numbers";
+import { readCell } from "../kit/numbers";
 import { SegmentsTile } from "./Segments";
 import { oneDecimal, ratioPercent, wrapName } from "./segmentsGeometry";
 
@@ -95,7 +95,7 @@ describe("ratioPercent", () => {
     expect(ratioPercent(n("81"), n("190"))).toBe("42.6");
   });
   it("never rounds twice: 567.46 / 1,000 = 56.746% is 56.7, though the two-decimal string reads 56.75", () => {
-    expect(percentOf("567.46", "1000")).toBe("56.75");
+    // percentOf("567.46", "1000") = "56.75" was asserted here; percentOf is removed from the kit (ruling i).
     expect(oneDecimal("56.75")).toBe("56.8");
     expect(ratioPercent(n("567.46"), n("1000"))).toBe("56.7");
   });
