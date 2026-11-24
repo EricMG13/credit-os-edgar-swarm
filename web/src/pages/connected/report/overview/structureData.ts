@@ -132,7 +132,7 @@ export function stackGeometry(rows: StackRow[]) {
 }
 
 /** Below this frame width the wall is drawn at the frame's own width, so its labels keep their size. */
-export const WALL_NARROW = 560;
+const WALL_NARROW = 560;
 const WALL_NARROWEST = 300;
 
 /** The drawing width for a frame of `measured` pixels: the full wall, or the frame itself when narrow. */
