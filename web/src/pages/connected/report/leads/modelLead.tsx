@@ -47,6 +47,49 @@ function spread<T extends { y: number; lines: string[] }>(ends: T[]) {
   return placed;
 }
 
+const GLYPH = 7.5;
+type Box = { x0: number; x1: number; y0: number; y1: number };
+
+/** The box of one line of 12 px text: its left edge, baseline and width. */
+const box = (x: number, baseline: number, width: number): Box => ({
+  x0: x,
+  x1: x + width,
+  y0: baseline - 12,
+  y1: baseline + 3,
+});
+const touches = (a: Box, b: Box) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+const RISE = [-12, 22, -28, 38, -44, 54] as const;
+
+/**
+ * Peak labels clear of each other and of `avoid` (axis labels, end labels): beside the mark when it
+ * is near the left edge (never over the axis), else centred on it; above it, then below, then
+ * further out until nothing overlaps.
+ */
+function placePeaks(marks: ({ x: number; y: number; text: string } | null)[], avoid: Box[]) {
+  const taken = [...avoid];
+  return marks.map((mark) => {
+    if (!mark) return null;
+    const near = mark.x - PLOT.left < 48;
+    const width = GLYPH * mark.text.length;
+    const x = near ? mark.x + 10 : mark.x;
+    const left = near ? x : x - width / 2;
+    const candidates = RISE.map((rise) => ({
+      y: mark.y + rise,
+      at: box(left, mark.y + rise, width),
+    }));
+    const pick =
+      candidates.find(({ y, at }) => y - 12 >= 0 && !taken.some((other) => touches(at, other))) ??
+      candidates[0];
+    if (pick) taken.push(pick.at);
+    return {
+      x,
+      y: pick?.y ?? mark.y - 12,
+      text: mark.text,
+      anchor: near ? "start" : "middle",
+    } as const;
+  });
+}
+
 function PathFigure({ path }: { path: Path }) {
   const id = `model-gap-${useId().replaceAll(":", "")}`;
   const geometry = pathGeometry(path.cases);
@@ -82,20 +125,6 @@ function PathFigure({ path }: { path: Path }) {
       null,
     ),
   );
-  // A peak label drops below its mark when an earlier one would sit on top of it.
-  const peakAt = peaks.map((peak, at) => {
-    const figure = peak?.figure;
-    if (!figure) return null;
-    const clash = peaks
-      .slice(0, at)
-      .some(
-        (other) =>
-          other?.figure &&
-          Math.abs(other.figure.x - figure.x) < 90 &&
-          Math.abs(other.figure.y - figure.y) < 18,
-      );
-    return { ...figure, display: peak.display, below: clash };
-  });
   // End labels, kept apart vertically.
   const ends = slots
     .map(({ group, cells }, at) => {
@@ -105,6 +134,22 @@ function PathFigure({ path }: { path: Path }) {
     .filter((end) => end !== null)
     .sort((a, b) => a.y - b.y);
   const endLabels = spread(ends);
+  const tickBoxes = geometry.ticks.map((tick) =>
+    box(
+      PLOT.left - 8 - GLYPH * (tick.label.length + 1),
+      y(tick.y) + 4,
+      GLYPH * (tick.label.length + 1),
+    ),
+  );
+  const endBoxes = endLabels.flatMap((end) =>
+    end.lines.map((line, at) => box(end.x + 12, end.top + 10 + at * 14, GLYPH * line.length)),
+  );
+  const peakAt = placePeaks(
+    peaks.map((peak) =>
+      peak?.figure ? { x: peak.figure.x, y: peak.figure.y, text: `peak ${peak.display}` } : null,
+    ),
+    [...tickBoxes, ...endBoxes],
+  );
   const every = geometry.periods.length > 9 ? 2 : 1;
   const reading = path.cases
     .map(
@@ -204,12 +249,12 @@ function PathFigure({ path }: { path: Path }) {
             key={slots[at]?.group}
             data-peak={slots[at]?.group}
             x={peak.x}
-            y={peak.below ? peak.y + 22 : peak.y - 12}
-            textAnchor="middle"
+            y={peak.y}
+            textAnchor={peak.anchor}
             fontSize="12"
             className="fill-text-primary font-mono"
           >
-            peak {peak.display}
+            {peak.text}
           </text>
         ) : null,
       )}

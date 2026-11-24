@@ -175,6 +175,49 @@ describe("ModelLead", () => {
     expect(container.querySelectorAll("[data-gap]")).toHaveLength(0);
   });
 
+  it("keeps peak labels clear of the axis labels and of each other, at the first period or the second", () => {
+    const peaks = model({
+      "Base case": [
+        ["5.10x", "5.1"],
+        ["4.60x", "4.6"],
+        ["4.10x", "4.1"],
+      ],
+      "Downside case": [
+        ["4.90x", "4.9"],
+        ["5.00x", "5.0"],
+        ["n.a.", null],
+      ],
+    });
+    const { container } = render(<ModelLead {...props([peaks])} />);
+    // Estimated boxes: 7 px a character, 11 px high, from the baseline up.
+    const boxOf = (text: Element) => {
+      const x = num(text, "x");
+      const width = 7 * text.textContent.length;
+      const anchor = text.getAttribute("text-anchor");
+      const x0 = anchor === "end" ? x - width : anchor === "middle" ? x - width / 2 : x;
+      const y = num(text, "y");
+      return { x0, x1: x0 + width, y0: y - 11, y1: y };
+    };
+    const overlap = (a: ReturnType<typeof boxOf>, b: ReturnType<typeof boxOf>) =>
+      a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+    const labels = [...container.querySelectorAll("[data-peak]")].map(boxOf);
+    expect(labels).toHaveLength(2);
+    const ticks = [...container.querySelectorAll("text")]
+      .filter((text) => /^\d+x$/.test(text.textContent))
+      .map(boxOf);
+    expect(ticks.length).toBeGreaterThan(2);
+    const [first, second] = labels;
+    if (!first || !second) throw new Error("peak labels missing");
+    expect(overlap(first, second)).toBe(false);
+    for (const label of labels) {
+      for (const tick of ticks) expect(overlap(label, tick)).toBe(false);
+      // Clear of the axis: nothing is drawn left of the plot edge but the tick labels.
+      expect(label.x0).toBeGreaterThanOrEqual(60);
+    }
+    expect(container.querySelector('[data-peak="Base case"]')?.textContent).toBe("peak 5.10x");
+    expect(container.querySelector('[data-peak="Downside case"]')?.textContent).toBe("peak 5.00x");
+  });
+
   it("keeps overlapping end labels apart", () => {
     const { container } = render(
       <ModelLead
