@@ -1,6 +1,6 @@
 // Coordinator review, part 1, items A3–A6, B10, B17, C20–C21: the call row draws only the
 // modules' words, groups nothing into good or bad, and states every missing side.
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import type { OutputEntry, PublishedRun, Section, Snapshot } from "../../publishedReport";
 import type { ReportView } from "../../reportView";
@@ -178,6 +178,7 @@ it("shows or links every bottom-line paragraph, each with its own trace", () => 
   ]);
   render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
   const call = screen.getByRole("region", { name: "The call" });
+  fireEvent.click(within(call).getByText("Read on"));
   expect(within(call).getByText("Cover held at 2.1x.")).toBeVisible();
   expect(within(call).getByRole("link", { name: "Read this passage in Evidence" })).toBeVisible();
   expect(call).not.toHaveTextContent(/annual_report/);
@@ -221,4 +222,60 @@ it("links from the run facts to the limitations and dates on this page", () => {
     "href",
     "#overview/dates",
   );
+});
+
+// Coordinator review, part 2, items 3–5.
+
+it("makes the bottom line the largest text at desktop, a step smaller on a phone, with its continuation behind Read on", () => {
+  const lead = entry("CP-6", [
+    text("Bottom line", "Leverage rose.", "Cover held at 2.1x.", "Liquidity covers two years."),
+  ]);
+  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  const call = screen.getByRole("region", { name: "The call" });
+  const first = within(call).getByText("Leverage rose.");
+  expect(first).toHaveClass("text-h2", "lg:text-display");
+  const more = within(call).getByText("Read on");
+  expect(more.tagName).toBe("SUMMARY");
+  expect(more.closest("details")).not.toHaveAttribute("open");
+  expect(within(call).getByText("Cover held at 2.1x.").closest("details")).toBe(
+    more.closest("details"),
+  );
+});
+
+it("does not repeat the lead module's name as a link in the call tile", () => {
+  const lead = entry("CP-6", [text("Bottom line", "The view.")]);
+  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  const call = screen.getByRole("region", { name: "The call" });
+  expect(within(call).queryByRole("link", { name: "Committee decision" })).toBeNull();
+  expect(
+    within(call).getByRole("heading", { name: "The call · Committee decision" }),
+  ).toBeVisible();
+});
+
+it("states the untyped clearance counts in one line, not a gap well, and adds no module link", () => {
+  const lead = entry("CP-6", [text("Bottom line", "The view.")]);
+  const validation = entry("CP-5", [text("Bottom line", "Pass with Remediation.")]);
+  render(<CallRow snapshot={snapshot} run={run} view={view([lead, validation], lead)} />);
+  const tile = screen.getByRole("region", { name: "Evidence clearance" });
+  const gap = within(tile).getByText(
+    "Issue counts by severity and committee use are not typed in this run.",
+  );
+  expect(gap.tagName).toBe("P");
+  expect(tile.querySelector(".min-h-24")).toBeNull();
+  expect(within(tile).queryByRole("link", { name: "Evidence validation" })).toBeNull();
+});
+
+it("gives the confidence score the same trace control as every other tile", () => {
+  const lead = entry(
+    "CP-6",
+    [text("Bottom line", "The view."), text("Confidence inputs", "Inputs.")],
+    {
+      confidence: { value: 53, band: "Low" },
+    },
+  );
+  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  const tile = screen.getByRole("region", { name: "Confidence" });
+  expect(
+    within(tile).getByRole("link", { name: "Source for the confidence score" }),
+  ).toHaveAttribute("href", expect.stringMatching(/#evidence\//));
 });

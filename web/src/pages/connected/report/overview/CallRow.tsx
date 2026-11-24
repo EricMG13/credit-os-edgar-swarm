@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/status/StatusBadge";
 import { cx } from "@/utils/cx";
 import { moduleName } from "../../api";
 import {
+  CONFIDENCE_INPUTS,
   comparisonForRun,
   evidencePath,
   runPathway,
@@ -180,20 +181,9 @@ function CallTile({ run, view }: Pick<RowProps, "run" | "view">) {
   return (
     <Tile span={8} label="The call" className="justify-between gap-7">
       <div className="flex flex-col gap-6">
-        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-            <h3 className="text-caption font-medium text-text-secondary">The call · {name}</h3>
-            {stance && <StanceChip stance={stance} large />}
-          </div>
-          <Button
-            className={LINK}
-            color="link-gray"
-            size="sm"
-            href={`#modules/${lead.output.module}`}
-            iconTrailing={ArrowRight}
-          >
-            {name}
-          </Button>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+          <h3 className="text-small font-medium text-text-secondary">The call · {name}</h3>
+          {stance && <StanceChip stance={stance} large />}
         </div>
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
@@ -204,28 +194,47 @@ function CallTile({ run, view }: Pick<RowProps, "run" | "view">) {
             run={run}
             entry={lead}
             passage={first}
-            className="max-w-[840px] text-h1 font-medium text-pretty text-text-primary"
+            className="max-w-[840px] text-h2 font-medium text-pretty text-text-primary sm:text-h1 lg:text-display lg:font-medium"
           />
-          {rest.map((passage, at) => (
-            <div key={passage.line} className="flex items-start justify-between gap-3">
-              <Sentence
-                run={run}
-                entry={lead}
-                passage={passage}
-                className="reading-copy text-body text-text-secondary"
-              />
-              <Source
-                run={run}
-                entry={lead}
-                line={passage.line}
-                name={`paragraph ${String(at + 2)} of the bottom line`}
-              />
-            </div>
-          ))}
+          <Continuation run={run} entry={lead} rest={rest} />
         </div>
       </div>
       <RunFacts run={run} view={view} />
     </Tile>
+  );
+}
+
+/** The bottom line's further paragraphs, closed behind "Read on" so the trust tiles stay in view. */
+function Continuation({
+  run,
+  entry,
+  rest,
+}: Pick<RowProps, "run"> & { entry: OutputEntry; rest: Passage[] }) {
+  if (rest.length === 0) return null;
+  return (
+    <details className="group">
+      <summary className="flex min-h-8 w-fit cursor-pointer items-center rounded-ds-xs text-small font-medium text-text-link outline-focus-ring focus-visible:outline-2 max-[480px]:min-h-11">
+        Read on
+      </summary>
+      <div className="mt-2 flex flex-col gap-3">
+        {rest.map((passage, at) => (
+          <div key={passage.line} className="flex items-start justify-between gap-3">
+            <Sentence
+              run={run}
+              entry={entry}
+              passage={passage}
+              className="reading-copy text-body text-text-secondary"
+            />
+            <Source
+              run={run}
+              entry={entry}
+              line={passage.line}
+              name={`paragraph ${String(at + 2)} of the bottom line`}
+            />
+          </div>
+        ))}
+      </div>
+    </details>
   );
 }
 
@@ -297,6 +306,13 @@ function Meter({ first, second }: { first: Scored; second: Second }) {
   );
 }
 
+/** The first block of the score's inputs, which the trace drawer opens; the section heading does not. */
+const confidenceLine = (entry: OutputEntry) =>
+  (
+    entry.sections.find((section) => section.heading === CONFIDENCE_INPUTS) ??
+    entry.output.confidenceTrace?.section
+  )?.blocks[0]?.line;
+
 const scoreOf = (entry: OutputEntry | undefined) => {
   const score = entry?.output.confidence;
   return score && "value" in score ? score : null;
@@ -319,18 +335,13 @@ function ConfidenceTile({ run, view }: Pick<RowProps, "run" | "view">) {
     <Tile span={12} label="Confidence" className="gap-2">
       <Head
         trace={
-          <Source
-            run={run}
-            entry={lead}
-            line={lead.output.confidenceTrace?.section?.line}
-            name="the confidence score"
-          />
+          <Source run={run} entry={lead} line={confidenceLine(lead)} name="the confidence score" />
         }
       >
         Confidence
       </Head>
       <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <Figure className="text-display font-medium">{score.value}</Figure>
+        <Figure className="text-metric font-medium">{score.value}</Figure>
         <span className="text-body font-medium text-text-primary">{score.band}</span>
         <span className="text-caption text-text-tertiary">{moduleName(lead.output.module)}</span>
       </p>
@@ -367,18 +378,13 @@ function ClearanceTile({ run, view }: Pick<RowProps, "run" | "view">) {
         passage={first}
         className="text-body font-medium text-pretty text-text-primary"
       />
-      <GapNote>Issue counts by severity and committee use are not typed in this run.</GapNote>
-      <div>
-        <Button
-          className={LINK}
-          color="link-gray"
-          size="sm"
-          href="#modules/CP-5"
-          iconTrailing={ArrowRight}
-        >
-          {name}
-        </Button>
-      </div>
+      <p className="flex items-center gap-2 text-caption text-gap-text">
+        <span
+          aria-hidden="true"
+          className="gap-hatch size-3 flex-none rounded-ds-xs border border-dashed border-border-gap"
+        />
+        Issue counts by severity and committee use are not typed in this run.
+      </p>
     </Tile>
   );
 }
