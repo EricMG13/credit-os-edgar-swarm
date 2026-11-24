@@ -1,15 +1,13 @@
-import { useId } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { cx } from "@/utils/cx";
+import { Tile } from "../report/overview/Tile";
 import type { ReadinessRow } from "./intake";
 import type { ModuleReadiness, ModuleRow } from "./moduleReadiness";
 
 /** Where the module states come from: none yet, the review on screen, or the last one left. */
 export type ReadinessSource = "unchecked" | "review" | "last";
-
-const TILE =
-  "flex min-w-0 flex-col gap-4 rounded-ds-lg border border-border-subtle bg-surface-card p-5";
 
 // Status, not pills, where the rail is a column beside the form.
 const AS_STATUS = "lg:bg-transparent lg:px-0 lg:ring-0";
@@ -24,6 +22,9 @@ function ModuleState({ row }: { row: ModuleRow }) {
   switch (row.state) {
     case "unchecked":
       return null;
+    case "unstated":
+      // The summary names no limit for this module; the page does not call it ready.
+      return <span className="text-caption text-text-tertiary">No limit stated</span>;
     case "ready":
       return <StatusBadge set="Source readiness" state="Ready" className={AS_STATUS} />;
     case "conditional":
@@ -78,6 +79,27 @@ function CapLine({
   );
 }
 
+/** Whether the element is taller than the room it has, so it scrolls and needs a tab stop. */
+function useScrolls<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [scrolls, setScrolls] = useState(false);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node || typeof ResizeObserver === "undefined") return;
+    const check = () => {
+      setScrolls(node.scrollHeight > node.clientHeight);
+    };
+    const observer = new ResizeObserver(check);
+    observer.observe(node);
+    for (const child of node.children) observer.observe(child);
+    check();
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+  return { ref, scrolls };
+}
+
 /**
  * The persistent readiness rail: the spending cap, what Submit still needs, and the run's modules
  * by stage with each one's readiness as the service last stated it.
@@ -99,16 +121,17 @@ export function ReadinessRail({
   source: ReadinessSource;
 }) {
   const needsId = useId();
-  const modulesId = useId();
+  const { ref, scrolls } = useScrolls<HTMLElement>();
   return (
     <aside
+      ref={ref}
       aria-label="Readiness"
       className="flex min-w-0 flex-col gap-4 lg:sticky lg:top-6 lg:col-span-4 lg:max-h-[calc(100dvh-6rem)] lg:self-start lg:overflow-y-auto"
-      // The rail scrolls on its own when it is taller than the window; the keyboard can reach it.
+      // When the rail is taller than the window it scrolls on its own; then the keyboard can reach it.
       // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
-      tabIndex={0}
+      tabIndex={scrolls ? 0 : undefined}
     >
-      <div className={TILE}>
+      <Tile span={12} label="Spending cap and what Submit needs">
         <h2 className="text-h4 font-medium text-text-primary">Readiness</h2>
         <CapLine cap={cap} capTitle={capTitle} />
         <div className="flex flex-col gap-1">
@@ -133,24 +156,25 @@ export function ReadinessRail({
             ))}
           </ul>
         </div>
-      </div>
-      <div className={TILE}>
-        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <h3 id={modulesId} className="text-small font-medium text-text-primary">
-            Modules
-          </h3>
-          <span className="text-caption text-text-secondary">
-            <span className="font-mono tabular-nums">{modules.count}</span>
-            {` ${modules.count === 1 ? "module" : "modules"} · ${pathway}`}
-          </span>
-        </div>
+      </Tile>
+      <Tile
+        span={12}
+        label="Modules by stage"
+        kicker={`${String(modules.count)} ${modules.count === 1 ? "module" : "modules"} · ${pathway}`}
+        title="Modules"
+      >
         <p className="text-caption text-text-secondary">{SOURCE_NOTE[source]}</p>
         {modules.run && (
-          <ul aria-label="Limits on the whole run" className="flex flex-col">
-            <ModuleLine row={modules.run} />
-          </ul>
+          <div className="flex flex-col gap-1">
+            <ul aria-label="Limits on the whole run" className="flex flex-col">
+              <ModuleLine row={modules.run} />
+            </ul>
+            <p className="px-2 text-caption text-text-tertiary">
+              A limit on the whole run applies to every module.
+            </p>
+          </div>
         )}
-        <ul aria-labelledby={modulesId} className="flex flex-col gap-3">
+        <ul aria-label="Modules" className="flex flex-col gap-3">
           {modules.groups.map((group) => (
             <li key={group.name} className="flex flex-col gap-1">
               <p className="flex items-baseline gap-2 text-caption text-text-tertiary">
@@ -165,7 +189,7 @@ export function ReadinessRail({
             </li>
           ))}
         </ul>
-      </div>
+      </Tile>
     </aside>
   );
 }

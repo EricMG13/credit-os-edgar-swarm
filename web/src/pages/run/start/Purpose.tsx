@@ -1,6 +1,7 @@
 import { useId, useState } from "react";
 import { RadioButton, RadioField, RadioGroup, Text } from "react-aria-components";
 import { cx } from "@/utils/cx";
+import { Figure } from "../../connected/report/overview/Tile";
 import type { StartDraft } from "../slice";
 
 type Step = Extract<StartDraft, { step: "purpose" }>;
@@ -95,11 +96,7 @@ export function PurposeCards({
                     <span className="rounded-ds-xs border border-border-hairline px-1.5 py-0.5 text-caption font-medium text-text-secondary">
                       {p.modules}
                     </span>
-                    {p.cap ? (
-                      <span className="font-mono text-caption tabular-nums text-text-primary">
-                        {p.cap}
-                      </span>
-                    ) : null}
+                    {p.cap ? <Figure className="text-caption">{p.cap}</Figure> : null}
                   </span>
                 </Text>
               </>

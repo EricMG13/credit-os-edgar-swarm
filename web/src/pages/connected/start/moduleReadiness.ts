@@ -6,10 +6,11 @@ import { scopeText } from "./limitWords";
 /**
  * A module's readiness as the rail draws it. `unchecked`: before any review the page does not
  * know it (the service judges readiness only when it makes the summary). After a review, from the
- * summary's own items: no limit is `ready`; a gap, limit or check is `conditional`; a refusal is
- * `blocked`. The page adds no judgement of its own.
+ * summary's own items only: a refusal is `blocked`; a gap, limit or check is `conditional`; an
+ * item the service itself marks ready is `ready`; a module the summary says nothing about is
+ * `unstated`, never called ready by the page.
  */
-type ModuleState = "unchecked" | "ready" | "conditional" | "blocked";
+type ModuleState = "unchecked" | "unstated" | "ready" | "conditional" | "blocked";
 
 export type ModuleRow = {
   id: string;
@@ -48,7 +49,9 @@ function rowOf(id: string, name: string, items: readonly ReadinessItem[]): Modul
     ? "blocked"
     : limits.length
       ? "conditional"
-      : "ready";
+      : items.some((item) => item.outcome === "ready")
+        ? "ready"
+        : "unstated";
   return { id, name, state, reasons: [...new Set(limits.map((item) => serviceText(item.reason)))] };
 }
 

@@ -77,18 +77,26 @@ const before = (first: Element, second: Element) =>
   Boolean(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING);
 
 describe("Review and start", () => {
-  it("draws three blocks in order: what will run, what it will not do, what it will cost", () => {
+  it("draws what the run will do, what it will not do, then every input and the cost", () => {
     show();
-    const [run, limits, cost] = [
-      screen.getByRole("region", { name: "What will run" }),
+    const [glance, limits, run, cost] = [
+      screen.getByRole("region", { name: "Run summary" }),
       screen.getByRole("region", { name: "Limits to decide" }),
+      screen.getByRole("region", { name: "What will run" }),
       screen.getByRole("region", { name: "What it will cost" }),
     ];
-    expect(before(run, limits)).toBe(true);
-    expect(before(limits, cost)).toBe(true);
-    expect(run).toHaveTextContent("What the run will do");
+    expect(before(glance, limits)).toBe(true);
+    expect(before(limits, run)).toBe(true);
+    expect(before(run, cost)).toBe(true);
+    expect(glance).toHaveTextContent("What the run will do");
+    expect(within(glance).getByRole("heading", { level: 3 })).toHaveTextContent(
+      "Full credit assessment of Northbridge",
+    );
+    expect(glance).toHaveTextContent("As of 2025-03-31");
+    expect(glance).toHaveTextContent("1 document read · 3 modules");
     expect(limits).toHaveTextContent("What it will not do");
     expect(within(limits).getByRole("checkbox", { name: "I accept this limit" })).toBeEnabled();
+    expect(run).toHaveTextContent("Every input Submit sends");
   });
 
   it("states the cap in mono, what leaves the building, then the consent and Submit, last", () => {

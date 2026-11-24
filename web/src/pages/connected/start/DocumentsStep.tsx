@@ -60,7 +60,7 @@ function IntakeDocumentRow({ row, view }: { row: DocumentRow; view: IntakeView }
       <div className="grid min-w-0 flex-1 gap-1">
         <p className="font-medium wrap-anywhere text-text-primary">{name}</p>
         <div className="flex flex-wrap items-center gap-2">
-          {record && (
+          {record?.kind && (
             <span className="rounded-ds-xs border border-border-hairline px-1.5 py-0.5 text-caption text-text-secondary">
               {record.kind.replaceAll("_", " ")}
             </span>

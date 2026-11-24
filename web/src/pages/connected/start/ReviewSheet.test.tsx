@@ -93,26 +93,19 @@ const followsInDocument = (first: HTMLElement, second: HTMLElement) =>
   Boolean(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING);
 
 describe("ReviewSheet", () => {
-  // C2-007 (limits buried under 2,700 px of echoed inputs) is held by folding the inputs that are
-  // often not given; the three blocks now come in the screen map's order: what will run, what it
-  // will not do (the limits), what it will cost.
-  it("C2-007 folds the optional inputs so the limits follow a short summary of what will run", () => {
+  it("C2-007 draws the limits to decide before the echoed inputs", () => {
     renderSheet();
+    const summaryBlock = screen.getByRole("region", { name: "Run summary" });
     const limits = screen.getByRole("region", { name: "Limits to decide" });
     const inputs = screen.getByRole("region", { name: "What will run" });
     const cost = screen.getByRole("region", { name: "What it will cost" });
-    expect(followsInDocument(inputs, limits)).toBe(true);
-    expect(followsInDocument(limits, cost)).toBe(true);
-    const folded = within(inputs).getByRole("group", { name: "Issuer details" }).closest("details");
-    expect(folded).not.toBeNull();
-    expect(folded?.open).toBe(false);
-    for (const name of [
-      "Issuer and documents",
-      "Purpose and modules",
-      "Context",
-      "Advanced choices",
-    ])
-      expect(within(inputs).getByRole("group", { name }).closest("details")).toBeNull();
+    expect(followsInDocument(limits, inputs)).toBe(true);
+    // Only the short run summary comes before the limits; the cost block, with Submit, is last.
+    expect(followsInDocument(summaryBlock, limits)).toBe(true);
+    expect(followsInDocument(inputs, cost)).toBe(true);
+    expect(within(summaryBlock).queryAllByRole("group")).toHaveLength(0);
+    // Every echoed input is drawn open: what the approval rests on is not folded away.
+    expect(inputs.querySelector("details")).toBeNull();
   });
 
   it("C2-007 still draws every block and its rows, including those that are not given", () => {

@@ -80,7 +80,9 @@ describe("moduleReadiness", () => {
     );
     expect(shown.count).toBe(6);
     expect(Object.keys(rows)).toEqual(["CP-0", "CP-1", "CP-3", "CP-4", "CP-4C", "CP-8"]);
+    // Ready only where the service says so; a module it says nothing about is not called ready.
     expect(rows["CP-0"]).toMatchObject({ state: "ready", reasons: [] });
+    expect(rows["CP-8"]).toMatchObject({ state: "unstated", reasons: [] });
     expect(rows["CP-1"]).toMatchObject({
       state: "conditional",
       reasons: ["No file is recognised as a financial report."],
@@ -100,8 +102,20 @@ describe("moduleReadiness", () => {
     expect(shown.groups.at(-1)).toMatchObject({
       number: "05",
       name: "Validation and decision",
-      rows: [{ id: "CP-8", name: "Changes since the last run", state: "ready" }],
+      rows: [{ id: "CP-8", name: "Changes since the last run", state: "unstated" }],
     });
+  });
+
+  it("never calls a module ready because the whole run, not the module, carries the limit", () => {
+    const shown = moduleReadiness(["CP-0", "CP-1"], {
+      modules: ["CP-0", "CP-1"],
+      items: [item("run", "will_refuse", "No document could be read.")],
+    });
+    expect(shown.run).toMatchObject({ state: "blocked" });
+    expect(shown.groups.flatMap((group) => group.rows.map((row) => row.state))).toEqual([
+      "unstated",
+      "unstated",
+    ]);
   });
 
   it("draws limits on the whole run as their own row, and only limits", () => {

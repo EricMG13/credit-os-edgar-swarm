@@ -27,6 +27,7 @@ import {
   storedName,
 } from "./plain";
 import { StatusBadge } from "@/components/status/StatusBadge";
+import { Figure, Tile, Well } from "../report/overview/Tile";
 import { decided, groupLimits, leaveOut, type LimitGroup } from "./limits";
 import { moduleNames, OUTCOME_STATE, scopeText } from "./limitWords";
 import {
@@ -280,8 +281,9 @@ function LimitCard({
       {refusing.length > 0 && <p>Will also refuse: {refusing.join(", ")}</p>}
       {affected.length > 0 && <p>Also affects: {affected.join(", ")}</p>}
       <LeaveOut group={group} choice={choice} disabled={disabled} />
-      <label className="flex items-center gap-2 font-semibold text-text-primary">
+      <label className="flex min-h-8 items-center gap-2 font-semibold text-text-primary max-sm:min-h-11">
         <input
+          className="size-4 shrink-0"
           type="checkbox"
           aria-describedby={reasonId}
           checked={decided(group, accepted)}
@@ -309,24 +311,21 @@ function LimitsToDecide({
   onAccept: (ids: readonly string[], checked: boolean) => void;
   choice: ModuleChoice;
 }) {
-  const titleId = useId();
   const { groups, passive } = groupLimits(items);
   const decidedCount = groups.filter((group) => decided(group, accepted)).length;
   return (
-    <section aria-labelledby={titleId} className={cx(TILE, "wrap-anywhere")}>
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div className="flex flex-col gap-1">
-          <p className="text-caption text-text-tertiary">What it will not do</p>
-          <h3 id={titleId} className="text-h4 font-medium text-text-primary">
-            Limits to decide
-          </h3>
-        </div>
-        {groups.length > 0 && (
-          <span className="text-sm text-text-tertiary">
-            {decidedCount} of {groups.length} decided
-          </span>
-        )}
-      </div>
+    <Tile
+      span={12}
+      label="Limits to decide"
+      kicker="What it will not do"
+      title="Limits to decide"
+      className="wrap-anywhere"
+    >
+      {groups.length > 0 && (
+        <p className="text-sm text-text-tertiary tabular-nums">
+          {decidedCount} of {groups.length} decided
+        </p>
+      )}
       {groups.length === 0 ? (
         <p className="text-sm text-text-secondary">No limits found for this run.</p>
       ) : (
@@ -361,12 +360,9 @@ function LimitsToDecide({
           </ul>
         </details>
       )}
-    </section>
+    </Tile>
   );
 }
-
-const TILE =
-  "grid min-w-0 gap-4 rounded-ds-lg border border-border-subtle bg-surface-card p-5 sm:p-6";
 
 /**
  * What leaves the service for a run, in the service's own terms, stated before Submit: the
@@ -376,7 +372,7 @@ function LeavesTheBuilding({ summary }: { summary: Summary }) {
   const status = summary.copilot_search && summary.modules.includes("CP-DR");
   if (!status && summary.web_search !== true && summary.web_lookup !== true) return null;
   return (
-    <div className="grid gap-2 rounded-ds-md bg-surface-subtle p-4">
+    <Well className="grid gap-2 p-4">
       <h4 className="text-small font-medium text-text-primary">What leaves the building</h4>
       {status && <p className="text-sm text-text-secondary">{summary.copilot_search}</p>}
       {summary.web_search === true && (
@@ -392,7 +388,7 @@ function LeavesTheBuilding({ summary }: { summary: Summary }) {
           sent.
         </p>
       )}
-    </div>
+    </Well>
   );
 }
 
@@ -405,16 +401,48 @@ function CostBlock({
   lead?: ReactNode;
   actions?: ReactNode;
 }) {
-  const titleId = useId();
   return (
-    <section aria-labelledby={titleId} className={cx(TILE, "wrap-anywhere")}>
-      <h3 id={titleId} className="text-h4 font-medium text-text-primary">
-        What it will cost
-      </h3>
+    <Tile span={12} label="What it will cost" title="What it will cost" className="wrap-anywhere">
       {lead}
       <LeavesTheBuilding summary={summary} />
       {actions}
-    </section>
+    </Tile>
+  );
+}
+
+/**
+ * What the run will do, in three lines from the reviewed answers and the summary: the pathway and
+ * issuer, the case date and market view, and how many documents were read and modules will run.
+ * Every input itself follows the limits, under "What will run".
+ */
+function RunSummary({ answers, summary }: { answers: Answers; summary: Summary }) {
+  const { run, identity } = answers.context;
+  const view = chosen(PURPOSES, run.run_type);
+  const documents = summary.documents.length;
+  const modules = drawnModules(summary.modules).length;
+  return (
+    <Tile
+      span={12}
+      label="Run summary"
+      kicker="What the run will do"
+      title={`${pathwayName(run.pathway)} of ${identity.issuer_name}`}
+      className="wrap-anywhere"
+    >
+      <div className="grid gap-1 text-body text-text-secondary">
+        <p>
+          {[`As of ${given(run.as_of)}`, view === NOT_GIVEN ? undefined : view]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+        <p>
+          <Figure>{documents}</Figure> {documents === 1 ? "document" : "documents"} read ·{" "}
+          <Figure>{modules}</Figure> {modules === 1 ? "module" : "modules"}
+        </p>
+      </div>
+      <p className="text-small text-text-tertiary">
+        Decide each limit below; every input Submit sends is listed after them.
+      </p>
+    </Tile>
   );
 }
 
@@ -442,7 +470,6 @@ export function ReviewSheet({
   /** What the review step draws in the cost block: the cap and its sentence; then consent and Submit. */
   cost?: { lead: ReactNode; actions: ReactNode };
 }) {
-  const titleId = useId();
   const { summary, answers } = review;
   const { run, identity } = answers.context;
   const changes = summary.prior
@@ -463,18 +490,26 @@ export function ReviewSheet({
     { group: moduleOptionInputs(answers.context, requested, advanced), drawn: advanced },
     { group: assumptionInputs(answers.context, requested, advanced), drawn: advanced },
   ];
-  const more = inputBlocks.flatMap(({ group, drawn }) => (group ? [{ group, drawn }] : []));
   return (
     <>
-      {/* What will run, compact: the inputs that are often not given are folded, so the
-          decisions that block Submit follow within the first screen (C2-007). */}
-      <section aria-labelledby={titleId} className={cx(TILE, "wrap-anywhere")}>
-        <div className="flex flex-col gap-1">
-          <p className="text-caption text-text-tertiary">What the run will do</p>
-          <h3 id={titleId} className="text-h4 font-medium text-text-primary">
-            What will run
-          </h3>
-        </div>
+      {/* A short summary first, then the decisions that block Submit (C2-007: they are not
+          pushed below a screen of echoed inputs), then every input Submit sends, open, then the
+          cost, the consent and Submit. */}
+      <RunSummary answers={answers} summary={summary} />
+      <LimitsToDecide
+        items={summary.items}
+        accepted={accepted}
+        disabled={disabled}
+        onAccept={onAccept}
+        choice={choice}
+      />
+      <Tile
+        span={12}
+        label="What will run"
+        kicker="Every input Submit sends"
+        title="What will run"
+        className="wrap-anywhere"
+      >
         <div className="grid min-w-0 gap-4 xl:grid-cols-2">
           <Block title="Issuer and documents" edit="documents" {...block}>
             <Facts
@@ -552,6 +587,19 @@ export function ReviewSheet({
             />
             <List title="Source lookup" items={(summary.lookup ?? []).map(lookupSentence)} />
           </Block>
+          {inputBlocks.map(
+            ({ group, drawn }) =>
+              group && (
+                <Block
+                  key={group.title}
+                  title={group.title}
+                  edit={drawn ? "context" : undefined}
+                  {...block}
+                >
+                  <GroupBody group={group} depth={0} />
+                </Block>
+              ),
+          )}
           <Block title="Advanced choices" {...block}>
             <Facts
               rows={[
@@ -566,33 +614,7 @@ export function ReviewSheet({
             )}
           </Block>
         </div>
-        {more.length > 0 && (
-          <details className="rounded-ds-md border border-border-hairline">
-            <summary className="cursor-pointer px-4 py-3 text-small font-medium text-text-primary">
-              {`More inputs Submit sends: ${more.map(({ group }) => group.title).join(", ")}`}
-            </summary>
-            <div className="grid min-w-0 gap-4 px-4 pb-4">
-              {more.map(({ group, drawn }) => (
-                <Block
-                  key={group.title}
-                  title={group.title}
-                  edit={drawn ? "context" : undefined}
-                  {...block}
-                >
-                  <GroupBody group={group} depth={0} />
-                </Block>
-              ))}
-            </div>
-          </details>
-        )}
-      </section>
-      <LimitsToDecide
-        items={summary.items}
-        accepted={accepted}
-        disabled={disabled}
-        onAccept={onAccept}
-        choice={choice}
-      />
+      </Tile>
       <CostBlock summary={summary} lead={cost?.lead} actions={cost?.actions} />
     </>
   );

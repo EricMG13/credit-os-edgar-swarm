@@ -1,5 +1,6 @@
 import { SubmitConfirmation } from "../../run/start/Start";
 import { pathwayName } from "../api";
+import { Figure } from "../report/overview/Tile";
 import { ErrorNotice, heading } from "../layout";
 import { decided, groupLimits } from "./limits";
 import { ReviewSheet } from "./ReviewSheet";
@@ -24,8 +25,9 @@ function ReviewApproval({
           {blocker}
         </p>
       )}
-      <label className="flex items-start gap-2 text-sm font-semibold">
+      <label className="flex min-h-8 items-center gap-2 text-sm font-semibold max-sm:min-h-11">
         <input
+          className="size-4 shrink-0"
           type="checkbox"
           aria-describedby={blocker ? "run-submit-blocker" : undefined}
           checked={approved}
@@ -66,9 +68,7 @@ function CostLead({
     <div className="grid gap-2">
       {figure && (
         <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span className="font-mono text-h2 font-medium text-text-primary tabular-nums">
-            {figure.amount}
-          </span>
+          <Figure className="text-h2 font-medium">{figure.amount}</Figure>
           <span className="text-small text-text-secondary">{figure.note}</span>
         </p>
       )}
@@ -173,7 +173,7 @@ export function ReviewConfirmation({
   const undecided = groups.filter((group) => !decided(group, accepted)).length;
   const blocker = submitBlocker(undecided, approved);
   return (
-    <div className="grid min-w-0 gap-4">
+    <div className="flex min-w-0 flex-col gap-4">
       <div className="grid gap-1 px-1">
         <h2 ref={focusStep} tabIndex={-1} className={`${heading} ${HEADING_FOCUS}`}>
           Review and start

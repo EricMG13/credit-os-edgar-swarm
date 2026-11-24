@@ -68,6 +68,13 @@ const [, , outDir, width = '1440', prefix = 'start'] = process.argv;
   await shot('3-context');
   await page.getByRole('button', { name: 'Review run', ...x }).click();
   const submit = page.getByRole('button', { name: paid ? 'Submit, spend up to USD 25.00' : 'Submit run', ...x }); await submit.waitFor();
+  // C2-007: how far below the step heading the limits to decide start.
+  const limitsGap = await page.evaluate(() => {
+    const heading = [...document.querySelectorAll('h2')].find((h) => h.textContent.trim() === 'Review and start');
+    const limits = document.querySelector('section[aria-label="Limits to decide"]');
+    return heading && limits ? Math.round(limits.getBoundingClientRect().top - heading.getBoundingClientRect().top) : null;
+  });
+  console.log(JSON.stringify({ limitsBelowHeading: limitsGap }));
   await shot('4-review');
   for (const c of await page.getByRole('region', { name: 'Limits to decide' }).getByRole('checkbox').all()) await c.check();
   await page.getByRole('checkbox', { name: 'Approve: I have read this summary and want this run started', ...x }).check();

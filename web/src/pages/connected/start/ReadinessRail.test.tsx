@@ -86,6 +86,7 @@ describe("the readiness rail", () => {
       moduleReadiness([], {
         modules: ["CP-0", "CP-1", "CP-4", "CP-6"],
         items: [
+          { id: "CP-0:read", scope: "CP-0", outcome: "ready", reason: "Every file was read." },
           {
             id: "run:claims",
             scope: "run",
@@ -116,11 +117,14 @@ describe("the readiness rail", () => {
     const blocked = row("Legal & covenants");
     expect(blocked).toHaveTextContent("Not assessableNo executed agreement is among the files.");
     expect(blocked).toHaveClass("border-dashed", "border-warning-mark");
-    expect(row("Committee decision")).toHaveTextContent("Ready");
+    // The summary says nothing about this module: the rail says so, and does not call it ready.
+    expect(row("Committee decision")).toHaveTextContent("No limit stated");
+    expect(row("Committee decision")).not.toHaveTextContent("Ready");
     const whole = within(aside).getByRole("list", { name: "Limits on the whole run" });
     expect(whole).toHaveTextContent(
       "Whole runConditionalFinancials are management claims, not filed statements.",
     );
+    expect(aside).toHaveTextContent("A limit on the whole run applies to every module.");
     expect(aside).toHaveTextContent("As the service checked them for this review.");
   });
 
