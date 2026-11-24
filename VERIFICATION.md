@@ -12,6 +12,35 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
 - Checks run on the final tree: 1,874 connected-page tests, TypeScript, lint and format on the changed files; 247 targeted Python tests across the parallel, budget, handoff-loop and web-search files, 14 selected launcher tests with one historical case skipped, and the changed-code gate with zero findings. One connected-page test failed once in five runs while the Python tests ran alongside; it was not identified and did not repeat. The full suites were not run.
 - Review. Two spec reviews and two adversarial reviews, each followed by repairs. The first fix to the turn event let a stop arriving during the event write through to dispatch; the look was restored to last and the test that covered it was restored. The adversarial reviews mutated the source in scratch copies: 18 of 19 web and 5 of 6 Python mutations were caught. The confidence-review and rewrite-tournament skills were not available in this session; the adversarial passes stood in for them. No browser was used; pages were rendered in jsdom.
 - Known limitations, left as low. An `other` grid drawn as its own statement can show the no-common-period sentence beside a drawn comparison. One case that publishes a period twice gets a left-out sentence at the statement although both columns are drawn, and the trends section drops that period without a notice when no cash proxy row exists. A third case disjoint from two that share periods is drawn as "Not published" with no notice. The statement header applies reader text to a name where the cards do not. A `not_sent` reply whose release then fails leaves a `turn` with no `turn_not_sent`. A halt and a ledger stop met together now raise the ledger stop. At a width of three or more the run page may still name a bystander at a checker stop; not confirmed.
+## 2026-11-24 — Coverage page (`/coverage`), first build
+
+- New top-level page of the connected app and one read-only reply, `/connected/coverage`, under
+  `docs/rulings/2026-11-24-coverage-page.md`. It reads the admitted publication only: fourteen
+  fixed module columns, five cell states by the Library's existing rules, and fields from the
+  Reader summary and typed `Chart data:` tables. It adds no parser, score, average or difference.
+- Retained evidence, module level only: three TransDigm CP-1 handoffs of the 2026-11-15 live runs
+  (as of 2024-09-30), each as its own publication. Leverage, net leverage and debt maturities kept
+  the text, period, unit and Basis read by hand from each Markdown file, and each figure's line is
+  its own table row. One issuer and one module: not a TDG pathway and not a cross-issuer case.
+- Everything across issuers is synthetic: figures keep text, period, unit and Basis; a stated gap
+  is listed apart, never ranked or shown as zero; a rank reads one reader-chosen period and keeps
+  reporting units apart; the page draws no module code, hash, file name or run folder.
+- Presentation fidelity, Chromium at 1500 px on a five-issuer synthetic publication: Modules, Rank,
+  Find and Trend drew with no console error. Edge, mobile widths and keyboard use were not checked.
+  The Evidence link's address follows `resolveEvidenceLocation` by reading; it was not clicked
+  through to a published report.
+- Review fixes, same day: text now comes from the current Findings sections (the synthetic
+  current-format CP-2 gives its bottom line, three findings and three limitations); module text
+  and Basis pass the reader's reference rule; adjusted headings join their reported measure;
+  gaps count `## Gaps` entries and `Not supplied:` cells (the retained TDG CP-1 is no longer plain
+  "Delivered"); absent modules are read against the run's recorded `requested_modules`, a new
+  field of the published run; period order reuses the reader's `periodOrder`.
+- Browser check repeated after the review fixes, Chromium at 1500 px, same five-issuer synthetic
+  publication with recorded plans: Modules (gaps and "Not asked for in this run" drawn), Rank,
+  Find by issuer name, Trend and an unavailable sector from the link drew with no console error.
+- Not done: confidence-review and rewrite-tournament (their definitions are not in this
+  repository or session), the full web and Python suites, and a check against the design system's component rules; the page uses native selects,
+  checkboxes and tables as the Library list does.
 
 ## 2026-11-24 — Parallel CP-OS review fixes for PR #71
 
