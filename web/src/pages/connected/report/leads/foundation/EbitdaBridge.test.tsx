@@ -178,7 +178,7 @@ describe("EbitdaBridgeTile on the retained handoff", () => {
     expect(rows[3]).toEqual(["Non-cash stock and deferred compensation expense", "+217", "change"]);
     expect(rows[6]).toEqual(["EBITDA (Adjusted)", "4,173", "closing total"]);
     expect(rows[7]).toEqual(["Add-backs total", "+360", "derived: sum of the changes"]);
-    const text = view.container.textContent ?? "";
+    const text = view.container.textContent;
     expect(containsReference(text)).toBe(false);
     // The handoff's basis cells cite pages ("annual p71"); none is drawn.
     expect(text).not.toMatch(/p71|realization status|CP-1/);

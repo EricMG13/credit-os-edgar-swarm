@@ -171,6 +171,17 @@ describe("MaturityTile states", () => {
     expect(within(tile).getByText("1,400 in FY2026–FY2028, derived")).toBeInTheDocument();
     expect(within(tile).getByRole("heading", { name: "Debt maturing by period" })).toBeVisible();
   });
+  it("leaves the amounts to the table view when a long axis has no room for their labels", () => {
+    const years = Array.from({ length: 13 }, (_, at) => [
+      `FY${String(2020 + at)}`,
+      String(100 + at),
+    ]);
+    const tile = draw(wall(years));
+    expect(tile.querySelectorAll("[data-bar]")).toHaveLength(13);
+    expect(within(tile).getByText("The amounts are in the table view.")).toBeVisible();
+    expect(within(tile).getByRole("img").querySelector("text.font-mono")).toBeNull();
+    expect(within(tile).getAllByRole("row")).toHaveLength(15);
+  });
   it("does not draw a schedule that states a period twice", () => {
     const tile = draw(
       wall([

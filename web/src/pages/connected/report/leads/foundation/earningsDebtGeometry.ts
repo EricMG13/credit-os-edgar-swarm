@@ -225,7 +225,7 @@ export function dumbbellLayout(data: EarningsAgainstDebt) {
   const growthValues = data.measures.filter(growthShown).map((m) => Number(m.growth));
   const growth = valueScale(growthValues, [ED.g0, ED.g1], "%");
   let y = ED.top - ED.row;
-  let separator: number | null = null;
+  let separator = null as number | null;
   const rows = data.measures.map((measure, index): DumbbellRow => {
     const before = y;
     y += ED.row;

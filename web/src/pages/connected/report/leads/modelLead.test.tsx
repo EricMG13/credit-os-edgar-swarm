@@ -25,7 +25,9 @@ function model(
   cases: Record<string, [string, string | null][]>,
   limits = ["Arithmetic over stated inputs; not analytical review."],
 ) {
-  const columns = [{ label: "LTM", group: "Last twelve months", start: null, end: null }];
+  const columns: { label: string; group: string; start: string | null; end: string | null }[] = [
+    { label: "LTM", group: "Last twelve months", start: null, end: null },
+  ];
   const cells = [cell("n.a.", null)];
   for (const [group, values] of Object.entries(cases))
     values.forEach(([display, exact], at) => {

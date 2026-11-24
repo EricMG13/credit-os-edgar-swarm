@@ -56,7 +56,7 @@ export type LadderRow = {
   /** Pixel x of the running level after this row, for the connector to the next row. */
   out: number | null;
   /** Where a stated level and the steps above it part: running level to stated level, in px. */
-  mismatch: { x: number; width: number } | null;
+  mismatch: LadderSpan | null;
 };
 
 const isZero = (text: string | null) => text !== null && Number(text) === 0;
@@ -217,7 +217,7 @@ export function ladderGeometry(data: CashLadder): LadderGeometry {
 }
 
 const lowerFirst = (text: string) =>
-  /^[A-Z][a-z]/.test(text) ? text[0]?.toLowerCase() + text.slice(1) : text;
+  /^[A-Z][a-z]/.test(text) ? `${text.charAt(0).toLowerCase()}${text.slice(1)}` : text;
 
 function phrase(step: LadderStep, value: LadderValue) {
   const label = lowerFirst(step.label);

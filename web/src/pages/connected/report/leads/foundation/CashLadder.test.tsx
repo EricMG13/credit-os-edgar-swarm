@@ -189,7 +189,7 @@ describe("CashLadderTile on the retained handoff", () => {
       "436",
       "derived",
     ]);
-    const text = view.container.textContent ?? "";
+    const text = view.container.textContent;
     expect(containsReference(text)).toBe(false);
     expect(text).not.toMatch(/\.jsonl|page \d|CP-1|T4\.5/);
     expect(containsReference(within(tile).getByRole("img").getAttribute("aria-label") ?? "")).toBe(

@@ -36,6 +36,17 @@ function wrap(name: string, width: number) {
   return lines;
 }
 
+/** End labels in order of height, each at least a line clear of the one above. */
+function spread<T extends { y: number; lines: string[] }>(ends: T[]) {
+  const placed: (T & { top: number })[] = [];
+  for (const end of ends) {
+    const above = placed.at(-1);
+    const floor = above ? above.top + above.lines.length * 14 + 4 : -Infinity;
+    placed.push({ ...end, top: Math.max(end.y - 4, floor) });
+  }
+  return placed;
+}
+
 function PathFigure({ path }: { path: Path }) {
   const id = `model-gap-${useId().replaceAll(":", "")}`;
   const geometry = pathGeometry(path.cases);
@@ -93,12 +104,7 @@ function PathFigure({ path }: { path: Path }) {
     })
     .filter((end) => end !== null)
     .sort((a, b) => a.y - b.y);
-  let floor = -Infinity;
-  const endLabels = ends.map((end) => {
-    const top = Math.max(end.y - 4, floor);
-    floor = top + end.lines.length * 14 + 4;
-    return { ...end, top };
-  });
+  const endLabels = spread(ends);
   const every = geometry.periods.length > 9 ? 2 : 1;
   const reading = path.cases
     .map(
