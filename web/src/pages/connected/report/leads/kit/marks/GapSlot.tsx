@@ -19,11 +19,12 @@ export function GapSlot({
   y: number;
   width: number;
   height: number;
-  reason: string;
+  /** The module's reason, on `data-gap` for tests; omitted for a legend swatch. */
+  reason?: string;
 }) {
   const id = svgId(useId(), "gap");
   return (
-    <g data-gap={reason}>
+    <g {...(reason === undefined ? {} : { "data-gap": reason })}>
       <defs>
         <GapPattern id={id} />
       </defs>

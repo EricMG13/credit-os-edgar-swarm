@@ -34,39 +34,130 @@ export function rowLabelled(table: Table, label: string, column = 0): Row | null
   return found.length === 1 ? (found[0] ?? null) : null;
 }
 
+/** A row label compared without case, punctuation or spacing ("Cash taxes paid, net of refunds" → "cash taxes paid net of refunds"). */
+export const normalLabel = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+
+/**
+ * The one row whose label begins with one of these words, compared as `normalLabel` on whole words
+ * ("cash taxes paid" matches "Cash taxes paid, net of refunds" and "Cash Taxes Paid", not "Cash
+ * taxes paidout"). "none" when no row does, "several" when more than one does: never a guess.
+ */
+export function rowStarting(
+  table: Table,
+  prefixes: readonly string[],
+  column = 0,
+): Row | "none" | "several" {
+  const wanted = prefixes.map(normalLabel);
+  const found = table.rows.filter((row) => {
+    const label = normalLabel(row.cells[column] ?? "");
+    return wanted.some((prefix) => label === prefix || label.startsWith(`${prefix} `));
+  });
+  if (found.length === 0) return "none";
+  return found.length === 1 && found[0] ? found[0] : "several";
+}
+
 /** A period label as the handoff writes it ("FY2024 / 2024-09-30" → "FY2024"). */
 export const periodLabel = (cell: string) => (cell.split(" / ")[0] ?? "").trim();
 
-const YEAR = /(\d{4})/;
-const kindOf = (label: string) =>
-  label
-    .replace(/\d{4}/, "")
-    .replace(/[^A-Za-z]/g, "")
-    .toUpperCase();
+export type PeriodKind = "annual" | "other";
 
 /**
- * The two latest period rows of a chart-data table, earlier first, ordered by the year in each label
- * (not by position). Null unless every label carries a year, the latest two differ and are the same
- * kind of period ("FY" beside "FY", not beside "LTM").
+ * One period a table states. `label` is as written (before any " / date"); `year` is the four-digit
+ * year in it; `form` is the label without its year, letters and digits only, upper case ("FY",
+ * "LTMDEC", "Q3", "" for a bare year): two periods compare only within one form. `kind` is
+ * "annual" for a fiscal or calendar year (`FY2024`, `CY2024`, `2024`), "other" for anything else
+ * (LTM, quarters, halves, an interim date).
  */
-export function lastTwoRows(table: Table): { prior: Row; current: Row } | null {
-  const dated = table.rows.map((row) => ({
-    row,
-    label: periodLabel(row.cells[0] ?? ""),
-    year: Number(YEAR.exec(periodLabel(row.cells[0] ?? ""))?.[1] ?? NaN),
-  }));
-  if (dated.length < 2 || dated.some((item) => Number.isNaN(item.year))) return null;
-  const ordered = [...dated].sort((a, b) => a.year - b.year);
-  const current = ordered.at(-1);
-  const prior = ordered.at(-2);
-  if (
-    !current ||
-    !prior ||
-    prior.year === current.year ||
-    kindOf(prior.label) !== kindOf(current.label)
-  )
-    return null;
-  return { prior: prior.row, current: current.row };
+export type Period = { label: string; kind: PeriodKind; form: string; year: number };
+
+const YEAR = /(?<!\d)(\d{4})(?!\d)/;
+const ANNUAL_FORMS = new Set(["FY", "CY", ""]);
+const MONTH_DAY = /\d{4}-(\d{2})-(\d{2})/;
+
+/** The period a cell names, or null when it names no year (`Thereafter`, `Current`). */
+export function periodOf(cell: string): Period | null {
+  const label = periodLabel(cell);
+  const year = YEAR.exec(label)?.[1];
+  if (!label || year === undefined) return null;
+  const form = label
+    .replace(year, "")
+    .replace(/[^A-Za-z0-9]/g, "")
+    .toUpperCase();
+  return { label, year: Number(year), form, kind: ANNUAL_FORMS.has(form) ? "annual" : "other" };
+}
+
+/** A balance-sheet date written in the cell ("FY2024 / 2024-09-30", "2025-06-30") as MMDD, else null. */
+const dayOf = (cell: string) => {
+  const found = MONTH_DAY.exec(cell);
+  return found ? Number(`${found[1] ?? ""}${found[2] ?? ""}`) : null;
+};
+
+export type Ordered<T> = { periods: { period: Period; item: T }[] } | { reason: string };
+
+/**
+ * Items keyed by a period cell, ordered by the year in the label (then by a stated date in the same
+ * year); items of one year and no date keep the handoff's order. A reason instead when a cell names
+ * no year, or when one period (one form, one year) is stated twice: the table is then a stated gap.
+ */
+export function orderByPeriod<T>(items: readonly { cell: string; item: T }[]): Ordered<T> {
+  const read = items.map(({ cell, item }) => ({ period: periodOf(cell), day: dayOf(cell), item }));
+  const undated = items.find((_, at) => read[at]?.period === null);
+  if (undated) return { reason: `A period is not dated: ${periodLabel(undated.cell) || "blank"}.` };
+  const dated = read as { period: Period; day: number | null; item: T }[];
+  for (const [at, one] of dated.entries()) {
+    const twice = dated
+      .slice(0, at)
+      .find((other) => other.period.form === one.period.form && other.period.year === one.period.year);
+    if (twice) return { reason: `${one.period.label} is stated more than once.` };
+  }
+  const ordered = [...dated].sort(
+    (a, b) =>
+      a.period.year - b.period.year || (a.day !== null && b.day !== null ? a.day - b.day : 0),
+  );
+  return { periods: ordered.map(({ period, item }) => ({ period, item })) };
+}
+
+/** The rows of a period-rows table (`Chart data: …`, `Net debt data`), ordered by period; see `orderByPeriod`. */
+export function periodRows(table: Table, column = 0): Ordered<Row> {
+  if (table.rows.length === 0) return { reason: "The table states no period." };
+  return orderByPeriod(table.rows.map((row) => ({ cell: row.cells[column] ?? "", item: row })));
+}
+
+/** The period columns of a statement table (`| Line item | FY2024 | FY2023 | Unit | …`): every header after the first that names a year. */
+export function statementColumns(table: Table): Ordered<number> {
+  const columns = table.headers.flatMap((header, at) =>
+    at > 0 && periodOf(header) ? [{ cell: header.trim(), item: at }] : [],
+  );
+  if (columns.length === 0) return { reason: "The table states no period column." };
+  return orderByPeriod(columns);
+}
+
+/**
+ * Every period of these lists once (by label), ordered by year; periods of one year keep the order
+ * they first appear in. Periods of different kinds are all kept, never collapsed.
+ */
+export function unionPeriods(lists: readonly (readonly Period[])[]): Period[] {
+  const seen = new Map<string, Period>();
+  for (const period of lists.flat()) if (!seen.has(period.label)) seen.set(period.label, period);
+  return [...seen.values()].sort((a, b) => a.year - b.year);
+}
+
+/**
+ * The two periods a comparison is drawn between, earlier first: the latest two of one form, annual
+ * periods first (`FY2023 → FY2024` beside an `LTM Dec-2024`). Null with fewer than two of one form:
+ * one period is drawn as itself, never compared.
+ */
+export function comparisonOf(periods: readonly Period[]): { from: string; to: string } | null {
+  const annual = periods.filter((period) => period.kind === "annual");
+  const pool = annual.length > 0 ? annual : periods;
+  const form = pool.at(-1)?.form;
+  const same = pool.filter((period) => period.form === form);
+  const [from, to] = same.slice(-2);
+  return from && to ? { from: from.label, to: to.label } : null;
 }
 
 /** For a statement table with one column per period (`FY2024`, `FY2023`): the earlier and later column. */
@@ -84,16 +175,5 @@ export function periodColumns(table: Table) {
   return a.year < b.year ? { prior: a, current: b } : { prior: b, current: a };
 }
 
-/** Prior and current cells of a labelled row in a statement table; null if the row or periods are missing. */
-export function statementPair(table: Table, label: string) {
-  const periods = periodColumns(table);
-  const row = rowLabelled(table, label);
-  if (!periods || !row) return null;
-  const prior = row.cells[periods.prior.at] ?? "";
-  const current = row.cells[periods.current.at] ?? "";
-  return {
-    line: row.line,
-    prior: { label: periods.prior.label, cell: readCell(prior) },
-    current: { label: periods.current.label, cell: readCell(current) },
-  };
-}
+/** A cell of a statement row read as a number, a stated gap or words. */
+export const cellAt = (row: Row, at: number) => readCell(row.cells[at] ?? "");

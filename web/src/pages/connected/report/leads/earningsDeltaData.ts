@@ -273,7 +273,10 @@ function pairOf({ unit, stated, others = [], ...parts }: PairInput): Pair {
     parts.priorPeriod !== null &&
     parts.currentPeriod !== null &&
     kindOf(parts.priorPeriod) !== kindOf(parts.currentPeriod);
-  const change = settle(stated, mixedBasis ? null : derivedChange(parts.prior, parts.current, unit));
+  const change = settle(
+    stated,
+    mixedBasis ? null : derivedChange(parts.prior, parts.current, unit),
+  );
   return { ...parts, change, tone: toneOf(parts.label, change), mixedBasis, others };
 }
 

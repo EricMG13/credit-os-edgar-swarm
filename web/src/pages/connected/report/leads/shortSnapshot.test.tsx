@@ -105,17 +105,19 @@ describe("shortSnapshotData", () => {
     });
   });
 
-  it("says what was expected when the table is absent, repeated or empty", () => {
+  it("says the true condition, without naming any column, when the table is absent, repeated or empty", () => {
     expect(readKeyFigures(snapshot(null))).toMatchObject({ state: "gap" });
     const gap = readKeyFigures(snapshot(null));
-    expect(gap.state === "gap" && gap.reason).toContain("Measure, Value, Period, Source");
+    expect(gap.state === "gap" && gap.reason).toBe("No key figures are in this handoff.");
     const twice = readKeyFigures(
       snapshot(FIGURES, [section("Key figures again", 30, table(31, HEAD, FIGURES))]),
     );
-    expect(twice.state === "gap" && twice.reason).toContain("more than one table");
+    expect(twice.state === "gap" && twice.reason).toContain("more than one table of key figures");
+    for (const result of [gap, twice, readKeyFigures(snapshot([]))])
+      expect(JSON.stringify(result)).not.toMatch(/Measure|Value|Period|Source|column/);
     expect(readKeyFigures(snapshot([]))).toEqual({
       state: "gap",
-      reason: "The Key figures table has no rows.",
+      reason: "The key figures table has no rows.",
     });
   });
 
@@ -198,15 +200,15 @@ describe("ShortSnapshotLead", () => {
     expect(strip?.querySelectorAll("dt")).toHaveLength(6);
     const leverage = dt(strip, "Total leverage, FY2024");
     expect(leverage).toHaveTextContent("6.1x");
-    expect(leverage).toHaveTextContent("up 0.5x (derived) worse");
+    expect(leverage).toHaveTextContent("+0.5x worse");
     expect(leverage).toHaveTextContent("from 5.6x in FY2023");
     expect(within(leverage as HTMLElement).getByRole("img")).toHaveAccessibleName(
       "Total leverage: 5.6x in FY2023, 6.1x in FY2024",
     );
     const liquidity = dt(strip, "Liquidity, FY2024");
-    expect(liquidity).toHaveTextContent("up USD 150m (derived) better");
+    expect(liquidity).toHaveTextContent("+USD 150m better");
     expect(within(tile).getByText("1 more figure is in the table view.")).toBeVisible();
-    expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent("7 key figures");
+    expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(/^Key figures$/);
   });
 
   it("a single-period figure shows its period and no prior, no slope and no change", () => {
@@ -223,7 +225,10 @@ describe("ShortSnapshotLead", () => {
   it("draws a missing figure as the handoff's own reason and a stated zero as a value", () => {
     render(<ShortSnapshotLead {...leadProps(snapshot())} />);
     const strip = screen.getByRole("region", { name: "Key figures" }).querySelector("dl");
-    expect(dt(strip, "Revenue, FY2024")).toHaveTextContent("not stated in the filing");
+    const revenue = dt(strip, "Revenue, FY2024");
+    expect(revenue).toHaveTextContent("not stated in the filing");
+    // The gap treatment: a hatched slot holding the reason, not plain grey text.
+    expect(revenue?.querySelector(".gap-hatch")).toHaveTextContent("not stated in the filing");
     expect(dt(strip, "Revenue, FY2024")).not.toHaveTextContent(/^Revenue, FY2024\s*0/);
     expect(dt(strip, "Cash, FY2024")).toHaveTextContent("0");
   });
@@ -243,7 +248,7 @@ describe("ShortSnapshotLead", () => {
       screen.getByRole("region", { name: "Key figures" }).querySelector("dl"),
       "Cash, FY2024",
     );
-    expect(cash).toHaveTextContent("down 4 (derived)");
+    expect(cash).toHaveTextContent("−4");
     expect(cash).not.toHaveTextContent(/better|worse/);
   });
 
@@ -254,18 +259,17 @@ describe("ShortSnapshotLead", () => {
     expect(document.body.textContent).not.toMatch(/Canonical data foundation|CP-1|CP-L10/);
   });
 
-  it("draws the gap, saying what was expected, when there is no Key figures table", () => {
+  it("draws one plain gap tile when there is no key figures table", () => {
     render(<ShortSnapshotLead {...leadProps(snapshot(null))} />);
-    expect(
-      screen.getByText(/No key figures are in this handoff\. Expected a Key figures table/),
-    ).toBeVisible();
+    expect(screen.getByText(/No key figures are in this handoff\./)).toBeVisible();
+    expect(document.querySelectorAll(".gap-hatch")).toHaveLength(1);
     expect(screen.queryByRole("img")).toBeNull();
   });
 
   it("draws one figure from a one-row table", () => {
     render(<ShortSnapshotLead {...leadProps(snapshot([["Cash", "5", "FY2024", SOURCE]]))} />);
     const tile = screen.getByRole("region", { name: "Key figures" });
-    expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent("1 key figure");
+    expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(/^Key figures$/);
     expect(tile.querySelectorAll("dt")).toHaveLength(1);
   });
 
@@ -309,15 +313,13 @@ describe("ShortSnapshotLead", () => {
         )}
       />,
     );
-    expect(
-      screen.getByText(/Expected a change screen with the columns Topic, Prior and Current/),
-    ).toBeVisible();
+    expect(screen.getByText(/change screen is not in a shape this page reads/)).toBeVisible();
     unmount();
     render(<ShortSnapshotLead {...leadProps(snapshot())} />);
     expect(screen.queryByRole("region", { name: "Change screen" })).toBeNull();
   });
 
-  it("a blocked module is the frame's one gap", () => {
+  it("a blocked module draws nothing: the frame states it", () => {
     const blocked = entry(
       "CP-L10",
       [],
@@ -338,10 +340,13 @@ describe("ShortSnapshotLead", () => {
         },
       ],
     );
-    render(<ShortSnapshotLead {...leadProps(blocked)} />);
-    expect(
-      screen.getByText("Not assessable: the financial foundation states no figure."),
-    ).toBeVisible();
-    expect(screen.queryByRole("region", { name: "Key figures" })).toBeNull();
+    const { container } = render(<ShortSnapshotLead {...leadProps(blocked)} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("states no derived label and declares that it draws none of the module's typed figures", () => {
+    render(<ShortSnapshotLead {...leadProps(snapshot())} />);
+    expect(document.body.textContent).not.toMatch(/derived|\bup \d|\bdown \d/i);
+    expect(ShortSnapshotLead.draws).toEqual([]);
   });
 });

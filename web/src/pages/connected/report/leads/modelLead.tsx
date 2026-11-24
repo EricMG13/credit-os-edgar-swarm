@@ -1,10 +1,10 @@
 import { ArrowRight } from "@untitledui/icons";
-import { useId } from "react";
+import { useId, type FC } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { GapPattern } from "../overview/figureParts";
 import { forwardPath, pathGeometry, PATH } from "../overview/stressData";
-import { GapNote, Tile } from "../overview/Tile";
-import { FigureTile, LeadFrame } from "./kit/LeadFrame";
+import { Tile } from "../overview/Tile";
+import { FigureTile, GapTile, LeadFrame } from "./kit/LeadFrame";
 import { safeText } from "./kit/reader";
 import type { LeadProps } from "./types";
 
@@ -13,16 +13,51 @@ import type { LeadProps } from "./types";
  * of its cash-flow grid through `forwardPath` (the Overview's own reader) and draws it on a larger
  * canvas; the forecast itself, all of its rows and its assumptions, are on the Forecast page.
  * Tested on a faked model of the shape `forwardPath` reads (see overview/StressRow.test.tsx);
- * no retained real published model is used.
+ * no retained real published model is used. No value is singled out (no high, no peak): every
+ * period's figure is the model's own, and the table view lists them all.
  */
 
 type Path = NonNullable<ReturnType<typeof forwardPath>>;
 
-const PLOT = { width: 640, height: 300, left: 60, right: 480, top: 34, base: 250 } as const;
-const LABEL_WIDTH = 18;
-const DASH = ["", "6 4", "2 3", "8 3 2 3"] as const;
+const PLOT = { width: 640, height: 300, left: 60, right: 470, top: 34, base: 250 } as const;
+const LABEL_WIDTH = 16;
+
+/** One look per case: a colour, a dash and a marker shape, so no two cases share any of them. */
+const LOOKS = [
+  { stroke: "stroke-chart-1", fill: "fill-chart-1", dash: "", shape: "circle" },
+  { stroke: "stroke-chart-2", fill: "fill-chart-2", dash: "6 4", shape: "square" },
+  { stroke: "stroke-chart-4", fill: "fill-chart-4", dash: "2 3", shape: "diamond" },
+  { stroke: "stroke-chart-5", fill: "fill-chart-5", dash: "8 3 2 3", shape: "triangle" },
+] as const;
+type Look = (typeof LOOKS)[number];
+const lookOf = (at: number): Look => LOOKS[at % LOOKS.length] ?? LOOKS[0];
 
 const reasonOf = (text: string) => (text.trim() ? safeText(text) : "no figure in the model");
+
+/** A case's marker at a point: its own shape, in its own colour. */
+function Marker({
+  look,
+  x,
+  y,
+  size = 5,
+  ...rest
+}: {
+  look: Look;
+  x: number;
+  y: number;
+  size?: number;
+  "data-point"?: string;
+}) {
+  const common = { className: `${look.fill} stroke-surface-card`, strokeWidth: 1.5, ...rest };
+  if (look.shape === "circle") return <circle cx={x} cy={y} r={size} {...common} />;
+  if (look.shape === "square")
+    return <rect x={x - size} y={y - size} width={size * 2} height={size * 2} {...common} />;
+  const points =
+    look.shape === "diamond"
+      ? `${String(x)},${String(y - size - 1)} ${String(x + size + 1)},${String(y)} ${String(x)},${String(y + size + 1)} ${String(x - size - 1)},${String(y)}`
+      : `${String(x)},${String(y - size - 1)} ${String(x + size + 1)},${String(y + size)} ${String(x - size - 1)},${String(y + size)}`;
+  return <polygon points={points} {...common} />;
+}
 
 /** `name` broken into lines of at most `width` characters at spaces. */
 function wrap(name: string, width: number) {
@@ -36,58 +71,15 @@ function wrap(name: string, width: number) {
   return lines;
 }
 
-/** End labels in order of height, each at least a line clear of the one above. */
+/** End labels in order of height, each at least its own height clear of the one above. */
 function spread<T extends { y: number; lines: string[] }>(ends: T[]) {
   const placed: (T & { top: number })[] = [];
   for (const end of ends) {
     const above = placed.at(-1);
-    const floor = above ? above.top + above.lines.length * 14 + 4 : -Infinity;
+    const floor = above ? above.top + above.lines.length * 14 + 6 : -Infinity;
     placed.push({ ...end, top: Math.max(end.y - 4, floor) });
   }
   return placed;
-}
-
-const GLYPH = 7.5;
-type Box = { x0: number; x1: number; y0: number; y1: number };
-
-/** The box of one line of 12 px text: its left edge, baseline and width. */
-const box = (x: number, baseline: number, width: number): Box => ({
-  x0: x,
-  x1: x + width,
-  y0: baseline - 12,
-  y1: baseline + 3,
-});
-const touches = (a: Box, b: Box) => a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
-const RISE = [-12, 22, -28, 38, -44, 54] as const;
-
-/**
- * Peak labels clear of each other and of `avoid` (axis labels, end labels): beside the mark when it
- * is near the left edge (never over the axis), else centred on it; above it, then below, then
- * further out until nothing overlaps.
- */
-function placePeaks(marks: ({ x: number; y: number; text: string } | null)[], avoid: Box[]) {
-  const taken = [...avoid];
-  return marks.map((mark) => {
-    if (!mark) return null;
-    const near = mark.x - PLOT.left < 48;
-    const width = GLYPH * mark.text.length;
-    const x = near ? mark.x + 10 : mark.x;
-    const left = near ? x : x - width / 2;
-    const candidates = RISE.map((rise) => ({
-      y: mark.y + rise,
-      at: box(left, mark.y + rise, width),
-    }));
-    const pick =
-      candidates.find(({ y, at }) => y - 12 >= 0 && !taken.some((other) => touches(at, other))) ??
-      candidates[0];
-    if (pick) taken.push(pick.at);
-    return {
-      x,
-      y: pick?.y ?? mark.y - 12,
-      text: mark.text,
-      anchor: near ? "start" : "middle",
-    } as const;
-  });
 }
 
 function PathFigure({ path }: { path: Path }) {
@@ -108,48 +100,28 @@ function PathFigure({ path }: { path: Path }) {
       const point = line.find((candidate) => candidate.period === period);
       return {
         period,
+        x: x(geometry.periods.find((candidate) => candidate.period === period)?.x ?? from),
         display: point?.display ?? "",
-        figure: point?.y == null ? null : { x: x(point.x), y: y(point.y), value: point.value ?? 0 },
-        reason: point?.reason ?? "",
+        figure: point?.y == null ? null : { x: x(point.x), y: y(point.y) },
       };
     });
-    return { group: item.group, cells };
+    return { group: item.group, look: lookOf(at), cells };
   });
-  const gapPeriods = geometry.periods.filter(({ period }) =>
-    slots.some(({ cells }) => cells.find((cell) => cell.period === period)?.figure === null),
-  );
-  const peaks = slots.map(({ cells }) =>
-    cells.reduce<(typeof cells)[number] | null>(
-      (best, cell) =>
-        cell.figure && (!best?.figure || cell.figure.value > best.figure.value) ? cell : best,
-      null,
-    ),
-  );
-  // End labels, kept apart vertically.
   const ends = slots
     .map(({ group, cells }, at) => {
-      const last = cells.filter((cell) => cell.figure).at(-1)?.figure;
-      return last ? { at, lines: wrap(group, LABEL_WIDTH), x: last.x, y: last.y } : null;
+      const last = cells.filter((cell) => cell.figure).at(-1);
+      return last?.figure
+        ? {
+            at,
+            lines: [...wrap(group, LABEL_WIDTH), last.display],
+            x: last.figure.x,
+            y: last.figure.y,
+          }
+        : null;
     })
     .filter((end) => end !== null)
     .sort((a, b) => a.y - b.y);
   const endLabels = spread(ends);
-  const tickBoxes = geometry.ticks.map((tick) =>
-    box(
-      PLOT.left - 8 - GLYPH * (tick.label.length + 1),
-      y(tick.y) + 4,
-      GLYPH * (tick.label.length + 1),
-    ),
-  );
-  const endBoxes = endLabels.flatMap((end) =>
-    end.lines.map((line, at) => box(end.x + 12, end.top + 10 + at * 14, GLYPH * line.length)),
-  );
-  const peakAt = placePeaks(
-    peaks.map((peak) =>
-      peak?.figure ? { x: peak.figure.x, y: peak.figure.y, text: `high ${peak.display}` } : null,
-    ),
-    [...tickBoxes, ...endBoxes],
-  );
   const every = geometry.periods.length > 9 ? 2 : 1;
   const reading = path.cases
     .map(
@@ -162,7 +134,7 @@ function PathFigure({ path }: { path: Path }) {
       viewBox={`0 0 ${String(PLOT.width)} ${String(PLOT.height)}`}
       width="100%"
       role="img"
-      aria-label={`${path.measure}, from zero. ${reading}. The highest stated value of each case is marked (derived).`}
+      aria-label={`${path.measure}, from zero. ${reading}.`}
     >
       <defs>
         <GapPattern id={id} />
@@ -187,21 +159,7 @@ function PathFigure({ path }: { path: Path }) {
           </text>
         </g>
       ))}
-      {gapPeriods.map(({ period, x: px }) => (
-        <rect
-          key={period}
-          data-gap={period}
-          x={x(px) - 18}
-          y={PLOT.top - 8}
-          width="36"
-          height={PLOT.base - PLOT.top + 16}
-          rx="4"
-          fill={`url(#${id})`}
-          strokeDasharray="3 3"
-          className="stroke-border-gap"
-        />
-      ))}
-      {slots.map(({ group, cells }, at) =>
+      {slots.map(({ group, look, cells }) =>
         cells.flatMap((cell, index) => {
           const next = cells[index + 1];
           // Only neighbouring periods that both have a figure are joined: nothing is drawn across a gap.
@@ -215,60 +173,67 @@ function PathFigure({ path }: { path: Path }) {
                   x2={next.figure.x}
                   y2={next.figure.y}
                   strokeWidth="2.5"
-                  strokeDasharray={DASH[Math.min(at, DASH.length - 1)]}
-                  className={at === 0 ? "stroke-chart-1" : "stroke-chart-2"}
+                  strokeDasharray={look.dash || undefined}
+                  className={look.stroke}
                 />,
               ]
             : [];
         }),
       )}
-      {slots.map(({ group, cells }, at) =>
-        cells.flatMap((cell) =>
-          cell.figure
+      {slots.map(({ group, look, cells }) =>
+        cells.flatMap((cell, index) => {
+          if (cell.figure)
+            return [
+              <Marker
+                key={`${group}-${cell.period}`}
+                data-point={`${group} ${cell.period}`}
+                look={look}
+                x={cell.figure.x}
+                y={cell.figure.y}
+              />,
+            ];
+          // No figure for this case in this period: a hatched slot on the case's own line, at the
+          // height of its nearest stated neighbour (a place for the mark, not a value).
+          const near =
+            cells
+              .slice(0, index)
+              .reverse()
+              .find((other) => other.figure) ??
+            cells.slice(index + 1).find((other) => other.figure);
+          return near?.figure
             ? [
-                <circle
-                  key={`${group}-${cell.period}`}
-                  data-point={`${group} ${cell.period}`}
-                  cx={cell.figure.x}
-                  cy={cell.figure.y}
-                  r="4.5"
-                  strokeWidth="2"
-                  className={
-                    at === 0
-                      ? "fill-chart-1 stroke-surface-card"
-                      : "fill-surface-card stroke-chart-2"
-                  }
+                <rect
+                  key={`${group}-${cell.period}-gap`}
+                  data-gap={`${group} ${cell.period}`}
+                  x={cell.x - 13}
+                  y={near.figure.y - 8}
+                  width="26"
+                  height="16"
+                  rx="4"
+                  fill={`url(#${id})`}
+                  strokeDasharray="3 3"
+                  className={look.stroke}
                 />,
               ]
-            : [],
-        ),
-      )}
-      {peakAt.map((peak, at) =>
-        peak ? (
-          <text
-            key={slots[at]?.group}
-            data-peak={slots[at]?.group}
-            x={peak.x}
-            y={peak.y}
-            textAnchor={peak.anchor}
-            fontSize="12"
-            className="fill-text-primary font-mono"
-          >
-            {peak.text}
-          </text>
-        ) : null,
+            : [];
+        }),
       )}
       {endLabels.map((end) => (
         <text
           key={end.at}
           data-case-label={slots[end.at]?.group}
-          x={end.x + 12}
+          x={end.x + 14}
           y={end.top + 10}
           fontSize="12"
           className="fill-text-secondary font-body"
         >
           {end.lines.map((line, index) => (
-            <tspan key={line} x={end.x + 12} dy={index === 0 ? 0 : 14}>
+            <tspan
+              key={line}
+              x={end.x + 14}
+              dy={index === 0 ? 0 : 14}
+              className={index === end.lines.length - 1 ? "fill-text-primary font-mono" : undefined}
+            >
               {line}
             </tspan>
           ))}
@@ -292,11 +257,40 @@ function PathFigure({ path }: { path: Path }) {
   );
 }
 
-function peakOf(case_: Path["cases"][number]) {
-  return case_.points.reduce<(typeof case_.points)[number] | null>(
-    (best, point) =>
-      point.value !== null && (best?.value == null || point.value > best.value) ? point : best,
-    null,
+/** The legend: each case's own line, dash and marker, then the hatched slot when a period has no figure. */
+function Legend({ path, gaps }: { path: Path; gaps: boolean }) {
+  return (
+    <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-caption text-text-secondary">
+      {path.cases.map(({ group }, at) => {
+        const look = lookOf(at);
+        return (
+          <li key={group} className="flex items-center gap-1.5">
+            <svg viewBox="0 0 28 14" width="28" height="14" aria-hidden="true" focusable="false">
+              <line
+                x1="0"
+                x2="28"
+                y1="7"
+                y2="7"
+                strokeWidth="2.5"
+                strokeDasharray={look.dash || undefined}
+                className={look.stroke}
+              />
+              <Marker look={look} x={14} y={7} size={4} />
+            </svg>
+            {group}
+          </li>
+        );
+      })}
+      {gaps && (
+        <li className="flex items-center gap-1.5">
+          <span
+            aria-hidden="true"
+            className="gap-hatch size-3 flex-none rounded-[3px] border border-dashed border-border-gap"
+          />
+          No figure in the model
+        </li>
+      )}
+    </ul>
   );
 }
 
@@ -309,30 +303,12 @@ function ForwardTile({ props, path }: { props: LeadProps; path: Path }) {
   return (
     <FigureTile
       props={props}
-      span={7}
+      span={8}
       label="Forward net leverage"
-      kicker="Net leverage by case, from zero"
-      title={path.cases
-        .flatMap((item) => {
-          const high = peakOf(item);
-          return high
-            ? [`${item.group}: highest stated value ${high.display} in ${high.period}`]
-            : [];
-        })
-        .join("; ")}
+      kicker={`${path.measure}, from zero`}
+      title="Net leverage by case"
       source="the forward path"
-      legend={[
-        ...path.cases.map((item, at) => ({
-          tone: at === 0 ? ("primary" as const) : ("secondary" as const),
-          text: item.group,
-        })),
-        ...(gaps.length ? [{ tone: "gap" as const, text: "No figure in the model" }] : []),
-      ]}
-      notes={[
-        "The highest stated value is the largest of the figures the model states for that case (derived).",
-        ...gaps,
-        ...path.limits,
-      ]}
+      notes={[...gaps, ...path.limits]}
       table={{
         caption: path.measure,
         headers: ["Case", "Period", "As the model states it"],
@@ -345,26 +321,16 @@ function ForwardTile({ props, path }: { props: LeadProps; path: Path }) {
         ),
       }}
     >
+      <Legend path={path} gaps={gaps.length > 0} />
       <PathFigure path={path} />
     </FigureTile>
   );
 }
 
-function OpenForecast({ path }: { path: Path | null }) {
+/** Just the way to the Forecast page: a compact tile beside the chart. */
+function OpenForecast() {
   return (
-    <Tile
-      span={5}
-      label="Open the forecast"
-      kicker="The full forward model"
-      title="The forecast page holds the whole model"
-    >
-      {path && (
-        <ul className="flex flex-col gap-1 text-small text-text-secondary">
-          {path.cases.map(({ group }) => (
-            <li key={group}>{group}</li>
-          ))}
-        </ul>
-      )}
+    <Tile span={4} label="Open the forecast" className="self-start">
       <div>
         <Button color="link-gray" size="sm" href="#forecast" iconTrailing={ArrowRight}>
           Open the forecast
@@ -382,26 +348,25 @@ function Content(props: LeadProps) {
       {path ? (
         <ForwardTile props={props} path={path} />
       ) : (
-        <Tile
-          span={7}
-          label="Forward net leverage"
-          kicker="Not drawn"
-          tone="gap"
-          className="self-start"
-        >
-          <GapNote>The published model states no net leverage path.</GapNote>
-        </Tile>
+        <GapTile span={8} label="Forward net leverage" kicker="Net leverage by case">
+          {model
+            ? "The published model states no net leverage path."
+            : "No published model for this run."}
+        </GapTile>
       )}
-      <OpenForecast path={path} />
+      <OpenForecast />
     </>
   );
 }
 
 /** CP-MODEL: net leverage by case from the published model, and the way to the Forecast page. */
-export function ModelLead(props: LeadProps) {
-  return (
-    <LeadFrame props={props}>
-      <Content {...props} />
-    </LeadFrame>
-  );
-}
+export const ModelLead: FC<LeadProps> & { draws?: readonly ("figures" | "events" | "maps")[] } =
+  function ModelLead(props) {
+    return (
+      <LeadFrame props={props}>
+        <Content {...props} />
+      </LeadFrame>
+    );
+  };
+// This lead draws no typed figure, event lane or map of the module's own.
+ModelLead.draws = [];

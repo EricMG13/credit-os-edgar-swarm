@@ -2,7 +2,7 @@ import { cx } from "@/utils/cx";
 import { fittingTicks, niceAxis, type NiceAxis } from "./axis";
 import { GapSlot } from "./GapSlot";
 import { LINE, NARROW, SIZE, signedText, textWidth, wrap } from "./text";
-import { AxisNote, Legend, TickLabels, type LegendItem } from "./parts";
+import { AxisNote, Legend, TickLabels, legendHeight, type LegendItem } from "./parts";
 
 /**
  * One row of a waterfall, in the handoff's order. A `level` (an opening or a stated intermediate
@@ -213,7 +213,7 @@ function Bar({ one, f, base, cut }: { one: Laid; f: Frame; base: number; cut: bo
   );
 }
 
-function RowLabel({ one, f }: { one: Laid; f: Frame }) {
+function RowLabel({ one }: { one: Laid }) {
   const total = one.row.kind === "level" || one.row.kind === "closing";
   return (
     <text
@@ -269,12 +269,13 @@ function connectors(laid: Laid[], f: Frame) {
 
 function legendItems(legend: WaterfallProps["legend"], hasGap: boolean): LegendItem[] {
   if (!legend) return [];
-  return [
-    legend.level ? { tone: "level" as const, text: legend.level } : null,
-    legend.step ? { tone: "step" as const, text: legend.step } : null,
-    legend.closing ? { tone: "closing" as const, text: legend.closing } : null,
-    hasGap ? { tone: "gap" as const, text: legend.gap ?? "Not stated" } : null,
-  ].filter((item): item is LegendItem => item !== null);
+  const named: [LegendItem["tone"], string | undefined][] = [
+    ["level", legend.level],
+    ["step", legend.step],
+    ["closing", legend.closing],
+    ["gap", hasGap ? (legend.gap ?? "Not stated") : undefined],
+  ];
+  return named.flatMap(([tone, text]) => (text ? [{ tone, text }] : []));
 }
 
 /**
@@ -290,7 +291,7 @@ export function Waterfall({ rows, unit, width, axisStart, label, legend }: Water
     legend,
     rows.some((row) => row.kind === "gap"),
   );
-  const legendBlock = Legend.height(items, width);
+  const legendBlock = legendHeight(items, width);
   const laid = lay(placed, f, legendBlock + 8);
   const plotTop = legendBlock + 4;
   const plotBottom = (laid.at(-1)?.top ?? plotTop) + (laid.at(-1)?.height ?? 0) - GAP + 6;
@@ -330,7 +331,7 @@ export function Waterfall({ rows, unit, width, axisStart, label, legend }: Water
       />
       {laid.map((one, at) => (
         <g key={`${String(at)}-${one.row.label}`}>
-          <RowLabel one={one} f={f} />
+          <RowLabel one={one} />
           {one.row.kind === "gap" && (
             <GapSlot
               x={f.plotLeft}

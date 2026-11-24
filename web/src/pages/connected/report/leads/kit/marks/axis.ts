@@ -90,7 +90,9 @@ export function niceAxis(
   if (edge <= 0) return throughZero(present, suffix);
   const step = stepFor(high - edge);
   const cut = Math.floor(edge / step + EDGE) * step;
-  return cut > 0 ? from(Number(cut.toFixed(decimalsOf(step))), high, suffix) : throughZero(present, suffix);
+  return cut > 0
+    ? from(Number(cut.toFixed(decimalsOf(step))), high, suffix)
+    : throughZero(present, suffix);
 }
 
 /**
