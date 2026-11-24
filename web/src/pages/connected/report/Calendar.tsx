@@ -1,10 +1,10 @@
 import { Table as KitTable } from "@/components/application/table/table";
 import { Button } from "@/components/base/buttons/button";
 import { ArrowRight } from "@untitledui/icons";
-import { ChartWithTable } from "@/components/chart/ChartWithTable";
+import { useId } from "react";
+import { Missing } from "@/components/gap/Missing";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import { moduleName } from "../api";
-import { card, heading } from "../layout";
 import {
   type Block,
   blocked,
@@ -14,8 +14,10 @@ import {
   readerText,
   type Table,
 } from "../publishedReport";
-import { EVENT_HEADERS, eventLane, eventRecords } from "../visuals/EventLane";
+import { EventAxis } from "../visuals/EventAxis";
+import { EVENT_HEADERS, eventRecords } from "../visuals/EventLane";
 import { publishedTables, word } from "../visuals/visualData";
+import { Bento, Tile } from "./overview/Tile";
 import { PublishedSource } from "./PublishedTrace";
 
 type EventLocation = { owner: string; href: string };
@@ -218,12 +220,19 @@ function addPlacedEvents(
   }
 }
 
-export function upcomingCalendarRows(rows: CalendarRow[], asOf: string | null) {
+/** The as-of date as a timestamp, or null when it is not a real YYYY-MM-DD date. */
+function asOfTimestamp(asOf: string | null | undefined) {
   if (!asOf || !/^\d{4}-\d{2}-\d{2}$/u.test(asOf)) return null;
   const timestamp = Date.parse(`${asOf}T00:00:00Z`);
   if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString().slice(0, 10) !== asOf) {
     return null;
   }
+  return timestamp;
+}
+
+export function upcomingCalendarRows(rows: CalendarRow[], asOf: string | null) {
+  const timestamp = asOfTimestamp(asOf);
+  if (timestamp === null) return null;
   return rows
     .filter(({ cells, to }) => !isHistoricalStatus(cells[4] ?? "") && to >= timestamp)
     .map((row) => ({
@@ -244,52 +253,98 @@ function EventSource({ href, name }: { href: string; name: string }) {
   );
 }
 
-function CalendarFigure({ rows }: { rows: CalendarRow[] }) {
-  const eventName = (cells: string[]) => cells[3] ?? "event";
-  const chart = eventLane(
-    {
-      line: 0,
-      headers: EVENT_HEADERS,
-      rows: rows.map(({ cells }) => cells),
-      evidenceInDrawer: true,
-    },
-    (index) => {
-      const row = rows[index];
-      return row ? (
-        <p className={`${TRACE_HOST} flex flex-wrap items-center gap-x-2 text-text-secondary`}>
-          <span>{row.owner}</span>
-          <EventSource href={row.href} name={`${eventName(row.cells)} · ${row.owner}`} />
-        </p>
-      ) : null;
-    },
-  );
+const TABLE_HEAD = [
+  "Event",
+  "Event date",
+  "Date precision",
+  "Published",
+  "Status",
+  "Credit relevance",
+  "Module",
+  "Evidence trace",
+];
+
+function focusRow(id: string) {
+  const row = document.getElementById(id);
+  if (!row) return;
+  row.focus();
+  if (typeof row.scrollIntoView === "function") row.scrollIntoView({ block: "nearest" });
+}
+
+function EventsTable({ rows, rowId }: { rows: CalendarRow[]; rowId: (index: number) => string }) {
   return (
-    <section className={`min-w-0 ${card}`}>
-      <ChartWithTable
-        title="Published events"
-        as="h3"
-        chart={chart}
-        table={{
-          head: [
-            "Event",
-            "Event date",
-            "Date precision",
-            "Published",
-            "Status",
-            "Credit relevance",
-            "Module",
-          ],
-          rows: rows.map(({ cells, owner, href }) => ({
-            label: eventName(cells),
-            cells: [cells[0], cells[1], cells[2], cells[4], cells[6], owner].map(
-              (value) => value || null,
-            ),
-            end: <EventSource href={href} name={`${eventName(cells)} · ${owner}`} />,
-          })),
-          endHeading: "Evidence",
-        }}
-      />
-    </section>
+    <div className="relative overflow-x-auto">
+      <table className="w-full border-collapse text-body">
+        <caption className="sr-only">Published events</caption>
+        <thead>
+          <tr className="border-b-2 border-border-hairline">
+            {TABLE_HEAD.map((heading) => (
+              <th
+                key={heading}
+                scope="col"
+                className="px-3 py-2 text-left font-medium whitespace-nowrap text-text-tertiary"
+              >
+                {heading}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(({ cells, owner, href }, index) => (
+            <tr
+              key={index}
+              id={rowId(index)}
+              tabIndex={-1}
+              className="group/trace relative border-b border-border-hairline outline-hidden focus:ring-2 focus:ring-focus focus:ring-inset"
+            >
+              <th scope="row" className="px-3 py-2 text-left font-medium">
+                {eventName(cells)}
+              </th>
+              {[cells[0], cells[1], cells[2], cells[4], cells[6], owner].map((value, at) => (
+                <td key={at} className="px-3 py-2 text-left align-top">
+                  {value || <Missing />}
+                </td>
+              ))}
+              <td className="px-3 py-2 align-top">
+                <EventSource href={href} name={`${eventName(cells)} · ${owner}`} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function eventName(cells: string[]) {
+  return cells[3] ?? "event";
+}
+
+function CalendarFigure({ rows, asOf }: { rows: CalendarRow[]; asOf: string | null | undefined }) {
+  const prefix = useId();
+  const rowId = (index: number) => `${prefix}-row-${String(index)}`;
+  const events = eventRecords({
+    line: 0,
+    headers: EVENT_HEADERS,
+    rows: rows.map(({ cells }) => cells),
+  });
+  const time = asOfTimestamp(asOf);
+  return (
+    <Tile span={12} label="Dated events" title="Published events">
+      <figure aria-label="Published events" className="grid min-w-0 gap-4">
+        {events.length ? (
+          <EventAxis
+            events={events}
+            asOf={time === null || !asOf ? null : { time, text: asOf }}
+            rowId={rowId}
+            onSelect={(index) => {
+              focusRow(rowId(index));
+            }}
+          />
+        ) : null}
+        <EventsTable rows={rows} rowId={rowId} />
+      </figure>
+    </Tile>
   );
 }
 
@@ -334,7 +389,13 @@ function UnplacedTable({ owner, events }: { owner: string; events: UnplacedEvent
   );
 }
 
-export function Calendar({ calendar }: { calendar: ReturnType<typeof buildCalendar> }) {
+export function Calendar({
+  calendar,
+  asOf,
+}: {
+  calendar: ReturnType<typeof buildCalendar>;
+  asOf?: string | null;
+}) {
   return (
     <>
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -347,33 +408,36 @@ export function Calendar({ calendar }: { calendar: ReturnType<typeof buildCalend
         Events keep their recorded status (Historical or Scheduled) regardless of the run’s as-of
         date. Dates can be precise to the day, month, quarter or year.
       </p>
-      {calendar.rows.length ? (
-        <CalendarFigure rows={calendar.rows} />
-      ) : (
-        <p className={card}>
-          {calendar.gaps.some(({ unplaced }) => unplaced?.some((event) => !event.unreadable))
-            ? "No published events could be plotted. See the events and recorded gaps below."
-            : calendar.gaps.length
-              ? "No events could be plotted. See the recorded gaps below."
-              : "No dated events were published for this run."}
-        </p>
-      )}
-      {calendar.gaps.map(({ owner, href, title, reason, unplaced }) => (
-        <section className={`${TRACE_HOST} ${card}`} key={href}>
-          <h3 className={heading}>{title}</h3>
-          <p>{owner}</p>
-          <p role="note">
-            {containsReference(reason)
-              ? "An event gap is recorded in Evidence."
-              : readerText(reason)}
-          </p>
-          {unplaced ? (
-            <UnplacedTable owner={owner} events={unplaced} />
-          ) : (
-            <EventSource href={href} name={title} />
-          )}
-        </section>
-      ))}
+      <Bento>
+        {calendar.rows.length ? (
+          <CalendarFigure rows={calendar.rows} asOf={asOf} />
+        ) : (
+          <Tile span={12} label="Dated events" tone="gap">
+            <p>
+              {calendar.gaps.some(({ unplaced }) => unplaced?.some((event) => !event.unreadable))
+                ? "No published events could be plotted. See the events and recorded gaps below."
+                : calendar.gaps.length
+                  ? "No events could be plotted. See the recorded gaps below."
+                  : "No dated events were published for this run."}
+            </p>
+          </Tile>
+        )}
+        {calendar.gaps.map(({ owner, href, title, reason, unplaced }) => (
+          <Tile key={href} span={12} label={title} title={title} tone="gap" className={TRACE_HOST}>
+            <p>{owner}</p>
+            <p role="note">
+              {containsReference(reason)
+                ? "An event gap is recorded in Evidence."
+                : readerText(reason)}
+            </p>
+            {unplaced ? (
+              <UnplacedTable owner={owner} events={unplaced} />
+            ) : (
+              <EventSource href={href} name={title} />
+            )}
+          </Tile>
+        ))}
+      </Bento>
     </>
   );
 }

@@ -15,7 +15,7 @@ export const EVENT_HEADERS = [
   "Credit relevance",
 ];
 
-const EVENT_LANES = ["Historical", "Scheduled", "Scenario", "User reminder"] as const;
+export const EVENT_LANES = ["Historical", "Scheduled", "Scenario", "User reminder"] as const;
 const DAY = 86_400_000;
 function dayOf(text: string) {
   const date = Date.parse(text);
@@ -79,7 +79,7 @@ export function eventRecords(table: SourceTable) {
   );
 }
 
-type EventRecord = ReturnType<typeof eventRecords>[number];
+export type EventRecord = ReturnType<typeof eventRecords>[number];
 type Active = { index: number; from: "row" | "marker" } | null;
 
 const MARK_SHAPES = {
@@ -88,7 +88,7 @@ const MARK_SHAPES = {
   "User reminder": "ring",
 } as const;
 
-function Mark({ category }: { category: EventRecord["category"] }) {
+export function Mark({ category }: { category: EventRecord["category"] }) {
   const shape = category === "Scenario" ? null : MARK_SHAPES[category];
   const tint = category === "Historical" ? "text-text-tertiary" : "text-action";
   return (

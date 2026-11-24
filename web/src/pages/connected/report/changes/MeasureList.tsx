@@ -30,7 +30,7 @@ function Cause({ cause }: { cause: string | null }) {
 }
 
 /** One measure: name, earlier → current as figures and as a dumbbell, the stated cause and effect. */
-export function MeasureRow({ item, ranked }: { item: MeasureChange; ranked: boolean }) {
+function MeasureRow({ item, ranked }: { item: MeasureChange; ranked: boolean }) {
   const {
     label,
     before,

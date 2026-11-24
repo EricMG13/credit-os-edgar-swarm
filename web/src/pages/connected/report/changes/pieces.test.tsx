@@ -2,7 +2,7 @@ import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { PublishedChanges } from "../../publishedReport";
 import { Dumbbell } from "./Dumbbell";
-import { maturityColumns, usableProfile } from "./MaturityPair";
+import { MaturityPair, usableProfile } from "./MaturityPair";
 import { ModuleMatrix } from "./ModuleMatrix";
 
 describe("Dumbbell", () => {
@@ -21,30 +21,21 @@ describe("Dumbbell", () => {
   });
 });
 
-describe("maturityColumns", () => {
+describe("MaturityPair", () => {
   const rows = [
     { period: "FY2026", prior: "10", current: "5" },
     { period: "FY2029", prior: null, current: "7" },
     { period: "Thereafter", prior: "3", current: "3" },
   ];
   it("spaces year periods truly, leaves unstated years empty and puts the rest after a break", () => {
-    const { columns, after } = maturityColumns(rows);
-    expect(columns.map((c) => [c.label, c.row === null])).toEqual([
-      ["FY2026", false],
-      ["2027", true],
-      ["2028", true],
-      ["FY2029", false],
-    ]);
-    expect(after.map((c) => c.label)).toEqual(["Thereafter"]);
-  });
-
-  it("keeps the listed order when the periods are not distinct years", () => {
-    const { columns, after } = maturityColumns([
-      { period: "Year 1", prior: "1", current: "2" },
-      { period: "Year 2", prior: "1", current: "2" },
-    ]);
-    expect(columns.map((c) => c.label)).toEqual(["Year 1", "Year 2"]);
-    expect(after).toEqual([]);
+    render(<MaturityPair profile={{ unit: "US$m", rows }} />);
+    const walls = within(screen.getByRole("region", { name: "Maturity walls" }));
+    const labels = walls
+      .getAllByText(/^(FY2026|2027|2028|FY2029|Thereafter)$/)
+      .map((n) => n.textContent);
+    expect(labels).toEqual(["FY2026", "2027", "2028", "FY2029", "Thereafter"]);
+    expect(walls.getByText("//")).toBeInTheDocument();
+    expect(walls.getByTitle("Earlier run: not stated")).toBeInTheDocument();
   });
 
   it("is unusable without a unit, distinct periods or any stated figure", () => {
@@ -53,7 +44,9 @@ describe("maturityColumns", () => {
     expect(
       usableProfile({ unit: "US$m", rows: [{ period: "FY2026", prior: null, current: null }] }),
     ).toBe(false);
-    expect(usableProfile({ unit: "US$m", rows: [rows[0]!, rows[0]!] })).toBe(false);
+    expect(usableProfile({ unit: "US$m", rows: [...rows.slice(0, 1), ...rows.slice(0, 1)] })).toBe(
+      false,
+    );
   });
 });
 

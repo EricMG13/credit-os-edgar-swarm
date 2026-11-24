@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { expect, it } from "vitest";
 import type { OutputEntry } from "../publishedReport";
 import { EVENT_HEADERS } from "../visuals/EventLane";
@@ -46,7 +46,6 @@ it("C4-030 retains the event name while moving its filename reference to Evidenc
   expect(within(figure).getByText("Redemption notice", { exact: true })).toBeInTheDocument();
   expect(within(figure).getByText("Maturity wall", { exact: true })).toBeInTheDocument();
   expect(figure).not.toHaveTextContent("notice_of_redemption.pdf");
-  fireEvent.click(within(figure).getByRole("radio", { name: "Table" }));
   expect(within(figure).getByRole("rowheader", { name: "Redemption notice" })).toBeInTheDocument();
 });
 

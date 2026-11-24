@@ -13,7 +13,7 @@ const HEIGHT = 144;
 const YEAR = /(?<!\d)((?:19|20)\d{2})(?!\d)/;
 
 /** Columns for the stated periods: consecutive years at true spacing when every period is a year, else as listed. */
-export function maturityColumns(rows: readonly Row[]): { columns: Column[]; after: Column[] } {
+function maturityColumns(rows: readonly Row[]): { columns: Column[]; after: Column[] } {
   const dated = rows.flatMap((row) => {
     const year = YEAR.exec(row.period)?.[1];
     return year ? [{ row, year: Number(year) }] : [];
