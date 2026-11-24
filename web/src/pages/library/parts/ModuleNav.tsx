@@ -9,6 +9,8 @@ import {
   SearchLg,
 } from "@untitledui/icons";
 import { Button, Link } from "react-aria-components";
+import { stageLabel } from "@/pages/connected/report/stageNumber";
+import { byStage } from "@/pages/connected/report/stages";
 import { Input } from "@/components/base/input/input";
 import { Select } from "@/components/base/select/select";
 import { STATUS_SETS } from "@/components/status/sets";
@@ -326,6 +328,183 @@ export function ModuleNav({
         <p className="px-4 py-2 text-small text-text-tertiary">No module matches</p>
       ) : null}
       <DesktopNavigation {...props} results={results} />
+    </nav>
+  );
+}
+
+const STAGE_LINK =
+  "flex min-h-8 w-full items-center gap-2 rounded-ds-md px-2 py-1 text-small text-text-secondary outline-hidden hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-brand max-[480px]:min-h-11";
+const STAGE_LINK_CURRENT = "bg-surface-selected text-text-link hover:bg-surface-selected";
+const DESKTOP = "(min-width: 1024px)";
+
+function SlashCircle({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 16 16"
+      className={cx("size-4 flex-none", className)}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    >
+      <circle cx="8" cy="8" r="6.25" />
+      <path d="M3.6 3.6l8.8 8.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function StateMark({ state }: { state: ModuleState }) {
+  if (state === "Not assessable") return <SlashCircle className="text-warning-mark" />;
+  return (
+    <span className={cx("flex flex-none", MARK[state])}>
+      <StatusShape shape={STATUS_SETS["Module state"][state].shape} />
+    </span>
+  );
+}
+
+function StageLink({
+  module,
+  current,
+  href,
+}: {
+  module: NavModule;
+  current: boolean;
+  href: string;
+}) {
+  const word = module.state === "Delivered" ? null : module.state;
+  return (
+    <a
+      href={href}
+      aria-label={`${module.name}, ${module.state}`}
+      aria-current={current ? "page" : undefined}
+      className={cx(STAGE_LINK, current && STAGE_LINK_CURRENT)}
+    >
+      <StateMark state={module.state} />
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="font-medium">{module.name}</span>
+        {word === null ? null : (
+          <small
+            className={cx(
+              "text-caption font-normal",
+              module.state === "Not assessable" ? "text-warning-text" : "text-text-tertiary",
+            )}
+          >
+            {word}
+          </small>
+        )}
+      </span>
+      <span className="font-mono text-caption text-text-tertiary">{module.id}</span>
+    </a>
+  );
+}
+
+function StageGroups({
+  modules,
+  current,
+  hrefFor,
+}: {
+  modules: readonly NavModule[];
+  current: string;
+  hrefFor: (id: string) => string;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      {byStage(modules).map((group) => (
+        <div key={group.name} className="flex flex-col gap-1">
+          <div className="flex items-baseline gap-2 px-2">
+            <span
+              aria-hidden="true"
+              className="font-mono text-caption text-text-tertiary tabular-nums"
+            >
+              {stageLabel(group.name)}
+            </span>
+            <h3 className="text-caption font-medium text-text-secondary">{group.name}</h3>
+          </div>
+          <ul>
+            {group.rows.map((module) => (
+              <li key={module.id}>
+                <StageLink
+                  module={module}
+                  current={module.id === current}
+                  href={hrefFor(module.id)}
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function useDesktop(): boolean {
+  const query = (): MediaQueryList | undefined =>
+    typeof window.matchMedia === "function" ? window.matchMedia(DESKTOP) : undefined;
+  const [desktop, setDesktop] = useState(() => query()?.matches ?? true);
+  useEffect(() => {
+    const list = query();
+    if (!list) return;
+    const sync = () => {
+      setDesktop(list.matches);
+    };
+    list.addEventListener("change", sync);
+    return () => {
+      list.removeEventListener("change", sync);
+    };
+  }, []);
+  return desktop;
+}
+
+/**
+ * The connected module page's navigator: the run's modules grouped by stage, each link carrying
+ * its state. Open at 1024px and wider; a closed disclosure below that.
+ */
+export function StageNav({
+  modules,
+  current,
+  hrefFor,
+  className,
+}: {
+  modules: readonly NavModule[];
+  current: string;
+  hrefFor: (id: string) => string;
+  className?: string;
+}) {
+  const desktop = useDesktop();
+  const [open, setOpen] = useState<boolean | null>(null);
+  if (modules.length === 0) return null;
+  const delivered = modules.filter((m) => m.state.startsWith("Delivered")).length;
+  const blocked = modules.filter((m) => m.state === "Not assessable").length;
+  const count = `${String(delivered)} of ${String(modules.length)} delivered`;
+  return (
+    <nav
+      aria-label="Modules in this run"
+      className={cx("rounded-ds-lg border border-border-subtle bg-surface-card p-3", className)}
+    >
+      <details
+        open={desktop || (open ?? false)}
+        onToggle={(event) => {
+          if (!desktop) setOpen(event.currentTarget.open);
+        }}
+        className="flex flex-col gap-3"
+      >
+        <summary className="flex min-h-8 cursor-pointer items-center text-small font-medium text-text-primary max-[480px]:min-h-11 lg:hidden">
+          Modules in this run · {count}
+        </summary>
+        <div className="mt-3 flex flex-col gap-3 lg:mt-0">
+          <header className="flex flex-col gap-0.5 px-2">
+            <h2 className="text-small font-medium text-text-primary">Modules</h2>
+            <p className="text-caption text-text-tertiary">{count}</p>
+            {blocked > 0 ? (
+              <p className="flex items-center gap-1 text-caption text-warning-text">
+                <SlashCircle className="size-3.5 text-warning-mark" />
+                {String(blocked)} not assessable
+              </p>
+            ) : null}
+          </header>
+          <StageGroups modules={modules} current={current} hrefFor={hrefFor} />
+        </div>
+      </details>
     </nav>
   );
 }
