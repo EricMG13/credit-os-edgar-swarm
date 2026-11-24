@@ -82,3 +82,27 @@ recorded `published`; the issuer is `failed`.
 - Ratings in `hy-list.md` are provisional.
 - The Nov 18 cloud run exercised the workflow and pushed shard results. The Nov 24 checkpoint
   changes were checked offline with Node and a temporary Git remote.
+
+## Sub-session shards (analysis first, verification after)
+
+Used for the Nov 24 resume (`tools/swarm/shards-2026-11-24.json`, 190 issuers, 15 shards,
+effort `xhigh`). The controlling session claims every remaining issuer in its ledger first
+(`ledger.py next --n N --stale-seconds 0`) and keeps the claims. Each shard session then runs
+analysis only and never writes a ledger:
+
+1. Restore inputs under `ROOT=/home/user/swarm-root` (the same path in every session, so run
+   manifests agree): download the `swarm-inputs-20261118` release assets with
+   `gh api repos/EricMG13/credit-os-edgar-swarm/releases/tags/swarm-inputs-20261118` and
+   `gh api -H 'Accept: application/octet-stream' .../releases/assets/ID`, check `SHA256SUMS`,
+   extract into `ROOT`, and check every hash in `ROOT/inputs/sha256.json` (paths are relative to `ROOT`).
+2. Use uv 0.12.5 (`pip install uv==0.12.5`; put it first on `PATH`), `uv sync`, then
+   `uv run python tools/swarm/prepare.py --approved ROOT/inputs/hy-list.md --packs ROOT/inputs/packs/ --contexts ROOT/inputs/contexts/ --root ROOT`.
+3. Run `Workflow({scriptPath: 'tools/swarm/analyse.workflow.js', args: {root: ROOT, repo: REPO, issuers: [...shard ids], effort: 'xhigh'}})`.
+4. Save: on branch `claude/swarm-results-2026-11-24-sNN`, commit `runs/swarm-<id>/` for the shard
+   (from `ROOT/_engine/runs/`, without `inputs/` and `source-text/`) and `reports.json` (the
+   workflow's returned reports), and push.
+
+The controlling session then fetches every shard branch, copies the run folders into its
+`ROOT/_engine/runs/`, runs `run_issuer.py ID verify` twice for each (the first restores the
+filing copies), records `ledger.py done` or `fail` with the kept claim, rebuilds the library and
+saves the batch.
