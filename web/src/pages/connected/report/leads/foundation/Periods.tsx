@@ -38,6 +38,7 @@ export function PeriodsGapTile({ lead }: { lead: LeadProps }) {
       kicker="Trend beyond two periods"
       title={gap.title}
       tone="gap"
+      className="self-start"
     >
       <GapNote>{gap.text}</GapNote>
     </Tile>

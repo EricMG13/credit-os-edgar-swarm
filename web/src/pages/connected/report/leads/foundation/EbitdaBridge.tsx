@@ -1,6 +1,6 @@
 import { cx } from "@/utils/cx";
 import { GapNote, Tile } from "../../overview/Tile";
-import { FigureTile } from "../kit/LeadFrame";
+import { FigureTile, ScrollFigure } from "../kit/LeadFrame";
 import type { LeadProps } from "../types";
 import {
   BRIDGE,
@@ -89,73 +89,75 @@ function Bridge({ data, geometry }: { data: EbitdaBridge; geometry: BridgeGeomet
     })
     .join("");
   return (
-    <svg
-      viewBox={`0 0 ${String(BRIDGE.width)} ${String(geometry.height)}`}
-      width="100%"
-      role="img"
-      aria-label={bridgeReading(data, geometry.axis)}
-      className="block"
-    >
-      {geometry.ticks.map((tick, at) => (
-        <g key={tick.value}>
-          <line
-            x1={tick.x}
-            x2={tick.x}
-            y1={BRIDGE.top - 4}
-            y2={plotBottom}
-            className={at === 0 ? "stroke-text-tertiary" : "stroke-border-hairline"}
-          />
-          <text
-            x={tick.x}
-            y={plotBottom + 16}
-            textAnchor="middle"
-            fontSize="11"
-            className="fill-text-tertiary font-mono"
-          >
-            {tick.label}
-          </text>
-        </g>
-      ))}
-      <path
-        d={connectors}
-        fill="none"
-        strokeWidth="1"
-        strokeDasharray="2 2"
-        className="stroke-connector"
-      />
-      {geometry.bars.map((bar) => (
-        <BarRow key={`${String(bar.step.line)}-${bar.label}`} bar={bar} geometry={geometry} />
-      ))}
-      {bracket && data.addBacks !== null && (
-        <g data-bracket="">
-          <path
-            d={`M${String(BRIDGE.bracketX - 6)} ${String(bracket.top)}H${String(BRIDGE.bracketX)}V${String(bracket.bottom)}H${String(BRIDGE.bracketX - 6)}`}
-            fill="none"
-            strokeWidth="1"
-            className="stroke-text-tertiary"
-          />
-          <text
-            x={BRIDGE.bracketX + 8}
-            y={middle - 2}
-            fontSize="11"
-            className="fill-text-secondary font-body"
-          >
-            Add-backs total
-          </text>
-          <text
-            x={BRIDGE.bracketX + 8}
-            y={middle + 12}
-            fontSize="12"
-            className="fill-text-primary font-mono font-medium"
-          >
-            {signed(data.addBacks)}
-            <tspan fontSize="11" className="fill-text-tertiary font-body font-normal">
-              , derived
-            </tspan>
-          </text>
-        </g>
-      )}
-    </svg>
+    <ScrollFigure label="EBITDA bridge figure" size="narrow">
+      <svg
+        viewBox={`0 0 ${String(BRIDGE.width)} ${String(geometry.height)}`}
+        width="100%"
+        role="img"
+        aria-label={bridgeReading(data, geometry.axis)}
+        className="block"
+      >
+        {geometry.ticks.map((tick, at) => (
+          <g key={tick.value}>
+            <line
+              x1={tick.x}
+              x2={tick.x}
+              y1={BRIDGE.top - 4}
+              y2={plotBottom}
+              className={at === 0 ? "stroke-text-tertiary" : "stroke-border-hairline"}
+            />
+            <text
+              x={tick.x}
+              y={plotBottom + 16}
+              textAnchor="middle"
+              fontSize="11"
+              className="fill-text-tertiary font-mono"
+            >
+              {tick.label}
+            </text>
+          </g>
+        ))}
+        <path
+          d={connectors}
+          fill="none"
+          strokeWidth="1"
+          strokeDasharray="2 2"
+          className="stroke-connector"
+        />
+        {geometry.bars.map((bar) => (
+          <BarRow key={`${String(bar.step.line)}-${bar.label}`} bar={bar} geometry={geometry} />
+        ))}
+        {bracket && data.addBacks !== null && (
+          <g data-bracket="">
+            <path
+              d={`M${String(BRIDGE.bracketX - 6)} ${String(bracket.top)}H${String(BRIDGE.bracketX)}V${String(bracket.bottom)}H${String(BRIDGE.bracketX - 6)}`}
+              fill="none"
+              strokeWidth="1"
+              className="stroke-text-tertiary"
+            />
+            <text
+              x={BRIDGE.bracketX + 8}
+              y={middle - 2}
+              fontSize="11"
+              className="fill-text-secondary font-body"
+            >
+              Add-backs total
+            </text>
+            <text
+              x={BRIDGE.bracketX + 8}
+              y={middle + 12}
+              fontSize="12"
+              className="fill-text-primary font-mono font-medium"
+            >
+              {signed(data.addBacks)}
+              <tspan fontSize="11" className="fill-text-tertiary font-body font-normal">
+                , derived
+              </tspan>
+            </text>
+          </g>
+        )}
+      </svg>
+    </ScrollFigure>
   );
 }
 
@@ -211,7 +213,7 @@ export function EbitdaBridgeTile({ lead }: { lead: LeadProps }) {
   const data = ebitdaBridge(lead.entry);
   if (!data)
     return (
-      <Tile span={6} label={LABEL} kicker={KICKER} tone="gap">
+      <Tile span={6} label={LABEL} kicker={KICKER} tone="gap" className="self-start">
         <GapNote>The financial foundation has no EBITDA bridge table.</GapNote>
       </Tile>
     );

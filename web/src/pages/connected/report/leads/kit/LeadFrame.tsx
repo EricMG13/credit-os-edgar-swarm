@@ -146,3 +146,36 @@ export function FigureTile({
     </Tile>
   );
 }
+
+const SCROLL_MIN = {
+  narrow: "min-w-[480px] sm:min-w-0",
+  wide: "min-w-[640px] sm:min-w-0",
+} as const;
+
+/**
+ * A drawing too wide to read at phone width: it keeps a readable size and scrolls inside its own
+ * box (the page never scrolls sideways); from `sm` up it fills the tile. The table view carries
+ * the same numbers.
+ */
+export function ScrollFigure({
+  label,
+  size = "narrow",
+  children,
+}: {
+  label: string;
+  size?: keyof typeof SCROLL_MIN;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      role="group"
+      aria-label={label}
+      // A scrolling box must be reachable by keyboard (WCAG 2.1.1, scrollable-region-focusable).
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+      tabIndex={0}
+      className="max-w-full overflow-x-auto rounded-ds-xs focus-visible:outline-2 focus-visible:outline-focus"
+    >
+      <div className={SCROLL_MIN[size]}>{children}</div>
+    </div>
+  );
+}

@@ -2,7 +2,7 @@ import { useId } from "react";
 import { cx } from "@/utils/cx";
 import { GapPattern } from "../../overview/figureParts";
 import { GapNote, Tile } from "../../overview/Tile";
-import { FigureTile } from "../kit/LeadFrame";
+import { FigureTile, ScrollFigure } from "../kit/LeadFrame";
 import type { LeadProps } from "../types";
 import { cashLadder, type CashLadder } from "./foundationData";
 import {
@@ -171,69 +171,71 @@ function Ladder({ data, geometry }: { data: CashLadder; geometry: LadderGeometry
   const hatch = `ladder-gap-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const plotBottom = geometry.height - LADDER.axis;
   return (
-    <svg
-      viewBox={`0 0 ${String(LADDER.width)} ${String(geometry.height)}`}
-      width="100%"
-      role="img"
-      aria-label={ladderReading(data, geometry.mismatch)}
-      className="block"
-    >
-      <defs>
-        <GapPattern id={hatch} />
-      </defs>
-      <text
-        x={LADDER.currentX}
-        y="16"
-        textAnchor="end"
-        fontSize="11"
-        className="fill-text-primary font-body font-medium"
+    <ScrollFigure label="Cash conversion figure" size="wide">
+      <svg
+        viewBox={`0 0 ${String(LADDER.width)} ${String(geometry.height)}`}
+        width="100%"
+        role="img"
+        aria-label={ladderReading(data, geometry.mismatch)}
+        className="block"
       >
-        {data.currentLabel}
-      </text>
-      <text
-        x={LADDER.priorX}
-        y="16"
-        textAnchor="end"
-        fontSize="11"
-        className="fill-text-tertiary font-body"
-      >
-        {data.priorLabel}
-      </text>
-      {geometry.ticks.map((tick) => (
-        <g key={tick.value}>
-          <line
-            x1={tick.x}
-            x2={tick.x}
-            y1={LADDER.top - 6}
-            y2={plotBottom}
-            data-zero={tick.value === 0 ? "" : undefined}
-            className={tick.value === 0 ? "stroke-text-tertiary" : "stroke-border-hairline"}
-          />
-          <text
-            x={tick.x}
-            y={plotBottom + 16}
-            textAnchor="middle"
-            fontSize="11"
-            className="fill-text-tertiary font-mono"
-          >
-            {tick.label}
-          </text>
-        </g>
-      ))}
-      <path
-        d={ladderConnectors(geometry.rows).join("")}
-        fill="none"
-        strokeWidth="1"
-        strokeDasharray="2 2"
-        className="stroke-connector"
-      />
-      {geometry.rows.map((row) => (
-        <g key={row.step.key}>
-          <RowLabel row={row} />
-          <RowMarks row={row} hatch={hatch} />
-        </g>
-      ))}
-    </svg>
+        <defs>
+          <GapPattern id={hatch} />
+        </defs>
+        <text
+          x={LADDER.currentX}
+          y="16"
+          textAnchor="end"
+          fontSize="11"
+          className="fill-text-primary font-body font-medium"
+        >
+          {data.currentLabel}
+        </text>
+        <text
+          x={LADDER.priorX}
+          y="16"
+          textAnchor="end"
+          fontSize="11"
+          className="fill-text-tertiary font-body"
+        >
+          {data.priorLabel}
+        </text>
+        {geometry.ticks.map((tick) => (
+          <g key={tick.value}>
+            <line
+              x1={tick.x}
+              x2={tick.x}
+              y1={LADDER.top - 6}
+              y2={plotBottom}
+              data-zero={tick.value === 0 ? "" : undefined}
+              className={tick.value === 0 ? "stroke-text-tertiary" : "stroke-border-hairline"}
+            />
+            <text
+              x={tick.x}
+              y={plotBottom + 16}
+              textAnchor="middle"
+              fontSize="11"
+              className="fill-text-tertiary font-mono"
+            >
+              {tick.label}
+            </text>
+          </g>
+        ))}
+        <path
+          d={ladderConnectors(geometry.rows).join("")}
+          fill="none"
+          strokeWidth="1"
+          strokeDasharray="2 2"
+          className="stroke-connector"
+        />
+        {geometry.rows.map((row) => (
+          <g key={row.step.key}>
+            <RowLabel row={row} />
+            <RowMarks row={row} hatch={hatch} />
+          </g>
+        ))}
+      </svg>
+    </ScrollFigure>
   );
 }
 
@@ -242,7 +244,7 @@ export function CashLadderTile({ lead }: { lead: LeadProps }) {
   const data = cashLadder(lead.entry);
   if (!data)
     return (
-      <Tile span={7} label={LABEL} kicker={LABEL} tone="gap">
+      <Tile span={7} label={LABEL} kicker={LABEL} tone="gap" className="self-start">
         <GapNote>
           The financial foundation does not state EBITDA As Defined and cash from operations in one
           unit.

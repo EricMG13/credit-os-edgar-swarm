@@ -334,7 +334,13 @@ function Content(props: LeadProps) {
       {path ? (
         <ForwardTile props={props} path={path} />
       ) : (
-        <Tile span={7} label="Forward net leverage" kicker="Not drawn" tone="gap">
+        <Tile
+          span={7}
+          label="Forward net leverage"
+          kicker="Not drawn"
+          tone="gap"
+          className="self-start"
+        >
           <GapNote>The published model states no net leverage path.</GapNote>
         </Tile>
       )}

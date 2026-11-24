@@ -10,7 +10,7 @@ import {
   type LeverageMeasure,
   type Support,
 } from "./earningsQualityData";
-import { Derived, FigureTile, LeadFrame } from "./kit/LeadFrame";
+import { Derived, FigureTile, LeadFrame, ScrollFigure } from "./kit/LeadFrame";
 import { group } from "./kit/numbers";
 import type { LeadProps } from "./types";
 
@@ -61,36 +61,38 @@ function Row({
           <p className="text-caption text-text-tertiary">{support ?? "Support not stated"}</p>
         )}
       </div>
-      <svg
-        viewBox={`0 0 ${String(BRIDGE.width)} ${String(BRIDGE.height)}`}
-        width="100%"
-        role="img"
-        aria-label={label}
-      >
-        <rect
-          data-step={step.label}
-          data-from={row.from}
-          data-to={row.to}
-          x={row.x0}
-          y="7"
-          width={width}
-          height="16"
-          rx="2"
-          className={row.kind === "total" ? "fill-text-secondary" : FILL[support ?? "none"]}
-        />
-        {row.kind === "total" && geometry.truncated && (
-          <path
-            data-axis-cut
-            d={`M${String(row.x0 + 10)} 3 ${String(row.x0 + 4)} 27M${String(row.x0 + 16)} 3 ${String(row.x0 + 10)} 27`}
-            strokeWidth="1.5"
-            fill="none"
-            className="stroke-surface-card"
+      <ScrollFigure label="Add-back bridge figure" size="narrow">
+        <svg
+          viewBox={`0 0 ${String(BRIDGE.width)} ${String(BRIDGE.height)}`}
+          width="100%"
+          role="img"
+          aria-label={label}
+        >
+          <rect
+            data-step={step.label}
+            data-from={row.from}
+            data-to={row.to}
+            x={row.x0}
+            y="7"
+            width={width}
+            height="16"
+            rx="2"
+            className={row.kind === "total" ? "fill-text-secondary" : FILL[support ?? "none"]}
           />
-        )}
-        <text x={row.x1 + 8} y="19" fontSize="12" className="fill-text-primary font-mono">
-          {text}
-        </text>
-      </svg>
+          {row.kind === "total" && geometry.truncated && (
+            <path
+              data-axis-cut
+              d={`M${String(row.x0 + 10)} 3 ${String(row.x0 + 4)} 27M${String(row.x0 + 16)} 3 ${String(row.x0 + 10)} 27`}
+              strokeWidth="1.5"
+              fill="none"
+              className="stroke-surface-card"
+            />
+          )}
+          <text x={row.x1 + 8} y="19" fontSize="12" className="fill-text-primary font-mono">
+            {text}
+          </text>
+        </svg>
+      </ScrollFigure>
     </li>
   );
 }
@@ -204,7 +206,7 @@ function BridgeGap({
   stated: { label: string; text: string }[];
 }) {
   return (
-    <Tile span={7} label="Add-back bridge" kicker="Not drawn" tone="gap">
+    <Tile span={7} label="Add-back bridge" kicker="Not drawn" tone="gap" className="self-start">
       <GapNote>{reason}</GapNote>
       {stated.length > 0 && (
         <ul className="flex flex-col gap-1 text-small text-text-secondary">
@@ -326,7 +328,7 @@ function LeverageTile({ props }: { props: LeadProps }) {
   const leverage = readLeverage(props.entry);
   if (leverage.state === "gap")
     return (
-      <Tile span={5} label="Leverage restated" kicker="Not drawn" tone="gap">
+      <Tile span={5} label="Leverage restated" kicker="Not drawn" tone="gap" className="self-start">
         <GapNote>{leverage.reason}</GapNote>
       </Tile>
     );

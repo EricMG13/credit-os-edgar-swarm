@@ -1,7 +1,7 @@
 import { cx } from "@/utils/cx";
 import { GapPattern } from "../../overview/figureParts";
 import { GapNote, Tile } from "../../overview/Tile";
-import { FigureTile } from "../kit/LeadFrame";
+import { FigureTile, ScrollFigure } from "../kit/LeadFrame";
 import type { LeadProps } from "../types";
 import {
   ED,
@@ -146,73 +146,81 @@ type Dumbbells = ReturnType<typeof dumbbellLayout>;
 function DumbbellPanel({ data, layout }: { data: EarningsAgainstDebt; layout: Dumbbells }) {
   const top = 30;
   return (
-    <svg
-      viewBox={`0 0 ${String(ED.width)} ${String(layout.height)}`}
-      width="100%"
-      role="img"
-      aria-label={earningsReading(data)}
-      className="block"
-    >
-      <defs>
-        <GapPattern id={GAP_ID} />
-      </defs>
-      <text x={ED.x0} y="16" fontSize="11" className="fill-text-tertiary font-body">
-        {`${data.unit} · one scale from zero`}
-      </text>
-      {layout.growthTicks.length > 0 && (
-        <text x={ED.g0} y="16" fontSize="11" className="fill-text-tertiary font-body">
-          Growth, derived
+    <ScrollFigure label="Earnings and debt figure" size="wide">
+      <svg
+        viewBox={`0 0 ${String(ED.width)} ${String(layout.height)}`}
+        width="100%"
+        role="img"
+        aria-label={earningsReading(data)}
+        className="block"
+      >
+        <defs>
+          <GapPattern id={GAP_ID} />
+        </defs>
+        <text x={ED.x0} y="16" fontSize="11" className="fill-text-tertiary font-body">
+          {`${data.unit} · one scale from zero`}
         </text>
-      )}
-      {layout.ticks.map((tick) => (
-        <g key={`m${String(tick.value)}`}>
+        {layout.growthTicks.length > 0 && (
+          <text x={ED.g0} y="16" fontSize="11" className="fill-text-tertiary font-body">
+            Growth, derived
+          </text>
+        )}
+        {layout.ticks.map((tick) => (
+          <g key={`m${String(tick.value)}`}>
+            <line
+              x1={tick.x}
+              x2={tick.x}
+              y1={top}
+              y2={layout.axisY}
+              className={tick.value === 0 ? "stroke-border-container" : "stroke-border-hairline"}
+            />
+            <text
+              x={tick.x}
+              y={layout.axisY + 18}
+              textAnchor="middle"
+              fontSize="11"
+              className={TICK}
+            >
+              {tick.label}
+            </text>
+          </g>
+        ))}
+        {layout.growthTicks.map((tick) => (
           <line
+            key={`g${String(tick.value)}`}
             x1={tick.x}
             x2={tick.x}
             y1={top}
             y2={layout.axisY}
             className={tick.value === 0 ? "stroke-border-container" : "stroke-border-hairline"}
           />
-          <text x={tick.x} y={layout.axisY + 18} textAnchor="middle" fontSize="11" className={TICK}>
+        ))}
+        {layout.growthLabels.map((tick) => (
+          <text
+            key={`gl${String(tick.value)}`}
+            x={tick.x}
+            y={layout.axisY + 18}
+            textAnchor="middle"
+            fontSize="11"
+            className={TICK}
+          >
             {tick.label}
           </text>
-        </g>
-      ))}
-      {layout.growthTicks.map((tick) => (
-        <line
-          key={`g${String(tick.value)}`}
-          x1={tick.x}
-          x2={tick.x}
-          y1={top}
-          y2={layout.axisY}
-          className={tick.value === 0 ? "stroke-border-container" : "stroke-border-hairline"}
-        />
-      ))}
-      {layout.growthLabels.map((tick) => (
-        <text
-          key={`gl${String(tick.value)}`}
-          x={tick.x}
-          y={layout.axisY + 18}
-          textAnchor="middle"
-          fontSize="11"
-          className={TICK}
-        >
-          {tick.label}
-        </text>
-      ))}
-      {layout.separator !== null && (
-        <line
-          x1="0"
-          x2={ED.width}
-          y1={layout.separator}
-          y2={layout.separator}
-          className="stroke-border-hairline"
-        />
-      )}
-      {layout.rows.map((row) => (
-        <DumbbellRowMarks key={row.key} row={row} />
-      ))}
-    </svg>
+        ))}
+        {layout.separator !== null && (
+          <line
+            x1="0"
+            x2={ED.width}
+            y1={layout.separator}
+            y2={layout.separator}
+            className="stroke-border-hairline"
+          />
+        )}
+        {layout.rows.map((row) => (
+          <DumbbellRowMarks key={row.key} row={row} />
+        ))}
+      </svg>
+    </ScrollFigure>
   );
 }
 

@@ -1,7 +1,7 @@
 import { cx } from "@/utils/cx";
 import { GapPattern } from "../../overview/figureParts";
 import { Figure, GapNote, Tile } from "../../overview/Tile";
-import { Derived, FigureTile } from "../kit/LeadFrame";
+import { Derived, FigureTile, ScrollFigure } from "../kit/LeadFrame";
 import { group } from "../kit/numbers";
 import type { LeadProps } from "../types";
 import { netDebtView, type NetDebtView } from "./foundationData";
@@ -200,51 +200,53 @@ function Bars({ view }: { view: NetDebtView }) {
   const layout = netDebtLayout(view);
   const crosses = (layout.ticks[0]?.value ?? 0) < 0;
   return (
-    <svg
-      viewBox={`0 0 ${String(ND.width)} ${String(layout.height)}`}
-      width="100%"
-      role="img"
-      aria-label={netDebtReading(view, crosses)}
-      className="block"
-    >
-      <defs>
-        <GapPattern id={GAP_ID} />
-        <pattern
-          id={PF_ID}
-          width="6"
-          height="6"
-          patternUnits="userSpaceOnUse"
-          patternTransform="rotate(45)"
-        >
-          <rect width="6" height="6" className="fill-warning-fill" />
-          <line x1="0" y1="0" x2="0" y2="6" strokeWidth="2" className="stroke-warning-mark" />
-        </pattern>
-      </defs>
-      {layout.ticks.map((tick) => (
-        <g key={tick.value}>
-          <line
-            x1={tick.x}
-            x2={tick.x}
-            y1="2"
-            y2={layout.axisY}
-            className={tick.value === 0 ? "stroke-border-container" : "stroke-border-hairline"}
-          />
-          <text
-            x={tick.x}
-            y={layout.axisY + 16}
-            textAnchor={tick.x > ND.width - 24 ? "end" : "middle"}
-            fontSize="11"
-            className={TICK}
+    <ScrollFigure label="Net debt figure" size="narrow">
+      <svg
+        viewBox={`0 0 ${String(ND.width)} ${String(layout.height)}`}
+        width="100%"
+        role="img"
+        aria-label={netDebtReading(view, crosses)}
+        className="block"
+      >
+        <defs>
+          <GapPattern id={GAP_ID} />
+          <pattern
+            id={PF_ID}
+            width="6"
+            height="6"
+            patternUnits="userSpaceOnUse"
+            patternTransform="rotate(45)"
           >
-            {tick.label}
-          </text>
-        </g>
-      ))}
-      {layout.bars.map((bar) => (
-        <PeriodRow key={bar.label} bar={bar} />
-      ))}
-      {layout.proForma && <ProFormaRow bar={layout.proForma} />}
-    </svg>
+            <rect width="6" height="6" className="fill-warning-fill" />
+            <line x1="0" y1="0" x2="0" y2="6" strokeWidth="2" className="stroke-warning-mark" />
+          </pattern>
+        </defs>
+        {layout.ticks.map((tick) => (
+          <g key={tick.value}>
+            <line
+              x1={tick.x}
+              x2={tick.x}
+              y1="2"
+              y2={layout.axisY}
+              className={tick.value === 0 ? "stroke-border-container" : "stroke-border-hairline"}
+            />
+            <text
+              x={tick.x}
+              y={layout.axisY + 16}
+              textAnchor={tick.x > ND.width - 24 ? "end" : "middle"}
+              fontSize="11"
+              className={TICK}
+            >
+              {tick.label}
+            </text>
+          </g>
+        ))}
+        {layout.bars.map((bar) => (
+          <PeriodRow key={bar.label} bar={bar} />
+        ))}
+        {layout.proForma && <ProFormaRow bar={layout.proForma} />}
+      </svg>
+    </ScrollFigure>
   );
 }
 
@@ -260,88 +262,90 @@ function Strip({ view }: { view: NetDebtView }) {
           {strip.fromZero ? "· own scale, from zero" : `· own scale, from ${start}, not from zero`}
         </span>
       </h4>
-      <svg
-        viewBox={`0 0 ${String(NL.width)} ${String(strip.height)}`}
-        width="100%"
-        role="img"
-        aria-label={stripReading(strip)}
-        className="block"
-      >
-        {strip.ticks.map((tick) => (
-          <g key={tick.value}>
-            <line
-              x1={tick.x}
-              x2={tick.x}
-              y1="2"
-              y2={strip.axisY}
-              className="stroke-border-hairline"
-            />
-            <text
-              x={tick.x}
-              y={strip.axisY + 16}
-              textAnchor="middle"
-              fontSize="11"
-              className={TICK}
-            >
-              {tick.label}
-            </text>
-          </g>
-        ))}
-        {strip.marks.map((mark) => {
-          const pro = mark.kind === "proForma";
-          return (
-            <g key={mark.label} data-strip={mark.label}>
+      <ScrollFigure label="Net debt to EBITDA figure" size="narrow">
+        <svg
+          viewBox={`0 0 ${String(NL.width)} ${String(strip.height)}`}
+          width="100%"
+          role="img"
+          aria-label={stripReading(strip)}
+          className="block"
+        >
+          {strip.ticks.map((tick) => (
+            <g key={tick.value}>
+              <line
+                x1={tick.x}
+                x2={tick.x}
+                y1="2"
+                y2={strip.axisY}
+                className="stroke-border-hairline"
+              />
               <text
-                x="0"
-                y={mark.y + 4}
-                fontSize="12"
-                className={cx(
-                  "font-body",
-                  pro ? "fill-warning-text font-medium" : "fill-text-secondary",
-                )}
+                x={tick.x}
+                y={strip.axisY + 16}
+                textAnchor="middle"
+                fontSize="11"
+                className={TICK}
               >
-                {mark.label}
+                {tick.label}
               </text>
-              {mark.value ? (
-                <>
-                  {mark.kind === "prior" ? (
-                    <circle
-                      cx={mark.value.x}
-                      cy={mark.y}
-                      r="4.5"
-                      strokeWidth="2"
-                      className="fill-surface-card stroke-chart-3"
-                    />
-                  ) : (
-                    <circle
-                      cx={mark.value.x}
-                      cy={mark.y}
-                      r="5"
-                      className={pro ? "fill-warning-mark" : "fill-chart-1"}
-                    />
-                  )}
-                  <text
-                    x={mark.value.labelX}
-                    y={mark.y + 4}
-                    textAnchor={mark.value.anchor}
-                    fontSize="12"
-                    className={cx(
-                      "font-mono",
-                      pro ? "fill-warning-text font-medium" : "fill-text-primary",
-                    )}
-                  >
-                    {mark.value.text}
-                  </text>
-                </>
-              ) : (
-                <text x={NL.x0} y={mark.y + 4} fontSize="11" className="fill-gap-text font-body">
-                  {mark.reason}
-                </text>
-              )}
             </g>
-          );
-        })}
-      </svg>
+          ))}
+          {strip.marks.map((mark) => {
+            const pro = mark.kind === "proForma";
+            return (
+              <g key={mark.label} data-strip={mark.label}>
+                <text
+                  x="0"
+                  y={mark.y + 4}
+                  fontSize="12"
+                  className={cx(
+                    "font-body",
+                    pro ? "fill-warning-text font-medium" : "fill-text-secondary",
+                  )}
+                >
+                  {mark.label}
+                </text>
+                {mark.value ? (
+                  <>
+                    {mark.kind === "prior" ? (
+                      <circle
+                        cx={mark.value.x}
+                        cy={mark.y}
+                        r="4.5"
+                        strokeWidth="2"
+                        className="fill-surface-card stroke-chart-3"
+                      />
+                    ) : (
+                      <circle
+                        cx={mark.value.x}
+                        cy={mark.y}
+                        r="5"
+                        className={pro ? "fill-warning-mark" : "fill-chart-1"}
+                      />
+                    )}
+                    <text
+                      x={mark.value.labelX}
+                      y={mark.y + 4}
+                      textAnchor={mark.value.anchor}
+                      fontSize="12"
+                      className={cx(
+                        "font-mono",
+                        pro ? "fill-warning-text font-medium" : "fill-text-primary",
+                      )}
+                    >
+                      {mark.value.text}
+                    </text>
+                  </>
+                ) : (
+                  <text x={NL.x0} y={mark.y + 4} fontSize="11" className="fill-gap-text font-body">
+                    {mark.reason}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+      </ScrollFigure>
     </div>
   );
 }
@@ -404,7 +408,7 @@ export function NetDebtTile({ lead }: { lead: LeadProps }) {
   const view = netDebtView(lead.entry);
   if (!view)
     return (
-      <Tile span={5} label={LABEL} kicker={LABEL} tone="gap">
+      <Tile span={5} label={LABEL} kicker={LABEL} tone="gap" className="self-start">
         <GapNote>{NO_NET_DEBT}</GapNote>
       </Tile>
     );

@@ -5,7 +5,7 @@ import { basisNotes, figureSource, unitOf, type FigureSource } from "../../overv
 import { GapPattern } from "../../overview/figureParts";
 import { WALL, wallGeometry, wallSlots } from "../../overview/structureData";
 import { GapNote, Tile } from "../../overview/Tile";
-import { FigureTile } from "../kit/LeadFrame";
+import { FigureTile, ScrollFigure } from "../kit/LeadFrame";
 import { group, sum } from "../kit/numbers";
 import type { LeadProps } from "../types";
 
@@ -286,52 +286,54 @@ function MaturityFigure({ lead, source }: { lead: LeadProps; source: Ready }) {
         ],
       }}
     >
-      <svg
-        viewBox={`0 0 ${String(BOX.width)} ${String(BOX.height)}`}
-        width="100%"
-        role="img"
-        aria-label={wallReading(marks, unitLabel(unit), bracket)}
-      >
-        <defs>
-          <pattern
-            id={UNDATED}
-            width="6"
-            height="6"
-            patternUnits="userSpaceOnUse"
-            patternTransform="rotate(45)"
-          >
-            <rect width="6" height="6" className="fill-surface-selected" />
-            <line x1="0" y1="0" x2="0" y2="6" strokeWidth="2" className="stroke-chart-1" />
-          </pattern>
-          <GapPattern id={GAP} />
-        </defs>
-        {marks.map((mark) => (
-          <Shape key={mark.label} mark={mark} />
-        ))}
-        <Axis breakAt={geometry.breakAt} />
-        {marks.map((mark) => (
-          <Labels key={mark.label} mark={mark} crowded={crowded} />
-        ))}
-        {bracket && (
-          <g data-bracket={bracket.total}>
-            <path
-              d={`M${String(bracket.x1)} ${String(bracket.y + 4)}V${String(bracket.y)}H${String(bracket.x2)}V${String(bracket.y + 4)}`}
-              strokeWidth="1"
-              fill="none"
-              className="stroke-text-tertiary"
-            />
-            <text
-              x={(bracket.x1 + bracket.x2) / 2}
-              y={bracket.y - 6}
-              textAnchor="middle"
-              fontSize="11"
-              className="fill-text-secondary font-body"
+      <ScrollFigure label="Maturity wall figure" size="narrow">
+        <svg
+          viewBox={`0 0 ${String(BOX.width)} ${String(BOX.height)}`}
+          width="100%"
+          role="img"
+          aria-label={wallReading(marks, unitLabel(unit), bracket)}
+        >
+          <defs>
+            <pattern
+              id={UNDATED}
+              width="6"
+              height="6"
+              patternUnits="userSpaceOnUse"
+              patternTransform="rotate(45)"
             >
-              {bracket.text}
-            </text>
-          </g>
-        )}
-      </svg>
+              <rect width="6" height="6" className="fill-surface-selected" />
+              <line x1="0" y1="0" x2="0" y2="6" strokeWidth="2" className="stroke-chart-1" />
+            </pattern>
+            <GapPattern id={GAP} />
+          </defs>
+          {marks.map((mark) => (
+            <Shape key={mark.label} mark={mark} />
+          ))}
+          <Axis breakAt={geometry.breakAt} />
+          {marks.map((mark) => (
+            <Labels key={mark.label} mark={mark} crowded={crowded} />
+          ))}
+          {bracket && (
+            <g data-bracket={bracket.total}>
+              <path
+                d={`M${String(bracket.x1)} ${String(bracket.y + 4)}V${String(bracket.y)}H${String(bracket.x2)}V${String(bracket.y + 4)}`}
+                strokeWidth="1"
+                fill="none"
+                className="stroke-text-tertiary"
+              />
+              <text
+                x={(bracket.x1 + bracket.x2) / 2}
+                y={bracket.y - 6}
+                textAnchor="middle"
+                fontSize="11"
+                className="fill-text-secondary font-body"
+              >
+                {bracket.text}
+              </text>
+            </g>
+          )}
+        </svg>
+      </ScrollFigure>
       <div>
         <Button color="link-gray" size="sm" href="#overview" iconTrailing={ArrowRight}>
           Full wall on Overview
@@ -346,7 +348,7 @@ export function MaturityTile({ lead }: { lead: LeadProps }) {
   const source = figureSource(lead.view, "CP-1", "Debt maturities", "Financial foundation");
   if (source.state === "gap")
     return (
-      <Tile span={5} label={LABEL} kicker={LABEL} tone="gap">
+      <Tile span={5} label={LABEL} kicker={LABEL} tone="gap" className="self-start">
         <GapNote>{source.reason}</GapNote>
       </Tile>
     );

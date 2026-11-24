@@ -1,7 +1,7 @@
 import { useId } from "react";
 import { GapPattern } from "../overview/figureParts";
 import { GapNote, Tile } from "../overview/Tile";
-import { Derived, FigureTile, LeadFrame } from "./kit/LeadFrame";
+import { Derived, FigureTile, LeadFrame, ScrollFigure } from "./kit/LeadFrame";
 import {
   groupScale,
   peerGapSentence,
@@ -126,18 +126,20 @@ function Strip({ row, scale }: { row: PeerRow; scale: ReturnType<typeof groupSca
   if (drawing.kind !== "strip") {
     const text = drawing.kind === "conflict" ? "Stated values conflict" : "Peer range not supplied";
     return (
-      <svg
-        viewBox={`0 0 ${String(WIDTH)} 36`}
-        width="100%"
-        role="img"
-        aria-label={reading(row)}
-        data-row={row.metric}
-      >
-        <defs>
-          <GapPattern id={id} />
-        </defs>
-        <GapSlot x={88} y={8} width={464} text={text} id={id} />
-      </svg>
+      <ScrollFigure label="Peer range figure" size="wide">
+        <svg
+          viewBox={`0 0 ${String(WIDTH)} 36`}
+          width="100%"
+          role="img"
+          aria-label={reading(row)}
+          data-row={row.metric}
+        >
+          <defs>
+            <GapPattern id={id} />
+          </defs>
+          <GapSlot x={88} y={8} width={464} text={text} id={id} />
+        </svg>
+      </ScrollFigure>
     );
   }
   const x = scale.x;
@@ -419,6 +421,7 @@ function Content(props: LeadProps) {
           label="Peer range not drawn"
           kicker="Not in this handoff"
           tone="gap"
+          className="self-start"
         >
           <GapNote>{gap}</GapNote>
         </Tile>

@@ -2,7 +2,7 @@ import { containsReference, readerText } from "../../../publishedReport";
 import { GapPattern } from "../../overview/figureParts";
 import { GapNote, Tile } from "../../overview/Tile";
 import { plain } from "../kit/geometry";
-import { FigureTile } from "../kit/LeadFrame";
+import { FigureTile, ScrollFigure } from "../kit/LeadFrame";
 import { difference, group, signOf, type Reading } from "../kit/numbers";
 import type { LeadProps } from "../types";
 import { segmentView, type Segment, type SegmentView } from "./foundationData";
@@ -136,80 +136,82 @@ function SegmentFigure({ view }: { view: SegmentView }) {
   const sums = reconciliation(view);
   return (
     <>
-      <svg
-        viewBox={`0 0 ${String(SEG.width)} ${String(height)}`}
-        width="100%"
-        role="img"
-        aria-label={reading(view)}
-      >
-        <defs>
-          <GapPattern id={GAP_ID} />
-        </defs>
-        <text x={SEG.plotStart} y="14" fontSize="11" className="fill-text-tertiary font-body">
-          One scale, {plain(low?.value ?? 0)} to {plain(high?.value ?? 0)}
-        </text>
-        <text
-          x={SEG.width}
-          y="14"
-          textAnchor="end"
-          fontSize="11"
-          className="fill-text-tertiary font-body"
+      <ScrollFigure label="Segments figure" size="narrow">
+        <svg
+          viewBox={`0 0 ${String(SEG.width)} ${String(height)}`}
+          width="100%"
+          role="img"
+          aria-label={reading(view)}
         >
-          EBITDA ÷ sales, derived
-        </text>
-        {ticks.map((tick) => (
-          <line
-            key={tick.value}
-            x1={tick.x}
-            y1={SEG.top - 4}
-            x2={tick.x}
-            y2={bottom}
-            className="stroke-border-hairline"
-          />
-        ))}
-        <line x1={zero} y1={SEG.top - 4} x2={zero} y2={bottom} className="stroke-connector" />
-        {blocks.map((block) => {
-          const name = block.segment.name;
-          return (
-            <g key={`${name}-${String(block.segment.line)}`} data-segment={name}>
-              <text fontSize="13" fontWeight="500" className="fill-text-primary font-body">
-                {block.lines.map((line, at) => (
-                  <tspan key={`${line}-${String(at)}`} x="0" y={block.nameY[at]}>
-                    {line}
-                  </tspan>
-                ))}
-              </text>
-              <Bar mark={block.sales} name={name} measure="sales" />
-              <Bar mark={block.ebitda} name={name} measure="ebitda" />
-              {block.ratio !== null && (
-                <text
-                  data-ratio={name}
-                  x={SEG.width}
-                  y={block.sales.y + 20}
-                  textAnchor="end"
-                  fontSize="13"
-                  fontWeight="500"
-                  className="fill-text-primary font-mono"
-                >
-                  {percent(block.ratio)}
-                </text>
-              )}
-            </g>
-          );
-        })}
-        {ticks.map((tick) => (
-          <text
-            key={tick.value}
-            x={tick.x}
-            y={height - 6}
-            textAnchor="middle"
-            fontSize="11"
-            className="fill-text-tertiary font-mono"
-          >
-            {plain(tick.value)}
+          <defs>
+            <GapPattern id={GAP_ID} />
+          </defs>
+          <text x={SEG.plotStart} y="14" fontSize="11" className="fill-text-tertiary font-body">
+            One scale, {plain(low?.value ?? 0)} to {plain(high?.value ?? 0)}
           </text>
-        ))}
-      </svg>
+          <text
+            x={SEG.width}
+            y="14"
+            textAnchor="end"
+            fontSize="11"
+            className="fill-text-tertiary font-body"
+          >
+            EBITDA ÷ sales, derived
+          </text>
+          {ticks.map((tick) => (
+            <line
+              key={tick.value}
+              x1={tick.x}
+              y1={SEG.top - 4}
+              x2={tick.x}
+              y2={bottom}
+              className="stroke-border-hairline"
+            />
+          ))}
+          <line x1={zero} y1={SEG.top - 4} x2={zero} y2={bottom} className="stroke-connector" />
+          {blocks.map((block) => {
+            const name = block.segment.name;
+            return (
+              <g key={`${name}-${String(block.segment.line)}`} data-segment={name}>
+                <text fontSize="13" fontWeight="500" className="fill-text-primary font-body">
+                  {block.lines.map((line, at) => (
+                    <tspan key={`${line}-${String(at)}`} x="0" y={block.nameY[at]}>
+                      {line}
+                    </tspan>
+                  ))}
+                </text>
+                <Bar mark={block.sales} name={name} measure="sales" />
+                <Bar mark={block.ebitda} name={name} measure="ebitda" />
+                {block.ratio !== null && (
+                  <text
+                    data-ratio={name}
+                    x={SEG.width}
+                    y={block.sales.y + 20}
+                    textAnchor="end"
+                    fontSize="13"
+                    fontWeight="500"
+                    className="fill-text-primary font-mono"
+                  >
+                    {percent(block.ratio)}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+          {ticks.map((tick) => (
+            <text
+              key={tick.value}
+              x={tick.x}
+              y={height - 6}
+              textAnchor="middle"
+              fontSize="11"
+              className="fill-text-tertiary font-mono"
+            >
+              {plain(tick.value)}
+            </text>
+          ))}
+        </svg>
+      </ScrollFigure>
       {(apart.length > 0 || sums.length > 0) && (
         <div className="flex flex-col gap-1 text-small text-text-secondary">
           {apart.map((line) => (
@@ -272,7 +274,7 @@ export function SegmentsTile({ lead }: { lead: LeadProps }) {
   const view = segmentView(lead.entry);
   if (!view)
     return (
-      <Tile span={6} label={LABEL} kicker="Segments" tone="gap">
+      <Tile span={6} label={LABEL} kicker="Segments" tone="gap" className="self-start">
         <GapNote>The handoff has no segment schedule.</GapNote>
       </Tile>
     );
