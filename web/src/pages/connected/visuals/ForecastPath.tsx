@@ -600,7 +600,7 @@ function PathTable({
       // The wide read-only table must be reachable for keyboard scrolling.
       // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
       tabIndex={0}
-      className="min-w-0 overflow-x-auto"
+      className="relative min-w-0 overflow-x-auto"
     >
       <table className="w-full border-collapse text-small">
         <caption className="sr-only">Net leverage by case</caption>

@@ -262,4 +262,81 @@ on the old `card` chrome. Every value, period, case name, notice and trace asser
 
 ## 7. Verification
 
-(Filled in during phase 2.)
+Scope: synthetic Northbridge run `20261124-222149-01` (Full pathway, `proof.serve`, no provider
+call) and unit tests on retained fixtures, including the real TransDigm CP-2G inputs block
+(outdated evidence, FY2024, shape only). Not a live run.
+
+### Built against each screen-map row
+
+| Rank | Row | Built | State on the synthetic run |
+|---|---|---|---|
+| P1 | Forward view in one sentence, case switch | `ForecastHeader`: CP-2G bottom line with trace; `Segmented` "Case" | "The synthetic issuer shows one observed item."; Base case / Downside shock |
+| P1 | Net leverage path by case vs limits and wall | `LeveragePath` (`visuals/ForecastPath.tsx`) | Base 1.23x → 0.29x labelled peak and end; Downside thinner; CP-4 5.0x limit dashed; FY2028 maturity wall (1,250) on the axis; FY2027 schedule gap hatched in the lane with its reason |
+| P2 | Peak, end, min cover, shortfall | `ForecastStats` on `StatsStrip` | 1.23x FY2025E; 0.29x FY2027E from 1.23x; 8.75x FY2025E; shortfall gap "No module states a shortfall figure" |
+| P2 | What breaks, and when | `WhatBreaks` | Accessible liquidity FY2027E 397 beside 1,250 due FY2028, not on one scale (units differ: model's not recorded vs US$m), shortfall gap; CP-2A stress small multiples (three measures × three scenarios) with gaps and qualifications listed |
+| P2 | Assumptions by case | `AssumptionsByCase` | Base and Downside drivers columns; shock rows tinted with ≠ and "differs from base"; "Not stated" for unstated drivers; full record behind a disclosure |
+| P3 | Uses of cash | `UsesOfCash` | Stacked 20 / 50 per year, no totals; table view |
+| P3 | Yearly grid | `ForecastStatement` in "Forecast grid" tile | n.a. / n.m. gap cells; unavailable rows behind their disclosure |
+| P3 | Scope, limits, published model, calculation download | `ForecastScopeTiles` | Base-case qualification, scope disclosure, "Download calculation" → the run's Calculation JSON |
+| — | Cash proxy by case (kept behaviour) | `CaseFigures` + `CashProxy` | 172.46 / 97.47, FY2027E with dates, comparison chart and table |
+| — | Run charts (kept) | `RunCharts` behind "Charts from the other modules of this run"; open on `#forecast/run-charts` | — |
+
+### Screenshots looked at
+
+- 1440 px, full page: header, strip, lead + what breaks, assumptions + uses of cash, grid +
+  scope/model, cash proxy, run charts in that order. Fixed after looking: limit label collided
+  with the wall label (limits now left-aligned); the lead tile had dead space beside the tall
+  stress tile (plot is taller at ≥ 700 px); stress values wrapped (leading figure in the bar,
+  the bracketed qualification listed in full under it); the old dark selected-button override
+  on the grid's controls removed; the generic run-chart cards moved behind a disclosure.
+- 390 px, full page: every tile full width in the same order; case switch wraps under the
+  title; axis labels shorten to `FY25E` (table view keeps exact labels); no horizontal page
+  scroll (main scrollWidth 390 = clientWidth, measured after the last change); the wide
+  statement and assumptions tables and the uses-of-cash chart scroll inside their own focusable
+  regions. Fixed after looking: the assumptions table squeezed its values a word per line (now a
+  minimum width inside its region); the uses-of-cash labels shrank to about 5 px (the chart keeps
+  a minimum width and scrolls); the "differs from base" screen-reader spans, absolutely
+  positioned, escaped the scroll region and widened the page to 533 px (regions are positioned).
+- No-forecast state, 1440 and 390 px: the Full run's snapshot served with `models` emptied
+  (Playwright route), because the synthetic engine's Lite run `20261124-225415-01` ended as
+  failed with no reason recorded and published no report. Header tile with the bottom line and
+  the gap "No forecast model was published for this run.", then the run-charts disclosure only.
+  On a real Lite run CP-2G is absent: the bottom line reads "Forward credit model did not run in
+  this run." and there is no "Open module" link (tested).
+
+### Checks
+
+| Check | Result |
+|---|---|
+| `npx tsc --noEmit` | pass |
+| `npx eslint --max-warnings=0` and `npx prettier --check` on the 24 changed files | pass |
+| `npx vitest run src/pages/connected/report src/pages/connected/visuals src/components/kit src/styles src/pages/connected/ReportLibrary*` | pass (88 files, 970 tests) |
+| `npm run unused` | one finding, `LeadProps` in `report/leads/types.ts` (frozen, not changed here) |
+| `npm run build` | pass |
+| Not run | the full web gate (`npm run gates`), Python tests that read the web build, the weekly full suite; the quality gate's Python part (no Python changed) |
+
+### Independent review
+
+One Sonnet reviewer was given the diff and the rules, not my conclusions. Confirmed and fixed:
+a selected case with no row for a measure showed the first case's figures under its name (stats,
+lead, uses of cash, liquidity); periods left out of the comparison (dates differing between
+cases) were still plotted and could become the peak; the wall appeared in the legend and the
+chart's reading when beyond the axis; other cases told apart by colour only (now dashed too);
+a driver key that is also a shock key made two rows with one React key and hid a value; empty
+inputs drew a header-only table; liquidity and a far wall shared one scale; float tick labels;
+the case list and its wrapper shared one accessible name; a calculation-listing failure showed
+the raw error. Each has a test. Not changed: a grid with two rows matching one measure is skipped
+for that measure without a notice (rare; listed for the coordinator); the retired section-jump
+focus behaviour is no longer tested (the jumps were removed by the mockup).
+
+### Tests
+
+Added: `forecastData.test.ts` (incl. the TransDigm block), `ForecastPath.test.tsx`,
+`ForecastHeader.test.tsx`, `ForecastBreaks.test.tsx`, `ForecastAssumptions.test.tsx`,
+`ForecastCash.test.tsx`, `ForecastScopeTile.test.tsx`, `Forecast.layout.test.tsx`.
+Rewritten (layout only; every value, period, case name, notice and trace assertion kept):
+radio-card queries → the `Case` buttons and the `Forecast cases` list in `Forecast.basis`,
+`Forecast.cases`, `Forecast.periods`, `Forecast.recovery`, `LegacyForecast`; the two section-jump
+tests in `Forecast.test.tsx` → tile presence and the run-charts deep link; the Forecast marker in
+`ReportLibrary.design.test.tsx` ("Forecast assumptions" → "Assumptions by case"; outside S5's
+files, a one-word marker the old label pinned).

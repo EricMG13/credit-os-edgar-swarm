@@ -59,7 +59,7 @@ function Chart({ slots }: { slots: Slot[] }) {
       role="img"
       aria-label={description}
       viewBox={`0 0 ${String(W)} ${String(H)}`}
-      className="h-auto w-full"
+      className="h-auto w-full min-w-[30rem]"
     >
       <defs>
         <pattern id="uses-of-cash-stub" width="6" height="6" patternUnits="userSpaceOnUse">
@@ -234,7 +234,16 @@ export function UsesOfCash({
       <p className="text-caption text-text-tertiary">{units || "Units not recorded"}</p>
       {view === "chart" ? (
         <>
-          <Chart slots={slots} />
+          <div
+            role="region"
+            aria-label="Uses of cash chart"
+            // At a phone's width the chart keeps legible labels and scrolls inside its tile.
+            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+            tabIndex={0}
+            className="relative min-w-0 overflow-x-auto"
+          >
+            <Chart slots={slots} />
+          </div>
           {notes.length > 0 && (
             <ul className="list-disc pl-5 text-small text-text-secondary">
               {notes.map((note) => (
@@ -249,7 +258,7 @@ export function UsesOfCash({
           aria-label="Uses of cash table"
           // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
           tabIndex={0}
-          className="min-w-0 overflow-x-auto"
+          className="relative min-w-0 overflow-x-auto"
         >
           <table className="w-full border-collapse text-small">
             <caption className="sr-only">Distributions and debt repayment by period</caption>

@@ -54,9 +54,9 @@ export function AssumptionsByCase({
         aria-label="Assumptions by case table"
         // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
         tabIndex={0}
-        className="min-w-0 overflow-x-auto"
+        className="relative min-w-0 overflow-x-auto"
       >
-        <table className="w-full border-collapse text-small">
+        <table className="w-full min-w-[36rem] border-collapse text-small">
           <caption className="sr-only">Forecast drivers by case</caption>
           <thead>
             <tr className="text-left text-caption text-text-tertiary">
