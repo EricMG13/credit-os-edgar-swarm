@@ -436,7 +436,8 @@ class _Board:
         self._index = {module_id: place for place, module_id in enumerate(ordered)}
         self._ordered, self._handoffs = tuple(ordered), handoffs
         self._changed = threading.Condition()  # re-entrant
-        self._stopped = len(ordered)  # the place of the earliest module that was not accepted
+        self._stopped = len(ordered)  # no module after this place is accepted in this launch
+        self._refused = len(ordered)  # the place of the earliest module failed or not accepted
         self._held = len(ordered)  # the place of the module an observer stopped the run at
         self.failed: dict[str, Exception] = {}  # reported by a module's thread as it fails
 
@@ -458,14 +459,18 @@ class _Board:
         start, starts nothing."""
         with self._changed:
             self.failed.setdefault(module_id, error)
-            self._stopped = min(self._stopped, self._index[module_id])
+            self._refused = min(self._refused, self._index[module_id])
+            self._stopped = min(self._stopped, self._refused)
             self._changed.notify_all()
 
     def stop_after(self, module_id: str | None) -> None:
         """No module after ``module_id`` in the plan (after none: no module at all) can be
-        accepted in this launch."""
+        accepted in this launch. ``module_id`` itself failed or was not accepted; with none
+        the whole launch is stopped (an interrupt, or its end), which is no module's failure."""
         with self._changed:
             place = -1 if module_id is None else self._index[module_id]
+            if module_id is not None:
+                self._refused = min(self._refused, place)
             self._stopped = min(self._stopped, place)
             self._changed.notify_all()
 
@@ -477,9 +482,13 @@ class _Board:
 
     def proceed(self, module_id: str) -> None:
         place = self._index[module_id]
-        if self._stopped < place:
+        if self._refused < place:
             raise ModuleHalted(
                 f"cpos_halted: {module_id}: a module before it in the plan was not accepted"
+            )
+        if self._stopped < place:
+            raise ModuleHalted(
+                f"cpos_halted: {module_id}: the launch was stopped before its next call"
             )
         if self._held < place:
             raise ModuleHalted(
@@ -774,7 +783,18 @@ class _ModuleLoop:
         for module_id in failed:
             if module_id != causes[0]:
                 cause.add_note(f"{module_id} also stopped: {with_notes(self.failures[module_id])}")
+        for module_id, halt in self._noted_halts():
+            cause.add_note(f"{module_id} halted: {with_notes(halt)}")
         return cause
+
+    def _noted_halts(self) -> Iterator[tuple[str, ModuleHalted]]:
+        """Each module that ended halted with a note on its halt (a hold whose release failed,
+        ``HandoffExecutor._last_look``). A halt is not a failure and is never the cause, but its
+        notes are part of the run's record: the cause carries them."""
+        for module_id, (_, future) in self.flights.items():
+            raised = future.exception() if future.done() else None
+            if isinstance(raised, ModuleHalted) and getattr(raised, "__notes__", None):
+                yield module_id, raised
 
     def _take_off(self, board: _Board, pool: _Threads, width: int) -> None:
         """Start the modules not yet started, in plan order, while a slot is free and the next
