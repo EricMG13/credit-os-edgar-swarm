@@ -218,6 +218,19 @@ describe("PeerBenchmarkLead", () => {
     expect(screen.queryByText(/percentile|rank/i)).toBeNull();
   });
 
+  it("says derived wherever the position against the median is stated: text, aria-label and table view", () => {
+    render(<PeerBenchmarkLead {...leadProps(peers(PERCENT, MULTIPLES))} />);
+    for (const name of ["Peer range, percent metrics", "Peer range, multiples"]) {
+      const tile = screen.getByRole("region", { name });
+      for (const p of tile.querySelectorAll("p"))
+        if (/^Issuer is /.test(p.textContent)) expect(p).toHaveTextContent("derived");
+      for (const svg of tile.querySelectorAll("svg[aria-label]"))
+        if (/the peer median/.test(svg.getAttribute("aria-label") ?? ""))
+          expect(svg.getAttribute("aria-label")).toContain("(derived)");
+      expect(within(tile).getByText("Issuer against the median (derived)")).toBeInTheDocument();
+    }
+  });
+
   it("prints the peer count, singular for one peer", () => {
     render(<PeerBenchmarkLead {...leadProps(peers(PERCENT, MULTIPLES))} />);
     const multiples = screen.getByRole("region", { name: "Peer range, multiples" });

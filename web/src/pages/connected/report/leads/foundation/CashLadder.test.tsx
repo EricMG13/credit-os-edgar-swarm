@@ -149,7 +149,7 @@ describe("CashLadderTile on the retained handoff", () => {
   it("titles from the stated levels and states every step in the aria-label", () => {
     const { tile } = draw(base);
     expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(
-      "Cash from operations 2,045 after interest, tax and other items; −2,505 after acquisitions and distributions",
+      "Cash from operations 2,045 after interest, tax and other items; −2,505 (derived) after acquisitions and distributions",
     );
     expect(
       within(tile).getByText(

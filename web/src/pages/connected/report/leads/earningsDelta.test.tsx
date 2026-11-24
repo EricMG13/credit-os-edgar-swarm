@@ -332,7 +332,38 @@ describe("the variance bridge", () => {
     );
     expect(result).toMatchObject({
       kind: "unreconciled",
-      reason: "the opening and its changes do not add up to the closing",
+      message:
+        "The variance bridge in this handoff does not add up, so it is not drawn as a bridge.",
+    });
+  });
+  it("says a gap step is not supplied, with its stated reason, and does not call that a failure to add up", () => {
+    const result = bridge(
+      delta(
+        steps([
+          GOOD[0] ?? [],
+          ["Disposals", "Not supplied: not split", "US$m", "x"],
+          GOOD[3] ?? [],
+        ]),
+      ),
+    );
+    expect(result).toMatchObject({
+      kind: "unreconciled",
+      message: "The variance bridge is not drawn: Disposals is not supplied (not split).",
+    });
+  });
+  it("screens a gap reason that names a register", () => {
+    const result = bridge(
+      delta(
+        steps([
+          GOOD[0] ?? [],
+          ["Disposals", "Not supplied: see register T4.4 row D14", "US$m", "x"],
+          GOOD[3] ?? [],
+        ]),
+      ),
+    );
+    expect(result).toMatchObject({
+      message:
+        "The variance bridge is not drawn: Disposals is not supplied (Detail is in Evidence.).",
     });
   });
   it("is not a bridge with a gap amount, with two units, with no changes, or when two tables compete", () => {
@@ -670,17 +701,141 @@ describe("EarningsDeltaLead with a variance bridge", () => {
     );
     expect(rows[2]).toEqual(["Disposals", "Change", "−5", "115"]);
   });
-  it("does not draw a bridge that does not add up, and says so", () => {
+  it("does not draw a bridge that does not add up, and says so on the bridge's own tile", () => {
     lead(
       delta(steps([...GOOD.slice(0, 3), ["Revenue FY2024", "116", "US$m", "x"]]), results(MONEY)),
     );
-    expect(screen.queryByRole("region", { name: "Variance bridge" })).toBeNull();
+    const own = screen.getByRole("region", { name: "Variance bridge" });
     expect(
-      screen.getByText(
-        /The variance bridge in this handoff does not add up, so it is not drawn as a bridge\./,
+      within(own).getByText(
+        "The variance bridge in this handoff does not add up, so it is not drawn as a bridge.",
       ),
     ).toBeVisible();
-    expect(screen.getByRole("list", { name: "Ranked movers, US$m" })).toBeInTheDocument();
+    expect(within(own).queryByRole("list")).toBeNull();
+    const movers = screen.getByRole("region", { name: "Ranked movers" });
+    expect(within(movers).queryByText(/does not add up/)).toBeNull();
+    expect(within(movers).getByRole("list", { name: "Ranked movers, US$m" })).toBeInTheDocument();
+  });
+  it("says a missing step is not supplied, never that the steps do not add up", () => {
+    lead(
+      delta(
+        steps([
+          GOOD[0] ?? [],
+          ["Disposals", "Not supplied: not split", "US$m", "x"],
+          GOOD[3] ?? [],
+        ]),
+        results(MONEY),
+      ),
+    );
+    const own = screen.getByRole("region", { name: "Variance bridge" });
+    expect(
+      within(own).getByText(
+        "The variance bridge is not drawn: Disposals is not supplied (not split).",
+      ),
+    ).toBeVisible();
+    expect(screen.queryByText(/does not add up/)).toBeNull();
+  });
+});
+
+describe("rows with no stated unit, screened text and titles", () => {
+  const NO_UNIT_ROWS = [
+    ["Revenue", "FY2023", "100", "FY2024", "150", "", "x"],
+    ["Customers", "FY2023", "100000", "FY2024", "100050", "", "x"],
+  ];
+  it("never puts two rows with no stated unit on one scale", () => {
+    const { movers } = earningsDelta(delta(results(NO_UNIT_ROWS)));
+    if (movers.kind !== "ready") throw new Error("expected movers");
+    expect(movers.groups).toHaveLength(2);
+    expect(movers.groups.map((one) => one.unitNotStated)).toEqual([true, true]);
+    expect(movers.groups.map((one) => one.ranked.map((pair) => pair.label))).toEqual([
+      ["Revenue"],
+      ["Customers"],
+    ]);
+    expect(movers.groups[0]?.axis?.hi).toBe(200);
+    expect(movers.groups[1]?.axis?.hi).toBe(150000);
+  });
+  it("keeps a stated unit's rows together beside rows with none", () => {
+    const { movers } = earningsDelta(delta(results([...MONEY.slice(0, 2), ...NO_UNIT_ROWS])));
+    if (movers.kind !== "ready") throw new Error("expected movers");
+    expect(movers.groups.map((one) => [one.unit, one.ranked.length])).toEqual([
+      ["US$m", 2],
+      ["", 1],
+      ["", 1],
+    ]);
+  });
+  it("draws each such row on its own labelled scale", () => {
+    lead(delta(results(NO_UNIT_ROWS)));
+    expect(screen.getAllByText("unit not stated")).toHaveLength(2);
+    expect(screen.getAllByRole("list", { name: "Ranked movers, unit not stated" })).toHaveLength(2);
+  });
+  it("screens words in a pair cell and drops a basis note that names a register", () => {
+    const { container } = lead(
+      delta(
+        results([
+          [
+            "Revenue",
+            "FY2023",
+            "see register T4.4",
+            "FY2024",
+            "10",
+            "US$m",
+            "Calculation C07; register T4.4 row D14.",
+          ],
+          [
+            "Debt",
+            "FY2023",
+            "50",
+            "FY2024",
+            "60",
+            "US$m",
+            "Calculation C07; register T4.4 row D14.",
+          ],
+        ]),
+      ),
+    );
+    expect(container.textContent).not.toMatch(/T4\.4|C07|D14/);
+    const tile = screen.getByRole("region", { name: "Ranked movers" });
+    const rows = [...tile.querySelectorAll("details tbody tr")].map((row) =>
+      [...row.querySelectorAll("td")].map((cell) => cell.textContent),
+    );
+    expect(rows.find((row) => row[0] === "Revenue")?.[3]).toBe("Detail is in Evidence.");
+    // The note is not drawn at all, not repeated as a sentence of its own.
+    expect(tile.querySelectorAll("ul")).toHaveLength(0);
+  });
+  it("does not name one winner when the largest moves are tied, and marks a derived title", () => {
+    lead(
+      delta(
+        results([
+          ["Revenue", "FY2023", "100", "FY2024", "150", "US$m", "x"],
+          ["Net debt", "FY2023", "200", "FY2024", "250", "US$m", "x"],
+        ]),
+      ),
+    );
+    expect(
+      screen.getByRole("heading", { name: "Largest moves are tied at 50 (derived)" }),
+    ).toBeVisible();
+    cleanup();
+    lead(
+      delta(
+        results([
+          ["Revenue", "FY2023", "100", "FY2024", "150", "US$m", "x"],
+          ["Net debt", "FY2023", "200", "FY2024", "230", "US$m", "x"],
+        ]),
+      ),
+    );
+    expect(
+      screen.getByRole("heading", { name: "Revenue moved most: up 50 (derived)" }),
+    ).toBeVisible();
+  });
+  it("marks a derived change in the margins title, and not a stated one", () => {
+    lead(delta(kpis([["Gross margin", "FY2023", "58.3", "FY2024", "58.8", "%", "x"]])));
+    expect(
+      screen.getByRole("heading", { name: "Gross margin up 0.5 percentage points (derived)" }),
+    ).toBeVisible();
+    cleanup();
+    lead(cp1bEntry());
+    const title = screen.getByRole("heading", { name: /^Gross margin up 0\.5 percentage points;/ });
+    expect(title).not.toHaveTextContent(/derived/);
   });
 });
 

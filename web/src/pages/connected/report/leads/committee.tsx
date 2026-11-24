@@ -15,7 +15,8 @@ import {
   type LedgerRow,
 } from "./committeeData";
 import type { LeadProps } from "./types";
-import { IN_EVIDENCE, saidText, type Said } from "./validationData";
+import { IN_EVIDENCE } from "./kit/reader";
+import { saidText, type Said } from "./validationData";
 
 const VISIBLE_ROWS = 8;
 /** Roughly how many characters fill one line of a ledger cell. */

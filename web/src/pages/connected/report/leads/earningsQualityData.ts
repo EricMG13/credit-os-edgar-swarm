@@ -1,5 +1,6 @@
-import { containsReference, readerText, type OutputEntry, type Table } from "../../publishedReport";
+import { readerText, type OutputEntry, type Table } from "../../publishedReport";
 import { tone } from "../../signal";
+import { namesSource, safeText } from "./kit/reader";
 import { difference, group, readCell, signOf, sum } from "./kit/numbers";
 import { allTables, tableWith } from "./kit/tables";
 
@@ -13,7 +14,6 @@ import { allTables, tableWith } from "./kit/tables";
  */
 
 /** A text a working page may draw: no source reference, module codes as names. */
-const safe = (text: string) => (containsReference(text) ? null : readerText(text));
 const norm = (text: string) => text.trim().replace(/\s+/g, " ").toLowerCase();
 
 export type Support = "Supported" | "Partly supported" | "Not supported" | "Insufficient evidence";
@@ -88,9 +88,9 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
   const amountAt = table.headers.indexOf("Amount");
   const basisAt = table.headers.indexOf("Basis and limitation");
   const stated = table.rows.map((row) => {
-    const cell = (row.cells[amountAt] ?? "").trim();
-    const unit = unitAt < 0 ? "" : (row.cells[unitAt] ?? "").trim();
-    return { label: safe(row.cells[0] ?? "") ?? "A step", text: unit ? `${cell} ${unit}` : cell };
+    const cell = safeText(row.cells[amountAt] ?? "");
+    const unit = unitAt < 0 ? "" : safeText(row.cells[unitAt] ?? "");
+    return { label: safeText(row.cells[0] ?? ""), text: unit ? `${cell} ${unit}` : cell };
   });
   if (table.rows.length < 2) return gapOf("The bridge states fewer than two steps.", stated);
   const units = new Set(
@@ -105,7 +105,7 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
       stated,
     );
   const steps = table.rows.map((row) => ({
-    label: safe(row.cells[0] ?? "") ?? "A step",
+    label: safeText(row.cells[0] ?? ""),
     reading: readCell(row.cells[amountAt] ?? ""),
     line: row.line,
   }));
@@ -113,8 +113,8 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
   if (bad)
     return gapOf(
       bad.reading.kind === "gap"
-        ? `${bad.label} is not supplied: ${safe(bad.reading.reason) ?? "the reason is in Evidence"}. The bridge cannot be drawn.`
-        : `${bad.label} states “${bad.reading.text}” where an amount was expected. The bridge cannot be drawn.`,
+        ? `${bad.label} is not supplied: ${safeText(bad.reading.reason)}. The bridge cannot be drawn.`
+        : `${bad.label} states “${safeText(bad.reading.text)}” where an amount was expected. The bridge cannot be drawn.`,
       stated,
     );
   const read: Step[] = steps.map((step) => {
@@ -147,13 +147,13 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
     ...new Set(
       table.rows.flatMap((row) => {
         const text = basisAt < 0 ? "" : (row.cells[basisAt] ?? "").trim();
-        return text && !containsReference(text) ? [readerText(text)] : [];
+        return text && !namesSource(text) ? [readerText(text)] : [];
       }),
     ),
   ];
   return {
     state: "ready",
-    unit,
+    unit: safeText(unit),
     line: table.line,
     opening,
     closing,
@@ -234,8 +234,8 @@ function multiple(cell: string) {
         ok: false,
         reason:
           reading.kind === "gap"
-            ? (safe(reading.reason) ?? "the reason is in Evidence")
-            : `the table states “${safe(reading.text) ?? "a value"}” where a multiple was expected`,
+            ? safeText(reading.reason)
+            : `the table states “${safeText(reading.text)}” where a multiple was expected`,
       } as const);
 }
 

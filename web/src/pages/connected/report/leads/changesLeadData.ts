@@ -1,6 +1,7 @@
 import type { OutputEntry } from "../../publishedReport";
 import { changeSign } from "../../signal";
 import { difference, group, readCell } from "./kit/numbers";
+import { namesSource } from "./kit/reader";
 import { cellAt, locate, said, saidText, type Said } from "./validationData";
 
 // ---------------------------------------------------------------------------------------------
@@ -203,7 +204,10 @@ export function issuerChanges(entry: OutputEntry): IssuerChanges | null {
     };
     const a = measured(earlier);
     const b = measured(current);
-    const change = a && b && a.unit === b.unit ? difference(b.number, a.number) : null;
+    const change =
+      a && b && a.unit !== "" && a.unit === b.unit && !namesSource(`${earlier} ${current}`)
+        ? difference(b.number, a.number)
+        : null;
     const held =
       HELD_BACK.test(cause) || (effect.kind === "text" && NOT_COMPARABLE.test(effect.text));
     const candidate: Candidate | null =

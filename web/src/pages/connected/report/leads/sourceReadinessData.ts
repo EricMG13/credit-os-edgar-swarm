@@ -1,4 +1,5 @@
-import { containsReference, readerText, type OutputEntry } from "../../publishedReport";
+import type { OutputEntry } from "../../publishedReport";
+import { IN_EVIDENCE, namesSource, safeText } from "./kit/reader";
 import { allTables, columnOf, tableWith } from "./kit/tables";
 
 export type ReadinessState = "ready" | "limited" | "conditional" | "blocked";
@@ -33,7 +34,6 @@ export function readinessState(cell: string | undefined): ReadinessState | null 
   return Object.hasOwn(NORMALISED, key) ? (NORMALISED[key] ?? null) : null;
 }
 
-const IN_EVIDENCE = "Detail is in Evidence.";
 const REASON_IN_EVIDENCE = "Reason is in Evidence.";
 const NO_LIMITATION = "No limitation stated.";
 
@@ -57,8 +57,7 @@ export type SourceReadiness =
       hasEvidenceTable: boolean;
     };
 
-const readable = (text: string, fallback: string) =>
-  containsReference(text) ? fallback : readerText(text).trim() || fallback;
+const readable = (text: string, fallback: string) => safeText(text) || fallback;
 
 /** A header that could hold the key evidence located or the conflicts and duplicates. */
 const evidenceHeader = (header: string) => /evidence|conflict|duplicate/i.test(header);
@@ -83,35 +82,24 @@ function readinessTable(entry: OutputEntry) {
   return null;
 }
 
-/** The Command column says DO NOT RUN: pipeline words, never drawn, but the row is not plainly ready. */
-const heldBack = (command: string | undefined) => /\bDO NOT RUN\b/i.test(command ?? "");
-const HELD_BACK = "Held back by the source review.";
-
 /** The readiness table as rows, or why there is nothing to draw. */
 export function sourceReadiness(entry: OutputEntry): SourceReadiness {
   const found = readinessTable(entry);
   if (!found || found.table.rows.length === 0) return { kind: "absent" };
   const { table } = found;
-  const [area, readiness, limitation, command] = [
-    found.area,
-    "Readiness",
-    found.reason,
-    "Command",
-  ].map((name) => columnOf(table, name));
+  // The Command column is never read: its words (RUN, DO NOT RUN) are the pipeline's, and the
+  // stated readiness is drawn as written.
+  const [area, readiness, limitation] = [found.area, "Readiness", found.reason].map((name) =>
+    columnOf(table, name),
+  );
   const states = table.rows.map((row) => readinessState(row.cells[readiness ?? -1]));
   if (states.some((state) => state === null)) return { kind: "unrecognised", line: table.line };
   const rows = table.rows.map((row, at): ReadinessRow => {
-    const held = heldBack(row.cells[command ?? -1]);
-    const stated = states[at] ?? "blocked";
-    const state = held && (stated === "ready" || stated === "limited") ? "conditional" : stated;
     const text = row.cells[limitation ?? -1] ?? "";
-    const reason = containsReference(text)
-      ? REASON_IN_EVIDENCE
-      : readable(text, state === stated ? NO_LIMITATION : "");
     return {
       area: readable(row.cells[area ?? -1] ?? "", IN_EVIDENCE),
-      state,
-      reason: state === stated ? reason : `${HELD_BACK} ${reason}`.trim(),
+      state: states[at] ?? "blocked",
+      reason: namesSource(text) ? REASON_IN_EVIDENCE : readable(text, NO_LIMITATION),
       line: row.line,
     };
   });

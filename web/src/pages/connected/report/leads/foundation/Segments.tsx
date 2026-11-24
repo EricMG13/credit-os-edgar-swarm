@@ -302,7 +302,7 @@ export function SegmentsTile({ lead }: { lead: LeadProps }) {
   const title =
     view.salesTotal === null
       ? `Segments, ${view.period}`
-      : `Net sales ${group(view.salesTotal)} across ${String(view.segments.length)} segment${view.segments.length === 1 ? "" : "s"}, ${view.period}`;
+      : `Segment net sales sum to ${group(view.salesTotal)} (derived) across ${String(view.segments.length)} segment${view.segments.length === 1 ? "" : "s"}, ${view.period}`;
   return (
     <FigureTile
       props={lead}

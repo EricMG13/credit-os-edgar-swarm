@@ -379,3 +379,36 @@ describe("CommitteeLead", () => {
     expect(screen.getAllByText(long)[0]?.className).toContain("wrap-anywhere");
   });
 });
+
+describe("a gap reason that names a source", () => {
+  const named = tbl("Chart data: portfolio limits", LIMIT_HEADERS, [
+    "Max single issuer",
+    "2.37",
+    "Not supplied: awaiting CP-2 data in Limits.xlsx",
+    "2.50",
+    "% NAV",
+    "Snapshot.",
+  ]);
+  it("is drawn as the in-Evidence sentence in the bullet note, the aria label and the table view", () => {
+    const { container } = renderLead(cp6(named));
+    expect(screen.getByText("Proposed: Not supplied: Detail is in Evidence.")).toBeVisible();
+    expect(container.textContent).not.toMatch(/Limits\.xlsx|CP-2|Funda/);
+    const table = container.querySelector("details table") as HTMLElement;
+    expect(table.textContent).toContain("Not supplied: Detail is in Evidence.");
+  });
+  it("is kept out of a whole-bullet gap too", () => {
+    const current = tbl("Chart data: portfolio limits", LIMIT_HEADERS, [
+      "Max",
+      "Not supplied: see Limits.xlsx for CP-2",
+      "1",
+      "2",
+      "% NAV",
+      "n",
+    ]);
+    const { container } = renderLead(cp6(current));
+    expect(
+      screen.getByText("Current exposure is not supplied: Detail is in Evidence."),
+    ).toBeVisible();
+    expect(container.textContent).not.toMatch(/xlsx|CP-2/);
+  });
+});

@@ -41,3 +41,26 @@ describe("table lookup in the retained CP-1 handoff", () => {
     expect(rows?.current.cells[1]).toBe("6.53");
   });
 });
+
+describe("lastTwoRows orders by date, not position", () => {
+  const rows = (...labels: string[]) => ({
+    type: "table" as const,
+    line: 1,
+    headers: ["Period", "Value"],
+    rows: labels.map((label, at) => ({ line: 2 + at, cells: [label, String(at)] })),
+  });
+  it("takes the two latest years even when the table lists the later year first", () => {
+    const pair = lastTwoRows(rows("FY2024 / 2024-09-30", "FY2023 / 2023-09-30"));
+    expect(pair?.prior.cells[0]).toBe("FY2023 / 2023-09-30");
+    expect(pair?.current.cells[0]).toBe("FY2024 / 2024-09-30");
+  });
+  it("takes the latest two of three periods in any order", () => {
+    const pair = lastTwoRows(rows("FY2025", "FY2023", "FY2024"));
+    expect([pair?.prior.cells[0], pair?.current.cells[0]]).toEqual(["FY2024", "FY2025"]);
+  });
+  it("refuses periods that are not both of one kind or have no year", () => {
+    expect(lastTwoRows(rows("FY2024", "LTM 2023"))).toBeNull();
+    expect(lastTwoRows(rows("Current", "Prior"))).toBeNull();
+    expect(lastTwoRows(rows("FY2024", "FY2024"))).toBeNull();
+  });
+});

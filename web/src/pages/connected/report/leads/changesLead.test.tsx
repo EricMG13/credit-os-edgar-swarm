@@ -319,3 +319,47 @@ describe("ChangesSummaryLead", () => {
     );
   });
 });
+
+describe("measures with no stated unit", () => {
+  const bare = () =>
+    cp8(
+      issuer(
+        row("Revenue (USD m)", "6,585 (FY2023)", "7,940 (FY2024)"),
+        row("Employees", "15,000", "16,500"),
+        row("Customers", "120", "130"),
+      ),
+    );
+  it("never ranks bare numbers against each other: each is a row in words, with no scale", () => {
+    const found = issuerChanges(bare());
+    expect(found?.moves).toEqual([]);
+    expect(found?.scale).toBeNull();
+    expect(found?.words.map((item) => [item.label, item.earlier, item.current])).toEqual([
+      ["Revenue (USD m)", "6,585 (FY2023)", "7,940 (FY2024)"],
+      ["Employees", "15,000", "16,500"],
+      ["Customers", "120", "130"],
+    ]);
+  });
+  it("draws them as words, with no dumbbell and no ranking claim", () => {
+    const { container } = renderLead(bare());
+    expect(container.querySelectorAll("[data-move]")).toHaveLength(0);
+    expect(container.textContent).not.toMatch(/plain numbers|largest/);
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Measures and facts, in words" }),
+    ).toBeVisible();
+  });
+  it("still ranks measures that state the same unit while leaving the bare ones in words", () => {
+    const found = issuerChanges(
+      cp8(issuer(row("Cover", "6.0x", "6.5x"), row("Employees", "15,000", "16,500"))),
+    );
+    expect(found?.moves.map((move) => move.label)).toEqual(["Cover"]);
+    expect(found?.words.map((item) => item.label)).toEqual(["Employees"]);
+  });
+});
+
+it("keeps a measure whose cell names a source out of the dumbbells", () => {
+  const found = issuerChanges(
+    cp8(issuer(row("Cover", "6.0x (see Annual.pdf)", "6.5x (FY2024)"), row("Debt", "1x", "2x"))),
+  );
+  expect(found?.moves.map((move) => move.label)).toEqual(["Debt"]);
+  expect(found?.words[0]?.earlier).toBe("Detail is in Evidence.");
+});

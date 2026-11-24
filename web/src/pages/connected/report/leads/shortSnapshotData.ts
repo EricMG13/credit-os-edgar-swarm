@@ -1,4 +1,5 @@
-import { containsReference, readerText, type OutputEntry } from "../../publishedReport";
+import type { OutputEntry } from "../../publishedReport";
+import { safeText } from "./kit/reader";
 import { difference, group, readCell, signOf } from "./kit/numbers";
 import { allTables, tableWith } from "./kit/tables";
 import { tone } from "../../signal";
@@ -14,9 +15,6 @@ import { tone } from "../../signal";
 
 const KEY_FIGURE_HEADERS = ["Measure", "Value", "Period", "Source"] as const;
 export const MOST_FIGURES = 6;
-
-const safe = (text: string) => (containsReference(text) ? null : readerText(text.trim()));
-const POINTER = "Detail is in Evidence.";
 
 export type Figure =
   | { kind: "value"; text: string; period: string }
@@ -66,15 +64,15 @@ function split(text: string) {
 
 function figureOf(value: string, period: string): Figure {
   const reading = readCell(value);
-  const when = safe(period) ?? POINTER;
+  const when = safeText(period);
   if (reading.kind === "gap")
     return {
       kind: "gap",
-      text: value.trim(),
-      reason: safe(reading.reason) ?? POINTER,
+      text: safeText(value),
+      reason: safeText(reading.reason),
       period: when,
     };
-  return { kind: "value", text: safe(value) ?? POINTER, period: when };
+  return { kind: "value", text: safeText(value), period: when };
 }
 
 const yearOf = (period: string) => /(\d{4})(?!.*\d{4})/.exec(period)?.[1];
@@ -129,7 +127,7 @@ export function readKeyFigures(entry: OutputEntry): KeyFigures {
   if (!table?.rows.length) return { state: "gap", reason: "The Key figures table has no rows." };
   const at = (name: string) => table.headers.indexOf(name);
   const rows = table.rows.map((row) => ({
-    measure: safe(row.cells[at("Measure")] ?? "") ?? POINTER,
+    measure: safeText(row.cells[at("Measure")] ?? ""),
     fig: figureOf(row.cells[at("Value")] ?? "", row.cells[at("Period")] ?? ""),
     line: row.line,
   }));
@@ -201,11 +199,11 @@ export function readChangeScreen(entry: OutputEntry): ChangeScreen {
     const text = textAt < 0 ? "" : (row.cells[textAt] ?? "").trim();
     const direction = directionAt < 0 ? "" : (row.cells[directionAt] ?? "").trim();
     return {
-      topic: safe(row.cells[at("Topic")] ?? "") ?? POINTER,
-      prior: safe(row.cells[at("Prior")] ?? "") ?? POINTER,
-      current: safe(row.cells[at("Current")] ?? "") ?? POINTER,
-      text: text ? (safe(text) ?? POINTER) : null,
-      direction: direction ? (safe(direction) ?? POINTER) : null,
+      topic: safeText(row.cells[at("Topic")] ?? ""),
+      prior: safeText(row.cells[at("Prior")] ?? ""),
+      current: safeText(row.cells[at("Current")] ?? ""),
+      text: text ? safeText(text) : null,
+      direction: direction ? safeText(direction) : null,
       line: row.line,
     };
   });

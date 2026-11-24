@@ -59,12 +59,28 @@ export function sum(terms: readonly string[]) {
   return total;
 }
 
-/** `part / whole` as a percentage of two plain numbers, 2 dp, exact digits; null if not computable. */
+const scaled = (text: string) => {
+  const [whole = "", fraction = ""] = text.replace(/^-/, "").split(".");
+  const digits = BigInt(whole + fraction);
+  return { value: text.startsWith("-") ? -digits : digits, scale: fraction.length };
+};
+
+/** `part / whole` as a percentage, exact decimal arithmetic rounded half away from zero to 2 dp; null if not computable. */
 export function percentOf(part: string, whole: string) {
   const a = readCell(part);
   const b = readCell(whole);
   if (a.kind !== "number" || b.kind !== "number" || b.value === 0) return null;
-  return ((a.value / b.value) * 100).toFixed(2);
+  const x = scaled(a.text);
+  const y = scaled(b.text);
+  // part / whole * 100 * 100 (two decimals), as an integer ratio.
+  const numerator = x.value * 10n ** BigInt(y.scale) * 10000n;
+  const denominator = y.value * 10n ** BigInt(x.scale);
+  const negative = numerator < 0n !== denominator < 0n;
+  const n = numerator < 0n ? -numerator : numerator;
+  const d = denominator < 0n ? -denominator : denominator;
+  const rounded = (2n * n + d) / (2n * d);
+  const digits = rounded.toString().padStart(3, "0");
+  return `${negative && rounded !== 0n ? "-" : ""}${digits.slice(0, -2)}.${digits.slice(-2)}`;
 }
 
 /** The sign of a plain number text: 1, 0, -1, or null. */

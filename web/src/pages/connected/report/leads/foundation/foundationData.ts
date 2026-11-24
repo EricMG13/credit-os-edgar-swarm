@@ -1,6 +1,6 @@
 import { unitLabel, type OutputEntry, type Table } from "../../../publishedReport";
 import { tone } from "../../../signal";
-import { difference, percentOf, readCell, sum, type Reading } from "../kit/numbers";
+import { difference, percentOf, readCell, signOf, sum, type Reading } from "../kit/numbers";
 import {
   columnOf,
   lastTwoRows,
@@ -426,21 +426,25 @@ export function netDebtView(entry: OutputEntry): NetDebtView | null {
   const eventAt = adjustments ? columnOf(adjustments, "Event") : -1;
   const found = (adjustments?.rows ?? []).flatMap((row): ProForma[] => {
     if (!adjustments) return [];
-    const proForma: ProForma = {
-      event: row.cells[eventAt] ?? "",
-      date: row.cells[columnOf(adjustments, "Date")] ?? "",
-      amount: readCell(row.cells[columnOf(adjustments, "Amount")] ?? ""),
-      netDebt: readCell(row.cells[columnOf(adjustments, "Pro forma net debt")] ?? ""),
-      leverage: readCell(row.cells[columnOf(adjustments, "Pro forma net leverage")] ?? ""),
-      line: row.line,
-    };
-    return proForma.netDebt.kind === "number" && proForma.amount.kind === "number"
-      ? [proForma]
-      : [];
+    return [
+      {
+        event: row.cells[eventAt] ?? "",
+        date: row.cells[columnOf(adjustments, "Date")] ?? "",
+        amount: readCell(row.cells[columnOf(adjustments, "Amount")] ?? ""),
+        netDebt: readCell(row.cells[columnOf(adjustments, "Pro forma net debt")] ?? ""),
+        leverage: readCell(row.cells[columnOf(adjustments, "Pro forma net leverage")] ?? ""),
+        line: row.line,
+      },
+    ];
   });
+  // Only a row that states both its amount and its pro forma net debt can be the bar; every other
+  // row stays listed, a stated gap with its reason.
+  const drawable = found.filter(
+    (item) => item.netDebt.kind === "number" && item.amount.kind === "number",
+  );
   const size = (item: ProForma) =>
     item.amount.kind === "number" ? Math.abs(item.amount.value) : 0;
-  const largest = found.reduce<ProForma | null>(
+  const largest = drawable.reduce<ProForma | null>(
     (best, item) => (best && size(best) >= size(item) ? best : item),
     null,
   );
@@ -507,12 +511,12 @@ export function ebitdaBridge(entry: OutputEntry): EbitdaBridge | null {
   const texts = steps.map((step) => step.cell.text);
   const changes = steps.filter((step) => step.kind === "change").map((step) => step.cell.text);
   const total = sum(texts.slice(0, -1));
+  const closingCell = steps.at(-1)?.cell;
+  const closing = closingCell?.kind === "number" ? closingCell.text : null;
   return {
     unit: unitLabel(unit),
     steps,
-    reconciles:
-      total !== null &&
-      total === (steps.at(-1)?.cell.kind === "number" ? steps.at(-1)?.cell.text : null),
+    reconciles: closing !== null && total !== null && signOf(difference(total, closing)) === 0,
     addBacks: sum(changes),
     tableLine: table.line,
   };

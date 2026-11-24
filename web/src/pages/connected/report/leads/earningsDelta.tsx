@@ -1,5 +1,5 @@
 import { cx } from "@/utils/cx";
-import { containsReference } from "../../publishedReport";
+import { FigureSourceControl } from "../overview/figureParts";
 import { GapBar } from "../overview/marks";
 import { GapNote, Tile } from "../overview/Tile";
 import {
@@ -20,8 +20,6 @@ import { group } from "./kit/numbers";
 import type { LeadProps } from "./types";
 
 const NO_BRIDGE = "No variance bridge in this handoff.";
-const NOT_A_BRIDGE =
-  "The variance bridge in this handoff does not add up, so it is not drawn as a bridge.";
 
 // The strip is about 580 px wide in the tile at 1440 px, so one drawing unit is about one pixel there
 // and 11-unit tick text is about 11 px. PAD leaves room for the widest tick label at each end.
@@ -218,10 +216,10 @@ function GroupRows({ group: one, label }: { group: PairGroup; label: string }) {
   const hidden = one.ranked.length - one.shown.length;
   return (
     <div className="flex flex-col gap-1">
-      {(one.unit || truncated) && (
+      {(one.unit || one.unitNotStated || truncated) && (
         <p className="text-caption text-text-tertiary">
           {[
-            one.unit,
+            one.unitNotStated ? "unit not stated" : one.unit,
             axis && truncated ? `axis starts at ${mark(axis.lo, one.unit)}, not zero` : "",
           ]
             .filter(Boolean)
@@ -255,10 +253,7 @@ function GroupRows({ group: one, label }: { group: PairGroup; label: string }) {
 }
 
 function pairTable(figure: Extract<PairFigure, { kind: "ready" }>, caption: string): TableViewData {
-  const cell = (one: Side, unit: string) =>
-    one.kind === "gap" && (containsReference(one.text) || one.text === "")
-      ? "Detail is in Evidence."
-      : sideText(one, unit);
+  const cell = sideText;
   const rows = figure.groups.flatMap((one) =>
     [...one.ranked, ...one.gaps, ...one.words].map((pair) => [
       pair.label,
@@ -301,13 +296,20 @@ function legendOf() {
   ];
 }
 
+const DERIVED_TAG = " (derived)";
+const derivedTag = (change: Change | null | undefined) =>
+  change?.basis === "derived" ? DERIVED_TAG : "";
+
 function moversTitle(figure: Extract<PairFigure, { kind: "ready" }>) {
   if (figure.groups.length !== 1) return `Prior and current results, each unit on its own scale`;
-  const top = figure.groups[0]?.ranked[0];
+  const [top, next] = figure.groups[0]?.ranked ?? [];
   if (!top?.change) return "Prior and current results";
-  return top.change.sign === 0
-    ? "No ranked measure changed between the periods"
-    : `${top.label} moved most: ${word(top.change.sign)} ${unsigned(top.change.text)}`;
+  if (top.change.sign === 0) return "No ranked measure changed between the periods";
+  const tag = derivedTag(top.change) || derivedTag(next?.change);
+  // Two measures at the top of the ranking with the same size of change: no one winner is named.
+  if (next?.change?.magnitude === top.change.magnitude)
+    return `Largest moves are tied at ${unsigned(top.change.text)}${tag}`;
+  return `${top.label} moved most: ${word(top.change.sign)} ${unsigned(top.change.text)}${tag}`;
 }
 
 function kpiTitle(figure: Extract<PairFigure, { kind: "ready" }>) {
@@ -318,15 +320,15 @@ function kpiTitle(figure: Extract<PairFigure, { kind: "ready" }>) {
     .map((pair) =>
       pair.change?.sign === 0
         ? `${pair.label} unchanged`
-        : `${pair.label} ${word(pair.change?.sign ?? 0)} ${unsigned(pair.change?.text ?? "")}`,
+        : `${pair.label} ${word(pair.change?.sign ?? 0)} ${unsigned(pair.change?.text ?? "")}${derivedTag(pair.change)}`,
     );
   const rest = rows.length - parts.length;
   return `${parts.join("; ")}${rest > 0 ? `; ${String(rest)} more` : ""}`;
 }
 
 function unitKicker(base: string, figure: Extract<PairFigure, { kind: "ready" }>) {
-  const units = figure.groups.map((one) => one.unit).filter(Boolean);
-  return units.length === 1 ? `${base}, ${units[0] ?? ""}` : base;
+  const [only] = figure.groups;
+  return figure.groups.length === 1 && only?.unit ? `${base}, ${only.unit}` : base;
 }
 
 function PairTile({
@@ -368,9 +370,9 @@ function PairTile({
     >
       {figure.groups.map((one) => (
         <GroupRows
-          key={one.unit}
+          key={one.ranked[0]?.line ?? one.gaps[0]?.line ?? one.words[0]?.line ?? one.unit}
           group={one}
-          label={`${label}${one.unit ? `, ${one.unit}` : ""}`}
+          label={`${label}${one.unitNotStated ? ", unit not stated" : one.unit ? `, ${one.unit}` : ""}`}
         />
       ))}
       {!drawn && <GapNote>The handoff states no pair with both figures to draw.</GapNote>}
@@ -510,25 +512,48 @@ function BridgeTile({
   );
 }
 
+/** The bridge's own place when the handoff has a step table that cannot be drawn as one: why, in words. */
+function BridgeGap({
+  props,
+  bridge,
+}: {
+  props: LeadProps;
+  bridge: { line: number; message: string };
+}) {
+  return (
+    <Tile
+      span={12}
+      label="Variance bridge"
+      kicker="Variance bridge, prior to current"
+      tone="gap"
+      trace={
+        <FigureSourceControl
+          folder={props.run.folder}
+          entry={props.entry}
+          line={bridge.line}
+          name="the variance bridge"
+        />
+      }
+    >
+      <GapNote>{bridge.message}</GapNote>
+    </Tile>
+  );
+}
+
 /** Earnings delta: the variance bridge where the handoff has one that adds up, the ranked movers, and margins and KPIs. */
 export function EarningsDeltaLead(props: LeadProps) {
   const { bridge, movers, kpis } = earningsDelta(props.entry);
-  const bridgeNote =
-    bridge?.kind === "unreconciled"
-      ? [`${NOT_A_BRIDGE} It says: ${bridge.reason}.`]
-      : bridge?.kind === "bridge"
-        ? []
-        : [NO_BRIDGE];
   return (
     <LeadFrame props={props}>
       {bridge?.kind === "bridge" && <BridgeTile props={props} bridge={bridge} />}
+      {bridge?.kind === "unreconciled" && <BridgeGap props={props} bridge={bridge} />}
       <PairTile
         props={props}
         figure={movers}
         label="Ranked movers"
         kicker="Ranked movers, largest change first"
         title={moversTitle}
-        notes={bridgeNote}
+        notes={bridge === null ? [NO_BRIDGE] : []}
         source="the ranked movers"
       />
       <PairTile

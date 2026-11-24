@@ -1,21 +1,13 @@
-import {
-  containsReference,
-  readerText,
-  type OutputEntry,
-  type Row,
-  type Table,
-} from "../../publishedReport";
+import { readerText, type OutputEntry, type Row, type Table } from "../../publishedReport";
 import { bottomLine } from "../overview/read";
 import { readCell } from "./kit/numbers";
+import { IN_EVIDENCE, namesSource, safeText as readerSafe } from "./kit/reader";
 import { allTables } from "./kit/tables";
 
-/** What a lead draws where a handoff passage cites a source: the trace control has it. */
-export const IN_EVIDENCE = "Detail is in Evidence.";
-
-/** A handoff's words, reference-free and with module codes named; null when they cite a source. */
+/** A handoff's words for a working page; null when they name a source (the trace control has it). */
 function safeText(text: string): string | null {
-  const trimmed = text.trim();
-  return trimmed === "" || containsReference(trimmed) ? null : readerText(trimmed);
+  const words = readerSafe(text);
+  return text.trim() === "" || words === IN_EVIDENCE ? null : words;
 }
 
 /** One cell as a lead may draw it: words, the handoff's stated gap, a source citation, or nothing. */
@@ -120,11 +112,12 @@ const reasonOf = (row: Row) => {
 function affectedOf(cell: string | undefined): Issue["affected"] {
   const text = (cell ?? "").trim();
   if (text === "" || readCell(text).kind === "gap") return null;
-  if (containsReference(text)) return "evidence";
+  if (namesSource(text)) return "evidence";
   return text
     .split(/[,;]/)
-    .map((part) => readerText(part.trim()))
-    .filter((part) => part !== "");
+    .map((part) => part.trim())
+    .filter((part) => part !== "")
+    .map(readerText);
 }
 
 function readRegister(entry: OutputEntry, headers: string[], kind: Issue["kind"]): Register {
@@ -274,8 +267,9 @@ export function clearance(entry: OutputEntry): Clearance | null {
     };
   }
   const [first] = bottomLine(entry);
-  if (first?.text) {
-    const [sentence = first.text] = first.text.split(/(?<=[.!?])\s+/);
+  const opening = first?.text ? safeText(first.text) : null;
+  if (first && opening) {
+    const [sentence = opening] = opening.split(/(?<=[.!?])\s+/);
     return {
       status: sentence,
       scope: null,
@@ -301,9 +295,11 @@ export type ModuleIntegrity = {
 };
 
 function resultShape(result: string): Shape {
-  if (/blocked|not evaluated/i.test(result)) return "slash";
-  if (/with findings/i.test(result)) return "half";
-  if (/no finding/i.test(result)) return "filled";
+  // A negated word is not its state: "Not blocked" is left out before the words are read.
+  const read = result.replace(/\bnot\s+blocked\b/gi, "");
+  if (/blocked|not evaluated/i.test(read)) return "slash";
+  if (/with findings/i.test(read)) return "half";
+  if (/\bno findings?\b/i.test(read)) return "filled";
   return "ring";
 }
 

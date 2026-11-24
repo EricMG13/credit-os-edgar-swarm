@@ -204,6 +204,60 @@ describe("earningsQualityData", () => {
   });
 });
 
+describe("no source reference in what is drawn", () => {
+  const CITED = "see C07 in T1D.2 per 10-K p 45";
+  it("screens an amount that is words, in the reason and in the listed steps", () => {
+    const bridge = readBridge(
+      quality([BRIDGE[0] ?? [], ["Savings", CITED, "US$m", ""], BRIDGE[4] ?? []]),
+    );
+    if (bridge.state !== "gap") throw new Error("expected a gap");
+    const text = JSON.stringify(bridge);
+    expect(text).not.toMatch(/C07|T1D\.2|p 45|10-K/);
+    expect(bridge.reason).toContain("Detail is in Evidence.");
+    expect(bridge.stated[1]?.text).toContain("Detail is in Evidence.");
+    render(
+      <EarningsQualityLead
+        {...leadProps(quality([BRIDGE[0] ?? [], ["Savings", CITED, "US$m", ""], BRIDGE[4] ?? []]))}
+      />,
+    );
+    expect(document.body.textContent).not.toMatch(/C07|T1D\.2|p 45/);
+    cleanup();
+  });
+
+  it("screens a gap reason, a basis note and a leverage cell that name a source", () => {
+    const bridge = readBridge(
+      quality([
+        BRIDGE[0] ?? [],
+        ["Savings", `Not supplied: ${CITED}`, "US$m", ""],
+        BRIDGE[4] ?? [],
+      ]),
+    );
+    expect(JSON.stringify(bridge)).not.toMatch(/C07|T1D\.2|p 45/);
+    const noted = readBridge(
+      quality(
+        BRIDGE.map((row, at) => (at === 1 ? [row[0] ?? "", row[1] ?? "", "US$m", CITED] : row)),
+      ),
+    );
+    expect(noted.state === "ready" && noted.notes.join(" ")).not.toMatch(/C07|T1D\.2/);
+    const lev = readLeverage(
+      quality(BRIDGE, ASSESSMENT, [LEVERAGE[0] ?? [], ["Supported", "", "", "", CITED, "5.9x"]]),
+    );
+    expect(JSON.stringify(lev)).not.toMatch(/C07|T1D\.2|p 45/);
+  });
+});
+
+describe("derived figures say so", () => {
+  it("labels the add-back total, the per-word sums and the leverage change as derived, in the table view too", () => {
+    render(<EarningsQualityLead {...leadProps(quality())} />);
+    expect(document.querySelector("[data-total]")).toHaveTextContent("derived");
+    expect(document.querySelector("[data-by-support]")).toHaveTextContent("derived");
+    const leverage = screen.getByRole("region", { name: "Leverage restated" });
+    expect(within(leverage).getByText("Change (derived)")).toBeInTheDocument();
+    for (const svg of leverage.querySelectorAll("svg[aria-label]"))
+      expect(svg.getAttribute("aria-label")).toContain("(derived)");
+  });
+});
+
 describe("EarningsQualityLead", () => {
   it("draws every bar in proportion on one cut axis, the two totals cut", () => {
     render(<EarningsQualityLead {...leadProps(quality())} />);

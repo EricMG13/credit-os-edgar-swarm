@@ -2,9 +2,9 @@ import { useId } from "react";
 import { GapPattern } from "../overview/figureParts";
 import { GapNote, Figure } from "../overview/Tile";
 import { FigureTile, LeadFrame } from "./kit/LeadFrame";
+import { IN_EVIDENCE } from "./kit/reader";
 import type { LeadProps } from "./types";
 import {
-  IN_EVIDENCE,
   clearance,
   issues,
   moduleIntegrity,

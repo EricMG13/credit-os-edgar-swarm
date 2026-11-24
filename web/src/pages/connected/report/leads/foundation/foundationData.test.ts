@@ -301,3 +301,45 @@ describe("segmentView", () => {
     expect(gap?.salesTotal).toBeNull();
   });
 });
+
+describe("review fixes", () => {
+  it("reads prior and current by year when Net debt data lists the later year first", () => {
+    const flipped = edited((table, at) =>
+      at === "Net debt data" ? { ...table, rows: [...table.rows].reverse() } : table,
+    );
+    const view = netDebtView(flipped);
+    expect(view?.periods.map((p) => [p.label, p.net.text])).toEqual([
+      ["FY2023", "16278"],
+      ["FY2024", "18619"],
+    ]);
+  });
+  it("keeps an adjustment whose pro forma is a stated gap, listed with its reason, never dropped", () => {
+    const gap = netDebtView(
+      setCell(
+        "Post-balance-sheet adjustments",
+        1,
+        "Pro forma net debt",
+        "Not supplied: pricing pending",
+      ),
+    );
+    const listed = [gap?.proForma, ...(gap?.otherAdjustments ?? [])].map((a) => a?.event);
+    expect(listed).toContain("Special dividend and dividend equivalent settlement");
+    const dividend = gap?.otherAdjustments.find((a) => a.event.startsWith("Special dividend"));
+    expect(dividend?.netDebt).toMatchObject({ kind: "gap", reason: "pricing pending" });
+  });
+  it("calls a bridge reconciled when the sum equals the closing figure numerically (3148.0 + 1025 = 4173)", () => {
+    const decimals = edited((table, at) =>
+      at === "Chart data: EBITDA bridge"
+        ? {
+            ...table,
+            rows: [
+              { ...table.rows[0]!, cells: ["EBITDA (Reported)", "3148.0", "US$m", "x"] },
+              { ...table.rows[1]!, cells: ["Add-backs", "1025", "US$m", "x"] },
+              { ...table.rows[5]!, cells: ["EBITDA (Adjusted)", "4173", "US$m", "x"] },
+            ],
+          }
+        : table,
+    );
+    expect(ebitdaBridge(decimals)?.reconciles).toBe(true);
+  });
+});

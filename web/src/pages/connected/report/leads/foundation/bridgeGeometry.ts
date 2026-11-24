@@ -196,9 +196,10 @@ export function bridgeTitle(data: EbitdaBridge) {
   const closing = readerSafe(data.steps.at(-1)?.label ?? "");
   if (!data.reconciles || data.addBacks === null) return `${opening} to ${closing}, steps stated`;
   const total = Number(data.addBacks);
-  if (total > 0) return `Add-backs lift ${opening} by ${group(data.addBacks)} to ${closing}`;
+  if (total > 0)
+    return `Add-backs lift ${opening} by ${group(data.addBacks)} (derived) to ${closing}`;
   if (total < 0)
-    return `The changes lower ${opening} by ${group(data.addBacks.slice(1))} to ${closing}`;
+    return `The changes lower ${opening} by ${group(data.addBacks.slice(1))} (derived) to ${closing}`;
   return `${opening} to ${closing}; the changes sum to 0`;
 }
 

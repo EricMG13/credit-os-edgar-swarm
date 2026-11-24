@@ -48,3 +48,14 @@ describe("exact arithmetic", () => {
     expect(percentOf("Not supplied: x", "5")).toBeNull();
   });
 });
+
+describe("percentOf is exact decimal arithmetic, rounded half up to two places", () => {
+  it("rounds 1.005 / 100 to 1.01, which floating point gets wrong", () => {
+    expect(percentOf("1.005", "100")).toBe("1.01");
+  });
+  it("keeps the retained growth figures", () => {
+    expect(percentOf("1355", "6585")).toBe("20.58");
+    expect(percentOf("665", "3148")).toBe("21.12");
+    expect(percentOf("-5", "8")).toBe("-62.50");
+  });
+});

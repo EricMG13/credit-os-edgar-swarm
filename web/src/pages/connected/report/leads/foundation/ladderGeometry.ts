@@ -249,7 +249,7 @@ export function ladderTitle(data: CashLadder) {
     clauses.push(`Cash from operations ${group(cfo.text)} after interest, tax and other items`);
   if (end?.value != null)
     clauses.push(
-      `${clauses.length ? "" : "Free cash flow "}${group(end.text)} after acquisitions and distributions`,
+      `${clauses.length ? "" : "Free cash flow "}${group(end.text)} (derived) after acquisitions and distributions`,
     );
   return clauses.join("; ") || `Cash conversion, ${data.currentLabel}`;
 }

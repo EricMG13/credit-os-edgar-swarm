@@ -1,6 +1,7 @@
-import { containsReference, readerText, type OutputEntry } from "../../publishedReport";
+import type { OutputEntry } from "../../publishedReport";
 import { bottomLine } from "../overview/read";
 import { ticks } from "../../visuals/visualData";
+import { safeText as safe } from "./kit/reader";
 import { difference, readCell, signOf } from "./kit/numbers";
 import { allTables } from "./kit/tables";
 
@@ -20,10 +21,6 @@ const REQUIRED = [
   "Peer count",
   "Reporting unit",
 ] as const;
-
-/** A text a working page may draw: no source reference, module codes as names; else a pointer. */
-export const safe = (text: string) =>
-  containsReference(text) ? "Detail is in Evidence." : readerText(text);
 
 /** One stated value: a plain number, the handoff's own reason for not stating it, or words where a number belongs. */
 export type Value =

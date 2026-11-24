@@ -80,15 +80,13 @@ describe("the consumer shape of the readiness table", () => {
     });
     for (const row of found.rows) expect(row.area).not.toMatch(/CP-/);
   });
-  it("never draws the Command column, and does not show a DO NOT RUN row as plainly ready", () => {
+  it("never draws the Command column, and keeps the stated state of a DO NOT RUN row", () => {
     const found = result();
     if (found.kind !== "ready") throw new Error("expected rows");
-    expect(JSON.stringify(found.rows)).not.toMatch(/DO NOT RUN|RUN/);
-    expect(found.rows[2]).toMatchObject({
-      state: "conditional",
-      reason: "Held back by the source review.",
-    });
-    expect(found.counts).toEqual({ ready: 0, limited: 1, conditional: 2, blocked: 0 });
+    expect(JSON.stringify(found.rows)).not.toMatch(/DO NOT RUN|RUN|Held back/);
+    // The table states READY for the last row: it is drawn ready, with nothing added to it.
+    expect(found.rows[2]).toMatchObject({ state: "ready", reason: "No limitation stated." });
+    expect(found.counts).toEqual({ ready: 1, limited: 1, conditional: 1, blocked: 0 });
   });
   it("draws the three rows with no pipeline words on the page", () => {
     const { container } = lead(readiness(CONSUMER_ROWS, CONSUMER_HEADERS));

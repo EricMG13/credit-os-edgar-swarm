@@ -1,11 +1,11 @@
 import { ArrowRight } from "@untitledui/icons";
 import { useId } from "react";
 import { Button } from "@/components/base/buttons/button";
-import { containsReference, readerText } from "../../publishedReport";
 import { GapPattern } from "../overview/figureParts";
 import { forwardPath, pathGeometry, PATH } from "../overview/stressData";
 import { GapNote, Tile } from "../overview/Tile";
 import { FigureTile, LeadFrame } from "./kit/LeadFrame";
+import { safeText } from "./kit/reader";
 import type { LeadProps } from "./types";
 
 /*
@@ -22,7 +22,7 @@ const PLOT = { width: 640, height: 300, left: 60, right: 480, top: 34, base: 250
 const LABEL_WIDTH = 18;
 const DASH = ["", "6 4", "2 3", "8 3 2 3"] as const;
 
-const safe = (text: string) => (text && !containsReference(text) ? readerText(text) : "");
+const reasonOf = (text: string) => (text.trim() ? safeText(text) : "no figure in the model");
 
 /** `name` broken into lines of at most `width` characters at spaces. */
 function wrap(name: string, width: number) {
@@ -146,7 +146,7 @@ function PathFigure({ path }: { path: Path }) {
   );
   const peakAt = placePeaks(
     peaks.map((peak) =>
-      peak?.figure ? { x: peak.figure.x, y: peak.figure.y, text: `peak ${peak.display}` } : null,
+      peak?.figure ? { x: peak.figure.x, y: peak.figure.y, text: `high ${peak.display}` } : null,
     ),
     [...tickBoxes, ...endBoxes],
   );
@@ -162,7 +162,7 @@ function PathFigure({ path }: { path: Path }) {
       viewBox={`0 0 ${String(PLOT.width)} ${String(PLOT.height)}`}
       width="100%"
       role="img"
-      aria-label={`${path.measure}, from zero. ${reading}.`}
+      aria-label={`${path.measure}, from zero. ${reading}. The highest stated value of each case is marked (derived).`}
     >
       <defs>
         <GapPattern id={id} />
@@ -301,14 +301,10 @@ function peakOf(case_: Path["cases"][number]) {
 }
 
 function ForwardTile({ props, path }: { props: LeadProps; path: Path }) {
-  const [base] = path.cases;
-  const peak = base ? peakOf(base) : null;
   const gaps = path.cases.flatMap(({ group, points }) =>
     points
       .filter((point) => point.value === null)
-      .map(
-        (point) => `${group}, ${point.period}: ${safe(point.reason) || "no figure in the model"}.`,
-      ),
+      .map((point) => `${group}, ${point.period}: ${reasonOf(point.reason)}.`),
   );
   return (
     <FigureTile
@@ -316,11 +312,14 @@ function ForwardTile({ props, path }: { props: LeadProps; path: Path }) {
       span={7}
       label="Forward net leverage"
       kicker="Net leverage by case, from zero"
-      title={
-        base && peak
-          ? `${path.measure}: ${base.group} peaks at ${peak.display} in ${peak.period}`
-          : path.measure
-      }
+      title={path.cases
+        .flatMap((item) => {
+          const high = peakOf(item);
+          return high
+            ? [`${item.group}: highest stated value ${high.display} in ${high.period}`]
+            : [];
+        })
+        .join("; ")}
       source="the forward path"
       legend={[
         ...path.cases.map((item, at) => ({
@@ -329,7 +328,11 @@ function ForwardTile({ props, path }: { props: LeadProps; path: Path }) {
         })),
         ...(gaps.length ? [{ tone: "gap" as const, text: "No figure in the model" }] : []),
       ]}
-      notes={[...gaps, ...path.limits]}
+      notes={[
+        "The highest stated value is the largest of the figures the model states for that case (derived).",
+        ...gaps,
+        ...path.limits,
+      ]}
       table={{
         caption: path.measure,
         headers: ["Case", "Period", "As the model states it"],

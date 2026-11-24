@@ -2,11 +2,11 @@ import { useId } from "react";
 import { GapPattern } from "../overview/figureParts";
 import { GapNote, Tile } from "../overview/Tile";
 import { Derived, FigureTile, LeadFrame, ScrollFigure } from "./kit/LeadFrame";
+import { safeText } from "./kit/reader";
 import {
   groupScale,
   peerGapSentence,
   readPeerBenchmark,
-  safe,
   SIDE_WORDS,
   withUnit,
   type PeerGroup,
@@ -287,7 +287,7 @@ function Group({ group, showUnit }: { group: PeerGroup; showUnit: boolean }) {
   return (
     <div className="flex min-w-0 flex-col gap-3">
       {showUnit && group.unit && (
-        <p className="text-caption text-text-tertiary">Reporting unit: {safe(group.unit)}</p>
+        <p className="text-caption text-text-tertiary">Reporting unit: {safeText(group.unit)}</p>
       )}
       <ol className="flex min-w-0 flex-col gap-4">
         {group.rows.map((row) => (
@@ -351,7 +351,9 @@ function PeerTile({ props, table, wide }: { props: LeadProps; table: PeerTable; 
           : []),
       ]}
       notes={[
-        ...(sideWords ? ["Position against the median compares the two stated values only."] : []),
+        ...(sideWords
+          ? ["Position against the median compares the two stated values only (derived)."]
+          : []),
         ...notes,
       ]}
       table={{
@@ -368,12 +370,12 @@ function PeerTile({ props, table, wide }: { props: LeadProps; table: PeerTable; 
         ],
         rows: table.rows.map((row) => [
           row.metric,
-          safe(row.issuer.text),
-          safe(row.low.text),
-          safe(row.median.text),
-          safe(row.high.text),
-          safe(row.count.text),
-          safe(row.unit),
+          safeText(row.issuer.text),
+          safeText(row.low.text),
+          safeText(row.median.text),
+          safeText(row.high.text),
+          safeText(row.count.text),
+          safeText(row.unit),
           row.drawing.kind === "strip" && row.drawing.side
             ? SIDE_WORDS[row.drawing.side]
             : "Not stated",

@@ -37,14 +37,36 @@ export function rowLabelled(table: Table, label: string, column = 0): Row | null
 /** A period label as the handoff writes it ("FY2024 / 2024-09-30" → "FY2024"). */
 export const periodLabel = (cell: string) => (cell.split(" / ")[0] ?? "").trim();
 
-/** The two latest period rows of a chart-data table, earlier first; null unless two distinct labels. */
+const YEAR = /(\d{4})/;
+const kindOf = (label: string) =>
+  label
+    .replace(/\d{4}/, "")
+    .replace(/[^A-Za-z]/g, "")
+    .toUpperCase();
+
+/**
+ * The two latest period rows of a chart-data table, earlier first, ordered by the year in each label
+ * (not by position). Null unless every label carries a year, the latest two differ and are the same
+ * kind of period ("FY" beside "FY", not beside "LTM").
+ */
 export function lastTwoRows(table: Table): { prior: Row; current: Row } | null {
-  const current = table.rows.at(-1);
-  const prior = table.rows.at(-2);
-  if (!current || !prior) return null;
-  return periodLabel(prior.cells[0] ?? "") !== periodLabel(current.cells[0] ?? "")
-    ? { prior, current }
-    : null;
+  const dated = table.rows.map((row) => ({
+    row,
+    label: periodLabel(row.cells[0] ?? ""),
+    year: Number(YEAR.exec(periodLabel(row.cells[0] ?? ""))?.[1] ?? NaN),
+  }));
+  if (dated.length < 2 || dated.some((item) => Number.isNaN(item.year))) return null;
+  const ordered = [...dated].sort((a, b) => a.year - b.year);
+  const current = ordered.at(-1);
+  const prior = ordered.at(-2);
+  if (
+    !current ||
+    !prior ||
+    prior.year === current.year ||
+    kindOf(prior.label) !== kindOf(current.label)
+  )
+    return null;
+  return { prior: prior.row, current: current.row };
 }
 
 /** For a statement table with one column per period (`FY2024`, `FY2023`): the earlier and later column. */

@@ -1,12 +1,7 @@
 import { tone } from "../../signal";
-import {
-  containsReference,
-  readerText,
-  unitLabel,
-  type OutputEntry,
-  type Table,
-} from "../../publishedReport";
+import { readerText, unitLabel, type OutputEntry, type Table } from "../../publishedReport";
 import { difference, group, readCell, sum } from "./kit/numbers";
+import { IN_EVIDENCE, namesSource, safeText } from "./kit/reader";
 import { allTables, columnOf, periodColumns, tableUnder } from "./kit/tables";
 
 const RESULTS = "Chart data: prior and current results";
@@ -21,10 +16,9 @@ const NO_MARGINS = "The handoff's earnings table has no margin row.";
 const NO_COLUMNS = "The table of prior and current results lacks a column this page reads.";
 const NO_PAIRS = "The handoff states no pair of figures to compare.";
 export const NO_PERCENT = "The margin cells do not state a percent sign, so they are not drawn.";
-const IN_EVIDENCE = "Detail is in Evidence.";
 
-const readable = (text: string, fallback = IN_EVIDENCE) =>
-  containsReference(text) ? fallback : readerText(text).trim() || fallback;
+/** Handoff words for the page, or the Evidence pointer where they name a source or are empty. */
+const readable = (text: string) => safeText(text) || IN_EVIDENCE;
 
 // ---------------------------------------------------------------------------------------------
 // Axis
@@ -93,6 +87,8 @@ export type PairGroup = {
   /** The unit as the page names it (`US$m`, `%`, `x`); empty when the handoff states none. */
   unit: string;
   percent: boolean;
+  /** The row states no unit: it is alone on its own scale, never on one shared with another row. */
+  unitNotStated: boolean;
   /** Pairs with both figures stated, the largest change first. */
   ranked: Pair[];
   /** The ranked pairs the figure draws (at most CAP). */
@@ -124,9 +120,12 @@ function side(cell: string | undefined): Side {
   const reading = readCell(cell ?? "");
   if (reading.kind === "number")
     return { kind: "number", text: reading.text, value: reading.value, reason: null };
-  if (reading.kind === "gap")
-    return { kind: "gap", text: reading.text, value: null, reason: readable(reading.reason) };
-  return { kind: "words", text: reading.text, value: null, reason: null };
+  if (reading.kind === "gap") {
+    const reason = readable(reading.reason);
+    const lead = /^Not \w+/.exec(reading.text)?.[0] ?? "Not supplied";
+    return { kind: "gap", text: `${lead}: ${reason}`, value: null, reason };
+  }
+  return { kind: "words", text: readable(reading.text), value: null, reason: null };
 }
 
 /** What a unit looks like beside a figure: `58.3%`, `6.27x`, or the number alone for money. */
@@ -182,7 +181,7 @@ function statedPoints(cell: string | undefined): Change | null {
   if (!found) return null;
   const [, mark = "", abs = "", rest = ""] = found;
   const sign = signOfAbs(abs, mark === "-" || mark === MINUS);
-  const tail = containsReference(rest) ? "" : readerText(rest);
+  const tail = namesSource(rest) ? "" : readerText(rest);
   return {
     text: `${signed(sign, abs)} percentage points${tail}`,
     basis: "stated",
@@ -252,6 +251,7 @@ function groupOf(unit: string, pairs: Pair[], amounts: boolean): PairGroup {
   return {
     unit,
     percent: PERCENT_UNIT.test(unit),
+    unitNotStated: unit === "",
     ranked,
     shown,
     gaps: rest.filter(hasGap),
@@ -260,31 +260,36 @@ function groupOf(unit: string, pairs: Pair[], amounts: boolean): PairGroup {
   };
 }
 
-/** The pairs of a figure by the unit each states, in the order the handoff first uses them. */
+/**
+ * The pairs of a figure by the unit each states, in the order the handoff first uses them. A row
+ * with no stated unit is a group of its own: nothing says it shares a scale with any other row.
+ */
 function byUnit(pairs: { unit: string; pair: Pair }[], amounts: boolean) {
-  const units = [...new Set(pairs.map((item) => item.unit))];
-  return units.map((unit) =>
-    groupOf(
-      unit,
-      pairs.filter((item) => item.unit === unit).map((item) => item.pair),
-      amounts,
-    ),
+  const keys = pairs.map((item, at) =>
+    item.unit === "" ? `unit-not-stated-${String(at)}` : item.unit,
   );
+  return [...new Set(keys)].map((key) => {
+    const members = pairs.filter((_, at) => keys[at] === key);
+    return groupOf(
+      members[0]?.unit ?? "",
+      members.map((item) => item.pair),
+      amounts,
+    );
+  });
 }
 
 const period = (cell: string | undefined) => {
   const reading = readCell(cell ?? "");
-  return reading.kind === "text" && reading.text && !containsReference(reading.text)
-    ? readerText(reading.text)
-    : null;
+  const text = reading.kind === "text" ? safeText(reading.text) : "";
+  return text && text !== IN_EVIDENCE ? text : null;
 };
 
+/** The table's own notes on its basis; a note that names a source is not drawn, not repeated as a pointer. */
 const basisNotes = (table: Table) => {
   const at = columnOf(table, "Basis and limitation");
   const notes = table.rows
-    .map((row) => (at < 0 ? "" : (row.cells[at] ?? "")).trim())
-    .filter((note) => note && !containsReference(note))
-    .map((note) => readerText(note));
+    .map((row) => safeText(at < 0 ? "" : (row.cells[at] ?? "")))
+    .filter((note) => note && note !== IN_EVIDENCE);
   return [...new Set(notes)];
 };
 
@@ -431,7 +436,11 @@ export type Step = {
 
 export type Bridge =
   | { kind: "bridge"; line: number; unit: string; steps: Step[]; axis: Axis; notes: string[] }
-  | { kind: "unreconciled"; line: number; reason: string; amounts: string[] };
+  | { kind: "unreconciled"; line: number; message: string };
+
+const NOT_DRAWN = "The variance bridge is not drawn";
+export const NOT_A_BRIDGE =
+  "The variance bridge in this handoff does not add up, so it is not drawn as a bridge.";
 
 const isZero = (exact: string | null) => exact !== null && /^-?0(?:\.0+)?$/.test(exact);
 
@@ -447,25 +456,25 @@ export function bridge(entry: OutputEntry): Bridge | null {
   if (tables.length !== 1 || !only) return null;
   const { table } = only;
   const amounts = table.rows.map((row) => row.cells[1] ?? "");
-  const listed = table.rows.map(
-    (row, at) => `${readable(row.cells[0] ?? "")} ${amounts[at] ?? ""}`,
-  );
-  const refuse = (reason: string): Bridge => ({
-    kind: "unreconciled",
-    line: table.line,
-    reason,
-    amounts: listed,
-  });
-  if (table.rows.length < 3) return refuse("it has no change steps between its first and last row");
+  const refuse = (message: string): Bridge => ({ kind: "unreconciled", line: table.line, message });
+  if (table.rows.length < 3)
+    return refuse(`${NOT_DRAWN}: it has no change steps between its opening and its closing.`);
   const readings = amounts.map(readCell);
-  if (readings.some((reading) => reading.kind !== "number"))
-    return refuse("a step states no figure");
+  const missing = readings.findIndex((reading) => reading.kind !== "number");
+  const absent = readings[missing];
+  if (absent) {
+    const label = readable(table.rows[missing]?.cells[0] ?? "");
+    return refuse(
+      absent.kind === "gap"
+        ? `${NOT_DRAWN}: ${label} is not supplied (${readable(absent.reason)}).`
+        : `${NOT_DRAWN}: ${label} states no figure.`,
+    );
+  }
   const units = new Set(table.rows.map((row) => (row.cells[2] ?? "").trim()));
-  if (units.size !== 1) return refuse("its steps state different units");
+  if (units.size !== 1) return refuse(`${NOT_DRAWN}: its steps state different units.`);
   const closing = amounts.at(-1) ?? "";
   const total = sum(amounts.slice(0, -1));
-  if (!isZero(total === null ? null : difference(closing, total)))
-    return refuse("the opening and its changes do not add up to the closing");
+  if (!isZero(total === null ? null : difference(closing, total))) return refuse(NOT_A_BRIDGE);
   const unit = unitLabel([...units][0] ?? "");
   let running = 0;
   const steps = table.rows.map((row, at): Step => {

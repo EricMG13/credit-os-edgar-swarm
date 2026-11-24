@@ -102,14 +102,14 @@ describe("ModelLead", () => {
     expect(container.querySelector('[data-case-label="Downside case"]')?.textContent).toBe(
       "Downside case",
     );
-    expect(container.querySelector('[data-peak="Base case"]')?.textContent).toBe("peak 2.00x");
-    expect(container.querySelector('[data-peak="Downside case"]')?.textContent).toBe("peak 3.50x");
+    expect(container.querySelector('[data-peak="Base case"]')?.textContent).toBe("high 2.00x");
+    expect(container.querySelector('[data-peak="Downside case"]')?.textContent).toBe("high 3.50x");
     const tile = screen.getByRole("region", { name: "Forward net leverage" });
     expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(
-      "Net leverage (net debt / Adj EBITDA): Base case peaks at 2.00x in FY2025E",
+      "Base case: highest stated value 2.00x in FY2025E; Downside case: highest stated value 3.50x in FY2026E",
     );
     expect(within(tile).getByRole("img")).toHaveAccessibleName(
-      "Net leverage (net debt / Adj EBITDA), from zero. Base case: FY2025E 2.00x, FY2026E no figure, FY2027E 1.00x. Downside case: FY2025E 2.50x, FY2026E 3.50x, FY2027E 3.00x.",
+      "Net leverage (net debt / Adj EBITDA), from zero. Base case: FY2025E 2.00x, FY2026E no figure, FY2027E 1.00x. Downside case: FY2025E 2.50x, FY2026E 3.50x, FY2027E 3.00x. The highest stated value of each case is marked (derived).",
     );
   });
 
@@ -214,8 +214,8 @@ describe("ModelLead", () => {
       // Clear of the axis: nothing is drawn left of the plot edge but the tick labels.
       expect(label.x0).toBeGreaterThanOrEqual(60);
     }
-    expect(container.querySelector('[data-peak="Base case"]')?.textContent).toBe("peak 5.10x");
-    expect(container.querySelector('[data-peak="Downside case"]')?.textContent).toBe("peak 5.00x");
+    expect(container.querySelector('[data-peak="Base case"]')?.textContent).toBe("high 5.10x");
+    expect(container.querySelector('[data-peak="Downside case"]')?.textContent).toBe("high 5.00x");
   });
 
   it("keeps overlapping end labels apart", () => {

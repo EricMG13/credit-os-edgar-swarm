@@ -126,7 +126,9 @@ describe("SegmentsTile on the retained handoff", () => {
   it("titles the reading from the derived sales total and names unit and period", () => {
     const tile = draw(cp1Entry());
     expect(
-      within(tile).getByRole("heading", { name: "Net sales 7,940 across 3 segments, FY2024" }),
+      within(tile).getByRole("heading", {
+        name: "Segment net sales sum to 7,940 (derived) across 3 segments, FY2024",
+      }),
     ).toBeVisible();
     expect(within(tile).getByText("Segments · US$m, FY2024")).toBeVisible();
   });
@@ -288,9 +290,11 @@ describe("SegmentsTile states", () => {
   });
   it("draws no reconciliation when the group's figures are not in the handoff", () => {
     const tile = draw(segments([["Alpha", "FY2024", "300", "90"]], null));
-    expect(within(tile).queryByText(/sum to|sums to/)).toBeNull();
+    expect(within(tile).queryByText(/sum to|sums to/, { ignore: "h3" })).toBeNull();
     expect(
-      within(tile).getByRole("heading", { name: "Net sales 300 across 1 segment, FY2024" }),
+      within(tile).getByRole("heading", {
+        name: "Segment net sales sum to 300 (derived) across 1 segment, FY2024",
+      }),
     ).toBeVisible();
   });
   it("wraps a long name onto several lines inside the figure", () => {

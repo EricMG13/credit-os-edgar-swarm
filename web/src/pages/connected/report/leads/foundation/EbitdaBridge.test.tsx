@@ -150,7 +150,7 @@ describe("EbitdaBridgeTile on the retained handoff", () => {
   it("titles from the stated totals and the exact sum, and reads every step aloud", () => {
     const { tile } = draw(base);
     expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(
-      "Add-backs lift EBITDA (Reported) by 360 to EBITDA (Adjusted)",
+      "Add-backs lift EBITDA (Reported) by 360 (derived) to EBITDA (Adjusted)",
     );
     expect(within(tile).getByText("Reported to adjusted EBITDA · US$m")).toBeVisible();
     expect(within(tile).getByRole("img").getAttribute("aria-label")).toBe(
@@ -239,7 +239,7 @@ describe("EbitdaBridgeTile states", () => {
       "less Cut 20, plus Add 50",
     );
     expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(
-      "Add-backs lift Opening by 30 to Closing",
+      "Add-backs lift Opening by 30 (derived) to Closing",
     );
     expect(within(tile).getByText("Largest step: Add, +50.")).toBeVisible();
   });

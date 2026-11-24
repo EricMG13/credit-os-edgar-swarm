@@ -82,7 +82,7 @@ function bracketOf(marks: Mark[]) {
   };
 }
 
-/** "FY2028 6,637 is the largest dated year" only when one dated amount is strictly the largest. */
+/** "FY2028 6,637 is the largest dated amount" only when one dated amount is strictly the largest. */
 function titleOf(marks: Mark[]) {
   const dated = marks.filter((mark) => !mark.undated);
   const values = dated.flatMap((mark) =>

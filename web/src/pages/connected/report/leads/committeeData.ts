@@ -1,5 +1,6 @@
 import { readParagraph, type OutputEntry } from "../../publishedReport";
 import { readCell } from "./kit/numbers";
+import { safeText } from "./kit/reader";
 import { cellAt, locate, said, saidText, type Said } from "./validationData";
 
 // ---------------------------------------------------------------------------------------------
@@ -150,8 +151,8 @@ export type Figure =
 function figure(cell: string | undefined): Figure {
   const reading = readCell(cell ?? "");
   if (reading.kind === "number") return reading;
-  if (reading.kind === "gap") return { kind: "gap", reason: reading.reason };
-  return { kind: "text", text: reading.text };
+  if (reading.kind === "gap") return { kind: "gap", reason: safeText(reading.reason) };
+  return { kind: "text", text: safeText(reading.text) };
 }
 
 export const BULLET = { left: 8, right: 400 } as const;
@@ -193,7 +194,8 @@ export function bulletMarks(values: {
   };
   for (const key of ["current", "limit"] as const) {
     const item = values[key];
-    if (item.kind === "gap") return { reason: `${named[key]} is not supplied: ${item.reason}.` };
+    if (item.kind === "gap")
+      return { reason: `${named[key]} is not supplied: ${item.reason.replace(/\.$/, "")}.` };
     if (item.kind === "text") return { reason: `${named[key]} is not a number.` };
   }
   if (proposed.kind === "text") return { reason: `${named.proposed} is not a number.` };

@@ -163,6 +163,33 @@ const dt = (strip: Element | null | undefined, label: string) =>
   [...(strip?.querySelectorAll("dt") ?? [])].find((item) => item.textContent === label)
     ?.parentElement;
 
+describe("no source reference in what is drawn", () => {
+  it("screens a gap value, its reason and a change-screen cell that name a source", () => {
+    const cited = "Not supplied: not in TDG_10-K.htm page 45";
+    const read = readKeyFigures(snapshot([["Revenue", cited, "FY2024", SOURCE]]));
+    if (read.state !== "ready") throw new Error(read.reason);
+    expect(JSON.stringify(read)).not.toMatch(/TDG|10-K|page 45/);
+    render(
+      <ShortSnapshotLead
+        {...leadProps(
+          snapshot(
+            [["Revenue", cited, "FY2024", SOURCE]],
+            [
+              section(
+                "Screen",
+                40,
+                table(41, ["Topic", "Prior", "Current"], [["Cash", "see C07 in T4.4", "1"]]),
+              ),
+            ],
+          ),
+        )}
+      />,
+    );
+    expect(document.body.textContent).not.toMatch(/TDG|10-K|page 45|C07|T4\.4/);
+    expect(screen.getAllByText("Detail is in Evidence.").length).toBeGreaterThan(0);
+  });
+});
+
 describe("ShortSnapshotLead", () => {
   it("draws the first six figures as the strip, prior to current where both periods are stated", () => {
     render(<ShortSnapshotLead {...leadProps(snapshot())} />);

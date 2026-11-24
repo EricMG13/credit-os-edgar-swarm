@@ -352,3 +352,45 @@ describe("ClearanceLead", () => {
     expect(critical?.getAttribute("class")).not.toBe(material[0]?.getAttribute("class"));
   });
 });
+
+describe("negated words keep to their own meaning", () => {
+  const result = (word: string) =>
+    moduleIntegrity(
+      cp5(
+        tbl(
+          "M",
+          ["Module", "Head status", "CP-5 findings", "Result"],
+          ["CP-1", "accepted", "None", word],
+        ),
+      ),
+    )?.[0]?.shape;
+  const status = (word: string) =>
+    clearance(cp5(tbl("V", ["Item", "Value"], ["Status", `${word} over the evaluated set`])))
+      ?.shape;
+  it("does not read 'Not blocked' as blocked", () => {
+    expect(result("Not blocked; no findings")).toBe("filled");
+    expect(result("Not blocked")).toBe("ring");
+    expect(result("Blocked upstream: not evaluated")).toBe("slash");
+    expect(result("Evaluated with findings")).toBe("half");
+  });
+  it("does not read 'Not restricted' as restricted or 'Not cleared' as cleared", () => {
+    expect(status("Not restricted")).toBe("ring");
+    expect(status("Not cleared")).toBe("slash");
+    expect(status("Not cleared")).not.toBe("filled");
+    expect(status("Cleared")).toBe("filled");
+  });
+  it("sends an action or opening sentence that names a register id to Evidence", () => {
+    const { container } = render5(
+      cp5(
+        tbl(
+          "G",
+          ["Gap ID", "Gap", "Why it matters", "Affected modules", "Severity", "Action"],
+          ["g", "g", "w", "CP-1", "Critical", "Resolve T5B.5 row 2 first"],
+        ),
+        text("Bottom line", "See T5B.8 for the verdict."),
+      ),
+    );
+    expect(container.textContent).not.toMatch(/T5B/);
+    expect(screen.getAllByText("Detail is in Evidence.").length).toBeGreaterThan(0);
+  });
+});
