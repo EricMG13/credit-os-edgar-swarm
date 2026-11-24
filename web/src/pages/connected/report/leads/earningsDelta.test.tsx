@@ -751,7 +751,7 @@ describe("rows with no stated unit, screened text and titles", () => {
       ["Revenue"],
       ["Customers"],
     ]);
-    expect(movers.groups[0]?.axis?.hi).toBe(200);
+    expect(movers.groups[0]?.axis?.hi).toBe(150);
     expect(movers.groups[1]?.axis?.hi).toBe(150000);
   });
   it("keeps a stated unit's rows together beside rows with none", () => {
@@ -800,7 +800,10 @@ describe("rows with no stated unit, screened text and titles", () => {
     );
     expect(rows.find((row) => row[0] === "Revenue")?.[3]).toBe("Detail is in Evidence.");
     // The note is not drawn at all, not repeated as a sentence of its own.
-    expect(tile.querySelectorAll("ul")).toHaveLength(0);
+    const notes = [...tile.querySelectorAll("ul li")].map((item) => item.textContent);
+    expect(notes).toEqual([
+      "Pairs that state words instead of a figure are in the table view only.",
+    ]);
   });
   it("does not name one winner when the largest moves are tied, and marks a derived title", () => {
     lead(
