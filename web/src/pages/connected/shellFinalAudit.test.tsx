@@ -175,9 +175,15 @@ describe("Run progress batch findings", () => {
   it("S6-037 names the delivery step alongside analytical modules and formats the case date", async () => {
     reply(run);
     render(<RunProgress id={run.id} mode="synthetic" />);
+    const pipeline = await screen.findByRole("list", { name: "Modules in this run" });
+    // The delivery step is its own last stage, named beside the analytical stages.
     expect(
-      await screen.findByRole("heading", { name: "Modules and report delivery" }),
-    ).toBeVisible();
+      within(pipeline)
+        .getAllByRole("heading", { level: 3 })
+        .map((heading) => heading.textContent)
+        .at(-1),
+    ).toBe("Report delivery1");
+    expect(within(pipeline).getByText("Report", { selector: "span" })).toBeVisible();
     expect(screen.getByText("31 March 2026")).toBeVisible();
     await waitFor(() => {
       expect(document.title).toBe("Northbridge run — Credit OS");

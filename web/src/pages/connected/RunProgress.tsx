@@ -2,13 +2,11 @@ import { useEffect, useState } from "react";
 import { Alert } from "@/components/alert/Alert";
 import { Button } from "@/components/base/buttons/button";
 import { Badge } from "@/components/base/badges/badges";
-import { Card } from "@/components/card/Card";
+import { Pipeline } from "@/components/pipeline";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { Skeleton } from "@/components/gap/Skeleton";
 import { PageHeader } from "../../shell/PageHeader";
-import { ModuleSteps } from "../run/activity/ModuleSteps";
 import { Feed } from "../run/activity/Feed";
-import { Summary } from "../run/activity/Summary";
 import { TextLink } from "../run/TextLink";
 import {
   getReport,
@@ -23,6 +21,8 @@ import {
   type RunStatus,
 } from "./api";
 import { Breadcrumb } from "./layout";
+import { Bento, GapNote, Tile, Well } from "./report/overview/Tile";
+import { pipelineStages, SpendTile, stoppedAt } from "./runProgressParts";
 import {
   asOfDate,
   elapsedFigure,
@@ -180,6 +180,7 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
   const restartable = run && RESTARTABLE.includes(run.status);
   const live = run?.status === "queued" || run?.status === "running";
   const lines = run ? feedLines(run) : [];
+  const steps = run ? moduleSteps(run, live, notAssessable) : [];
   const assessmentGaps =
     run?.modules
       .filter(
@@ -197,6 +198,15 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
     run?.status === "finished" && report !== "pending" && report !== "ready"
       ? REPORT_PROBLEMS[report]
       : undefined;
+  const mayRestart = restartable || report === "ready" || report === "absent";
+  // What to do about a run that stopped: said inside its notice when it has one, else under the header.
+  const restartNote = (
+    <p id="run-restart-note" className="reading-copy text-body text-text-secondary">
+      Review the inputs in a new draft. The new run has its own spending cap.
+    </p>
+  );
+  const noticed = Boolean(run?.reason);
+  const stopped = restartable ? stoppedAt(steps) : [];
   return (
     <>
       <Breadcrumb href="/runs" root="Run activity">
@@ -205,32 +215,34 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
       <PageHeader
         title={run?.issuer_name || "Run"}
         badges={
-          run && (
-            <>
-              <span role="status">
-                <StatusBadge set="Run states" state={WORDS[run.status]} />
-              </span>
-              <Badge color="brand">{pathwayName(run.pathway)}</Badge>
-              {mode === "synthetic" && <Badge color="gray">Synthetic test</Badge>}
-              {run.as_of && (
-                <Badge color="gray">
-                  <span>
-                    As of{" "}
-                    <time className="tabular-nums" dateTime={run.as_of}>
-                      {asOfDate(run.as_of)}
-                    </time>
-                  </span>
-                </Badge>
-              )}
-            </>
-          )
+          <>
+            {run && (
+              <>
+                <span role="status">
+                  <StatusBadge set="Run states" state={WORDS[run.status]} />
+                </span>
+                <Badge color="brand">{pathwayName(run.pathway)}</Badge>
+              </>
+            )}
+            {mode === "synthetic" && <Badge color="gray">Synthetic test</Badge>}
+            {run?.as_of && (
+              <Badge color="gray">
+                <span>
+                  As of{" "}
+                  <time className="tabular-nums" dateTime={run.as_of}>
+                    {asOfDate(run.as_of)}
+                  </time>
+                </span>
+              </Badge>
+            )}
+          </>
         }
         actions={
           <>
             {report === "ready" && (
               <Button href={`/report/${encodeURIComponent(id)}`}>Open report</Button>
             )}
-            {(restartable || report === "ready" || report === "absent") && (
+            {mayRestart && (
               <Button
                 color="secondary"
                 href={`/start?from=${encodeURIComponent(id)}`}
@@ -242,11 +254,7 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
           </>
         }
       />
-      {(restartable || report === "ready" || report === "absent") && (
-        <p id="run-restart-note" className="reading-copy mt-3 text-body text-text-secondary">
-          Review the inputs in a new draft. The new run has its own spending cap.
-        </p>
-      )}
+      {mayRestart && !(noticed && restartable) && <div className="mt-3">{restartNote}</div>}
       {runProblem && (
         <div className="mt-6">
           <Alert
@@ -273,7 +281,13 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
               tone={run.status === "capped" ? "warning" : "error"}
               title="Why this run ended without a report"
             >
-              <span className="wrap-anywhere">{serviceText(run.reason)}</span>
+              <span className="grid gap-2">
+                <span className="wrap-anywhere">{serviceText(run.reason)}</span>
+                {stopped.length > 0 && (
+                  <span className="wrap-anywhere">{`Where it stopped: ${stopped.join(", ")}.`}</span>
+                )}
+                {restartable && restartNote}
+              </span>
             </Alert>
           )}
           {live && run.held_reason && (
@@ -309,50 +323,67 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
               {reportProblem.text}
             </Alert>
           )}
-          <Summary
-            spendCaption="Cap usage"
-            run={{
-              spend: spendFigure(run),
-              finished: finishedFigure(run),
-              elapsed: elapsedFigure(run),
-            }}
-          />
-          <div className="grid min-w-0 items-start gap-6 xl:grid-cols-2">
-            <Card title="Modules and report delivery">
-              <ModuleSteps live={live} steps={moduleSteps(run, live, notAssessable)} />
+          <Bento>
+            <Tile
+              span={8}
+              label="Pipeline"
+              kicker="Module pipeline"
+              title={
+                finishedFigure(run).value === null
+                  ? "No analytical modules listed"
+                  : `${finishedFigure(run).value ?? ""} modules done`
+              }
+            >
+              <Well className="border border-border-hairline p-4 sm:p-6">
+                <Pipeline label="Modules in this run" stages={pipelineStages(run.modules, steps)} />
+              </Well>
               {assessmentGaps.length > 0 && (
-                <p className="mt-4 text-sm text-text-secondary">
+                <p className="text-small text-text-secondary">
                   No assessment status is recorded for {assessmentGaps.join(", ")}.
                 </p>
               )}
-            </Card>
-            <Card title="Activity">
+            </Tile>
+            <SpendTile
+              spend={spendFigure(run)}
+              finished={finishedFigure(run)}
+              elapsed={elapsedFigure(run)}
+            />
+            <Tile span={12} label="Activity" kicker="Activity" title="What just happened">
               {run.events === null && (
-                <p className="pb-3 text-sm text-text-secondary">The activity log is unavailable.</p>
+                <p className="text-small text-text-secondary">The activity log is unavailable.</p>
               )}
               {lines.length > 0 ? (
                 <Feed lines={lines} />
               ) : (
                 run.events !== null && (
-                  <p className="text-sm text-text-secondary">No activity recorded yet.</p>
+                  <p className="text-small text-text-secondary">No activity recorded yet.</p>
                 )
               )}
-            </Card>
-          </div>
+            </Tile>
+          </Bento>
         </section>
       ) : (
-        !problem && (
-          <div role="status" aria-label="Loading run progress" className="mt-6 grid gap-6">
-            <Skeleton lines={2} />
-            <div className="grid gap-6 xl:grid-cols-2">
-              {[0, 1].map((key) => (
-                <Card key={key}>
-                  <Skeleton lines={7} />
-                </Card>
-              ))}
-            </div>
-          </div>
-        )
+        <div
+          role="status"
+          aria-label={problem ? "Run progress unknown" : "Loading run progress"}
+          className="mt-6"
+        >
+          <Bento>
+            <Tile span={8} label="Pipeline" kicker="Module pipeline">
+              {problem ? (
+                <GapNote>Progress is not known while this run cannot be read.</GapNote>
+              ) : (
+                <Skeleton lines={7} />
+              )}
+            </Tile>
+            <Tile span={4} label="Spend and progress" kicker="Spend against the cap">
+              {problem ? <GapNote>Spend is not known.</GapNote> : <Skeleton lines={5} />}
+            </Tile>
+            <Tile span={12} label="Activity" kicker="Activity">
+              {problem ? <GapNote>No activity is known.</GapNote> : <Skeleton lines={3} />}
+            </Tile>
+          </Bento>
+        </div>
       )}
     </>
   );

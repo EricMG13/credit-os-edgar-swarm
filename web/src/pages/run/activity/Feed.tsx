@@ -43,7 +43,7 @@ export function Feed({ lines }: { lines: ActivityLine[] }) {
               <div className="flex flex-none flex-col items-center">
                 <span
                   className={cx(
-                    "flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-subtle",
+                    "flex size-7 shrink-0 items-center justify-center rounded-ds-full bg-surface-subtle",
                     MARK[tone],
                   )}
                 >
@@ -53,18 +53,18 @@ export function Feed({ lines }: { lines: ActivityLine[] }) {
                 {last ? null : (
                   <span
                     aria-hidden="true"
-                    className="my-1 min-h-3 flex-1 border-s-[3px] border-dotted border-connector"
+                    className="my-1 min-h-3 flex-1 border-s border-border-container"
                   />
                 )}
               </div>
-              <div className={cx("flex min-w-0 flex-1 flex-col", last ? "pb-0" : "pb-8")}>
+              <div className={cx("flex min-w-0 flex-1 flex-col", last ? "pb-0" : "pb-4")}>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="min-w-0 text-sm font-medium wrap-anywhere text-text-secondary">
                     {line.who}
                   </span>
-                  <time className="text-caption text-text-tertiary tabular-nums">{line.time}</time>
+                  <time className="font-mono text-caption text-text-tertiary tabular-nums">{line.time}</time>
                 </div>
-                <p className="text-sm text-pretty wrap-anywhere text-text-tertiary">{line.text}</p>
+                <p className="text-small text-pretty wrap-anywhere text-text-secondary">{line.text}</p>
               </div>
             </article>
           </li>

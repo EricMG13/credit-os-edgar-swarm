@@ -1971,10 +1971,9 @@ describe("connected activity and reports", () => {
     render(<ConnectedApp path="/run/test-run" mode="synthetic" />);
     const alert = await screen.findByText(reason);
     expect(alert.closest("[role]")).toHaveTextContent("Held by the service");
-    const modules = screen
-      .getByRole("heading", { name: "Modules and report delivery" })
-      .closest("section, div");
-    expect(modules).toHaveTextContent(/Interrupted/);
+    expect(screen.getByRole("list", { name: "Modules in this run" })).toHaveTextContent(
+      /Interrupted/,
+    );
     expect(screen.getByRole("progressbar", { name: "1 of 2 modules" })).toBeInTheDocument();
   });
 
