@@ -92,14 +92,37 @@ function metricIdentity(metric: CatalogueRun["metrics"][string] | undefined) {
 
 const cardFindings = new Map<string, Promise<CardFinding | null>>();
 
-/** One download per run, as-of date, pathway and issuer for the life of the page. */
-function cachedCardFinding(run: LibraryIndex["workspace"]["runs"][string], date: string) {
-  const key = JSON.stringify([run.folder, date, run.pathway, run.issuerKey]);
+type CardRun = LibraryIndex["workspace"]["runs"][string];
+
+/** One publication of one run: a republished folder or date is a different card. */
+const cardKey = (run: CardRun, date: string) =>
+  JSON.stringify([
+    run.folder,
+    date,
+    run.pathway,
+    run.issuerKey,
+    run.publishedAt ?? null,
+    run.lead?.sha256 ?? null,
+  ]);
+
+/** Test seam: the cache is module state. */
+export function resetCardFindings() {
+  cardFindings.clear();
+}
+
+/** One download per publication while it is in flight or has a finding; no finding is asked again. */
+function cachedCardFinding(run: CardRun, date: string) {
+  const key = cardKey(run, date);
   const cached = cardFindings.get(key);
   if (cached) return cached;
   const pending = specialistCardFinding(run, date, new AbortController().signal);
   cardFindings.set(key, pending);
-  pending.catch(() => cardFindings.delete(key));
+  const evict = () => {
+    if (cardFindings.get(key) === pending) cardFindings.delete(key);
+  };
+  pending.then((finding) => {
+    if (!finding) evict();
+  }, evict);
   return pending;
 }
 
@@ -191,7 +214,7 @@ function CreditView({
   )
     return (
       <SpecialistCardFinding
-        key={JSON.stringify([run.folder, date, run.pathway, run.issuerKey])}
+        key={cardKey(run, date)}
         run={run}
         date={date}
         unavailable={unavailable}
