@@ -49,10 +49,14 @@ const tool = (script, rest) => `cd ${q(repo)} && ${uv} run python tools/swarm/${
 const ledger = (rest) => tool('ledger.py', `--root ${q(root)} ${rest}`)
 
 // Every save copies all runs again, so a save that failed is made good by the next one.
+// data.js can be rebuilt from the saved runs if it grows past GitHub's 100 MiB limit.
 const save = (message) =>
   `(set -eo pipefail; cd ${q(results)}; rm -rf runs library; ` +
-  `tar -C ${q(root)}/_engine --exclude='runs/*/inputs' --exclude='runs/*/source-text' -cf - runs library` +
-  ` | tar -xf -; cp ${q(root)}/swarm/plan.json plan.json; ` +
+  `tar -C ${q(root)}/_engine --exclude='runs/*/inputs' --exclude='runs/*/source-text' ` +
+  `--exclude='library/data.js' -cf - runs library | tar -xf -; ` +
+  `data=${q(root)}/_engine/library/data.js; ` +
+  `if [ -f "$data" ] && [ "$(wc -c < "$data")" -le 104857600 ]; then cp "$data" library/data.js; fi; ` +
+  `cp ${q(root)}/swarm/plan.json plan.json; ` +
   `git add -A; git diff --cached --quiet || git commit -q -m ${q(message)}` +
   `${trailer ? ` -m ${q(trailer)}` : ''}; ` +
   `for i in 1 2 3 4; do git push -q origin HEAD && exit 0; sleep $((i * 4)); done; exit 1) 2>&1`

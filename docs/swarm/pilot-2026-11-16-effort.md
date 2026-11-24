@@ -51,3 +51,29 @@ Swarm analysts run Sonnet at **high** (this supersedes the earlier "agreed" deci
 with a cap of 2 resubmissions per module; an issuer that exceeds it is marked `failed` in the ledger
 and retried in a second pass. Token cost of high over medium is not measured: the first pilot batch
 (5 issuers) should record it.
+
+## First swarm batch at high (2026-11-17)
+
+`swarm.workflow.js` run `wf_871d8869-d50`, `limit` 5, on credit-os2 main 284081c merged into this
+repo: American Airlines, CACI, Churchill Downs, Gray Television, Magnera. All 5 published, every
+module accepted on attempt 1, relaunch check passed. 85 minutes wall clock with 2 agents at a time
+(the 4-CPU container caps the Workflow tool's concurrency there).
+
+Tokens per issuer analyst, from the agents' own transcripts (input + cache writes + output; cache
+reads listed apart):
+
+| Issuer | Input + cache writes | Output | Cache reads |
+| --- | --- | --- | --- |
+| American Airlines | 0.65M | 0.26M | 58.4M |
+| CACI | 0.65M | 0.24M | 44.5M |
+| Churchill Downs | 0.57M | 0.25M | 48.5M |
+| Gray Television | 0.55M | 0.25M | 40.6M |
+| Magnera | 0.53M | 0.19M | 36.2M |
+
+Mean about 0.82M per issuer without cache reads, 46M cache reads. Runner agents (claim, command,
+verify, ledger, library) added about 2.0M in all for the batch, mostly cache reads. The 2026-11-16
+figure (0.34M per run) was not split this way, so the high-over-medium ratio is still not
+established. Analysts again reported defects they could not fix once accepted (an "unavailable"
+maturity ladder and D&A in American's CP-1, corrected in CP-1A and CP-2; guarantors "not named" in
+CACI's CP-0 and CP-1). Two analysts shared a scratch file in the session scratchpad; the brief now
+keeps every scratch file in the issuer's drafts folder.

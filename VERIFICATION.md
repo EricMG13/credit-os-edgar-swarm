@@ -4,6 +4,22 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-24 — EDGAR swarm checkpoint and reader fidelity
+
+- Reconciled all 16 pinned shard ledgers. Constellium and Thryv passed an offline relaunch
+  after source restoration, with their original receipts and no new analytical output.
+  The rebuilt library has 50 published runs and 200 handoff downloads. The ledger has
+  192 pending, including the retained partial runs for Snap and PBF Holding.
+- The prepare regression verifies claim generations and completed module evidence survive a
+  path refresh. A replacement issuer ID begins pending in its own run folder. The focused
+  swarm tests passed, and the quality gate against the PR base reported zero findings.
+- The principal tile keeps a reader-safe debt scope note, the exact principal and currency,
+  and the original row trace. The connected report tests covered legacy and reference-bearing
+  basis cells. Both files passed (69 tests), along with web typecheck.
+- The checkpoint command pushed to a local bare Git remote in the small, oversized and
+  small-again cases. It left both filing directories out and preserved the ledger, run files
+  and downloads when the generated index was 100 MiB plus one byte.
+
 ## 2026-11-18 — Codex issuer swarm and local library
 
 - Six reports delivered through Fundamental credit (CP-0, CP-1, CP-1A and CP-2):
@@ -975,108 +991,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   This is source-snapshot proof; the previously held ZIP was not regenerated.
 - RBOT-HTML and pins still match `256101a`; React lock unchanged. Windows work
   PC acceptance remains pending. No ZIP publication, Signal work or tournaments.
-
-## 2026-11-16 — Connected admission, durable traces and Credit OS design
-
-- Scope: React reader and additive connected adapter only. Native RBOT-HTML
-  source, issuer-library engine and Python pins still match `256101a`; React
-  dependency lock remains unchanged. No provider execution, Signal work,
-  tournaments or publication.
-- Admission now applies to the snapshot consumed by the Library and report
-  reader, the report listing, forecast artifacts and portfolio attestation.
-  Managed running/queued/failed/capped/rejected/interrupted reports stay out;
-  native retained reports without scheduler records remain available, including
-  folders containing spaces and Unicode. Source publications are not changed.
-- Evidence links bind output identity, SHA-256 revision and exact paragraph,
-  table row or section line. Reordering cannot select another output. Old ordinal
-  links and missing revisions/rows show an unavailable state. Overview, Changes,
-  Modules, Forecast, calendar and Evidence use the same resolver.
-- Credit OS fidelity scope: original React components and Claude HTML exports
-  at `450f6406`, Library filters and Cards/List, Overview dates with traces,
-  Changes Cards/Table, Forecast case cards and shared chart/table selection,
-  source-control hover, existing Evidence navigation and expandable Record.
-  Gaps counts actual saved gap rows, preserves effects and delivered severity,
-  and filters explicit None records. Module-scoped counts and empty states agree.
-- Confidence review ranked identity/reordering, admission timing, exact data
-  preservation, null/zero budget display, filters and case-label matching.
-  Reproduced and repaired empty-result controls disappearing, deferred event
-  reads, Gap ID being mistaken for Gap, unknown severity being discarded, and
-  Downside shock selection differing from its raw Downside case column label.
-  Budget totals use one retained reservation snapshot and exact decimal sums;
-  unreadable journals remain unavailable, holds are separate from settled charges.
-  Native historical admission and invalidation of unversioned bookmarks are
-  deliberate. Browser/platform scope and retained source limitations stay explicit.
-- Checks before browser proof: 74 targeted Python tests, 1,425 frontend tests,
-  TypeScript, ESLint, formatting and the changed-code quality gate passed.
-  Fallow retains baseline findings plus complexity/duplication warnings in
-  touched code; the new unused export was removed. Browser results follow below.
-- Browser preparation found and fixed a duplicated-label locator in Record.
-  Visual inspection also required an explicit label for unrecorded model units;
-  the native synthetic model leaves units null, and the UI does not infer them.
-- Final clean-extraction browser proof: Chrome 157.0.8103.78 completed
-  `20261116-023525-01`; Edge 157.0.4341.60 completed `20261116-023541-01`.
-  Both passed all 30 recorded checks on macOS, including source hover with
-  Show sources off, Base/Downside selection (independent 315/252 fixture values),
-  exact source reload, output reorder and rejection of an old ordinal link.
-  Paired Changes uses an explicitly separate fixture, not a second analytical run.
-  The final null-unit change also passed 15 focused frontend tests.
-- Candidate source `ab6641058546f8dc9ccde1054a44ce9b0beb62d7`; SHA-256
-  `b0faadd99b3801d4c7ee922c0553b566196bd1c189cfdacc9913c43f7a783ce1`.
-  Proof retained at `proof-artifacts/run-EkSYga/proof.json`; logs and screenshots
-  are beside it. Preview run `20261116-023313-01` is synthetic and its 16 compiled
-  files match the final candidate. Opened the Forecast view in the app preview.
-  Browser retries corrected only test selectors and the paired fixture's digest
-  lookup; no native backend or analytical output changed.
-- The Windows release gate remains open. Keep the ZIP local until Chrome and
-  Edge both pass on the actual Windows work PC using `docs/react-workflow.md`.
-
-## 2026-11-15 — Evidence Record and report traces
-
-- Viewed the Record tab with the existing Evidence tabs and module filter.
-  Run totals use RBOT-HTML's scheduler timestamps and spend journal. Module
-  timings, calls, instructions and hashes use the published record. Synthetic
-  adapter responses carry an explicit label, and unavailable totals remain
-  unavailable in retained reports without a scheduler record.
-- Verified the Overview passage, a specific Modules debt chart row, and the
-  Forecast model's pinned input block. A separate paired-run fixture checked
-  the Changes measure link and both maturity schedule sources. It confirmed
-  that a recorded zero opens the earlier row and that the current source
-  excludes the other maturity rows. The upload-to-report proof used actual
-  RBOT-HTML publication of the synthetic run. Confidence review checked
-  ambiguous row bindings, exact amounts and the selected delivery's handoff.
-- Fixed two browser proof issues. The debt locator now searches within the
-  chosen row, and the download check waits until Summary has switched tabs
-  and cleared the module filter.
-- Backend and pins match `256101a`. The quality gate, 68 targeted Python tests,
-  1,408 web tests, production build, lint and formatting passed.
-- Candidate `f495920049e6691bb00538ee8802c62eb82290a4` SHA-256
-  `228292e206f850acc376db101f5650a887d1018ef04df4c7b4d567a15cbf3c7d`.
-  Chrome 157.0.8103.78 (`20261115-223326-01`) and Edge 157.0.4341.60
-  (`20261115-223341-01`) each passed 27 checks from a clean macOS extraction.
-  The preview build's files match the candidate and the preview run is
-  `20261115-222925-01`. The ZIP stays local pending both work PC passes.
-
-## 2026-11-15 — Credit OS Run start and Run activity exports
-
-- Compared both screens with `Run start.dc.html` and `Run activity.dc.html` from
-  Credit OS design commit `450f6406e25d26e53cf8af87956e529dc8c67bb2`. Checked
-  the five-step layout, document picker, Readiness, paid warning dialog and the
-  activity summary and two panels against the browser captures. The reference's
-  Stop run control has no RBOT-HTML endpoint.
-- Confidence review checked that opening or canceling either dialog sends no
-  submission, final confirmation reuses the approved digest and uncertain retries
-  reuse the exact payload. Checked recorded zero spend, a historical USD 50.00
-  cap against the current USD 20.00 setting, missing event logs, private event
-  fields, elapsed time and report-only delivery. The digested summary receives
-  the optional analyst note as a native research question with line breaks
-  converted to spaces for the native table contract.
-- The RBOT-HTML backend and pins match `256101a`. Quality gate, 68 targeted
-  Python tests, 172 web tests, ESLint, Prettier and production build passed.
-- Candidate `f045f69768c4aed90cd23e7c9a7a41f2f7cf7af6` SHA-256
-  `af69e17f9d7f306fd2fda39223bd3af2accffad899976399b59f2b7cc7b7cb75`.
-  Clean macOS extraction passed Chrome 157.0.8103.78 (`20261115-214116-01`)
-  and Edge 157.0.4341.60 (`20261115-214130-01`). Each passed 24 checks
-  from upload through the published report. The paid dialog was exercised with
-  submission blocked. The separate synthetic preview completed
-  `20261115-214052-01` with USD 0.00 spent and 14 of 14 modules finished.
-  The ZIP stays local pending both browsers on the Windows work PC.

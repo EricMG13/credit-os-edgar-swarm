@@ -12,7 +12,7 @@ The issuer ID is the context's ``identity.issuer_id``, the ID a run on that cont
 must be at most ``MAX_ISSUER_ID`` characters, as the run start page requires. A row with no
 pack, no usable pack folder content, no context, an invalid context, an over-long or duplicate
 issuer ID is listed under ``skipped`` with the reason and registers nothing. A rerun keeps the
-``status`` and ``attempts`` already in the plan and changes no file when nothing changed.
+ledger state for each unchanged issuer ID and refreshes its paths.
 """
 
 from __future__ import annotations
@@ -164,7 +164,11 @@ def prepare(approved: Path, packs: Path, contexts: Path, root: Path) -> dict[str
             continue
         taken[found["issuer_id"]] = cik
         filing.issuer_folder(layout, found["issuer_id"], found["name"])  # Registers the ID.
+        kept = previous.get(cik, {})
+        if kept.get("issuer_id") != found["issuer_id"]:
+            kept = {}  # A different ID points to a different run folder.
         entry: dict[str, Any] = {
+            **kept,
             "issuer_id": found["issuer_id"],
             "name": found["name"],
             "cik": cik,
@@ -172,13 +176,9 @@ def prepare(approved: Path, packs: Path, contexts: Path, root: Path) -> dict[str
             "pack": str(sources[0].resolve()),
             "context": str(sources[1].resolve()),
             "run_folder": str(layout.runs / f"{RUN_PREFIX}{found['issuer_id']}"),
-            "status": "pending",
-            "attempts": 0,
+            "status": kept.get("status", "pending"),
+            "attempts": kept.get("attempts", 0),
         }
-        kept = previous.get(cik)
-        if kept is not None:
-            entry["status"] = kept["status"]
-            entry["attempts"] = kept.get("attempts", 0)
         issuers.append(entry)
 
     # Issuers in an earlier plan that this run no longer lists keep their record.

@@ -316,9 +316,13 @@ function principal(entry: OutputEntry, date: string, run?: string): MetricBindin
   if (unit === undefined) return [];
   const row = namedRow(table, ({ cells }) => cells[0] === date && cells[4] === unit);
   const value = row?.cells[1];
-  return value && numeric.test(value)
-    ? [metricBinding("principal", "Contractual principal", value, unit, date, row.line)]
-    : [];
+  if (!row || !value || !numeric.test(value)) return [];
+  const basisColumn =
+    table?.headers.findIndex((header) => /^Basis(?: and limitation)?$/i.test(header)) ?? -1;
+  const basis = row.cells[basisColumn];
+  if (basis && containsReference(basis)) return [];
+  const note = basis ? `${date} · ${readerText(basis)}` : date;
+  return [metricBinding("principal", "Contractual principal", value, unit, note, row.line)];
 }
 
 function maturityTotal(entry: OutputEntry, date: string, run?: string): MetricBinding[] {
