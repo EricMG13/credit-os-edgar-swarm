@@ -187,4 +187,15 @@ Behaviour assertions (values, links, gaps, states) are kept against the new bloc
 
 ## 7. Verification
 
-(Filled in during phase 2.)
+Synthetic Northbridge run (`docs/design/preview/README.md`), viewer restarted after each build.
+Screenshots looked at, at 1440 and 390 px; what I saw:
+
+| Shot | Seen |
+|---|---|
+| Before, Overview 1440 | The interim page: page h2 "Overview" with anchor links, a white findings band, a run-glance box, six equal metric cards, bottom-line cards by stage, limitation accordions beside a dates list, then Key charts. Reads as the old page. |
+| v1, Overview 1440 | Header as the mockup: crumbs Library / Northbridge Synthetic Group / Full credit assessment, name 32 px, chips (pathway, as-of, US$m, Moody's B1 · Negative), segmented control right with Overview tinted and dotted, Calendar in it. Bento rows in the mockup's order: call (8) beside confidence / clearance / since-earlier (4); gross slope and net dot strip (4 + 4) beside a 2×2 of small tiles; findings (7) beside the navy contrary tile and the what-would-change gap tile (5); maturity wall (8) and capital stack (4); headroom (4), downside (5), forward path (3); "What this run could not do" full width with hatched wells; pipeline graph with three columns of bottom lines; dates on a time axis. The call tile has empty space under its one-sentence synthetic bottom line (the right column sets the row height); real bottom lines are three or four lines at this size. Negative outlook was red → changed to the signal colour. |
+| v1, Overview 390 | One column in reading order, no page scroll. Small figure tiles stacked one per row with oversized mini marks → made 2×2. Maturity wall labels scaled to ~5 px → the wall now draws at the frame's width below 560 px. Downside small multiples scaled to ~6 px → the figure keeps its type size and scrolls sideways inside its tile (a focusable region). |
+| v2, Overview 390 | Figures 2×2 legible; wall bars and labels at full size; downside scrolls in its tile; limits wells, pipeline (stages stacked), bottom lines and dates list all readable; breadcrumb wraps onto two lines. |
+| History 1440 / 390 | Crumbs end in "Runs"; no segment current; tile "Runs of Northbridge Synthetic Group", the who-started gap line, the timeline node marked as this run, date in mono, "Stance not stated" (the synthetic committee decision states no Final Action Bias, consistent with the call tile showing no stance chip), pathway chip, Finished, modules run, Open overview / What changed. |
+
+Checks: see the report to the coordinator (filled in when done).
