@@ -1,0 +1,256 @@
+import { Fragment } from "react";
+import { cx } from "@/utils/cx";
+import { blocked, unitLabel, type Row } from "../../publishedReport";
+import { ticks, type SourceTable } from "../../visuals/visualData";
+import { Key } from "../overview/figureParts";
+import { basisNotes, readCell, type Cell } from "../overview/figureData";
+import { Bento, Tile } from "../overview/Tile";
+import { DatedList, LeadBlocked, LeadFigure, LeadGap, NEEDS, Trace } from "./parts";
+import {
+  blockedReason,
+  chartOf,
+  columnOf,
+  eventsOf,
+  leadHref,
+  readerCell,
+  registerTable,
+} from "./read";
+import type { LeadProps } from "./types";
+
+const TITLE = "Refinancing need";
+const IN_EVIDENCE = "Not assessable; the reason is recorded in Evidence.";
+const MEASURES = ["Debt maturing", "Committed resources"] as const;
+
+const TONE = { primary: "bg-chart-1", secondary: "bg-chart-2" } as const;
+
+/** A stated amount as a bar from zero on a shared scale, or the stated gap as a hatched mark. */
+export function BarLine({
+  name,
+  cell,
+  top,
+  tone,
+}: {
+  name: string;
+  cell: Cell;
+  top: number;
+  tone: keyof typeof TONE;
+}) {
+  const placed = cell.value !== null && cell.value >= 0 && top > 0;
+  return (
+    <div className="grid grid-cols-[7.5rem_minmax(0,1fr)] items-center gap-2">
+      <span className="text-caption text-text-secondary">{name}</span>
+      {placed ? (
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="relative h-3 min-w-0 flex-1">
+            <span
+              data-bar={cell.text}
+              className={cx("absolute inset-y-0 left-0 rounded-ds-xs", TONE[tone])}
+              style={{ width: `${String(((cell.value ?? 0) / top) * 100)}%` }}
+            />
+          </span>
+          <span className="w-16 flex-none text-right font-mono text-small text-text-primary tabular-nums">
+            {cell.text}
+          </span>
+        </span>
+      ) : (
+        <span className="flex min-w-0 items-start gap-2">
+          {cell.value === null && (
+            <span
+              data-gap
+              className="gap-hatch mt-0.5 h-3 w-8 flex-none rounded-ds-xs border border-dashed border-border-gap"
+            />
+          )}
+          <span className="min-w-0 text-caption wrap-anywhere text-gap-text">
+            {cell.text || "Not supplied"}
+          </span>
+        </span>
+      )}
+    </div>
+  );
+}
+
+/** A cell for a figure's reading: the figure as written, or "not supplied" with the reason. */
+export const spoken = (cell: Cell) =>
+  cell.value === null ? `not supplied${cell.reason ? ` (${cell.reason})` : ""}` : cell.text;
+
+function needRows(table: SourceTable) {
+  const [debt, resources] = MEASURES.map((name) => columnOf(table, name));
+  const period = columnOf(table, "Period");
+  if (debt === undefined || resources === undefined || [debt, resources, period].includes(-1))
+    return null;
+  const scope = table.rows.flatMap((row) => [row[debt] ?? "", row[resources] ?? ""]);
+  return table.rows.map((row, at) => ({
+    period: row[period] ?? "",
+    line: table.rowLines?.[at] ?? table.line,
+    cells: [debt, resources].map((column) => readCell(row[column] ?? "", scope, row.at(-2) ?? "")),
+  }));
+}
+
+function NeedFigure({
+  entry,
+  href,
+}: {
+  entry: LeadProps["entry"];
+  href: (line?: number) => string;
+}) {
+  const chart = chartOf(entry, TITLE);
+  const rows = chart.state === "ready" ? needRows(chart.table) : null;
+  if (chart.state !== "ready" || !rows)
+    return (
+      <LeadGap
+        span={8}
+        label={TITLE}
+        title={TITLE}
+        reason={
+          chart.state === "gap" ? chart.reason : "The module wrote no refinancing need table."
+        }
+        needs={chart.state === "gap" ? undefined : NEEDS.proof}
+      />
+    );
+  const units = new Set(chart.table.rows.map((row) => row.at(-2) ?? ""));
+  const unit = units.size === 1 ? ([...units][0] ?? "") : "";
+  const scale = ticks(rows.flatMap(({ cells }) => cells.map((cell) => cell.value)));
+  const top = scale.at(-1)?.value ?? 0;
+  const reading = `Debt maturing against committed resources${unit ? ` in ${unitLabel(unit)}` : ""}. ${rows
+    .map(
+      ({ period, cells: [debt, resources] }) =>
+        `${period}: debt maturing ${debt ? spoken(debt) : "not supplied"}, committed resources ${resources ? spoken(resources) : "not supplied"}.`,
+    )
+    .join(" ")}`;
+  return (
+    <LeadFigure
+      span={8}
+      label={TITLE}
+      kicker={TITLE}
+      title="Debt maturing against committed resources, by period"
+      basis={unit ? unitLabel(unit) : "Each period in its own unit"}
+      legend={
+        <>
+          <Key tone="primary">Debt maturing</Key>
+          <Key tone="secondary">Committed resources</Key>
+          <Key tone="gap">Not supplied</Key>
+        </>
+      }
+      trace={<Trace href={href(chart.table.line)} name={TITLE} />}
+      figure={
+        <div role="img" aria-label={reading} className="flex flex-col">
+          {rows.map(({ period, cells }, index) => (
+            <div
+              key={index}
+              className="grid grid-cols-1 gap-1.5 border-t border-border-hairline py-3 first:border-t-0 first:pt-0 sm:grid-cols-[6rem_minmax(0,1fr)] sm:gap-3"
+            >
+              <span className="font-mono text-small font-medium text-text-primary">{period}</span>
+              <div className="flex min-w-0 flex-col gap-1.5">
+                {MEASURES.map((name, at) => (
+                  <Fragment key={name}>
+                    {cells[at] && (
+                      <BarLine
+                        name={name}
+                        cell={cells[at]}
+                        top={top}
+                        tone={at === 0 ? "primary" : "secondary"}
+                      />
+                    )}
+                  </Fragment>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      }
+      table={{
+        head: ["Period", ...MEASURES],
+        rows: rows.map(({ period, line, cells }) => ({
+          label: period,
+          cells: cells.map((cell) => cell.text || null),
+          end: <Trace href={href(line)} name={period} />,
+        })),
+        endHeading: "Source",
+      }}
+      notes={basisNotes(chart.table)}
+    />
+  );
+}
+
+const PATH_FIELDS = ["Feasibility", "Likelihood Direction"] as const;
+
+function PathItem({ row, columns }: { row: Row; columns: number[] }) {
+  return (
+    <>
+      <span className="text-small font-medium wrap-anywhere text-text-primary">
+        {readerCell(row.cells[columns[0] ?? -1] ?? "")}
+      </span>
+      <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-caption">
+        {PATH_FIELDS.map((name, at) => {
+          const cell = row.cells[columns[at + 1] ?? -1];
+          return cell === undefined ? null : (
+            <Fragment key={name}>
+              <dt className="text-text-tertiary">{name === "Feasibility" ? name : "Likelihood"}</dt>
+              <dd className="wrap-anywhere text-text-secondary">{readerCell(cell)}</dd>
+            </Fragment>
+          );
+        })}
+      </dl>
+    </>
+  );
+}
+
+function Paths({ entry, href }: { entry: LeadProps["entry"]; href: (line?: number) => string }) {
+  const label = "Liability-management paths";
+  const table = registerTable(entry, "T3D.6", ["Path Type", "Feasibility"]);
+  if (!table?.rows.length)
+    return (
+      <LeadGap
+        span={12}
+        label={label}
+        title={label}
+        reason="The module wrote no liability-management path register."
+        needs={NEEDS.proof}
+      />
+    );
+  const columns = ["Path Type", ...PATH_FIELDS].map((name) => columnOf(table, name));
+  return (
+    <Tile span={12} label={label} title={label}>
+      <ul aria-label={label} className="flex flex-col">
+        {table.rows.map((row) => (
+          <li
+            key={row.line}
+            className="flex items-start justify-between gap-3 border-t border-border-hairline py-2.5 first:border-t-0 first:pt-0"
+          >
+            <span className="flex min-w-0 flex-col gap-1">
+              <PathItem row={row} columns={columns} />
+            </span>
+            <Trace href={href(row.line)} name={readerCell(row.cells[columns[0] ?? -1] ?? "")} />
+          </li>
+        ))}
+      </ul>
+    </Tile>
+  );
+}
+
+/** CP-3C: what falls due, against what is committed to meet it. */
+export function RefinancingLead(props: LeadProps) {
+  const { entry } = props;
+  const href = leadHref(props);
+  const reason = blockedReason(entry);
+  if (reason !== null || blocked(entry) || entry.output.state?.established === false)
+    return (
+      <Bento>
+        <LeadBlocked span={12} label={TITLE} title={TITLE} reason={reason ?? IN_EVIDENCE} />
+      </Bento>
+    );
+  const events = eventsOf(entry, "Refinancing") ?? [];
+  return (
+    <Bento>
+      <NeedFigure entry={entry} href={href} />
+      <div className="flex min-w-0 flex-col gap-4 lg:col-span-4">
+        <Paths entry={entry} href={href} />
+        {events.length > 0 && (
+          <Tile span={12} label="Refinancing dates" title="Refinancing dates">
+            <DatedList label="Refinancing dates" events={events} href={href} />
+          </Tile>
+        )}
+      </div>
+    </Bento>
+  );
+}

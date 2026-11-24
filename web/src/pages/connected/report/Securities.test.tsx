@@ -1,6 +1,22 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
+import { afterEach } from "vitest";
 import type { OutputEntry } from "../publishedReport";
 import { Securities, securityView } from "./Securities";
+
+afterEach(cleanup);
+
+/** The instrument's row in the instrument table. */
+function instrumentRow(name: string) {
+  const found = screen.getByRole("rowheader", { name }).closest("tr");
+  if (!found) throw new Error(`missing row ${name}`);
+  return found;
+}
+
+/** The yield bars drawn, by instrument. */
+const bars = () =>
+  [...document.querySelectorAll("[data-bar]")].map(
+    (bar) => bar.closest("tr")?.querySelector("th")?.textContent,
+  );
 
 function basis(date: string, amounts = "USD millions") {
   return `All amounts ${amounts} unless stated; yields are percentages from last trades on ${date}; differences in yield are percentage points, shown in bp.`;
@@ -85,17 +101,26 @@ it("shows the paired observed quote with all authored digits and keeps the unquo
   const view = securityView(dataset("1 Oct 2026", [basis("2026-10-01")]), "2026-10-02");
   if (!view) throw new Error("missing security review");
   render(<Securities data={view} href={(line) => `#evidence/5-${String(line)}`} />);
-  const chart = screen.getByRole("figure", { name: "Last-trade prices and yields" });
-  fireEvent.click(within(chart).getByRole("radio", { name: "Table" }));
-  expect(within(chart).getByRole("cell", { name: "7.005000%" })).toBeInTheDocument();
-  expect(within(chart).queryByText("Term loan")).toBeNull();
-  const loan = screen.getByRole("heading", { name: "Term loan" }).closest("article");
-  if (!loan) throw new Error("missing instrument card");
-  expect(within(loan).getByRole("link", { name: "Security source" })).toHaveAttribute(
+  // The yield column replaces the price and yield chart: each last-trade yield as written, with
+  // its bar against the largest stated yield; the unquoted loan has no yield and no bar.
+  expect(within(instrumentRow("Secured notes")).getByText("7.005000%")).toBeInTheDocument();
+  expect(within(instrumentRow("Unsecured notes")).getByText("9.12%")).toBeInTheDocument();
+  expect(bars()).toEqual(["Secured notes", "Unsecured notes"]);
+  const widths = [...document.querySelectorAll<HTMLElement>("[data-bar] .bg-chart-1")].map(
+    (bar) => bar.style.width,
+  );
+  expect(widths).toEqual([`${String((7.005 / 9.12) * 100)}%`, "100%"]);
+  const loan = instrumentRow("Term loan");
+  expect(within(loan).queryByText(/yield/)).toBeNull();
+  expect(within(loan).getAllByText("Not supplied")).toHaveLength(2);
+  expect(within(loan).getByRole("link", { name: "Source for Term loan" })).toHaveAttribute(
     "href",
     "#evidence/5-8",
   );
   expect(within(loan).getByText("Not supplied: no loan observation")).toBeInTheDocument();
+  expect(within(loan).getByText("Requires More Work")).toBeInTheDocument();
+  expect(within(instrumentRow("Secured notes")).getByText("Neutral")).toBeInTheDocument();
+  expect(screen.getByText(/Spread is not supplied/)).toBeInTheDocument();
 });
 
 it.each([
@@ -120,6 +145,10 @@ it("keeps an unlocated price in its card without using it in the comparison", ()
   const view = securityView(source, "2026-10-02");
   expect(view?.chartable.map(({ name }) => name)).toEqual(["Unsecured notes"]);
   expect(view?.records[0]?.market).toContain("$99.00");
+  if (!view) throw new Error("missing security review");
+  render(<Securities data={view} href={(line) => `#evidence/5-${String(line)}`} />);
+  expect(within(instrumentRow("Secured notes")).getByText(/\$99\.00/)).toBeInTheDocument();
+  expect(bars()).toEqual([]);
 });
 
 // docs/rulings/2026-11-16-reporting-currency-from-sources.md: the quotes stay US market quotes.
@@ -133,7 +162,7 @@ it.each([
     <Securities data={view} href={(line) => `#evidence/5-${String(line)}`} runUnit={runUnit} />,
   );
   expect(screen.getByText(text)).toHaveAttribute("role", "note");
-  expect(screen.getByRole("figure", { name: "Last-trade prices and yields" })).toBeInTheDocument();
+  expect(bars()).toEqual(["Secured notes", "Unsecured notes"]);
 });
 
 it.each([["US$m"], [undefined]])("adds no quote note on a run in %s", (runUnit) => {
@@ -162,9 +191,7 @@ it.each(["GBP millions", "CHF millions", "EUR millions"])(
     render(
       <Securities data={view} href={(line) => `#evidence/5-${String(line)}`} runUnit="GBPm" />,
     );
-    expect(
-      screen.getByRole("figure", { name: "Last-trade prices and yields" }),
-    ).toBeInTheDocument();
+    expect(bars()).toEqual(["Secured notes", "Unsecured notes"]);
     expect(
       screen.queryByText("No pair of comparable last trades is supplied for this run."),
     ).toBeNull();
@@ -181,6 +208,9 @@ it("says in the reader's words that no pair of comparable last trades is supplie
   const note = screen.getByText("No pair of comparable last trades is supplied for this run.");
   expect(note).toHaveAttribute("role", "note");
   expect(document.body.textContent).not.toMatch(/handoff/i);
+  // The yields stay as written in the table, with no bar.
+  expect(within(instrumentRow("Secured notes")).getByText("7.005000%")).toBeInTheDocument();
+  expect(bars()).toEqual([]);
 });
 
 it.each(["GBP thousands", "£ millions", "GBPm", "gbp millions", "GBP millions and EUR millions"])(
