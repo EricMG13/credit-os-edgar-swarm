@@ -27,6 +27,7 @@ import {
 } from "./plain";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { decided, groupLimits, leaveOut, type LimitGroup } from "./limits";
+import { moduleNames, OUTCOME_STATE, scopeText } from "./limitWords";
 import {
   assumptionInputs,
   attachmentFacts,
@@ -146,13 +147,6 @@ function List({ title, items }: { title: string; items: readonly string[] }) {
   );
 }
 
-const OUTCOME_STATE = {
-  will_refuse: "Will refuse",
-  gap: "Gap",
-  limited: "Limited",
-  check: "Check",
-} as const;
-
 /** The omitted report sections by title; an older service sends no titles, so only their count. */
 function omittedSentence({ omitted, omitted_titles, prior, changes }: Summary) {
   if (omitted.length === 1 && omitted[0] === "what-changed" && !prior && /first run/i.test(changes))
@@ -168,10 +162,6 @@ function modelAndEffort({ model, effort }: Summary) {
   return labels.every(Boolean) ? labels.join(" · ") : undefined;
 }
 
-function scopeText(scope: string) {
-  return scope === "run" ? "Whole run" : moduleName(scope);
-}
-
 function acceptanceLabel(group: LimitGroup) {
   if (group.kind === "check") return "I have checked this";
   const limits = group.causes.length;
@@ -180,10 +170,6 @@ function acceptanceLabel(group: LimitGroup) {
   return consequences === 0
     ? label
     : `${label} and ${limits === 1 ? "its" : "their"} ${String(consequences)} ${consequences === 1 ? "consequence" : "consequences"}`;
-}
-
-function moduleNames(items: readonly { scope: string }[]): string[] {
-  return [...new Set(items.map((item) => scopeText(item.scope)))];
 }
 
 function nameList(names: readonly string[]): string {
