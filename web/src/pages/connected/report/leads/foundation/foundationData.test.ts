@@ -2,7 +2,7 @@
 // (tests/fixtures/live_2026_11_15/earnings_update-CP-1-draft3-accepted.md), not computed by the code
 // under test. The handoff is outdated evidence: shape and scope only.
 import { describe, expect, it } from "vitest";
-import type { OutputEntry, Table } from "../../../publishedReport";
+import type { Block, OutputEntry, Table } from "../../../publishedReport";
 import { cp1Entry } from "../fixtures/load";
 import {
   cashLadder,
@@ -20,7 +20,7 @@ function edited(change: (table: Table, heading: string) => Table | null): Output
     ...entry,
     sections: entry.sections.map((section) => ({
       ...section,
-      blocks: section.blocks.flatMap((block) => {
+      blocks: section.blocks.flatMap((block): Block[] => {
         if (block.type !== "table") return [block];
         const next = change(block, section.heading);
         return next ? [next] : [];
@@ -124,7 +124,6 @@ describe("earningsAgainstDebt", () => {
 
 describe("cashLadder", () => {
   const ladder = cashLadder(entry);
-  const step = (key: string) => ladder?.steps.find((s) => s.key === key);
   it("walks FY2024 from EBITDA As Defined to free cash flow after acquisitions and distributions", () => {
     expect(ladder?.currentLabel).toBe("FY2024");
     expect(ladder?.steps.map((s) => s.key)).toEqual([
