@@ -203,7 +203,9 @@ it("heads every report page with the breadcrumb, the name, the sector line and q
     [order[0], order[1]],
     [order[1], order[2]],
   ] as const)
-    expect(earlier.compareDocumentPosition(later) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(
+      (earlier?.compareDocumentPosition(later as Node) ?? 0) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   expect(within(header).queryByText(/acme-old|acmeKey|CP-6/)).toBeNull();
 });
 

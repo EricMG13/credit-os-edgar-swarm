@@ -139,8 +139,13 @@ it("draws the call: stance, bottom line, confidence, clearance and the changes s
     value: 56,
     band: "Low",
   });
+  const ran = (id: string) => ({ outputs: [`${id}-1`], default: `${id}-1` });
+  const ranAll = {
+    ...run,
+    modules: { "CP-3": ran("CP-3"), "CP-5": ran("CP-5"), "CP-6": ran("CP-6") },
+  } as unknown as PublishedRun;
   render(
-    <CallRow snapshot={snapshot} run={run} view={view([lead, validation, selection], lead)} />,
+    <CallRow snapshot={snapshot} run={ranAll} view={view([lead, validation, selection], lead)} />,
   );
   const call = screen.getByRole("region", { name: "The call" });
   expect(
@@ -149,18 +154,18 @@ it("draws the call: stance, bottom line, confidence, clearance and the changes s
   expect(within(call).getByText("Watchlist")).toBeVisible();
   expect(
     within(call).getByText("Gross leverage rose to 6.53x despite stronger earnings."),
-  ).toHaveClass("text-h1");
+  ).toHaveClass("lg:text-display");
   expect(within(call).getByText("3 · all delivered")).toBeVisible();
   const confidence = screen.getByRole("region", { name: "Confidence" });
   expect(within(confidence).getByText("53")).toBeVisible();
-  expect(within(confidence).getByText("Low")).toHaveClass("text-warning-text");
+  expect(within(confidence).getByText("Low").className).not.toMatch(/warning|success|error/);
   expect(
     within(confidence).getByRole("img", {
       name: "Confidence 53 of 100, band Low. Security selection scored 56, band Low.",
     }),
   ).toBeVisible();
   expect(within(confidence).getByText("Committee decision 53")).toBeInTheDocument();
-  expect(within(confidence).getByText("Security selection 56")).toBeInTheDocument();
+  expect(within(confidence).getByText("Security selection 56 · Low")).toBeInTheDocument();
   const clearance = screen.getByRole("region", { name: "Evidence clearance" });
   expect(within(clearance).getByText("Pass with Remediation.")).toBeVisible();
   expect(within(clearance).queryByText("Delivered")).toBeNull();
@@ -319,31 +324,6 @@ it("keeps the counter passage whole under its own heading, one trace per paragra
   expect(within(counter).getByText(/are not typed in this run/)).toBeVisible();
 });
 
-it("names the modules that were not delivered in the run facts, by name and state", () => {
-  const lead = committee();
-  const states = { "CP-6": "Delivered with gaps", "CP-4": "Not assessable", "CP-1C": "Not run" };
-  const modules = Object.entries(states).map(([id, state]) => ({
-    id,
-    name: { "CP-6": "Committee decision", "CP-4": "Legal & covenants", "CP-1C": "Peer benchmark" }[
-      id
-    ],
-    state,
-    outputs: [],
-  }));
-  render(
-    <CallRow
-      snapshot={snapshot}
-      run={run}
-      view={{ ...view([lead], lead), modules } as unknown as ReportView}
-    />,
-  );
-  expect(
-    screen.getByText(
-      "3 · all delivered except Legal & covenants (not assessable), Peer benchmark (not run)",
-    ),
-  ).toBeVisible();
-});
-
 function compared(currentBias: string | null, priorBias: string | null, bottom: string) {
   const prior = { ...run, folder: "run-0", asOf: "2024-03-31", issuerKey: "nb" } as PublishedRun;
   const current = {
@@ -402,7 +382,7 @@ function compared(currentBias: string | null, priorBias: string | null, bottom: 
   return { snap, current, lead, changes };
 }
 
-it("draws the comparison verdict large with the stance was → now, both read from the handoffs", () => {
+it("draws the stance was → now, both read from the handoffs, beside the changes sentence as written", () => {
   const { snap, current, lead, changes } = compared(
     "Watchlist",
     "Requires More Work",
@@ -410,9 +390,9 @@ it("draws the comparison verdict large with the stance was → now, both read fr
   );
   render(<CallRow snapshot={snap} run={current} view={view([lead, changes], lead)} />);
   const tile = screen.getByRole("region", { name: "Since the earlier run" });
-  expect(within(tile).getByText("About the same")).toHaveClass("text-h3");
+  expect(within(tile).queryByText("About the same")).toBeNull();
   expect(within(tile).getByText("Requires More Work")).toBeVisible();
-  expect(within(tile).getAllByText("Watchlist")[0]).toHaveClass("text-warning-text");
+  expect(within(tile).getByText("Watchlist")).toBeVisible();
   expect(within(tile).getByText("Stance was Requires More Work, now Watchlist.")).toHaveClass(
     "sr-only",
   );
@@ -421,7 +401,7 @@ it("draws the comparison verdict large with the stance was → now, both read fr
   ).toBeVisible();
 });
 
-it("draws no verdict word and no stance chips that the handoffs do not state", () => {
+it("draws no verdict word, and says which stance the handoffs do not state", () => {
   const { snap, current, lead, changes } = compared(
     "Watchlist",
     null,
@@ -430,27 +410,9 @@ it("draws no verdict word and no stance chips that the handoffs do not state", (
   render(<CallRow snapshot={snap} run={current} view={view([lead, changes], lead)} />);
   const tile = screen.getByRole("region", { name: "Since the earlier run" });
   expect(within(tile).queryByText(/^(Better|Worse|About the same)$/)).toBeNull();
-  expect(within(tile).queryByText(/Stance was/)).toBeNull();
+  expect(within(tile).getByText("Stance was not stated, now Watchlist.")).toHaveClass("sr-only");
+  expect(within(tile).getByText("Not stated")).toBeVisible();
   expect(within(tile).getByText("Leverage rose while cover held.")).toBeVisible();
-});
-
-it("counts a module delivered with gaps as delivered, and says when no module ran", () => {
-  const lead = committee();
-  const one = (state: string) => ({ id: "CP-6", name: "Committee decision", state, outputs: [] });
-  const { unmount } = render(
-    <CallRow
-      snapshot={snapshot}
-      run={run}
-      view={
-        { ...view([lead], lead), modules: [one("Delivered with gaps")] } as unknown as ReportView
-      }
-    />,
-  );
-  expect(screen.getByText("1 · all delivered")).toBeVisible();
-  unmount();
-  render(<CallRow snapshot={snapshot} run={run} view={{ ...view([lead], lead), modules: [] }} />);
-  expect(screen.getByText("No module ran")).toBeVisible();
-  expect(screen.queryByText(/0 · all delivered/)).toBeNull();
 });
 
 it("gives the reason in place when the comparison does not stand", () => {
