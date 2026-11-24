@@ -30,16 +30,18 @@ function SmallHead({
   trace,
 }: {
   as: "h2" | "h3";
-  title: ReactNode;
+  title?: ReactNode;
   kicker?: ReactNode;
   trace?: ReactNode;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-      <Heading className="flex min-w-0 items-center gap-2 text-small font-medium text-text-primary">
-        {title}
-      </Heading>
-      <div className="flex items-center gap-3">
+      {title != null && (
+        <Heading className="flex min-w-0 items-center gap-2 text-small font-medium text-text-primary">
+          {title}
+        </Heading>
+      )}
+      <div className="ml-auto flex items-center gap-3">
         {kicker != null && <p className="text-caption text-text-tertiary">{kicker}</p>}
         {trace}
       </div>
@@ -87,7 +89,7 @@ export function Tile({
         className,
       )}
     >
-      {head === "small" && title != null && (
+      {head === "small" && (kicker ?? title ?? trace) != null && (
         <SmallHead as={as} title={title} kicker={kicker} trace={trace} />
       )}
       {head === "default" && (kicker ?? title ?? trace) != null && (

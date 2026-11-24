@@ -279,10 +279,13 @@ describe("connected library and report design", () => {
     expect(within(dates).getByText("Refinancing maturity")).toBeInTheDocument();
     expect(within(dates).getByText("15 March 2027")).toBeInTheDocument();
     expect(within(dates).getByText("Scheduled")).toBeInTheDocument();
-    const trace = within(dates).getByRole("link", {
-      name: "Source for Refinancing maturity on 15 March 2027",
-    });
-    expect(trace).toHaveAttribute("href", expect.stringMatching(/#evidence\//));
+    // The shared trace control (PublishedSource): a drawer button where the provider resolves
+    // the row, else its Evidence link; one per module record, named by event, date and module.
+    expect(
+      within(dates).getByLabelText(
+        /^(Show sources|Source) for Refinancing maturity on 15 March 2027 from Financial foundation$/,
+      ),
+    ).toBeInTheDocument();
 
     window.location.hash = "#modules/CP-1";
     const modulePicker = await screen.findByLabelText("Module");

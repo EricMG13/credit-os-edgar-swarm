@@ -279,3 +279,22 @@ it("gives the confidence score the same trace control as every other tile", () =
     within(tile).getByRole("link", { name: "Source for the confidence score" }),
   ).toHaveAttribute("href", expect.stringMatching(/#evidence\//));
 });
+
+it("shows or links every paragraph of the validation module's bottom line, each with its trace", () => {
+  const lead = entry("CP-6", [text("Bottom line", "The view.")]);
+  const validation = entry("CP-5", [
+    text(
+      "Bottom line",
+      "Pass with Remediation.",
+      "Four material issues remain.",
+      "See register EV-1 in ledger.xlsx.",
+    ),
+  ]);
+  render(<CallRow snapshot={snapshot} run={run} view={view([lead, validation], lead)} />);
+  const tile = screen.getByRole("region", { name: "Evidence clearance" });
+  expect(within(tile).getByText("Pass with Remediation.")).toBeVisible();
+  expect(within(tile).getByText("Four material issues remain.")).toBeVisible();
+  expect(within(tile).getByRole("link", { name: "Read this passage in Evidence" })).toBeVisible();
+  expect(tile).not.toHaveTextContent(/ledger\.xlsx/);
+  expect(within(tile).getAllByRole("link", { name: /^Source for / })).toHaveLength(3);
+});

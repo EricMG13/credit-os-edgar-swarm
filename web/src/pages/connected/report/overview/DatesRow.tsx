@@ -5,7 +5,8 @@ import type { ReportView } from "../../reportView";
 import { buildCalendar, upcomingCalendarRows } from "../Calendar";
 import { asOfDate } from "../../runFigures";
 import { cx } from "@/utils/cx";
-import { SourceLink } from "./sourceLink";
+import { TextLink } from "../../../run/TextLink";
+import { PublishedSource } from "../PublishedTrace";
 import { GapNote, Tile } from "./Tile";
 
 type RowProps = { snapshot: Snapshot; run: PublishedRun; view: ReportView };
@@ -17,14 +18,22 @@ const NEAR = 18;
 const LANES = 3;
 const LANE = 30;
 
-/** One dated event as the reader sees it: the same date and name from several modules is one event. */
+/**
+ * One dated event as the reader sees it. Rows from several modules are one event only when they
+ * state the same date, name, status, relevance and timing note; an unnamed row is never merged.
+ */
 type Event = { key: string; date: string; name: string; from: number; rows: WatchRow[] };
 
 function events(rows: readonly WatchRow[]): Event[] {
   const found = new Map<string, Event>();
-  for (const row of rows) {
+  for (const [at, row] of rows.entries()) {
     const name = row.cells[3] || "Dated event";
-    const key = `${row.cells[0] ?? ""}|${name}`;
+    const facts = [row.cells[0], row.cells[3], row.cells[4], row.cells[6]].map(
+      (cell) => cell ?? "",
+    );
+    const key = row.cells[3]
+      ? JSON.stringify([...facts, row.timingWithinRecordedPeriod])
+      : `unnamed-${String(at)}`;
     const known = found.get(key);
     if (known) known.rows.push(row);
     else found.set(key, { key, date: row.cells[0] ?? "", name, from: row.from, rows: [row] });
@@ -160,11 +169,21 @@ function EventItem({ event, index }: { event: Event; index: number }) {
           Timing falls within the recorded period; the exact date is unresolved.
         </p>
       )}
-      {row && (
-        <span className="flex">
-          <SourceLink href={row.href} label={`Source for ${event.name} on ${shown(event.date)}`} />
-        </span>
-      )}
+      <span className="flex flex-wrap gap-1">
+        {event.rows.map((item, at) => {
+          const name = `${event.name} on ${shown(event.date)} from ${item.owner}`;
+          return (
+            <PublishedSource
+              key={`${item.href}-${String(at)}`}
+              href={item.href}
+              name={name}
+              linkLabel={`Source for ${name}`}
+            >
+              View source
+            </PublishedSource>
+          );
+        })}
+      </span>
     </li>
   );
 }
@@ -182,7 +201,9 @@ function Watch({ rows }: { rows: readonly WatchRow[] | null }) {
         No recorded event dates fall on or after this run’s as-of date.
       </p>
     );
-  const list = events(rows).slice(0, SHOWN);
+  const all = events(rows);
+  const list = all.slice(0, SHOWN);
+  const more = all.length - list.length;
   return (
     <>
       <Axis list={list} />
@@ -191,6 +212,14 @@ function Watch({ rows }: { rows: readonly WatchRow[] | null }) {
           <EventItem key={event.key} event={event} index={index} />
         ))}
       </ol>
+      {more > 0 && (
+        <TextLink
+          className="inline-flex min-h-8 w-fit items-center max-[480px]:min-h-11"
+          href="#calendar"
+        >
+          {`${String(more)} more dated ${more === 1 ? "item" : "items"} on the Calendar`}
+        </TextLink>
+      )}
     </>
   );
 }

@@ -363,7 +363,7 @@ function ClearanceTile({ run, view }: Pick<RowProps, "run" | "view">) {
         <GapNote>{name} is not part of this run.</GapNote>
       </Tile>
     );
-  const [first] = bottomLine(entry);
+  const [first, ...rest] = bottomLine(entry);
   return (
     <Tile span={12} label="Evidence clearance" className="gap-3">
       <Head trace={<Source run={run} entry={entry} line={first?.line} name={name} />}>
@@ -378,6 +378,22 @@ function ClearanceTile({ run, view }: Pick<RowProps, "run" | "view">) {
         passage={first}
         className="text-body font-medium text-pretty text-text-primary"
       />
+      {rest.map((passage, at) => (
+        <div key={passage.line} className="flex items-start justify-between gap-3">
+          <Sentence
+            run={run}
+            entry={entry}
+            passage={passage}
+            className="text-small text-pretty text-text-secondary"
+          />
+          <Source
+            run={run}
+            entry={entry}
+            line={passage.line}
+            name={`paragraph ${String(at + 2)} of ${name}`}
+          />
+        </div>
+      ))}
       <p className="flex items-center gap-2 text-caption text-gap-text">
         <span
           aria-hidden="true"

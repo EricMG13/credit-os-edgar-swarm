@@ -250,7 +250,7 @@ it("collapses one event recorded by several modules into one mark that names the
   expect(within(within(tile).getByRole("list")).getByText("Notes mature")).toBeVisible();
 });
 
-it("prints dates as the header does, labels the axis ends, and names each trace distinctly", () => {
+it("prints dates as the header does, labels the axis ends, and gives each record its own trace", () => {
   const rows = [event("2025-03-31", "Coupon"), event("2026-07-01", "Notes mature")];
   mocks.calendar = rows;
   mocks.upcoming = rows;
@@ -260,8 +260,9 @@ it("prints dates as the header does, labels the axis ends, and names each trace 
   expect(within(tile).getAllByText("31 March 2025").length).toBeGreaterThan(0);
   expect(within(tile).getAllByText("1 July 2026").length).toBeGreaterThan(0);
   expect(within(tile).queryByRole("link", { name: "Evidence" })).toBeNull();
+  // Without the report's trace provider the shared control falls back to its Evidence link.
   expect(
-    within(tile).getByRole("link", { name: "Source for Coupon on 31 March 2025" }),
+    within(tile).getByRole("link", { name: "Source for Coupon on 31 March 2025 from Liquidity" }),
   ).toHaveAttribute("href", "/report/run#evidence/Coupon");
 });
 
@@ -288,4 +289,57 @@ it("says the recorded events could not be placed, not that none were recorded, w
     "href",
     "#calendar",
   );
+});
+
+it("keeps rows apart when their status, relevance or timing differ, and never merges unnamed events", () => {
+  const base = event("2025-03-31", "Synthetic note");
+  const lapsed = {
+    ...base,
+    owner: "Legal & covenants",
+    cells: [
+      "2025-03-31",
+      "",
+      "",
+      "Synthetic note",
+      "Scenario — only if the waiver lapses",
+      "",
+      "Cost",
+    ],
+  };
+  const unnamed = (owner: string) => ({
+    ...event("2025-06-30", ""),
+    owner,
+    cells: ["2025-06-30", "", "", "", "Scheduled", "", "Maturity wall"],
+  });
+  const rows = [base, lapsed, unnamed("Liquidity"), unnamed("Downside")];
+  mocks.calendar = rows;
+  mocks.upcoming = rows;
+  render(<DatesRow {...props} />);
+  const items = within(
+    within(screen.getByRole("region", { name: "Dates to watch" })).getByRole("list"),
+  ).getAllByRole("listitem");
+  expect(items).toHaveLength(4);
+  expect(items[1]).toHaveTextContent("Scenario — only if the waiver lapses");
+  expect(items[1]).toHaveTextContent("Legal & covenants · Cost");
+  expect(items[0]).not.toHaveTextContent("Legal & covenants");
+});
+
+it("shows the next five dated items and says how many more are on the Calendar", () => {
+  const rows = [
+    "2025-07-01",
+    "2025-08-01",
+    "2025-09-01",
+    "2025-10-01",
+    "2025-11-01",
+    "2025-12-01",
+    "2026-01-01",
+  ].map((iso, at) => event(iso, `Event ${String(at + 1)}`));
+  mocks.calendar = rows;
+  mocks.upcoming = rows;
+  render(<DatesRow {...props} />);
+  const tile = screen.getByRole("region", { name: "Dates to watch" });
+  expect(within(within(tile).getByRole("list")).getAllByRole("listitem")).toHaveLength(5);
+  expect(
+    within(tile).getByRole("link", { name: "2 more dated items on the Calendar" }),
+  ).toHaveAttribute("href", "#calendar");
 });
