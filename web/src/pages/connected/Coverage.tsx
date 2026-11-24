@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { BarChartSquare02, SearchLg, XClose } from "@untitledui/icons";
+import { BarChartSquare02, SearchLg } from "@untitledui/icons";
 import { Alert, Callout } from "@/components/alert/Alert";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { Button } from "@/components/base/buttons/button";
@@ -23,7 +23,7 @@ import {
   type SavedGroup,
 } from "./coverageData";
 import { card, field as control, label } from "./layout";
-import { Chip, ChipGroup } from "./libraryRows/Chips";
+import { Chip, ChipGroup, RemovableChip } from "@/components/kit/Chip";
 import { Choice, FieldOptions } from "./coverage/Controls";
 import { FindView } from "./coverage/Find";
 import { IssuerDetail } from "./coverage/IssuerDetail";
@@ -113,8 +113,8 @@ function Dashboard({ data }: { data: Data }) {
   const period =
     stated.find((item) => item === periodPick) ??
     (field ? commonPeriod(data, data.issuers, field.id) : null);
-  // Trend draws every period, so the bounds, which read one period, are not applied there.
-  const matched = matchIssuers(data, filters, field?.id ?? null, view === "trend" ? null : period);
+  // The bounds read one figure at one period, which only Rank shows, so only Rank applies them.
+  const matched = matchIssuers(data, filters, view === "rank" ? (field?.id ?? null) : null, period);
   // A bound passes no issuer without a figure, but Rank lists those apart as not ranked, with the
   // module's reason, so they stay in its list whatever the bounds are.
   const unranked = (issuer: Issuer) => {
@@ -146,7 +146,7 @@ function Dashboard({ data }: { data: Data }) {
   const detail = shown.find((issuer) => issuer.key === open);
   const column = data.columns.find((item) => item.code === filters.module);
   const choiceField = choices.find((item) => item.id === filters.choice);
-  // Filters set in the disclosure show above as chips that remove themselves.
+  // Filters set in the disclosure show beside the chips and remove themselves.
   const active = [
     column && {
       key: "module",
@@ -163,15 +163,23 @@ function Dashboard({ data }: { data: Data }) {
       },
     },
   ].filter((item): item is NonNullable<typeof item> => Boolean(item));
+  const phone = "max-[480px]:min-h-11";
+  const heading =
+    view === "matrix"
+      ? "What each module delivered, by issuer"
+      : view === "find"
+        ? "Module passages, by issuer"
+        : field
+          ? view === "rank"
+            ? `${field.label}${period ? `, ${period}` : ""}, ranked`
+            : `${field.label}, by period`
+          : view === "rank"
+            ? "Ranked figure"
+            : "Figure by period";
 
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5">
-      <p className="reading-copy max-w-3xl text-body text-text-secondary">
-        What each issuer’s published runs hold, module by module. Every figure and sentence is as
-        its module wrote it; this page only selects, sorts and groups them. Portfolio views read
-        each issuer’s newest run.
-      </p>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
         <Segmented
           label="View"
           current={view}
@@ -181,7 +189,7 @@ function Dashboard({ data }: { data: Data }) {
             if (next) setView(next.id);
           }}
         />
-        <label className="relative block w-full max-w-md sm:flex-1">
+        <label className="relative block w-full min-w-0 sm:max-w-md sm:flex-1">
           <span className="sr-only">Search issuers and module text</span>
           <SearchLg
             aria-hidden
@@ -195,13 +203,16 @@ function Dashboard({ data }: { data: Data }) {
             onChange={(event) => {
               set({ query: event.currentTarget.value });
             }}
-            className="h-10 w-full rounded-ds-md border border-border-hairline bg-surface-canvas pr-3 pl-9 text-body text-text-primary placeholder:text-text-tertiary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            className={`h-10 w-full rounded-ds-md border border-border-hairline bg-surface-canvas pr-3 pl-9 text-body text-text-primary placeholder:text-text-tertiary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${phone}`}
           />
         </label>
+        <p role="status" className="text-small text-text-secondary sm:ml-auto">
+          {String(shown.length)} of {String(data.issuers.length)} issuers shown
+        </p>
       </div>
 
       <section aria-label="Filters" className="grid gap-3">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
           <ChipGroup
             label="Sector"
             choices={sectors}
@@ -218,21 +229,42 @@ function Dashboard({ data }: { data: Data }) {
               set({ pathway });
             }}
           />
-          {active.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              aria-label={`Remove filter ${item.text}`}
-              onClick={item.clear}
-              className="inline-flex min-h-8 cursor-pointer items-center gap-1.5 rounded-ds-xs border border-action-subtle-hover bg-surface-selected px-3 text-small font-medium text-text-link outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2 max-[480px]:min-h-11"
+          {groups.length > 0 && (
+            <div
+              role="group"
+              aria-label="Saved group"
+              className="flex min-w-0 flex-wrap items-center gap-2"
             >
+              <span aria-hidden="true" className="text-caption text-text-tertiary">
+                Saved groups
+              </span>
+              {groups.map((group) => (
+                <Chip
+                  key={group.name}
+                  pressed={
+                    onlyChosen &&
+                    group.issuers.length === chosen.size &&
+                    group.issuers.every((key) => chosen.has(key))
+                  }
+                  onPress={() => {
+                    setChosen(new Set(group.issuers));
+                    setOnlyChosen(true);
+                  }}
+                >
+                  {group.name}
+                </Chip>
+              ))}
+            </div>
+          )}
+          {active.map((item) => (
+            <RemovableChip key={item.key} onRemove={item.clear}>
               {item.text}
-              <XClose aria-hidden className="size-3.5" />
-            </button>
+            </RemovableChip>
           ))}
           <Button
             color="tertiary"
             size="sm"
+            className={`min-h-8 ${phone}`}
             onPress={() => {
               setFilters(NO_FILTERS);
               setOnlyChosen(false);
@@ -241,11 +273,13 @@ function Dashboard({ data }: { data: Data }) {
             Clear filters
           </Button>
         </div>
-        <details className="group rounded-ds-md border border-border-hairline bg-surface-card px-4 py-2">
-          <summary className="min-h-8 cursor-pointer text-small font-medium text-text-secondary">
-            More filters: module, module state, module confidence
+        <details className="rounded-ds-md border border-border-hairline bg-surface-card px-4">
+          <summary
+            className={`flex min-h-8 cursor-pointer items-center text-small font-medium text-text-secondary ${phone}`}
+          >
+            Filters: module, module state, confidence, compare and save a group
           </summary>
-          <div className="flex flex-wrap items-end gap-3 py-3">
+          <div className="flex flex-wrap items-end gap-x-4 gap-y-3 py-3">
             <Choice
               name="Module"
               value={filters.module}
@@ -302,11 +336,40 @@ function Dashboard({ data }: { data: Data }) {
                 ))}
               </Choice>
             )}
+            <label className={`flex min-h-8 items-center gap-2 text-small font-medium ${phone}`}>
+              <input
+                type="checkbox"
+                className="size-4"
+                checked={onlyChosen}
+                onChange={(event) => {
+                  setOnlyChosen(event.currentTarget.checked);
+                }}
+              />
+              Only the {String(chosen.size)} issuers ticked to compare
+            </label>
+            <label className={`${label} w-56`}>
+              Save ticked issuers as
+              <input
+                value={groupName}
+                onChange={(event) => {
+                  setGroupName(event.currentTarget.value);
+                }}
+                className={`${control} ${phone}`}
+              />
+            </label>
+            <Button
+              color="secondary"
+              className={phone}
+              isDisabled={!groupName.trim() || chosen.size === 0}
+              onPress={saveGroup}
+            >
+              Save group
+            </Button>
           </div>
         </details>
       </section>
 
-      {numbers.length > 0 && (
+      {numbers.length > 0 && (view === "rank" || view === "trend") && (
         <section
           aria-label="Figure"
           className="flex flex-wrap items-end gap-x-4 gap-y-3 rounded-ds-lg border border-border-subtle bg-surface-card p-4"
@@ -314,48 +377,47 @@ function Dashboard({ data }: { data: Data }) {
           <Choice name="Figure" value={field?.id ?? ""} onChange={setFieldId}>
             <FieldOptions fields={numbers} titles={titles} />
           </Choice>
-          {stated.length > 0 && view !== "trend" && (
-            <div
-              role="group"
-              aria-label="Period"
-              className="flex flex-wrap items-center gap-2 pb-0.5"
-            >
-              <span aria-hidden="true" className="text-caption text-text-tertiary">
-                Period
-              </span>
-              {stated.map((item) => (
-                <Chip
-                  key={item}
-                  pressed={item === period}
-                  onPress={() => {
-                    setPeriodPick(item);
-                  }}
-                >
-                  {item}
-                </Chip>
-              ))}
-            </div>
-          )}
-          {view !== "trend" &&
-            (["min", "max"] as const).map((side) => (
-              <label key={side} className={`${label} w-28`}>
-                {side === "min" ? "At least" : "At most"}
-                <input
-                  inputMode="decimal"
-                  value={filters[side]}
-                  aria-invalid={readBound(filters[side]).invalid || undefined}
-                  onChange={(event) => {
-                    set({ [side]: event.currentTarget.value });
-                  }}
-                  className={control}
-                />
-                {readBound(filters[side]).invalid && (
-                  <span className="text-small font-normal text-error-text">Enter a number</span>
-                )}
-              </label>
-            ))}
           {view === "rank" && (
             <>
+              {stated.length > 0 && (
+                <div
+                  role="group"
+                  aria-label="Period"
+                  className="flex flex-wrap items-center gap-2 pb-0.5"
+                >
+                  <span aria-hidden="true" className="text-caption text-text-tertiary">
+                    Period
+                  </span>
+                  {stated.map((item) => (
+                    <Chip
+                      key={item}
+                      pressed={item === period}
+                      onPress={() => {
+                        setPeriodPick(item);
+                      }}
+                    >
+                      {item}
+                    </Chip>
+                  ))}
+                </div>
+              )}
+              {(["min", "max"] as const).map((side) => (
+                <label key={side} className={`${label} w-28`}>
+                  {side === "min" ? "At least" : "At most"}
+                  <input
+                    inputMode="decimal"
+                    value={filters[side]}
+                    aria-invalid={readBound(filters[side]).invalid || undefined}
+                    onChange={(event) => {
+                      set({ [side]: event.currentTarget.value });
+                    }}
+                    className={`${control} ${phone}`}
+                  />
+                  {readBound(filters[side]).invalid && (
+                    <span className="text-small font-normal text-error-text">Enter a number</span>
+                  )}
+                </label>
+              ))}
               <Segmented
                 label="Order"
                 current={order}
@@ -378,67 +440,7 @@ function Dashboard({ data }: { data: Data }) {
         </section>
       )}
 
-      <section aria-label="Groups" className="flex flex-wrap items-end gap-x-4 gap-y-3">
-        <label className="flex min-h-8 items-center gap-2 py-2 text-small font-medium">
-          <input
-            type="checkbox"
-            checked={onlyChosen}
-            onChange={(event) => {
-              setOnlyChosen(event.currentTarget.checked);
-            }}
-          />
-          Only the {String(chosen.size)} issuers ticked to compare
-        </label>
-        {groups.length > 0 && (
-          <div
-            role="group"
-            aria-label="Saved group"
-            className="flex flex-wrap items-center gap-2 pb-0.5"
-          >
-            <span aria-hidden="true" className="text-caption text-text-tertiary">
-              Saved groups
-            </span>
-            {groups.map((group) => (
-              <Chip
-                key={group.name}
-                pressed={
-                  onlyChosen &&
-                  group.issuers.length === chosen.size &&
-                  group.issuers.every((key) => chosen.has(key))
-                }
-                onPress={() => {
-                  setChosen(new Set(group.issuers));
-                  setOnlyChosen(true);
-                }}
-              >
-                {group.name}
-              </Chip>
-            ))}
-          </div>
-        )}
-        <label className={`${label} w-56`}>
-          Save ticked issuers as
-          <input
-            value={groupName}
-            onChange={(event) => {
-              setGroupName(event.currentTarget.value);
-            }}
-            className={control}
-          />
-        </label>
-        <Button
-          color="secondary"
-          isDisabled={!groupName.trim() || chosen.size === 0}
-          onPress={saveGroup}
-        >
-          Save group
-        </Button>
-      </section>
-
-      <p role="status" className="text-small text-text-secondary">
-        {String(shown.length)} of {String(data.issuers.length)} issuers shown
-      </p>
-
+      <h2 className="font-display text-h3 text-text-primary">{heading}</h2>
       {shown.length === 0 ? (
         <p className={card}>No issuers match these filters.</p>
       ) : view === "matrix" ? (
@@ -460,6 +462,10 @@ function Dashboard({ data }: { data: Data }) {
       ) : (
         <TrendView data={data} issuers={shown} field={field} />
       )}
+      <p className="reading-copy max-w-3xl text-small text-text-secondary">
+        Every figure and sentence is as its module wrote it; this page only selects, sorts and
+        groups them. Views read each issuer’s newest run.
+      </p>
     </div>
   );
 }

@@ -1,59 +1,195 @@
 import { useState } from "react";
 import { cx } from "@/utils/cx";
 import {
+  factsOf,
   fieldUnits,
   figure,
+  latestRun,
   trend,
   type Coverage,
+  type CoverageRun,
   type Fact,
   type Field,
   type Issuer,
   type TrendSeries,
 } from "../coverageData";
-import { Chip } from "../libraryRows/Chips";
+import { Chip } from "@/components/kit/Chip";
 import { card } from "../layout";
+import { prose } from "./shared";
 
 type Stated = Fact & { at: number };
 type Dot = { fact: Stated; index: number };
+type Scale = { y: (value: number) => number; low: Stated | undefined; high: Stated | undefined };
+/** Why a period draws no point, by what the run itself states for it. */
+type Missing = { long: string; short: string };
 
 const WIDTH = 320;
-const HEIGHT = 140;
-const PAD = { left: 12, right: 12, top: 12, bottom: 26 };
+const HEIGHT = 150;
+const PAD = { left: 20, right: 12, top: 20, bottom: 26 };
 const PLOT_WIDTH = WIDTH - PAD.left - PAD.right;
 const PLOT_HEIGHT = HEIGHT - PAD.top - PAD.bottom;
-const BASELINE = PAD.top + PLOT_HEIGHT;
-/** From this many points a series is drawn as a line; fewer are dots (two with a connector) and written values. */
+const BOTTOM = PAD.top + PLOT_HEIGHT;
+/** From this many points a series is drawn as lines; fewer are dots (two with a connector) and written values. */
 const LINE_FROM = 3;
+const IN_EVIDENCE = "the module's reason is in Evidence";
 
-const isStated = (fact: Fact | null): fact is Stated => fact !== null && fact.at !== null;
+const isStated = (fact: Fact | null | undefined): fact is Stated =>
+  fact != null && fact.at !== null;
 
-/** One scale for every panel: from zero (or the lowest figure) to the highest figure. */
-function scaleOf(series: readonly TrendSeries[]): (value: number) => number {
-  const values = series.flatMap((item) => item.points.flatMap((fact) => fact?.at ?? []));
-  const low = Math.min(0, ...values);
-  const high = Math.max(low + 1, ...values);
-  return (value) => PAD.top + ((high - value) / (high - low)) * PLOT_HEIGHT;
+/** The module's own reason for a stated gap, when it can be drawn on a working page. */
+const gapReason = (fact: Fact): string => prose(fact.text) ?? IN_EVIDENCE;
+
+const unitsOf = (facts: readonly Fact[]): string =>
+  [...new Set(facts.map((fact) => fact.unit || "no unit stated"))].join(", ");
+
+/** What is true of a period the run's panel draws no point for. */
+function missingAt(facts: readonly Fact[], period: string, unit: string): Missing {
+  const here = facts.filter((fact) => fact.period === period);
+  const inUnit = here.filter((fact) => fact.at !== null && (fact.unit ?? "") === unit);
+  if (inUnit.length > 1) {
+    const texts = inUnit.map(figure).join("; ");
+    return {
+      long: `states this period more than once (${texts}), so none is drawn`,
+      short: `Stated more than once: ${texts}`,
+    };
+  }
+  const stated = here.find((fact) => fact.at === null);
+  if (stated) {
+    const reason = gapReason(stated);
+    return { long: reason, short: reason === IN_EVIDENCE ? "Reason in Evidence" : reason };
+  }
+  const other = here.filter((fact) => fact.at !== null);
+  if (other.length > 0) {
+    const units = unitsOf(other);
+    return { long: `stated in another unit (${units}), not drawn here`, short: `In ${units} only` };
+  }
+  return { long: "no figure stated for this period", short: "No figure" };
+}
+
+/** Why an issuer's newest run gives no panel in this unit. */
+function absentReason(facts: readonly Fact[], unit: string): string {
+  const gaps = facts.filter((fact) => fact.at === null);
+  if (gaps.length > 0) return [...new Set(gaps.map(gapReason))].join("; ");
+  const other = facts.filter((fact) => (fact.unit ?? "") !== unit);
+  if (other.length > 0) return `stated only in another unit (${unitsOf(other)}), not drawn here`;
+  if (facts.length > 0) return "states figures in this unit without a period, so none is drawn";
+  return "no figure stated for this measure in its newest run";
+}
+
+/** One scale for every panel, always holding zero: from the lowest figure (or zero) to the highest (or zero). */
+function scaleOf(series: readonly TrendSeries[]): Scale {
+  const stated = series.flatMap((item) => item.points.filter(isStated));
+  const pick = (better: (a: number, b: number) => boolean) =>
+    stated.reduce<Stated | undefined>(
+      (found, fact) => (!found || better(fact.at, found.at) ? fact : found),
+      undefined,
+    );
+  const low = pick((a, b) => a < b);
+  const high = pick((a, b) => a > b);
+  const bottom = Math.min(0, low?.at ?? 0);
+  const top = Math.max(0, high?.at ?? 0);
+  const span = top > bottom ? top - bottom : 1;
+  return { y: (value) => PAD.top + ((top - value) / span) * PLOT_HEIGHT, low, high };
 }
 
 const x = (index: number, count: number): number =>
   PAD.left + ((index + 0.5) / count) * PLOT_WIDTH;
 
+/** Stated points cut into runs of consecutive periods; a line never crosses a missing period. */
+function segmentsOf(dots: readonly Dot[]): Dot[][] {
+  const runs: Dot[][] = [];
+  for (const dot of dots) {
+    const open = runs.at(-1);
+    const prev = open?.at(-1);
+    if (open && prev && prev.index === dot.index - 1) open.push(dot);
+    else runs.push([dot]);
+  }
+  return runs.filter((run) => run.length > 1);
+}
+
+function Lines({ dots, at }: { dots: readonly Dot[]; at: (dot: Dot) => string }) {
+  const segments = segmentsOf(dots);
+  if (dots.length >= LINE_FROM)
+    return segments.map((run) => (
+      <polyline
+        key={run[0]?.index}
+        data-segment=""
+        points={run.map(at).join(" ")}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinejoin="round"
+      />
+    ));
+  return segments.map((run) => {
+    const [from, to] = at(run[0] as Dot).split(",");
+    const [x2, y2] = at(run[1] as Dot).split(",");
+    return (
+      <line
+        key={run[0]?.index}
+        data-segment=""
+        x1={from}
+        y1={to}
+        x2={x2}
+        y2={y2}
+        stroke="currentColor"
+        strokeWidth={1}
+      />
+    );
+  });
+}
+
+function EndLabels({ dots, count, y }: { dots: readonly Dot[]; count: number; y: (v: number) => number }) {
+  const first = dots[0];
+  const last = dots.at(-1);
+  if (!first || !last) return null;
+  const ends = first === last ? [{ dot: first, which: "first" }] : [
+    { dot: first, which: "first" },
+    { dot: last, which: "last" },
+  ];
+  return ends.map(({ dot, which }) => {
+    const cy = y(dot.fact.at);
+    const anchor = first === last ? "middle" : which === "first" ? "start" : "end";
+    const shift = anchor === "start" ? -4 : anchor === "end" ? 4 : 0;
+    return (
+      <text
+        key={which}
+        data-label={which}
+        x={(x(dot.index, count) + shift).toFixed(2)}
+        y={(cy - 8 < PAD.top - 6 ? cy + 16 : cy - 8).toFixed(2)}
+        textAnchor={anchor}
+        className="fill-text-primary font-mono text-caption"
+      >
+        {figure(dot.fact)}
+      </text>
+    );
+  });
+}
+
 function Panel({
   series,
   periods,
-  y,
+  scale,
+  facts,
+  unit,
 }: {
   series: TrendSeries;
   periods: readonly string[];
-  y: (value: number) => number;
+  scale: Scale;
+  facts: readonly Fact[];
+  unit: string;
 }) {
+  const { y } = scale;
   const dots: Dot[] = series.points.flatMap((fact, index) =>
     isStated(fact) ? [{ fact, index }] : [],
   );
-  const missing = periods.filter((_, index) => !isStated(series.points[index] ?? null));
+  const missing = periods.flatMap((period, index) =>
+    isStated(series.points[index]) ? [] : [{ period, ...missingAt(facts, period, unit) }],
+  );
   const at = (dot: Dot) => `${x(dot.index, periods.length).toFixed(2)},${y(dot.fact.at).toFixed(2)}`;
   const last = dots.at(-1);
   const step = Math.ceil(periods.length / 6);
+  const zero = y(0).toFixed(2);
   const label = `${series.name}: ${dots.map((dot) => figure(dot.fact)).join(", ")} across ${dots
     .map((dot) => dot.fact.period)
     .join(", ")}`;
@@ -70,12 +206,32 @@ function Panel({
         className="h-auto w-full text-chart-1"
       >
         <line
+          data-bottom=""
           x1={PAD.left}
           x2={WIDTH - PAD.right}
-          y1={BASELINE}
-          y2={BASELINE}
+          y1={BOTTOM}
+          y2={BOTTOM}
           stroke="var(--color-border-subtle)"
         />
+        <line
+          data-zero=""
+          x1={PAD.left}
+          x2={WIDTH - PAD.right}
+          y1={zero}
+          y2={zero}
+          stroke="var(--color-text-tertiary)"
+          strokeWidth={1}
+        />
+        <text
+          data-zero-label=""
+          x={PAD.left - 4}
+          y={zero}
+          textAnchor="end"
+          dominantBaseline="middle"
+          className="fill-text-tertiary font-mono text-caption"
+        >
+          0
+        </text>
         {periods.map((period, index) =>
           index % step === 0 ? (
             <text
@@ -89,40 +245,23 @@ function Panel({
             </text>
           ) : null,
         )}
-        {periods.map((period, index) =>
-          isStated(series.points[index] ?? null) ? null : (
+        {missing.map(({ period }) => {
+          const gx = x(periods.indexOf(period), periods.length);
+          return (
             <line
               key={period}
               data-gap={period}
-              x1={x(index, periods.length)}
-              x2={x(index, periods.length)}
-              y1={BASELINE}
-              y2={BASELINE - 14}
+              x1={gx}
+              x2={gx}
+              y1={BOTTOM}
+              y2={BOTTOM - 14}
               stroke="var(--color-text-tertiary)"
               strokeWidth={2}
               strokeDasharray="2 2"
             />
-          ),
-        )}
-        {dots.length >= LINE_FROM && (
-          <polyline
-            points={dots.map(at).join(" ")}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinejoin="round"
-          />
-        )}
-        {dots.length === 2 && dots[0] && dots[1] && (
-          <line
-            x1={x(dots[0].index, periods.length)}
-            y1={y(dots[0].fact.at)}
-            x2={x(dots[1].index, periods.length)}
-            y2={y(dots[1].fact.at)}
-            stroke="currentColor"
-            strokeWidth={1}
-          />
-        )}
+          );
+        })}
+        <Lines dots={dots} at={at} />
         {dots.map((dot) => (
           <circle
             key={dot.index}
@@ -134,9 +273,13 @@ function Panel({
             fill="currentColor"
           />
         ))}
+        <EndLabels dots={dots} count={periods.length} y={y} />
       </svg>
       {dots.length < LINE_FROM ? (
-        <ul className="m-0 flex list-none flex-wrap gap-x-4 gap-y-1 p-0 font-mono text-small tabular-nums">
+        <ul
+          aria-label="Figures as written"
+          className="m-0 flex list-none flex-wrap gap-x-4 gap-y-1 p-0 font-mono text-small tabular-nums"
+        >
           {dots.map((dot) => (
             <li key={dot.index}>
               <span className="text-text-tertiary">{dot.fact.period}</span>{" "}
@@ -153,7 +296,14 @@ function Panel({
         )
       )}
       {missing.length > 0 && (
-        <p className="m-0 text-caption text-text-tertiary">Not stated: {missing.join(", ")}</p>
+        <ul
+          aria-label="Periods not drawn"
+          className="m-0 grid list-none gap-1 p-0 text-caption text-text-tertiary"
+        >
+          {missing.map((item) => (
+            <li key={item.period}>{`${item.period}: ${item.long}`}</li>
+          ))}
+        </ul>
       )}
     </article>
   );
@@ -164,11 +314,13 @@ function TableView({
   unit,
   periods,
   series,
+  factsFor,
 }: {
   field: Field;
   unit: string;
   periods: readonly string[];
   series: readonly TrendSeries[];
+  factsFor: (run: CoverageRun) => Fact[];
 }) {
   return (
     <details className="rounded-ds-lg border border-border-subtle bg-surface-card p-4">
@@ -201,9 +353,9 @@ function TableView({
                   return (
                     <td
                       key={period}
-                      className={cx("p-2 font-mono", !fact && "text-text-tertiary")}
+                      className={cx("p-2", fact ? "font-mono" : "text-caption text-text-tertiary")}
                     >
-                      {fact ? figure(fact) : "Not stated"}
+                      {fact ? figure(fact) : missingAt(factsFor(item.run), period, unit).short}
                     </td>
                   );
                 })}
@@ -213,6 +365,28 @@ function TableView({
         </table>
       </div>
     </details>
+  );
+}
+
+/** Issuers whose newest run gives no figure in this unit: listed apart, with the truthful reason. */
+function Absent({ rows, unit }: { rows: readonly { issuer: Issuer; reason: string }[]; unit: string }) {
+  if (rows.length === 0) return null;
+  return (
+    <div className="gap-hatch grid gap-2 rounded-ds-lg border border-dashed border-border-gap p-4">
+      <div className="grid gap-2 rounded-ds-sm bg-surface-card p-3">
+        <h3 className="font-semibold text-text-primary">
+          {`No figure to draw: the newest run states none in ${unit || "no unit stated"}`}
+        </h3>
+        <ul className="m-0 grid list-none gap-1 p-0 text-small text-gap-text">
+          {rows.map(({ issuer, reason }) => (
+            <li key={issuer.key}>
+              <span className="font-medium text-text-primary">{issuer.name}</span>
+              {`: ${reason}`}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
   );
 }
 
@@ -239,15 +413,26 @@ export function TrendView({
       </p>
     );
   const { periods, series } = trend(data, issuers, field.id, unit);
-  const y = scaleOf(series);
+  const scale = scaleOf(series);
+  const factsFor = (run: CoverageRun) => factsOf(data, run.key, field.id);
+  const drawn = new Set(series.map((item) => item.run.key));
+  const absent = issuers.flatMap((issuer) => {
+    const run = latestRun(issuer);
+    if (run && drawn.has(run.key)) return [];
+    return [{ issuer, reason: absentReason(run ? factsFor(run) : [], unit) }];
+  });
   return (
     <div className="grid gap-4">
       {units.length > 1 && (
         <div role="group" aria-label="Reporting unit" className="flex flex-wrap gap-2">
           {units.map((item) => (
-            <Chip key={item} pressed={item === unit} onPress={() => {
+            <Chip
+              key={item}
+              pressed={item === unit}
+              onPress={() => {
                 setPicked(item);
-              }}>
+              }}
+            >
               {item || "No unit stated"}
             </Chip>
           ))}
@@ -258,12 +443,31 @@ export function TrendView({
         issuers with different year ends sit at different points. Each figure is as its module
         wrote it; bases can differ between issuers.
       </p>
+      {scale.low && scale.high && (
+        <p className="m-0 text-small text-text-secondary">
+          {`Same scale in every panel: lowest stated figure ${figure(scale.low)}, highest ${figure(scale.high)}`}
+        </p>
+      )}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {series.map((item) => (
-          <Panel key={item.name} series={item} periods={periods} y={y} />
+          <Panel
+            key={item.name}
+            series={item}
+            periods={periods}
+            scale={scale}
+            facts={factsFor(item.run)}
+            unit={unit}
+          />
         ))}
       </div>
-      <TableView field={field} unit={unit} periods={periods} series={series} />
+      <Absent rows={absent} unit={unit} />
+      <TableView
+        field={field}
+        unit={unit}
+        periods={periods}
+        series={series}
+        factsFor={factsFor}
+      />
     </div>
   );
 }

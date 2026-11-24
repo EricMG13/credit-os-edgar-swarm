@@ -3,8 +3,8 @@ import { TextLink } from "../../run/TextLink";
 import { moduleName } from "../api";
 import { evidenceLink, factsOf, latestRun, type Coverage as Data, type Issuer } from "../coverageData";
 import { card, heading } from "../layout";
-import { StageHead, StateCells } from "./Matrix";
-import { named, prose, IN_EVIDENCE, reportPath, RunLine, STATE_WORDS, tableBox } from "./shared";
+import { Scroller, StageHead, StateCells } from "./Matrix";
+import { named, prose, IN_EVIDENCE, reportPath, RunLine, STATE_WORDS } from "./shared";
 
 /** One issuer: every run against the fixed columns, and what its newest run says. */
 export function IssuerDetail({ data, issuer }: { data: Data; issuer: Issuer }) {
@@ -17,18 +17,13 @@ export function IssuerDetail({ data, issuer }: { data: Data; issuer: Issuer }) {
   return (
     <section className={card} aria-label={issuer.name}>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <h2 className={heading}>{issuer.name}</h2>
+        <h3 className={heading}>{issuer.name}</h3>
         {newest && <Button href={reportPath(newest.folder)}>Open newest report</Button>}
       </div>
-      <div className={tableBox}>
+      <Scroller label={`Every run of ${issuer.name}`}>
         <table className="w-full text-small">
           <caption className="sr-only">Every run of {issuer.name}, newest first</caption>
-          <StageHead
-            data={data}
-            lead={[
-              { label: "Run", className: "min-w-56" },
-            ]}
-          />
+          <StageHead data={data} lead="Run" />
           <tbody>
             {issuer.runs.map((run) => (
               <tr key={run.key} className="border-b border-border-hairline last:border-0">
@@ -45,15 +40,15 @@ export function IssuerDetail({ data, issuer }: { data: Data; issuer: Issuer }) {
                     </span>
                   )}
                 </th>
-                <StateCells data={data} cells={run.cells} />
+                <StateCells data={data} run={run} issuer={issuer.name} />
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
+      </Scroller>
       {newest && said.length > 0 && (
         <div className="grid gap-3">
-          <h3 className="font-semibold text-text-primary">Bottom lines of the newest run</h3>
+          <h4 className="font-semibold text-text-primary">Bottom lines of the newest run</h4>
           <ul className="grid gap-4">
             {said.map((fact) => (
               <li key={`${fact.output}-${String(fact.line)}`} className="grid gap-1">

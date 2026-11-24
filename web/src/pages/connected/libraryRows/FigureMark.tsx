@@ -1,8 +1,10 @@
+import type { ReactNode } from "react";
 import { ArrowDown, ArrowUp } from "@untitledui/icons";
 import { Missing } from "@/components/gap/Missing";
 import { cx } from "@/utils/cx";
 import { changeSign, changeText, tone } from "../signal";
 import { withUnit } from "../publishedReport";
+import { DeltaBar } from "../report/overview/marks";
 import { ToneMark } from "../report/ToneMark";
 import { stated } from "../reportView";
 
@@ -10,108 +12,94 @@ type Figure = {
   value?: number | string | null;
   unit?: string | null;
   period?: string | null;
+  basis?: string;
   prior?: { value: string; period: string };
   change?: string;
 };
 
-const MARK_WIDTH = 64;
-const PAD = 6;
+/** A figure's number, or NaN when the text is empty or not a number (an empty text is not zero). */
+const number = (text: string | number) => {
+  const plain = String(text).replaceAll(",", "").trim();
+  return plain === "" ? Number.NaN : Number(plain);
+};
 
-const number = (text: string | number) => Number(String(text).replaceAll(",", ""));
-
-const DOT = {
-  better: "text-success-mark",
-  worse: "text-warning-mark",
-  flat: "text-text-secondary",
-  none: "text-text-secondary",
-} as const;
-
-/**
- * Two points on one short line: the prior value hollow, the current value filled. The line is
- * scaled to the two values alone, so it shows which way and how much of the pair's own span;
- * it carries no number of its own.
- */
-function TwoPoint({
-  prior,
-  current,
-  kind,
-}: {
-  prior: number;
-  current: number;
-  kind: keyof typeof DOT;
-}) {
-  const low = Math.min(prior, current);
-  const span = Math.max(prior, current) - low;
-  const at = (value: number) =>
-    span === 0 ? MARK_WIDTH / 2 : PAD + ((value - low) / span) * (MARK_WIDTH - 2 * PAD);
-  return (
-    <svg
-      aria-hidden="true"
-      width={MARK_WIDTH}
-      height="12"
-      viewBox={`0 0 ${String(MARK_WIDTH)} 12`}
-      className="text-chart-3"
-    >
-      <line x1={at(prior)} x2={at(current)} y1="6" y2="6" stroke="currentColor" strokeWidth="1.5" />
-      <circle
-        cx={at(prior)}
-        cy="6"
-        r="3.25"
-        fill="var(--color-surface-card)"
-        stroke="currentColor"
-        strokeWidth="1.5"
-      />
-      <circle cx={at(current)} cy="6" r="3.75" fill="currentColor" className={DOT[kind]} />
-    </svg>
-  );
+/** The label a figure carries: coverage read as reported EBITDA over cash interest keeps that name. */
+export function figureName(key: string, name: string, figure: Figure | undefined): string {
+  const debtCashInterest =
+    key === "coverage" &&
+    /^LTM reported EBITDA over LTM cash interest for debt(?: [\d.,]+)?(?:;|$)/iu.test(
+      figure?.basis ?? "",
+    );
+  return debtCashInterest ? "Reported EBITDA / cash interest on debt" : name;
 }
 
 /**
- * One headline figure of a library row: the value in mono, a prior → current mark, and the change
- * with its direction word where the owner's table gives the measure one. A figure the catalogue
- * does not state is the gap cell, never zero.
+ * One headline figure of a library row: the value in mono with its period, a bar mark from zero
+ * for the prior and current values, and the change with its direction word where the owner's table
+ * gives the measure one. A figure the catalogue does not quote is the gap cell ("Not shown here",
+ * as the report's own headline tiles say), never zero.
  */
 export function FigureMark({
   name,
   metricKey,
   figure,
   className,
-  children,
+  trace,
 }: {
   name: string;
   metricKey: string;
   figure: Figure | undefined;
   className?: string;
-  /** A line the row adds beneath the figure, as the catalogue wrote it. */
-  children?: React.ReactNode;
+  /** The figure's single source control; drawn at the cell's top right. */
+  trace?: ReactNode;
 }) {
+  const label = figureName(metricKey, name, figure);
+  const head = (
+    <div className="flex min-h-8 items-start justify-between gap-1 xl:absolute xl:top-0 xl:right-0 xl:min-h-0 max-[480px]:min-h-11">
+      <span className="text-caption text-text-tertiary xl:sr-only">{label}</span>
+      {trace}
+    </div>
+  );
   if (!stated(figure))
     return (
-      <div className={cx("flex min-w-0 flex-col gap-1", className)}>
-        <span className="text-caption text-text-tertiary xl:sr-only">{name}</span>
+      <div className={cx("relative flex min-w-0 flex-col gap-1 xl:pr-8", className)}>
+        {head}
         <span className="font-mono text-body">
           <Missing />
         </span>
-        <span className="text-caption text-gap-text">Not supplied</span>
-        {children}
+        <span className="text-caption text-gap-text">Not shown here</span>
       </div>
     );
   const prior = figure.prior;
   const change = prior && figure.change != null ? figure.change : undefined;
   const kind = change === undefined ? "none" : tone(metricKey, change);
   const sign = change === undefined ? null : changeSign(change);
-  const a = prior ? number(prior.value) : Number.NaN;
-  const b = number(figure.value);
+  const before = prior ? number(prior.value) : Number.NaN;
+  const now = number(figure.value);
   return (
-    <div className={cx("flex min-w-0 flex-col gap-1", className)}>
-      <span className="text-caption text-text-tertiary xl:sr-only">{name}</span>
-      <span className="font-mono text-body font-medium text-text-primary tabular-nums wrap-anywhere">
+    <div className={cx("relative flex min-w-0 flex-col gap-1 xl:pr-8", className)}>
+      {head}
+      <span className="font-mono text-body font-medium wrap-anywhere text-text-primary tabular-nums">
         {withUnit(figure.value, figure.unit)}
       </span>
+      {figure.period && <span className="text-caption text-text-secondary">{figure.period}</span>}
       {change !== undefined && prior ? (
         <>
-          {Number.isFinite(a) && Number.isFinite(b) && (
-            <TwoPoint prior={a} current={b} kind={kind} />
+          {Number.isFinite(before) && Number.isFinite(now) && (
+            <DeltaBar
+              from={{
+                label: `${prior.period} (earlier)`,
+                value: before,
+                text: withUnit(prior.value, figure.unit),
+              }}
+              to={{
+                label: `${figure.period ?? "Current"} (current)`,
+                value: now,
+                text: withUnit(figure.value, figure.unit),
+              }}
+              tone={kind}
+              label={`${label}: ${withUnit(prior.value, figure.unit)} in ${prior.period}, ${withUnit(figure.value, figure.unit)} now, drawn from zero`}
+            />
           )}
           <span className="flex min-w-0 flex-wrap items-center gap-x-1 text-caption text-text-secondary tabular-nums">
             {sign === 1 && <ArrowUp aria-hidden className="size-3.5 shrink-0" />}
@@ -124,7 +112,6 @@ export function FigureMark({
       ) : (
         <span className="text-caption text-text-tertiary">No prior period stated</span>
       )}
-      {children}
     </div>
   );
 }

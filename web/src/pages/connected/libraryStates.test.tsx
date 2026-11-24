@@ -130,6 +130,38 @@ describe("a library with a report", () => {
   });
 });
 
+describe("a library address", () => {
+  it("clearing the filters leaves the address's other parameters alone", async () => {
+    window.history.replaceState(null, "", "/?sector=Mining&state=Delivered&ref=mail");
+    serve(ok(FILLED));
+    open();
+    fireEvent.click(await screen.findByRole("button", { name: "Clear filters" }));
+    expect(window.location.search).toBe("?ref=mail");
+  });
+
+  it("says an unpublished run has no report and links nothing for it", async () => {
+    serve(
+      ok({
+        catalogue: { real: [ENTRY] },
+        workspace: { runs: {} },
+      }),
+    );
+    open();
+    const row = within(await screen.findByRole("list", { name: "Issuers" }));
+    expect(row.getByText("No report published")).toBeVisible();
+    expect(row.queryByRole("link", { name: "Open report" })).toBeNull();
+  });
+
+  it("keeps the preview reason on screen above its rows", async () => {
+    serve(ok({ ...FILLED, preview: { reason: "Retained test record." } }));
+    open();
+    expect(await screen.findByText("Retained test record.")).toBeVisible();
+    expect(
+      within(screen.getByRole("list", { name: "Issuers" })).getByText("Test preview"),
+    ).toBeVisible();
+  });
+});
+
 describe("a library that cannot be read", () => {
   it("says so in an alert with an icon and a Try again action, not a plain line", async () => {
     window.history.replaceState(null, "", "/?sector=Food");

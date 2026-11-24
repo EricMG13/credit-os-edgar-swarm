@@ -23,7 +23,7 @@ export function Choice({
         onChange={(event) => {
           onChange(event.currentTarget.value);
         }}
-        className={control}
+        className={`${control} max-[480px]:min-h-11`}
       >
         {children}
       </select>
@@ -31,7 +31,7 @@ export function Choice({
   );
 }
 
-export function fieldName(field: Field, titles: ReadonlyMap<string, string>) {
+function fieldName(field: Field, titles: ReadonlyMap<string, string>) {
   return `${titles.get(field.module) ?? moduleName(field.module)}: ${field.group}, ${field.label}`;
 }
 

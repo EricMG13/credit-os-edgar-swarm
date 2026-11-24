@@ -55,7 +55,7 @@ export function FindView({
       {found.map(({ issuer, run, facts }) => (
         <section key={issuer.key} aria-label={issuer.name} className={`${card} gap-4 sm:p-6`}>
           <div className="grid gap-0.5">
-            <h2 className={heading}>{issuer.name}</h2>
+            <h3 className={heading}>{issuer.name}</h3>
             <RunLine run={run} />
           </div>
           <ul className="grid gap-5">

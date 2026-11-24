@@ -132,16 +132,16 @@ test("a rank shows the figure as written with period and basis, and missing apar
   answer(data);
   window.history.replaceState(null, "", "/coverage?view=rank");
   render(<Coverage />);
-  const table = await screen.findByRole("table");
-  const row = within(table).getByRole("row", { name: /Alpha plc/ });
+  const list = await screen.findByRole("list", { name: /Net debt \/ EBITDA, FY2025/ });
+  const row = within(list).getByRole("listitem");
+  expect(within(row).getByText("Alpha plc")).toBeInTheDocument();
   expect(within(row).getByText("4.6x")).toBeInTheDocument();
-  expect(within(row).getByText("FY2025")).toBeInTheDocument();
-  expect(within(row).getByText("Issuer-adjusted EBITDA.")).toBeInTheDocument();
+  expect(within(row).getByText(/FY2025 · Issuer-adjusted EBITDA\./)).toBeInTheDocument();
   expect(within(row).getByRole("link", { name: "View sources" })).toHaveAttribute(
     "href",
     `/report/alpha-run#evidence/alpha-run%2FCP-1.md~${SHA}-22`,
   );
-  expect(within(table).queryByText(/Beta SA/)).not.toBeInTheDocument();
+  expect(within(list).queryByText(/Beta SA/)).not.toBeInTheDocument();
   expect(
     screen.getByText("Not ranked: no figure for FY2025 in the newest run"),
   ).toBeInTheDocument();
@@ -158,8 +158,8 @@ test("a bound in Rank keeps issuers with no figure listed apart, never ranked", 
   fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
     target: { value: "4" },
   });
-  const table = screen.getByRole("table");
-  expect(within(table).getByText("Alpha plc")).toBeInTheDocument();
+  const list = screen.getByRole("list", { name: /Net debt \/ EBITDA, FY2025/ });
+  expect(within(list).getByText("Alpha plc")).toBeInTheDocument();
   expect(
     screen.getByText("Not ranked: no figure for FY2025 in the newest run"),
   ).toBeInTheDocument();
@@ -167,7 +167,7 @@ test("a bound in Rank keeps issuers with no figure listed apart, never ranked", 
   fireEvent.change(screen.getByRole("textbox", { name: /At least/ }), {
     target: { value: "5" },
   });
-  expect(screen.queryByRole("table")).toBeNull();
+  expect(screen.queryByRole("list", { name: /Net debt \/ EBITDA, FY2025/ })).toBeNull();
   expect(screen.getByText(/Not supplied: cash not stated/)).toBeInTheDocument();
 });
 
@@ -218,8 +218,8 @@ test("module text is drawn by the reader's rule: references stay in Evidence, co
   });
   window.history.replaceState(null, "", "/coverage?view=rank");
   const { container } = render(<Coverage />);
-  expect(await screen.findByText("Qualification recorded in Evidence.")).toBeInTheDocument();
-  expect(screen.getByText("Stated as Net debt / adjusted EBITDA")).toBeInTheDocument();
+  expect(await screen.findByText(/Qualification recorded in Evidence\./)).toBeInTheDocument();
+  expect(screen.getByText(/Stated as Net debt \/ adjusted EBITDA/)).toBeInTheDocument();
   expect(container.textContent).not.toContain("pages 71");
   fireEvent.click(screen.getByRole("button", { name: "Find" }));
   expect(await screen.findByText("Headroom is thin per Legal & covenants.")).toBeInTheDocument();
@@ -244,17 +244,20 @@ test("a sector in the link that no issuer has is shown as unavailable, not hidde
   );
 });
 
-test("an unreadable bound is marked, and the detail closes when its issuer is filtered out", async () => {
+test("the detail closes when its issuer is filtered out, and an unreadable bound is marked in Rank", async () => {
   answer(data);
   render(<Coverage />);
   fireEvent.click(await screen.findByRole("button", { name: "Alpha plc" }));
   expect(screen.getByRole("heading", { name: "Alpha plc" })).toBeInTheDocument();
-  fireEvent.change(screen.getByRole("textbox", { name: /At most/ }), { target: { value: "5x" } });
-  expect(screen.getByRole("textbox", { name: /At most/ })).toBeInvalid();
+  // Bounds read one figure at one period, so only Rank has them.
+  expect(screen.queryByRole("textbox", { name: /At most/ })).not.toBeInTheDocument();
   fireEvent.click(
     within(screen.getByRole("group", { name: "Sector" })).getByRole("button", { name: "Retail" }),
   );
   expect(screen.queryByRole("heading", { name: "Alpha plc" })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Rank" }));
+  fireEvent.change(screen.getByRole("textbox", { name: /At most/ }), { target: { value: "5x" } });
+  expect(screen.getByRole("textbox", { name: /At most/ })).toBeInvalid();
   fireEvent.click(screen.getByRole("button", { name: "Trend" }));
   expect(screen.queryByRole("textbox", { name: /At most/ })).not.toBeInTheDocument();
 });

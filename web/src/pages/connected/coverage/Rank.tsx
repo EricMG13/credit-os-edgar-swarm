@@ -9,8 +9,8 @@ import {
   type Field,
   type Issuer,
 } from "../coverageData";
-import { card, heading } from "../layout";
-import { prose, RunLine, tableBox, th } from "./shared";
+import { card } from "../layout";
+import { prose, RunLine } from "./shared";
 
 function grouped(data: Data, issuers: readonly Issuer[], by: string) {
   const groups = new Map<string, Issuer[]>();
@@ -21,14 +21,16 @@ function grouped(data: Data, issuers: readonly Issuer[], by: string) {
   return [...groups].sort(([a], [b]) => a.localeCompare(b));
 }
 
-/** The figure column grows with its text, where the kit's bar cell fixes it at five rems. */
-const WIDE_TEXT = "[&>span>span:first-child]:w-auto [&>span>span:first-child]:min-w-20";
+/** Every row's figure column is this wide, so the bars share one left edge. */
+const FIGURE_WIDTH = "w-28";
 
 /**
- * One figure across issuers at the chosen period: horizontal bars in the figure's own unit, one
- * list per reporting unit. A bar is the figure over the list's largest magnitude; a negative
- * figure keeps its sign in the written text and takes the signal tone. Issuers with no figure
- * for the period are listed apart with the module's reason, never ranked and never zero.
+ * One figure across issuers at the chosen period, as bars: per row the issuer, the bar and the
+ * figure as written. One list per reporting unit (units are never ranked together); equal figures
+ * share a rank. A bar is the figure over the list's largest, drawn from zero, so bars are drawn
+ * only where every figure in the list is zero or above; a list that mixes signs shows its
+ * figures without bars rather than a bar that hides the sign. Issuers with no figure for the
+ * period are listed apart with the module's reason: never ranked and never zero.
  */
 export function RankView({
   data,
@@ -58,75 +60,71 @@ export function RankView({
         const ranking = rank(data, members, field.id, period, order);
         return (
           <section key={group} className="grid gap-3" aria-label={group || "Ranking"}>
-            {group && <h2 className={heading}>{group}</h2>}
+            {group && <h3 className="font-display text-h4 text-text-primary">{group}</h3>}
             {ranking.units.map(({ unit, rows }) => {
-              const largest = Math.max(...rows.map(({ fact }) => Math.abs(fact.at ?? 0)));
+              const values = rows.map(({ fact }) => fact.at ?? 0);
+              const bars = values.every((value) => value >= 0);
+              const largest = Math.max(...values);
+              const name = `${field.label}, ${period}${unit ? `, reporting unit ${unit}` : ""}${order === "high" ? ", highest first" : ", lowest first"}`;
               return (
-                <div key={unit} className={tableBox}>
-                  <table className="w-full text-small">
-                    <caption className="p-3 text-left text-text-secondary">
-                      {field.label}, {period}
-                      {unit ? `, reporting unit ${unit}` : ""}
-                      {order === "high" ? ", highest first" : ", lowest first"}
-                    </caption>
-                    <thead>
-                      <tr className="border-b border-border-hairline">
-                        <th className={th}>Rank</th>
-                        <th className={th}>Issuer</th>
-                        <th className={th}>{field.label}</th>
-                        <th className={th}>Period</th>
-                        <th className={th}>Basis and limitation</th>
-                        <th className={th}>Sources</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map(({ issuer, run, fact }) => (
-                        <tr
-                          key={issuer.key}
-                          className="border-b border-border-hairline align-top last:border-0"
-                        >
-                          <td className="p-3 font-mono tabular-nums">
+                <div key={unit} className="grid gap-2">
+                  <p className="text-small text-text-secondary">{name}</p>
+                  {!bars && (
+                    <p className="text-caption text-gap-text">
+                      This list mixes positive and negative figures, so no bars are drawn; the
+                      figures are as written.
+                    </p>
+                  )}
+                  <ol
+                    aria-label={name}
+                    className="grid divide-y divide-border-hairline rounded-ds-lg border border-border-subtle bg-surface-card"
+                  >
+                    {rows.map(({ issuer, run, fact }) => (
+                      <li
+                        key={issuer.key}
+                        className="grid gap-x-4 gap-y-2 p-4 sm:grid-cols-[2rem_minmax(12rem,20rem)_minmax(0,1fr)_auto] sm:items-center"
+                      >
+                        <div className="flex items-baseline gap-3 sm:contents">
+                          <span className="font-mono text-small text-text-tertiary tabular-nums">
                             {rows.findIndex((other) => other.fact.at === fact.at) + 1}
-                          </td>
-                          <th scope="row" className="min-w-48 p-3 text-left font-semibold wrap-anywhere">
-                            {issuer.name}
-                            <br />
+                          </span>
+                          <div className="grid min-w-0 gap-0.5 wrap-anywhere">
+                            <span className="font-semibold text-text-primary">{issuer.name}</span>
                             <RunLine run={run} />
-                          </th>
-                          <td className="min-w-64 p-3">
-                            <div className={WIDE_TEXT}>
-                              <BarCell
-                                text={figure(fact)}
-                                share={largest === 0 ? 0 : Math.abs(fact.at ?? 0) / largest}
-                                tone={(fact.at ?? 0) < 0 ? "signal" : "primary"}
-                              />
-                            </div>
-                            {fact.heading && (
-                              <span className="mt-1 block text-caption text-text-secondary">
-                                Stated as {fact.heading}
-                              </span>
-                            )}
-                          </td>
-                          <td className="p-3">{fact.period ?? fact.row ?? "Not stated"}</td>
-                          <td className="max-w-md p-3 wrap-anywhere">
-                            {prose(fact.basis) ?? "Qualification recorded in Evidence."}
-                          </td>
-                          <td className="p-3">
-                            <TextLink href={evidenceLink(run, fact)}>View sources</TextLink>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          </div>
+                        </div>
+                        {bars ? (
+                          <BarCell
+                            text={figure(fact)}
+                            share={largest === 0 ? 0 : (fact.at ?? 0) / largest}
+                            valueWidth={FIGURE_WIDTH}
+                          />
+                        ) : (
+                          <span className="font-mono text-small text-text-primary tabular-nums">
+                            {figure(fact)}
+                          </span>
+                        )}
+                        <TextLink href={evidenceLink(run, fact)} grey className="text-small font-normal">
+                          View sources
+                        </TextLink>
+                        <p className="text-caption text-text-secondary wrap-anywhere sm:col-span-4 sm:col-start-2">
+                          {fact.period ?? fact.row ?? "Period not stated"}
+                          {fact.heading ? ` · Stated as ${fact.heading}` : ""}
+                          {" · "}
+                          {prose(fact.basis) ?? "Qualification recorded in Evidence."}
+                        </p>
+                      </li>
+                    ))}
+                  </ol>
                 </div>
               );
             })}
             {ranking.missing.length > 0 && (
               <div className="gap-hatch grid gap-2 rounded-ds-lg border border-dashed border-border-gap p-4">
                 <div className="grid gap-2 rounded-ds-sm bg-surface-card p-3">
-                  <h3 className="font-semibold text-text-primary">
+                  <h4 className="font-semibold text-text-primary">
                     Not ranked: no figure for {period} in the newest run
-                  </h3>
+                  </h4>
                   <ul className="grid gap-1 text-small text-gap-text">
                     {ranking.missing.map(({ issuer, fact, stated, repeated }) => (
                       <li key={issuer.key}>

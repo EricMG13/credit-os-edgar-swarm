@@ -1,39 +1,60 @@
 import { useEffect, useState } from "react";
-import { getSnapshot, outputEntries, type Snapshot } from "../publishedReport";
+import { outputEntries, type Snapshot } from "../publishedReport";
 import { buildCalendar, upcomingCalendarRows } from "../report/Calendar";
+import type { LoadSnapshot } from "./rowSnapshot";
 
-export type NextEvent = { date: string; name: string; href: string };
+export type NextEvent = {
+  /** The date as the module wrote it. */
+  date: string;
+  name: string;
+  /** The event's status as written, such as "Scheduled — Contract"; empty when none. */
+  status: string;
+  /** The recorded period holds the as-of date, so the exact date is unresolved. */
+  withinRecordedPeriod: boolean;
+  href: string;
+};
 
 /**
- * The first dated event after the run's as-of date, by the Calendar's own reader: the date as the
- * module wrote it, the event name as the Calendar draws it, and the row's evidence link. Nothing
- * when the run states no upcoming event or no as-of date.
+ * The first dated event after the run's as-of date, by the Calendar's own reader. "none" only when
+ * the Calendar read every event table and none is upcoming; "unknown" when it could not say: no
+ * readable as-of date, the report is not in the snapshot, or event rows could not be read or placed.
  */
 export function nextDatedEvent(snapshot: Snapshot, folder: string): NextEvent | "none" | "unknown" {
   const found = Object.entries(snapshot.workspace.runs).find(([, run]) => run.folder === folder);
   if (!found) return "unknown";
   const [routeKey, run] = found;
-  const { rows } = buildCalendar(outputEntries(snapshot, run, routeKey), folder);
-  // Without a readable as-of date nothing can be called upcoming: that is not "no event".
+  const { rows, gaps } = buildCalendar(outputEntries(snapshot, run, routeKey), folder);
   const upcoming = upcomingCalendarRows(rows, run.asOf);
   if (upcoming === null) return "unknown";
   const first = upcoming[0];
   const date = first?.cells[0];
   const name = first?.cells[3];
-  return first && date && name ? { date, name, href: first.href } : "none";
+  if (first && date && name)
+    return {
+      date,
+      name,
+      status: first.cells[4] ?? "",
+      withinRecordedPeriod: first.timingWithinRecordedPeriod,
+      href: first.href,
+    };
+  return gaps.length > 0 ? "unknown" : "none";
 }
 
 export type NextEventState =
   | { status: "idle" | "loading" | "none" | "unknown" | "failed" }
   | { status: "found"; event: NextEvent };
 
-/** The run's next dated event, read from its scoped report once `enabled` (the row is opened). */
-export function useNextEvent(folder: string | undefined, enabled: boolean): NextEventState {
+/** The run's next dated event, read once the row has been opened (`enabled`) and kept after. */
+export function useNextEvent(
+  folder: string | undefined,
+  enabled: boolean,
+  load: LoadSnapshot,
+): NextEventState {
   const [state, setState] = useState<{ folder: string; value: NextEventState } | null>(null);
   useEffect(() => {
     if (!enabled || !folder) return;
-    const controller = new AbortController();
-    void getSnapshot(controller.signal, folder)
+    let current = true;
+    void load(folder)
       .then((snapshot) => {
         const event = snapshot ? nextDatedEvent(snapshot, folder) : "unknown";
         return typeof event === "string"
@@ -42,12 +63,12 @@ export function useNextEvent(folder: string | undefined, enabled: boolean): Next
       })
       .catch(() => ({ status: "failed" }) as const)
       .then((value) => {
-        if (!controller.signal.aborted) setState({ folder, value });
+        if (current) setState({ folder, value });
       });
     return () => {
-      controller.abort();
+      current = false;
     };
-  }, [folder, enabled]);
+  }, [folder, enabled, load]);
   if (!enabled || !folder) return { status: "idle" };
   return state?.folder === folder ? state.value : { status: "loading" };
 }

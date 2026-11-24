@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { FileSearch02 } from "@untitledui/icons";
 import type { Trace } from "@/pages/library/slice";
-import { TraceButton } from "@/pages/library/parts/TraceControl";
 import { TraceDrawer } from "@/pages/library/parts/TraceDrawer";
 import {
   evidenceHref,
-  getSnapshot,
   outputEntries,
   resolveEvidenceLocation,
   type CatalogueRun,
@@ -12,6 +11,7 @@ import {
 } from "../publishedReport";
 import { headlineSources } from "../reportView";
 import { traceForLine } from "../ReportContent";
+import type { LoadSnapshot } from "./rowSnapshot";
 
 function metricIdentity(metric: CatalogueRun["metrics"][string] | undefined) {
   const { value = null, unit = null, period = null } = metric ?? {};
@@ -37,9 +37,9 @@ function resolveFigureSource(snapshot: Snapshot, catalogue: CatalogueRun, key: s
   return source ? { entries, source, folder: run.folder } : null;
 }
 
-/** The handoff row a library figure is read from, loaded from the run's own report when asked. */
-export async function figureSource(catalogue: CatalogueRun, key: string, signal: AbortSignal) {
-  const snapshot = await getSnapshot(signal, catalogue.id);
+/** The handoff row a library figure is read from, in the run's own report (read once per row). */
+async function figureSource(catalogue: CatalogueRun, key: string, load: LoadSnapshot) {
+  const snapshot = await load(catalogue.id);
   if (!snapshot) return null;
   if (
     metricIdentity(catalogueMetric(snapshot, catalogue.id, key)) !==
@@ -74,7 +74,7 @@ const NOT_LOADED = "Sources for this figure could not be loaded. Try its source 
  * One trace lookup for a run's row figures. `button(key, name)` is the figure's single source
  * control; `notes` draws the loading or failure sentence and the drawer once for the row.
  */
-export function useFigureTrace(catalogue: CatalogueRun) {
+export function useFigureTrace(catalogue: CatalogueRun, load: LoadSnapshot) {
   const scope = `${catalogue.id}:${JSON.stringify(catalogue.metrics)}`;
   const [lookup, setLookup] = useState<Lookup | null>(null);
   const controller = useRef<AbortController | null>(null);
@@ -91,23 +91,28 @@ export function useFigureTrace(catalogue: CatalogueRun) {
       controller.current = own;
       setLookup({ scope, key, name });
       try {
-        const found = await figureSource(catalogue, key, own.signal);
+        const found = await figureSource(catalogue, key, load);
         if (own.signal.aborted) return;
         setLookup(found ? { scope, ...found } : { scope, error: NO_ROW });
       } catch {
         if (!own.signal.aborted) setLookup({ scope, error: NOT_LOADED });
       }
     },
-    [catalogue, scope],
+    [catalogue, scope, load],
   );
   const active = lookup?.scope === scope ? lookup : null;
   const button = (key: string, name: string, owner: string) => (
-    <TraceButton
-      label={`Show sources for ${name}, ${owner}`}
-      open={() => {
+    <button
+      type="button"
+      aria-label={`Show sources for ${name}, ${owner}`}
+      title="Show sources"
+      onClick={() => {
         void request(key, name);
       }}
-    />
+      className="flex size-8 flex-none cursor-pointer items-center justify-center rounded-ds-sm border border-transparent text-text-tertiary outline-focus-ring hover:border-border-control hover:bg-action-subtle hover:text-action focus-visible:outline-2 focus-visible:outline-offset-2 max-[480px]:size-11"
+    >
+      <FileSearch02 aria-hidden="true" className="size-4" />
+    </button>
   );
   const notes = (
     <>

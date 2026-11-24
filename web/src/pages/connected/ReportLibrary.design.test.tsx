@@ -144,7 +144,7 @@ describe("connected library and report design", () => {
     expect(screen.getByText("Finished")).toBeInTheDocument();
   });
 
-  it("lays the metric tiles out in an auto-fit grid and keeps each value on one line", async () => {
+  it("draws the figures the row does not show as one stats strip with the value in mono", async () => {
     const snapshot = librarySnapshot() as unknown as Snapshot;
     const [north] = snapshot.catalogue.real;
     if (!north) throw new Error("Northbridge fixture is missing");
@@ -154,11 +154,11 @@ describe("connected library and report design", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: /Show runs and detail for Northbridge/ }),
     );
-    const value = await screen.findByText("US$965m", { selector: "div" });
-    expect(value).toHaveClass("whitespace-nowrap");
-    const grid = value.closest("dl");
-    expect(grid).toHaveClass("grid-cols-[repeat(auto-fit,minmax(9rem,1fr))]");
-    expect(grid).not.toHaveClass("xl:grid-cols-5");
+    const value = await screen.findByText("US$965m", { selector: "span" });
+    expect(value).toHaveClass("font-mono", "tabular-nums");
+    const strip = value.closest("dl");
+    expect(strip).toHaveAccessibleName("More figures, Northbridge");
+    expect(within(strip as HTMLElement).getByText("Gross leverage, 2026-06-30")).toBeVisible();
   });
 
   it("keeps repeated issuer searches usable after other filters change", async () => {

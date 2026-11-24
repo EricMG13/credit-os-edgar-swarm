@@ -68,6 +68,8 @@ it("is the earliest upcoming dated event with its date as written and its eviden
   expect(found).toEqual({
     date: "2026-09-15",
     name: "Notes call date",
+    status: "Scheduled — Contract",
+    withinRecordedPeriod: false,
     href: `/report/acme-run#evidence/acme-run%2Fliquidity~${SHA}-23`,
   });
 });
@@ -85,4 +87,32 @@ it("is unknown, not none, for a run with no as-of date", () => {
 
 it("is unknown when the report is not in the snapshot", () => {
   expect(nextDatedEvent(snapshot([row("2028-06-30", "Term loan due")]), "other")).toBe("unknown");
+});
+
+it("keeps the event's status and says when its recorded period holds the as-of date", () => {
+  const found = nextDatedEvent(
+    snapshot([
+      [
+        "2026-Q1",
+        "quarter",
+        "2026-01-01",
+        "Quarter-end test",
+        "Scheduled — Contract",
+        "x",
+        "Refinancing",
+      ],
+    ]),
+    "acme-run",
+  );
+  expect(found).toMatchObject({
+    date: "2026-Q1",
+    status: "Scheduled — Contract",
+    withinRecordedPeriod: true,
+  });
+});
+
+it("is unknown, not none, when an event row could not be placed on the calendar", () => {
+  expect(nextDatedEvent(snapshot([row("mid-2027", "Refinancing window")]), "acme-run")).toBe(
+    "unknown",
+  );
 });

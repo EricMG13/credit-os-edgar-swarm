@@ -9,7 +9,7 @@ import { PageHeader } from "../../shell/PageHeader";
 import { card } from "./layout";
 import { getLibraryIndex, type LibraryIndex } from "./publishedReport";
 import { isUnreachable } from "./useResource";
-import { ChipGroup } from "./libraryRows/Chips";
+import { ChipGroup } from "@/components/kit/Chip";
 import { groupIssuers, matchesQuery, RUN_STATES } from "./libraryRows/group";
 import { IssuerRow, ROW_COLUMNS } from "./libraryRows/IssuerRow";
 
@@ -66,7 +66,7 @@ function MatchRuns({
           onChange={(event) => {
             choose({ query: event.currentTarget.value });
           }}
-          className="h-10 w-full rounded-ds-md border border-border-hairline bg-surface-canvas pr-3 pl-9 text-body text-text-primary placeholder:text-text-tertiary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          className="h-10 w-full rounded-ds-md border border-border-hairline bg-surface-canvas pr-3 pl-9 text-body text-text-primary placeholder:text-text-tertiary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus max-[480px]:min-h-11"
         />
       </label>
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
@@ -122,6 +122,7 @@ function MatchRuns({
             <span>Run</span>
             <span>Next event</span>
           </div>
+          <h2 className="sr-only">Issuers</h2>
           <ul aria-label="Issuers" className="grid gap-2">
             {rows.map((group) => (
               <IssuerRow key={group.key} group={group} />
@@ -242,10 +243,19 @@ export function ReportLibrary({ readOnly = false }: { readOnly?: boolean }) {
           </Alert>
         )}
         {value === undefined && !problem && (
-          <div role="status" aria-label="Loading reports" className="grid gap-4 lg:grid-cols-2">
-            {[0, 1].map((key) => (
-              <div className={card} key={key}>
-                <Skeleton lines={5} />
+          <div role="status" aria-label="Loading reports" className="grid gap-2">
+            {[0, 1, 2].map((key) => (
+              <div
+                key={key}
+                className="grid gap-4 rounded-ds-lg border border-border-subtle bg-surface-card p-4 sm:p-5 xl:grid-cols-[minmax(15rem,1.6fr)_8rem_repeat(3,minmax(8rem,1fr))_minmax(10rem,1.1fr)_minmax(9.5rem,1fr)]"
+              >
+                <Skeleton lines={3} />
+                <div className="h-6 rounded-ds-xs bg-surface-subtle" />
+                {[0, 1, 2].map((cell) => (
+                  <div key={cell} className="h-16 rounded-ds-sm bg-surface-subtle" />
+                ))}
+                <div className="h-6 rounded-ds-xs bg-surface-subtle" />
+                <div className="h-6 rounded-ds-xs bg-surface-subtle" />
               </div>
             ))}
           </div>

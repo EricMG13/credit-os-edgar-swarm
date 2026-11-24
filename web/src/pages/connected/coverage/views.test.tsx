@@ -99,34 +99,84 @@ it("groups the module columns under the five stages and draws each state as a sh
   expect(within(beta).getByText("Not asked for in this run")).toBeVisible();
 });
 
-it("ranks bars in one unit, apart from another unit, and lists a stated gap without a bar", () => {
-  const { container } = render(
+const rankOf = (facts: Fact[], order: "high" | "low" = "high") =>
+  render(
     <RankView
-      data={data}
+      data={{ ...data, facts }}
       issuers={[...data.issuers]}
       field={data.fields[0]}
       period="FY2025"
-      order="high"
+      order={order}
       by="none"
     />,
   );
-  const tables = screen.getAllByRole("table");
-  expect(tables).toHaveLength(2);
-  const ex = tables.find((table) => table.textContent.includes("Alpha plc"));
-  if (!ex) throw new Error("missing x table");
-  const rows = within(ex).getAllByRole("row").slice(1);
-  expect(rows.map((row) => within(row).getAllByRole("rowheader")[0]?.textContent)).toEqual([
+
+it("ranks bars from zero in one unit, apart from another unit, and lists a stated gap without a bar", () => {
+  const { container } = rankOf([
+    fact("a", { text: "4.0", at: 4 }),
+    fact("b", { text: "2.0", at: 2 }),
+    fact("c", { text: "Not supplied: no cash", at: null, gap: true }),
+    fact("d", { text: "1.0", at: 1, unit: "%" }),
+  ]);
+  const lists = screen.getAllByRole("list").filter((list) => list.tagName === "OL");
+  expect(lists).toHaveLength(2);
+  const ex = lists.find((list) => list.textContent.includes("Alpha plc"));
+  if (!ex) throw new Error("missing x list");
+  const rows = within(ex).getAllByRole("listitem");
+  expect(rows.map((row) => row.textContent)).toEqual([
     expect.stringContaining("Alpha plc"),
     expect.stringContaining("Beta SA"),
   ]);
-  const widths = rows.map((row) => row.querySelector<HTMLElement>("[style]")?.style.width);
-  expect(widths).toEqual(["100%", "50%"]);
-  expect(within(rows[1] as HTMLElement).getByText("-2.0x")).toBeVisible();
+  expect(rows.map((row) => row.querySelector<HTMLElement>("[style]")?.style.width)).toEqual([
+    "100%",
+    "50%",
+  ]);
+  // One left edge: every row's figure column has the same width class.
+  expect(rows.map((row) => row.querySelector(".w-28")?.textContent)).toEqual(["4.0x", "2.0x"]);
   expect(within(ex).queryByText(/Gamma AG/)).toBeNull();
-  const apart = screen.getByRole("heading", { name: "Not ranked: no figure for FY2025 in the newest run" });
+  const apart = screen.getByRole("heading", {
+    name: "Not ranked: no figure for FY2025 in the newest run",
+  });
   expect(apart.closest("div")?.textContent).toContain("Gamma AG: Not supplied: no cash");
   expect(apart.closest("div")?.querySelector("[style]")).toBeNull();
   expect(container.textContent).not.toContain("CP-1");
+});
+
+it("draws no bars for a list that mixes signs and writes the figures as they are", () => {
+  const { container } = rankOf([fact("a", { text: "4.0", at: 4 }), fact("b", { text: "-2.0", at: -2 })]);
+  expect(container.querySelector("[style]")).toBeNull();
+  expect(screen.getByText("-2.0x")).toBeVisible();
+  expect(screen.getByText(/mixes positive and negative figures/)).toBeVisible();
+  const rows = within(screen.getByRole("list", { name: /FY2025/ })).getAllByRole("listitem");
+  expect(rows[0]?.textContent).toContain("Alpha plc");
+});
+
+it("gives equal figures one rank", () => {
+  rankOf([fact("a", { text: "3.0", at: 3 }), fact("b", { text: "3.0", at: 3 }), fact("c", { text: "1.0", at: 1 })]);
+  const rows = within(screen.getByRole("list", { name: /FY2025/ })).getAllByRole("listitem");
+  expect(rows.map((row) => row.textContent.slice(0, 1))).toEqual(["1", "1", "3"]);
+});
+
+it("states each not-assessable module as a dashed blocked chip with a link to the module's page", () => {
+  render(
+    <Matrix
+      data={data}
+      issuers={[data.issuers[0] as Issuer]}
+      chosen={new Set()}
+      toggle={() => undefined}
+      open={null}
+      setOpen={() => undefined}
+    />,
+  );
+  const word = screen.getByText("Not assessable");
+  expect(word.parentElement).toHaveClass("border-dashed");
+  expect(screen.getByRole("link", { name: "Legal & covenants for Alpha plc" })).toHaveAttribute(
+    "href",
+    "/report/a1-run#modules/CP-4",
+  );
+  expect(screen.queryByRole("link", { name: /Committee decision/ })).toBeNull();
+  expect(screen.getByRole("region", { name: "Issuers by module" })).toHaveAttribute("tabindex", "0");
+  expect(screen.getByRole("columnheader", { name: "Issuer" })).toHaveClass("sticky");
 });
 
 it("groups found passages by issuer, one section each, with a sources link per passage", () => {

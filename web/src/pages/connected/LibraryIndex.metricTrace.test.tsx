@@ -123,7 +123,6 @@ it("qualifies retained coverage and keeps the preview reason visible with the ro
   snapshot.preview = { reason: "Retained test record." };
   vi.stubGlobal("fetch", () => Promise.resolve(Response.json(snapshot)));
   render(<ReportLibrary readOnly />);
-  fireEvent.click(await screen.findByRole("button", { name: /Show runs and detail for Acme/ }));
   await screen.findByText("Reported EBITDA / cash interest on debt");
   const issuers = within(screen.getByRole("list", { name: "Issuers" }));
   expect(issuers.queryByText("Delivered")).toBeNull();
@@ -132,25 +131,25 @@ it("qualifies retained coverage and keeps the preview reason visible with the ro
   expect(screen.getByText("Retained test record.")).toBeVisible();
 });
 
-it("J4-001 loads a scoped snapshot only when a row is opened or a figure is traced, and opens its exact row", async () => {
+it("J4-001 loads a scoped snapshot only when a row is opened or a figure is traced, reads it once, and opens its exact row", async () => {
   const snapshot = fixture();
   const fetch = serve(snapshot, () => Response.json(snapshot));
   render(<ReportLibrary />);
   await screen.findByRole("heading", { name: "Acme" });
   expect(fetch.mock.calls.map(([url]) => url)).toEqual(["/connected/library"]);
   fireEvent.click(screen.getByRole("button", { name: /Show runs and detail for Acme/ }));
-  await screen.findByText("The report states no upcoming dated event.");
+  await screen.findByText(/The report states no upcoming dated event\./);
   expect(fetch.mock.calls.map(([url]) => url)).toEqual([
     "/connected/library",
     "/connected/snapshot?run=current",
   ]);
-  fireEvent.click(screen.getByRole("button", { name: "Show sources for Revenue" }));
+  fireEvent.click(screen.getByRole("button", { name: "Show sources for Revenue, Acme" }));
   const drawer = await screen.findByRole("dialog", {
     name: "Sources for Chart data: revenue and EBITDA",
   });
+  // One scoped request served the dates and the trace.
   expect(fetch.mock.calls.map(([url]) => url)).toEqual([
     "/connected/library",
-    "/connected/snapshot?run=current",
     "/connected/snapshot?run=current",
   ]);
   expect(drawer).toHaveTextContent("Original filing page 2");
@@ -171,7 +170,7 @@ it("J4-001 states a missing source instead of linking a same-valued figure in an
   render(<ReportLibrary />);
   await screen.findByRole("heading", { name: "Acme" });
   fireEvent.click(screen.getByRole("button", { name: /Show runs and detail for Acme/ }));
-  fireEvent.click(screen.getByRole("button", { name: "Show sources for Revenue" }));
+  fireEvent.click(screen.getByRole("button", { name: "Show sources for Revenue, Acme" }));
   expect(
     await screen.findByText(
       "The original source row for this figure is not available in this run’s published record.",
@@ -187,7 +186,7 @@ it("J4-001 offers an honest source-load failure without drawing a trace", async 
   render(<ReportLibrary />);
   await screen.findByRole("heading", { name: "Acme" });
   fireEvent.click(screen.getByRole("button", { name: /Show runs and detail for Acme/ }));
-  fireEvent.click(screen.getByRole("button", { name: "Show sources for Revenue" }));
+  fireEvent.click(screen.getByRole("button", { name: "Show sources for Revenue, Acme" }));
   expect(
     await screen.findByText(
       "Sources for this figure could not be loaded. Try its source control again.",

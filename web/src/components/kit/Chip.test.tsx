@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { ChipGroup } from "./Chips";
+import { ChipGroup, RemovableChip } from "./Chip";
 
 afterEach(cleanup);
 
@@ -37,4 +37,11 @@ it("pressing the chosen chip again returns to All", () => {
   render(<ChipGroup label="Sector" choices={["Food"]} value="Food" onChange={onChange} />);
   fireEvent.click(screen.getByRole("button", { name: "Food" }));
   expect(onChange).toHaveBeenCalledWith("all");
+});
+
+it("draws a removable chip named for the filter it removes", () => {
+  const onRemove = vi.fn();
+  render(<RemovableChip onRemove={onRemove}>Module: Legal</RemovableChip>);
+  fireEvent.click(screen.getByRole("button", { name: "Remove filter Module: Legal" }));
+  expect(onRemove).toHaveBeenCalledTimes(1);
 });

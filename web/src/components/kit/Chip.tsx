@@ -1,3 +1,4 @@
+import { XClose } from "@untitledui/icons";
 import { cx } from "@/utils/cx";
 
 const CHIP =
@@ -85,5 +86,20 @@ export function ChipGroup({
         </Chip>
       ))}
     </div>
+  );
+}
+
+/** A chip that stands for a filter in force and removes it when pressed. */
+export function RemovableChip({ onRemove, children }: { onRemove: () => void; children: string }) {
+  return (
+    <button
+      type="button"
+      aria-label={`Remove filter ${children}`}
+      className={cx(CHIP, ON, "gap-1.5")}
+      onClick={onRemove}
+    >
+      {children}
+      <XClose aria-hidden className="size-3.5" />
+    </button>
   );
 }

@@ -145,3 +145,15 @@ no measure-specific meaning is claimed); Trend panels carry no per-panel sources
 Find views, and the Library, carry them; the ruling's "a fact opens its run's report" is met there);
 the row's undrawn line has no trace of its own (it is drawn under cash; its source is in the opened
 row's headline figures); the next event's date is not in the collapsed row (see Requests 2).
+
+## Round 2: coordinator review (26 items)
+
+Fixed on the same branch, tests first; see the coordinator report for each number. Decisions worth
+keeping here: the Rank bounds ("At least", "At most") live with the figure and period on the Rank view
+only, because a bound reads one figure at one period and Modules/Find/Trend do not show either; the
+Filters disclosure holds module, module state, confidence, compare and save-a-group, with saved
+groups still shown as chips above the views. A Rank list that mixes signs draws no bars. The
+Library's row reads its report once (shared by the dates and any figure trace) and keeps the
+answer. `web/scripts/connected-proof.mjs` is unchanged: the collapsed row keeps an exact "Open report"
+link for the newest published run. Kit additions: `valueWidth` on `BarCell` (default unchanged) and
+`components/kit/Chip.tsx` (Chip, ChipGroup, RemovableChip), each with a test.
