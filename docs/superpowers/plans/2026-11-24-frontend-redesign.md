@@ -165,3 +165,20 @@ this one lands; until then their places show the gap state.
 | Synthetic text hides layout problems with real sentences | Tests on the retained TransDigm fixtures; reviewers check long text and wrapping |
 | A session rebuilds on the old layout | Review item; the spec must list blocks from the screen map, not from the old page |
 | Start run regresses | Xhigh effort, request-body tests kept, reviewer assigned only to that |
+
+## Sessions (launched 2026-11-24)
+
+Coordinator: `session_01EB6ycPxKRUz49po8T6WMyS`, branch `claude/exciting-albattani-v1zoug`.
+
+| Id | Session | Branch |
+|---|---|---|
+| S1 | `session_01EB6ycR3VFeZsHNwPEvh7nA` | `claude/redesign-s1-overview` |
+| S2 | `session_01EB6ycQUfYfHKjGRF2tKdZ8` | `claude/redesign-s2-module-frame` |
+| S3 | `session_01EB6ycP8kCiqs7rNQv6KwEC` | `claude/redesign-s3-leads-a` |
+| S4 | `session_01EB6ycPBYdDv9SZUBw7Jo2j` | `claude/redesign-s4-leads-b` |
+| S5 | `session_01EB6ycQCe8XxBS2gjFigNsm` | `claude/redesign-s5-forecast` |
+| S6 | `session_01EB6ycRZbVLZBJgiCyqfuxa` | `claude/redesign-s6-changes-calendar` |
+| S7 | `session_01EB6ycTLXz8UohKUYgF2ewq` | `claude/redesign-s7-evidence` |
+| S8 | `session_01EB6ycP6P5K1yaBQpSXRf9K` | `claude/redesign-s8-library-coverage` |
+| S9 | `session_01EB6ycQcudmWEUV4y5xjsRW` | `claude/redesign-s9-start-run` |
+| S10 | `session_01EB6ycPNYufzfhRnFDveY6V` | `claude/redesign-s10-run` |
