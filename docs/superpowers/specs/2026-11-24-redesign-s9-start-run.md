@@ -307,4 +307,97 @@ order (three blocks, consent and Submit last), and 390 px layout classes where t
 
 ## 9. Verification
 
-Filled in during phase 2.
+Phase 2, 2026-11-24, branch `claude/redesign-s9-start-run`. Synthetic mode only; no provider was
+called and no paid run was made.
+
+### What is sent: unchanged
+
+- **jsdom goldens** (`web/src/pages/connected/start/requests.golden.test.tsx`, files
+  `start/requests.golden/*.txt`): five drives recorded from the form before any change (commit
+  02d4049) and never rewritten: the Northbridge drive (three files, a note, workbook, agreement,
+  a rating); a paid Deep run at Advanced with a module left out, another model, effort and turns;
+  an Earnings Update with periods, a removed file and a step back; a run carried from an earlier
+  one; an uncertain Submit and its retry. Each records path, method, headers (`Content-Type`,
+  `X-Shown-Cap`) and the exact body string of every request in order. Mutation check: changing
+  one sent value (`max_turns` 32 → 33) fails four of the five. Green after every commit.
+- **Real drive** (`2026-11-24-redesign-s9-start-run/capture-requests.cjs` against `proof.serve`
+  on a fresh root): the same 13 requests and bodies as `golden-requests.json`, compared with
+  `diff` after the split, after the frame and rail, after the review rebuild and on the final
+  build; the stored upload bytes hash to the proof files.
+- **Independent review** (Opus, given the code and the rules): every named declaration of the
+  old `StartRun.tsx` compared with the split, parsed with the TypeScript compiler: identical
+  except three type annotations; after the split `StartRun.tsx` and `intake.ts` changed only by
+  the display-only last review. It found no change to what is sent and none to the gating.
+
+### Checks run
+
+| Check | Result |
+|---|---|
+| `npx tsc --noEmit` | pass |
+| `npx eslint --max-warnings=0` on `connected/start`, `StartRun.tsx`, `run/start` | pass. Repo-wide `npm run lint` has one error, in `report/stages.ts:19`, a file unchanged from the base commit and not in this package |
+| `npm run format:check` (repo) | pass |
+| `npx vitest run` ConnectedApp, `connected/start`, `run/start`, `styles` | 29 files, 688 tests pass (599 run-start tests before; none removed) |
+| `npx vitest run` App tests, `pages/library`, `pages/run`, `styles` | 77 files, 1,465 tests pass |
+| `npm run unused` (knip) | only `LeadProps` in `report/leads/types.ts` (coordinator's, pre-existing); `Bento` is now used |
+| `npm run duplication` | pass (2.48 %, threshold 3) |
+| `npm run build` | pass |
+| Class coverage (`scripts/classes.mjs` on the build) | 0 problems |
+| `uv run python tools/quality_gate.py` | 0 findings (no Python changed) |
+| `web/scripts/connected-proof.mjs`, full | pass on the preinstalled Chromium, with only its browser list changed in a throwaway copy (branded Chrome and Edge are not installed here); this covers the rail beside the form, the 390 px drop zone, the stepper, the paid dialog and the shown caps `["25", "25"]` |
+| `docs/design/preview/drive-synthetic-run.cjs` steps | the same steps run inside `capture-requests.cjs` and `shoot-steps.cjs`; pass |
+
+Not run: `npm run test` with coverage over all of `web/`, `npm audit`, `npm run test:scripts`,
+`npm run test:file:gates`, the proof on branded Chrome and Edge.
+
+### Tests rewritten (layout only) and added
+
+Rewritten, each keeping its behaviour check:
+1. "reads readiness as four status rows": counts the items of the list "Before Submit" (the rail
+   now also lists modules).
+2. "carries a prior run's documents and answers…": the limit's reason is looked for in "Limits to
+   decide" and in the rail (it appears in both now), instead of once on the page.
+3. "web search statement" (3) and "Yahoo Finance statement" (5): the sentences are looked for in
+   the cost block, still exactly once on the page and still adjacent; the negative cases check
+   the cost block too.
+4. `ReviewSheet.test` "C2-007 draws the limits to decide before the echoed inputs": its original
+   assertion, plus the run summary first, the cost last and no echoed input folded.
+5. `Purpose.focusRing.test`: `outline-brand` → `outline-focus`.
+6. `Steps.test` "draws the Purpose card header as a strip…" → "…an unselected Purpose card as a
+   hairline-bordered surface".
+
+Added: `requests.golden.test.tsx` (5), `moduleReadiness.test.ts` (5), `ReadinessRail.test.tsx`
+(6), `ReviewStep.test.tsx` (4), `DocumentsStep.test.tsx` (9), `ContextStep.test.tsx` (7),
+`Purpose.cards.test.tsx` (4), `Stepper.test.tsx` (3).
+
+### Screens looked at
+
+Shot with `shoot-steps.cjs` on the synthetic Northbridge drive at 1440 and 390 px (and with
+`PAID=1` for the paid wording); kept in `2026-11-24-redesign-s9-start-run/screens/`. No console
+error and no horizontal scroll on any step at either width.
+
+- Documents (1440, 390): stepper strip on top with the current step underlined; the drop zone
+  large; each file a hairline row with its kind chip ("credit agreement", "unrecognised") and
+  state badge, the agreement's facts on one line; the hatched gap note for what each file
+  unlocks; "Missing for the modules: Checked when you review the run."; the issuer block. The
+  rail beside it: Readiness with "USD 0.00 of USD 25.00" in mono, the four rows, and the 14
+  modules by stage, unchecked, with when they are checked. At 390 the stepper is four markers
+  with "Step 1 of 4 · Documents", Remove targets 44 px, the rail after the form.
+- Purpose (1440, 390): eight cards, two columns at 1440 and one at 390, each with its question,
+  "{n} base modules" and "Cap USD x" in mono; Full selected with the accent edge, tint and filled
+  mark; Market view, Case kind, Run form level below with their help lines.
+- More context (1440, 390): five titled groups; the rating row open; Issuer details closed; the
+  one-line readiness summary above the actions at 390.
+- Review and start (1440, 390): the run summary ("Full credit assessment of Northbridge Synthetic
+  Group", as of, market view, "3 documents read · 14 modules"); the limits start 290 px under the
+  step heading at 1440 and 354 px at 390 (2,694 and 3,602 px in audit finding C2-007); three
+  limit cards with their badges and checkboxes; every input open in two columns; the cost block
+  with "USD 0.00 · No-cost test" (paid: "USD 25.00 · Spending cap · Full credit assessment"), the
+  sentence, the synthetic note, the consent and Submit last, full width at 390. The rail shows
+  Whole run and Financial foundation and Security selection as Conditional with the service's
+  reasons, the rest "No limit stated".
+- Dialog (1440, 390): "Start a synthetic test?" with a ring mark and its unchanged sentence and
+  actions; paid: "Start a paid run?", warning mark, "Start run, up to USD 25.00".
+
+One defect was found only by looking: the review stack was a grid, and the kit Tile's 12-column
+span made implicit columns that squeezed the step heading into one word per line; the stack is
+a flex column now.
