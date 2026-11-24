@@ -52,7 +52,7 @@ it("draws net leverage by case as the model displays it, the peak, the gap perio
   const tile = screen.getByRole("region", { name: "Net leverage path" });
   expect(tile.className).toMatch(/lg:col-span-12/);
   expect(within(tile).getByRole("heading")).toHaveTextContent(
-    "Net leverage peaks at 7.10x (Downside case, FY2026E)",
+    "Highest stated net leverage 7.10x (Downside case, FY2026E)",
   );
   const figure = within(tile).getByRole("img");
   expect(figure).toHaveAccessibleName(
@@ -71,6 +71,7 @@ it("draws net leverage by case as the model displays it, the peak, the gap perio
     "href",
     "#forecast",
   );
+  expect(within(tile).getByRole("link", { name: "Open the forecast" })).toHaveClass("min-h-8");
   fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
   expect(within(tile).getByRole("row", { name: /Downside case/ })).toHaveTextContent("7.10x");
 });
@@ -147,4 +148,55 @@ it("draws a blocked module as Not assessable", () => {
   expect(within(tile).getByText("Not assessable")).toBeVisible();
   expect(within(tile).getByText("The downside module was blocked.")).toBeVisible();
   expect(screen.queryByRole("region", { name: "Drivers by case" })).toBeNull();
+});
+
+it("says the path peaks only when every period of every case has a figure", () => {
+  const complete = structuredClone(model);
+  const [row] = complete.cashflow.rows;
+  if (!row) throw new Error("one row");
+  row.cells[2] = cell("6.10x", "6.1");
+  render(<ForwardLead {...leadProps(high(), [], [complete])} />);
+  expect(
+    within(screen.getByRole("region", { name: "Net leverage path" })).getByRole("heading"),
+  ).toHaveTextContent("Net leverage peaks at 7.10x (Downside case, FY2026E)");
+});
+
+const forecastBlock = (document: Record<string, unknown>) =>
+  entry(
+    "CP-2G",
+    [],
+    [
+      {
+        heading: "Forecast inputs (machine-readable)",
+        level: 3,
+        line: 1,
+        blocks: [
+          {
+            type: "text",
+            line: 3,
+            end: 5,
+            text: `\`\`\`json\n${JSON.stringify(document)}\n\`\`\``,
+          },
+        ],
+      },
+    ],
+  );
+
+it("shows a negative share driver as a percentage, its digits unrounded", () => {
+  const made = forecastBlock({
+    currency: "USD",
+    scale: 1,
+    years: [{ year: 2025 }, { year: 2026 }, { year: 2027 }],
+    base_drivers: { revenue_growth: { values: ["0.12", "0.12", "0.12"] } },
+    downside_drivers: { revenue_growth: { values: ["-0.05", "-0.025", "0"] } },
+  });
+  render(<ForwardLead {...leadProps(made)} />);
+  const tile = screen.getByRole("region", { name: "Drivers by case" });
+  const growth = within(tile).getByRole("row", { name: /^Revenue growth/ });
+  expect(
+    within(growth)
+      .getAllByRole("cell")
+      .map((item) => item.textContent),
+  ).toEqual(["12%", "12%", "12%", "-5%", "-2.5%", "0%"]);
+  expect(within(tile).getByText(/Shares are shown as percentages/)).toBeVisible();
 });

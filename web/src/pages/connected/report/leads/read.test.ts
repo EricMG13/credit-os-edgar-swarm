@@ -1,9 +1,11 @@
 import { expect, it } from "vitest";
 import type { OutputEntry } from "../../publishedReport";
 import { entry, section, table } from "../overview/rows.fixture";
+import { bottomLine, EVENT_HEADERS } from "./lead.fixture";
 import { fixtureEntry, retained } from "./markdown.fixture";
 import {
   blockedReason,
+  blockedState,
   chartOf,
   eventsOf,
   leadingMillions,
@@ -116,7 +118,7 @@ it("orders dated events by date and keeps each one's stated precision", () => {
   expect(eventsOf(made, "Hedges")).toBeNull();
 });
 
-it("gives the blocked module's first sentence after its prefix, and nothing naming a source", () => {
+it("gives the blocked module's first paragraph after its prefix, and nothing naming a source", () => {
   const blockedEntry = (text: string) =>
     entry(
       "CP-4",
@@ -137,7 +139,13 @@ it("gives the blocked module's first sentence after its prefix, and nothing nami
         "Not assessable: no executed governing document available. The source set holds no credit agreement.",
       ),
     ),
-  ).toBe("No executed governing document available.");
+  ).toBe("No executed governing document available. The source set holds no credit agreement.");
+  expect(
+    blockedReason(blockedEntry("Not assessable: Acme Holdings Inc. did not publish its accounts.")),
+  ).toBe("Acme Holdings Inc. did not publish its accounts.");
+  expect(blockedReason(blockedEntry("Not assessable: no filings were supplied"))).toBe(
+    "No filings were supplied",
+  );
   expect(blockedReason(blockedEntry("Not assessable: see TDG_10-K.htm, page 3."))).toBeNull();
   expect(blockedReason(blockedEntry("Leverage is high."))).toBeNull();
 });
@@ -170,4 +178,52 @@ it("draws a passage's paragraphs and keeps one that names a source in Evidence",
     { line: 2, text: "The downside path starts with a traffic shock." },
     { line: 4, text: null },
   ]);
+});
+
+it("states a blocked module's reason, or the Evidence fallback, whenever it is blocked", () => {
+  const made = (text: string) => entry("CP-2", [], [...bottomLine(text)]);
+  const fallback = { reason: "Not assessable; the reason is recorded in Evidence." };
+  expect(blockedState(made("Not assessable: no filings were supplied"))).toEqual({
+    reason: "No filings were supplied",
+  });
+  expect(blockedState(made("Not assessable: see TDG_10-K.htm, page 3."))).toEqual(fallback);
+  expect(blockedState(made("Leverage is high."))).toBeNull();
+  const unestablished = made("Leverage is high.");
+  unestablished.output.state = { established: false, declared: null };
+  expect(blockedState(unestablished)).toEqual(fallback);
+});
+
+it("draws a map's edges and dated events without their source references or module codes", () => {
+  const made = edges([
+    ["Retail", "Drives EBITDA per annual_report.pdf p. 12", "Documentary Fact", "CP-2A", "S1"],
+  ]);
+  const map = mapOf(made, "ownership and control");
+  expect(map.state === "ready" && map.edges[0]).toMatchObject({
+    from: "Retail",
+    relationship: "In Evidence",
+    type: "Documentary Fact",
+    to: "Downside",
+  });
+  made.sections.push(
+    section(
+      "Events: Issuer history",
+      20,
+      table(21, EVENT_HEADERS, [
+        [
+          "2024-03-01",
+          "day",
+          "2024-03-01",
+          "Notes issued (offering_memo.pdf p. 3)",
+          "Historical — CP-2D",
+          "S2",
+          "Debt",
+        ],
+      ]),
+    ),
+  );
+  made.output.events = [{ lane: "Issuer history", table: 21 }];
+  expect(eventsOf(made, "Issuer history")?.[0]).toMatchObject({
+    event: "In Evidence",
+    status: "Historical — Liquidity",
+  });
 });

@@ -105,6 +105,7 @@ it("lists the funding dates earliest first and states the runway gap", () => {
       .map((item) => item.textContent),
   ).toEqual([expect.stringContaining("2025-03-31"), expect.stringContaining("2026")]);
   const runway = screen.getByRole("region", { name: "Runway" });
+  expect(within(runway).getByText("This handoff states no runway figure.")).toBeVisible();
   expect(within(runway).getByText(/methodology/)).toBeVisible();
 });
 
@@ -127,4 +128,22 @@ it("says why when the module wrote no bridge, and draws a blocked module as Not 
   expect(within(tile).getByText("Not assessable")).toBeVisible();
   expect(within(tile).getByText("No cash flow statement was supplied.")).toBeVisible();
   expect(screen.queryByRole("region", { name: "Runway" })).toBeNull();
+});
+
+it("draws no source reference or module code in a bridge step's label or a gap's reason", () => {
+  const named = BRIDGE.map((row) => [...row]);
+  (named[1] as string[])[0] = "Free cash flow (CP-2G)";
+  (named[2] as string[])[0] = "Repayment per indenture.pdf p. 7";
+  render(<LiquidityLead {...leadProps(liquidity(named))} />);
+  const tile = screen.getByRole("region", { name: "Liquidity bridge" });
+  expect(within(tile).getByRole("img")).toHaveAccessibleName(/In Evidence -450/);
+  expect(tile.textContent).not.toMatch(/indenture|CP-2G/);
+  fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
+  expect(tile.textContent).not.toMatch(/indenture|CP-2G/);
+  cleanup();
+  const gap = BRIDGE.map((row) => [...row]);
+  (gap[1] as string[])[1] = "Not supplied: see cash_flow.xlsx tab 2";
+  render(<LiquidityLead {...leadProps(liquidity(gap))} />);
+  const again = screen.getByRole("region", { name: "Liquidity bridge" });
+  expect(again.textContent).not.toMatch(/cash_flow\.xlsx/);
 });

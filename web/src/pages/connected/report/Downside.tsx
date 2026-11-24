@@ -103,8 +103,17 @@ function readerDetail(value: string) {
   return containsReference(value) ? "See the scenario evidence." : value;
 }
 
-/** The same recorded share in percent, moving its decimal point without rounding its digits. */
-export function scenarioShareLabel(text: string) {
+/**
+ * The same recorded share in percent, moving its decimal point without rounding its digits; a
+ * leading minus ("-0.025", "−0.025") is kept as written in front of the percent ("-2.5%").
+ */
+export function scenarioShareLabel(text: string): string {
+  const minus = /^[-−](?=\d)/.exec(text)?.[0];
+  if (minus) {
+    const magnitude = text.slice(minus.length);
+    const shown = scenarioShareLabel(magnitude);
+    return shown === magnitude ? text : `${minus}${shown}`;
+  }
   if (sharePosition(text) === null) return text;
   const stated = /\((\d+(?:\.\d+)?%)\)$/.exec(text)?.[1];
   if (stated) return stated;
@@ -126,7 +135,7 @@ export function writtenTable(table: Table, href: (line: number) => string): Lead
   const columns = displayColumns(table.headers, false, table.rows);
   const [first, ...rest] = columns;
   if (first === undefined || !table.rows.length) return undefined;
-  const cell = (text: string | undefined) => (text?.trim() ? readerCell(text) : null);
+  const cell = (text: string | undefined) => readerCell(text ?? "") || null;
   return {
     head: columns.map((at) => readerCell(table.headers[at] ?? "")),
     rows: table.rows.map(({ line, cells }) => {
@@ -318,7 +327,7 @@ function resultsTable(matrix: Table, cases: readonly Case[], href: (line: number
       const label = readerCell(cells[0] ?? "");
       return {
         label,
-        cells: columns.map((at) => (cells[at]?.trim() ? readerCell(cells[at] ?? "") : null)),
+        cells: columns.map((at) => readerCell(cells[at] ?? "") || null),
         end: <Trace href={href(line)} name={label} />,
       };
     }),

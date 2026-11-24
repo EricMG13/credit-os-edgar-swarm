@@ -9,6 +9,7 @@ import {
   type Table,
 } from "../../publishedReport";
 import { eventRecords } from "../../visuals/EventLane";
+import type { Cell } from "../overview/figureData";
 import { items, publishedTables, record, word, type SourceTable } from "../../visuals/visualData";
 import type { LeadProps } from "./types";
 
@@ -19,6 +20,8 @@ export const leadHref =
   ({ run, entry }: Pick<LeadProps, "run" | "entry">) =>
   (line?: number) =>
     evidencePath(run.folder, entry, line);
+
+const capital = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 const escaped = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -73,8 +76,8 @@ export function sectionParagraphs(entry: OutputEntry, heading: string): Paragrap
 const NOT_ASSESSABLE = /^Not assessable:\s*/;
 
 /**
- * Why a blocked module could not run, in its own words: the first sentence of its bottom line after
- * "Not assessable:". Null when that sentence names a source; the reason is then in Evidence.
+ * Why a blocked module could not run, in its own words: the whole first paragraph of its bottom line
+ * after "Not assessable:". Null when that paragraph names a source; the reason is then in Evidence.
  */
 export function blockedReason(entry: OutputEntry) {
   if (!blocked(entry)) return null;
@@ -82,11 +85,34 @@ export function blockedReason(entry: OutputEntry) {
     .find((section) => section.heading === "Bottom line")
     ?.blocks.find((block) => block.type === "text");
   const body = first?.type === "text" ? readParagraph(first.text).body : "";
-  const sentence = /^(.+?[.!?])(?:\s|$)/.exec(body.replace(NOT_ASSESSABLE, ""))?.[1] ?? "";
-  const reason = sentence.replaceAll("**", "").replaceAll("`", "").trim();
+  const reason = body
+    .replace(NOT_ASSESSABLE, "")
+    .replaceAll("**", "")
+    .replaceAll("`", "")
+    .replace(/\s+/g, " ")
+    .trim();
   if (!reason || containsReference(reason)) return null;
-  const text = readerText(reason);
-  return text.charAt(0).toUpperCase() + text.slice(1);
+  return capital(readerText(reason));
+}
+
+const IN_EVIDENCE = "Not assessable; the reason is recorded in Evidence.";
+
+/** A module that could not run or is marked not established: its reason, or where the reason is. */
+export function blockedState(entry: OutputEntry): { reason: string } | null {
+  if (!blocked(entry) && entry.output.state?.established !== false) return null;
+  return { reason: blockedReason(entry) ?? IN_EVIDENCE };
+}
+
+/** A register row's name for the reader: its own words, or its place when it has none. */
+export const rowName = (text: string, index: number) => text || `Row ${String(index + 1)}`;
+
+/** A read cell as a working page shows it; its value is read from the cell as written. */
+export function readerCellOf(cell: Cell): Cell {
+  return {
+    ...cell,
+    text: readerCell(cell.text),
+    reason: cell.reason === null ? null : readerCell(cell.reason),
+  };
 }
 
 export type Chart =
@@ -122,8 +148,6 @@ export function chartsStartingWith(entry: OutputEntry, prefix: string) {
     });
 }
 
-const capital = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
-
 export type Edge = { from: string; relationship: string; type: string; to: string; line: number };
 export type MapRead =
   | { state: "ready"; edges: Edge[]; line: number }
@@ -146,7 +170,15 @@ export function mapOf(entry: OutputEntry, name: string): MapRead {
   if (!table || table.headers.join("\0") !== MAP.join("\0")) return { state: "absent" };
   const edges = table.rows.flatMap(([from = "", relationship = "", type = "", to = ""], index) =>
     [from, relationship, type, to].every(stated)
-      ? [{ from, relationship, type, to, line: table.rowLines?.[index] ?? table.line }]
+      ? [
+          {
+            from: readerCell(from),
+            relationship: readerCell(relationship),
+            type: readerCell(type),
+            to: readerCell(to),
+            line: table.rowLines?.[index] ?? table.line,
+          },
+        ]
       : [],
   );
   if (edges.length !== table.rows.length || !edges.length) {
@@ -167,7 +199,12 @@ export function eventsOf(entry: OutputEntry, lane: string) {
   const table = publishedTables(entry.sections).get(descriptor.table);
   if (!table) return null;
   return eventRecords(table)
-    .map((event) => ({ ...event, line: table.rowLines?.[event.index] ?? table.line }))
+    .map((event) => ({
+      ...event,
+      event: readerCell(event.event) || "Not stated",
+      status: readerCell(event.status),
+      line: table.rowLines?.[event.index] ?? table.line,
+    }))
     .sort((a, b) => a.from - b.from || a.index - b.index);
 }
 

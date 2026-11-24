@@ -87,6 +87,8 @@ function securityRow(line: number, cells: string[]) {
     value,
     recommendation,
     quote: located ? securityQuote(market) : null,
+    /** The yield the market level states in the quote form, located or not; text only. */
+    yieldText: securityQuote(market)?.yieldText ?? null,
   };
 }
 
@@ -189,7 +191,7 @@ export function quotedInstruments(data: SecurityData, runUnit?: string): Instrum
       market: item.market,
       value: item.value,
       recommendation: item.recommendation,
-      yieldText: item.quote?.yieldText ?? null,
+      yieldText: item.yieldText,
       share: quote && top > 0 ? quote.yieldValue / top : null,
     };
   });
@@ -343,8 +345,8 @@ export function InstrumentTable({ data, href }: { data: Instruments; href: Evide
           against the largest of them.
         </li>
         <li>
-          Spread is not supplied: the module writes no spread column. A spread needs market quotes
-          supplied at run start and a spread column in the module&apos;s table.
+          No spread column in the module&apos;s table. A spread needs market quotes supplied at run
+          start and a spread column in the module&apos;s table.
         </li>
       </ul>
     </Tile>

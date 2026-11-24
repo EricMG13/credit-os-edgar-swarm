@@ -1,4 +1,3 @@
-import { blocked } from "../../publishedReport";
 import { runMoneyUnit } from "../../reportView";
 import { Bento, Tile } from "../overview/Tile";
 import {
@@ -9,11 +8,10 @@ import {
   ValueMatrix,
 } from "../Securities";
 import { LeadBlocked, LeadGap, NEEDS, Prose } from "./parts";
-import { blockedReason, leadHref, sectionParagraphs } from "./read";
+import { blockedState, leadHref, sectionParagraphs } from "./read";
 import type { LeadProps } from "./types";
 
 const TITLE = "Instrument decisions";
-const IN_EVIDENCE = "Not assessable; the reason is recorded in Evidence.";
 
 function Passage({
   entry,
@@ -47,11 +45,11 @@ function Passage({
 export function SecurityLead(props: LeadProps) {
   const { entry, run, view } = props;
   const href = leadHref(props);
-  const reason = blockedReason(entry);
-  if (reason !== null || blocked(entry) || entry.output.state?.established === false)
+  const stopped = blockedState(entry);
+  if (stopped)
     return (
       <Bento>
-        <LeadBlocked span={12} label={TITLE} title={TITLE} reason={reason ?? IN_EVIDENCE} />
+        <LeadBlocked span={12} label={TITLE} title={TITLE} reason={stopped.reason} />
       </Bento>
     );
   const data = securityView(entry, run.asOf);
@@ -77,7 +75,7 @@ export function SecurityLead(props: LeadProps) {
         span={12}
         label="Relative value against peers"
         title="Relative value against peers"
-        reason="The module states no peer levels to compare the instruments against."
+        reason="This handoff has no peer levels to compare the instruments against."
         needs={NEEDS.input("market quotes and peer levels")}
       />
       {data?.outcomes && <ValueMatrix table={data.outcomes} href={href} />}

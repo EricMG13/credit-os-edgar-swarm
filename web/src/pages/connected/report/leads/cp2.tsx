@@ -2,8 +2,9 @@ import type { ReactNode } from "react";
 import { evidencePath, withUnit } from "../../publishedReport";
 import { figureSource, moduleSource } from "../overview/figureData";
 import { gapReason, lastTwo, periodSeries } from "../overview/read";
-import { bulletGeometry, headroomTests } from "../overview/stressData";
+import { bulletGeometry } from "../overview/stressData";
 import { Bento, Figure, Tile } from "../overview/Tile";
+import { leadTests } from "./bullet";
 import {
   edgeTable,
   LeadBlocked,
@@ -15,7 +16,7 @@ import {
   Trace,
 } from "./parts";
 import {
-  blockedReason,
+  blockedState,
   columnOf,
   leadHref,
   mapOf,
@@ -25,7 +26,6 @@ import {
 } from "./read";
 import type { LeadProps } from "./types";
 
-const IN_EVIDENCE = "Not assessable; the reason is recorded in Evidence.";
 const LEDGER_HEADER = [
   "direction",
   "rank",
@@ -39,7 +39,8 @@ const LEDGER_HEADER = [
 ].join("|");
 
 type Item = { rank: number; label: string; mechanism: string; line: number };
-type Ledger = { strengths: Item[]; weaknesses: Item[] };
+/** `unplaced`: rows whose direction is neither side, as "<label> (<direction as written>)". */
+type Ledger = { strengths: Item[]; weaknesses: Item[]; unplaced: string[] };
 
 const byRank = (a: Item, b: Item) => a.rank - b.rank;
 const rankOf = (text: string) =>
@@ -48,6 +49,21 @@ const written = (text: string) => {
   const cell = readerCell(text);
   return cell === "" || cell === "—" || cell === "-" || cell === "In Evidence" ? "" : cell;
 };
+/** A ledger label as written; one naming a source is in Evidence, a missing one not stated. */
+const labelOf = (text: string) => {
+  const cell = readerCell(text);
+  return cell === "" || cell === "—" || cell === "-" ? "Not stated" : cell;
+};
+
+type Sides = Readonly<Record<string, "strengths" | "weaknesses">>;
+
+/** Files an item by the side its direction names, or as not placed with the direction as written. */
+function place(ledger: Ledger, sides: Sides, direction: string, item: Item) {
+  const key = direction.trim();
+  const side = Object.hasOwn(sides, key.toLowerCase()) ? sides[key.toLowerCase()] : undefined;
+  if (side) ledger[side].push(item);
+  else ledger.unplaced.push(`${item.label} (${readerCell(key) || "no direction stated"})`);
+}
 
 /** The typed strengths and weaknesses table, wherever the module put it. */
 function typedLedger(entry: LeadProps["entry"]): Ledger | null {
@@ -59,17 +75,16 @@ function typedLedger(entry: LeadProps["entry"]): Ledger | null {
         block.headers.map((name) => name.trim().toLowerCase()).join("|") === LEDGER_HEADER,
     );
   if (found?.type !== "table") return null;
-  const ledger: Ledger = { strengths: [], weaknesses: [] };
+  const ledger: Ledger = { strengths: [], weaknesses: [], unplaced: [] };
+  const sides = { strength: "strengths", weakness: "weaknesses" } as const;
   for (const { cells, line } of found.rows) {
-    const direction = (cells[0] ?? "").trim().toUpperCase();
     const item = {
       rank: rankOf(cells[1] ?? ""),
-      label: written(cells[2] ?? "") || "In Evidence",
+      label: labelOf(cells[2] ?? ""),
       mechanism: written(cells[3] ?? ""),
       line,
     };
-    if (direction === "STRENGTH") ledger.strengths.push(item);
-    if (direction === "WEAKNESS") ledger.weaknesses.push(item);
+    place(ledger, sides, cells[0] ?? "", item);
   }
   return ledger;
 }
@@ -86,20 +101,19 @@ function filterLedger(entry: LeadProps["entry"]): Ledger | null {
     implication: columnOf(found, "Credit Implication"),
   };
   if (at.rank < 0 || at.driver < 0 || at.direction < 0) return null;
-  const ledger: Ledger = { strengths: [], weaknesses: [] };
+  const ledger: Ledger = { strengths: [], weaknesses: [], unplaced: [] };
+  const sides = { positive: "strengths", negative: "weaknesses" } as const;
   for (const { cells, line } of found.rows) {
-    const direction = (cells[at.direction] ?? "").trim().toLowerCase();
     const item = {
       rank: rankOf(cells[at.rank] ?? ""),
-      label: written(cells[at.driver] ?? "") || "In Evidence",
+      label: labelOf(cells[at.driver] ?? ""),
       mechanism: [at.mechanic, at.implication]
         .map((column) => (column < 0 ? "" : written(cells[column] ?? "")))
         .filter(Boolean)
         .join(" "),
       line,
     };
-    if (direction === "positive") ledger.strengths.push(item);
-    if (direction === "negative") ledger.weaknesses.push(item);
+    place(ledger, sides, cells[at.direction] ?? "", item);
   }
   return ledger;
 }
@@ -159,6 +173,15 @@ function LedgerTile({
           <Column title="Strengths" items={ledger.strengths} href={href} />
           <Column title="Weaknesses" items={ledger.weaknesses} href={href} />
         </div>
+        {ledger.unplaced.length > 0 && (
+          <ul className="flex flex-col gap-1.5 border-t border-border-hairline pt-3 text-caption text-text-secondary">
+            {ledger.unplaced.map((text, at) => (
+              <li key={at} className="wrap-anywhere">
+                {`Not placed: ${text}`}
+              </li>
+            ))}
+          </ul>
+        )}
       </Tile>
     );
   const paragraphs = sectionParagraphs(entry, "Strengths and weaknesses");
@@ -229,7 +252,7 @@ function SeriesStat({
       ) : (
         <Reason>
           {latest?.period ?? "Latest period"}:{" "}
-          {(latest && gapReason(latest.cell)) ?? "not supplied"}
+          {readerCell((latest && gapReason(latest.cell)) ?? "") || "not supplied"}
         </Reason>
       )}
       {prior?.value != null && (
@@ -250,7 +273,7 @@ function HeadroomStat({ props }: { props: LeadProps }) {
         <Reason>{source.reason}</Reason>
       </Stat>
     );
-  const tests = headroomTests(source.table, source.descriptor);
+  const tests = leadTests(source.table, source.descriptor);
   const lead = tests?.find((test) => bulletGeometry(test) !== null);
   if (!lead)
     return (
@@ -285,15 +308,15 @@ function HeadroomStat({ props }: { props: LeadProps }) {
 export function CreditLead(props: LeadProps) {
   const { entry } = props;
   const href = leadHref(props);
-  const reason = blockedReason(entry);
-  if (reason !== null || entry.output.state?.established === false)
+  const stopped = blockedState(entry);
+  if (stopped)
     return (
       <Bento>
         <LeadBlocked
           span={12}
           label="Fundamental credit"
           title="Fundamental credit"
-          reason={reason ?? IN_EVIDENCE}
+          reason={stopped.reason}
         />
       </Bento>
     );

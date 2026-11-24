@@ -1,7 +1,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import { headroomTests } from "../overview/stressData";
-import { bulletTable, Bullets } from "./bullet";
+import { bulletTable, Bullets, leadTests } from "./bullet";
 
 afterEach(cleanup);
 
@@ -107,4 +107,32 @@ it("shows stated figures that cannot be placed from zero as written, with no bar
   expect(
     within(item).getByText("The stated values cannot be placed on a scale from zero."),
   ).toBeVisible();
+});
+
+it("reads every drawn text of a test as a working page shows it, keeping the numbers", () => {
+  const read = leadTests(
+    source(40, HEAD, [
+      [
+        "Net leverage per credit_agreement.pdf p. 4",
+        "Not supplied: see indenture.pdf p. 9",
+        "4.2",
+        "**0.8x**",
+        "Passes at or below, as CP-4 reads it",
+        "x",
+        "Synthetic.",
+      ],
+    ]),
+    ROLES,
+  );
+  const [test] = read ?? [];
+  expect(test).toMatchObject({
+    label: "In Evidence",
+    threshold: { text: "In Evidence", value: null, reason: "In Evidence" },
+    current: { text: "4.2", value: 4.2 },
+    headroom: "0.8x",
+  });
+  expect(test?.direction).not.toContain("CP-4");
+  render(<Bullets label="Covenant tests" tests={read ?? []} />);
+  const list = screen.getByRole("list", { name: "Covenant tests" });
+  expect(list.textContent).not.toMatch(/\.pdf|CP-4/);
 });

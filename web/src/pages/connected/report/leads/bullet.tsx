@@ -1,7 +1,26 @@
 import { withUnit } from "../../publishedReport";
-import { BULLET, bulletGeometry, type HeadroomTest } from "../overview/stressData";
+import type { SourceTable } from "../../visuals/visualData";
+import { BULLET, bulletGeometry, headroomTests, type HeadroomTest } from "../overview/stressData";
 import { Figure } from "../overview/Tile";
 import { Trace, type LeadTable } from "./parts";
+import { readerCell, readerCellOf } from "./read";
+
+/**
+ * The tests of a value-against-limit table (`headroomTests`), every drawn text as a working page
+ * shows it: no source reference, module codes as names. Values are read from the cells as written.
+ */
+export function leadTests(table: SourceTable, descriptor: Record<string, unknown>) {
+  return (
+    headroomTests(table, descriptor)?.map((test): HeadroomTest => ({
+      ...test,
+      label: readerCell(test.label),
+      threshold: readerCellOf(test.threshold),
+      current: readerCellOf(test.current),
+      headroom: test.headroom === null ? null : readerCell(test.headroom) || null,
+      direction: readerCell(test.direction),
+    })) ?? null
+  );
+}
 
 /** A test's cell as written, with the row's unit when it is a number. */
 const shown = (test: HeadroomTest, cell: HeadroomTest["current"]) =>
@@ -122,7 +141,7 @@ export function bulletTable(
       cells: [
         test.current.text || null,
         test.threshold.text || null,
-        test.headroom,
+        test.headroom || null,
         test.direction || null,
       ],
       end: href ? <Trace href={href(at)} name={test.label} /> : undefined,

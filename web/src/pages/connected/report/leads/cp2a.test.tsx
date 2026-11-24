@@ -85,6 +85,6 @@ it("draws a blocked module as Not assessable in place of both tiles", () => {
   render(<DownsideLead {...leadProps(stopped)} />);
   const tile = screen.getByRole("region", { name: "EBITDA break points" });
   expect(within(tile).getByText("Not assessable")).toBeVisible();
-  expect(within(tile).getByText("No financial base was supplied.")).toBeVisible();
+  expect(within(tile).getByText("No financial base was supplied. Rest of the line.")).toBeVisible();
   expect(screen.queryByRole("region", { name: "Downside scenarios" })).toBeNull();
 });

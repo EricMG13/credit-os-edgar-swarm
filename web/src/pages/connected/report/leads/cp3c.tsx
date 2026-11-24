@@ -1,24 +1,25 @@
 import { Fragment } from "react";
 import { cx } from "@/utils/cx";
-import { blocked, unitLabel, type Row } from "../../publishedReport";
+import { unitLabel, type Row } from "../../publishedReport";
 import { ticks, type SourceTable } from "../../visuals/visualData";
 import { Key } from "../overview/figureParts";
 import { basisNotes, readCell, type Cell } from "../overview/figureData";
-import { Bento, Tile } from "../overview/Tile";
+import { Bento, GapNote, Tile } from "../overview/Tile";
 import { DatedList, LeadBlocked, LeadFigure, LeadGap, NEEDS, Trace } from "./parts";
 import {
-  blockedReason,
+  blockedState,
   chartOf,
   columnOf,
   eventsOf,
   leadHref,
   readerCell,
+  readerCellOf,
   registerTable,
+  rowName,
 } from "./read";
 import type { LeadProps } from "./types";
 
 const TITLE = "Refinancing need";
-const IN_EVIDENCE = "Not assessable; the reason is recorded in Evidence.";
 const MEASURES = ["Debt maturing", "Committed resources"] as const;
 
 const TONE = { primary: "bg-chart-1", secondary: "bg-chart-2" } as const;
@@ -80,9 +81,11 @@ function needRows(table: SourceTable) {
     return null;
   const scope = table.rows.flatMap((row) => [row[debt] ?? "", row[resources] ?? ""]);
   return table.rows.map((row, at) => ({
-    period: row[period] ?? "",
+    period: readerCell(row[period] ?? "") || "Period not stated",
     line: table.rowLines?.[at] ?? table.line,
-    cells: [debt, resources].map((column) => readCell(row[column] ?? "", scope, row.at(-2) ?? "")),
+    cells: [debt, resources].map((column) =>
+      readerCellOf(readCell(row[column] ?? "", scope, row.at(-2) ?? "")),
+    ),
   }));
 }
 
@@ -108,7 +111,8 @@ function NeedFigure({
       />
     );
   const units = new Set(chart.table.rows.map((row) => row.at(-2) ?? ""));
-  const unit = units.size === 1 ? ([...units][0] ?? "") : "";
+  const oneUnit = units.size === 1;
+  const unit = oneUnit ? ([...units][0] ?? "") : "";
   const scale = ticks(rows.flatMap(({ cells }) => cells.map((cell) => cell.value)));
   const top = scale.at(-1)?.value ?? 0;
   const reading = `Debt maturing against committed resources${unit ? ` in ${unitLabel(unit)}` : ""}. ${rows
@@ -123,40 +127,47 @@ function NeedFigure({
       label={TITLE}
       kicker={TITLE}
       title="Debt maturing against committed resources, by period"
-      basis={unit ? unitLabel(unit) : "Each period in its own unit"}
+      basis={unit ? unitLabel(unit) : undefined}
       legend={
-        <>
-          <Key tone="primary">Debt maturing</Key>
-          <Key tone="secondary">Committed resources</Key>
-          <Key tone="gap">Not supplied</Key>
-        </>
+        oneUnit && (
+          <>
+            <Key tone="primary">Debt maturing</Key>
+            <Key tone="secondary">Committed resources</Key>
+            <Key tone="gap">Not supplied</Key>
+          </>
+        )
       }
       trace={<Trace href={href(chart.table.line)} name={TITLE} />}
       figure={
-        <div role="img" aria-label={reading} className="flex flex-col">
-          {rows.map(({ period, cells }, index) => (
-            <div
-              key={index}
-              className="grid grid-cols-1 gap-1.5 border-t border-border-hairline py-3 first:border-t-0 first:pt-0 sm:grid-cols-[6rem_minmax(0,1fr)] sm:gap-3"
-            >
-              <span className="font-mono text-small font-medium text-text-primary">{period}</span>
-              <div className="flex min-w-0 flex-col gap-1.5">
-                {MEASURES.map((name, at) => (
-                  <Fragment key={name}>
-                    {cells[at] && (
-                      <BarLine
-                        name={name}
-                        cell={cells[at]}
-                        top={top}
-                        tone={at === 0 ? "primary" : "secondary"}
-                      />
-                    )}
-                  </Fragment>
-                ))}
+        // One scale only for one unit: amounts in two units are not drawn against each other.
+        !oneUnit ? (
+          <GapNote>The amounts are stated in more than one unit.</GapNote>
+        ) : (
+          <div role="img" aria-label={reading} className="flex flex-col">
+            {rows.map(({ period, cells }, index) => (
+              <div
+                key={index}
+                className="grid grid-cols-1 gap-1.5 border-t border-border-hairline py-3 first:border-t-0 first:pt-0 sm:grid-cols-[6rem_minmax(0,1fr)] sm:gap-3"
+              >
+                <span className="font-mono text-small font-medium text-text-primary">{period}</span>
+                <div className="flex min-w-0 flex-col gap-1.5">
+                  {MEASURES.map((name, at) => (
+                    <Fragment key={name}>
+                      {cells[at] && (
+                        <BarLine
+                          name={name}
+                          cell={cells[at]}
+                          top={top}
+                          tone={at === 0 ? "primary" : "secondary"}
+                        />
+                      )}
+                    </Fragment>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )
       }
       table={{
         head: ["Period", ...MEASURES],
@@ -174,11 +185,11 @@ function NeedFigure({
 
 const PATH_FIELDS = ["Feasibility", "Likelihood Direction"] as const;
 
-function PathItem({ row, columns }: { row: Row; columns: number[] }) {
+function PathItem({ row, columns, index }: { row: Row; columns: number[]; index: number }) {
   return (
     <>
       <span className="text-small font-medium wrap-anywhere text-text-primary">
-        {readerCell(row.cells[columns[0] ?? -1] ?? "")}
+        {rowName(readerCell(row.cells[columns[0] ?? -1] ?? ""), index)}
       </span>
       <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-caption">
         {PATH_FIELDS.map((name, at) => {
@@ -212,15 +223,18 @@ function Paths({ entry, href }: { entry: LeadProps["entry"]; href: (line?: numbe
   return (
     <Tile span={12} label={label} title={label}>
       <ul aria-label={label} className="flex flex-col">
-        {table.rows.map((row) => (
+        {table.rows.map((row, index) => (
           <li
             key={row.line}
             className="flex items-start justify-between gap-3 border-t border-border-hairline py-2.5 first:border-t-0 first:pt-0"
           >
             <span className="flex min-w-0 flex-col gap-1">
-              <PathItem row={row} columns={columns} />
+              <PathItem row={row} columns={columns} index={index} />
             </span>
-            <Trace href={href(row.line)} name={readerCell(row.cells[columns[0] ?? -1] ?? "")} />
+            <Trace
+              href={href(row.line)}
+              name={rowName(readerCell(row.cells[columns[0] ?? -1] ?? ""), index)}
+            />
           </li>
         ))}
       </ul>
@@ -232,11 +246,11 @@ function Paths({ entry, href }: { entry: LeadProps["entry"]; href: (line?: numbe
 export function RefinancingLead(props: LeadProps) {
   const { entry } = props;
   const href = leadHref(props);
-  const reason = blockedReason(entry);
-  if (reason !== null || blocked(entry) || entry.output.state?.established === false)
+  const stopped = blockedState(entry);
+  if (stopped)
     return (
       <Bento>
-        <LeadBlocked span={12} label={TITLE} title={TITLE} reason={reason ?? IN_EVIDENCE} />
+        <LeadBlocked span={12} label={TITLE} title={TITLE} reason={stopped.reason} />
       </Bento>
     );
   const events = eventsOf(entry, "Refinancing") ?? [];

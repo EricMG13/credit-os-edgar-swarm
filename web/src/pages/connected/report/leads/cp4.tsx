@@ -1,20 +1,21 @@
 import { Fragment } from "react";
-import { blocked, unitLabel, withUnit } from "../../publishedReport";
+import { unitLabel, withUnit } from "../../publishedReport";
 import { word } from "../../visuals/visualData";
 import { Key } from "../overview/figureParts";
 import { basisNotes } from "../overview/figureData";
-import { bulletGeometry, headroomTests, type HeadroomTest } from "../overview/stressData";
+import { bulletGeometry, type HeadroomTest } from "../overview/stressData";
 import { Bento, Tile } from "../overview/Tile";
-import { bulletTable, Bullets } from "./bullet";
+import { bulletTable, Bullets, leadTests } from "./bullet";
 import { edgeTable, LeadBlocked, LeadFigure, LeadGap, NEEDS, NodeList, Trace } from "./parts";
 import {
-  blockedReason,
+  blockedState,
   chartOf,
   columnOf,
   leadHref,
   mapOf,
   readerCell,
   registerTable,
+  rowName,
   type MapRead,
 } from "./read";
 import type { LeadProps } from "./types";
@@ -22,7 +23,6 @@ import type { LeadProps } from "./types";
 type Href = (line?: number) => string;
 
 const TITLE = "Covenant headroom";
-const IN_EVIDENCE = "Not assessable; the reason is recorded in Evidence.";
 const UNLOCK =
   "Covenant headroom needs the executed credit agreement and indentures supplied at run start.";
 const DOCUMENTS = NEEDS.input("executed documents");
@@ -45,7 +45,7 @@ function reading(tests: readonly HeadroomTest[]) {
 
 function Headroom({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
   const chart = chartOf(entry, TITLE);
-  const tests = chart.state === "ready" ? headroomTests(chart.table, chart.descriptor) : null;
+  const tests = chart.state === "ready" ? leadTests(chart.table, chart.descriptor) : null;
   if (chart.state !== "ready" || !tests?.length)
     return (
       <LeadGap
@@ -150,8 +150,8 @@ function Baskets({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
   return (
     <Tile span={6} label={label} title={label}>
       <ul aria-label={label} className="flex flex-col">
-        {table.rows.map(({ line, cells }) => {
-          const basket = readerCell(cells[name] ?? "");
+        {table.rows.map(({ line, cells }, index) => {
+          const basket = rowName(readerCell(cells[name] ?? ""), index);
           return (
             <li
               key={line}
@@ -186,8 +186,8 @@ export function LegalLead(props: LeadProps) {
   const { entry } = props;
   const href = leadHref(props);
   const maps = MAPS.map((item) => ({ ...item, map: mapOf(entry, item.name) }));
-  const reason = blockedReason(entry);
-  if (reason !== null || blocked(entry) || entry.output.state?.established === false) {
+  const stopped = blockedState(entry);
+  if (stopped) {
     const chart = chartOf(entry, TITLE);
     return (
       <Bento>
@@ -195,7 +195,7 @@ export function LegalLead(props: LeadProps) {
           span={12}
           label={TITLE}
           title={TITLE}
-          reason={chart.state === "gap" ? chart.reason : (reason ?? IN_EVIDENCE)}
+          reason={chart.state === "gap" ? chart.reason : stopped.reason}
           unlock={UNLOCK}
         />
         {maps.map(({ name, title, map }) =>

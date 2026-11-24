@@ -201,3 +201,43 @@ it("draws a blocked module as Not assessable", () => {
   expect(within(tile).getByText("No debt schedule was supplied.")).toBeVisible();
   expect(screen.queryByRole("region", { name: "Foreign share" })).toBeNull();
 });
+
+it("places only a cash impact that states exactly one amount; a range or a qualified one stays words", () => {
+  const made = entry(
+    "CP-2E",
+    [],
+    [
+      {
+        heading: "T2F.5 — Sensitivity register",
+        level: 4,
+        line: 9,
+        blocks: [
+          table(
+            10,
+            ["Sensitivity", "Estimated Cash Impact", "Source"],
+            [
+              ["+100 bp SOFR", "USD 5 million to USD 8 million a year, before hedges", "S1"],
+              ["+150 bp SOFR", "USD 9 million, about USD 7 million after hedges", "S1"],
+              ["+175 bp SOFR", "USD 10 million – 12 million a year", "S1"],
+              ["+200 bp SOFR", "USD 16 million a year", "S1"],
+            ],
+          ),
+        ],
+      },
+    ],
+  );
+  render(<MacroLead {...leadProps(made)} />);
+  const tile = screen.getByRole("region", { name: "Rate sensitivity" });
+  expect(within(tile).getByRole("img")).toHaveAccessibleName(
+    "Rate sensitivity: +200 bp SOFR: USD 16 million.",
+  );
+  expect(
+    [...tile.querySelectorAll("[data-bar]")].map((bar) => bar.getAttribute("data-bar")),
+  ).toEqual(["USD 16 million"]);
+  for (const text of [
+    "+100 bp SOFR: USD 5 million to USD 8 million a year, before hedges",
+    "+150 bp SOFR: USD 9 million, about USD 7 million after hedges",
+    "+175 bp SOFR: USD 10 million – 12 million a year",
+  ])
+    expect(within(tile).getByText(text)).toBeVisible();
+});

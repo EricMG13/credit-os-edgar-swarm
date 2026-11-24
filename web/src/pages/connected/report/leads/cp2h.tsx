@@ -1,14 +1,21 @@
 import { withUnit } from "../../publishedReport";
 import { Key } from "../overview/figureParts";
 import { basisNotes } from "../overview/figureData";
-import { headroomTests, type HeadroomTest } from "../overview/stressData";
-import { Bullets } from "./bullet";
+import type { HeadroomTest } from "../overview/stressData";
+import { Bullets, leadTests } from "./bullet";
 import { Bento, Figure } from "../overview/Tile";
 import { LeadBlocked, LeadFigure, LeadGap, NEEDS, Trace } from "./parts";
-import { blockedReason, chartOf, columnOf, leadHref, readerCell, registerTable } from "./read";
+import {
+  blockedState,
+  chartOf,
+  columnOf,
+  leadHref,
+  readerCell,
+  registerTable,
+  rowName,
+} from "./read";
 import type { LeadProps } from "./types";
 
-const IN_EVIDENCE = "Not assessable; the reason is recorded in Evidence.";
 const TRIGGERS = "Rating triggers";
 const REGISTER = "Rating register";
 
@@ -20,7 +27,7 @@ const shown = (test: HeadroomTest, cell: HeadroomTest["current"]) =>
 function Triggers({ entry, href }: { entry: LeadProps["entry"]; href: (line?: number) => string }) {
   const chart = chartOf(entry, TRIGGERS);
   const tests =
-    chart.state === "ready" ? headroomTests(chart.table, { ...chart.descriptor, label: 1 }) : null;
+    chart.state === "ready" ? leadTests(chart.table, { ...chart.descriptor, label: 1 }) : null;
   if (chart.state !== "ready" || !tests)
     return (
       <LeadGap
@@ -83,7 +90,12 @@ function Triggers({ entry, href }: { entry: LeadProps["entry"]; href: (line?: nu
         head: ["Trigger", "Agency", "Threshold", "Current", "Direction"],
         rows: triggers.map(({ agency, test, line }) => ({
           label: test.label,
-          cells: [agency, shown(test, test.threshold), shown(test, test.current), test.direction],
+          cells: [
+            agency,
+            shown(test, test.threshold) || null,
+            shown(test, test.current) || null,
+            test.direction || null,
+          ],
           end: <Trace href={href(line)} name={test.label} />,
         })),
         endHeading: "Source",
@@ -120,14 +132,14 @@ function Register({ entry, href }: { entry: LeadProps["entry"]; href: (line?: nu
       title="Ratings as the agencies state them"
       figure={
         <ul aria-label={REGISTER} className="flex flex-col">
-          {found.rows.map(({ cells, line }) => (
+          {found.rows.map(({ cells, line }, index) => (
             <li
               key={line}
               className="flex flex-col gap-1 border-t border-border-hairline py-3 first:border-t-0"
             >
               <span className="flex items-start justify-between gap-2 text-caption text-text-tertiary">
-                {cell(cells, at.agency)}
-                <Trace href={href(line)} name={cell(cells, at.agency)} />
+                {rowName(cell(cells, at.agency), index)}
+                <Trace href={href(line)} name={rowName(cell(cells, at.agency), index)} />
               </span>
               <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                 <Figure className="text-h3 font-medium">
@@ -156,15 +168,15 @@ function Register({ entry, href }: { entry: LeadProps["entry"]; href: (line?: nu
 export function RatingsLead(props: LeadProps) {
   const { entry } = props;
   const href = leadHref(props);
-  const reason = blockedReason(entry);
-  if (reason !== null || entry.output.state?.established === false)
+  const stopped = blockedState(entry);
+  if (stopped)
     return (
       <Bento>
         <LeadBlocked
           span={12}
           label="Ratings migration"
           title="Ratings migration"
-          reason={reason ?? IN_EVIDENCE}
+          reason={stopped.reason}
         />
       </Bento>
     );

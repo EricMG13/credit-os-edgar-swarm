@@ -2,6 +2,7 @@ import { unitLabel } from "../../publishedReport";
 import { ticks, type SourceTable } from "../../visuals/visualData";
 import { readCell, type Cell } from "../overview/figureData";
 import { gapReason } from "../overview/read";
+import { readerCell, readerCellOf } from "./read";
 
 export type Step = { label: string; cell: Cell; line: number };
 
@@ -15,8 +16,8 @@ export function bridgeSteps(table: SourceTable, amountColumn = 1) {
   const units = new Set(table.rows.map((row) => row.at(-2) ?? ""));
   const unit = units.size === 1 ? ([...units][0] ?? "") : "";
   const steps: Step[] = table.rows.map((row, at) => ({
-    label: row[0] ?? "",
-    cell: readCell(texts[at] ?? "", texts, unit),
+    label: readerCell(row[0] ?? "") || "Not stated",
+    cell: readerCellOf(readCell(texts[at] ?? "", texts, unit)),
     line: table.rowLines?.[at] ?? table.line,
   }));
   const stated = steps.find((step) => step.cell.value === null);
@@ -25,6 +26,8 @@ export function bridgeSteps(table: SourceTable, amountColumn = 1) {
     if (!unit) return "The bridge's rows are in more than one unit.";
     if (stated) {
       const reason = gapReason(stated.cell.text) ?? stated.cell.reason;
+      if (reason === "In Evidence")
+        return `${stated.label} is not supplied; the reason is recorded in Evidence.`;
       return reason
         ? `${stated.label} is not supplied: ${reason}`
         : `${stated.label} has no amount the figure can place.`;

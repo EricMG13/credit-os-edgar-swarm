@@ -91,11 +91,7 @@ it("draws the operating model map as the module wrote it, with a table view and 
 it("states the revenue mix gap and draws ownership, the transaction passage and the history", () => {
   render(<BusinessLead {...leadProps(business({ op: OP, own: OWN, prose: true }))} />);
   const mix = screen.getByRole("region", { name: "Revenue mix" });
-  expect(
-    within(mix).getByText(
-      "The handoff states the revenue mix in words, not as a table of amounts or shares.",
-    ),
-  ).toBeVisible();
+  expect(within(mix).getByText("This handoff has no revenue-mix table.")).toBeVisible();
   expect(within(mix).queryByText("0")).toBeNull();
   const own = screen.getByRole("region", { name: "Ownership and control" });
   expect(within(own).getByText("Synthetic C")).toBeVisible();
@@ -146,4 +142,42 @@ it("draws a blocked module as Not assessable", () => {
   expect(screen.getByText("Not assessable")).toBeVisible();
   expect(screen.getByText("No filing was supplied.")).toBeVisible();
   expect(screen.queryByRole("region", { name: "Revenue mix" })).toBeNull();
+});
+
+it("draws no source reference or module code from a map edge or a dated event", () => {
+  const made = business({
+    op: [
+      [
+        "Retail",
+        "Drives 60% of EBITDA per annual_report.pdf p. 12",
+        "Documentary Fact",
+        "CP-2A downside",
+        "S1",
+      ],
+    ],
+  });
+  made.sections.push(
+    tableSection(
+      "Chart data: issuer history",
+      table(60, EVENT_HEADERS, [
+        [
+          "2024-03-01",
+          "day",
+          "2024-03-01",
+          "Notes issued (offering_memo.pdf p. 3)",
+          "Historical — issued",
+          "S2",
+          "Debt",
+        ],
+      ]),
+    ),
+  );
+  made.output.events = [{ lane: "Issuer history", table: 60 }];
+  render(<BusinessLead {...leadProps(made)} />);
+  const page = document.body.textContent;
+  expect(page).not.toMatch(/annual_report|offering_memo|CP-2A/);
+  const tile = screen.getByRole("region", { name: "Operating model to credit" });
+  expect(within(tile).getByText("In Evidence")).toBeVisible();
+  fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
+  expect(tile.textContent).not.toMatch(/annual_report|CP-2A/);
 });

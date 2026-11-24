@@ -179,7 +179,7 @@ it("falls back to the bottom line's reason when the headroom table states no gap
   render(<LegalLead {...leadProps(made)} />);
   expect(
     within(screen.getByRole("region", { name: "Covenant headroom" })).getByText(
-      "No executed governing document available.",
+      "No executed governing document available. The source set holds no executed credit agreement, amendment, guarantee or indenture, and the filing's summaries cannot be used in this transport.",
     ),
   ).toBeVisible();
 });

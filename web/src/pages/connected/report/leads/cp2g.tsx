@@ -7,12 +7,11 @@ import { GapPattern } from "../overview/figureParts";
 import { forwardPath } from "../overview/stressData";
 import { Bento, Tile } from "../overview/Tile";
 import { LeadBlocked, LeadFigure, LeadGap, NEEDS, Trace } from "./parts";
-import { blockedReason, leadHref, readerCell } from "./read";
+import { blockedState, leadHref, readerCell } from "./read";
 import type { LeadProps } from "./types";
 
 const PATH_LABEL = "Net leverage path";
 const DRIVERS = "Drivers by case";
-const IN_EVIDENCE = "Not assessable; the reason is recorded in Evidence.";
 
 type Path = NonNullable<ReturnType<typeof forwardPath>>;
 type Point = Path["cases"][number]["points"][number];
@@ -51,6 +50,7 @@ function CasePanel({
   periods,
   tone,
   peak,
+  mark,
   y,
   scale,
 }: {
@@ -59,6 +59,8 @@ function CasePanel({
   periods: readonly string[];
   tone: (typeof TONES)[number];
   peak: ReturnType<typeof peakOf>;
+  /** The word set over the highest point: "Peak" only on a complete path. */
+  mark: string;
   y: (value: number) => number;
   scale: ReturnType<typeof ticks>;
 }) {
@@ -160,7 +162,7 @@ function CasePanel({
                   fontSize="11"
                   className="fill-text-secondary font-body"
                 >
-                  Peak
+                  {mark}
                 </text>
               )}
             </Fragment>
@@ -184,7 +186,15 @@ function CasePanel({
 }
 
 /** Net leverage by case as small multiples on one shared scale: each case's points as the model displays them. */
-function PathPanels({ path, peak }: { path: Path; peak: ReturnType<typeof peakOf> }) {
+function PathPanels({
+  path,
+  peak,
+  mark,
+}: {
+  path: Path;
+  peak: ReturnType<typeof peakOf>;
+  mark: string;
+}) {
   const periods = [...new Set(path.cases.flatMap(({ points }) => points.map((p) => p.period)))];
   const { scale, y } = scaleOf(path);
   const reading = path.cases
@@ -211,6 +221,7 @@ function PathPanels({ path, peak }: { path: Path; peak: ReturnType<typeof peakOf
             periods={periods}
             tone={toneOf(at)}
             peak={peak}
+            mark={mark}
             y={y}
             scale={scale}
           />
@@ -239,10 +250,19 @@ function ForwardPathTile({ view, href }: { view: LeadProps["view"]; href: string
     );
   const peak = peakOf(path);
   const periods = [...new Set(path.cases.flatMap(({ points }) => points.map((p) => p.period)))];
+  // "Peaks" only when every case states a figure for every period; otherwise the highest stated.
+  const complete = path.cases.every(({ points }) =>
+    periods.every((period) =>
+      points.some((point) => point.period === period && point.value !== null),
+    ),
+  );
   const gaps = path.cases.flatMap(({ group, points }) =>
     points
       .filter((point) => point.value === null)
-      .map((point) => `${group}, ${point.period}: ${point.reason || "no figure in the model"}.`),
+      .map(
+        (point) =>
+          `${group}, ${point.period}: ${readerCell(point.reason) || "no figure in the model"}.`,
+      ),
   );
   return (
     <LeadFigure
@@ -251,24 +271,27 @@ function ForwardPathTile({ view, href }: { view: LeadProps["view"]; href: string
       kicker="Case paths"
       title={
         peak
-          ? `Net leverage peaks at ${peak.display} (${peak.group}, ${peak.period})`
+          ? `${complete ? "Net leverage peaks at" : "Highest stated net leverage"} ${peak.display} (${peak.group}, ${peak.period})`
           : "Net leverage by case"
       }
       basis={`${path.measure}; every case on one scale`}
       legend={
-        <a href="#forecast" className="text-small font-medium text-text-link underline">
+        <a
+          href="#forecast"
+          className="inline-flex min-h-8 items-center text-small font-medium text-text-link underline"
+        >
           Open the forecast
         </a>
       }
       trace={<Trace href={href} name="the forward credit model" />}
-      figure={<PathPanels path={path} peak={peak} />}
+      figure={<PathPanels path={path} peak={peak} mark={complete ? "Peak" : "Highest"} />}
       table={{
         head: ["Case", ...periods],
         rows: path.cases.map(({ group, points }) => ({
           label: group,
           cells: periods.map((period): TableCell => {
             const point = points.find((item) => item.period === period);
-            return point && point.value !== null ? point.display : { gap: true };
+            return point && point.value !== null && point.display ? point.display : { gap: true };
           }),
         })),
       }}
@@ -312,7 +335,7 @@ function stated(key: string, value: unknown): TableCell {
   if (typeof value === "number")
     return SHARES.has(key) ? scenarioShareLabel(String(value)) : String(value);
   if (typeof value !== "string" || !value.trim()) return { gap: true };
-  return SHARES.has(key) ? scenarioShareLabel(value.trim()) : readerCell(value);
+  return SHARES.has(key) ? scenarioShareLabel(value.trim()) : readerCell(value) || { gap: true };
 }
 
 /** The block's amount units in words: scale 1 is millions and 1000 thousands (cpos_forecast). */
@@ -424,16 +447,11 @@ function DriversTile({
 export function ForwardLead(props: LeadProps) {
   const { entry, view } = props;
   const href = leadHref(props);
-  const reason = blockedReason(entry);
-  if (reason !== null || entry.output.state?.established === false)
+  const stopped = blockedState(entry);
+  if (stopped)
     return (
       <Bento>
-        <LeadBlocked
-          span={12}
-          label={PATH_LABEL}
-          title={PATH_LABEL}
-          reason={reason ?? IN_EVIDENCE}
-        />
+        <LeadBlocked span={12} label={PATH_LABEL} title={PATH_LABEL} reason={stopped.reason} />
       </Bento>
     );
   return (

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { type OutputEntry, type Table } from "../publishedReport";
-import { Downside, downsideView } from "./Downside";
+import { Downside, downsideView, scenarioShareLabel, writtenTable } from "./Downside";
 
 function table(line: number, headers: string[], rows: string[][]): Table {
   return {
@@ -161,4 +161,21 @@ it("J3-016 labels the chosen stress and displays both shock quantities as percen
   expect(decline).toHaveTextContent("10%");
   expect(decline).not.toHaveTextContent("0.10");
   expect(interest).toHaveTextContent("0%");
+});
+
+it("shows a negative share as a percentage by moving its decimal point, digits unrounded", () => {
+  expect(scenarioShareLabel("-0.05")).toBe("-5%");
+  expect(scenarioShareLabel("-0.025")).toBe("-2.5%");
+  expect(scenarioShareLabel("−0.1234")).toBe("−12.34%");
+  expect(scenarioShareLabel("0.025")).toBe("2.5%");
+  expect(scenarioShareLabel("-1.5")).toBe("-1.5");
+  expect(scenarioShareLabel("-x")).toBe("-x");
+});
+
+it("gives a written table cell that reads as nothing as missing, not an empty string", () => {
+  const written = writtenTable(
+    table(3, ["Measure", "Value"], [["Leverage", "**"]]),
+    (line) => `#evidence/${String(line)}`,
+  );
+  expect(written?.rows[0]?.cells).toEqual([null]);
 });

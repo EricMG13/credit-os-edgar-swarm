@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import { Bento } from "../overview/Tile";
-import { DatedList, LeadBlocked, LeadFigure, LeadGap, NodeList, Prose } from "./parts";
+import { DatedList, edgeTable, LeadBlocked, LeadFigure, LeadGap, NodeList, Prose } from "./parts";
 
 afterEach(cleanup);
 
@@ -156,4 +156,76 @@ it("draws a passage paragraph by paragraph and keeps one naming a source in Evid
   expect(
     screen.getByText("This paragraph cites its sources by name; it is in Evidence."),
   ).toBeVisible();
+});
+
+it("splits an event's status at its first dash only and keeps the rest as the detail", () => {
+  render(
+    <DatedList
+      label="Funding dates"
+      events={[
+        {
+          date: "2026",
+          precision: "year",
+          event: "Maturity",
+          status: "Scheduled — maturity — subject to extension",
+          line: 4,
+        },
+      ]}
+    />,
+  );
+  const list = screen.getByRole("list", { name: "Funding dates" });
+  expect(within(list).getByText("Scheduled").parentElement).toHaveTextContent(
+    "Scheduled · maturity — subject to extension",
+  );
+});
+
+it("names each paragraph's trace by its place in the passage", () => {
+  render(
+    <Prose
+      label="Causal scenarios"
+      href={(line) => `#evidence/run/${String(line)}`}
+      paragraphs={[
+        { line: 2, text: "A traffic shock cuts aftermarket sales." },
+        { line: 4, text: "Recovery takes two years." },
+      ]}
+    />,
+  );
+  expect(
+    screen.getByRole("link", { name: "Source for Causal scenarios, paragraph 1" }),
+  ).toHaveAttribute("href", "#evidence/run/2");
+  expect(
+    screen.getByRole("link", { name: "Source for Causal scenarios, paragraph 2" }),
+  ).toHaveAttribute("href", "#evidence/run/4");
+});
+
+it("sets a short blocked reason as a lead and a long one as body text", () => {
+  const long = `The source set holds ${"no executed credit agreement and no indenture, ".repeat(4)}so no test can be read.`;
+  render(
+    <Bento>
+      <LeadBlocked span={12} label="Short" title="Short" reason="No filings were supplied." />
+      <LeadBlocked span={12} label="Long" title="Long" reason={long} />
+    </Bento>,
+  );
+  expect(screen.getByText("No filings were supplied.")).toHaveClass("text-lead");
+  expect(screen.getByText(long)).toHaveClass("text-body");
+  expect(screen.getByText(long)).not.toHaveClass("text-lead");
+});
+
+it("shows an empty edge cell in the table view as missing, not as a crash", () => {
+  render(
+    <Bento>
+      <LeadFigure
+        span={12}
+        label="Ownership"
+        title="Ownership"
+        figure={<p>map</p>}
+        table={edgeTable([
+          { from: "Parent", relationship: "", type: "Ownership", to: "Issuer", line: 3 },
+        ])}
+      />
+    </Bento>,
+  );
+  const tile = screen.getByRole("region", { name: "Ownership" });
+  fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
+  expect(within(tile).getByRole("row", { name: /Parent/ })).toBeVisible();
 });

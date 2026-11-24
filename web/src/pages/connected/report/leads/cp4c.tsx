@@ -1,6 +1,6 @@
 import { Fragment, useState } from "react";
 import { Segmented } from "@/components/kit/Segmented";
-import { blocked, unitLabel, withUnit } from "../../publishedReport";
+import { unitLabel, withUnit } from "../../publishedReport";
 import { items, record, ticks, word, type SourceTable } from "../../visuals/visualData";
 import { basisNotes, readCell, type Cell } from "../overview/figureData";
 import { Key } from "../overview/figureParts";
@@ -9,13 +9,15 @@ import { Bridge, bridgeSteps } from "./bridge";
 import { BarLine, spoken } from "./cp3c";
 import { LeadBlocked, LeadFigure, LeadGap, NEEDS, Trace } from "./parts";
 import {
-  blockedReason,
+  blockedState,
   chartOf,
+  readerCellOf,
   chartsStartingWith,
   columnOf,
   leadHref,
   readerCell,
   registerTable,
+  rowName,
   type Chart,
 } from "./read";
 import type { LeadProps } from "./types";
@@ -25,7 +27,6 @@ type Entry = LeadProps["entry"];
 
 const TITLE = "Value allocation";
 const RECOVERY = "Recovery by class";
-const IN_EVIDENCE = "Not assessable; the reason is recorded in Evidence.";
 
 /** Every value allocation the module published, and those it states as gaps, in its order. */
 function allocations(entry: Entry) {
@@ -158,11 +159,12 @@ function recoveries(table: SourceTable) {
     const unit = row.at(-2) ?? "";
     return {
       index,
-      name: readerCell(row[name] ?? ""),
+      name: readerCell(row[name] ?? "") || "Not stated",
       scenario: readerCell(row[scenario] ?? ""),
-      claim: readCell(row[claim] ?? "", scope, unit),
-      recovery: readCell(row[recovery] ?? "", scope, unit),
-      percent: readCell(row[percent] ?? "", [row[percent] ?? ""], ""),
+      unit,
+      claim: readerCellOf(readCell(row[claim] ?? "", scope, unit)),
+      recovery: readerCellOf(readCell(row[recovery] ?? "", scope, unit)),
+      percent: readerCellOf(readCell(row[percent] ?? "", [row[percent] ?? ""], "")),
       line: table.rowLines?.[index] ?? table.line,
     };
   });
@@ -190,6 +192,8 @@ function RecoveryByClass({ entry, href }: { entry: Entry; href: Href }) {
       />
     );
   const unit = word(chart.descriptor.unit);
+  // One scale only for one unit: amounts in two units are not drawn against each other.
+  const oneUnit = new Set(rows.map((row) => row.unit)).size === 1;
   const scale = ticks(rows.flatMap((row) => [row.claim.value, row.recovery.value]));
   const top = scale.at(-1)?.value ?? 0;
   const reading = `${RECOVERY}${unit ? ` in ${unitLabel(unit)}` : ""}. ${rows
@@ -205,40 +209,46 @@ function RecoveryByClass({ entry, href }: { entry: Entry; href: Href }) {
       title={RECOVERY}
       basis={unit ? `${unitLabel(unit)} · recovery % as stated` : undefined}
       legend={
-        <>
-          <Key tone="primary">Claim</Key>
-          <Key tone="secondary">Recovery</Key>
-        </>
+        oneUnit && (
+          <>
+            <Key tone="primary">Claim</Key>
+            <Key tone="secondary">Recovery</Key>
+          </>
+        )
       }
       trace={<Trace href={href(chart.table.line)} name={RECOVERY} />}
       figure={
-        <div role="img" aria-label={reading} className="flex flex-col">
-          {rows.map((row, at) => (
-            <Fragment key={row.index}>
-              {rows[at - 1]?.name !== row.name && (
-                <span className="border-t border-border-hairline pt-3 text-small font-medium wrap-anywhere text-text-primary first:border-t-0 first:pt-0">
-                  {row.name}
-                </span>
-              )}
-              <div className="flex flex-col gap-1 py-2">
-                <span className="flex items-baseline justify-between gap-2 text-caption text-text-tertiary">
-                  {row.scenario}
-                  <span
-                    className={
-                      row.percent.value === null
-                        ? "text-gap-text"
-                        : "font-mono text-small text-text-primary tabular-nums"
-                    }
-                  >
-                    {percentText(row.percent)}
+        !oneUnit ? (
+          <GapNote>The claims and recoveries are stated in more than one unit.</GapNote>
+        ) : (
+          <div role="img" aria-label={reading} className="flex flex-col">
+            {rows.map((row, at) => (
+              <Fragment key={row.index}>
+                {rows[at - 1]?.name !== row.name && (
+                  <span className="border-t border-border-hairline pt-3 text-small font-medium wrap-anywhere text-text-primary first:border-t-0 first:pt-0">
+                    {row.name}
                   </span>
-                </span>
-                <BarLine name="Claim" cell={row.claim} top={top} tone="primary" />
-                <BarLine name="Recovery" cell={row.recovery} top={top} tone="secondary" />
-              </div>
-            </Fragment>
-          ))}
-        </div>
+                )}
+                <div className="flex flex-col gap-1 py-2">
+                  <span className="flex items-baseline justify-between gap-2 text-caption text-text-tertiary">
+                    {row.scenario}
+                    <span
+                      className={
+                        row.percent.value === null
+                          ? "text-gap-text"
+                          : "font-mono text-small text-text-primary tabular-nums"
+                      }
+                    >
+                      {percentText(row.percent)}
+                    </span>
+                  </span>
+                  <BarLine name="Claim" cell={row.claim} top={top} tone="primary" />
+                  <BarLine name="Recovery" cell={row.recovery} top={top} tone="secondary" />
+                </div>
+              </Fragment>
+            ))}
+          </div>
+        )
       }
       table={{
         head: [...RECOVERY_COLUMNS],
@@ -278,8 +288,8 @@ function PlanTreatment({ entry, href }: { entry: Entry; href: Href }) {
   return (
     <Tile span={12} label={label} title={label}>
       <ul aria-label={label} className="flex flex-col">
-        {table.rows.map(({ line, cells }) => {
-          const name = readerCell(cells[path] ?? "");
+        {table.rows.map(({ line, cells }, index) => {
+          const name = rowName(readerCell(cells[path] ?? ""), index);
           return (
             <li
               key={line}
@@ -315,11 +325,11 @@ function PlanTreatment({ entry, href }: { entry: Entry; href: Href }) {
 export function RestructuringLead(props: LeadProps) {
   const { entry } = props;
   const href = leadHref(props);
-  const reason = blockedReason(entry);
-  if (reason !== null || blocked(entry) || entry.output.state?.established === false)
+  const stopped = blockedState(entry);
+  if (stopped)
     return (
       <Bento>
-        <LeadBlocked span={12} label={TITLE} title={TITLE} reason={reason ?? IN_EVIDENCE} />
+        <LeadBlocked span={12} label={TITLE} title={TITLE} reason={stopped.reason} />
       </Bento>
     );
   return (

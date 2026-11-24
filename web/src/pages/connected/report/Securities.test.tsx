@@ -120,7 +120,7 @@ it("shows the paired observed quote with all authored digits and keeps the unquo
   expect(within(loan).getByText("Not supplied: no loan observation")).toBeInTheDocument();
   expect(within(loan).getByText("Requires More Work")).toBeInTheDocument();
   expect(within(instrumentRow("Secured notes")).getByText("Neutral")).toBeInTheDocument();
-  expect(screen.getByText(/Spread is not supplied/)).toBeInTheDocument();
+  expect(screen.getByText(/No spread column in the module's table/)).toBeInTheDocument();
 });
 
 it.each([
@@ -148,7 +148,18 @@ it("keeps an unlocated price in its card without using it in the comparison", ()
   if (!view) throw new Error("missing security review");
   render(<Securities data={view} href={(line) => `#evidence/5-${String(line)}`} />);
   expect(within(instrumentRow("Secured notes")).getByText(/\$99\.00/)).toBeInTheDocument();
+  // The unlocated quote's stated yield is shown as written, with no bar.
+  expect(within(instrumentRow("Secured notes")).getByText("7.005000%")).toBeInTheDocument();
+  expect(within(instrumentRow("Secured notes")).getAllByText("Not supplied")).toHaveLength(1);
   expect(bars()).toEqual([]);
+});
+
+it("says what was checked about the spread column", () => {
+  const view = securityView(dataset("1 Oct 2026", [basis("2026-10-01")]), "2026-10-02");
+  if (!view) throw new Error("missing security review");
+  render(<Securities data={view} href={(line) => `#evidence/5-${String(line)}`} />);
+  expect(screen.getByText(/^No spread column in the module's table\./)).toBeVisible();
+  expect(screen.getByText(/A spread needs market quotes supplied at run start/)).toBeVisible();
 });
 
 // docs/rulings/2026-11-16-reporting-currency-from-sources.md: the quotes stay US market quotes.

@@ -152,7 +152,7 @@ it("says why when the triggers are a stated gap or the tables are absent", () =>
   ).toBeVisible();
   expect(
     within(screen.getByRole("region", { name: "Rating register" })).getByText(
-      "Not yet produced by a real run of this module.",
+      "Built from the module's contract; to be proven on a real run.",
     ),
   ).toBeVisible();
   cleanup();
@@ -174,4 +174,50 @@ it("draws a blocked module as Not assessable", () => {
   );
   expect(screen.getByText("Not assessable")).toBeVisible();
   expect(screen.getByText("No agency rating was supplied.")).toBeVisible();
+});
+
+it("shows an empty trigger cell as missing in the table view, not a crash", () => {
+  render(
+    <RatingsLead
+      {...leadProps(
+        ratings({
+          triggers: [["Synthetic Agency A", "Net leverage", "6.5", "6.1", "", "x", "Synthetic."]],
+        }),
+      )}
+    />,
+  );
+  const tile = screen.getByRole("region", { name: "Rating triggers" });
+  fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
+  expect(within(tile).getByRole("row", { name: /^Net leverage/ })).toBeVisible();
+});
+
+it("draws a trigger's texts without source references and names a register row without an agency", () => {
+  render(
+    <RatingsLead
+      {...leadProps(
+        ratings({
+          triggers: [
+            [
+              "Synthetic Agency A",
+              "Leverage per rating_report.pdf p. 2",
+              "6.5",
+              "6.1",
+              "Per CP-2 view",
+              "x",
+              "Synthetic.",
+            ],
+          ],
+          register: [
+            ["", "Synthetic Issuer", "BB-", "Stable", "2025-06-30", "Release", "p.1", "Current"],
+          ],
+        }),
+      )}
+    />,
+  );
+  const tile = screen.getByRole("region", { name: "Rating triggers" });
+  expect(tile.textContent).not.toMatch(/rating_report|CP-2/);
+  fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
+  expect(tile.textContent).not.toMatch(/rating_report|CP-2/);
+  const register = screen.getByRole("region", { name: "Rating register" });
+  expect(within(register).getByRole("link", { name: "Source for Row 1" })).toBeVisible();
 });

@@ -137,6 +137,9 @@ it("draws the relative value and portfolio fit passages and the peer gap", () =>
   ).toBeVisible();
   const peers = screen.getByRole("region", { name: "Relative value against peers" });
   expect(
+    within(peers).getByText("This handoff has no peer levels to compare the instruments against."),
+  ).toBeVisible();
+  expect(
     within(peers).getByText("Needs market quotes and peer levels supplied at run start."),
   ).toBeVisible();
 });
@@ -164,6 +167,6 @@ it("draws a blocked module as Not assessable with its reason", () => {
   );
   const tile = screen.getByRole("region", { name: "Instrument decisions" });
   expect(within(tile).getByText("Not assessable")).toBeVisible();
-  expect(within(tile).getByText("No market quotes were supplied.")).toBeVisible();
+  expect(within(tile).getByText("No market quotes were supplied. More.")).toBeVisible();
   expect(screen.queryByRole("region", { name: "Relative value" })).toBeNull();
 });

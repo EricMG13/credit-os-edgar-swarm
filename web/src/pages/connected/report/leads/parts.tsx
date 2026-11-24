@@ -110,7 +110,7 @@ export function LeadFigure({
 /** What unlocks a gap, in the reader's words. */
 export const NEEDS = {
   method: "Needs a typed table in the module's handoff: a methodology change.",
-  proof: "Not yet produced by a real run of this module.",
+  proof: "Built from the module's contract; to be proven on a real run.",
   input: (what: string) => `Needs ${what} supplied at run start.`,
 } as const;
 
@@ -147,6 +147,9 @@ function withoutState(reason: string) {
   return rest ? rest.charAt(0).toUpperCase() + rest.slice(1) : reason;
 }
 
+/** The longest reason set as a lead; a longer one reads as body text. */
+const LEAD_REASON = 160;
+
 /** A module that could not run, in place of its lead: Not assessable, why, and what would fix it. */
 export function LeadBlocked({
   span,
@@ -161,6 +164,7 @@ export function LeadBlocked({
   reason: string;
   unlock?: string;
 }) {
+  const shown = withoutState(reason);
   return (
     <Tile
       span={span}
@@ -170,7 +174,14 @@ export function LeadBlocked({
     >
       <div className="flex flex-col gap-3">
         <StatusBadge set="Module state" state="Not assessable" className="w-fit" />
-        <p className="text-lead text-balance text-text-primary">{withoutState(reason)}</p>
+        <p
+          className={cx(
+            "text-balance text-text-primary",
+            shown.length <= LEAD_REASON ? "text-lead" : "text-body",
+          )}
+        >
+          {shown}
+        </p>
         {unlock && <p className="text-small text-text-secondary">{unlock}</p>}
       </div>
     </Tile>
@@ -231,8 +242,8 @@ export function edgeTable(edges: readonly Edge[], href?: (line: number) => strin
   return {
     head: ["From", "Relationship", "Edge type", "To"],
     rows: edges.map((edge) => ({
-      label: edge.from,
-      cells: [edge.relationship, edge.type, edge.to],
+      label: edge.from || "Not stated",
+      cells: [edge.relationship || null, edge.type || null, edge.to || null],
       end: href ? <Trace href={href(edge.line)} name={`${edge.from} to ${edge.to}`} /> : undefined,
     })),
     endHeading: href ? "Source" : undefined,
@@ -260,7 +271,9 @@ export function DatedList({
   return (
     <ol aria-label={label} className="flex flex-col">
       {events.map((item) => {
-        const [kind, detail] = item.status.split(" — ");
+        const cut = item.status.indexOf(" — ");
+        const kind = cut < 0 ? item.status : item.status.slice(0, cut);
+        const detail = cut < 0 ? "" : item.status.slice(cut + 3);
         return (
           <li
             key={item.line}
@@ -298,7 +311,7 @@ export function Prose({
 }) {
   return (
     <Well className={cx("flex flex-col gap-3", className)}>
-      {paragraphs.map((paragraph) => (
+      {paragraphs.map((paragraph, at) => (
         <div key={paragraph.line} className="flex items-start justify-between gap-3">
           <p
             className={cx(
@@ -308,7 +321,9 @@ export function Prose({
           >
             {paragraph.text ?? "This paragraph cites its sources by name; it is in Evidence."}
           </p>
-          {href && <Trace href={href(paragraph.line)} name={label} />}
+          {href && (
+            <Trace href={href(paragraph.line)} name={`${label}, paragraph ${String(at + 1)}`} />
+          )}
         </div>
       ))}
     </Well>

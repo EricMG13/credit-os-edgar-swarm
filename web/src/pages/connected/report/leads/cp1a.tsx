@@ -10,10 +10,8 @@ import {
   Prose,
   Trace,
 } from "./parts";
-import { blockedReason, eventsOf, leadHref, mapOf, sectionParagraphs } from "./read";
+import { blockedState, eventsOf, leadHref, mapOf, sectionParagraphs } from "./read";
 import type { LeadProps } from "./types";
-
-const IN_EVIDENCE = "Not assessable; the reason is recorded in Evidence.";
 
 function MapTile({
   entry,
@@ -93,15 +91,15 @@ function Transaction({
 export function BusinessLead(props: LeadProps) {
   const { entry } = props;
   const href = leadHref(props);
-  const reason = blockedReason(entry);
-  if (reason !== null || entry.output.state?.established === false)
+  const stopped = blockedState(entry);
+  if (stopped)
     return (
       <Bento>
         <LeadBlocked
           span={12}
           label="Business and governance"
           title="Business and governance"
-          reason={reason ?? IN_EVIDENCE}
+          reason={stopped.reason}
         />
       </Bento>
     );
@@ -123,7 +121,7 @@ export function BusinessLead(props: LeadProps) {
         span={4}
         label="Revenue mix"
         title="Revenue mix"
-        reason="The handoff states the revenue mix in words, not as a table of amounts or shares."
+        reason="This handoff has no revenue-mix table."
         needs={NEEDS.method}
       />
       <MapTile

@@ -248,3 +248,43 @@ it("draws the transmission map with its note, or its gap, and a blocked module a
   );
   expect(screen.getByText("Not assessable")).toBeVisible();
 });
+
+it("says a missing ledger label is not stated and lists a row it cannot place", () => {
+  const made = credit([
+    ledger([
+      row("STRENGTH", "1", "—", "Cash generative."),
+      row("STRENGTH", "2", "Per annual_report.pdf p. 4", "Scale."),
+      row("MIXED", "2", "FX exposure", "Both ways."),
+      row("WEAKNESS", "1", "Leverage", "High."),
+    ]),
+  ]);
+  render(<CreditLead {...leadProps(made)} />);
+  const strengths = screen.getByRole("list", { name: "Strengths" });
+  const [first, second] = within(strengths).getAllByRole("listitem");
+  expect(first).toHaveTextContent("Not stated");
+  expect(second).toHaveTextContent("In Evidence");
+  const tile = screen.getByRole("region", { name: "Strengths and weaknesses" });
+  expect(within(tile).getByText("Not placed: FX exposure (MIXED)")).toBeVisible();
+});
+
+it("lists a materiality row whose direction is not positive or negative as not placed", () => {
+  const filter = table(
+    10,
+    ["Rank", "Driver", "Direction"],
+    [
+      ["1", "Scale", "Positive (moderate)"],
+      ["1", "Leverage", "Negative"],
+    ],
+  );
+  render(
+    <CreditLead
+      {...leadProps(
+        credit([{ heading: "T2.10 Materiality Filter", level: 4, line: 9, blocks: [filter] }]),
+      )}
+    />,
+  );
+  expect(screen.getByText("Not placed: Scale (Positive (moderate))")).toBeVisible();
+  expect(
+    within(screen.getByRole("list", { name: "Weaknesses" })).getByText("Leverage"),
+  ).toBeVisible();
+});

@@ -2,23 +2,22 @@ import { breakPointView, BreakPointsTile } from "../BreakPoints";
 import { downsideView, DownsideTile } from "../Downside";
 import { Bento } from "../overview/Tile";
 import { LeadBlocked, LeadGap, NEEDS } from "./parts";
-import { blockedReason, leadHref } from "./read";
+import { blockedState, leadHref } from "./read";
 import type { LeadProps } from "./types";
 
 const LADDER = "EBITDA break points";
 const SCENARIOS = "Downside scenarios";
-const IN_EVIDENCE = "Not assessable; the reason is recorded in Evidence.";
 
 /** CP-2A: how far EBITDA can fall before each limit, and every stress case side by side. */
 export function DownsideLead(props: LeadProps) {
   const { entry } = props;
   const evidence = leadHref(props);
   const href = (line: number) => evidence(line);
-  const reason = blockedReason(entry);
-  if (reason !== null || entry.output.state?.established === false)
+  const stopped = blockedState(entry);
+  if (stopped)
     return (
       <Bento>
-        <LeadBlocked span={12} label={LADDER} title={LADDER} reason={reason ?? IN_EVIDENCE} />
+        <LeadBlocked span={12} label={LADDER} title={LADDER} reason={stopped.reason} />
       </Bento>
     );
   const breaks = breakPointView(entry);

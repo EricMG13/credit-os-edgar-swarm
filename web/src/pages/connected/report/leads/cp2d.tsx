@@ -4,11 +4,10 @@ import { basisNotes } from "../overview/figureData";
 import { Bento } from "../overview/Tile";
 import { Bridge, bridgeSteps } from "./bridge";
 import { DatedList, LeadBlocked, LeadFigure, LeadGap, NEEDS, Trace } from "./parts";
-import { blockedReason, chartOf, eventsOf, leadHref } from "./read";
+import { blockedState, chartOf, eventsOf, leadHref } from "./read";
 import type { LeadProps } from "./types";
 
 const TITLE = "Liquidity bridge";
-const IN_EVIDENCE = "Not assessable; the reason is recorded in Evidence.";
 
 function LiquidityBridge({
   entry,
@@ -88,11 +87,11 @@ function LiquidityBridge({
 export function LiquidityLead(props: LeadProps) {
   const { entry } = props;
   const href = leadHref(props);
-  const reason = blockedReason(entry);
-  if (reason !== null || entry.output.state?.established === false)
+  const stopped = blockedState(entry);
+  if (stopped)
     return (
       <Bento>
-        <LeadBlocked span={12} label={TITLE} title={TITLE} reason={reason ?? IN_EVIDENCE} />
+        <LeadBlocked span={12} label={TITLE} title={TITLE} reason={stopped.reason} />
       </Bento>
     );
   const events = eventsOf(entry, "Financing") ?? [];
@@ -119,7 +118,7 @@ export function LiquidityLead(props: LeadProps) {
           span={12}
           label="Runway"
           title="Runway"
-          reason="The handoff states no runway as a figure."
+          reason="This handoff states no runway figure."
           needs={NEEDS.method}
         />
       </div>

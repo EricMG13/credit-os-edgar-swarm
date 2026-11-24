@@ -192,7 +192,9 @@ it("draws the plan treatment as written, and the gaps when the module wrote none
     ["Plan treatment", "The module wrote no plan treatment register."],
   ] as const)
     expect(within(screen.getByRole("region", { name })).getByText(text)).toBeVisible();
-  expect(screen.getAllByText("Not yet produced by a real run of this module.")).toHaveLength(3);
+  expect(
+    screen.getAllByText("Built from the module's contract; to be proven on a real run."),
+  ).toHaveLength(3);
 });
 
 it("draws a blocked module as Not assessable with its reason", () => {
@@ -208,4 +210,29 @@ it("draws a blocked module as Not assessable with its reason", () => {
   const tile = screen.getByRole("region", { name: "Value allocation" });
   expect(within(tile).getByText("Not assessable")).toBeVisible();
   expect(within(tile).getByText("The distress gate is not met.")).toBeVisible();
+});
+
+it("puts claims in more than one unit in the table view with the reason, not on one scale", () => {
+  const mixed = RESTRUCTURING.replace(
+    "| Senior unsecured notes | Scenario 1 | 600 | 250 | 41.7 | US$m |",
+    "| Senior unsecured notes | Scenario 1 | 600 | 250 | 41.7 | EUR m |",
+  );
+  render(<RestructuringLead {...leadProps(restructuring(mixed))} />);
+  const tile = screen.getByRole("region", { name: "Recovery by class" });
+  expect(tile.querySelectorAll("[data-bar]")).toHaveLength(0);
+  expect(
+    within(tile).getByText("The claims and recoveries are stated in more than one unit."),
+  ).toBeVisible();
+  fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
+  expect(within(tile).getByRole("cell", { name: "41.7" })).toBeVisible();
+});
+
+it("names a plan path without a name by its place", () => {
+  render(
+    <RestructuringLead
+      {...leadProps(restructuring(RESTRUCTURING.replace("| Prepackaged plan |", "|  |")))}
+    />,
+  );
+  const tile = screen.getByRole("region", { name: "Plan treatment" });
+  expect(within(tile).getByRole("link", { name: "Source for Row 1" })).toBeVisible();
 });

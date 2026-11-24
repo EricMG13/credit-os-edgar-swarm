@@ -180,3 +180,52 @@ it("labels the earliest and latest maturity dates when the points fall within on
   expect(within(figure).getByText("2027-08-01")).toBeInTheDocument();
   expect(within(figure).queryByText("2027")).toBeNull();
 });
+
+it("places no point when the yields are in more than one unit, and says so", () => {
+  const mixed = MARKET.replace(
+    "| 6.80 | Not supplied: no benchmark stated | 2025-03-28 | Last trade | % |",
+    "| 680 | Not supplied: no benchmark stated | 2025-03-28 | Last trade | bp |",
+  );
+  const made = market();
+  made.sections = sectionsOf(mixed);
+  render(<MarketLead {...leadProps(made)} />);
+  const tile = screen.getByRole("region", { name: "Yield against maturity" });
+  expect(tile.querySelectorAll("[data-point]")).toHaveLength(0);
+  expect(within(tile).getByText("The yields are stated in more than one unit.")).toBeVisible();
+  expect(within(tile).queryByText(/^Yield in/)).toBeNull();
+  fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
+  expect(within(tile).getByRole("cell", { name: "680" })).toBeVisible();
+  expect(within(tile).getByRole("cell", { name: "6.12" })).toBeVisible();
+});
+
+it("gives a yield below zero its own reason, and draws no source reference in a reason line", () => {
+  const made = market();
+  made.sections = sectionsOf(
+    MARKET.replace("| 6.80 |", "| -0.2 |").replace(
+      "Not supplied: no loan quote in the files",
+      "Not supplied: see loan_tape.xlsx row 4",
+    ),
+  );
+  render(<MarketLead {...leadProps(made)} />);
+  const tile = screen.getByRole("region", { name: "Yield against maturity" });
+  expect(
+    within(tile).getByText(
+      "Synthetic subordinated notes 2027: Stated yield below zero; not placed.",
+    ),
+  ).toBeVisible();
+  expect(tile.textContent).not.toMatch(/loan_tape/);
+});
+
+it("names an implied-risk row without a security by its place", () => {
+  const made = market();
+  made.sections = sectionsOf(
+    MARKET.replace(
+      "| Synthetic subordinated notes 2027 | Credit triangle |",
+      "|  | Credit triangle |",
+    ),
+  );
+  render(<MarketLead {...leadProps(made)} />);
+  const tile = screen.getByRole("region", { name: "Market-implied default" });
+  expect(within(tile).getByText("Row 1")).toBeVisible();
+  expect(within(tile).getByRole("link", { name: "Source for Row 1" })).toBeVisible();
+});

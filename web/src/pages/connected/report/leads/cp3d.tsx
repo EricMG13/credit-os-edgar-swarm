@@ -1,17 +1,25 @@
 import { Fragment } from "react";
-import { blocked, withUnit } from "../../publishedReport";
+import { withUnit } from "../../publishedReport";
 import { ticks, type SourceTable } from "../../visuals/visualData";
 import { basisNotes, readCell } from "../overview/figureData";
 import { Key } from "../overview/figureParts";
 import { Bento, GapNote, Tile } from "../overview/Tile";
 import { LeadBlocked, LeadFigure, LeadGap, NEEDS, Trace } from "./parts";
-import { blockedReason, chartOf, columnOf, leadHref, readerCell, registerTable } from "./read";
+import {
+  blockedState,
+  chartOf,
+  columnOf,
+  leadHref,
+  readerCell,
+  readerCellOf,
+  registerTable,
+  rowName,
+} from "./read";
 import type { LeadProps } from "./types";
 
 type Href = (line?: number) => string;
 
 const TITLE = "Yield against maturity";
-const IN_EVIDENCE = "Not assessable; the reason is recorded in Evidence.";
 const MARKET_DATA = NEEDS.input("market data");
 const COLUMNS = [
   "Instrument",
@@ -37,10 +45,10 @@ function quotes(table: SourceTable) {
   const scope = table.rows.map((row) => row[yieldAt] ?? "");
   return table.rows.map((row, index) => {
     const unit = row.at(-2) ?? "";
-    const cell = readCell(row[yieldAt] ?? "", scope, unit);
+    const cell = readerCellOf(readCell(row[yieldAt] ?? "", scope, unit));
     return {
-      name: readerCell(row[name] ?? ""),
-      maturity: row[maturity] ?? "",
+      name: readerCell(row[name] ?? "") || "Instrument not stated",
+      maturity: readerCell(row[maturity] ?? ""),
       day: dayOf(row[maturity] ?? ""),
       cell,
       unit,
@@ -52,6 +60,13 @@ function quotes(table: SourceTable) {
 }
 
 type Quote = NonNullable<ReturnType<typeof quotes>>[number];
+
+/** Why a quote is not placed: its stated gap, a yield below zero, or its maturity date. */
+function unplacedReason(row: Quote) {
+  if (row.cell.value === null) return row.cell.text || "Not supplied";
+  if (row.cell.value < 0) return "Stated yield below zero; not placed.";
+  return `maturity date ${row.maturity || "not stated"}`;
+}
 type Placed = Quote & { day: number; value: number };
 
 const W = { width: 400, height: 236, left: 36, right: 384, top: 14, base: 200 } as const;
@@ -192,22 +207,20 @@ function YieldFigure({ entry, href }: { entry: LeadProps["entry"]; href: Href })
         needs={chart.state === "gap" ? undefined : MARKET_DATA}
       />
     );
-  const placed = rows
+  const candidates = rows
     .flatMap((row): Placed[] =>
       row.day !== null && row.cell.value !== null && row.cell.value >= 0
         ? [{ ...row, day: row.day, value: row.cell.value }]
         : [],
     )
     .sort((a, b) => a.day - b.day);
+  // One axis only for one unit: yields in two units are not placed against each other.
+  const units = new Set(candidates.map((row) => row.unit));
+  const placed = units.size === 1 ? candidates : [];
+  const unit = placed[0]?.unit ?? "";
   const unplotted = rows
-    .filter((row) => !placed.some((point) => point.index === row.index))
-    .map((row) =>
-      row.cell.value === null
-        ? `${row.name}: ${row.cell.text}`
-        : `${row.name}: maturity date ${row.maturity || "not stated"}`,
-    );
-  const units = new Set(rows.map((row) => row.unit));
-  const unit = units.size === 1 ? ([...units][0] ?? "") : "";
+    .filter((row) => !candidates.some((point) => point.index === row.index))
+    .map((row) => `${row.name}: ${unplacedReason(row)}`);
   const reading = `Yield against maturity date${unit ? `, in ${unit}` : ""}. ${placed
     .map(
       (point) =>
@@ -227,7 +240,11 @@ function YieldFigure({ entry, href }: { entry: LeadProps["entry"]; href: Href })
         placed.length ? (
           <Scatter points={placed} label={reading} />
         ) : (
-          <GapNote>No instrument has both a stated yield and a maturity date.</GapNote>
+          <GapNote>
+            {units.size > 1
+              ? "The yields are stated in more than one unit."
+              : "No instrument has both a stated yield and a maturity date."}
+          </GapNote>
         )
       }
       table={{
@@ -277,8 +294,8 @@ function Implied({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
   return (
     <Tile span={4} label={label} title={label}>
       <ul aria-label={label} className="flex flex-col">
-        {table.rows.map(({ line, cells }) => {
-          const name = security < 0 ? label : readerCell(cells[security] ?? "");
+        {table.rows.map(({ line, cells }, index) => {
+          const name = rowName(security < 0 ? "" : readerCell(cells[security] ?? ""), index);
           return (
             <li
               key={line}
@@ -312,11 +329,11 @@ function Implied({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
 export function MarketLead(props: LeadProps) {
   const { entry } = props;
   const href = leadHref(props);
-  const reason = blockedReason(entry);
-  if (reason !== null || blocked(entry) || entry.output.state?.established === false)
+  const stopped = blockedState(entry);
+  if (stopped)
     return (
       <Bento>
-        <LeadBlocked span={12} label={TITLE} title={TITLE} reason={reason ?? IN_EVIDENCE} />
+        <LeadBlocked span={12} label={TITLE} title={TITLE} reason={stopped.reason} />
       </Bento>
     );
   return (

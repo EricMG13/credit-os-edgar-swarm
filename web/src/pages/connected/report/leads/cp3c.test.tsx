@@ -142,7 +142,9 @@ it("states the gaps when the module wrote neither table, and draws a blocked mod
     ),
   ).toBeVisible();
   const paths = screen.getByRole("region", { name: "Liability-management paths" });
-  expect(within(paths).getByText("Not yet produced by a real run of this module.")).toBeVisible();
+  expect(
+    within(paths).getByText("Built from the module's contract; to be proven on a real run."),
+  ).toBeVisible();
   expect(screen.queryByRole("list", { name: "Refinancing dates" })).toBeNull();
   cleanup();
   render(
@@ -169,4 +171,38 @@ it("draws the module's stated reason when the whole table is a gap", () => {
       "No maturity schedule in the files",
     ),
   ).toBeVisible();
+});
+
+it("puts amounts in more than one unit in the table view with the reason, not on one scale", () => {
+  render(
+    <RefinancingLead
+      {...leadProps(
+        made(MARKDOWN.replace("| FY2026 | 500 | 300 | US$m |", "| FY2026 | 500 | 300 | EUR m |")),
+      )}
+    />,
+  );
+  const tile = screen.getByRole("region", { name: "Refinancing need" });
+  expect(tile.querySelectorAll("[data-bar]")).toHaveLength(0);
+  expect(within(tile).getByText("The amounts are stated in more than one unit.")).toBeVisible();
+  fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
+  expect(within(tile).getByRole("cell", { name: "500" })).toBeVisible();
+});
+
+it("draws no source reference in a period or a cell of the need table", () => {
+  render(
+    <RefinancingLead
+      {...leadProps(
+        made(
+          MARKDOWN.replace("| FY2026 | 500 |", "| FY2026 (CP-3C) | 500 |").replace(
+            "Not supplied: no commitment is stated",
+            "Not supplied: see facility_agreement.pdf p. 9",
+          ),
+        ),
+      )}
+    />,
+  );
+  const tile = screen.getByRole("region", { name: "Refinancing need" });
+  expect(tile.textContent).not.toMatch(/facility_agreement|CP-3C/);
+  fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
+  expect(tile.textContent).not.toMatch(/facility_agreement|CP-3C/);
 });

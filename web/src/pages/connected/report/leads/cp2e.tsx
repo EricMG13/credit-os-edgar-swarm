@@ -15,7 +15,7 @@ import { Key } from "../overview/figureParts";
 import { Bento } from "../overview/Tile";
 import { DatedList, LeadBlocked, LeadFigure, LeadGap, NEEDS, Trace } from "./parts";
 import {
-  blockedReason,
+  blockedState,
   columnOf,
   eventsOf,
   leadHref,
@@ -28,7 +28,6 @@ import type { LeadProps } from "./types";
 type Href = (line: number) => string;
 
 const LADDER = "Rate sensitivity";
-const IN_EVIDENCE = "Not assessable; the reason is recorded in Evidence.";
 const STEP = /(?:^|[\s(])\+\s?(\d+(?:\.\d+)?)\s?bp\b/;
 const LEADING = /^[+−-]?[A-Z]{3} ?(?:\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?) ?million\b/;
 
@@ -39,20 +38,36 @@ function leadingAmount(text: string) {
   return money && written ? { ...money, written } : null;
 }
 
+const SECOND_AMOUNT = /\b[A-Z]{3} ?[+−-]?\d|\d(?:[\d,]*\d)?(?:\.\d+)? ?(?:million|billion|bn)\b/;
+const RANGE_ON = /^\s*(?:to|or|and|[–—-])\s*[+−-]?\d/i;
+const QUALIFIED =
+  /\b(?:approximately|approx\.?|about|around|roughly|circa|up to|at least|at most)\b/i;
+
+/**
+ * The amount a cell opens with when it states exactly one: no second amount, no range ("to", a dash)
+ * and no qualifier ("approximately", "about") anywhere; words after the amount are kept as written.
+ */
+function singleAmount(text: string) {
+  const amount = leadingAmount(text);
+  if (!amount) return null;
+  const rest = text.trim().slice(amount.written.length);
+  return SECOND_AMOUNT.test(rest) || RANGE_ON.test(rest) || QUALIFIED.test(text) ? null : amount;
+}
+
 /** A cell that is exactly one stated amount ("USD 3,400 million"), nothing after it. */
 function soleAmount(text: string) {
   const amount = leadingAmount(text);
   return amount && amount.written === text.trim() ? amount : null;
 }
 
-/** The skill's T2F.5 rows: each "+N bp" step whose cash impact opens with a stated amount. */
+/** The skill's T2F.5 rows: each "+N bp" step whose cash impact states exactly one amount. */
 function sensitivityRows(table: Table) {
   const label = columnOf(table, "Sensitivity");
   const impact = columnOf(table, "Estimated Cash Impact");
   const rows = table.rows.map(({ line, cells }) => {
     const name = cells[label] ?? "";
     const text = cells[impact] ?? "";
-    const money = STEP.test(name) ? leadingAmount(text) : null;
+    const money = STEP.test(name) ? singleAmount(text) : null;
     return { line, name: readerCell(name), text: readerCell(text), money };
   });
   const currencies = new Set(rows.flatMap(({ money }) => (money ? [money.currency] : [])));
@@ -241,7 +256,7 @@ function HedgedTile({ entry, href }: { entry: OutputEntry; href: Href }) {
         head: ["Metric", "Amount"],
         rows: rows.map((item) => ({
           label: item.name,
-          cells: [item.text.trim() ? readerCell(item.text) : null],
+          cells: [readerCell(item.text) || null],
           end:
             item.line === undefined ? undefined : <Trace href={href(item.line)} name={item.name} />,
         })),
@@ -257,11 +272,11 @@ export function MacroLead(props: LeadProps) {
   const { entry } = props;
   const evidence = leadHref(props);
   const href: Href = (line) => evidence(line);
-  const reason = blockedReason(entry);
-  if (reason !== null || entry.output.state?.established === false)
+  const stopped = blockedState(entry);
+  if (stopped)
     return (
       <Bento>
-        <LeadBlocked span={12} label={LADDER} title={LADDER} reason={reason ?? IN_EVIDENCE} />
+        <LeadBlocked span={12} label={LADDER} title={LADDER} reason={stopped.reason} />
       </Bento>
     );
   const data = macroView(entry);

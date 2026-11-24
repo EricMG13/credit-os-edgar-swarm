@@ -1,24 +1,23 @@
 import { Bento, Tile } from "../overview/Tile";
 import { DatedList, LeadBlocked, LeadFigure, LeadGap, NEEDS, Prose } from "./parts";
-import { blockedReason, eventsOf, leadHref, sectionParagraphs } from "./read";
+import { blockedState, eventsOf, leadHref, sectionParagraphs } from "./read";
 import type { LeadProps } from "./types";
 
-const IN_EVIDENCE = "Not assessable; the reason is recorded in Evidence.";
 const QUESTIONS = "Research questions and answers";
 
 /** CP-DR: what the research found, the scenarios it draws and the dates that matter. */
 export function ResearchLead(props: LeadProps) {
   const { entry } = props;
   const href = leadHref(props);
-  const reason = blockedReason(entry);
-  if (reason !== null || entry.output.state?.established === false)
+  const stopped = blockedState(entry);
+  if (stopped)
     return (
       <Bento>
         <LeadBlocked
           span={12}
           label="Deep research"
           title="Deep research"
-          reason={reason ?? IN_EVIDENCE}
+          reason={stopped.reason}
         />
       </Bento>
     );
