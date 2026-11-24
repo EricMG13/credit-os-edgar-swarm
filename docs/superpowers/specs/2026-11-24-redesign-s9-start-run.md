@@ -60,7 +60,7 @@ At 390 px nothing scrolls sideways; Submit is full width and last.
 2. **Before Submit.** `<ul aria-label="Before Submit">`, the four existing condition rows as
    status (`StatusBadge` "Met or not met"): Documents inspected; Purpose chosen; Decisions made
    (`n of m` or "None needed"); Summary approved. Data: unchanged `readinessRows`.
-3. **Modules by stage.** `<ul aria-label="Modules for this run">`, grouped by the five stages with
+3. **Modules by stage.** A list named by its heading "Modules", grouped by the five stages with
    `byStage` (`report/stages.ts`, read only): "01 Sources", "02 Financials", "03 Credit", "04
    Structure and market", "05 Validation and decision"; module names, never codes; the forecast
    (`CP-MODEL`) is never drawn. Header: "{n} modules · {pathway label}". Rows and states:
@@ -74,14 +74,17 @@ At 390 px nothing scrolls sideways; Submit is full width and last.
      `will_refuse`: the blocked state — dashed orange outline, `Not assessable` ("Module state"
      set, slashed circle) and the reason. Items scoped to `run` are one "Whole run" row first.
      Passive items (`information`, `ready`) do not change a module's state. A module the service
-     added (Changes since the last run) is drawn in its stage.
+     added (Changes since the last run) is drawn in its stage. Each stage is a sub-list named by the
+     stage; the whole-run row is the list "Limits on the whole run".
    - **From your last review** (after leaving a review by Edit, the stepper or Back): the last
      summary's states, marked "From your last review. Review the run again to check changes.",
      shown only while the pathway and Issuer ID are those of that review; otherwise Not checked
      yet. Kept in page state only; it changes no request.
 
 The one-line summary "`2 of 4 ready · USD 0.00 of USD 25.00`" (or "· Cap unavailable") stays
-above each step action below `lg`.
+above each step action below `lg`. At `lg` the rail is sticky and, when taller than the window,
+scrolls on its own (`max-h` with `overflow-y-auto`, keyboard-focusable), so the cap and what
+Submit needs stay in view on every step.
 
 ### 2.2 Stepper — `run/start/Stepper.tsx` (P2, top)
 
@@ -142,10 +145,15 @@ today, Advanced only. Which controls are drawn, when, stays exactly as today.
 
 h2 "Review and start", then three blocks in this order, each a tile:
 1. **What the run will do** — the existing region "What will run" with its Edit buttons ("Edit
-   issuer and documents", "Edit purpose and modules", "Edit context", and the Advanced ones):
-   issuer, Issuer ID, as-of date, documents read and ignored, pathway, market view, case kind,
-   form level, modules (n) by name, omitted sections, context facts, lookups, and every other
-   input Submit sends, as today.
+   issuer and documents", "Edit purpose and modules", "Edit context", and the Advanced ones).
+   Drawn open, two to a row at `xl`: Issuer and documents (issuer, Issuer ID, as-of date,
+   classification, submitted by, documents read and ignored), Purpose and modules (pathway,
+   market view, case kind, form level, modules (n) by name in two columns, left out, omitted
+   sections), Context (periods, cutoff, changes, file roles, source lookup) and Advanced choices
+   (model and effort, turns). Folded under one closed disclosure, "More inputs Submit sends: …"
+   naming each group: Issuer details, Context details, and at Advanced Valuation and peers, Module
+   options, Scenario assumptions — the groups that are mostly "Not given", whose length pushed the
+   limits 2,700 px down before (audit finding C2-007).
 2. **What it will not do** — the existing region "Limits to decide" ("n of m decided"): one
    decision per shared cause with its status badge, the modules affected, the fix, "Leave out"
    where offered, and the acceptance checkbox ("I accept this limit…", "I have checked this").
@@ -163,7 +171,9 @@ h2 "Review and start", then three blocks in this order, each a tile:
 
 The dialog keeps its titles ("Start a paid run?" / "Start a synthetic test?"), sentences and
 actions ("Start run, up to USD 25.00" / "Start synthetic run", Cancel), and returns focus to
-Submit on Cancel. Gating is unchanged: Submit is disabled until every decision is accepted and
+Submit on Cancel. Its mark is the warning triangle for a paid run and a ring in the accent for
+the no-cost test (the critique of 2026-11-16 noted a warning on a USD 0.00 test). The lock icon
+on Submit is dropped (it read as "locked"). Gating is unchanged: Submit is disabled until every decision is accepted and
 the summary approved; in live mode also until the cap is known and the model pair is verified.
 
 ## 3. Request shapes held fixed
@@ -224,8 +234,11 @@ Every one is used by a test, the proof script or the preview driver; none is ren
 - Headings: h2 per step ("Documents", "Purpose", "More context", "Review and start"), focused on a
   step change.
 
-Added names (new, not yet used by any script): list "Before Submit", list "Modules for this
-run", region "What it will cost".
+Added names (new, not yet used by any script): list "Before Submit", list "Modules" and its
+sub-lists named by stage, list "Limits on the whole run", region "What it will cost", heading
+"What leaves the building", heading and list "Missing for the modules" on Documents, and the five
+More context group titles ("For the research", "Dates and periods", "Legal documents", "Files
+with a role", "Ratings, quotes and facilities"). No existing name was removed or renamed.
 
 ## 5. Files
 
