@@ -514,8 +514,7 @@ function archivedRelativeValue(
       findings.push({ ...passage, body });
   }
   const title = "Instrument preference withheld";
-  const reason =
-    "Entry level and executable yield curve are unestablished for this historical pair.";
+  const reason = "The entry level and executable yield curve are not shown in this report.";
   return {
     title,
     decision: findings.map(({ body }) => body),
@@ -539,7 +538,7 @@ function archivedRelativeValue(
         marks,
         "Issuer evaluated marks and security terms",
         safe,
-        "Historical issuer Level 2 estimates per 100 of principal. Quote basis and executable depth are unestablished.",
+        "Quote basis and executable depth are not shown in this report.",
       ),
     ],
   };
@@ -891,13 +890,8 @@ export function covenantRefinancing(
   );
   return {
     title: "Funding and lender implications",
-    decision: [
-      lead,
-      ...(!headroom
-        ? ["Covenant headroom and unconditional revolver drawability are unestablished."]
-        : []),
-    ],
-    restrictions: headroom ? [] : ["Covenant headroom unestablished"],
+    decision: [lead, ...(!headroom ? ["Covenant headroom is not shown in this report."] : [])],
+    restrictions: headroom ? [] : ["Covenant headroom is not shown in this report."],
     charts,
     gap: charts.length
       ? undefined
@@ -979,21 +973,14 @@ export function distressedRestructuring(
     decision: [
       lead,
       ...(!workout
-        ? ["The restructuring path, fulcrum and class recovery are unestablished."]
+        ? ["The restructuring path and class recovery are not shown in this report."]
         : []),
     ],
-    restrictions: recovery ? [] : ["Class recovery unavailable"],
+    restrictions: recovery ? [] : ["Class recovery is not shown in this report."],
     charts,
-    gap: charts.length
-      ? undefined
-      : "A supported runway or recovery chart is unavailable. Historical static stresses do not establish a current runway.",
+    gap: charts.length ? undefined : "A runway or recovery chart is not shown in this report.",
     exhibits: [
-      ...exhibit(
-        stress,
-        "Historical downside stress",
-        safe,
-        "Static historical shocks. The scenarios do not forecast closing liquidity, default or recovery.",
-      ),
+      ...exhibit(stress, "Historical downside stress", safe),
       ...exhibit(breaks, "Break points", safe),
       ...chartExhibit(workout, "Chart data: recovery by class", "Recovery by class", safe),
     ],
@@ -1012,14 +999,7 @@ export function distressedRestructuring(
             "Interpretation, causal sequence and strongest challenge",
           ],
           safe,
-        ).map((body) =>
-          body
-            .replace(/ The forward path belongs to the forecast consumer\.$/, "")
-            .replace(
-              /: CP-DR identifies equal-or-junior lien permission, not proof of actual ranking\./,
-              ".",
-            ),
-        ),
+        ).map((body) => body.replace(/ The forward path belongs to the forecast consumer\.$/, "")),
       },
       { title: "Limitations", bodies: namedPassage(downside, ["Limitations"], safe) },
     ],

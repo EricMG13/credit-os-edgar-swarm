@@ -616,7 +616,7 @@ const FILE_REFERENCE = new RegExp(
 );
 const LONG_HASH = /\b(?=[0-9a-f]*[a-f])[0-9a-f]{32,}\b/i;
 const ADDRESS_REFERENCE =
-  /(?:\b(?:https?|ftp|file):\/\/|\bwww\.|(?:^|[\s(`"':])(?:(?:~|\.{0,2})\/|[a-z]:\\|\\\\)\S)/i;
+  /(?:\b(?:https?|ftp|file):\/\/|\bwww\.|(?:^|[\s(`"':])(?:(?:~|\.{1,2})\/\S|\/[^\s/]+\/\S|[a-z]:\\\S|\\\\\S))/i;
 const REGISTER_ID = /\bCP-[A-Z0-9]+-(?:GAP|MON|FACT|CALC|EVID|SRC|ASSUMPTION)-[A-Z0-9-]+\b/i;
 
 // A gap id as the modules spell a gap, the report-wide id after the empty-set mark ("∅ G12",

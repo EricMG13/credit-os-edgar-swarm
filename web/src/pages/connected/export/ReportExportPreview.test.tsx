@@ -219,7 +219,7 @@ it("does not call a generically unavailable decision an owner-recorded hold", as
     label: "",
   };
   open("#export/credit-snapshot", snapshot);
-  await screen.findByText("A published decision is unavailable for this run.");
+  await screen.findByText(/is not shown on Overview because its clearance is not recorded/);
   const footer = document.documentElement.style.getPropertyValue("--report-export-scope");
   expect(footer).toContain("Committee action and size unavailable");
   expect(footer).not.toContain("Committee action and size withheld");
@@ -305,8 +305,21 @@ it("withholds print when a figure supplies unsafe visible text", async () => {
   document.querySelector(".report-export-paper")?.append(label);
   fontsReady();
   expect(await screen.findByRole("alert")).toHaveTextContent(
-    "The print layout could not be prepared.",
+    "This PDF cannot be printed because its text contains a link, a reference or a run identifier.",
   );
+  expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
   expect(button).toBeDisabled();
   expect(document.querySelector("[data-print-ready]")).toBeNull();
+});
+
+it("keeps the layout message and a retry when the print layout does not become ready", async () => {
+  Object.defineProperty(HTMLImageElement.prototype, "decode", {
+    configurable: true,
+    value: () => Promise.reject(new Error("decode failed")),
+  });
+  open("#export/credit-snapshot");
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "The print layout could not be prepared.",
+  );
+  expect(screen.getByRole("button", { name: "Try again" })).toBeVisible();
 });

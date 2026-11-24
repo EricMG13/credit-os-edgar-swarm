@@ -90,6 +90,19 @@ function metricIdentity(metric: CatalogueRun["metrics"][string] | undefined) {
   return JSON.stringify([value, unit, period]);
 }
 
+const cardFindings = new Map<string, Promise<CardFinding | null>>();
+
+/** One download per run, as-of date, pathway and issuer for the life of the page. */
+function cachedCardFinding(run: LibraryIndex["workspace"]["runs"][string], date: string) {
+  const key = JSON.stringify([run.folder, date, run.pathway, run.issuerKey]);
+  const cached = cardFindings.get(key);
+  if (cached) return cached;
+  const pending = specialistCardFinding(run, date, new AbortController().signal);
+  cardFindings.set(key, pending);
+  pending.catch(() => cardFindings.delete(key));
+  return pending;
+}
+
 async function specialistCardFinding(
   run: LibraryIndex["workspace"]["runs"][string],
   date: string,
@@ -133,7 +146,7 @@ function SpecialistCardFinding({
     if (!target) return;
     const controller = new AbortController();
     const load = async () => {
-      const result = await specialistCardFinding(run, date, controller.signal).catch(() => null);
+      const result = await cachedCardFinding(run, date).catch(() => null);
       if (!controller.signal.aborted) setFinding(result);
     };
     const observer =

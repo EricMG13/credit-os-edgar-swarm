@@ -338,6 +338,8 @@ function Overview({
   const actionModules = ["CP-3", "CP-3D", "CP-5", "CP-6"];
   const calendar = buildCalendar(view.entries, run.folder);
   const watchRows = upcomingCalendarRows(calendar.rows, run.asOf);
+  const keyCharts = overviewCharts(view, run);
+  const ownFigures = (frontPage?.figures.length ?? 0) > 0;
   const foundation = view.entries.find((entry) => entry.selected && entry.output.module === "CP-1");
   const metrics = foundation
     ? foundationMetrics(foundation, view.catalogue).filter(({ key }) => TILE_KEYS.includes(key))
@@ -368,7 +370,7 @@ function Overview({
       </div>
       <nav aria-label="Overview sections" className="flex flex-wrap items-center gap-4 text-sm">
         <TextLink href="#overview/limitations">Limitations</TextLink>
-        {(!frontPage || frontPage.figures.length > 0) && (
+        {(!frontPage || ownFigures || keyCharts.length > 0) && (
           <TextLink href="#overview/key-charts">Key charts</TextLink>
         )}
         {calendar.rows.length > 0 && <TextLink href="#overview/dates">Dates to watch</TextLink>}
@@ -394,13 +396,14 @@ function Overview({
         run={run}
         rows={runLimitations(view, run).filter(
           ({ id, line }) =>
-            !actionModules.includes(id) &&
             !frontPage?.limitations.some(
               (limitation) => limitation.owner.module === id && limitation.line === line,
             ),
         )}
       />
-      {!frontPage && <KeyCharts run={run} charts={overviewCharts(view, run)} />}
+      {(!frontPage || (!ownFigures && keyCharts.length > 0)) && (
+        <KeyCharts run={run} charts={keyCharts} />
+      )}
       {calendar.rows.length > 0 && (
         <section className={`${card} grid gap-3`}>
           <div className="flex flex-wrap items-center justify-between gap-3">

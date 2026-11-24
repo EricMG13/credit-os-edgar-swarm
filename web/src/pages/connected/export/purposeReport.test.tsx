@@ -894,3 +894,47 @@ it("rejects hold-only eligibility when the independent portfolio observations ha
   };
   unavailable(snapshot, "portfolio-decision");
 });
+
+it("prints availability wording, not a conclusion, when the covenant headroom table is not found", () => {
+  const { snapshot, add } = publication("covenant_refinancing");
+  add("CP-4", [context("Findings"), text("Bottom line", "The covenant package is described.")]);
+  add("CP-2D", [context("Findings"), text("Liquidity view", "Reported cash is conditional.")]);
+  const { container } = open(snapshot, "covenant-refinancing");
+  expect(container.textContent).not.toMatch(/unestablished/i);
+  expect(container.textContent).toContain("Covenant headroom is not shown in this report.");
+});
+
+it("prints availability wording, not a conclusion, when the recovery output is not found", () => {
+  const { snapshot, add } = publication("distressed_restructuring");
+  add("CP-2A", [context("Findings"), text("Bottom line", "The downside case is described.")]);
+  const { container } = open(snapshot, "distressed-restructuring");
+  expect(container.textContent).not.toMatch(/unestablished/i);
+  expect(container.textContent).toContain(
+    "The restructuring path and class recovery are not shown in this report.",
+  );
+  expect(container.textContent).toContain("Class recovery is not shown in this report.");
+  expect(container.textContent).not.toContain("Historical static stresses");
+});
+
+it("prints the contrary-evidence passage with its own qualification and no delivery-written exhibit note", () => {
+  const { snapshot, add } = publication("distressed_restructuring");
+  add("CP-2A", [
+    context("Findings"),
+    text("Bottom line", "The downside case is described."),
+    text(
+      "Contrary evidence and what would change the view",
+      "Lien capacity is wider: CP-DR identifies equal-or-junior lien permission, not proof of actual ranking.",
+    ),
+    table(
+      "Downside stress",
+      ["Scenario and assumption", "FCF, USD thousand"],
+      [["Severe case", "-120"]],
+    ),
+  ]);
+  const { container } = open(snapshot, "distressed-restructuring");
+  expect(container.textContent).toContain(
+    "identifies equal-or-junior lien permission, not proof of actual ranking.",
+  );
+  expect(container.textContent).toContain("Severe case");
+  expect(container.textContent).not.toMatch(/Static historical shocks|do not forecast/);
+});

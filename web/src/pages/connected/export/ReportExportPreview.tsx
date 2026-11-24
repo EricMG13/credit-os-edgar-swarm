@@ -84,7 +84,7 @@ function cssText(text: string) {
 function PrintPaper({ report }: { report: Extract<ReportExport, { state: "ready" }> }) {
   const { id, name, document: paper, qualifiers, previewNote, privateIds } = report;
   const root = useRef<HTMLElement>(null);
-  const [layout, setLayout] = useState<"waiting" | "ready" | "failed">("waiting");
+  const [layout, setLayout] = useState<"waiting" | "ready" | "failed" | "blocked">("waiting");
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     const element = root.current;
@@ -108,7 +108,7 @@ function PrintPaper({ report }: { report: Extract<ReportExport, { state: "ready"
         element.querySelector("a[href], svg a") ||
         containsReference(text) ||
         containsRunIdentifier(text, privateIds);
-      setLayout(unsafe ? "failed" : "ready");
+      setLayout(unsafe ? "blocked" : "ready");
     };
     const mark = element.querySelector(".report-export-brand img");
     void Promise.all([
@@ -161,6 +161,12 @@ function PrintPaper({ report }: { report: Extract<ReportExport, { state: "ready"
         </Button>
         <div className="flex flex-wrap items-center gap-2">
           {layout === "waiting" && <p role="status">Preparing print layout…</p>}
+          {layout === "blocked" && (
+            <p role="alert">
+              This PDF cannot be printed because its text contains a link, a reference or a run
+              identifier.
+            </p>
+          )}
           {layout === "failed" && (
             <>
               <p role="alert">The print layout could not be prepared.</p>

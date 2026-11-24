@@ -194,7 +194,15 @@ it("fails closed for absent verification, stale lead or hold, and ambiguous char
   const stale = { ...run, lead: run.lead && { ...run.lead, line: 4 }, actionTreatment: {} };
   const page = buildIssuerFrontPage(view, stale);
   expect(page?.lead).toBeUndefined();
-  expect(page?.actions[0]?.reason).toBe("A published decision is unavailable for this run.");
+  expect(page?.actions[0]?.reason).toBe(
+    "This decision is not shown on Overview because its clearance is not recorded; the module holds it.",
+  );
+  expect(
+    buildIssuerFrontPage(
+      { ...view, entries: view.entries.filter(({ output }) => output.module !== "CP-6") },
+      { ...run, pathway: "portfolio_decision" },
+    )?.actions[0]?.reason,
+  ).toBe("A published decision is unavailable for this run.");
   const foundation = view.entries[1];
   foundation?.sections.push(section(55, "Superseded chart table", [leverage]));
   expect(buildIssuerFrontPage(view, run)?.figures[0]).toMatchObject({ title: "Leverage" });
@@ -459,6 +467,36 @@ it("keeps the accepted issuer profile and dated gross debt stack together, with 
   foundation.sections.splice(index, 1);
   debtSection.blocks.push(detail);
   expect(termLoanRows()).toEqual(["Term loan I", "Term loan J"]);
+  const finance = foundation.sections.find(
+    ({ heading }) => heading === "Financials and credit metrics",
+  );
+  const financeTable = finance?.blocks[0];
+  if (financeTable?.type !== "table") throw new Error("Expected the financial table");
+  financeTable.rows.push({
+    line: 22,
+    cells: [
+      "Net debt / EBITDA",
+      "2025-12-31",
+      "2.00x",
+      "Consolidated; cash netting unrestrictedness not certified",
+      "issuer.pdf",
+    ],
+  });
+  expect(
+    buildIssuerFrontPage(view, run)?.headline.find(({ category }) => category === "Net leverage")
+      ?.label,
+  ).toBe("Net debt / EBITDA");
+  const notes = debt.rows.find(({ cells }) => cells[0] === "5.50% 2027 Notes");
+  if (!notes) throw new Error("Expected the notes row");
+  const noteCells = () =>
+    buildIssuerFrontPage(view, run)?.capital?.table.rows.find(
+      ({ cells }) => cells[0] === "5.50% 2027 Notes",
+    )?.cells;
+  notes.cells[3] = "four tranches; Term SOFR + 2.50%; 2028-2032";
+  expect(noteCells()?.slice(3)).toEqual(["four tranches; Term SOFR + 2.50%; 2028-2032", ""]);
+  notes.cells[3] = "July 1, 2027; 5.50%; callable";
+  expect(noteCells()?.slice(3)).toEqual(["5.50%; callable", "1 Jul 2027"]);
+  notes.cells[3] = "November 15, 2027; 5.50%";
   debt.rows.push({ line: 57, cells: ["Total secured notes", "0", "0", "Subtotal", "Source"] });
   expect(buildIssuerFrontPage(view, run)?.capitalBasis).toBeUndefined();
   debt.rows.pop();
@@ -599,3 +637,57 @@ it("requires the published unit for naked figures and for each instrument amount
     "0",
   ]);
 });
+
+it("keeps the differing-rating notice on the front page, on screen only", () => {
+  const { view, run } = inputs();
+  view.catalogue = {
+    metrics: {},
+    ratings: [
+      { agency: "Moody's", label: "B2", scope: "issuer", outlook: "Stable", date: "2025-06-01" },
+    ],
+  } as unknown as ReportView["catalogue"];
+  view.entries.push(
+    owner("CP-2H", [
+      section(1, "Findings", []),
+      section(30, "T2R.1 Rating evidence register", [
+        {
+          type: "table",
+          line: 32,
+          headers: ["Agency", "Issuer/instrument", "Rating", "Outlook/watch", "Effective date"],
+          rows: [{ line: 34, cells: ["Moody's", "Issuer", "B3", "Stable", "2025-06-10"] }],
+        },
+      ]),
+    ]),
+  );
+  const page = buildIssuerFrontPage(view, run);
+  if (!page) throw new Error("Expected a front page");
+  const { unmount } = render(<IssuerFrontPage page={page} />);
+  const link = screen.getByRole("link", { name: /shows a different rating for Moody's/ });
+  expect(link.getAttribute("href")).toMatch(/#modules\/CP-2H$/);
+  expect(screen.getByText(/Entered rating/)).toHaveTextContent("Moody's B2 Stable 2025-06-01");
+  unmount();
+  render(<IssuerFrontPage page={page} print />);
+  expect(screen.queryByText(/shows a different rating/)).toBeNull();
+});
+
+it.each(["Basis is in issuer.pdf, section 4.", "page:12"])(
+  "still shows cash and undrawn amounts when their basis is a reference or empty after redaction (%s)",
+  (basis) => {
+    const { view, run } = inputs();
+    const page = buildIssuerFrontPage(view, run);
+    if (!page) throw new Error("Expected a front page");
+    const owner = { id: "CP-1", module: "CP-1", sha256: SHA };
+    const { container } = render(
+      <IssuerFrontPage
+        page={{
+          ...page,
+          liquidity: { owner, line: 5, cash: "USD 120m", undrawn: "USD 300m", basis },
+        }}
+      />,
+    );
+    expect(container).toHaveTextContent("Cash USD 120m");
+    expect(container).toHaveTextContent("Undrawn committed facilities USD 300m");
+    expect(screen.getByText("The basis for these amounts is available in Evidence.")).toBeVisible();
+    expect(container).not.toHaveTextContent(/issuer\.pdf|page:12/);
+  },
+);

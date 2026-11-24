@@ -14,6 +14,7 @@ import {
   type Section,
   type Table,
 } from "../publishedReport";
+import { differingAgencies } from "./IdentityBand";
 import { plainText } from "../richText";
 import { foundationMetrics, namedRow, namedTable, type ReportView } from "../reportView";
 
@@ -541,8 +542,9 @@ function legacyDebtRow({ line, cells }: Table["rows"][number]) {
     : /\bSecured Notes$/.test(name)
       ? "Secured"
       : "";
-  const [maturity, rate] = terms.split("; ");
-  const date = compactDebtDate(maturity ?? "");
+  const [maturity = "", ...clauses] = terms.split("; ");
+  const date = compactDebtDate(maturity);
+  const rate = date ? clauses.join("; ") : name === LEGACY_TOTAL ? "" : terms;
   return [
     {
       line,
@@ -550,7 +552,7 @@ function legacyDebtRow({ line, cells }: Table["rows"][number]) {
         receivables ? "Receivables facility" : name === LEGACY_TOTAL ? "Total funded debt" : name,
         rank || (receivables && /fully drawn confirmed/i.test(evidence) ? "Fully drawn" : ""),
         principal,
-        date && rate ? rate : "",
+        rate,
         date ?? "",
       ],
     },
@@ -804,8 +806,16 @@ function actions(view: ReportView, run: PublishedRun): Action[] {
         },
       ];
     }
+    if (entry)
+      return [
+        {
+          label,
+          status: "unavailable",
+          reason:
+            "This decision is not shown on Overview because its clearance is not recorded; the module holds it.",
+        },
+      ];
     if (
-      entry ||
       (code === "CP-3" && run.pathway === "relative_value") ||
       (code === "CP-6" && run.pathway === "portfolio_decision")
     )
@@ -849,21 +859,7 @@ export function buildIssuerFrontPage(view: ReportView, run: PublishedRun) {
   );
   const instruments = instrumentTable(foundation);
   const legacy = legacyCapital(foundation, issuer, run.asOf);
-  const headline = (foundation ? headlines(foundation, profile, view, run.asOf) : []).map(
-    (item) => {
-      if (
-        legacy &&
-        item.label === "EBITDA / cash interest" &&
-        item.basis?.includes("cash-paid net interest")
-      )
-        return { ...item, label: "Issuer EBITDA / net cash interest paid" };
-      return legacy &&
-        item.label === "Net debt / EBITDA" &&
-        item.basis?.includes("cash netting unrestrictedness not certified")
-        ? { ...item, label: "Net debt / issuer EBITDA" }
-        : item;
-    },
-  );
+  const headline = foundation ? headlines(foundation, profile, view, run.asOf) : [];
   const missingHeadline = specialist
     ? []
     : financialRows
@@ -910,7 +906,12 @@ export function buildIssuerFrontPage(view: ReportView, run: PublishedRun) {
     capitalBasis: legacy?.basis,
     liquidity: capitalLiquidity(foundation, legacy?.date),
     tranches: legacy?.tranches,
-    company: { ...company, sector: company.sector ?? readyField(view.catalogue?.sector), ratings },
+    company: {
+      ...company,
+      sector: company.sector ?? readyField(view.catalogue?.sector),
+      ratings,
+      differing: differingAgencies(view.entries, ratings),
+    },
   };
 }
 

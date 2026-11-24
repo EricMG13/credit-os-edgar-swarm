@@ -100,3 +100,23 @@ it("keeps ordinary values in an ambiguous Code column and excludes real citation
   ]);
   expect(displayColumns(["Code"], false, [{ line: 1, cells: ["See p. 12."] }])).toEqual([]);
 });
+
+it.each(["net debt /EBITDA", "Leverage (/share) is flat.", "cash and /or debt", "ratio / EBITDA"])(
+  "does not read a slash after a space as a path: %s",
+  (text) => {
+    expect(containsReference(text)).toBe(false);
+  },
+);
+
+it.each([
+  "See /Users/x/report for detail.",
+  "Output in ./out/a",
+  "Output in ../out/a",
+  "Output in ~/a",
+  "Saved to C:\\a",
+  "Saved to \\\\server\\share",
+  "Read https://x",
+  "Read www.example.com",
+])("still reads an address as a reference: %s", (text) => {
+  expect(containsReference(text)).toBe(true);
+});

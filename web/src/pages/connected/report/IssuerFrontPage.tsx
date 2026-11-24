@@ -1,6 +1,8 @@
+import { Button } from "@/components/base/buttons/button";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import { ChartPrintContext } from "@/components/chart/ChartPrintContext";
 import { printableBasis, printableTable, redactArchivedLocator } from "../export/printTable";
+import { moduleName } from "../api";
 import { heading } from "../layout";
 import { PublishedTable } from "../ReportContent";
 import {
@@ -248,8 +250,16 @@ function Headline({
 }
 
 function Company({ page, context }: { page: IssuerFrontPageData; context: TraceContext }) {
-  const { description, ownership, country, countrySource, sector, sectorSource, ratings } =
-    page.company;
+  const {
+    description,
+    ownership,
+    country,
+    countrySource,
+    sector,
+    sectorSource,
+    ratings,
+    differing,
+  } = page.company;
   const identity = [sector, country].filter(Boolean).join(" · ");
   if (!description && !ownership && !identity && !ratings.length) return null;
   return (
@@ -290,6 +300,14 @@ function Company({ page, context }: { page: IssuerFrontPageData; context: TraceC
                   [agency, label, outlook, date].filter(Boolean).join(" "),
                 )
                 .join(" · ")}
+              {!context.print && differing.length > 0 && (
+                <>
+                  {" · "}
+                  <Button href="#modules/CP-2H" color="link-gray" size="sm">
+                    {`${moduleName("CP-2H")} shows a different rating for ${differing.join(", ")}`}
+                  </Button>
+                </>
+              )}
             </p>
           )}
         </div>
@@ -417,8 +435,11 @@ function CashAndRevolver({
   context: TraceContext;
 }) {
   if (!liquidity) return null;
-  const basis = printableBasis(liquidity.basis);
-  if (!basis || containsReference(basis)) return null;
+  const printable = printableBasis(liquidity.basis);
+  const basis =
+    printable && !containsReference(printable)
+      ? printable
+      : "The basis for these amounts is available in Evidence.";
   return (
     <div className={`${TRACE_HOST} grid gap-1 border-t border-border-hairline pt-2 text-sm`}>
       <p>
