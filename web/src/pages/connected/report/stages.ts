@@ -16,7 +16,7 @@ const OTHER = "Other";
 export function byStage<Row extends { id: string }>(rows: readonly Row[]) {
   const known = new Set<string>(STAGES.flatMap((stage) => stage.modules));
   const groups = STAGES.map((stage) => ({
-    name: stage.name as string,
+    name: stage.name,
     rows: rows.filter((row) => (stage.modules as readonly string[]).includes(row.id)),
   }));
   groups.push({ name: OTHER, rows: rows.filter((row) => !known.has(row.id)) });
