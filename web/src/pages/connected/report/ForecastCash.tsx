@@ -312,11 +312,16 @@ export function UsesOfCash({
     ),
   );
   return (
-    <Tile {...tile}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Legend debtTrace={trace("Debt repayment")} />
-        <Segmented label="Uses of cash view" segments={VIEWS} current={view} onSelect={setView} />
-      </div>
+    <Tile
+      {...tile}
+      trace={
+        <div className="flex flex-none items-center gap-2">
+          <Segmented label="Uses of cash view" segments={VIEWS} current={view} onSelect={setView} />
+          {tile.trace}
+        </div>
+      }
+    >
+      <Legend debtTrace={trace("Debt repayment")} />
       {view === "chart" ? (
         <>
           <Chart slots={slots} />
