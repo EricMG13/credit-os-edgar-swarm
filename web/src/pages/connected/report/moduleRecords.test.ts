@@ -302,4 +302,21 @@ describe("review cases", () => {
     expect(cited).toBe("Untitled table");
     expect(coded).not.toMatch(/CP-1/);
   });
+
+  it("drops register codes of any shape and tells repeated held registers apart", () => {
+    const records = moduleRecords(
+      entry([
+        section("Findings", 2, 1),
+        section("T2B.1 - Register", 3, 2, [table(3, ["A", "B"], [["x", "1"]])]),
+        section("T2B.2 - Register", 3, 10, [table(11, ["A", "B"], [["x", "1"]])]),
+        section("Analytical appendix", 3, 20),
+        section("T2DS.6 Break points", 4, 21, [table(22, ["A", "B"], [["x", "1"]])]),
+      ]),
+    );
+    expect(records.evidence.map(({ title }) => title)).toEqual([
+      "Register",
+      "Register · 2",
+      "Break points",
+    ]);
+  });
 });

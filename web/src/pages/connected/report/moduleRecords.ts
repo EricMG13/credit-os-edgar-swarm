@@ -105,23 +105,26 @@ export function moduleRecords(entry: OutputEntry) {
       });
     }
   }
-  return { tables: distinctTitles(tables), evidence };
+  return { tables: distinctTitles(tables, " · table "), evidence: distinctTitles(evidence, " · ") };
 }
+
+/** A register code of any shape at the start of a heading (T4.1, T2DS.6, T5.5 -), with its dash. */
+const ANY_CODE = /^[A-Z]\d+[A-Z]*(?:\.\d+)*\s+(?:[-\u2013\u2014]\s*)?/;
 
 /** A heading as the reader sees it: no drawing prefix or register code, module names for codes,
  * and no title at all where it cites a source, which belongs in Evidence. */
 function readableTitle(heading: string) {
-  const title = readerText(plainText(drawingTitle(heading))).trim();
+  const title = readerText(plainText(drawingTitle(heading)).replace(ANY_CODE, "")).trim();
   return title && !containsReference(title) ? title : "Untitled table";
 }
 
 /** Tables that share a title, anywhere in the handoff, are told apart by their place among them. */
-function distinctTitles(tables: RecordTable[]) {
+function distinctTitles<Item extends { title: string }>(items: Item[], joiner: string) {
   const seen = new Map<string, number>();
-  return tables.map((record) => {
-    const count = (seen.get(record.title) ?? 0) + 1;
-    seen.set(record.title, count);
-    return count > 1 ? { ...record, title: `${record.title} · table ${String(count)}` } : record;
+  return items.map((item) => {
+    const count = (seen.get(item.title) ?? 0) + 1;
+    seen.set(item.title, count);
+    return count > 1 ? { ...item, title: `${item.title}${joiner}${String(count)}` } : item;
   });
 }
 
