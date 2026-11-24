@@ -1,0 +1,108 @@
+import { cleanup, render, screen, within } from "@testing-library/react";
+import { afterEach, expect, it } from "vitest";
+import type { Snapshot } from "../publishedReport";
+import { citedPagesBySource, EvidenceSources, type SourceGroup } from "./EvidenceSources";
+
+afterEach(cleanup);
+
+const sha = "d".repeat(64);
+const base = `/connected/sources/case/${sha}/Issuer.txt`;
+const source = {
+  name: "Issuer.txt",
+  type: "txt",
+  documentDate: "2025-03-31",
+  readBy: ["CP-1"],
+  sha256: sha,
+};
+const chip = (over: object) => ({
+  label: "p. 2",
+  quote: null,
+  excerpt: null,
+  file: "Issuer.txt",
+  source: null,
+  sha256: sha,
+  reason: null,
+  href: base,
+  pageHref: `${base}?page=2&end=3`,
+  ...over,
+});
+const snapshot = (chips: Snapshot["chips"]) => ({ chips }) as unknown as Snapshot;
+const groups: SourceGroup[] = [
+  { label: "Used by a module", rows: [source] },
+  {
+    label: "Supplied, not used",
+    rows: [{ ...source, name: "Spare.txt", readBy: [], sha256: "e".repeat(64) }],
+  },
+  { label: "Not recorded as used", rows: [] },
+];
+
+it("collects the pages each cited file is cited at, from the chips that name it", () => {
+  const pages = citedPagesBySource(snapshot({ "case/CP-1.md:5": [chip({})] }));
+  expect([...(pages.get("Issuer.txt") ?? [])]).toEqual(["Cited pages 2–3"]);
+});
+
+it("draws the used and the supplied-not-used files as separate tables with exact hashes", () => {
+  render(
+    <EvidenceSources
+      sourceGroups={groups}
+      modules={["CP-1", "CP-2"]}
+      snapshot={snapshot({ "case/CP-1.md:5": [chip({})] })}
+    />,
+  );
+  const used = within(screen.getByRole("table", { name: "Used by a module" }));
+  const spare = within(screen.getByRole("table", { name: "Supplied, not used" }));
+  expect(used.getByText("Issuer.txt")).toBeVisible();
+  expect(used.getByText(sha)).toBeVisible();
+  expect(used.getByText("Cited pages 2–3")).toBeVisible();
+  expect(used.getByText("Read by Financial foundation")).toBeVisible();
+  expect(spare.queryByText("Issuer.txt")).toBeNull();
+  expect(spare.getByText("Spare.txt")).toBeVisible();
+  expect(spare.getByText("e".repeat(64))).toBeVisible();
+  expect(spare.getByText("Not cited")).toBeVisible();
+  expect(screen.queryByRole("table", { name: "Not recorded as used" })).toBeNull();
+});
+
+it("states a source's missing type, date and hash instead of leaving the cell blank", () => {
+  render(
+    <EvidenceSources
+      sourceGroups={[
+        {
+          label: "Used by a module",
+          rows: [{ name: "x.txt", type: null, documentDate: null, readBy: [], sha256: null }],
+        },
+      ]}
+      modules={[]}
+      snapshot={snapshot({})}
+    />,
+  );
+  expect(screen.getByText("Document type n.a.")).toBeVisible();
+  expect(screen.getByText("Document date n.a.")).toBeVisible();
+  expect(screen.getByText("No hash recorded")).toBeVisible();
+});
+
+it("names a file read by every module once", () => {
+  render(
+    <EvidenceSources
+      sourceGroups={[
+        { label: "Used by a module", rows: [{ ...source, readBy: ["CP-1", "CP-2"] }] },
+      ]}
+      modules={["CP-1", "CP-2"]}
+      snapshot={snapshot({})}
+    />,
+  );
+  expect(screen.getByText("Read by all 2 modules")).toBeVisible();
+});
+
+it("filters to one module's files and says so when it has none", () => {
+  const view = render(
+    <EvidenceSources
+      sourceGroups={groups}
+      module="CP-2"
+      modules={["CP-1", "CP-2"]}
+      snapshot={snapshot({})}
+    />,
+  );
+  expect(screen.getByRole("heading", { name: "No source files recorded" })).toBeVisible();
+  expect(screen.getByText("No issuer files are listed for Fundamental credit.")).toBeVisible();
+  view.unmount();
+});
