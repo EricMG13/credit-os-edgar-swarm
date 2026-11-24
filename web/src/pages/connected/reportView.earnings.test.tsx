@@ -86,10 +86,12 @@ it("labels the published earnings lead and renders its conclusion once", async (
   expect(
     within(call).getByRole("heading", { level: 3, name: "The call · Earnings changes" }),
   ).toBeVisible();
-  expect(within(call).getByRole("link", { name: "Earnings changes" })).toHaveAttribute(
-    "href",
-    "#modules/CP-1B",
-  );
+  // Attributed by the tile's heading; the module is reached through its pipeline node.
+  expect(
+    screen
+      .getAllByRole("link", { name: /^Earnings changes/ })
+      .map((link) => link.getAttribute("href")),
+  ).toContain("#modules/CP-1B");
   expect(screen.getAllByText("Published earnings conclusion.")).toHaveLength(1);
   expect(within(call).getByText("Published earnings conclusion.")).toBeVisible();
 });

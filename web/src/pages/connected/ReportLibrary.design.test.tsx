@@ -275,14 +275,14 @@ describe("connected library and report design", () => {
     window.history.replaceState(null, "", "/report/northbridge-2026");
     render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
     expect(await screen.findByRole("heading", { name: "Dates to watch" })).toBeInTheDocument();
-    expect(screen.getByText("Refinancing maturity")).toBeInTheDocument();
-    expect(screen.getByText("2027-03-15")).toBeInTheDocument();
-    expect(screen.getByText("Scheduled")).toBeInTheDocument();
-    const evidence = screen
-      .getAllByRole("link", { name: "Evidence" })
-      .find((link) => link.getAttribute("href")?.includes("#evidence/"));
-    expect(evidence).toBeDefined();
-    expect(evidence).toHaveAttribute("href", expect.stringMatching(/#evidence\//));
+    const dates = within(screen.getByRole("region", { name: "Dates to watch" })).getByRole("list");
+    expect(within(dates).getByText("Refinancing maturity")).toBeInTheDocument();
+    expect(within(dates).getByText("15 March 2027")).toBeInTheDocument();
+    expect(within(dates).getByText("Scheduled")).toBeInTheDocument();
+    const trace = within(dates).getByRole("link", {
+      name: /^Source for Refinancing maturity on 15 March 2027 from /,
+    });
+    expect(trace).toHaveAttribute("href", expect.stringMatching(/#evidence\//));
 
     window.location.hash = "#modules/CP-1";
     const modulePicker = await screen.findByLabelText("Module");

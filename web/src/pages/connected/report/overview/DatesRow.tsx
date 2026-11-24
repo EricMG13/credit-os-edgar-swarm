@@ -4,8 +4,8 @@ import type { PublishedRun, Snapshot } from "../../publishedReport";
 import type { ReportView } from "../../reportView";
 import { buildCalendar, upcomingCalendarRows } from "../Calendar";
 import { asOfDate } from "../../runFigures";
-import { PublishedSource } from "../PublishedTrace";
 import { cx } from "@/utils/cx";
+import { SourceLink } from "./sourceLink";
 import { GapNote, Tile } from "./Tile";
 
 type RowProps = { snapshot: Snapshot; run: PublishedRun; view: ReportView };
@@ -154,17 +154,14 @@ function EventItem({ event, index }: { event: Event; index: number }) {
         </p>
       )}
       <span className="flex flex-wrap gap-1">
-        {event.rows.map((item) => {
+        {event.rows.map((item, at) => {
           const name = `${event.name} on ${shown(event.date)} from ${item.owner}`;
           return (
-            <PublishedSource
-              key={item.href}
+            <SourceLink
+              key={`${item.href}-${String(at)}`}
               href={item.href}
-              name={name}
-              linkLabel={`Source for ${name}`}
-            >
-              View source
-            </PublishedSource>
+              label={`Source for ${name}`}
+            />
           );
         })}
       </span>
