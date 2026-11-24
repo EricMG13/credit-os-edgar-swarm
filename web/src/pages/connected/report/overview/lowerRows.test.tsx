@@ -149,8 +149,11 @@ it("groups limitations into one well per module and keeps the in-page anchor", (
     line("CP-4", "Legal & covenants", "Not assessable", "Not assessable: no document."),
   ];
   render(<LimitsRow {...props} />);
-  const tile = screen.getByRole("region", { name: "Limitations" });
-  const heading = within(tile).getByRole("heading", { level: 2, name: "Limitations" });
+  const tile = screen.getByRole("region", { name: "What this run could not do" });
+  const heading = within(tile).getByRole("heading", {
+    level: 3,
+    name: "What this run could not do",
+  });
   expect(heading).toHaveAttribute("id", "overview-limitations");
   expect(heading).toHaveAttribute("tabindex", "-1");
   const wells = within(tile)
@@ -170,9 +173,14 @@ it("says so when no limitation is listed", () => {
   expect(screen.getByText(/No limitation is listed on this page for this run/)).toBeInTheDocument();
 });
 
-it("draws nothing for a run with no recorded dates", () => {
-  const { container } = render(<DatesRow {...props} />);
-  expect(container).toBeEmptyDOMElement();
+it("keeps the dates tile and its anchor for a run with no recorded dates, and says so", () => {
+  render(<DatesRow {...props} />);
+  const tile = screen.getByRole("region", { name: "Dates to watch" });
+  expect(within(tile).getByRole("heading", { level: 3 })).toHaveAttribute("id", "overview-dates");
+  expect(within(tile).getByRole("status")).toHaveTextContent(
+    "No dated events were recorded in this run.",
+  );
+  expect(within(tile).queryByRole("listitem")).toBeNull();
 });
 
 it("keeps the invalid as-of and nothing-upcoming sentences", () => {
@@ -202,7 +210,7 @@ it("places marks by date, stacks marks on one day, and lists at most five events
   mocks.upcoming = rows;
   const { container } = render(<DatesRow {...props} />);
   const tile = screen.getByRole("region", { name: "Dates to watch" });
-  expect(within(tile).getByRole("heading", { level: 2 })).toHaveAttribute("id", "overview-dates");
+  expect(within(tile).getByRole("heading", { level: 3 })).toHaveAttribute("id", "overview-dates");
   expect(within(tile).getAllByRole("listitem")).toHaveLength(5);
   expect(within(tile).queryByText("Sixth")).toBeNull();
   expect(within(tile).getAllByRole("link", { name: "Evidence" })[0]).toHaveAttribute(

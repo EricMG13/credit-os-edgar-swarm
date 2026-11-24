@@ -139,6 +139,9 @@ it("draws the call: stance, bottom line, confidence, clearance and the changes s
     <CallRow snapshot={snapshot} run={run} view={view([lead, validation, selection], lead)} />,
   );
   const call = screen.getByRole("region", { name: "The call" });
+  expect(
+    within(call).getByRole("heading", { name: "The call · Committee decision" }),
+  ).toBeVisible();
   expect(within(call).getByText("Watchlist")).toBeVisible();
   expect(
     within(call).getByText("Gross leverage rose to 6.53x despite stronger earnings."),
@@ -147,10 +150,21 @@ it("draws the call: stance, bottom line, confidence, clearance and the changes s
   const confidence = screen.getByRole("region", { name: "Confidence" });
   expect(within(confidence).getByText("53")).toBeVisible();
   expect(within(confidence).getByText("Low")).toHaveClass("text-warning-text");
-  expect(within(confidence).getByText("56")).toBeVisible();
+  expect(
+    within(confidence).getByRole("img", {
+      name: "Confidence 53 of 100, band Low. Security selection scored 56, band Low.",
+    }),
+  ).toBeVisible();
+  expect(within(confidence).getByText("Committee decision 53")).toBeInTheDocument();
+  expect(within(confidence).getByText("Security selection 56")).toBeInTheDocument();
   const clearance = screen.getByRole("region", { name: "Evidence clearance" });
   expect(within(clearance).getByText("Pass with Remediation.")).toBeVisible();
-  expect(within(clearance).getByText("Delivered")).toBeVisible();
+  expect(within(clearance).queryByText("Delivered")).toBeNull();
+  expect(
+    within(clearance).getByText(
+      "Issue counts by severity and committee use are not typed in this run.",
+    ),
+  ).toBeVisible();
   expect(
     within(screen.getByRole("region", { name: "Since the earlier run" })).getByText(
       "No earlier run to compare.",
@@ -245,11 +259,16 @@ it("numbers the lead's findings in its own words and links a paragraph that cite
   expect(
     within(findings).getByRole("link", { name: "Read this passage in Evidence" }),
   ).toBeVisible();
-  const counter = screen.getByRole("region", {
-    name: "Contrary evidence and what would change the view",
-  });
+  const counter = screen.getByRole("region", { name: "Contrary evidence" });
   expect(counter).toHaveClass("bg-info-fill");
   expect(within(counter).getByText("Cash generation improved.")).toBeVisible();
+  const change = screen.getByRole("region", { name: "What would change the view" });
+  expect(change).not.toHaveClass("bg-info-fill");
+  expect(
+    within(change).getByText(
+      "Favourable and adverse outcomes are not written apart in this run; the passage is quoted above.",
+    ),
+  ).toBeVisible();
 });
 
 it("draws a passage the lead did not write as a gap, and nothing without a credit view", () => {
@@ -259,8 +278,145 @@ it("draws a passage the lead did not write as a gap, and nothing without a credi
   );
   expect(
     screen.getAllByText("Not established for this run. The module's handoff has no such passage."),
-  ).toHaveLength(2);
+  ).toHaveLength(3);
   unmount();
   const { container } = render(<JudgementRow snapshot={snapshot} run={run} view={view([])} />);
   expect(container).toBeEmptyDOMElement();
+});
+
+it("draws the further paragraphs of the counter passage as written under what would change the view", () => {
+  const lead = entry("CP-6", [
+    text(
+      "Contrary evidence and what would change the view",
+      "Cash generation improved.",
+      "A refinancing of the 2028 notes would soften the view.",
+      "A second dividend would harden it.",
+    ),
+  ]);
+  render(<JudgementRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  const counter = screen.getByRole("region", { name: "Contrary evidence" });
+  expect(within(counter).getByText("Cash generation improved.")).toBeVisible();
+  expect(within(counter).queryByText(/refinancing/)).toBeNull();
+  const change = screen.getByRole("region", { name: "What would change the view" });
+  expect(
+    within(change).getByText("A refinancing of the 2028 notes would soften the view."),
+  ).toBeVisible();
+  expect(within(change).getByText("A second dividend would harden it.")).toBeVisible();
+  expect(within(change).queryByText(/resolved favourably|resolved adversely/i)).toBeNull();
+  expect(within(change).getAllByRole("link", { name: /^Source for / })).toHaveLength(1);
+});
+
+it("names the modules that were not delivered in the run facts, by name and state", () => {
+  const lead = committee();
+  const states = { "CP-6": "Delivered", "CP-4": "Not assessable", "CP-1C": "Limited" };
+  const modules = Object.entries(states).map(([id, state]) => ({
+    id,
+    name: { "CP-6": "Committee decision", "CP-4": "Legal & covenants", "CP-1C": "Peer benchmark" }[
+      id
+    ],
+    state,
+    outputs: [],
+  }));
+  render(
+    <CallRow
+      snapshot={snapshot}
+      run={run}
+      view={{ ...view([lead], lead), modules } as unknown as ReportView}
+    />,
+  );
+  expect(
+    screen.getByText(
+      "3 · all delivered except Legal & covenants (not assessable), Peer benchmark (limited)",
+    ),
+  ).toBeVisible();
+});
+
+function compared(currentBias: string | null, priorBias: string | null, bottom: string) {
+  const prior = { ...run, folder: "run-0", asOf: "2024-03-31", issuerKey: "nb" } as PublishedRun;
+  const current = {
+    ...run,
+    issuerKey: "nb",
+    pathway: "full",
+    changes: {
+      pack: {
+        prior: { run: "run-0", as_of: "2024-03-31", pathway: "full" },
+        current: { as_of: "2025-03-31", pathway: "full" },
+      },
+    },
+  } as unknown as PublishedRun;
+  prior.pathway = "full";
+  prior.modules = priorBias ? { "CP-6": { outputs: ["run-0/cp6"], default: "run-0/cp6" } } : {};
+  const snap = {
+    catalogue: { real: [] },
+    workspace: {
+      runs: { k0: prior, k1: current },
+      outputs: {
+        "run-0/cp6": {
+          id: "run-0/cp6",
+          run: "k0",
+          module: "CP-6",
+          sha256: "p".repeat(64),
+          label: "CP-6",
+          href: "",
+        },
+      },
+      handoffs: {
+        ["p".repeat(64)]: [
+          {
+            heading: "Decision",
+            level: 3,
+            line: 2,
+            blocks: [
+              {
+                type: "text",
+                line: 3,
+                end: 3,
+                text: `Final Action Bias: ${String(priorBias)}. R.`,
+              },
+            ],
+          },
+        ],
+      },
+      models: [],
+    },
+    chips: {},
+  } as unknown as Snapshot;
+  const lead = entry(
+    "CP-6",
+    currentBias ? [text("Decision", `Final Action Bias: ${currentBias}. Watched.`)] : [],
+  );
+  const changes = entry("CP-8", [text("Bottom line", bottom)]);
+  return { snap, current, lead, changes };
+}
+
+it("draws the comparison verdict large with the stance was → now, both read from the handoffs", () => {
+  const { snap, current, lead, changes } = compared(
+    "Watchlist",
+    "Requires More Work",
+    "About the same: the credit picture has not changed.",
+  );
+  render(<CallRow snapshot={snap} run={current} view={view([lead, changes], lead)} />);
+  const tile = screen.getByRole("region", { name: "Since the earlier run" });
+  expect(within(tile).getByText("About the same")).toHaveClass("text-h3");
+  expect(within(tile).getByText("Requires More Work")).toBeVisible();
+  expect(within(tile).getAllByText("Watchlist")[0]).toHaveClass("text-warning-text");
+  expect(within(tile).getByText("Stance was Requires More Work, now Watchlist.")).toHaveClass(
+    "sr-only",
+  );
+  expect(
+    within(tile).getByText("About the same: the credit picture has not changed."),
+  ).toBeVisible();
+});
+
+it("draws no verdict word and no stance chips that the handoffs do not state", () => {
+  const { snap, current, lead, changes } = compared(
+    "Watchlist",
+    null,
+    "Leverage rose while cover held.",
+  );
+  render(<CallRow snapshot={snap} run={current} view={view([lead, changes], lead)} />);
+  const tile = screen.getByRole("region", { name: "Since the earlier run" });
+  expect(within(tile).queryByText(/^(Better|Worse|About the same)$/)).toBeNull();
+  expect(within(tile).queryByText(/Stance was/)).toBeNull();
+  expect(within(tile).getByText("Leverage rose while cover held.")).toBeVisible();
 });

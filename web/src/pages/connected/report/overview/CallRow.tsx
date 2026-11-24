@@ -1,4 +1,11 @@
-import { AlertTriangle, ArrowRight, ClockRewind } from "@untitledui/icons";
+import {
+  AlertTriangle,
+  ArrowNarrowRight,
+  ArrowRight,
+  ClockRewind,
+  Eye,
+  Plus,
+} from "@untitledui/icons";
 import type { ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { StatusBadge } from "@/components/status/StatusBadge";
@@ -14,6 +21,7 @@ import {
 } from "../../publishedReport";
 import { actionBias, moduleState, runMoneyUnit, type ReportView } from "../../reportView";
 import { PublishedSource } from "../PublishedTrace";
+import { changeVerdict, earlierStance } from "./changeData";
 import { bottomLine, entryOf, type Passage, type RowProps } from "./read";
 import { Figure, GapNote, Tile } from "./Tile";
 
@@ -69,20 +77,21 @@ function Sentence({
   return <p className={className}>{passage.text}</p>;
 }
 
+/** How many modules ran, and by name and state the ones that were not delivered. */
 function moduleCount(view: ReportView) {
-  const counts = new Map<string, number>();
-  for (const { state } of view.modules) counts.set(state, (counts.get(state) ?? 0) + 1);
   const total = String(view.modules.length);
-  if (counts.size === 1 && counts.has("Delivered")) return `${total} · all delivered`;
-  const parts = [...counts].map(([state, count]) => `${String(count)} ${state.toLowerCase()}`);
-  return `${total} · ${parts.join(", ")}`;
+  const others = view.modules.filter(({ state }) => state !== "Delivered");
+  if (others.length === 0) return `${total} · all delivered`;
+  if (others.length === view.modules.length) return `${total} · none delivered`;
+  const named = others.map(({ name, state }) => `${name} (${state.toLowerCase()})`);
+  return `${total} · all delivered except ${named.join(", ")}`;
 }
 
 function RunFacts({ run, view }: Pick<RowProps, "run" | "view">) {
   const unit = runMoneyUnit(view.catalogue);
   const facts = [
     ["Pathway", runPathway(run, view.catalogue)],
-    ["Timing", runTiming(run)],
+    ["Financials as of", runTiming(run)],
     ["Currency", unit ? unitLabel(unit) : ""],
     ["Modules", moduleCount(view)],
   ].filter(([, value]) => value);
@@ -95,6 +104,26 @@ function RunFacts({ run, view }: Pick<RowProps, "run" | "view">) {
         </div>
       ))}
     </dl>
+  );
+}
+
+/** A stated stance as a word chip: the adding stances in teal, every other in the signal colour. */
+function StanceChip({ stance, large = false }: { stance: string; large?: boolean }) {
+  const adding = ADDING.test(stance);
+  const Icon = adding ? Plus : Eye;
+  return (
+    <span
+      className={cx(
+        "flex items-center rounded-ds-sm border",
+        large
+          ? "h-10 gap-2.5 pr-4 pl-3 text-h3 font-semibold"
+          : "h-6 gap-1 px-2 text-caption font-medium",
+        adding ? POSITIVE : SIGNAL,
+      )}
+    >
+      <Icon aria-hidden="true" className={large ? "size-[18px]" : "size-3"} />
+      {stance}
+    </span>
   );
 }
 
@@ -113,23 +142,19 @@ function CallTile({ run, view }: Pick<RowProps, "run" | "view">) {
   return (
     <Tile span={8} label="The call" className="justify-between gap-7">
       <div className="flex flex-col gap-6">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-          <h3 className="text-caption text-text-secondary">
-            The call · from{" "}
-            <a className="underline underline-offset-2" href={`#modules/${lead.output.module}`}>
-              {name}
-            </a>
-          </h3>
-          {stance && (
-            <span
-              className={cx(
-                "flex h-10 items-center rounded-ds-sm border px-4 text-h3 font-semibold",
-                ADDING.test(stance) ? POSITIVE : SIGNAL,
-              )}
-            >
-              {stance}
-            </span>
-          )}
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+            <h3 className="text-caption font-medium text-text-secondary">The call · {name}</h3>
+            {stance && <StanceChip stance={stance} large />}
+          </div>
+          <Button
+            color="link-gray"
+            size="sm"
+            href={`#modules/${lead.output.module}`}
+            iconTrailing={ArrowRight}
+          >
+            {name}
+          </Button>
         </div>
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
@@ -157,11 +182,39 @@ function CallTile({ run, view }: Pick<RowProps, "run" | "view">) {
   );
 }
 
+type Score = { value: number; band: string };
+type Scored = { name: string; score: Score };
+
+/** The meter's reading in words: the score, its band, and the second module's score where marked. */
+const meterReading = (first: Scored, second: Scored | null) =>
+  `Confidence ${String(first.score.value)} of 100, band ${first.score.band}.` +
+  (second
+    ? ` ${second.name} scored ${String(second.score.value)}, band ${second.score.band}.`
+    : "");
+
 /** A 0 to 100 meter: the score as the filled length, a second module's score as a tick. */
-function Meter({ value, caution, tick }: { value: number; caution: boolean; tick: number | null }) {
+function Meter({
+  first,
+  second,
+  caution,
+}: {
+  first: Scored;
+  second: Scored | null;
+  caution: boolean;
+}) {
   const x = (score: number) => (Math.min(Math.max(score, 0), 100) / 100) * 408;
+  const value = first.score.value;
+  const tick = second?.score.value ?? null;
+  const apart = tick !== null && Math.abs(x(tick) - x(value)) >= 140;
+  const after = tick !== null && tick > value;
   return (
-    <svg viewBox="0 0 408 32" width="100%" aria-hidden="true" className="block overflow-visible">
+    <svg
+      viewBox="0 0 408 36"
+      width="100%"
+      role="img"
+      aria-label={meterReading(first, second)}
+      className="block overflow-visible"
+    >
       <rect x="0" y="6" width="408" height="6" rx="3" className="fill-border-hairline" />
       <rect
         x="0"
@@ -181,10 +234,28 @@ function Meter({ value, caution, tick }: { value: number; caution: boolean; tick
           className="stroke-text-primary"
         />
       )}
-      <text x="0" y="30" className="fill-text-tertiary font-mono text-[11px]">
+      <text x="0" y="32" className="fill-text-tertiary font-mono text-[11px]">
         0
       </text>
-      <text x="408" y="30" textAnchor="end" className="fill-text-tertiary font-mono text-[11px]">
+      <text
+        x={Math.max(x(value) - 4, 40)}
+        y="32"
+        textAnchor="end"
+        className="fill-text-secondary font-body text-[11px]"
+      >
+        {first.name} {value}
+      </text>
+      {tick !== null && second && (
+        <text
+          x={apart || after ? x(tick) + 6 : x(tick) - 6}
+          y={apart || after ? 32 : 46}
+          textAnchor={apart || after ? "start" : "end"}
+          className="fill-text-secondary font-body text-[11px]"
+        >
+          {second.name} {tick}
+        </text>
+      )}
+      <text x="408" y="32" textAnchor="end" className="fill-text-tertiary font-mono text-[11px]">
         100
       </text>
     </svg>
@@ -236,13 +307,13 @@ function ConfidenceTile({ run, view }: Pick<RowProps, "run" | "view">) {
         </span>
         <span className="text-caption text-text-tertiary">{moduleName(lead.output.module)}</span>
       </p>
-      <Meter value={score.value} caution={caution} tick={second?.value ?? null} />
-      {selection && second && (
-        <p className="text-caption text-text-secondary">
-          Marked on the bar: {moduleName(selection.output.module)} scored{" "}
-          <Figure>{second.value}</Figure>, {second.band}.
-        </p>
-      )}
+      <Meter
+        first={{ name: moduleName(lead.output.module), score }}
+        second={
+          selection && second ? { name: moduleName(selection.output.module), score: second } : null
+        }
+        caution={caution}
+      />
     </Tile>
   );
 }
@@ -265,18 +336,21 @@ function ClearanceTile({ run, view }: Pick<RowProps, "run" | "view">) {
       trace={<Source run={run} entry={entry} line={first?.line} name={name} />}
       className="gap-3"
     >
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      {moduleState(entry) !== "Delivered" && (
         <StatusBadge set="Module state" state={moduleState(entry)} />
-        <Button color="link-gray" size="sm" href="#modules/CP-5" iconTrailing={ArrowRight}>
-          {name}
-        </Button>
-      </div>
+      )}
       <Sentence
         run={run}
         entry={entry}
         passage={first}
-        className="text-small text-text-secondary"
+        className="text-body font-medium text-pretty text-text-primary"
       />
+      <GapNote>Issue counts by severity and committee use are not typed in this run.</GapNote>
+      <div>
+        <Button color="link-gray" size="sm" href="#modules/CP-5" iconTrailing={ArrowRight}>
+          {name}
+        </Button>
+      </div>
     </Tile>
   );
 }
@@ -293,8 +367,43 @@ function ChangesBody({ snapshot, run, view }: RowProps): ReactNode {
       </p>
     );
   const [first] = bottomLine(entry);
+  const verdict = changeVerdict(first?.text);
+  const was = earlierStance(snapshot, run);
+  const now = view.lead ? actionBias(view.lead) : undefined;
   return (
-    <Sentence run={run} entry={entry} passage={first} className="text-small text-text-secondary" />
+    <>
+      {(verdict ?? (was && now)) && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          {verdict && <span className="text-h3 font-medium text-text-primary">{verdict}</span>}
+          {was && now && <StanceMove was={was} now={now} />}
+        </div>
+      )}
+      <Sentence
+        run={run}
+        entry={entry}
+        passage={first}
+        className="text-small text-text-secondary"
+      />
+    </>
+  );
+}
+
+/** The stance in the earlier run and in this one, as two chips; the move in words for a reader. */
+function StanceMove({ was, now }: { was: string; now: string }) {
+  return (
+    <span className="flex items-center gap-1.5">
+      <span className="sr-only">{`Stance was ${was}, now ${now}.`}</span>
+      <span
+        aria-hidden="true"
+        className="flex h-6 items-center rounded-ds-xs border border-border-container px-2 text-caption text-text-secondary"
+      >
+        {was}
+      </span>
+      <ArrowNarrowRight aria-hidden="true" className="size-3.5 text-text-secondary" />
+      <span aria-hidden="true">
+        <StanceChip stance={now} />
+      </span>
+    </span>
   );
 }
 

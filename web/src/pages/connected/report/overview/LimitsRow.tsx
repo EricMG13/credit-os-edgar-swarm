@@ -44,11 +44,11 @@ function BlockedWell({ id, name, text }: { id: string; name: string; text: strin
   return (
     <li className={cx(WELL, SIGNAL_HATCH, "border-warning-mark bg-warning-fill")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-small font-medium text-text-primary">
+        <h4 className="text-small font-medium text-text-primary">
           <a href={`#modules/${id}`} className="rounded-ds-xs outline-focus-ring hover:underline">
             {name}
           </a>
-        </h3>
+        </h4>
         <span className="flex h-[22px] items-center gap-1.5 rounded-ds-xs border border-dashed border-warning-mark bg-surface-card px-2 text-caption text-warning-text">
           <SlashCircle01 aria-hidden="true" className="size-3.5" />
           {BLOCKED}
@@ -93,14 +93,14 @@ function LimitationWell({ run, rows }: { run: PublishedRun; rows: Limitation[] }
   return (
     <li className={cx(WELL, "gap-hatch border-border-gap")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-small font-medium text-text-primary">
+        <h4 className="text-small font-medium text-text-primary">
           <a
             href={`#modules/${first.id}`}
             className="rounded-ds-xs outline-focus-ring hover:underline"
           >
             {first.name}
           </a>
-        </h3>
+        </h4>
         <span className="flex h-[22px] items-center rounded-ds-xs border border-border-container bg-surface-card px-2 font-mono text-caption text-text-secondary tabular-nums">
           {rows.length} recorded
         </span>
@@ -119,9 +119,9 @@ export function LimitsRow({ run, view }: RowProps) {
   const blocked = blockedModules(view, run);
   const groups = grouped(runLimitations(view, run));
   return (
-    <Tile span={12} label="Limitations">
+    <Tile span={12} label="What this run could not do">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <h2
+        <h3
           id="overview-limitations"
           tabIndex={-1}
           className="flex items-center gap-2.5 text-small font-medium text-text-primary"
@@ -130,8 +130,8 @@ export function LimitsRow({ run, view }: RowProps) {
             aria-hidden="true"
             className="gap-hatch size-4 flex-none rounded-ds-xs border border-dashed border-border-gap"
           />
-          Limitations
-        </h2>
+          What this run could not do
+        </h3>
         <p className="text-caption text-text-tertiary">Gaps are drawn as gaps, never as zero</p>
       </div>
       {blocked.length + groups.length === 0 ? (

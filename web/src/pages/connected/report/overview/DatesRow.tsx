@@ -126,26 +126,31 @@ function Watch({ rows }: { rows: readonly WatchRow[] | null }) {
   );
 }
 
-/** Dates to watch on a true time axis; nothing is drawn for a run with no recorded dates. */
+/** Dates to watch on a true time axis; a run with no recorded dates says so in place. */
 export function DatesRow({ run, view }: RowProps) {
   const calendar = buildCalendar(view.entries, run.folder);
-  if (calendar.rows.length === 0) return null;
   return (
     <Tile span={12} label="Dates to watch">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <h2
+        <h3
           id="overview-dates"
           tabIndex={-1}
           className="flex items-center gap-2.5 text-small font-medium text-text-primary"
         >
           <CalendarIcon aria-hidden="true" className="size-4 text-text-secondary" />
           Dates to watch
-        </h2>
+        </h3>
         <Button href="#calendar" color="secondary" size="sm" iconTrailing={ArrowRight}>
           Open issuer calendar
         </Button>
       </div>
-      <Watch rows={upcomingCalendarRows(calendar.rows, run.asOf)} />
+      {calendar.rows.length === 0 ? (
+        <p className="text-small text-text-secondary" role="status">
+          No dated events were recorded in this run.
+        </p>
+      ) : (
+        <Watch rows={upcomingCalendarRows(calendar.rows, run.asOf)} />
+      )}
     </Tile>
   );
 }

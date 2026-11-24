@@ -4,6 +4,7 @@ import { cx } from "@/utils/cx";
 import { blocked, evidencePath, withUnit, type OutputEntry } from "../../publishedReport";
 import { changeSign, changeText, exactDifference, tone } from "../../signal";
 import { PublishedSource } from "../PublishedTrace";
+import { FigureHead } from "./figureParts";
 import { DeltaBar, DotStrip, GapBar, MiniSlope, Ruler, Slope, SplitBar } from "./marks";
 import type { Mark, MarkTone } from "./marks";
 import { entryOf, gapReason, lastTwo, periodSeries, type RowProps, type Series } from "./read";
@@ -160,14 +161,12 @@ function LargeTile({
   children,
 }: Pick<RowProps, "run"> & { entry: OutputEntry; reading: Reading; children: ReactNode }) {
   return (
-    <Tile
-      span={4}
-      label={reading.title}
-      title={reading.title}
-      kicker={reading.series?.points.at(-1)?.period}
-      trace={<Source run={run} entry={entry} reading={reading} />}
-      className="justify-between"
-    >
+    <Tile span={4} label={reading.title} className="justify-between">
+      <FigureHead
+        title={reading.title}
+        basis={reading.series?.points.at(-1)?.period}
+        source={<Source run={run} entry={entry} reading={reading} />}
+      />
       <Level reading={reading} large />
       {reading.series && (comparable(reading) ? children : <GapBar />)}
     </Tile>

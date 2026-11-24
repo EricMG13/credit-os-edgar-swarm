@@ -74,20 +74,25 @@ function Findings({ run, entry }: Pick<RowProps, "run"> & { entry: OutputEntry }
   );
 }
 
-function Counter({ run, entry }: Pick<RowProps, "run"> & { entry: OutputEntry }) {
-  const [first, ...rest] = passageParagraphs(entry, CONTRARY);
+/** The counter-argument: the passage's opening paragraph, on its own surface so it reads as one. */
+function Counter({
+  run,
+  entry,
+  first,
+}: Pick<RowProps, "run"> & { entry: OutputEntry; first?: Passage }) {
   return (
     <Tile
-      span={5}
-      label={CONTRARY}
-      title={CONTRARY}
+      span={12}
+      label="Contrary evidence"
+      title="Contrary evidence"
       tone="counter"
+      className="flex-1"
       trace={
         first && <Source run={run} entry={entry} passage={first} name="the contrary evidence" />
       }
     >
       {first ? (
-        <blockquote>
+        <blockquote className="border-l-2 border-info-mark pl-4">
           <Words
             run={run}
             entry={entry}
@@ -98,16 +103,51 @@ function Counter({ run, entry }: Pick<RowProps, "run"> & { entry: OutputEntry })
       ) : (
         <GapNote>{MISSING}</GapNote>
       )}
-      {rest.map((passage) => (
-        <Well key={passage.line} className="border border-info-edge bg-surface-card">
-          <Words
-            run={run}
-            entry={entry}
-            passage={passage}
-            className="text-small text-text-primary"
-          />
-        </Well>
-      ))}
+    </Tile>
+  );
+}
+
+const NOT_APART =
+  "Favourable and adverse outcomes are not written apart in this run; the passage is quoted above.";
+
+/**
+ * What would change the view: the passage's further paragraphs as the module wrote them, one well
+ * each. Which outcome a paragraph names is the module's to type; it is never labelled here.
+ */
+function Change({
+  run,
+  entry,
+  first,
+  rest,
+}: Pick<RowProps, "run"> & { entry: OutputEntry; first?: Passage; rest: Passage[] }) {
+  const [next] = rest;
+  return (
+    <Tile
+      span={12}
+      label="What would change the view"
+      title="What would change the view"
+      trace={
+        next && <Source run={run} entry={entry} passage={next} name="what would change the view" />
+      }
+    >
+      {!first ? (
+        <GapNote>{MISSING}</GapNote>
+      ) : rest.length === 0 ? (
+        <GapNote>{NOT_APART}</GapNote>
+      ) : (
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(min(200px,100%),1fr))] gap-2">
+          {rest.map((passage) => (
+            <Well key={passage.line} className="border border-border-hairline">
+              <Words
+                run={run}
+                entry={entry}
+                passage={passage}
+                className="text-small text-pretty text-text-primary"
+              />
+            </Well>
+          ))}
+        </div>
+      )}
     </Tile>
   );
 }
@@ -117,12 +157,22 @@ function Counter({ run, entry }: Pick<RowProps, "run"> & { entry: OutputEntry })
  * the counter-argument on its own surface so it reads as one. Nothing without a credit view: the
  * call tile already says there is none.
  */
+function CounterColumn({ run, entry }: Pick<RowProps, "run"> & { entry: OutputEntry }) {
+  const [first, ...rest] = passageParagraphs(entry, CONTRARY);
+  return (
+    <div className="flex min-w-0 flex-col gap-4 lg:col-span-5">
+      <Counter run={run} entry={entry} first={first} />
+      <Change run={run} entry={entry} first={first} rest={rest} />
+    </div>
+  );
+}
+
 export function JudgementRow({ run, view }: RowProps) {
   if (!view.lead) return null;
   return (
     <>
       <Findings run={run} entry={view.lead} />
-      <Counter run={run} entry={view.lead} />
+      <CounterColumn run={run} entry={view.lead} />
     </>
   );
 }
