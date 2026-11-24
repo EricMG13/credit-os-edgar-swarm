@@ -77,7 +77,7 @@ export function bulletGeometry(test: HeadroomTest) {
 }
 
 /** One stressed measure: a cell a case, word for word, at its handoff line. */
-export type DownsideMeasure = {
+type DownsideMeasure = {
   measure: string;
   line: number;
   cells: Cell[];

@@ -1,11 +1,13 @@
 // Review part 2: the wall fits its tile, the stack labels its segments, the downside dumbbell
 // against the covenant limit, and a trace record every structure and stress tile resolves.
 import { cleanup, render, screen, within } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { afterEach, expect, it } from "vitest";
 import type { OutputEntry, Snapshot } from "../../publishedReport";
 import { PublishedTraceProvider } from "../PublishedTrace";
 import { StressRow } from "./StressRow";
 import { StructureRow } from "./StructureRow";
+import { measuredAt } from "./resize.fixture";
 import { entry, rowProps, section, table } from "./rows.fixture";
 
 afterEach(cleanup);
@@ -55,23 +57,6 @@ const STACK = [
   ["Senior notes", "2", "No", "800", "4.0", "US$m", ""],
   ["Subordinated notes", "3", "No", "Not supplied: not stated", "", "US$m", ""],
 ];
-
-function measuredAt(width: number) {
-  const Original = globalThis.ResizeObserver;
-  globalThis.ResizeObserver = class extends Original {
-    constructor(callback: ResizeObserverCallback) {
-      super((entries, observer) => {
-        callback(
-          entries.map((item) => ({ ...item, contentRect: { ...item.contentRect, width } })),
-          observer,
-        );
-      });
-    }
-  };
-  return () => {
-    globalThis.ResizeObserver = Original;
-  };
-}
 
 it("fits the maturity wall to its tile at a desktop width, with no sideways scroll", () => {
   const restore = measuredAt(755);
@@ -232,7 +217,7 @@ const bottomLine = (module: string, text: string) =>
     ],
   );
 
-function traced(entries: OutputEntry[], render_: (props: ReturnType<typeof rowProps>) => void) {
+function traced(entries: OutputEntry[], draw: (props: ReturnType<typeof rowProps>) => ReactNode) {
   const props = rowProps(entries, [{ cashflow: { columns: [], rows: [] } }]);
   render(
     <PublishedTraceProvider
@@ -241,7 +226,7 @@ function traced(entries: OutputEntry[], render_: (props: ReturnType<typeof rowPr
       entries={entries}
       route="overview"
     >
-      {render_(props) as never}
+      {draw(props)}
     </PublishedTraceProvider>,
   );
 }

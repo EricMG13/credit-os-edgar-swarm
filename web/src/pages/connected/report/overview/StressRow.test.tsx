@@ -2,6 +2,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { evidencePath, type OutputEntry } from "../../publishedReport";
 import { StressRow } from "./StressRow";
+import { measuredAt } from "./resize.fixture";
 import { entry, rowProps, section, table } from "./rows.fixture";
 
 afterEach(cleanup);
@@ -173,18 +174,20 @@ it("draws the blocked module's own reason in place of the headroom figure", () =
   expect(within(tile).queryByRole("img")).toBeNull();
 });
 
-it("draws each stressed metric's bars from zero in proportion, and a gap where a case has no figure", () => {
+// Rewritten for the dumbbell layout (review part 2, P2-7): the bars-from-zero panels it pinned
+// are gone; its behaviour (each case placed by its figure, a gap where a case has none, the gap's
+// reason and each case's assumptions) is kept. The proportions are in rowsDesign.test.tsx.
+it("places each case's leverage by its figure, and draws a gap where a case has no figure", () => {
   render(<StressRow {...rowProps([downside])} />);
   const tile = screen.getByRole("region", { name: "Downside scenarios" });
-  const cover = tile.querySelector('[data-panel="All-in cover (x)"]');
-  const widths = ["3.10", "2.00", "1.40"].map((text) =>
-    x(cover?.querySelector(`[data-bar="${text}"]`) ?? null, "width"),
-  );
-  expect((widths[1] ?? 0) / (widths[0] ?? 1)).toBeCloseTo(2.0 / 3.1, 6);
-  expect((widths[2] ?? 0) / (widths[0] ?? 1)).toBeCloseTo(1.4 / 3.1, 6);
-  const leverage = tile.querySelector('[data-panel="Net leverage (x)"]');
-  expect(leverage?.querySelectorAll("[data-bar]")).toHaveLength(2);
-  expect(leverage?.querySelectorAll("[data-gap]")).toHaveLength(1);
+  const control = x(tile.querySelector('[data-dot="Control"]'), "cx");
+  const shock = x(tile.querySelector('[data-dot="Cost shock"]'), "cx");
+  expect(shock).toBeGreaterThan(control);
+  expect(tile.querySelectorAll("[data-dumbbell]")).toHaveLength(1);
+  expect(tile.querySelector('[data-dot="Cost and rate shock"]')).toBeNull();
+  expect(tile.querySelectorAll("[data-gap]")).toHaveLength(1);
+  for (const value of ["3.10", "2.00", "1.40", "1.25", "1.30"])
+    expect(within(tile).getByText(value)).toBeInTheDocument();
   expect(
     within(tile).getByText("Cost and rate shock, Net leverage (x): net debt is missing."),
   ).toBeVisible();
@@ -361,17 +364,7 @@ it("makes the downside figure a focusable scroll region only when it scrolls", (
   expect(frame).not.toHaveAttribute("tabindex");
   expect(frame).not.toHaveAttribute("role");
   cleanup();
-  const Original = globalThis.ResizeObserver;
-  globalThis.ResizeObserver = class Narrow extends Original {
-    constructor(callback: ResizeObserverCallback) {
-      super((entries, observer) => {
-        callback(
-          entries.map((item) => ({ ...item, contentRect: { ...item.contentRect, width: 320 } })),
-          observer,
-        );
-      });
-    }
-  };
+  const restore = measuredAt(320);
   try {
     render(<StressRow {...rowProps([downside])} />);
     expect(screen.getByRole("region", { name: /scrolls sideways/ })).toHaveAttribute(
@@ -379,7 +372,7 @@ it("makes the downside figure a focusable scroll region only when it scrolls", (
       "0",
     );
   } finally {
-    globalThis.ResizeObserver = Original;
+    restore();
   }
 });
 
