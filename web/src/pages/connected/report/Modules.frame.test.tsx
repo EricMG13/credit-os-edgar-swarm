@@ -204,3 +204,26 @@ it("names the next module in stage order and links to it", () => {
     "#modules/CP-6",
   );
 });
+
+it.each([
+  ["holds only its Basis line", [text(3, "Basis: annual report, page 4")]],
+  ["holds only a table", [table(3, ["Metric", "FY2024"], [["Cover", "3.1x"]])]],
+])("draws the bottom-line gap in place when the passage %s", (_, blocks) => {
+  page([section("Findings", 2, 1), section("Bottom line", 3, 2, blocks)]);
+  const header = screen.getByRole("region", { name: "Fundamental credit" });
+  expect(within(header).getByText(/The module's handoff has no such passage/)).toBeVisible();
+  expect(within(header).queryByText("Bottom line")).toBeNull();
+});
+
+it("draws no empty well for a limitation that holds only its Basis line", () => {
+  page([
+    ...written.filter(({ heading }) => heading !== "Limitations"),
+    section("Limitations", 3, 30, [
+      text(31, "Basis: annual report, page 9"),
+      text(32, "One period only."),
+    ]),
+  ]);
+  const limits = screen.getByRole("region", { name: "Limitations of this module" });
+  expect(within(limits).getAllByRole("listitem")).toHaveLength(1);
+  expect(within(limits).getByText("One period only.")).toBeVisible();
+});

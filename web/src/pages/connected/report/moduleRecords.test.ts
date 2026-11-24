@@ -207,3 +207,99 @@ describe("amountColumns", () => {
     expect(amountColumns(chart).size).toBe(0);
   });
 });
+
+describe("review cases", () => {
+  it("draws no bars where rows state different currencies or units", () => {
+    const mixed = table(
+      1,
+      ["Instrument", "Currency", "Principal"],
+      [
+        ["EUR notes", "EUR", "500"],
+        ["USD notes", "USD", "400"],
+      ],
+    );
+    expect(amountColumns(mixed).size).toBe(0);
+    const one = table(
+      1,
+      ["Instrument", "Currency", "Principal"],
+      [
+        ["A", "USD", "500"],
+        ["B", "USD", "400"],
+      ],
+    );
+    expect(amountColumns(one).size).toBe(1);
+  });
+
+  it.each([
+    "Revenue growth",
+    "Net debt to EBITDA (x)",
+    "Revenue CAGR",
+    "Cash conversion",
+    "Days cash",
+  ])("draws no bars in a %s column", (header) => {
+    expect(
+      amountColumns(
+        table(
+          1,
+          ["Period", header],
+          [
+            ["FY2024", "4.2"],
+            ["FY2023", "3.9"],
+          ],
+        ),
+      ).size,
+    ).toBe(0);
+  });
+
+  it("keeps tables about an issuing entity or identity on the page; holds entity keys in Evidence", () => {
+    const records = moduleRecords(
+      entry([
+        section("Findings", 2, 1),
+        section("Debt by issuing entity", 3, 2, [table(3, ["Entity", "Debt"], [["A", "1"]])]),
+        section("Guarantor identity and coverage", 3, 10, [
+          table(11, ["Guarantor", "Share"], [["B", "1"]]),
+        ]),
+        section("T4.2 Entity period key", 3, 20, [
+          table(21, ["Entity", "Period"], [["A", "FY2024"]]),
+        ]),
+      ]),
+    );
+    expect(records.tables.map(({ title }) => title)).toEqual([
+      "Debt by issuing entity",
+      "Guarantor identity and coverage",
+    ]);
+    expect(records.evidence.map(({ title }) => title)).toEqual(["Entity period key"]);
+  });
+
+  it("tells apart tables of the same title in different sections", () => {
+    const records = moduleRecords(
+      entry([
+        section("Findings", 2, 1),
+        section("Maturities", 3, 2, [table(3, ["Year", "Amount"], [["2028", "1"]])]),
+        section("Maturities", 3, 10, [table(11, ["Year", "Amount"], [["2029", "1"]])]),
+      ]),
+    );
+    expect(records.tables.map(({ title }) => title)).toEqual([
+      "Maturities",
+      "Maturities · table 2",
+    ]);
+  });
+
+  it("draws no title that cites a source, and module names in place of codes", () => {
+    const records = moduleRecords(
+      entry([
+        section("Findings", 2, 1),
+        section(
+          "Debt schedule per TDG_2024-09-30_10-K_0001260221-24-000083_tdg-20240930.htm.jsonl",
+          3,
+          2,
+          [table(3, ["Year", "Amount"], [["2028", "1"]])],
+        ),
+        section("Inputs from CP-1", 3, 10, [table(11, ["Year", "Amount"], [["2029", "1"]])]),
+      ]),
+    );
+    const [cited, coded] = records.tables.map(({ title }) => title);
+    expect(cited).toBe("Untitled table");
+    expect(coded).not.toMatch(/CP-1/);
+  });
+});

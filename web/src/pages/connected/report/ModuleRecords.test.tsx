@@ -100,8 +100,13 @@ it("is closed by default, stating its count, with no table drawn", () => {
   expect(within(region).getByText("4 tables · 1 held in Evidence")).toBeInTheDocument();
   const toggle = within(region).getByRole("button", { name: "Show records" });
   expect(toggle).toHaveAttribute("aria-expanded", "false");
-  expect(toggle).toHaveAttribute("aria-controls");
+  // The body is not drawn while closed, so the toggle points at nothing until it is open.
+  expect(toggle).not.toHaveAttribute("aria-controls");
   expect(screen.queryByRole("table")).toBeNull();
+  fireEvent.click(toggle);
+  const controls = toggle.getAttribute("aria-controls") ?? "";
+  expect(document.getElementById(controls)).not.toBeNull();
+  fireEvent.click(toggle);
   expect(screen.queryByRole("group", { name: "Record kind" })).toBeNull();
 });
 
@@ -209,7 +214,8 @@ it("gives every row a trace control that opens the row's trace", () => {
   expect(open).toHaveBeenCalledWith(traceKey(entry, 24));
 
   fireEvent.click(kinds().getByRole("button", { name: "Calculations 1" }));
-  fireEvent.click(screen.getByRole("button", { name: "Show sources for C01" }));
+  // The ID column is not drawn, so the row is named by the first column the reader sees.
+  fireEvent.click(screen.getByRole("button", { name: "Show sources for 24880" }));
   expect(open).toHaveBeenLastCalledWith(traceKey(entry, 43));
 });
 

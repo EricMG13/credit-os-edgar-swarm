@@ -356,6 +356,14 @@ export function traceForConfidence(snapshot: Snapshot, entry: OutputEntry): Trac
   };
 }
 
+type Amounts = {
+  columns: ReadonlySet<number>;
+  draw: (column: number, cell: string) => ReactNode | undefined;
+};
+
+const amountCell = (amounts: Amounts | undefined, column: number, cell: string) =>
+  amounts?.columns.has(column) ? amounts.draw(column, cell) : undefined;
+
 export function PublishedTable({
   table,
   evidence = false,
@@ -365,8 +373,11 @@ export function PublishedTable({
   href,
   heading: tableHeading,
   emptyLabel = "Empty in the handoff",
+  amounts,
 }: {
   table: Table;
+  /** Amount columns: each figure is drawn by `draw` (a bar behind the text as written); a gap falls back. */
+  amounts?: Amounts;
   /** The section heading that names the table's scroll region; "Table" when not given. */
   heading?: string;
   /** The recorded source of an empty field; run-record callers do not read a handoff. */
@@ -392,71 +403,78 @@ export function PublishedTable({
         <TraceControl trace={traceAt(line)} label={`Show sources for ${shown(name)}`} />
       )));
   // A wide table scrolls sideways: it is a named, focusable region so the keyboard can reach it.
-  const scrolls =
-    columns.length >= 5 ? { role: "region", "aria-label": tableHeading || "Table" } : {};
-  return (
-    <div
-      {...scrolls}
-      tabIndex={columns.length >= 5 ? 0 : undefined}
-      className="relative min-w-0 overflow-x-auto rounded-ds-md border border-border-hairline"
-    >
-      <table className="w-full border-collapse text-sm">
-        <thead className="bg-surface-subtle text-text-secondary">
-          <tr>
-            {columns.map((column) => (
-              <th
-                key={column}
-                scope="col"
-                className={`px-3 py-2.5 text-left font-semibold${pinned(column, "bg-surface-subtle")}`}
-              >
-                {richParts(table.headers[column] ?? "", shown)}
-              </th>
-            ))}
+  // Bars need room, so a table that draws them scrolls inside its own region at any width.
+  const wide = columns.length >= 5 || Boolean(amounts?.columns.size);
+  // A row is named by the first column the reader sees, never by a hidden source column.
+  const rowName = (row: Table["rows"][number]) => row.cells[columns[0] ?? 0] ?? "";
+  const name = tableHeading || "Table";
+  const drawn = (
+    <table className="w-full border-collapse text-sm">
+      {amounts?.columns.size ? (
+        <caption className="sr-only">{`${name} · bars on one scale per column`}</caption>
+      ) : null}
+      <thead className="bg-surface-subtle text-text-secondary">
+        <tr>
+          {columns.map((column) => (
+            <th
+              key={column}
+              scope="col"
+              className={`px-3 py-2.5 text-left font-semibold${pinned(column, "bg-surface-subtle")}`}
+            >
+              {richParts(table.headers[column] ?? "", shown)}
+            </th>
+          ))}
+          {sources && (
+            <th scope="col" className="px-2 py-2.5 text-left font-semibold">
+              <span className="sr-only">Sources</span>
+            </th>
+          )}
+        </tr>
+      </thead>
+      <tbody>
+        {table.rows.map((row) => (
+          <tr key={row.line} className={`${TRACE_HOST} border-t border-border-hairline align-top`}>
+            {columns.map((column) => {
+              const cell = row.cells[column] ?? "";
+              const sourceHref = rowHref?.(row.line) ?? href;
+              return (
+                <td
+                  key={column}
+                  className={`px-3 py-2.5 text-text-secondary${amounts?.columns.has(column) ? " min-w-40" : ""}${pinned(column, "bg-surface-card")}`}
+                >
+                  {!evidence && containsReference(cell) ? (
+                    sourceHref ? (
+                      <Button href={sourceHref} color="link-gray" size="sm">
+                        In Evidence
+                      </Button>
+                    ) : (
+                      "Source reference unavailable"
+                    )
+                  ) : cell.trim() ? (
+                    (amountCell(amounts, column, cell) ?? richParts(cell, shown))
+                  ) : (
+                    <span aria-label={emptyLabel}>—</span>
+                  )}
+                </td>
+              );
+            })}
             {sources && (
-              <th scope="col" className="px-2 py-2.5 text-left font-semibold">
-                <span className="sr-only">Sources</span>
-              </th>
+              <td className="px-2 py-1.5">{sources(row.line, rowName(row) || "this row")}</td>
             )}
           </tr>
-        </thead>
-        <tbody>
-          {table.rows.map((row) => (
-            <tr
-              key={row.line}
-              className={`${TRACE_HOST} border-t border-border-hairline align-top`}
-            >
-              {columns.map((column) => {
-                const cell = row.cells[column] ?? "";
-                const sourceHref = rowHref?.(row.line) ?? href;
-                return (
-                  <td
-                    key={column}
-                    className={`px-3 py-2.5 text-text-secondary${pinned(column, "bg-surface-card")}`}
-                  >
-                    {!evidence && containsReference(cell) ? (
-                      sourceHref ? (
-                        <Button href={sourceHref} color="link-gray" size="sm">
-                          In Evidence
-                        </Button>
-                      ) : (
-                        "Source reference unavailable"
-                      )
-                    ) : cell.trim() ? (
-                      richParts(cell, shown)
-                    ) : (
-                      <span aria-label={emptyLabel}>—</span>
-                    )}
-                  </td>
-                );
-              })}
-              {sources && (
-                <td className="px-2 py-1.5">{sources(row.line, row.cells[0] || "this row")}</td>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+        ))}
+      </tbody>
+    </table>
+  );
+  const frame = "relative min-w-0 overflow-x-auto rounded-ds-md border border-border-hairline";
+  return wide ? (
+    // A table that scrolls sideways is a named region the keyboard can focus to scroll it.
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+    <div role="region" aria-label={name} tabIndex={0} className={frame}>
+      {drawn}
     </div>
+  ) : (
+    <div className={frame}>{drawn}</div>
   );
 }
 

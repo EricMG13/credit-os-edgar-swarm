@@ -188,7 +188,13 @@ function ModulePage({
   const stats = headlineStats(entry, view);
   const gaps = chartGaps(entry);
   const module = { ...current, state: moduleState(entry) };
-  const empty = !frame.bottomLine && !frame.keyFindings && !frame.contrary && !frame.others.length;
+  const empty =
+    !frame.bottomLine &&
+    !frame.keyFindings &&
+    !frame.contrary &&
+    !frame.limitations &&
+    !frame.others.length &&
+    !frame.missing.length;
   const active = open === null ? undefined : traces[open];
   return (
     <RunContext.Provider value={{ traces, open: setOpen }}>
@@ -199,7 +205,6 @@ function ModulePage({
           bottomLine={frame.bottomLine}
           owed={frame.missing.includes("Bottom line")}
           folder={run.folder}
-          unit={runMoneyUnit(view.catalogue)}
           confidence={
             <ModuleConfidence
               confidence={entry.output.confidence}
@@ -321,6 +326,7 @@ export function Modules({
   return (
     <div className="grid min-w-0 gap-4 lg:grid-cols-[232px_minmax(0,1fr)]">
       <StageNav
+        key={current.id}
         modules={view.modules}
         current={current.id}
         hrefFor={moduleHref}

@@ -3,19 +3,15 @@ import { useId, useState } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { BarCell } from "@/components/kit/BarCell";
 import { Segmented } from "@/components/kit/Segmented";
-import { TraceControl, TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import {
-  containsReference,
   displayColumns,
   evidencePath,
-  readerText,
   type OutputEntry,
   type PublishedRun,
   type Table,
 } from "../publishedReport";
 import { FindingParagraph, PublishedTable } from "../ReportContent";
 import { traceKey } from "../reportView";
-import { richParts } from "../richText";
 import { GapNote } from "./overview/Tile";
 import {
   amountColumns,
@@ -30,7 +26,6 @@ type Run = Pick<PublishedRun, "folder">;
 
 const TOGGLE =
   "flex min-h-8 flex-none cursor-pointer items-center gap-1.5 rounded-ds-sm border border-border-control px-3 text-small font-medium text-text-secondary outline-focus-ring transition duration-100 ease-linear hover:bg-surface-subtle hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 max-[480px]:min-h-11";
-const EMPTY = "Empty in the handoff";
 
 const plural = (count: number, word: string) => `${String(count)} ${word}${count === 1 ? "" : "s"}`;
 
@@ -40,102 +35,19 @@ function countLine(tables: number, held: number) {
   return parts.join(" · ");
 }
 
-/** A first column that stays in view while a wide table scrolls sideways, as `PublishedTable` pins it. */
-const pinned = (wide: boolean, first: boolean, background: string) =>
-  wide && first ? ` sm:sticky sm:left-0 sm:min-w-56 ${background}` : "";
-
-function AmountCell({
-  cell,
-  column,
-  href,
-}: {
-  cell: string;
-  column: AmountColumn | undefined;
-  href: string;
-}) {
-  if (containsReference(cell))
-    return (
-      <Button href={href} color="link-gray" size="sm">
-        In Evidence
-      </Button>
-    );
-  if (!cell.trim()) return <span aria-label={EMPTY}>—</span>;
-  const share = column?.share(cell) ?? null;
-  if (!column || share === null) return richParts(cell, readerText);
-  return (
-    <BarCell text={cell} share={share} tone={column.negative(cell) ? "secondary" : "primary"} />
-  );
-}
-
-/** `PublishedTable`'s drawing, with each amount column's figures over bars on one scale per column. */
-function AmountTable({
-  run,
-  entry,
-  record,
-  bars,
-}: {
-  run: Run;
-  entry: OutputEntry;
-  record: RecordTable;
-  bars: Map<number, AmountColumn>;
-}) {
-  const { table, title } = record;
-  const columns = displayColumns(table.headers, false, table.rows);
-  const wide = columns.length >= 5;
-  const scrolls = wide ? { role: "region", "aria-label": title, tabIndex: 0 } : {};
-  return (
-    <div
-      {...scrolls}
-      className="relative min-w-0 overflow-x-auto rounded-ds-md border border-border-hairline"
-    >
-      <table className="w-full border-collapse text-sm">
-        <caption className="sr-only">{`${title} · bars on one scale per column`}</caption>
-        <thead className="bg-surface-subtle text-text-secondary">
-          <tr>
-            {columns.map((column) => (
-              <th
-                key={column}
-                scope="col"
-                className={`px-3 py-2.5 text-left font-semibold${pinned(wide, column === columns[0], "bg-surface-subtle")}`}
-              >
-                {richParts(table.headers[column] ?? "", readerText)}
-              </th>
-            ))}
-            <th scope="col" className="px-2 py-2.5 text-left font-semibold">
-              <span className="sr-only">Sources</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {table.rows.map((row) => (
-            <tr
-              key={row.line}
-              className={`${TRACE_HOST} border-t border-border-hairline align-top`}
-            >
-              {columns.map((column) => (
-                <td
-                  key={column}
-                  className={`px-3 py-2.5 text-text-secondary${bars.has(column) ? " min-w-32" : ""}${pinned(wide, column === columns[0], "bg-surface-card")}`}
-                >
-                  <AmountCell
-                    cell={row.cells[column] ?? ""}
-                    column={bars.get(column)}
-                    href={evidencePath(run.folder, entry, row.line)}
-                  />
-                </td>
-              ))}
-              <td className="px-2 py-1.5">
-                <TraceControl
-                  trace={traceKey(entry, row.line)}
-                  label={`Show sources for ${readerText(row.cells[0] || "this row")}`}
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+/** A figure over its bar on the column's one scale; a gap has no share and keeps its words. */
+function amountsOf(bars: Map<number, AmountColumn>) {
+  return {
+    columns: new Set(bars.keys()),
+    draw: (column: number, cell: string) => {
+      const bar = bars.get(column);
+      const share = bar?.share(cell) ?? null;
+      if (!bar || share === null) return undefined;
+      return (
+        <BarCell text={cell} share={share} tone={bar.negative(cell) ? "secondary" : "primary"} />
+      );
+    },
+  };
 }
 
 const drawable = (table: Table) =>
@@ -164,13 +76,13 @@ function RecordDrawing({
         </Button>
       </GapNote>
     );
-  if (bars.size) return <AmountTable run={run} entry={entry} record={record} bars={bars} />;
   return (
     <PublishedTable
       table={record.table}
       heading={record.title}
       traceAt={(line) => traceKey(entry, line)}
       rowHref={(line) => evidencePath(run.folder, entry, line)}
+      amounts={bars.size ? amountsOf(bars) : undefined}
     />
   );
 }
@@ -333,7 +245,7 @@ export function ModuleRecords({ run, entry }: { run: Run; entry: OutputEntry }) 
         <button
           type="button"
           aria-expanded={open}
-          aria-controls={body}
+          aria-controls={open ? body : undefined}
           className={TOGGLE}
           onClick={() => {
             setOpen(!open);

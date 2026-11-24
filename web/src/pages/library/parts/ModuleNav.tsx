@@ -340,22 +340,14 @@ const DESKTOP = "(min-width: 1024px)";
 
 function SlashCircle({ className }: { className?: string }) {
   return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 16 16"
-      className={cx("size-4 flex-none", className)}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-    >
-      <circle cx="8" cy="8" r="6.25" />
-      <path d="M3.6 3.6l8.8 8.8" strokeLinecap="round" />
-    </svg>
+    <span className={cx("flex flex-none text-warning-mark", className)}>
+      <StatusShape shape={STATUS_SETS["Module state"]["Not assessable"].shape} />
+    </span>
   );
 }
 
 function StateMark({ state }: { state: ModuleState }) {
-  if (state === "Not assessable") return <SlashCircle className="text-warning-mark" />;
+  if (state === "Not assessable") return <SlashCircle />;
   return (
     <span className={cx("flex flex-none", MARK[state])}>
       <StatusShape shape={STATUS_SETS["Module state"][state].shape} />
@@ -502,7 +494,7 @@ export function StageNav({
             <p className="text-caption text-text-tertiary">{count}</p>
             {blocked > 0 ? (
               <p className="flex items-center gap-1 text-caption text-warning-text">
-                <SlashCircle className="size-3.5 text-warning-mark" />
+                <SlashCircle />
                 {String(blocked)} not assessable
               </p>
             ) : null}

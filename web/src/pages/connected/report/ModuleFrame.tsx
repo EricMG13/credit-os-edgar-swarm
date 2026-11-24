@@ -2,6 +2,8 @@ import { ArrowRight } from "@untitledui/icons";
 import { useContext, type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { StatusBadge } from "@/components/status/StatusBadge";
+import { STATUS_SETS } from "@/components/status/sets";
+import { StatusShape } from "@/components/status/shapes";
 import type { ModuleState } from "@/pages/library/slice";
 import { RunContext } from "@/pages/library/parts/RunContext";
 import { TRACE_HOST, TraceControl } from "@/pages/library/parts/TraceControl";
@@ -38,17 +40,9 @@ export function HeldTrace({ trace, label }: { trace: string; label: string }) {
 
 function SlashCircle() {
   return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 16 16"
-      className="size-4 flex-none text-warning-mark"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.5"
-    >
-      <circle cx="8" cy="8" r="6.25" />
-      <path d="M3.6 3.6l8.8 8.8" strokeLinecap="round" />
-    </svg>
+    <span className="flex flex-none text-warning-mark">
+      <StatusShape shape={STATUS_SETS["Module state"]["Not assessable"].shape} />
+    </span>
   );
 }
 
@@ -104,15 +98,9 @@ function BottomLineText({
   );
 }
 
-function basisLine(module: FrameModule, unit: string | undefined) {
+function basisLine(module: FrameModule) {
   const stage = stageOf(module.id);
-  return [
-    stage.number ? `${stage.name} · stage ${String(stage.number)} of ${String(stage.of)}` : "",
-    // The run's money unit, on the stages whose modules report amounts.
-    unit && stage.number >= 2 && stage.number <= 4 ? `Amounts in ${unit}` : "",
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  return stage.number ? `${stage.name} · stage ${String(stage.number)} of ${String(stage.of)}` : "";
 }
 
 /**
@@ -125,7 +113,6 @@ export function ModuleHeader({
   bottomLine,
   owed,
   folder,
-  unit,
   confidence,
 }: {
   module: FrameModule;
@@ -134,11 +121,10 @@ export function ModuleHeader({
   /** The module owes a bottom line its handoff does not hold. */
   owed: boolean;
   folder: string;
-  unit?: string;
   confidence?: ReactNode;
 }) {
   const blocked = module.state === "Not assessable";
-  const basis = basisLine(module, unit);
+  const basis = basisLine(module);
   const titleId = `module-title-${module.id}`;
   return (
     <section
@@ -259,7 +245,9 @@ function KeyFindings({
   entry: OutputEntry;
   folder: string;
 }) {
-  const paragraphs = section.blocks.filter((block): block is TextBlock => block.type === "text");
+  const paragraphs = section.blocks.filter(
+    (block): block is TextBlock => block.type === "text" && readParagraph(block.text).body !== "",
+  );
   const tables = section.blocks.filter((block) => block.type === "table");
   return (
     <>
@@ -407,7 +395,15 @@ export function chartGaps(entry: OutputEntry): ChartGap[] {
   });
 }
 
-function Well({ trace, label, children }: { trace: string; label: string; children: ReactNode }) {
+function GapWell({
+  trace,
+  label,
+  children,
+}: {
+  trace: string;
+  label: string;
+  children: ReactNode;
+}) {
   return (
     <li
       className={cx(
@@ -440,7 +436,7 @@ export function ModuleLimitations({
   folder: string;
 }) {
   const paragraphs = (section?.blocks ?? []).filter(
-    (block): block is TextBlock => block.type === "text",
+    (block): block is TextBlock => block.type === "text" && readParagraph(block.text).body !== "",
   );
   if (!paragraphs.length && !owed && !gaps.length) return null;
   return (
@@ -449,7 +445,7 @@ export function ModuleLimitations({
       {owed && !paragraphs.length && <GapNote>{MISSING_PASSAGE}</GapNote>}
       <ul className="flex flex-col">
         {paragraphs.map((block) => (
-          <Well
+          <GapWell
             key={block.line}
             trace={traceKey(entry, block.line)}
             label="Show sources for this limitation"
@@ -459,23 +455,23 @@ export function ModuleLimitations({
               href={evidencePath(folder, entry, block.line)}
               className="text-small text-text-primary"
             />
-          </Well>
+          </GapWell>
         ))}
         {gaps.map((gap) => (
-          <Well
+          <GapWell
             key={`gap-${String(gap.line)}`}
             trace={traceKey(entry, gap.line)}
-            label={`Show sources for ${gap.title}`}
+            label={`Show sources for ${readerText(gap.title)}`}
           >
             <p className="text-small font-medium text-text-primary first-letter:uppercase">
-              {gap.title}: not drawn
+              {readerText(gap.title)}: not drawn
             </p>
             <p className="text-caption text-text-secondary">
               {containsReference(gap.reason)
                 ? "The reason cites a source; see Evidence."
                 : readerText(gap.reason)}
             </p>
-          </Well>
+          </GapWell>
         ))}
       </ul>
     </Tile>

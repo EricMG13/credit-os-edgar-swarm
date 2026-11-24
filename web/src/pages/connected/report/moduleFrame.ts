@@ -3,6 +3,7 @@ import {
   containsReference,
   missingPassages,
   passages,
+  readParagraph,
   type Block,
   type OutputEntry,
   type Section,
@@ -24,8 +25,11 @@ export type BottomLineSource =
 const textBlocks = (section: Section | undefined) =>
   (section?.blocks ?? []).filter((block): block is TextBlock => block.type === "text");
 
+/** A paragraph the reader can read: not only a Basis line, which belongs in the trace. */
+const readable = (block: TextBlock) => readParagraph(block.text).body !== "";
+
 function bottomLineOf(entry: OutputEntry, passage: Section | undefined): BottomLineSource {
-  const [first, ...rest] = textBlocks(passage);
+  const [first, ...rest] = textBlocks(passage).filter(readable);
   if (first) return { kind: "passage", block: first, rest };
   const summary = entry.output.summary;
   if (!summary || containsReference(summary.bottomLine)) return null;
@@ -50,8 +54,16 @@ export function moduleFrame(entry: OutputEntry, figureTableLines: readonly numbe
   const found = findingBlocks(entry.sections, entry, figureTableLines).filter(
     (section) => !drawingSections.has(section.line),
   );
+  // A passage with nothing to read (no paragraph but its Basis, no table) is drawn as its gap.
   const passage = (name: string) =>
-    found.find((section) => section.heading === name && slotLines.has(section.line));
+    found.find(
+      (section) =>
+        section.heading === name &&
+        slotLines.has(section.line) &&
+        section.blocks.some(
+          (block) => block.type === "table" || (block.type === "text" && readable(block)),
+        ),
+    );
   const named = ["Bottom line", KEY_FINDINGS, CONTRARY, LIMITATIONS].flatMap(
     (name) => passage(name) ?? [],
   );
@@ -61,7 +73,10 @@ export function moduleFrame(entry: OutputEntry, figureTableLines: readonly numbe
     .filter((section) => section.blocks.some((block) => charts.has(block.line)))
     .map((section) => section.heading);
   const bottomLine = bottomLineOf(entry, passage("Bottom line"));
-  const drawn = [...named.map(({ heading }) => heading), ...charted];
+  // A Bottom line passage holding only a table is not a bottom line: the table is in the records.
+  const drawn = [...named.map(({ heading }) => heading), ...charted].filter(
+    (heading) => heading !== "Bottom line",
+  );
   return {
     bottomLine,
     keyFindings: passage(KEY_FINDINGS),

@@ -1,5 +1,8 @@
+import { plainText } from "../richText";
 import {
   classifySections,
+  containsReference,
+  readerText,
   displayColumns,
   methodNote,
   type Block,
@@ -36,7 +39,8 @@ export interface HeldRecord {
 }
 
 /** Machinery the screen map keeps off the module page (row E), whatever role its section has. */
-const EVIDENCE_ONLY = /source register|entity|definition conflict/i;
+const EVIDENCE_ONLY =
+  /source register|\bentit(?:y|ies)[ -](?:period )?keys?\b|definition conflict/i;
 const NO_QUALIFICATION = "No qualification.";
 
 function descriptorTitles(entry: OutputEntry) {
@@ -79,10 +83,8 @@ export function moduleRecords(entry: OutputEntry) {
   const evidence: HeldRecord[] = [];
   for (const { section, role } of classifySections(entry.sections)) {
     const own = section.blocks.filter((block): block is Table => block.type === "table");
-    if (!own.length) continue;
     const drawn = registerBlocks(section, entry);
-    const title = drawingTitle(section.heading);
-    let count = 0;
+    const title = readableTitle(section.heading);
     for (const table of own) {
       const kind = charted.has(table.line)
         ? "charts"
@@ -93,18 +95,34 @@ export function moduleRecords(entry: OutputEntry) {
           evidence.push({ title, line: section.line });
         continue;
       }
-      count += 1;
-      const named = titles.get(table.line) ?? title;
+      const named = titles.get(table.line);
       tables.push({
         kind,
-        title: count > 1 && !titles.has(table.line) ? `${named} · table ${String(count)}` : named,
+        title: named === undefined ? title : readableTitle(named),
         section,
         table,
         notes: sectionNotes(section),
       });
     }
   }
-  return { tables, evidence };
+  return { tables: distinctTitles(tables), evidence };
+}
+
+/** A heading as the reader sees it: no drawing prefix or register code, module names for codes,
+ * and no title at all where it cites a source, which belongs in Evidence. */
+function readableTitle(heading: string) {
+  const title = readerText(plainText(drawingTitle(heading))).trim();
+  return title && !containsReference(title) ? title : "Untitled table";
+}
+
+/** Tables that share a title, anywhere in the handoff, are told apart by their place among them. */
+function distinctTitles(tables: RecordTable[]) {
+  const seen = new Map<string, number>();
+  return tables.map((record) => {
+    const count = (seen.get(record.title) ?? 0) + 1;
+    seen.set(record.title, count);
+    return count > 1 ? { ...record, title: `${record.title} · table ${String(count)}` } : record;
+  });
 }
 
 const GAP_CELL = /^(?:not\b|n\/?a\b|withheld\b|none\b|—$|-$)/i;
@@ -112,7 +130,9 @@ const NUMBER = /^(\()?(-)?(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?(\))?$/;
 const AMOUNT_HEADER =
   /principal|amount|debt|cash|balance|commitment|drawn|maturing|liquidity|outstanding|(?:carrying|market|face|fair|book) value|revenue|sales|ebitda|flow|capex|proceeds/i;
 const NOT_AMOUNT =
-  /\/|ratio|bps|%|rate|spread|margin|coupon|floor|multiple|cover|leverage|date|year|period|unit|basis|source|tier|status/i;
+  /\/|ratio|bps|%|rate|spread|margin|coupon|floor|multiple|cover|leverage|date|year|period|unit|basis|source|tier|status|growth|cagr|change|conversion|days|yield|\(x\)|\bto (?:ebitda|revenue|sales|equity|capital)\b/i;
+/** A column that states each row's currency or unit: figures in two of them share no scale. */
+const UNIT_HEADER = /^(?:currency|unit|reporting unit|units?|ccy)$/i;
 const PERIOD_HEADER = /^(?:FY|H[12] |Q[1-4] |LTM |20\d\d)/;
 
 /** A cell's number exactly as written, or null for text that is not one plain number. */
@@ -154,6 +174,7 @@ function amountColumn(cells: string[]): AmountColumn | null {
 /** The table's amount columns by index: a header that names an amount, every cell a number or a gap. */
 export function amountColumns(table: Table) {
   const columns = new Map<number, AmountColumn>();
+  if (mixedUnits(table)) return columns;
   for (const index of displayColumns(table.headers, false, table.rows)) {
     const header = table.headers[index] ?? "";
     if (!AMOUNT_HEADER.test(header) || NOT_AMOUNT.test(header) || PERIOD_HEADER.test(header))
@@ -162,4 +183,14 @@ export function amountColumns(table: Table) {
     if (column) columns.set(index, column);
   }
   return columns;
+}
+
+function mixedUnits(table: Table) {
+  return table.headers.some((header, index) => {
+    if (!UNIT_HEADER.test(header.trim())) return false;
+    const units = new Set(
+      table.rows.map(({ cells }) => (cells[index] ?? "").trim()).filter(Boolean),
+    );
+    return units.size > 1;
+  });
 }
