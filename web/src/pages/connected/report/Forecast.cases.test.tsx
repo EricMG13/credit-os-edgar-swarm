@@ -92,10 +92,10 @@ it("shows each same-label case's own columns and marks its own cash proxy row cu
   }
 });
 
-it("matches the selected case by raw group where the statement names its groups differently", () => {
+it("matches the selected case by raw group where the other grid is drawn as its own statement", () => {
   const periods = ["FY2027E", "FY2028E"];
-  // The other grid has different rows, so the statement draws each grid alone: within the main
-  // grid "Upside" has no same-label peer, while its case card is named apart from "Upside case".
+  // The other grid has different rows, so the statement draws each grid alone: the main grid's
+  // "Upside" has its same-label peer, "Upside case", only in the other grid.
   const view = viewOf(
     ["Base case", "Upside"].flatMap((group) => periods.map((label) => ({ label, group }))),
     {
@@ -159,4 +159,115 @@ it("draws no module code in a case name on the Forecast page", () => {
   const { container } = render(<Forecast view={view} run={run} />);
   expect(screen.getAllByRole("radio", { name: /^Downside drivers/ })).toHaveLength(2);
   expect(container.textContent).not.toMatch(/CP-/);
+});
+
+const cardNames = () =>
+  within(screen.getByRole("radiogroup", { name: "Forecast case" }))
+    .getAllByRole("radio")
+    .map((radio) => radio.closest("label")?.querySelector("span")?.textContent ?? "");
+
+function showComparisonTable() {
+  const comparison = within(screen.getByRole("figure", { name: "Cash proxy by scenario" }));
+  fireEvent.click(comparison.getByRole("radio", { name: "Table" }));
+  return within(screen.getByRole("table", { name: "Scenario comparison" }));
+}
+
+it("shows a case whose label no other case shares exactly as published", () => {
+  // "CP" is also commercial paper: nothing rewrites a label because it starts that way.
+  const groups = ["Base case", "CP-backstop downside", "Downside (CP-funded)", "CP-10"];
+  const view = viewOf(
+    groups.flatMap((group) => [
+      { label: "FY2027E", group },
+      { label: "FY2028E", group },
+    ]),
+    { [CASH_PROXY]: ["10", "12", "7", "8", "5", "6", "3", "4"].map(value) },
+  );
+  render(<Forecast view={view} run={run} />);
+  const published = [...groups].sort();
+  expect(cardNames().sort()).toEqual(published);
+  expect(
+    showComparisonTable()
+      .getAllByRole("rowheader")
+      .map((header) => header.textContent)
+      .sort(),
+  ).toEqual(published);
+  fireEvent.change(screen.getByLabelText("Statement columns"), { target: { value: "compare" } });
+  const statement = within(screen.getByRole("table", { name: "Cash flow model" }));
+  for (const group of groups)
+    expect(statement.getByRole("columnheader", { name: group })).toBeInTheDocument();
+});
+
+it("names two same-label cases apart, the same in the cards, statement, comparison and trends", () => {
+  const periods = ["FY2027E", "FY2028E"];
+  // The other grid has different rows, so the statement draws each grid as its own table.
+  const view = viewOf(
+    ["Base case", "Upside"].flatMap((group) => periods.map((label) => ({ label, group }))),
+    {
+      [CASH_PROXY]: ["10", "12", "21", "22"].map(value),
+      Revenue: ["100", "101", "202", "203"].map(value),
+    },
+    gridOf(
+      periods.map((label) => ({ label, group: "Upside case" })),
+      { [CASH_PROXY]: ["31", "32"].map(value) },
+    ),
+  );
+  render(<Forecast view={view} run={run} />);
+  const cards = within(screen.getByRole("radiogroup", { name: "Forecast case" }));
+  const card = (figure: string) => {
+    const radio = cards
+      .getAllByRole("radio")
+      .find((input) => within(input.closest("label") as HTMLElement).queryByText(figure));
+    if (!radio) throw new Error(`No case card shows ${figure}`);
+    return radio;
+  };
+  const nameOn = (figure: string) =>
+    card(figure).closest("label")?.querySelector("span")?.textContent ?? "";
+  const upside = nameOn("22");
+  const upsideCase = nameOn("32");
+  expect(upside).not.toBe(upsideCase);
+
+  fireEvent.click(card("22"));
+  const main = within(screen.getByRole("table", { name: "Cash flow model" }));
+  expect(main.getByRole("columnheader", { name: upside })).toBeInTheDocument();
+  const trend = within(screen.getByRole("figure", { name: "Revenue" }));
+  fireEvent.click(trend.getByRole("radio", { name: "Table" }));
+  expect(trend.getAllByRole("rowheader").map((header) => header.textContent)).toEqual([upside]);
+  expect(
+    showComparisonTable()
+      .getAllByRole("rowheader")
+      .map((header) => header.textContent)
+      .sort(),
+  ).toEqual(["Base case", upside, upsideCase].sort());
+
+  fireEvent.click(card("32"));
+  const other = within(screen.getByRole("table", { name: "Other forecast cases" }));
+  expect(other.getByRole("columnheader", { name: upsideCase })).toBeInTheDocument();
+
+  // The raw group as reader text tells "Upside" apart; "Upside case" would only repeat the
+  // label, so it takes a worded ordinal by raw-group order.
+  expect([upside, upsideCase]).toEqual(["Upside case · Upside", "Upside case · second case"]);
+});
+
+it("adds no module code or number to a name it generates", () => {
+  const view = viewOf(
+    ["Base case", "Downside (CP-2G drivers)", "Downside drivers"].flatMap((group) => [
+      { label: "FY2027E", group },
+      { label: "FY2028E", group },
+    ]),
+    { [CASH_PROXY]: ["10", "12", "7", "8", "5", "6"].map(value) },
+  );
+  render(<Forecast view={view} run={run} />);
+  const names = cardNames().sort();
+  expect(names).toEqual([
+    "Base case",
+    "Downside drivers · Downside (Forward credit model drivers)",
+    "Downside drivers · second case",
+  ]);
+  for (const name of names) expect(name).not.toMatch(/CP-|\d/);
+  expect(
+    showComparisonTable()
+      .getAllByRole("rowheader")
+      .map((header) => header.textContent)
+      .sort(),
+  ).toEqual(names);
 });

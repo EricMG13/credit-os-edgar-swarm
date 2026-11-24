@@ -142,23 +142,24 @@ function includesPeriod(selection: ForecastSelection, column: Grid["columns"][nu
 function selectedValues(model: ForecastModel, rowName: string, selection: ForecastSelection) {
   const cashflow = record(model.cashflow);
   const downside = stringsIn(cashflow.notes).find((note) => note.startsWith("Downside case is"));
-  const grids = rawGroups(model);
-  const rawNames = grids.flatMap((grid) => grid.columns.map(({ group }) => group));
-  const names = forecastCaseNames([...new Set(rawNames)], downside);
-  return grids.flatMap((grid) => {
+  const names = forecastCaseNames(cashflow);
+  return rawGroups(model).flatMap((grid) => {
     const rows = grid.rows.filter((row) => row.label === rowName);
     if (rows.length !== 1) return [];
     const row = rows[0];
     if (!row) return [];
     return grid.columns.flatMap((column, index) => {
-      const name = names.get(column.group) ?? forecastCaseLabel(column.group, downside);
+      const label = forecastCaseLabel(column.group, downside);
+      const name = names.get(column.group) ?? label;
       if (!includesCase(selection, column.group, name) || !includesPeriod(selection, column))
         return [];
+      // The drawer identifies a column whose label another case shares by its recorded raw group.
+      const identity = name === label ? label : `${label} · ${column.group}`;
       const cell = row.cells[index];
       const value = word(cell?.exact) || word(cell?.display) || "n.a.";
       const reason = word(cell?.reason);
       const span = column.start && column.end ? ` (${column.start} to ${column.end})` : "";
-      return [`${name} · ${column.label}${span}: ${value}${reason ? ` (${reason})` : ""}`];
+      return [`${identity} · ${column.label}${span}: ${value}${reason ? ` (${reason})` : ""}`];
     });
   });
 }
@@ -251,7 +252,7 @@ function forecastCases(model: ForecastModel, downsideNote: string, selection: Fo
       .filter((column) => isDatedForecastPeriod(column.label))
       .map((column) => column.group),
   );
-  const names = forecastCaseNames([...new Set(available)], downsideNote);
+  const names = forecastCaseNames(model.cashflow);
   const chosen = selection.rawGroups ?? (selection.rawGroup ? [selection.rawGroup] : undefined);
   const selected = chosen
     ? chosen

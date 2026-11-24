@@ -469,11 +469,10 @@ it("keeps differently dated partial years out of comparisons while retaining eac
     start: "2026-10-01",
   };
   render(<Forecast view={view} run={run} />);
-  expect(
-    screen
-      .getAllByRole("status")
-      .some((status) => status.textContent.includes("incompatible periods are omitted")),
-  ).toBe(true);
+  // The notice names the one period left out and why; FY2026E is still compared.
+  expect(screen.getAllByRole("status").map((status) => status.textContent)).toContain(
+    "Periods left out of the scenario comparison: FY2027E (recorded start and end dates do not match between cases, or are incomplete or invalid).",
+  );
   fireEvent.change(screen.getByLabelText("Statement columns"), { target: { value: "compare" } });
   const periods = within(screen.getByLabelText("Comparison period"));
   expect(periods.getByRole("option", { name: "FY2026E" })).toBeInTheDocument();
@@ -544,9 +543,9 @@ it("withholds duplicated comparison periods and traces every retained date for t
       <Forecast view={view} run={run} />
     </PublishedTraceProvider>,
   );
-  expect(
-    screen.getAllByRole("status").some(({ textContent }) => textContent.includes("duplicate")),
-  ).toBe(true);
+  expect(screen.getAllByRole("status").map((status) => status.textContent)).toContain(
+    "Periods left out of the scenario comparison: FY2027E (published more than once by a case).",
+  );
   fireEvent.change(screen.getByLabelText("Statement columns"), { target: { value: "compare" } });
   const periods = within(screen.getByLabelText("Comparison period"));
   expect(periods.getByRole("option", { name: "FY2026E" })).toBeInTheDocument();
@@ -629,7 +628,9 @@ it.each(["separate grids", "one grid"])(
       </PublishedTraceProvider>,
     );
     const first = screen.getByRole("radio", { name: /^Upside case · Upside6/ });
-    const second = screen.getByRole("radio", { name: /^Upside case · Upside case20/ });
+    // "Upside case" would only repeat the label, so the card takes its place by raw-group order;
+    // the trace drawer below still identifies the column by its recorded raw group.
+    const second = screen.getByRole("radio", { name: /^Upside case · second case20/ });
     expect(first.closest("label")?.textContent).toContain("6");
     expect(second.closest("label")?.textContent).toContain("20");
     fireEvent.click(second);

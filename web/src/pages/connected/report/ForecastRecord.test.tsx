@@ -71,3 +71,31 @@ it("finds a placeholder-only case's column from the card's selection, which name
   );
   expect(trace.statement).not.toContain("FY2027E");
 });
+
+it("identifies a same-label column by its recorded raw group in the trace, not its page name", () => {
+  const coded = "Downside (CP-2G drivers)";
+  const model = modelOf(
+    ["Base case", coded, "Downside drivers"].map((group) => ({ label: "FY2027E", group })),
+    [value("10"), value("7"), value("8")],
+  );
+  const trace = forecastTraceContext(model, { years: [] }, "Cash proxy by scenario", {
+    row: CASH_PROXY,
+    case: "",
+  });
+  expect(trace.statement).toContain("Base case · FY2027E: 10");
+  expect(trace.statement).toContain(`Downside drivers · ${coded} · FY2027E: 7`);
+  expect(trace.statement).toContain("Downside drivers · Downside drivers · FY2027E: 8");
+  // The page names the two apart in reader text, with no module code.
+  const names = Object.fromEntries(
+    forecastCaseOptions(model).map(({ rawGroup, name }) => [rawGroup, name]),
+  );
+  expect(names[coded]).toBe("Downside drivers · Downside (Forward credit model drivers)");
+  expect(names["Downside drivers"]).toBe("Downside drivers · second case");
+  // A selection by page name still finds its own column.
+  const one = forecastTraceContext(model, { years: [] }, "Cash proxy", {
+    row: CASH_PROXY,
+    case: names["Downside drivers"],
+  });
+  expect(one.statement).toContain("Downside drivers · Downside drivers · FY2027E: 8");
+  expect(one.statement).not.toContain("FY2027E: 7");
+});

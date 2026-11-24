@@ -3,10 +3,10 @@ import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/but
 import { field } from "../layout";
 import { unitLabel } from "../publishedReport";
 import type { ForecastSource } from "../report/ForecastRecord";
-import { forecastCaseLabel, forecastCaseNames, gridOf, type Grid } from "./LegacyForecast";
+import { forecastCaseNames, gridOf, type CaseNames, type Grid } from "./LegacyForecast";
 import { ForecastTable } from "./ForecastTable";
 import { record, stringsIn, word } from "./visualData";
-import { analyzeScenarioPeriods } from "./scenarioPeriods";
+import { analyzeScenarioPeriods, scenarioComparisonNotice } from "./scenarioPeriods";
 
 const families = {
   accounts: "Accounts",
@@ -54,17 +54,13 @@ function statementColumns(
   grid: Grid,
   selectedCase: string | undefined,
   selectedRawGroup: string | undefined,
-  downsideNote: string,
+  caseNames: CaseNames,
 ) {
-  const names = forecastCaseNames(
-    [...new Set(grid.columns.map(({ group }) => group))],
-    downsideNote,
-  );
   return grid.columns.map((column, index) => ({
     ...column,
     index,
     rawGroup: column.group,
-    group: names.get(column.group) ?? forecastCaseLabel(column.group, downsideNote),
+    group: caseNames.get(column.group) ?? column.group,
     forecast:
       /^FY\d{4}E\b/u.test(column.label) ||
       /^(?:Base case|Downside\b|Upside\b)/u.test(column.group) ||
@@ -78,11 +74,11 @@ function displayedColumns(
   grid: Grid,
   selectedCase: string | undefined,
   selectedRawGroup: string | undefined,
-  downsideNote: string,
+  caseNames: CaseNames,
   requestedView: View,
   requestedPeriod: string,
 ) {
-  const columns = statementColumns(grid, selectedCase, selectedRawGroup, downsideNote);
+  const columns = statementColumns(grid, selectedCase, selectedRawGroup, caseNames);
   const projections = columns.filter(({ forecast }) => forecast);
   const history = columns.filter(({ forecast }) => !forecast);
   // The raw group, where the caller resolved it, identifies the case; two can share a name.
@@ -121,7 +117,7 @@ function displayedColumns(
     period,
     canCompare,
     comparison,
-    comparisonBasisGap: comparison.basisGap,
+    notice: scenarioComparisonNotice(comparison),
     view,
     visible,
   };
@@ -153,7 +149,7 @@ function StatementPeriodControls({
   hasProjections,
   hasHistory,
   canCompare,
-  comparisonBasisGap,
+  notice,
   setView,
   setPeriod,
 }: {
@@ -164,7 +160,8 @@ function StatementPeriodControls({
   hasProjections: boolean;
   hasHistory: boolean;
   canCompare: boolean;
-  comparisonBasisGap: boolean;
+  /** What the reader is told about comparing these columns' cases, where anything is. */
+  notice: string | null;
   setView: (view: View) => void;
   setPeriod: (period: string) => void;
 }) {
@@ -206,10 +203,9 @@ function StatementPeriodControls({
           </select>
         </label>
       )}
-      {comparisonBasisGap && (
+      {notice && (
         <p role="status" className="text-small text-text-secondary">
-          The cases cannot be compared period by period: they share no period, or their recorded
-          start and end dates do not match or cannot establish a unique period.
+          {notice}
         </p>
       )}
     </>
@@ -222,7 +218,7 @@ function StatementView({
   units,
   selectedCase,
   selectedRawGroup,
-  downsideNote,
+  caseNames,
   limits,
   source,
 }: {
@@ -231,7 +227,7 @@ function StatementView({
   units: string;
   selectedCase?: string;
   selectedRawGroup?: string;
-  downsideNote: string;
+  caseNames: CaseNames;
   limits: string[];
   source?: ForecastSource;
 }) {
@@ -246,14 +242,14 @@ function StatementView({
     period,
     canCompare,
     comparison,
-    comparisonBasisGap,
+    notice,
     view,
     visible,
   } = displayedColumns(
     grid,
     selectedCase,
     selectedRawGroup,
-    downsideNote,
+    caseNames,
     requestedView,
     requestedPeriod,
   );
@@ -304,7 +300,7 @@ function StatementView({
           hasProjections={projections.length > 0}
           hasHistory={history.length > 0}
           canCompare={canCompare}
-          comparisonBasisGap={comparisonBasisGap}
+          notice={notice}
           setView={setView}
           setPeriod={setPeriod}
         />
@@ -356,8 +352,8 @@ export function ForecastStatement({
     units: word(cashflow.units),
     selectedCase,
     selectedRawGroup,
-    downsideNote:
-      stringsIn(cashflow.notes).find((note) => note.startsWith("Downside case is")) ?? "",
+    // The model's one case naming, whether its grids are drawn joined or as two statements.
+    caseNames: forecastCaseNames(cashflow),
     limits: stringsIn(cashflow.limits),
     source,
   };

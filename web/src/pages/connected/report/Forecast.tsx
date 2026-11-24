@@ -86,7 +86,7 @@ function BasisNote({
   );
   if (!limitation) return null;
   const grid = gridOf(raw);
-  const cases = grid && cashProxyCases(grid, null);
+  const cases = grid && cashProxyCases(grid, null, forecastCaseNames(raw));
   const baseObservation = cases?.observations
     .filter(({ group }) => group === "Base case")
     .sort((a, b) => a.period.localeCompare(b.period))[0];
@@ -218,10 +218,9 @@ function ForecastCases({
           ),
         )}
       </div>
-      {caseOptions.some(({ comparisonBasisGap: gap }) => gap) && (
+      {first.comparisonNotice && (
         <p role="status" className="reading-copy text-small text-text-secondary">
-          Some case periods are duplicate, differently dated, or do not share a recorded date basis.
-          Each case keeps its own dated figure; incompatible periods are omitted from comparisons.
+          {first.comparisonNotice}
         </p>
       )}
       <p id="forecast-case-note" className="text-small text-text-secondary">
@@ -349,16 +348,10 @@ function ForecastTrendsSection({
   const cashflow = record(model.cashflow);
   const grid = gridOf(cashflow);
   const other = gridOf(cashflow.other);
-  const downsideNote = stringsIn(cashflow.notes).find((note) =>
-    note.startsWith("Downside case is"),
-  );
   if (!grid) return null;
-  const rawGroups = [
-    ...new Set([...grid.columns, ...(other?.columns ?? [])].map(({ group }) => group)),
-  ];
-  const names = forecastCaseNames(rawGroups, downsideNote);
+  const names = forecastCaseNames(cashflow);
   const selectedGroup =
-    selectedRawGroup ?? rawGroups.find((group) => names.get(group) === selectedCase);
+    selectedRawGroup ?? [...names.keys()].find((group) => names.get(group) === selectedCase);
   const forecasts = other?.columns.some(({ group }) => group === selectedGroup) ? other : grid;
   return (
     <details className="mt-4 border-y border-border-hairline bg-surface-card px-4 py-3">
@@ -370,7 +363,7 @@ function ForecastTrendsSection({
           source={source}
           selectedCase={selectedCase}
           selectedRawGroup={selectedGroup}
-          downsideNote={downsideNote}
+          caseNames={names}
         />
       </div>
     </details>
