@@ -9,7 +9,7 @@ import { scopeText } from "./limitWords";
  * summary's own items: no limit is `ready`; a gap, limit or check is `conditional`; a refusal is
  * `blocked`. The page adds no judgement of its own.
  */
-export type ModuleState = "unchecked" | "ready" | "conditional" | "blocked";
+type ModuleState = "unchecked" | "ready" | "conditional" | "blocked";
 
 export type ModuleRow = {
   id: string;
@@ -19,7 +19,7 @@ export type ModuleRow = {
   reasons: string[];
 };
 
-export type StageGroup = { number?: string; name: string; rows: ModuleRow[] };
+type StageGroup = { number?: string; name: string; rows: ModuleRow[] };
 
 export type ModuleReadiness = {
   /** Limits on the whole run, not on one module; undefined when the summary has none. */

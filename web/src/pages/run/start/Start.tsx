@@ -78,6 +78,7 @@ export function SubmitConfirmation({
   isDisabled,
   describedBy,
   className,
+  noCost = false,
   onConfirm,
 }: {
   label: string;
@@ -87,6 +88,8 @@ export function SubmitConfirmation({
   isDisabled: boolean;
   describedBy?: string;
   className?: string;
+  /** A confirmation that spends nothing (a synthetic test): a calm mark, not a warning. */
+  noCost?: boolean;
   onConfirm: () => void;
 }) {
   return (
@@ -106,11 +109,11 @@ export function SubmitConfirmation({
               <div className="flex flex-col gap-8 p-6">
                 <div className="flex flex-col gap-4">
                   <FeaturedIcon
-                    color="warning"
+                    color={noCost ? "brand" : "warning"}
                     size="md"
                     icon={
                       <span className="flex size-4 [&>svg]:size-full">
-                        <StatusShape shape="triangle" />
+                        <StatusShape shape={noCost ? "ring" : "triangle"} />
                       </span>
                     }
                   />

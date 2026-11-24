@@ -121,6 +121,7 @@ function ReviewSubmit({
           confirm={confirmation}
           isDisabled={submitDisabled}
           describedBy="run-submit-cost"
+          noCost={synthetic}
           onConfirm={onSubmit}
         />
       </div>

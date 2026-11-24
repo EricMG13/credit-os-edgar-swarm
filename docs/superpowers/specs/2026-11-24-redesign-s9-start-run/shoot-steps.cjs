@@ -1,6 +1,8 @@
 // Screenshots of each Start run step, the review and the confirmation dialog on the synthetic
 // Northbridge drive, at one width. Usage: node shoot-steps.cjs <out-dir> <width> [prefix]
-// Stops before Submit is confirmed: nothing is started.
+// Stops before Submit is confirmed: nothing is started. With PAID=1 the page is shown in live mode
+// as web/scripts/connected-proof.mjs does (the mode tag rewritten, every Submit request aborted),
+// to see the paid wording; the service stays the offline synthetic one.
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -15,6 +17,15 @@ const [, , outDir, width = '1440', prefix = 'start'] = process.argv;
   page.on('pageerror', (e) => errors.push(String(e).slice(0, 300)));
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text().slice(0, 300)));
   const x = { exact: true };
+  const paid = process.env.PAID === '1';
+  if (paid) {
+    await page.route(/\/api\/submissions\/[^/]+\/submit$/u, (route) => route.abort());
+    await page.route((url) => url.origin === ORIGIN && (url.pathname === '/' || url.pathname === '/start'), async (route) => {
+      const result = await route.fetch({ maxRedirects: 0 });
+      const body = (await result.text()).replace('name="credit-os-mode" content="synthetic"', 'name="credit-os-mode" content="live"');
+      await route.fulfill({ response: result, body });
+    });
+  }
   // The shell scrolls inside <main>, so the viewport is grown to the page's height for each shot.
   const shot = async (name) => {
     await page.waitForTimeout(400);
@@ -56,7 +67,7 @@ const [, , outDir, width = '1440', prefix = 'start'] = process.argv;
   await ratings.getByLabel('Rating', x).fill('B1'); await ratings.getByLabel('Outlook', x).selectOption('Negative'); await ratings.getByLabel('As-of', x).fill('2025-02-28');
   await shot('3-context');
   await page.getByRole('button', { name: 'Review run', ...x }).click();
-  const submit = page.getByRole('button', { name: 'Submit run', ...x }); await submit.waitFor();
+  const submit = page.getByRole('button', { name: paid ? 'Submit, spend up to USD 25.00' : 'Submit run', ...x }); await submit.waitFor();
   await shot('4-review');
   for (const c of await page.getByRole('region', { name: 'Limits to decide' }).getByRole('checkbox').all()) await c.check();
   await page.getByRole('checkbox', { name: 'Approve: I have read this summary and want this run started', ...x }).check();
