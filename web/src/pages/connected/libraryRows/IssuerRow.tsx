@@ -186,7 +186,12 @@ export function IssuerRow({ group }: { group: IssuerGroup }) {
         <div className="flex min-w-0 flex-col gap-1 md:col-span-3 xl:col-span-1">
           <span className={CELL_LABEL}>Next event</span>
           {linked ? (
-            <TextLink href={`${reportPath(linked.id)}#calendar`}>Open Calendar</TextLink>
+            <TextLink
+              href={`${reportPath(linked.id)}#calendar`}
+              className="text-left text-small whitespace-normal"
+            >
+              Open Calendar
+            </TextLink>
           ) : (
             <span className="text-small text-gap-text">Needs a published report</span>
           )}
