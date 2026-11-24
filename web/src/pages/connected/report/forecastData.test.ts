@@ -158,3 +158,41 @@ it("tabulates drivers by case, marks a value that differs from base and never as
   expect(shock?.cells.map(({ text }) => text)).toEqual(["Not stated", "Not stated", "20.00%"]);
   expect(shock?.cells[2]?.differs).toBe(true);
 });
+
+it("tabulates the retained TransDigm inputs exactly: upside dividends and flat downside sales differ", async () => {
+  // Outdated evidence (TransDigm FY2024, as of 2024-09-30), used for shape only.
+  const { readFileSync } = await import("node:fs");
+  const path = await import("node:path");
+  const block = readFileSync(
+    path.join(
+      import.meta.dirname,
+      "../../../../../tests/fixtures/tdg_sol_high_2026_11_13/CP-2G-forecast-block.md",
+    ),
+    "utf8",
+  );
+  const json = /```json\n([\s\S]*?)\n```/u.exec(block)?.[1] ?? "{}";
+  const table = driverTable(JSON.parse(json) as Record<string, unknown>);
+  expect(table.years).toEqual(["2025", "2026", "2027"]);
+  expect(table.cases.map(({ name }) => name)).toEqual([
+    "Base case",
+    "Upside case",
+    "Downside drivers",
+  ]);
+  const cells = (key: string) =>
+    table.rows.find((item) => item.key === key)?.cells.map(({ text, differs }) => [text, differs]);
+  expect(cells("revenue_growth")).toEqual([
+    ["12.00% each year", false],
+    ["16.20% each year", true],
+    ["0.00% each year", true],
+  ]);
+  expect(cells("dividends")).toEqual([
+    ["4348 · 2038 · 2038", false],
+    ["4348 · 38 · 38", true],
+    ["Not stated", false],
+  ]);
+  expect(cells("rate_increase")).toEqual([
+    ["Not stated", false],
+    ["Not stated", false],
+    ["1.84%", true],
+  ]);
+});
