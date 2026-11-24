@@ -266,7 +266,7 @@ Checks run on `b56b83d` (web/, Node 22; each under five minutes):
 | `npx prettier --check` on changed files | Pass |
 | `npx vitest run src/pages/connected/report src/pages/library/parts` + `ReportContent.records`, `ReportContent.drawings` | 78 files, 707 tests pass (then +3 for the title fix) |
 | `npx vitest run src/pages/connected/ConnectedApp.test.tsx` | 221 pass |
-| Wide run `src/pages src/components src/styles` | See the coordinator report |
+| Wide run `src/pages src/components src/styles` (on `38e25da`) | 316 of 317 files, 5332 of 5333 tests; the one failure was a test added while the run was in progress, which passes at `b56b83d` (32/32) |
 | `npm run unused` (knip) | Clean |
 | `npm run build` | Pass |
 | `tools/quality_gate.py` | Not applicable: no Python changed; it also cannot resolve `origin/main` in this clone |
