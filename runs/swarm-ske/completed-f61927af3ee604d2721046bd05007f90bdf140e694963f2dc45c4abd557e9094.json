@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Skeena Resources Ltd as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/194097ac0f192b0c6619902e34c8acad67c9c5059ae43242b22c4003ea6b8c55/1.response.md",
+    "CP-1": "requests/CP-1/d9d51991718ebea4fe3ade4f5f3b805f6fa9f60adb7cb1e9c1de2f03a372b510/1.response.md",
+    "CP-1A": "requests/CP-1A/42a45f93fbe82bdbbdcc7cb38373337c25fc6c6a1a0c74d66d0ae1a3c908fc46/1.response.md",
+    "CP-2": "requests/CP-2/a7d96a636e950be13c46ee0eff89b74b06b6cda1562d797b3c5e8488cbd10bf3/2.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "e871db495fe67e841b8fdcbedd7fa18360da06ddeb966ce745a3be5d04cd43ed",
+  "delivery_sha256": "9019a425a442461a2bff432cf33927ab363415ecca4bee99b71470ddd7105399"
+}

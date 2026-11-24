@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Solaris Energy Infrastructure, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/d34aeb0b1d0be597e1ce182dbba7e17fcc550700b1a505c7a613bc3317bd7bd5/1.response.md",
+    "CP-1": "requests/CP-1/f81435708233eab3d19663e0c052b899451c71aa2822ae8ba74568ca0854fdb9/1.response.md",
+    "CP-1A": "requests/CP-1A/e51dde05b5d00c4643cea501707db6b3873a54a0de68a9f3d99f75c64d4ec530/1.response.md",
+    "CP-2": "requests/CP-2/4f684c70618f7c1e30082d9cbeed0dcd2723fdf8b662679d817c628a918fc484/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "370e099936ee926200c4aa5e7f7c8ee63a4bb74a04b505bd5c9c2aff2c1196fb",
+  "delivery_sha256": "ef7506f3fff88d16948231c926be11b9eb673b62fbef8102daba22e6cdca07f9"
+}

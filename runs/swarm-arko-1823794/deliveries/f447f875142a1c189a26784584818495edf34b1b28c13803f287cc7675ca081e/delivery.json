@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for ARKO Corp. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "4934282bdfbbbc0489c8f0295d56af0d9cb6ce8374b76c0d77feb2eb83b03774",
+    "CP-1.md": "398125af206252d9c57a35d03d4cfcc4e818b8d9b2418d633915d7cc649c1d29",
+    "CP-1A.md": "92765868ca02e162bfba9f26067a328eeab50d4372d82ed59b838bb4f0ea3361",
+    "CP-2.md": "ebf1e58b14a8b2e2a0a56fa4805584f74bea3310d48ebfbf883f7726cc172ca8",
+    "coverage.json": "36b48318b9a76fdd3b125c80a380469604ffdda9c2669ef279f5b9b7b2ae092d",
+    "view.json": "dad66fcf832d6f73c44262ae5dbdc24f5b900d4fa3faa109feceabb2d91ad57e",
+    "report-view.json": "28e307b468735cc1b820518d8b5382f88dbafdecc76a108426f9840fd60554ad"
+  }
+}

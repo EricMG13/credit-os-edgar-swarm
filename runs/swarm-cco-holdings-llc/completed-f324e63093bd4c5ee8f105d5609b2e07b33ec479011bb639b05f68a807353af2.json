@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for CCO HOLDINGS LLC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/268d34eccc79d2357774dbc5fe1f5eb1d3bc788c455bbfc2fb68a7b355ca5f19/1.response.md",
+    "CP-1": "requests/CP-1/aa5d13e9a8033bb4f3425c4bebd7a033f129f1afa70f928279575a175f883908/1.response.md",
+    "CP-1A": "requests/CP-1A/25f90aa8bf8692bce70a3fb39b8e238ecace53d04c097eddccf8db8799751f13/1.response.md",
+    "CP-2": "requests/CP-2/56eda73b7f086b9f2c09d44d6e5062d9860a205c1d1756fce5079533b86fa76d/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "7704a75b607f6330c45c43a42b81f6e451c025a3aaebfdb66ebca385e622c1be",
+  "delivery_sha256": "c37d2853c1b3e92e92cd4c6fc565830c166c9094ca3a27f43018868c759cffd1"
+}

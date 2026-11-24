@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for NCR Atleos Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "dd6fcbcac85d42e8f46a9a0f7d5a3ddc9cf4e36da4f0fca865b579719e006c94",
+    "CP-1.md": "959ec4961b1312a5d1e2b69b6fb6b2eb8874bc71f8fe7a0b432cdcee907b2bdd",
+    "CP-1A.md": "ee891cc8c7e8f6502d9e240928992f45240a043c34822ce92d99b3aaca4a0bef",
+    "CP-2.md": "d5c3ba277ca91fdc8cdcac24a10c05037918fe973d13d4a54101196243ba3891",
+    "coverage.json": "b44f89c2b14e2e7d8ab7d8e52784be1f93a2c0443ed4d0e001fb0858584fc808",
+    "view.json": "6e137596db91478da033c4ce0a56f13d99a9d8ddaafc16a9d6ee802d0ea26c53",
+    "report-view.json": "65044a84a523965d7fe8589a72cbda8e35224a613e8a254d424745adb3be6f59"
+  }
+}

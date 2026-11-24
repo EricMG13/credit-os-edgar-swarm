@@ -1,0 +1,248 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "mwa-1350593-2026-11-18-credit_snapshot-host",
+    "issuer_id": "mwa-1350593",
+    "issuer_name": "Mueller Water Products, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-09-30_mwa-20240930.htm.jsonl": {
+      "path": "source-text/10-K_2024-09-30_mwa-20240930.htm.jsonl",
+      "sha256": "d5c25d835ca31656c8e1480c5afd9d099b3b2274269021d82091d62dc309e2b3"
+    },
+    "10-K_2025-09-30_mwa-20250930.htm.jsonl": {
+      "path": "source-text/10-K_2025-09-30_mwa-20250930.htm.jsonl",
+      "sha256": "4b7b74148b0723cdccd4dcc114e3b20e8ec4121d486bf9d7c8b4c1b62768cf60"
+    },
+    "10-Q_2025-12-31_mwa-20251231.htm.jsonl": {
+      "path": "source-text/10-Q_2025-12-31_mwa-20251231.htm.jsonl",
+      "sha256": "892231fe2cdd09f75d285c5f0becefa90f0ce4cc47b7eb59d2d13a3919460028"
+    },
+    "10-Q_2026-03-31_mwa-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_mwa-20260331.htm.jsonl",
+      "sha256": "430e7378b7e470c36549c2f13ea5a3054efc473654b6d6fafcabd4f1c30ce1ba"
+    },
+    "10-Q_2026-06-30_mwa-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_mwa-20260630.htm.jsonl",
+      "sha256": "776829fb9dea4c3b3b5a9f9b1b1780f1b1baf22c086502fa1532fcd7c2df7581"
+    },
+    "EX-99.1_2026-02-04_exhibit991pressreleasefy26.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-02-04_exhibit991pressreleasefy26.htm.jsonl",
+      "sha256": "b60d294c04520411ed607c26026991d649412fed49aa8da0ae5051055b4c9d9d"
+    },
+    "EX-99.1_2026-05-05_exhibit991pressreleasefy26.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-05-05_exhibit991pressreleasefy26.htm.jsonl",
+      "sha256": "8aed43935ed6ee3bffa373289947d3a3f0697543e7bd91fe04a436f47d0c912b"
+    },
+    "EX-99.1_2026-08-05_exhibit991pressreleasefy26.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-08-05_exhibit991pressreleasefy26.htm.jsonl",
+      "sha256": "a4254be41b4820add9017ccb43d9f5ee58eeee68e035eb30f688c6c93bd8a232"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1350593-mueller-water-products-inc.json",
+      "sha256": "fe9d7fa835e4c6879f31102d281136f14f375c21a993183248da516bd628a3b2"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "a0fa150b8195e9b50f941774b1cd27b8db16ca65b32f471d3c01a0970000281e"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "c59fc266285a6944602ac09000f5f6f232ccfc35fe033a14f9a73f76ae0d388f"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "3db0c867d10aeeee9f885b1bfa68e0eae7021e64a3b319ea77f4efc86742af30"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "fa3c6686bce81a5306c5092e7c149a6af84acbebb876814c99a0eb46ecabc565"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Mueller Water Products, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Mueller Water Products, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

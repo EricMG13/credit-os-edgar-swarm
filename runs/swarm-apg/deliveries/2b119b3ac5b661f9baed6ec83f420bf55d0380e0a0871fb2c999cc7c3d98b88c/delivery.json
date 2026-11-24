@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for APi Group Corp as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "49c022f66e917ac0e688a4c245bcd14e354dc73558a11a31e04cf3d48185130e",
+    "CP-1.md": "52c786a3edcbc24bde8990a4ed5795d4355007032496242f410c3b1db2f7cd51",
+    "CP-1A.md": "18f06440f229f0979e55d05f6ec4a3186d5c704a27de1e81035aad38bacde04d",
+    "CP-2.md": "d51563146b0119304e15630de126cb50baa91e20b818fa02d27afe8a10c0bea2",
+    "coverage.json": "1a883e7d061ae8c9e6801240ea4fcd15e78832b4ae083048eac66333c24d5ee9",
+    "view.json": "97591cfc7fa2a700de4232f5e79e900653e35a76b56a063e142b1452cb3f588d",
+    "report-view.json": "89a38ba42b89fe2bd5163a18d1636ad701e3c9cb2f92c3971ac6c509bfd259c2"
+  }
+}

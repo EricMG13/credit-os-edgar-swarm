@@ -1,0 +1,232 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "mtn-812011-2026-11-18-credit_snapshot-host",
+    "issuer_id": "mtn-812011",
+    "issuer_name": "Vail Resorts Inc",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2025-07-31_mtn-20250731.htm.jsonl": {
+      "path": "source-text/10-K_2025-07-31_mtn-20250731.htm.jsonl",
+      "sha256": "55cdabd1a82ef88ab6cacd962e88866108993f34d707bcb6f2706c474539360f"
+    },
+    "10-K_2026-07-31_mtn-20260731.htm.jsonl": {
+      "path": "source-text/10-K_2026-07-31_mtn-20260731.htm.jsonl",
+      "sha256": "61f34dbcec306a2d2babd5e6174a6f57326643e50fc796fac0b7053d56452792"
+    },
+    "10-Q_2026-01-31_mtn-20260131.htm.jsonl": {
+      "path": "source-text/10-Q_2026-01-31_mtn-20260131.htm.jsonl",
+      "sha256": "0429d8a825d64d833518a1cedbc48fb44ffcf0999cce431f9788c6f837aceffc"
+    },
+    "10-Q_2026-04-30_mtn-20260430.htm.jsonl": {
+      "path": "source-text/10-Q_2026-04-30_mtn-20260430.htm.jsonl",
+      "sha256": "2cb1e2366740b16bf429b8a197c1ee9af6d0cab60f11fb526dd196f76a8d00c9"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/812011-vail-resorts-inc-mtn.json",
+      "sha256": "d189465abe41e2be4dbf8d0b8c1ad094dd27de210e3cf9ca0d02f564eb374dcb"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "0c202f04d8f319fc10c18e1cca5e3367df658d9c5fdcae5301dbfad5b4716de5"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "f7a2af7d9da4a8b1a76f5904b43aa93c6da04b34327cf2bf10fc6d44877c67e4"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "777494251770e0ebb41758adcbc33624852271ede997426115c7b5f88882ed21"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "c6c142acefeef45109b081a3a3d8eba9b65da740059730798fdd49ddba5a3441"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Vail Resorts Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Vail Resorts Inc — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

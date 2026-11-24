@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Bristow Group Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "3c1c581672ea0619df0b67aa120d3a45975a1a3a8f7c7b2fc25578c0d39a910c",
+    "CP-1.md": "a8a25285be0c0c815d5464d37bfc732b4d7e9754347cf856b39559b2ee360eaf",
+    "CP-1A.md": "5040965248e28fc119b0fecd398a316d8ee0b0995be6834ba49f72d60497f804",
+    "CP-2.md": "8574f4010cc6f270efa706d899e81a4180140c9ed86669312c058995f68e96bb",
+    "coverage.json": "e93b2538821288054adeb4778b9106f0fee4dfdec25a6c02e7797f42f9a4d78c",
+    "view.json": "5a1b2ee88ee67b9500c646d6fe3d88831abbdf210922b686bc7529da80cc9e3b",
+    "report-view.json": "03bbe1a9f92c5c5b1f3b39ced10ec4726bf8d39155df33821036bbb006b31252"
+  }
+}

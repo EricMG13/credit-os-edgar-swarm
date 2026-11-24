@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for GENMAB A/S as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/c0ee457d14e5d68e8edb529ee335a0229d291858be7fa8d3d5b078b90ae98702/1.response.md",
+    "CP-1": "requests/CP-1/aa0aa7fb050325c8e7852ffa424713fdd6f989b99f5fc262b341d0949fe27fd2/1.response.md",
+    "CP-1A": "requests/CP-1A/4c2cc0e0caf8aeafdebd865c1a9abb42f57074f24493cb064e6c14772e2e8312/1.response.md",
+    "CP-2": "requests/CP-2/4e038642e8bfb06b279d2e66300f4346451308604dbaa0d20ffdeb784e7a3970/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "4eab7b8a6987bc7b8390c3363cc537f927670ab1bafd0cf79ffb68729e47253d",
+  "delivery_sha256": "f6d05df62c521e889fc7e218257c83ce5a935875e1cae3769d1378795dd16dd1"
+}

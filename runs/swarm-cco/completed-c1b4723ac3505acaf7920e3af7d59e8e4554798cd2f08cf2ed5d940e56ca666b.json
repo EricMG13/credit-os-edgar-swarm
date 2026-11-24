@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Clear Channel Outdoor Holdings, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/9b96123b32004204460a2319c966e828302cd2294a5a4533ccef26ae16e8b4de/1.response.md",
+    "CP-1": "requests/CP-1/c9772fb4f0fd92aaeba7fcf543e2b5d6f1a2bffdfeec2c03ad445331ed1d07e0/1.response.md",
+    "CP-1A": "requests/CP-1A/c984d1241742870566f42f96cd749b4632b377069f8b2582d81cc9e54ab6b940/1.response.md",
+    "CP-2": "requests/CP-2/50a4eefc741000d232f44fa6266c47552c72b17981ef42a80eedc7a1c73105df/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "272c1e05c386aabd3ec87bd0bdedc849c6499505fb2b57f892e33cfd13615f35",
+  "delivery_sha256": "83d8d79c84409526b08851fd21c60951952842a7f0b08df6bdc77e7cc6b50dd1"
+}

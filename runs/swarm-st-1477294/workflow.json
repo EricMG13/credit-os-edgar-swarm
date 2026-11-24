@@ -1,0 +1,260 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "st-1477294-2026-11-18-credit_snapshot-host",
+    "issuer_id": "st-1477294",
+    "issuer_name": "Sensata Technologies Holding plc",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_st.pdf": {
+      "path": "../../../inputs/packs/1477294-sensata-technologies-holding-plc/10-K_2024-12-31_st.pdf",
+      "sha256": "cf7dd4099a068ba51be0a9ebcd8be5843218c6b2802ac578f056ba203f20360b"
+    },
+    "10-K_2025-12-31_st.pdf": {
+      "path": "../../../inputs/packs/1477294-sensata-technologies-holding-plc/10-K_2025-12-31_st.pdf",
+      "sha256": "f5a313cd57e71a55ab76489d83e63967f6ffc066dcf20cdd46587f58279fc2c0"
+    },
+    "10-Q_2026-03-31_st.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_st.htm.jsonl",
+      "sha256": "70b6efec940a99630687a238297312571827f7ea7b73b85de7482fcdcfe9fdd2"
+    },
+    "10-Q_2026-06-30_st.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_st.htm.jsonl",
+      "sha256": "4e8014ae29af62e87e6287d7dc5f1461413d5d1419fe2f11c054c3c069427ec2"
+    },
+    "10-Q_2026-09-30_st.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_st.htm.jsonl",
+      "sha256": "ef1fc99d4666f158166de5b36c1f842b8b3656732c661f87e5d9eaab71ebba43"
+    },
+    "PRESENTATION_Q12026_st.pdf": {
+      "path": "../../../inputs/packs/1477294-sensata-technologies-holding-plc/PRESENTATION_Q12026_st.pdf",
+      "sha256": "6c421cd431d8022d0b45a2e310fdb519d8e70c3c543fe8b6c3d3028abe8aefe0"
+    },
+    "PRESENTATION_Q22026_st.pdf": {
+      "path": "../../../inputs/packs/1477294-sensata-technologies-holding-plc/PRESENTATION_Q22026_st.pdf",
+      "sha256": "4035a395622ad0e58d3ed073c4984f4c9e22fe1cff90a6254308aa8098e85399"
+    },
+    "PRESENTATION_Q32026_st.pdf": {
+      "path": "../../../inputs/packs/1477294-sensata-technologies-holding-plc/PRESENTATION_Q32026_st.pdf",
+      "sha256": "dfbfac32b74a15d8111f94ba73fd630ef76650b68fbae0c18b6e915a4e60153a"
+    },
+    "RESULTS_Q12026_st.pdf": {
+      "path": "../../../inputs/packs/1477294-sensata-technologies-holding-plc/RESULTS_Q12026_st.pdf",
+      "sha256": "21b22d2a4f9bcf2dbe604f81204d9ea99e14961ed4662bc39c62372088eb1877"
+    },
+    "RESULTS_Q22026_st.pdf": {
+      "path": "../../../inputs/packs/1477294-sensata-technologies-holding-plc/RESULTS_Q22026_st.pdf",
+      "sha256": "a15485b2956aec3b9456ce8adf95d4571115ddfb12e7094cb933c9def700a238"
+    },
+    "RESULTS_Q32026_st.pdf": {
+      "path": "../../../inputs/packs/1477294-sensata-technologies-holding-plc/RESULTS_Q32026_st.pdf",
+      "sha256": "a470437b9fc805ab604b2292dab1385af5e6c4589cf4eea78a8256ea74b15e06"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1477294-sensata-technologies-holding-plc.json",
+      "sha256": "c8969f850b318abe587ca3fedefb8508c3d79ff8c81d2797e1ad78354613dbb4"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "b8f9f3de10172c1bd05e889cfb3692466e7ed3a6cb4b511ca83498f407937b40"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "7f687fb5f94d2ac05f8ec0571bb6bcece507b3e4ca0471f2cda4a8573556348e"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "34ec180fbd70aee6c48e7207e6ad625d546e3af32747c7314164d23c57688aca"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "e406a499f0855b91e6bcaccc3084e351529aba0dd442f5538aa204135f2e6cad"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Sensata Technologies Holding plc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Sensata Technologies Holding plc — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

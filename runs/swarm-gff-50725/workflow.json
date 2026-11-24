@@ -1,0 +1,232 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "gff-50725-2026-11-18-credit_snapshot-host",
+    "issuer_id": "gff-50725",
+    "issuer_name": "Griffon Corp",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2025-09-30_gff-20250930.htm.jsonl": {
+      "path": "source-text/10-K_2025-09-30_gff-20250930.htm.jsonl",
+      "sha256": "fc0e17249f99e02270a17b9a7f2256446e6e5d40d93fbd4171ae85061e5c72d8"
+    },
+    "10-K_2026-09-30_gff-20260930.htm.jsonl": {
+      "path": "source-text/10-K_2026-09-30_gff-20260930.htm.jsonl",
+      "sha256": "92a3b051e05b0f1a1729b1e53dc85ac489959385dfef38d93cc2515c94a1d639"
+    },
+    "10-Q_2026-03-31_gff-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_gff-20260331.htm.jsonl",
+      "sha256": "294b90cf2bfc764d150ad2661c4d88f4eb74b3458e1216b4553b6403a26f0165"
+    },
+    "10-Q_2026-06-30_gff-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_gff-20260630.htm.jsonl",
+      "sha256": "96058c3de96a5c5432d03a061fc3a8aa41dcb03dc811c973c95926861cef64c7"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/50725-griffon-corp-gff.json",
+      "sha256": "6691d416bd6a9d1f1de6db8d5354e602c66f0d2a5ff3dee5f7ac29d9d140179c"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "d5015940a54a68751c8a50fb61266ff318ce5651c110d841e797e21aecd12b5a"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "7e2e7083d2153b8a1b459f6b7f3b90081f29cf5fa9d25ce362de4ea4a5c89697"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "04720e5bd92f7d7e6c8a2564c1eacc37bff234e52fdbf6be767c814f47d70440"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "961aba1c4e35e092b9370da688d92fd4159d074a78d4d36a228b7ee6ee205097"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Griffon Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Griffon Corp — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

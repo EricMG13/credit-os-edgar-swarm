@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for TENET HEALTHCARE CORP as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "ff67d89c13c0b0d076f0445071a4d67f004eddd9a5e07b1b44daf1309df5392f",
+    "CP-1.md": "82ad2d674b0a9a4afe17fca6d2b3f7498aa0d7ac5094384275a528cc9018c496",
+    "CP-1A.md": "724cff899c974757325935a22cfa6a56bac86f619caed07417dcd6bd3ca96377",
+    "CP-2.md": "135eb592a473f12c918f42e26f389dccd6f3e82bc6c0e03940e23855d883c4ea",
+    "coverage.json": "80945beb19ac6ffe18f74b7508a1f404a962ae19d8a9fc5c922c29d2ed9686ee",
+    "view.json": "8f6b53993a186b6bb2dd1c540432fabe9cf582d3de26655e925ddd3454b183a4",
+    "report-view.json": "232ac8af7670bf0ab5749eca4f1643cf9eb4022e4dacf4315e1a69549e0ad6da"
+  }
+}

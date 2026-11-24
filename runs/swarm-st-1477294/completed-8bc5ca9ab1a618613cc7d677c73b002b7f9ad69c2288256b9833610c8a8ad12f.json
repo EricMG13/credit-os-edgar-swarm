@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Sensata Technologies Holding plc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/af0c727d276c481193b75af70e99cc758331d9ca923ad356ebb88df4ee0fc446/1.response.md",
+    "CP-1": "requests/CP-1/f9934c2e11021a4c68a0397cf2e7214dea122ab40695c8c54fdc36ed8360a258/1.response.md",
+    "CP-1A": "requests/CP-1A/09a1e62891c0a65f690941a1a1f9d1c3666f74e9e8828290e02081c506d57003/1.response.md",
+    "CP-2": "requests/CP-2/d9eade7501dc23bca21eb27349ba2447679a4eb6796faad91de398f7812de376/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "150a92e0fb4a30e7d4a85b85f8395f388960a98f6e89b0fe792332de3d23202b",
+  "delivery_sha256": "792035e1d5fa46ab8f3af746c75898ea3527934c1766058724ab69483da960e0"
+}

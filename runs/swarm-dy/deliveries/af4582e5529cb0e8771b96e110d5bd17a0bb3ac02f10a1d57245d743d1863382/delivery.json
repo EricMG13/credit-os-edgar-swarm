@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for DYCOM INDUSTRIES INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "a9666727b0d5884c6687d8beafbe462222a8e3c05442392537cb06c514f19ec1",
+    "CP-1.md": "d6a1660a560dc7af94f5244ac4e4c31a6a5d9c7b32f3b0d9a7ad2c49ffe9cffb",
+    "CP-1A.md": "667d5cab4376ebc2a840c65db4c7c06319d5ef1ce89103918e18156e062483dc",
+    "CP-2.md": "26e30fa12bac5801c0d79e51282aed009a23129c1d07493cf90a913aa69a2fca",
+    "coverage.json": "c9f9a85dea871c941d36d114b73f4b4725fe4e45b5722ab005172e45a46f1e97",
+    "view.json": "38a65635f061dbbed29f6e0d8c235e7f108fb176acb9ff4a9198d81cada56f84",
+    "report-view.json": "979ddb5dfe36cb59a51d2b70403e328e400910daeade7aa3d0e20cb5b6c47930"
+  }
+}

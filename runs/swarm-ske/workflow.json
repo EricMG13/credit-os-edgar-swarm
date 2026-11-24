@@ -1,0 +1,244 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "ske-2026-11-05-credit_snapshot-host",
+    "issuer_id": "ske",
+    "issuer_name": "Skeena Resources Ltd",
+    "as_of": "2026-11-05",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "40-F_2025-12-31_ske-20251231x40f.htm.jsonl": {
+      "path": "source-text/40-F_2025-12-31_ske-20251231x40f.htm.jsonl",
+      "sha256": "db53ff9f8d0ca28c9b2edfb7202c651bb5c9ec8c989c923bb91bcc11481dd65e"
+    },
+    "6-K-EX-99.1_2026-03-24_exh_991.htm.jsonl": {
+      "path": "source-text/6-K-EX-99.1_2026-03-24_exh_991.htm.jsonl",
+      "sha256": "2c276dba594c2df305ad125f0ece05f65167118a8d8060b6fa5d7edae3ae61ff"
+    },
+    "6-K-EX-99.1_2026-05-15_ske-20260515xex99d1.htm.jsonl": {
+      "path": "source-text/6-K-EX-99.1_2026-05-15_ske-20260515xex99d1.htm.jsonl",
+      "sha256": "232a824d9608ba6939a5237ea02786aae7b7f6f4a3ef441bec526b8439fdd718"
+    },
+    "6-K-EX-99.1_2026-08-13_ske-20260813xex99d1.htm.jsonl": {
+      "path": "source-text/6-K-EX-99.1_2026-08-13_ske-20260813xex99d1.htm.jsonl",
+      "sha256": "c4db22929f19fe544f88a7604e2308cdbc32700c4f1804f3c24f0271e5a2ab28"
+    },
+    "6-K-EX-99.2_2025-11-13_ske-20251113xex99d2.htm.jsonl": {
+      "path": "source-text/6-K-EX-99.2_2025-11-13_ske-20251113xex99d2.htm.jsonl",
+      "sha256": "a3b00c87d028f94b90bcea93f3fd8fe3b7d050af714766a40adae75d64ae2545"
+    },
+    "6-K-EX-99.2_2026-05-15_ske-20260515xex99d2.htm.jsonl": {
+      "path": "source-text/6-K-EX-99.2_2026-05-15_ske-20260515xex99d2.htm.jsonl",
+      "sha256": "23892a03c3bd6fd8f48bf0d8bc66e12cf89a073a244322844de1eee4158909d7"
+    },
+    "6-K-EX-99.2_2026-08-13_ske-20260813xex99d2.htm.jsonl": {
+      "path": "source-text/6-K-EX-99.2_2026-08-13_ske-20260813xex99d2.htm.jsonl",
+      "sha256": "f089cfed7c41a13c1124e873c8cf9d986ddb809584e80594413f338c0cb3dda8"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1713748-skeena-resources-ltd-ske.json",
+      "sha256": "74622c0ba0b18d4f8697485a569e78b3429cdc3e20d2499bc2bcfcfddaa82602"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "8703edefa72a6bc7a474a94896fabf7f402d5d2c4ec81f514f5d88941bb4b7e5"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "a9dfc34ed98436c5751e3061b25afd2a8d1419fbd365ad17b40df05a3a5cd12b"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "8aa4cb1dddce8e4fa103606355a1bf224afd958ec9f2e18c2fab60d956daeb81"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "be3a836ebf82a767e2d63e120a85eab0d580faa5b5fa86885eb85eb8e2decfa8"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Skeena Resources Ltd as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Skeena Resources Ltd — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

@@ -1,27 +1,23 @@
-# EDGAR swarm results, HY list (inputs 2026-11-18)
+# EDGAR swarm checkpoint for the Nov 18 issuer list
 
-Outputs of the full swarm run of the owner's 242-issuer high-yield list on the latest credit-os2
-engine. The workflow `tools/swarm/swarm.workflow.js` on branch `claude/nice-gates-xwsl4g` of this
-repository (`claude/swarm-latest-engine` at `a03caec`, merging credit-os2 `main` `2e48875`, plus
-the results-saving step and the `effort` argument) writes one commit here after each batch.
+This Nov 24 checkpoint combines the 16 source shards listed in `source-shards.json`.
+The ledger records 242 issuers, with 50 published, 192 pending and zero running.
+Offline verification recovered the retained Constellium and Thryv deliveries from shard 11.
+The 14 other interrupted claims returned to pending. Snap and PBF Holding retain their partial
+run folders. The library lists the 50 completed runs and their four handoffs per issuer.
 
-| Path | Content |
-| --- | --- |
-| `plan.json` | the swarm ledger (`swarm-plan/1`): status, attempts and reason per issuer |
-| `runs/swarm-<issuer>/` | the CP-OS host-mode run folder per issuer (CP-0, CP-1, CP-1A, CP-2) |
-| `library/` | the issuer library that `update_library.py` built from those runs |
+- `plan.json` is the resumable ledger. The source snapshots are pinned by commit.
+- `runs/` preserves the 52 retained run folders from the source shards.
+- `library/` contains the combined publication and downloads.
 
-Each run folder is kept without `inputs/` and `source-text/`. These two folders hold copies of the
-SEC filings and the text taken from them. The packs and contexts come from the private prerelease
-`swarm-inputs-20261118` of this repository (`inputs/packs/`, `inputs/contexts/`,
-`inputs/hy-list.md`; `SHA256SUMS` and the inner `inputs/sha256.json` checked before the run).
+To restore the checkpoint in a fresh host session, use the exact `swarm-inputs-20261118`
+prerelease as described in the code repository's swarm runbook. Verify the release checksum
+and its input hashes. Extract its `inputs/` tree under the new run root. Copy this checkpoint's
+`runs/` into `ROOT/_engine/runs/` and its `plan.json` into `ROOT/swarm/plan.json`. Run the current
+`tools/swarm/prepare.py` against the restored inputs to refresh paths and check that the ledger
+reports 50 published and 192 pending. Use a dedicated worktree of this branch for batch saves.
 
-Scope: all 242 issuers in `inputs/hy-list.md`; `prepare.py` registered 242 and skipped 0. The six
-issuers the 2026-11-17 run published on the older engine (American Airlines, Churchill Downs,
-Dycom, Olin, Iron Mountain, Caesars) were reset to `pending` and are redone here. Answers are
-written by Sonnet analysts in host mode; the effort level is the one the owner approves for the
-run. No provider was called. The launcher checks the format of each answer. No independent review
-of content was run.
-
-The paths in `plan.json` and the run manifests are the paths in the container that ran the
-swarm (`/home/user/swarm-root`).
+Run directories exclude raw filing copies and converted source text. The launcher restores
+those copies from the verified inputs when reopening a retained run. If the combined index
+outgrows GitHub's file limit, the workflow keeps the ledger, runs and downloads so the index
+can be rebuilt offline.

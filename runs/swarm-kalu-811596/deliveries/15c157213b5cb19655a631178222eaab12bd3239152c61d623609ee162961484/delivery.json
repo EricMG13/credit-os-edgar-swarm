@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Kaiser Aluminum Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "6637bb26bcc1403d3cd5c5dd708e7d71971c23fa4f0755d6b3fb76449d6337f9",
+    "CP-1.md": "f044278b9c81852c0817bb12eb4f877ce9b78bdb4e5c5180c56097231129bc8d",
+    "CP-1A.md": "c08bd2b0ca310e768cfc9bd5e73399cbf5163e611e662c15db3559141ed581fa",
+    "CP-2.md": "b3ddb14ff5e037506fe53a3f43661857e8e9fa671b31c1406fcdeb48937250b7",
+    "coverage.json": "4dba250399a9172a1eb74458885f43cda21710f6dcc3ca2f53d3d0b6839cafaf",
+    "view.json": "0d4b16b9eb37cd9c51c76e98061dd629d3f62b53d1fc89be27e2301b75764773",
+    "report-view.json": "f7493d5897b28607b4823a69214e5cc80f5b82484b8580e7350eb55bac5f1fbf"
+  }
+}

@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "www-110471-2026-11-18-credit_snapshot-host",
+    "issuer_id": "www-110471",
+    "issuer_name": "Wolverine World Wide Inc /De/",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-28_www-20241228.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-28_www-20241228.htm.jsonl",
+      "sha256": "7239e33c4ae03b27f5635b1a953f7f93069ffa5bc28afa6ba494b2d8b1ccb420"
+    },
+    "10-K_2026-01-03_www-20260103.htm.jsonl": {
+      "path": "source-text/10-K_2026-01-03_www-20260103.htm.jsonl",
+      "sha256": "f58252240bbbfa7d9b61184a9217c945b56b2be2e0cc93102849cc1e20eab894"
+    },
+    "10-Q_2026-04-04_www-20260404.htm.jsonl": {
+      "path": "source-text/10-Q_2026-04-04_www-20260404.htm.jsonl",
+      "sha256": "607918af6fedbad373330ee245ab98ff6facb9118bcfa5632ff51201c6fc6044"
+    },
+    "10-Q_2026-07-04_www-20260704.htm.jsonl": {
+      "path": "source-text/10-Q_2026-07-04_www-20260704.htm.jsonl",
+      "sha256": "5a09204c9fb474b4e2579452f2b10c4ffadd01196c6342344def825b064d76f3"
+    },
+    "10-Q_2026-10-03_www-20261003.htm.jsonl": {
+      "path": "source-text/10-Q_2026-10-03_www-20261003.htm.jsonl",
+      "sha256": "e7b2d4756d04f34834477b48b11b534f653fbd89b9d3fad410ef29da659129b1"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/110471-wolverine-world-wide-inc-de-www.json",
+      "sha256": "fe8deb2d58252e47f362e0f6c175bf28377c3cfed6b5876df2b54bc1b9090a2b"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "e190753402956fd5c073a36ebb265517202488d9ab20bc0a6a0a109f68c7fe15"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "926b73160cf24511a433df2428abb3317aac09673ff28631fee5fddcc14b9bf2"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "23e01491734a4d4ce98b393d2a9be6e182f1db596f1cf2902c49ee0c2032db43"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "3747941b03ee661d94f96bcdc9f2aae596c143c61a41171dc3ce535b0d678f9f"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Wolverine World Wide Inc /De/ as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Wolverine World Wide Inc /De/ — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

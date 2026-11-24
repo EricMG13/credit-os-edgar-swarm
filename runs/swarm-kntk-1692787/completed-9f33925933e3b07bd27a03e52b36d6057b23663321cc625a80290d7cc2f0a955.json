@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Kinetik Holdings Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/8fb06a9055f52d9ef09731975a24993c45c314ecf9c5a3516560e4f4e251efb0/1.response.md",
+    "CP-1": "requests/CP-1/8b5dcdf5071ae5a0b471fb3fb2e3677c22584d3e4d572340c8ead3d44e6851a7/1.response.md",
+    "CP-1A": "requests/CP-1A/870fb786b9fc8e0bfd9c3f50411034572a73b980b66e0d3203fdbec7f8d39fd3/1.response.md",
+    "CP-2": "requests/CP-2/fa50b3fcb4b445efaff69e672956857f21477de9736eac041c2b1f840cec2d1f/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "78e6bf3c2e5814ba50b8269e0ffc7fdab3dd5fdcc0d709a2c33030ab6dfe9eac",
+  "delivery_sha256": "5c8ce1ba19b89fee2cc7a305cbd3cf70c0ca612c9d1e9ad57a3c498865cefcd8"
+}

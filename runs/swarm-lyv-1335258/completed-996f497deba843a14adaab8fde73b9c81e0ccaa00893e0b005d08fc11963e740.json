@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Live Nation Entertainment, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/9e134e4d0e408502644cc5fe1b0bf89b3ab154d7699af75e4ed11efe72b11e7b/1.response.md",
+    "CP-1": "requests/CP-1/ec836768f8cc74460c999831912989ccfb528e9db0bdb553f80cf05fb9322151/1.response.md",
+    "CP-1A": "requests/CP-1A/cd32a2ea843aa3a68d8320fdf76d8c0d6a6bf1e99989290402161ac0b20ef4f0/1.response.md",
+    "CP-2": "requests/CP-2/c7dc952562a83155082aad619b1eb7a2e041049317317cbfc7f9e32d78991afb/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "35019ce5e9183b83f6d2962c133a3205982c20d74f22db91eac919c65f0862cd",
+  "delivery_sha256": "f2ae470f54ef0fbfbae4445d0f3757f096b24c30ea24dfc9ef953708c8dde8f9"
+}

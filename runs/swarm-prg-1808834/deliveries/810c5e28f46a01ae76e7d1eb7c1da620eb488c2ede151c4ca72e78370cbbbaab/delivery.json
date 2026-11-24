@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for PROG Holdings, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "d3f74393f88729bc8e6d05fa278852f8922d8a828710ce1f3334269169f92c1e",
+    "CP-1.md": "f810a6f9dbb118451e814f13d62ac7f18df9de36b9eb97ba985f34515c11cd85",
+    "CP-1A.md": "e6b2d4f0a842f2b6f11ae2642777aef6f7c2d87ca69e5288c547809c2f90000f",
+    "CP-2.md": "6dfb1eebb1e119bef5ebad64f61eaa07c4560fd4d4d4d4494d22f4befd72687a",
+    "coverage.json": "d908d6c54dd118bfdfd0673f00562686b836affc654adcffd688eea52772fc6e",
+    "view.json": "2bb654ad8c63724749748d45763636bfa690795aaa176a0f707d3d18ba8280c4",
+    "report-view.json": "631882640f6b3e390d124612eef4c2cc7f8db641fe2306cf368c75ab97cf19ca"
+  }
+}

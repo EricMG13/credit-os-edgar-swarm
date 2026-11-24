@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Vail Resorts Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/9c2b9e6db6cc0752a53a6432951e24d0b967de95ee2afe5f1d602609a819d4f9/1.response.md",
+    "CP-1": "requests/CP-1/23eb932b95beae6c4e4b12f2d2c316178418b833d33f549f7e708935964e06f5/1.response.md",
+    "CP-1A": "requests/CP-1A/83c386b1b80fbd37ea6eec6639869cbb302ffda831cba9bfe60376cca0c9c6f0/1.response.md",
+    "CP-2": "requests/CP-2/535b45cfac8b8e227a4fcce027cf0bd7779154adb1b9c2d3332f2e8e958ba5ca/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "9049d22d7b3511ed71a11321445c353864c0f902e76203a5fcebe18e35fd8470",
+  "delivery_sha256": "6dae1d85d0fee598c12f1493abe2513965de62590261f8c09fb9caaadcff0f93"
+}

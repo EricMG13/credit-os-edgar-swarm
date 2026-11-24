@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Healthequity, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "da6933a06816c56f8009b5d95355f213000fc9805a9e5f0892995e436bd1e613",
+    "CP-1.md": "d6b0233b99dadcde540f9b0f07aa501f2109e22a98411fcfb25614623118d971",
+    "CP-1A.md": "ff08df32e75361967341130a0914ef360bb3ed4bf00d4d4a0ef50d2bca3f1598",
+    "CP-2.md": "793d17b69ef788161402feee99bae3a9a0753c8b1a6b4bb1cc85eec013d9fd6c",
+    "coverage.json": "0f177ec85c96dfdfd5bcb2c67308efd6ae749704cfd62102b36c2d5091d7831f",
+    "view.json": "2e563b53c2ab23da7f891ba7e7a609d9f73a9bd7f440c91dfd564b358279b7f6",
+    "report-view.json": "a6b014e30c003d334d977cdf8f41be8a2225e809ade7ae2696c7186af71ceeb2"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Bausch Health Companies Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/247132489ce784241fd1cc28a92b00ac794efe1baba04fd933d4e1acf0c59906/1.response.md",
+    "CP-1": "requests/CP-1/e50af72ae4783ad0645b1fd2e4372b9cdd9175cebf91a8e226dfd3bf5df7d69b/1.response.md",
+    "CP-1A": "requests/CP-1A/dc71b5a8a4ec4f88f75429ef9b3278696607bad8520f2606ef931e82d8dea7bb/1.response.md",
+    "CP-2": "requests/CP-2/f8e37f9ddd9d4f7d87cf5b802b926d9c861481886fd7c8e54e0a91588d91fc75/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "60dae96dfaaf0d07d0ef4a30ef566d2e80d4feb2b7f6a24f121190a3d6bf468d",
+  "delivery_sha256": "30175049360e1575711938120a73f3bfa60091e739918616dca657cb2a3b7cbc"
+}

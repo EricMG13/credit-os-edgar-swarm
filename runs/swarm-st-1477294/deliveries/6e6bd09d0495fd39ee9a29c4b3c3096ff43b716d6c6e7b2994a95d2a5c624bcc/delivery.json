@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Sensata Technologies Holding plc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "cc7022dff5ee387be0935e986a31a7f1000c18765b97d7e2de1ff9a257f52553",
+    "CP-1.md": "55e3da9efd0f964320042691f4099f48f77d26bfb9480e64c82e05475aa5cdf0",
+    "CP-1A.md": "e8159d1904dbe7534386894525838ca05043e93cc6c2495391a60b7389e91328",
+    "CP-2.md": "39a0f90d64ec7a57a934267250d2aca9b5be2ad606d3212435ff9f10492a3bd6",
+    "coverage.json": "ac4a8dbe303c17ec0f9ca69348bde63e51432ac416bb66e40468d8f9853fde5a",
+    "view.json": "cbfff01b40faaf9bc29fada81d4dffd58367faf68957708e9bf78b859090ffc4",
+    "report-view.json": "d993da179622ce02e8fcc2cdde7d65ff06f040b5e35b32fe224b1248640e44a6"
+  }
+}

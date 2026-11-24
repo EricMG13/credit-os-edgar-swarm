@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Thryv Holdings, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "ca1a9c4ec1bc3bb0ce505e781ca29a2ccd098b774b2ea5b6d7ed7bf7c658c4a6",
+    "CP-1.md": "6998e9ddbbf582cfec83d402baf22037b05c20b04126b50bd1247f9d35442e3f",
+    "CP-1A.md": "8e328019fe4ec3c6d3573baa330add65e7ac4df0795af070be3873defb4c7338",
+    "CP-2.md": "b3842bad744299c814edebb407eb4c2f0990f68ab1a0c8797f6355d870994c31",
+    "coverage.json": "c3b7d6fb8c04e56e2b1ef0166bb8a7a8ce65f896bf2c1dbde5bb1da1115b96ba",
+    "view.json": "e5f02543d980cd155a80f2fb284df9ba3918268d015e594765723c11bf00049e",
+    "report-view.json": "15527df51eafc4ca25a128b81459feb9d8b75b3846d86322f5a38904a6e189fa"
+  }
+}

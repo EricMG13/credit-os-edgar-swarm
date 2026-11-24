@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Vail Resorts Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "dbdd06f18acf3a080b6e3805987e77f9b8739c78b3f220face08df53e08d55c3",
+    "CP-1.md": "9467b1518a98f35322f5cdadc11e82fb9314311927eeaa8bb3a008f271b7fa02",
+    "CP-1A.md": "58149eb8d4e2884794ad0497c81701a89cdf5346155dae9781020220f51813a3",
+    "CP-2.md": "50b5a54dae8da7679abab81c5722089fc878591866ec3bf82ab983133b0992a8",
+    "coverage.json": "ede8d107d00e2e19a22973bae116989ae3f50257477f5ce77416ec4ec6d0ad6c",
+    "view.json": "ea3a1370c8f881fb566deaee61a12d62f7cab16334340e9791ee6bc5027bfacb",
+    "report-view.json": "02ab680c0d78a3a67065590fd3c8fa7eb68df0ad877bdb8d46d7f8c3962000c7"
+  }
+}

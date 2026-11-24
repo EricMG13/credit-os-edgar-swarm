@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "ftre-1965040-2026-11-18-credit_snapshot-host",
+    "issuer_id": "ftre-1965040",
+    "issuer_name": "Fortrea Holdings Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_ftre-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_ftre-20241231.htm.jsonl",
+      "sha256": "eaf3761841ef01594f1ab86c8bd6df9839eef8ec1710aee9a4c497b442e2780b"
+    },
+    "10-K_2025-12-31_ftre-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_ftre-20251231.htm.jsonl",
+      "sha256": "8b95ed086bee1e22bdc9939204b714aadfab6b2aacd70a5ed5895da68a096d07"
+    },
+    "10-Q_2026-03-31_ftre-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_ftre-20260331.htm.jsonl",
+      "sha256": "926245b69bc886e1bbe2a46da7bfe585969450fe165397cd69acf996b1d19ac1"
+    },
+    "10-Q_2026-06-30_ftre-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_ftre-20260630.htm.jsonl",
+      "sha256": "9b87cb91036346612feecb02ecdb23500419e7f3968e1d881b6183bf42a2cff0"
+    },
+    "10-Q_2026-09-30_ftre-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_ftre-20260930.htm.jsonl",
+      "sha256": "c8421dd1a564dddecc236c5a1321482d1b190e3fb90be5f148bb69f7c89bdab4"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1965040-fortrea-holdings-inc-ftre.json",
+      "sha256": "ae2e6ebb773bc4ecb728e6c80120d86de66ef8b8690fac4ffe3e860c9011024f"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "5e0dab515fdf225f7a61cd9e54a7bc78465dbb6d048f893c2d17ef7511b186e3"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "fbacdbd325018d214ed4c6e92f00a21f2a57cde2254057845efeaba4f64300f7"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "f6313ee891631022c6b46484b35028ba7ad4753bfe88dc9f4a48ffa89fa8f5c2"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "db010f8d2546d3249010ca8e520c6025331b66d8c46c3fd3190d3e8c09c8ae74"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Fortrea Holdings Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Fortrea Holdings Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

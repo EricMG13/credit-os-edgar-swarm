@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Wolverine World Wide Inc /De/ as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/ffb9fa60ff95cc1e3e0ed9d637dae2063c75ab086a187b33d8ccb4f5c92a2a0f/1.response.md",
+    "CP-1": "requests/CP-1/c37f0cf8041fa31293fbbbc4bdeb50bf42b2dc17ab56ffa68262139f2b398829/1.response.md",
+    "CP-1A": "requests/CP-1A/bdf3def53b7dbdd27924f3b6598f7dc30e58920fd65a28df194deb02296462b4/1.response.md",
+    "CP-2": "requests/CP-2/e71261ea704830aaa17eef03ba3ffd2c4be24f92fd679de924826751f8858ab7/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "4b974280ff1f6b30b8b4a65633f75dfc512d4d65ce0ff03635c293967feb0549",
+  "delivery_sha256": "f9cc8259182301b3db9eca090bd57899aadee231c22ea49269fce2177e7d1688"
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Twilio Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "4a3d91ec4cd283bcba5101ed97a800396be3fe6c61c40a9f65c74cd20ffd26e5",
+    "CP-1.md": "8705eac51ed2290f9acd349d166aab13c0b4b111bb54a696bb102c9d8ef626fa",
+    "CP-1A.md": "1e9678610840eaf250c8fd8b1e0f096651d911eb6e0646149225a5f5e2e4db75",
+    "CP-2.md": "4a20d3e0f1554efbfd1a41fe3505b3542d13e033aec8b022647b053a5583f532",
+    "coverage.json": "607c7d348c0ab592f836284948029d12e5561ee7f836cf966596061e097a4f4e",
+    "view.json": "7d2aaf16bca3e1aa3be81dfe66d01f40e202a7cd2de8aeed73359baacfbae7c6",
+    "report-view.json": "6ffb02e4dac203db6745dc7bc366e997f91e6fcdb33a843b542e8bf344076be9"
+  }
+}

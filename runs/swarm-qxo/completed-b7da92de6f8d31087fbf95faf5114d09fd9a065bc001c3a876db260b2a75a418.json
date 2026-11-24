@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for QXO, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/e6129ecb63543ce7b577c8b7c89d8aa8efe89c9f0fcd9d45547591a761862a09/1.response.md",
+    "CP-1": "requests/CP-1/63e68924eb778991bd360e9f3776be1be8a1eca49c3e03892180b96f3f181e85/1.response.md",
+    "CP-1A": "requests/CP-1A/0d13e9253d99c1111088d1f3853c1ae9dbe4668e6c3b84c25c6f6328ce58eb96/1.response.md",
+    "CP-2": "requests/CP-2/a118e5454a14b2cdde12a2a47a2ce572c2ab19cfbc74d46e9ee681cd19c9dbd8/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "55e9d61fda8dddca644f891b2ce09795f8eaeee17ff4cf856ea59a2e88885187",
+  "delivery_sha256": "2bb4f1478fcf46340bd8ef444d9f0cd356f1e859fc6109abe64f2cb9990e1bf5"
+}

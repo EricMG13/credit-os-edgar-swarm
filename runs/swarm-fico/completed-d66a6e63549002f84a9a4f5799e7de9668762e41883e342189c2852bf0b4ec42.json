@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for FAIR ISAAC CORP as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/6f6d51cd79cd67a4868e5ad1fc6cfb29a8a887244f13628185b5a561cf22f80b/1.response.md",
+    "CP-1": "requests/CP-1/1cc722ed58f88707ee8f336f0e1e5048b70d74e4ca9b194a5ba3d33217ad37bc/1.response.md",
+    "CP-1A": "requests/CP-1A/3cea6d0ca53915c6ec0474e952b13c880078ed63dec3eb6d697d8af984058619/1.response.md",
+    "CP-2": "requests/CP-2/78ab40a2a716e4abde4a10faa6827d1a33b82d1f936cc4e604387a80f6a4cea1/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "6f99fe655ceb98b37bb41933492e6824a5e67ee14a9f675a79af632537bdbe7c",
+  "delivery_sha256": "b920beea66a466edac6f47a87f183f57b6988f9ab30284791d9ae37286c43d22"
+}

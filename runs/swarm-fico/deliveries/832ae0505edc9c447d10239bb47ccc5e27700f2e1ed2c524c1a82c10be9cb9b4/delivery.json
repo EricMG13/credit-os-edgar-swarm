@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for FAIR ISAAC CORP as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "6c660eab004988f8413cc893b0fac719fc832df662ff9ea8783faf48c669307b",
+    "CP-1.md": "17dee110ddf61f802934fea5b93b74d63740e8fdf22e677d3b829c7a3ca1e1bb",
+    "CP-1A.md": "31b4114fe0206091c0fcfae5e7ea173aa67c9cc5ba0dce95fa9dd28954c57926",
+    "CP-2.md": "91390874c691c074c11dd54f9453b33325f2c9fd1bd2759b9dcca6fd6bbcc1d0",
+    "coverage.json": "07a20311dd6117fdf130f8aa928a3ddf04ff750b5e2b1b586fb6f2597c3541e1",
+    "view.json": "be178e4f9d2997f8f57bbdeaf588b77825affc4a14bb5a56c737c31316ab0695",
+    "report-view.json": "de037be9f06b25f4604673e58d056f36811c0885cf73f2db53dba23641b62cf7"
+  }
+}

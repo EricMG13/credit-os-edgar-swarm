@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for TripAdvisor, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "61e62f12db8ad1e7313bae27fae1379922767a0d24e4298e5d42cc5cae7f3f26",
+    "CP-1.md": "40228c9fafc807776d76c400b7380f3e27261c5b821386fb248697e736af5d16",
+    "CP-1A.md": "29fe1479075395599a7894a2abb37d14fb0bbe87ead912a84544333432ef073e",
+    "CP-2.md": "b27bfa2a7f72c718d7967f218a92c9a121fcc30d929d854a653831924438f8aa",
+    "coverage.json": "06c5060f6da7bc42ed1f1f522d2e36ee1c05511253d9682887517bf903877c79",
+    "view.json": "92ec56b729611c455157122426b944944f9f1c17d7787ad7628623a36ded3226",
+    "report-view.json": "b7f4ad69f2214c5d791053eda48d450f22385bce2cc7269dd54a405121f5e2d5"
+  }
+}

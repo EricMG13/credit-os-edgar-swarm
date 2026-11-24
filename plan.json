@@ -264,11 +264,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/50725-griffon-corp-gff",
       "context": "/home/user/swarm-root/inputs/contexts/50725-griffon-corp-gff.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-gff-50725",
-      "status": "skipped",
-      "attempts": 0,
-      "claims": 2,
-      "reclaimed": 1,
-      "reason": "shard 1 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T12:54:29+00:00"
     },
     {
       "issuer_id": "dy",
@@ -278,10 +285,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/67215-dycom-industries-inc-dy",
       "context": "/home/user/swarm-root/inputs/contexts/67215-dycom-industries-inc-dy.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-dy",
-      "status": "skipped",
-      "claims": 2,
-      "reclaimed": 1,
-      "reason": "shard 1 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T12:54:43+00:00"
     },
     {
       "issuer_id": "mog-b-67887",
@@ -291,11 +306,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/67887-moog-inc",
       "context": "/home/user/swarm-root/inputs/contexts/67887-moog-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-mog-b-67887",
-      "status": "skipped",
-      "attempts": 0,
-      "claims": 2,
-      "reclaimed": 1,
-      "reason": "shard 1 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T12:54:58+00:00"
     },
     {
       "issuer_id": "thc",
@@ -305,11 +327,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/70318-tenet-healthcare-corp-thc",
       "context": "/home/user/swarm-root/inputs/contexts/70318-tenet-healthcare-corp-thc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-thc",
-      "status": "skipped",
-      "attempts": 0,
-      "claims": 2,
-      "reclaimed": 1,
-      "reason": "shard 1 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T12:55:12+00:00"
     },
     {
       "issuer_id": "oii-73756",
@@ -319,11 +348,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/73756-oceaneering-international-inc",
       "context": "/home/user/swarm-root/inputs/contexts/73756-oceaneering-international-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-oii-73756",
-      "status": "skipped",
-      "attempts": 0,
-      "claims": 2,
-      "reclaimed": 1,
-      "reason": "shard 1 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "oln",
@@ -333,10 +359,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/74303-olin-corp-oln",
       "context": "/home/user/swarm-root/inputs/contexts/74303-olin-corp-oln.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-oln",
-      "status": "skipped",
-      "claims": 2,
-      "reclaimed": 1,
-      "reason": "shard 1 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "ach-75252",
@@ -346,11 +370,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/75252-accendra-health-inc-va",
       "context": "/home/user/swarm-root/inputs/contexts/75252-accendra-health-inc-va.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ach-75252",
-      "status": "skipped",
-      "attempts": 0,
-      "claims": 2,
-      "reclaimed": 1,
-      "reason": "shard 1 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "tpc-77543",
@@ -360,11 +381,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/77543-tutor-perini-corp-tpc",
       "context": "/home/user/swarm-root/inputs/contexts/77543-tutor-perini-corp-tpc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-tpc-77543",
-      "status": "skipped",
-      "attempts": 0,
-      "claims": 2,
-      "reclaimed": 1,
-      "reason": "shard 1 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "pbi",
@@ -374,11 +392,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/78814-pitney-bowes-inc-de-pbi-pbi-pb",
       "context": "/home/user/swarm-root/inputs/contexts/78814-pitney-bowes-inc-de-pbi-pbi-pb.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-pbi",
-      "status": "skipped",
-      "attempts": 0,
-      "claims": 2,
-      "reclaimed": 1,
-      "reason": "shard 1 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "sci",
@@ -388,11 +403,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/89089-service-corp-international-sci",
       "context": "/home/user/swarm-root/inputs/contexts/89089-service-corp-international-sci.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-sci",
-      "status": "skipped",
-      "attempts": 0,
-      "claims": 2,
-      "reclaimed": 1,
-      "reason": "shard 1 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "tfx-96943",
@@ -402,11 +414,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/96943-teleflex-inc",
       "context": "/home/user/swarm-root/inputs/contexts/96943-teleflex-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-tfx-96943",
-      "status": "skipped",
-      "attempts": 0,
-      "claims": 2,
-      "reclaimed": 1,
-      "reason": "shard 1 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "tex-97216",
@@ -416,11 +425,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/97216-terex-corp",
       "context": "/home/user/swarm-root/inputs/contexts/97216-terex-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-tex-97216",
-      "status": "skipped",
-      "attempts": 0,
-      "claims": 2,
-      "reclaimed": 1,
-      "reason": "shard 1 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "tdw-98222",
@@ -430,11 +436,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/98222-tidewater-inc",
       "context": "/home/user/swarm-root/inputs/contexts/98222-tidewater-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-tdw-98222",
-      "status": "skipped",
-      "attempts": 0,
-      "claims": 2,
-      "reclaimed": 1,
-      "reason": "shard 1 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "trn-99780",
@@ -444,11 +447,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/99780-trinity-industries-inc",
       "context": "/home/user/swarm-root/inputs/contexts/99780-trinity-industries-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-trn-99780",
-      "status": "skipped",
-      "attempts": 0,
-      "claims": 2,
-      "reclaimed": 1,
-      "reason": "shard 1 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "ual-100517",
@@ -458,9 +458,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/100517-united-airlines-holdings-inc-ual",
       "context": "/home/user/swarm-root/inputs/contexts/100517-united-airlines-holdings-inc-ual.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ual-100517",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 1 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "vsec",
@@ -470,9 +469,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/102752-vse-corp-vsec-vsecu",
       "context": "/home/user/swarm-root/inputs/contexts/102752-vse-corp-vsec-vsecu.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-vsec",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 1 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "whr",
@@ -482,9 +480,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/106640-whirlpool-corp-de-whr-whr-pa",
       "context": "/home/user/swarm-root/inputs/contexts/106640-whirlpool-corp-de-whr-whr-pa.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-whr",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 2 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:22:46+00:00"
     },
     {
       "issuer_id": "issuer-108772",
@@ -494,9 +501,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/108772-xerox-corp",
       "context": "/home/user/swarm-root/inputs/contexts/108772-xerox-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-issuer-108772",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 2 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:23:02+00:00"
     },
     {
       "issuer_id": "www-110471",
@@ -506,9 +522,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/110471-wolverine-world-wide-inc-de-www",
       "context": "/home/user/swarm-root/inputs/contexts/110471-wolverine-world-wide-inc-de-www.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-www-110471",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 2 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:23:16+00:00"
     },
     {
       "issuer_id": "cde-215466",
@@ -518,9 +543,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/215466-coeur-mining-inc",
       "context": "/home/user/swarm-root/inputs/contexts/215466-coeur-mining-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cde-215466",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 2 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:23:31+00:00"
     },
     {
       "issuer_id": "val",
@@ -530,9 +564,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/314808-valaris-ltd-val-val-wt",
       "context": "/home/user/swarm-root/inputs/contexts/314808-valaris-ltd-val-val-wt.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-val",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 2 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "rrc-315852",
@@ -542,9 +575,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/315852-range-resources-corp",
       "context": "/home/user/swarm-root/inputs/contexts/315852-range-resources-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-rrc-315852",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 2 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "acco-712034",
@@ -554,9 +586,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/712034-acco-brands-corp",
       "context": "/home/user/swarm-root/inputs/contexts/712034-acco-brands-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-acco-712034",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 2 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "mur",
@@ -566,9 +597,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/717423-murphy-oil-corp-mur",
       "context": "/home/user/swarm-root/inputs/contexts/717423-murphy-oil-corp-mur.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-mur",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 2 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "tho-730263",
@@ -578,9 +608,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/730263-thor-industries-inc",
       "context": "/home/user/swarm-root/inputs/contexts/730263-thor-industries-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-tho-730263",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 2 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "uis-746838",
@@ -590,9 +619,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/746838-unisys-corp-uis",
       "context": "/home/user/swarm-root/inputs/contexts/746838-unisys-corp-uis.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-uis-746838",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 2 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "lnwo-750004",
@@ -602,9 +630,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/750004-light-wonder-inc",
       "context": "/home/user/swarm-root/inputs/contexts/750004-light-wonder-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-lnwo-750004",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 2 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "clf",
@@ -614,9 +641,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/764065-cleveland-cliffs-inc-clf",
       "context": "/home/user/swarm-root/inputs/contexts/764065-cleveland-cliffs-inc-clf.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-clf",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 2 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "ehc",
@@ -626,9 +652,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/785161-encompass-health-corp-ehc",
       "context": "/home/user/swarm-root/inputs/contexts/785161-encompass-health-corp-ehc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ehc",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 2 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "mgm-789570",
@@ -638,9 +663,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/789570-mgm-resorts-international",
       "context": "/home/user/swarm-root/inputs/contexts/789570-mgm-resorts-international.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-mgm-789570",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 2 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "vsat",
@@ -650,9 +674,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/797721-viasat-inc-vsat",
       "context": "/home/user/swarm-root/inputs/contexts/797721-viasat-inc-vsat.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-vsat",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 2 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "kalu-811596",
@@ -662,9 +685,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/811596-kaiser-aluminum-corp-kalu",
       "context": "/home/user/swarm-root/inputs/contexts/811596-kaiser-aluminum-corp-kalu.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-kalu-811596",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 3 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:26:22+00:00"
     },
     {
       "issuer_id": "mtn-812011",
@@ -674,9 +706,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/812011-vail-resorts-inc-mtn",
       "context": "/home/user/swarm-root/inputs/contexts/812011-vail-resorts-inc-mtn.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-mtn-812011",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 3 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:26:35+00:00"
     },
     {
       "issuer_id": "nwl",
@@ -686,9 +727,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/814453-newell-brands-inc-nwl",
       "context": "/home/user/swarm-root/inputs/contexts/814453-newell-brands-inc-nwl.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-nwl",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 3 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:26:49+00:00"
     },
     {
       "issuer_id": "fico",
@@ -698,9 +748,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/814547-fair-isaac-corp-fico",
       "context": "/home/user/swarm-root/inputs/contexts/814547-fair-isaac-corp-fico.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-fico",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 3 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:27:02+00:00"
     },
     {
       "issuer_id": "ccl",
@@ -710,9 +769,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/815097-carnival-corp-ltd-ccl",
       "context": "/home/user/swarm-root/inputs/contexts/815097-carnival-corp-ltd-ccl.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ccl",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 3 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "cohr",
@@ -722,9 +780,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/820318-coherent-corp-cohr",
       "context": "/home/user/swarm-root/inputs/contexts/820318-coherent-corp-cohr.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cohr",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 3 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "clh-822818",
@@ -734,9 +791,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/822818-clean-harbors-inc",
       "context": "/home/user/swarm-root/inputs/contexts/822818-clean-harbors-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-clh-822818",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 3 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "chscp",
@@ -746,9 +802,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/823277-chs-inc-chscp-chsco-chscn-chscm-chscl",
       "context": "/home/user/swarm-root/inputs/contexts/823277-chs-inc-chscp-chsco-chscn-chscm-chscl.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-chscp",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 3 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "smg-825542",
@@ -758,9 +813,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/825542-scotts-miracle-gro-co",
       "context": "/home/user/swarm-root/inputs/contexts/825542-scotts-miracle-gro-co.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-smg-825542",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 3 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "trs-842633",
@@ -770,9 +824,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/842633-trimas-corp",
       "context": "/home/user/swarm-root/inputs/contexts/842633-trimas-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-trs-842633",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 3 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "slgn-849869",
@@ -782,9 +835,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/849869-silgan-holdings-inc",
       "context": "/home/user/swarm-root/inputs/contexts/849869-silgan-holdings-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-slgn-849869",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 3 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "ptc-857005",
@@ -794,9 +846,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/857005-ptc-inc",
       "context": "/home/user/swarm-root/inputs/contexts/857005-ptc-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ptc-857005",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 3 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "gva-861459",
@@ -806,9 +857,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/861459-granite-construction-inc-gva",
       "context": "/home/user/swarm-root/inputs/contexts/861459-granite-construction-inc-gva.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-gva-861459",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 3 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "ese",
@@ -818,9 +868,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/866706-esco-technologies-inc-ese",
       "context": "/home/user/swarm-root/inputs/contexts/866706-esco-technologies-inc-ese.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ese",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 3 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "dorm-868780",
@@ -830,9 +879,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/868780-dorman-products-inc",
       "context": "/home/user/swarm-root/inputs/contexts/868780-dorman-products-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-dorm-868780",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 3 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "acm-868857",
@@ -842,9 +890,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/868857-aecom",
       "context": "/home/user/swarm-root/inputs/contexts/868857-aecom.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-acm-868857",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 4 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:15:50+00:00"
     },
     {
       "issuer_id": "zbra-877212",
@@ -854,9 +911,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/877212-zebra-technologies-corp-zbra",
       "context": "/home/user/swarm-root/inputs/contexts/877212-zebra-technologies-corp-zbra.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-zbra-877212",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 4 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:16:04+00:00"
     },
     {
       "issuer_id": "wnc-879526",
@@ -866,9 +932,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/879526-wabash-national-corp-wnc",
       "context": "/home/user/swarm-root/inputs/contexts/879526-wabash-national-corp-wnc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-wnc-879526",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 4 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:16:19+00:00"
     },
     {
       "issuer_id": "bhc",
@@ -878,9 +953,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/885590-bausch-health-companies-inc-bhc",
       "context": "/home/user/swarm-root/inputs/contexts/885590-bausch-health-companies-inc-bhc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-bhc",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 4 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:16:34+00:00"
     },
     {
       "issuer_id": "efor-890564",
@@ -890,9 +974,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/890564-everforth-inc-efor",
       "context": "/home/user/swarm-root/inputs/contexts/890564-everforth-inc-efor.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-efor-890564",
-      "status": "skipped",
+      "status": "pending",
       "attempts": 0,
-      "reason": "shard 4 of 16: run by another session"
+      "claims": 1,
+      "reclaimed": 1
     },
     {
       "issuer_id": "sm",
@@ -902,9 +987,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/893538-sm-energy-co-sm",
       "context": "/home/user/swarm-root/inputs/contexts/893538-sm-energy-co-sm.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-sm",
-      "status": "skipped",
+      "status": "pending",
       "attempts": 0,
-      "reason": "shard 4 of 16: run by another session"
+      "claims": 1,
+      "reclaimed": 1
     },
     {
       "issuer_id": "byd-906553",
@@ -914,9 +1000,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/906553-boyd-gaming-corp",
       "context": "/home/user/swarm-root/inputs/contexts/906553-boyd-gaming-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-byd-906553",
-      "status": "skipped",
+      "status": "pending",
       "attempts": 0,
-      "reason": "shard 4 of 16: run by another session"
+      "claims": 1,
+      "reclaimed": 1
     },
     {
       "issuer_id": "tigo",
@@ -926,9 +1013,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/912958-millicom-international-cellular-sa-tigo",
       "context": "/home/user/swarm-root/inputs/contexts/912958-millicom-international-cellular-sa-tigo.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-tigo",
-      "status": "skipped",
+      "status": "pending",
       "attempts": 0,
-      "reason": "shard 4 of 16: run by another session"
+      "claims": 1,
+      "reclaimed": 1
     },
     {
       "issuer_id": "bdc",
@@ -938,9 +1026,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/913142-belden-inc-bdc",
       "context": "/home/user/swarm-root/inputs/contexts/913142-belden-inc-bdc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-bdc",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 4 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "issuer-915840",
@@ -950,9 +1037,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/915840-beazer-homes-usa-inc",
       "context": "/home/user/swarm-root/inputs/contexts/915840-beazer-homes-usa-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-issuer-915840",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 4 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "ego",
@@ -962,9 +1048,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/918608-eldorado-gold-corp-fi-ego",
       "context": "/home/user/swarm-root/inputs/contexts/918608-eldorado-gold-corp-fi-ego.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ego",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 4 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "penn",
@@ -974,9 +1059,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/921738-penn-entertainment-inc-penn",
       "context": "/home/user/swarm-root/inputs/contexts/921738-penn-entertainment-inc-penn.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-penn",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 4 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "fgpr-922358",
@@ -986,9 +1070,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/922358-ferrellgas-partners-l-p-fgpr",
       "context": "/home/user/swarm-root/inputs/contexts/922358-ferrellgas-partners-l-p-fgpr.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-fgpr-922358",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 4 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "dva",
@@ -998,9 +1081,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/927066-davita-inc-dva",
       "context": "/home/user/swarm-root/inputs/contexts/927066-davita-inc-dva.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-dva",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 4 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "upbd-933036",
@@ -1010,9 +1092,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/933036-upbound-group-inc-upbd",
       "context": "/home/user/swarm-root/inputs/contexts/933036-upbound-group-inc-upbd.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-upbd-933036",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 4 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "cien-936395",
@@ -1022,9 +1103,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/936395-ciena-corp",
       "context": "/home/user/swarm-root/inputs/contexts/936395-ciena-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cien-936395",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 5 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "tnet-937098",
@@ -1034,9 +1114,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/937098-trinet-group-inc",
       "context": "/home/user/swarm-root/inputs/contexts/937098-trinet-group-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-tnet-937098",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 5 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "svc",
@@ -1046,9 +1125,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/945394-service-properties-trust-svc",
       "context": "/home/user/swarm-root/inputs/contexts/945394-service-properties-trust-svc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-svc",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 5 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "matv",
@@ -1058,9 +1136,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1000623-mativ-holdings-inc-matv",
       "context": "/home/user/swarm-root/inputs/contexts/1000623-mativ-holdings-inc-matv.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-matv",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 5 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "otex",
@@ -1070,9 +1147,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1002638-open-text-corp-otex",
       "context": "/home/user/swarm-root/inputs/contexts/1002638-open-text-corp-otex.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-otex",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 5 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "cmco",
@@ -1082,9 +1158,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1005229-columbus-mckinnon-corp-cmco",
       "context": "/home/user/swarm-root/inputs/contexts/1005229-columbus-mckinnon-corp-cmco.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cmco",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 5 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "issuer-1012100",
@@ -1094,9 +1169,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1012100-sealed-air-corp-de",
       "context": "/home/user/swarm-root/inputs/contexts/1012100-sealed-air-corp-de.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-issuer-1012100",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 5 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "pds",
@@ -1106,9 +1180,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1013605-precision-drilling-corp-pds",
       "context": "/home/user/swarm-root/inputs/contexts/1013605-precision-drilling-corp-pds.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-pds",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 5 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "opch-1014739",
@@ -1118,9 +1191,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1014739-option-care-health-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1014739-option-care-health-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-opch-1014739",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 5 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "ati-1018963",
@@ -1130,9 +1202,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1018963-ati-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1018963-ati-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ati-1018963",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 5 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "pag-1019849",
@@ -1142,9 +1213,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1019849-penske-automotive-group-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1019849-penske-automotive-group-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-pag-1019849",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 5 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "irm",
@@ -1154,8 +1224,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1020569-iron-mountain-inc-irm",
       "context": "/home/user/swarm-root/inputs/contexts/1020569-iron-mountain-inc-irm.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-irm",
-      "status": "skipped",
-      "reason": "shard 5 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "dxpe",
@@ -1165,9 +1235,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1020710-dxp-enterprises-inc-dxpe",
       "context": "/home/user/swarm-root/inputs/contexts/1020710-dxp-enterprises-inc-dxpe.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-dxpe",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 5 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "gel",
@@ -1177,9 +1246,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1022321-genesis-energy-lp-gel",
       "context": "/home/user/swarm-root/inputs/contexts/1022321-genesis-energy-lp-gel.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-gel",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 5 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "lad-1023128",
@@ -1189,9 +1257,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1023128-lithia-motors-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1023128-lithia-motors-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-lad-1023128",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 5 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "gpi-1031203",
@@ -1201,9 +1268,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1031203-group-1-automotive-inc-gpi",
       "context": "/home/user/swarm-root/inputs/contexts/1031203-group-1-automotive-inc-gpi.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-gpi-1031203",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 6 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "mms",
@@ -1213,9 +1279,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1032220-maximus-inc-mms",
       "context": "/home/user/swarm-root/inputs/contexts/1032220-maximus-inc-mms.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-mms",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 6 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "sbac-1034054",
@@ -1225,9 +1290,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1034054-sba-communications-corp",
       "context": "/home/user/swarm-root/inputs/contexts/1034054-sba-communications-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-sbac-1034054",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 6 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "issuer-1040765",
@@ -1237,9 +1301,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1040765-vornado-realty-lp",
       "context": "/home/user/swarm-root/inputs/contexts/1040765-vornado-realty-lp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-issuer-1040765",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 6 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "sah-1043509",
@@ -1249,9 +1312,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1043509-sonic-automotive-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1043509-sonic-automotive-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-sah-1043509",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 6 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "amkr-1047127",
@@ -1261,9 +1323,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1047127-amkor-technology-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1047127-amkor-technology-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-amkr-1047127",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 6 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "bmrn",
@@ -1273,9 +1334,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1048477-biomarin-pharmaceutical-inc-bmrn",
       "context": "/home/user/swarm-root/inputs/contexts/1048477-biomarin-pharmaceutical-inc-bmrn.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-bmrn",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 6 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "axon-1069183",
@@ -1285,9 +1345,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1069183-axon-enterprise-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1069183-axon-enterprise-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-axon-1069183",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 6 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "cnx",
@@ -1297,9 +1356,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1070412-cnx-resources-corp-cnx",
       "context": "/home/user/swarm-root/inputs/contexts/1070412-cnx-resources-corp-cnx.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cnx",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 6 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "cxw-1070985",
@@ -1309,9 +1367,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1070985-corecivic-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1070985-corecivic-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cxw-1070985",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 6 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "cnc",
@@ -1321,9 +1378,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1071739-centene-corp-cnc",
       "context": "/home/user/swarm-root/inputs/contexts/1071739-centene-corp-cnc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cnc",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 6 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "dhc-1075415",
@@ -1333,9 +1389,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1075415-diversified-healthcare-trust",
       "context": "/home/user/swarm-root/inputs/contexts/1075415-diversified-healthcare-trust.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-dhc-1075415",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 6 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "zd-1084048",
@@ -1345,9 +1400,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1084048-ziff-davis-inc-zd",
       "context": "/home/user/swarm-root/inputs/contexts/1084048-ziff-davis-inc-zd.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-zd-1084048",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 6 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "epc-1096752",
@@ -1357,9 +1411,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1096752-edgewell-personal-care-co",
       "context": "/home/user/swarm-root/inputs/contexts/1096752-edgewell-personal-care-co.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-epc-1096752",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 6 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "crl",
@@ -1369,9 +1422,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1100682-charles-river-laboratories-international",
       "context": "/home/user/swarm-root/inputs/contexts/1100682-charles-river-laboratories-international.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-crl",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 6 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "entg",
@@ -1381,9 +1433,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1101302-entegris-inc-entg",
       "context": "/home/user/swarm-root/inputs/contexts/1101302-entegris-inc-entg.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-entg",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 7 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "ttmi-1116942",
@@ -1393,9 +1444,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1116942-ttm-technologies-inc-ttmi",
       "context": "/home/user/swarm-root/inputs/contexts/1116942-ttm-technologies-inc-ttmi.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ttmi-1116942",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 7 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "avnt-1122976",
@@ -1405,9 +1455,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1122976-avient-corp",
       "context": "/home/user/swarm-root/inputs/contexts/1122976-avient-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-avnt-1122976",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 7 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "nxst-1142417",
@@ -1417,9 +1466,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1142417-nexstar-media-group-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1142417-nexstar-media-group-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-nxst-1142417",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 7 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "tac",
@@ -1429,9 +1477,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1144800-transalta-corp-tac-tsltf-trntf-tacpf",
       "context": "/home/user/swarm-root/inputs/contexts/1144800-transalta-corp-tac-tsltf-trntf-tacpf.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-tac",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 7 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "abg-1144980",
@@ -1441,9 +1488,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1144980-asbury-automotive-group-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1144980-asbury-automotive-group-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-abg-1144980",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 7 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "podd-1145197",
@@ -1453,9 +1499,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1145197-insulet-corp-podd",
       "context": "/home/user/swarm-root/inputs/contexts/1145197-insulet-corp-podd.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-podd-1145197",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 7 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "aap",
@@ -1465,9 +1510,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1158449-advance-auto-parts-inc-aap",
       "context": "/home/user/swarm-root/inputs/contexts/1158449-advance-auto-parts-inc-aap.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-aap",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 7 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "jblu",
@@ -1477,9 +1521,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1158463-jetblue-airways-corp-jblu",
       "context": "/home/user/swarm-root/inputs/contexts/1158463-jetblue-airways-corp-jblu.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-jblu",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 7 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "nbr",
@@ -1489,9 +1532,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1163739-nabors-industries-ltd-nbr",
       "context": "/home/user/swarm-root/inputs/contexts/1163739-nabors-industries-ltd-nbr.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-nbr",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 7 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "xpo-1166003",
@@ -1501,9 +1543,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1166003-xpo-inc-xpo",
       "context": "/home/user/swarm-root/inputs/contexts/1166003-xpo-inc-xpo.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-xpo-1166003",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 7 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "moh",
@@ -1513,9 +1554,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1179929-molina-healthcare-inc-moh",
       "context": "/home/user/swarm-root/inputs/contexts/1179929-molina-healthcare-inc-moh.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-moh",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 7 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "sgi-1206264",
@@ -1525,9 +1565,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1206264-somnigroup-international-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1206264-somnigroup-international-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-sgi-1206264",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 7 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "fa-1210677",
@@ -1537,9 +1576,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1210677-first-advantage-corp-fa",
       "context": "/home/user/swarm-root/inputs/contexts/1210677-first-advantage-corp-fa.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-fa-1210677",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 7 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "cmp-1227654",
@@ -1549,9 +1587,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1227654-compass-minerals-international-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1227654-compass-minerals-international-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cmp-1227654",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 7 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "qxo",
@@ -1561,9 +1598,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1236275-qxo-inc-qxo-qxo-pb",
       "context": "/home/user/swarm-root/inputs/contexts/1236275-qxo-inc-qxo-qxo-pb.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-qxo",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 8 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:21:53+00:00"
     },
     {
       "issuer_id": "cmpr",
@@ -1573,9 +1619,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1262976-cimpress-plc-cmpr",
       "context": "/home/user/swarm-root/inputs/contexts/1262976-cimpress-plc-cmpr.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cmpr",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 8 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:22:07+00:00"
     },
     {
       "issuer_id": "cco-holdings-llc",
@@ -1585,9 +1640,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1271833-cco-holdings-llc",
       "context": "/home/user/swarm-root/inputs/contexts/1271833-cco-holdings-llc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cco-holdings-llc",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 8 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:22:21+00:00"
     },
     {
       "issuer_id": "bgs-1278027",
@@ -1597,9 +1661,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1278027-b-g-foods-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1278027-b-g-foods-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-bgs-1278027",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 8 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:22:37+00:00"
     },
     {
       "issuer_id": "bte",
@@ -1609,9 +1682,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1279495-baytex-energy-corp-bte",
       "context": "/home/user/swarm-root/inputs/contexts/1279495-baytex-energy-corp-bte.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-bte",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 8 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "mxl",
@@ -1621,9 +1693,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1288469-maxlinear-inc-mxl",
       "context": "/home/user/swarm-root/inputs/contexts/1288469-maxlinear-inc-mxl.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-mxl",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 8 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "ens-1289308",
@@ -1633,9 +1704,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1289308-enersys",
       "context": "/home/user/swarm-root/inputs/contexts/1289308-enersys.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ens-1289308",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 8 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "novelis-inc",
@@ -1645,9 +1715,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1304280-novelis-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1304280-novelis-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-novelis-inc",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 8 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "wex-1309108",
@@ -1657,9 +1726,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1309108-wex-inc-wex",
       "context": "/home/user/swarm-root/inputs/contexts/1309108-wex-inc-wex.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-wex-1309108",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 8 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "rblx-1315098",
@@ -1669,9 +1737,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1315098-roblox-corp",
       "context": "/home/user/swarm-root/inputs/contexts/1315098-roblox-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-rblx-1315098",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 8 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "bldr",
@@ -1681,9 +1748,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1316835-builders-firstsource-inc-bldr",
       "context": "/home/user/swarm-root/inputs/contexts/1316835-builders-firstsource-inc-bldr.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-bldr",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 8 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "ncl-corp-ltd",
@@ -1693,9 +1759,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1318742-ncl-corp-ltd",
       "context": "/home/user/swarm-root/inputs/contexts/1318742-ncl-corp-ltd.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ncl-corp-ltd",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 8 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "hbm",
@@ -1705,9 +1770,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1322422-hudbay-minerals-inc-hbm",
       "context": "/home/user/swarm-root/inputs/contexts/1322422-hudbay-minerals-inc-hbm.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-hbm",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 8 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "merc-1333274",
@@ -1717,9 +1781,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1333274-mercer-international-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1333274-mercer-international-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-merc-1333274",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 8 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "crox-1334036",
@@ -1729,9 +1792,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1334036-crocs-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1334036-crocs-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-crox-1334036",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 8 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "cco",
@@ -1741,9 +1803,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1334978-clear-channel-outdoor-holdings-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1334978-clear-channel-outdoor-holdings-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cco",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 9 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:19:34+00:00"
     },
     {
       "issuer_id": "lyv-1335258",
@@ -1753,9 +1824,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1335258-live-nation-entertainment-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1335258-live-nation-entertainment-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-lyv-1335258",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 9 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:19:50+00:00"
     },
     {
       "issuer_id": "issuer-1345122",
@@ -1765,9 +1845,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1345122-compass-group-diversified-holdings-llc",
       "context": "/home/user/swarm-root/inputs/contexts/1345122-compass-group-diversified-holdings-llc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-issuer-1345122",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 9 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:20:10+00:00"
     },
     {
       "issuer_id": "mwa-1350593",
@@ -1777,9 +1866,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1350593-mueller-water-products-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1350593-mueller-water-products-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-mwa-1350593",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 9 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:20:26+00:00"
     },
     {
       "issuer_id": "kbr",
@@ -1789,9 +1887,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1357615-kbr-inc-kbr",
       "context": "/home/user/swarm-root/inputs/contexts/1357615-kbr-inc-kbr.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-kbr",
-      "status": "skipped",
+      "status": "pending",
       "attempts": 0,
-      "reason": "shard 9 of 16: run by another session"
+      "claims": 1,
+      "reclaimed": 1
     },
     {
       "issuer_id": "hri",
@@ -1801,9 +1900,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1364479-herc-holdings-inc-hri",
       "context": "/home/user/swarm-root/inputs/contexts/1364479-herc-holdings-inc-hri.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-hri",
-      "status": "skipped",
+      "status": "pending",
       "attempts": 0,
-      "reason": "shard 9 of 16: run by another session"
+      "claims": 1,
+      "reclaimed": 1
     },
     {
       "issuer_id": "ebs-1367644",
@@ -1813,9 +1913,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1367644-emergent-biosolutions-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1367644-emergent-biosolutions-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ebs-1367644",
-      "status": "skipped",
+      "status": "pending",
       "attempts": 0,
-      "reason": "shard 9 of 16: run by another session"
+      "claims": 1,
+      "reclaimed": 1
     },
     {
       "issuer_id": "cvi",
@@ -1825,9 +1926,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1376139-cvr-energy-inc-cvi",
       "context": "/home/user/swarm-root/inputs/contexts/1376139-cvr-energy-inc-cvi.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cvi",
-      "status": "skipped",
+      "status": "pending",
       "attempts": 0,
-      "reason": "shard 9 of 16: run by another session"
+      "claims": 1,
+      "reclaimed": 1
     },
     {
       "issuer_id": "ats",
@@ -1837,9 +1939,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1394832-ats-corp-ats-ats",
       "context": "/home/user/swarm-root/inputs/contexts/1394832-ats-corp-ats-ats.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ats",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 9 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "opln",
@@ -1849,9 +1950,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1395942-openlane-inc-opln",
       "context": "/home/user/swarm-root/inputs/contexts/1395942-openlane-inc-opln.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-opln",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 9 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "orn-1402829",
@@ -1861,9 +1961,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1402829-orion-group-holdings-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1402829-orion-group-holdings-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-orn-1402829",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 9 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "for-1406587",
@@ -1873,9 +1972,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1406587-forestar-group-inc-for",
       "context": "/home/user/swarm-root/inputs/contexts/1406587-forestar-group-inc-for.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-for-1406587",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 9 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "alsn",
@@ -1885,9 +1983,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1411207-allison-transmission-holdings-inc-alsn",
       "context": "/home/user/swarm-root/inputs/contexts/1411207-allison-transmission-holdings-inc-alsn.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-alsn",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 9 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "amc",
@@ -1897,9 +1994,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1411579-amc-entertainment-holdings-inc-amc",
       "context": "/home/user/swarm-root/inputs/contexts/1411579-amc-entertainment-holdings-inc-amc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-amc",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 9 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "uan-1425292",
@@ -1909,9 +2005,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1425292-cvr-partners-lp",
       "context": "/home/user/swarm-root/inputs/contexts/1425292-cvr-partners-lp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-uan-1425292",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 9 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "hqy-1428336",
@@ -1921,9 +2016,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1428336-healthequity-inc-hqy",
       "context": "/home/user/swarm-root/inputs/contexts/1428336-healthequity-inc-hqy.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-hqy-1428336",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 10 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:08:53+00:00"
     },
     {
       "issuer_id": "gmab",
@@ -1933,9 +2037,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1434265-genmab-a-s-gmab-gnmsf",
       "context": "/home/user/swarm-root/inputs/contexts/1434265-genmab-a-s-gmab-gnmsf.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-gmab",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 10 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:09:06+00:00"
     },
     {
       "issuer_id": "twlo-1447669",
@@ -1945,9 +2058,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1447669-twilio-inc-twlo",
       "context": "/home/user/swarm-root/inputs/contexts/1447669-twilio-inc-twlo.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-twlo-1447669",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 10 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:09:19+00:00"
     },
     {
       "issuer_id": "st-1477294",
@@ -1957,9 +2079,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1477294-sensata-technologies-holding-plc",
       "context": "/home/user/swarm-root/inputs/contexts/1477294-sensata-technologies-holding-plc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-st-1477294",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 10 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:10:06+00:00"
     },
     {
       "issuer_id": "hpp-1482512",
@@ -1969,9 +2100,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1482512-hudson-pacific-properties-inc-hpp",
       "context": "/home/user/swarm-root/inputs/contexts/1482512-hudson-pacific-properties-inc-hpp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-hpp-1482512",
-      "status": "skipped",
+      "status": "pending",
       "attempts": 0,
-      "reason": "shard 10 of 16: run by another session"
+      "claims": 1,
+      "reclaimed": 1
     },
     {
       "issuer_id": "chrd-1486159",
@@ -1981,9 +2113,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1486159-chord-energy-corp",
       "context": "/home/user/swarm-root/inputs/contexts/1486159-chord-energy-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-chrd-1486159",
-      "status": "skipped",
+      "status": "pending",
       "attempts": 0,
-      "reason": "shard 10 of 16: run by another session"
+      "claims": 1,
+      "reclaimed": 1
     },
     {
       "issuer_id": "bwxt-1486957",
@@ -1993,9 +2126,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1486957-bwx-technologies-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1486957-bwx-technologies-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-bwxt-1486957",
-      "status": "skipped",
+      "status": "pending",
       "attempts": 0,
-      "reason": "shard 10 of 16: run by another session"
+      "claims": 1,
+      "reclaimed": 1
     },
     {
       "issuer_id": "rlj-1511337",
@@ -2005,9 +2139,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1511337-rlj-lodging-trust",
       "context": "/home/user/swarm-root/inputs/contexts/1511337-rlj-lodging-trust.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-rlj-1511337",
-      "status": "skipped",
+      "status": "pending",
       "attempts": 0,
-      "reason": "shard 10 of 16: run by another session"
+      "claims": 1,
+      "reclaimed": 1
     },
     {
       "issuer_id": "lind-1512499",
@@ -2017,9 +2152,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1512499-lindblad-expeditions-holdings-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1512499-lindblad-expeditions-holdings-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-lind-1512499",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 10 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "xyz",
@@ -2029,9 +2163,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1512673-block-inc-xyz-bsqkz",
       "context": "/home/user/swarm-root/inputs/contexts/1512673-block-inc-xyz-bsqkz.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-xyz",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 10 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "sxc-1514705",
@@ -2041,9 +2174,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1514705-suncoke-energy-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1514705-suncoke-energy-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-sxc-1514705",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 10 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "amcx",
@@ -2053,9 +2185,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1514991-amc-global-media-inc-amcx",
       "context": "/home/user/swarm-root/inputs/contexts/1514991-amc-global-media-inc-amcx.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-amcx",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 10 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "mtdr-1520006",
@@ -2065,9 +2196,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1520006-matador-resources-co",
       "context": "/home/user/swarm-root/inputs/contexts/1520006-matador-resources-co.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-mtdr-1520006",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 10 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "alks",
@@ -2077,9 +2207,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1520262-alkermes-plc-alks",
       "context": "/home/user/swarm-root/inputs/contexts/1520262-alkermes-plc-alks.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-alks",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 10 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "achc-1520697",
@@ -2089,9 +2218,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1520697-acadia-healthcare-company-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1520697-acadia-healthcare-company-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-achc-1520697",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 10 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "vtol-1525221",
@@ -2101,9 +2229,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1525221-bristow-group-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1525221-bristow-group-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-vtol-1525221",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 11 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T12:39:14+00:00"
     },
     {
       "issuer_id": "trip",
@@ -2113,9 +2250,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1526520-tripadvisor-inc-trip",
       "context": "/home/user/swarm-root/inputs/contexts/1526520-tripadvisor-inc-trip.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-trip",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 11 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T12:39:27+00:00"
     },
     {
       "issuer_id": "post",
@@ -2125,9 +2271,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1530950-post-holdings-inc-post",
       "context": "/home/user/swarm-root/inputs/contexts/1530950-post-holdings-inc-post.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-post",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 11 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T12:39:41+00:00"
     },
     {
       "issuer_id": "sun",
@@ -2137,9 +2292,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1552275-sunoco-lp-sun",
       "context": "/home/user/swarm-root/inputs/contexts/1552275-sunoco-lp-sun.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-sun",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 11 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T12:39:54+00:00"
     },
     {
       "issuer_id": "thry-1556739",
@@ -2149,9 +2313,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1556739-thryv-holdings-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1556739-thryv-holdings-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-thry-1556739",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 11 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "finished_at": "2026-11-24T07:43:01+00:00",
+      "reason": null
     },
     {
       "issuer_id": "cstm",
@@ -2161,9 +2334,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1563411-constellium-se-cstm",
       "context": "/home/user/swarm-root/inputs/contexts/1563411-constellium-se-cstm.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cstm",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 11 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "finished_at": "2026-11-24T07:43:01+00:00",
+      "reason": null
     },
     {
       "issuer_id": "snap-1564408",
@@ -2173,9 +2355,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1564408-snap-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1564408-snap-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-snap-1564408",
-      "status": "skipped",
+      "status": "pending",
       "attempts": 0,
-      "reason": "shard 11 of 16: run by another session"
+      "claims": 1,
+      "reclaimed": 1
     },
     {
       "issuer_id": "pbf-holding-co-llc",
@@ -2185,9 +2368,10 @@
       "pack": "/home/user/swarm-root/inputs/packs/1566011-pbf-holding-co-llc",
       "context": "/home/user/swarm-root/inputs/contexts/1566011-pbf-holding-co-llc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-pbf-holding-co-llc",
-      "status": "skipped",
+      "status": "pending",
       "attempts": 0,
-      "reason": "shard 11 of 16: run by another session"
+      "claims": 1,
+      "reclaimed": 1
     },
     {
       "issuer_id": "saic-1571123",
@@ -2197,9 +2381,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1571123-science-applications-international-corp",
       "context": "/home/user/swarm-root/inputs/contexts/1571123-science-applications-international-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-saic-1571123",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 11 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "ccs",
@@ -2209,9 +2392,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1576940-century-communities-inc-ccs",
       "context": "/home/user/swarm-root/inputs/contexts/1576940-century-communities-inc-ccs.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ccs",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 11 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "lgih-1580670",
@@ -2221,9 +2403,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1580670-lgi-homes-inc-lgih",
       "context": "/home/user/swarm-root/inputs/contexts/1580670-lgi-homes-inc-lgih.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-lgih-1580670",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 11 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "ibp-1580905",
@@ -2233,9 +2414,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1580905-installed-building-products-inc-ibp",
       "context": "/home/user/swarm-root/inputs/contexts/1580905-installed-building-products-inc-ibp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ibp-1580905",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 11 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "esi",
@@ -2245,9 +2425,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1590714-element-solutions-inc-esi",
       "context": "/home/user/swarm-root/inputs/contexts/1590714-element-solutions-inc-esi.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-esi",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 11 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "czr",
@@ -2257,8 +2436,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1590895-caesars-entertainment-inc-czr",
       "context": "/home/user/swarm-root/inputs/contexts/1590895-caesars-entertainment-inc-czr.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-czr",
-      "status": "skipped",
-      "reason": "shard 11 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "mgni",
@@ -2268,9 +2447,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1595974-magnite-inc-mgni",
       "context": "/home/user/swarm-root/inputs/contexts/1595974-magnite-inc-mgni.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-mgni",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 11 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "wfrd",
@@ -2280,9 +2458,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1603923-weatherford-international-plc-wfrd",
       "context": "/home/user/swarm-root/inputs/contexts/1603923-weatherford-international-plc-wfrd.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-wfrd",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 12 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "wms-1604028",
@@ -2292,9 +2469,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1604028-advanced-drainage-systems-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1604028-advanced-drainage-systems-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-wms-1604028",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 12 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "w",
@@ -2304,9 +2480,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1616707-wayfair-inc-w",
       "context": "/home/user/swarm-root/inputs/contexts/1616707-wayfair-inc-w.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-w",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 12 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "zip-1617553",
@@ -2316,9 +2491,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1617553-ziprecruiter-inc-zip",
       "context": "/home/user/swarm-root/inputs/contexts/1617553-ziprecruiter-inc-zip.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-zip-1617553",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 12 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "brsl",
@@ -2328,9 +2502,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1619762-brightstar-lottery-plc-brsl",
       "context": "/home/user/swarm-root/inputs/contexts/1619762-brightstar-lottery-plc-brsl.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-brsl",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 12 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "cc",
@@ -2340,9 +2513,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1627223-chemours-co-cc",
       "context": "/home/user/swarm-root/inputs/contexts/1627223-chemours-co-cc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cc",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 12 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "cwk-1628369",
@@ -2352,9 +2524,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1628369-cushman-wakefield-ltd",
       "context": "/home/user/swarm-root/inputs/contexts/1628369-cushman-wakefield-ltd.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cwk-1628369",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 12 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "enr-1632790",
@@ -2364,9 +2535,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1632790-energizer-holdings-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1632790-energizer-holdings-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-enr-1632790",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 12 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "flut",
@@ -2376,9 +2546,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1635327-flutter-entertainment-plc-flut",
       "context": "/home/user/swarm-root/inputs/contexts/1635327-flutter-entertainment-plc-flut.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-flut",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 12 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "ngvt-1653477",
@@ -2388,9 +2557,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1653477-ingevity-corp-ngvt",
       "context": "/home/user/swarm-root/inputs/contexts/1653477-ingevity-corp-ngvt.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ngvt-1653477",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 12 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "hgv",
@@ -2400,9 +2568,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1674168-hilton-grand-vacations-inc-hgv",
       "context": "/home/user/swarm-root/inputs/contexts/1674168-hilton-grand-vacations-inc-hgv.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-hgv",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 12 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "ash-1674862",
@@ -2412,9 +2579,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1674862-ashland-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1674862-ashland-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ash-1674862",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 12 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "vvv-1674910",
@@ -2424,9 +2590,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1674910-valvoline-inc-vvv",
       "context": "/home/user/swarm-root/inputs/contexts/1674910-valvoline-inc-vvv.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-vvv-1674910",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 12 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "cars-1683606",
@@ -2436,9 +2601,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1683606-cars-com-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1683606-cars-com-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cars-1683606",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 12 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "nmrk-1690680",
@@ -2448,9 +2612,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1690680-newmark-group-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1690680-newmark-group-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-nmrk-1690680",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 12 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "cvna",
@@ -2460,9 +2623,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1690820-carvana-co-cvna",
       "context": "/home/user/swarm-root/inputs/contexts/1690820-carvana-co-cvna.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cvna",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 13 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:11:48+00:00"
     },
     {
       "issuer_id": "kntk-1692787",
@@ -2472,9 +2644,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1692787-kinetik-holdings-inc-kntk",
       "context": "/home/user/swarm-root/inputs/contexts/1692787-kinetik-holdings-inc-kntk.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-kntk-1692787",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 13 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:12:02+00:00"
     },
     {
       "issuer_id": "sei-1697500",
@@ -2484,9 +2665,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1697500-solaris-energy-infrastructure-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1697500-solaris-energy-infrastructure-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-sei-1697500",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 13 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:12:14+00:00"
     },
     {
       "issuer_id": "ske",
@@ -2496,9 +2686,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1713748-skeena-resources-ltd-ske",
       "context": "/home/user/swarm-root/inputs/contexts/1713748-skeena-resources-ltd-ske.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ske",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 13 of 16: run by another session"
+      "status": "published",
+      "attempts": 5,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 2
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:12:26+00:00"
     },
     {
       "issuer_id": "wh-1722684",
@@ -2508,9 +2707,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1722684-wyndham-hotels-resorts-inc-wh",
       "context": "/home/user/swarm-root/inputs/contexts/1722684-wyndham-hotels-resorts-inc-wh.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-wh-1722684",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 13 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "ahco",
@@ -2520,9 +2718,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1725255-adapthealth-corp-ahco",
       "context": "/home/user/swarm-root/inputs/contexts/1725255-adapthealth-corp-ahco.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ahco",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 13 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "elan",
@@ -2532,9 +2729,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1739104-elanco-animal-health-inc-elan",
       "context": "/home/user/swarm-root/inputs/contexts/1739104-elanco-animal-health-inc-elan.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-elan",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 13 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "issuer-1739445",
@@ -2544,9 +2740,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1739445-arcosa-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1739445-arcosa-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-issuer-1739445",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 13 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "baly",
@@ -2556,9 +2751,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1747079-bally-s-corp-baly",
       "context": "/home/user/swarm-root/inputs/contexts/1747079-bally-s-corp-baly.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-baly",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 13 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "altg-1759824",
@@ -2568,9 +2762,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1759824-alta-equipment-group-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1759824-alta-equipment-group-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-altg-1759824",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 13 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "kgs",
@@ -2580,9 +2773,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1767042-kodiak-gas-services-inc-kgs",
       "context": "/home/user/swarm-root/inputs/contexts/1767042-kodiak-gas-services-inc-kgs.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-kgs",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 13 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "crwv",
@@ -2592,9 +2784,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1769628-coreweave-inc-crwv",
       "context": "/home/user/swarm-root/inputs/contexts/1769628-coreweave-inc-crwv.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-crwv",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 13 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "xrx-1770450",
@@ -2604,9 +2795,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1770450-xerox-holdings-corp-xrx",
       "context": "/home/user/swarm-root/inputs/contexts/1770450-xerox-holdings-corp-xrx.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-xrx-1770450",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 13 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "brbr-1772016",
@@ -2616,9 +2806,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1772016-bellring-brands-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1772016-bellring-brands-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-brbr-1772016",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 13 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "gfl",
@@ -2628,9 +2817,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1780232-gfl-environmental-inc-gfl",
       "context": "/home/user/swarm-root/inputs/contexts/1780232-gfl-environmental-inc-gfl.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-gfl",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 13 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "apg",
@@ -2640,9 +2828,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1796209-api-group-corp-apg",
       "context": "/home/user/swarm-root/inputs/contexts/1796209-api-group-corp-apg.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-apg",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 14 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:11:08+00:00"
     },
     {
       "issuer_id": "prg-1808834",
@@ -2652,9 +2849,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1808834-prog-holdings-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1808834-prog-holdings-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-prg-1808834",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 14 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:11:22+00:00"
     },
     {
       "issuer_id": "ccc",
@@ -2664,9 +2870,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1818201-ccc-intelligent-solutions-holdings-inc-c",
       "context": "/home/user/swarm-root/inputs/contexts/1818201-ccc-intelligent-solutions-holdings-inc-c.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ccc",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 14 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:11:37+00:00"
     },
     {
       "issuer_id": "arko-1823794",
@@ -2676,9 +2891,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1823794-arko-corp",
       "context": "/home/user/swarm-root/inputs/contexts/1823794-arko-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-arko-1823794",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 14 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:11:53+00:00"
     },
     {
       "issuer_id": "dfh-1825088",
@@ -2688,9 +2912,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1825088-dream-finders-homes-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1825088-dream-finders-homes-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-dfh-1825088",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 14 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "woof-1826470",
@@ -2700,9 +2923,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1826470-petco-health-wellness-company-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1826470-petco-health-wellness-company-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-woof-1826470",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 14 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "corz-1839341",
@@ -2712,9 +2934,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1839341-core-scientific-inc-tx",
       "context": "/home/user/swarm-root/inputs/contexts/1839341-core-scientific-inc-tx.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-corz-1839341",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 14 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "evcm",
@@ -2724,9 +2945,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1853145-evercommerce-inc-evcm",
       "context": "/home/user/swarm-root/inputs/contexts/1853145-evercommerce-inc-evcm.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-evcm",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 14 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "cnm-1856525",
@@ -2736,9 +2956,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1856525-core-main-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1856525-core-main-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-cnm-1856525",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 14 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "blco-1860742",
@@ -2748,9 +2967,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1860742-bausch-lomb-corp",
       "context": "/home/user/swarm-root/inputs/contexts/1860742-bausch-lomb-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-blco-1860742",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 14 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "embc-1872789",
@@ -2760,9 +2978,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1872789-embecta-corp",
       "context": "/home/user/swarm-root/inputs/contexts/1872789-embecta-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-embc-1872789",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 14 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "esab-1877322",
@@ -2772,9 +2989,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1877322-esab-corp-esab",
       "context": "/home/user/swarm-root/inputs/contexts/1877322-esab-corp-esab.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-esab-1877322",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 14 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "ee-1888447",
@@ -2784,9 +3000,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1888447-excelerate-energy-inc-ee",
       "context": "/home/user/swarm-root/inputs/contexts/1888447-excelerate-energy-inc-ee.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ee-1888447",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 14 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "rxo-1929561",
@@ -2796,9 +3011,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1929561-rxo-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1929561-rxo-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-rxo-1929561",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 14 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "mbc-1941365",
@@ -2808,9 +3022,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/1941365-masterbrand-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1941365-masterbrand-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-mbc-1941365",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 14 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "ftre-1965040",
@@ -2820,9 +3033,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1965040-fortrea-holdings-inc-ftre",
       "context": "/home/user/swarm-root/inputs/contexts/1965040-fortrea-holdings-inc-ftre.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-ftre-1965040",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 15 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:30:25+00:00"
     },
     {
       "issuer_id": "vsts",
@@ -2832,9 +3054,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1967649-vestis-corp-vsts",
       "context": "/home/user/swarm-root/inputs/contexts/1967649-vestis-corp-vsts.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-vsts",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 15 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:30:38+00:00"
     },
     {
       "issuer_id": "phin-1968915",
@@ -2844,9 +3075,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1968915-phinia-inc",
       "context": "/home/user/swarm-root/inputs/contexts/1968915-phinia-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-phin-1968915",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 15 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:30:53+00:00"
     },
     {
       "issuer_id": "natl-1974138",
@@ -2856,9 +3096,18 @@
       "pack": "/home/user/swarm-root/inputs/packs/1974138-ncr-atleos-corp",
       "context": "/home/user/swarm-root/inputs/contexts/1974138-ncr-atleos-corp.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-natl-1974138",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 15 of 16: run by another session"
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-18T13:31:07+00:00"
     },
     {
       "issuer_id": "amtm",
@@ -2868,9 +3117,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/2011286-amentum-holdings-inc-amtm",
       "context": "/home/user/swarm-root/inputs/contexts/2011286-amentum-holdings-inc-amtm.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-amtm",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 15 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "mrp-2017206",
@@ -2880,9 +3128,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/2017206-millrose-properties-inc",
       "context": "/home/user/swarm-root/inputs/contexts/2017206-millrose-properties-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-mrp-2017206",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 15 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "unit",
@@ -2892,9 +3139,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/2020795-uniti-group-inc-unit",
       "context": "/home/user/swarm-root/inputs/contexts/2020795-uniti-group-inc-unit.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-unit",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 15 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "inr-2029118",
@@ -2904,9 +3150,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/2029118-infinity-natural-resources-inc-inr",
       "context": "/home/user/swarm-root/inputs/contexts/2029118-infinity-natural-resources-inc-inr.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-inr-2029118",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 15 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "krmn",
@@ -2916,9 +3161,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/2040127-karman-holdings-inc-krmn",
       "context": "/home/user/swarm-root/inputs/contexts/2040127-karman-holdings-inc-krmn.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-krmn",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 15 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "prmb",
@@ -2928,9 +3172,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/2042694-primo-brands-corp-prmb",
       "context": "/home/user/swarm-root/inputs/contexts/2042694-primo-brands-corp-prmb.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-prmb",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 15 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "mdln-2046386",
@@ -2940,9 +3183,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/2046386-medline-inc",
       "context": "/home/user/swarm-root/inputs/contexts/2046386-medline-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-mdln-2046386",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 15 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "lgn-2052568",
@@ -2952,9 +3194,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/2052568-legence-corp-lgn",
       "context": "/home/user/swarm-root/inputs/contexts/2052568-legence-corp-lgn.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-lgn-2052568",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 15 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "q",
@@ -2964,9 +3205,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/2058873-qnity-electronics-inc-q",
       "context": "/home/user/swarm-root/inputs/contexts/2058873-qnity-electronics-inc-q.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-q",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 15 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "sols-2064953",
@@ -2976,9 +3216,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/2064953-solstice-advanced-materials-inc",
       "context": "/home/user/swarm-root/inputs/contexts/2064953-solstice-advanced-materials-inc.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-sols-2064953",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 15 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     },
     {
       "issuer_id": "vsnt-2067876",
@@ -2988,9 +3227,8 @@
       "pack": "/home/user/swarm-root/inputs/packs/2067876-versant-media-group-inc-vsnt",
       "context": "/home/user/swarm-root/inputs/contexts/2067876-versant-media-group-inc-vsnt.json",
       "run_folder": "/home/user/swarm-root/_engine/runs/swarm-vsnt-2067876",
-      "status": "skipped",
-      "attempts": 0,
-      "reason": "shard 15 of 16: run by another session"
+      "status": "pending",
+      "attempts": 0
     }
   ],
   "skipped": []

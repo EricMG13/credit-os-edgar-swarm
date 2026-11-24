@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Moog Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "0bb52ca04f4e7d1d21f41d4aa5ed6f04b0e18c624b4cb810e84d5732375b9f6d",
+    "CP-1.md": "8dc5823bda67aac14f26b4f120f2fb56d69d8571ee7f164e714b7689bb2c7d80",
+    "CP-1A.md": "615420e51b87c6b0ab15f0e095829fdf1348ca5950ae843c0137638efed9b943",
+    "CP-2.md": "84373b765b79385074c985cab3b3f6007bce81df9e58217d56f16c75c5ee6a66",
+    "coverage.json": "f9d3518343d42b02f6e2cdb8a20b26e2f4b9f9aceec51a98a59d7505a4c283a3",
+    "view.json": "58d651a681da3b91e3f8e3a0d954f3720f990a74665cd7e8f2c7c2b1461cce7d",
+    "report-view.json": "3e4c2f727295d3e61502df29c2867da8f16b36a32779eece2a729a457aaa759d"
+  }
+}

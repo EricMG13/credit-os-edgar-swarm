@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Post Holdings, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/51379f1cb3578275338d8c0e770c6965603ce9cfc26778c406fa61741304b5f0/1.response.md",
+    "CP-1": "requests/CP-1/b4aab1d3e518ad23b3a1f7bb056f4e8cb7df8fdab0bf28df80179e19b53cd949/1.response.md",
+    "CP-1A": "requests/CP-1A/f496928e62c742785f22d8d701e9ca4cdcec24ff30628cf3dfe839c045695890/1.response.md",
+    "CP-2": "requests/CP-2/28e70ec309ac4ab421c87e0e6439ca6c3891b1e0d01061f8a5fb4b31ef4e7025/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "50e60531a870778f4ec21e35f98eb303ba6ac63d022f49f2e28882d50ef9b944",
+  "delivery_sha256": "9bcd2c20d295087e2789eb46f300029b485c43d866b1922fa22de8cf90d0200b"
+}

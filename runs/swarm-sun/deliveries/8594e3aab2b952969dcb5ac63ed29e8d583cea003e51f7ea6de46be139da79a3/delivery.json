@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Sunoco LP as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "af0ca99cd65847b15b8ad075c6ef0e2af25d7dda352158f588ad98d6675a0d95",
+    "CP-1.md": "1018496207f705c17642269513a106480524a77747d7082187f40ffa0d74c237",
+    "CP-1A.md": "aa20b138d7827c104b86e31d591144f71d6e9ca2b8c1ad5e7333af74faf942e6",
+    "CP-2.md": "4e0def3bdcde4abf2434287681612c43e79853e1c1deccef7d3905128aeafbfb",
+    "coverage.json": "6e8935f12bd86f515f32be98d8cd9a2e89efe25a9a1c0a79bae7a0f344378902",
+    "view.json": "f296527aa00734b2880156108956216406fe71d9584d67d051de455c0709ce0b",
+    "report-view.json": "5a373a2bb35f0af2e1ca77c154a11abf72f792f3770148cef25e3d3d88035808"
+  }
+}
