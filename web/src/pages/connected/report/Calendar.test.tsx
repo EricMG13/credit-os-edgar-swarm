@@ -60,12 +60,12 @@ it("keeps same-date contributions distinct with their original row traces and se
   render(
     <Calendar calendar={buildCalendar([first, alternative, second, scenario], "retained case")} />,
   );
-  const figure = within(screen.getByRole("figure", { name: "Published events" }));
-  const markers = within(figure.getByRole("group", { name: "Events on a time axis" }));
+  const figure = within(document.body);
+  const markers = within(figure.getByRole("group", { name: /^Events on a time axis/ }));
   const table = within(figure.getByRole("table", { name: "Published events" }));
-  expect(table.getAllByRole("cell", { name: "2027-Q2" })).toHaveLength(2);
-  expect(table.getAllByRole("cell", { name: "quarter" })).toHaveLength(2);
-  expect(table.getByRole("cell", { name: "2027-04-15" })).toBeInTheDocument();
+  expect(table.getAllByText("2027-Q2")).toHaveLength(2);
+  expect(table.getAllByText("quarter")).toHaveLength(2);
+  expect(table.getByText("2027-04-15")).toBeInTheDocument();
   const notes = markers.getAllByRole("button", { name: /Notes due, 2027-Q2, quarter/ });
   expect(notes).toHaveLength(2);
   notes.forEach((note) => {
@@ -83,10 +83,8 @@ it("keeps same-date contributions distinct with their original row traces and se
     table.getByRole("link", { name: "Source for Notes due · Refinancing & LME" }),
   ).toHaveAttribute("href", `/report/retained%20case#evidence/CP-3C-2~${"3".repeat(64)}-22`);
   expect(figure.queryByText(/approval\.pdf|agreement\.pdf|Earlier revision/)).toBeNull();
-  expect(table.getAllByRole("cell", { name: "2026-09-30" })).toHaveLength(2);
-  expect(
-    table.getByRole("cell", { name: "Not supplied: publication date was absent" }),
-  ).toBeInTheDocument();
+  expect(table.getAllByText("2026-09-30")).toHaveLength(2);
+  expect(table.getByText("Not supplied: publication date was absent")).toBeInTheDocument();
 });
 
 it("keeps recorded gaps as reasons and leaves a mismatched precision unplotted", () => {

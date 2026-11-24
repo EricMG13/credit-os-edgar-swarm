@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { OutputEntry, PublishedChanges, Section } from "../../publishedReport";
-import { classifyMeasures, ledgerLists, statusColumn, verdictSentence } from "./model";
+import { classifyMeasures, ledgerLists, statusColumn, verdictOf } from "./model";
 
 const side = (value: string, unit = "x", period = "FY2025") => ({ value, unit, period });
 const measure = (key: string, prior: string, current: string, difference: number, extra = {}) => ({
@@ -38,7 +38,7 @@ const table = (heading: string, headers: string[], rows: string[][]): Section =>
 });
 
 describe("classifyMeasures", () => {
-  it("ranks the largest relative move first and keeps unmoved, revised and not assessable apart", () => {
+  it("keeps the pack's order and groups by what the pack says, never by a computed size", () => {
     const change: PublishedChanges = {
       pack: {
         measures: [
@@ -50,27 +50,41 @@ describe("classifyMeasures", () => {
             same_period: true,
           }),
           measure("none", "1", "2", 1),
+          measure("units", "1", "2", 1, { current: side("2", "US$m", "FY2026") }),
+          measure("empty", "", "2", 2),
         ],
       },
       verdicts: {
         measures: {
-          ...verdicts(["small", "big", "flat", "same"]).measures,
+          ...verdicts(["small", "big", "flat", "same", "units", "empty"]).measures,
           none: { kind: "not_comparable", label: "L", reason: "Different basis" },
         },
       },
     };
     const groups = classifyMeasures(change, (label) => `#trace/${label}`);
-    expect(groups.moved.map((item) => item.key)).toEqual(["big", "small"]);
+    expect(groups.moved.map((item) => item.key)).toEqual(["small", "big", "empty"]);
     expect(groups.revised.map((item) => item.key)).toEqual(["same"]);
     expect(groups.unmoved.map((item) => item.key)).toEqual(["flat"]);
-    expect(groups.notAssessable.map((item) => item.key)).toEqual(["none"]);
-    expect(groups.moved[0]).toMatchObject({
+    expect(groups.notAssessable.map((item) => item.key)).toEqual(["none", "units"]);
+    expect(groups.moved[1]).toMatchObject({
       before: "2x (FY2025)",
       after: "4x (FY2026)",
       beforeValue: 2,
       afterValue: 4,
       href: "#trace/Measure big",
     });
+  });
+
+  it("replaces a reason that cites a source with a pointer to the comparison evidence", () => {
+    const change: PublishedChanges = {
+      pack: { measures: [measure("a", "1", "2", 1)] },
+      verdicts: {
+        measures: { a: { kind: "comparable", label: "L", reason: "Per filing.pdf p. 3" } },
+      },
+    };
+    expect(classifyMeasures(change, () => undefined).moved[0]?.reason).toBe(
+      "See comparison evidence.",
+    );
   });
 
   it("never turns a missing side into zero", () => {
@@ -101,17 +115,30 @@ describe("classifyMeasures", () => {
         [
           ["Measure big", "2x", "4x", "Unresolved", "Weaker cover"],
           ["Measure small", "10x", "11x", "New period", "—"],
+          ["measure referenced", "1x", "2x", "Per filing.pdf p. 3", ""],
+          ["Measure blank", "1x", "2x", "—", ""],
         ],
       ),
     ]);
     const change: PublishedChanges = {
-      pack: { measures: [measure("big", "2", "4", 2), measure("small", "10", "11", 1)] },
-      verdicts: verdicts(["big", "small"]),
+      pack: {
+        measures: [
+          measure("big", "2", "4", 2),
+          measure("small", "10", "11", 1),
+          measure("referenced", "1", "2", 1),
+          measure("blank", "1", "2", 1),
+          measure("elsewhere", "1", "2", 1),
+        ],
+      },
+      verdicts: verdicts(["big", "small", "referenced", "blank", "elsewhere"]),
     };
     const { moved } = classifyMeasures(change, () => undefined, entry);
     expect(moved.map((item) => [item.key, item.cause, item.effect])).toEqual([
-      ["big", "Unresolved", "Weaker cover"],
-      ["small", "New period", null],
+      ["big", { kind: "written", text: "Unresolved" }, "Weaker cover"],
+      ["small", { kind: "written", text: "New period" }, null],
+      ["referenced", { kind: "referenced" }, null],
+      ["blank", { kind: "absent" }, null],
+      ["elsewhere", { kind: "unmatched" }, null],
     ]);
   });
 });
@@ -132,51 +159,77 @@ describe("statusColumn", () => {
 });
 
 describe("ledgerLists", () => {
+  const rows = [
+    ["E1", "—", "Revolver terms unavailable", "**Closed**", "Amended agreement supplied"],
+    ["—", "C2", "Hedge book not provided", "New", "—"],
+    ["E3", "C3", "Lease schedule open", "Remaining", ""],
+    ["—", "C4", "Per filing.pdf p. 3 the swap is unclear", "New", "—"],
+  ];
+  const headers = ["Earlier ref", "Current ref", "Limitation", "Status", "What closed it"];
+
   it("lists New limitations as added and Closed as removed, with what closed them", () => {
-    const entry = entryWith([
-      table(
-        "Limitations ledger",
-        ["Earlier ref", "Current ref", "Limitation", "Status", "What closed it"],
-        [
-          ["E1", "—", "Revolver terms unavailable", "**Closed**", "Amended agreement supplied"],
-          ["—", "C2", "Hedge book not provided", "New", "—"],
-          ["E3", "C3", "Lease schedule open", "Remaining", ""],
-        ],
-      ),
+    const lists = ledgerLists(entryWith([table("Limitations ledger", headers, rows)]), "cur");
+    expect(lists?.added.map((item) => item.text)).toEqual(["Hedge book not provided", null]);
+    expect(lists?.removed).toMatchObject([
+      { text: "Revolver terms unavailable", note: "Amended agreement supplied", line: 12 },
     ]);
-    expect(ledgerLists(entry)).toEqual({
-      added: [{ text: "Hedge book not provided", note: null, line: 13 }],
-      removed: [
-        { text: "Revolver terms unavailable", note: "Amended agreement supplied", line: 12 },
-      ],
-    });
+  });
+
+  it("keeps a row that cites a source as a link to Evidence, not a missing row", () => {
+    const lists = ledgerLists(entryWith([table("Limitations ledger", headers, rows)]), "cur");
+    expect(lists?.added[1]?.href).toMatch(/^\/report\/cur#evidence\//);
   });
 
   it("is empty without a ledger", () => {
-    expect(ledgerLists(entryWith([]))).toBeNull();
-    expect(ledgerLists(undefined)).toBeNull();
+    expect(ledgerLists(entryWith([]), "cur")).toBeNull();
+    expect(ledgerLists(undefined, "cur")).toBeNull();
   });
 });
 
-describe("verdictSentence", () => {
-  it("is the first Bottom line paragraph in the module's words, without a reference", () => {
-    const entry = entryWith([
+describe("verdictOf", () => {
+  const bottom = (...texts: string[]) =>
+    entryWith([
       { heading: "Findings", level: 2, line: 1, blocks: [] },
       {
         heading: "Bottom line",
         level: 3,
         line: 2,
-        blocks: [
-          {
-            type: "text",
-            line: 3,
-            end: 3,
-            text: "Credit is about the same as in the earlier run.",
-          },
-        ],
+        blocks: texts.map((text, at) => ({
+          type: "text" as const,
+          line: 3 + at,
+          end: 3 + at,
+          text,
+        })),
       },
     ]);
-    expect(verdictSentence(entry)).toBe("Credit is about the same as in the earlier run.");
-    expect(verdictSentence(undefined)).toBeNull();
+
+  it("is the first sentence, with the rest of the passage as body", () => {
+    const verdict = verdictOf(
+      bottom("Credit is weaker than before. Leverage rose by half a turn.", "Cover fell."),
+      "cur",
+    );
+    expect(verdict).toMatchObject({
+      sentence: "Credit is weaker than before.",
+      body: ["Leverage rose by half a turn.", "Cover fell."],
+      referenced: false,
+    });
+  });
+
+  it("does not split on a decimal", () => {
+    expect(verdictOf(bottom("Leverage is 3.5x higher."), "cur")?.sentence).toBe(
+      "Leverage is 3.5x higher.",
+    );
+  });
+
+  it("links to Evidence instead of claiming no verdict when the first paragraph cites a source", () => {
+    expect(verdictOf(bottom("See filing.pdf p. 3 for the position."), "cur")).toMatchObject({
+      sentence: null,
+      referenced: true,
+    });
+  });
+
+  it("is null without a Bottom line", () => {
+    expect(verdictOf(entryWith([]), "cur")).toBeNull();
+    expect(verdictOf(undefined, "cur")).toBeNull();
   });
 });

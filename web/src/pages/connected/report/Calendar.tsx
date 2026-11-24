@@ -1,9 +1,8 @@
 import { Table as KitTable } from "@/components/application/table/table";
-import { Button } from "@/components/base/buttons/button";
-import { ArrowRight } from "@untitledui/icons";
 import { useId } from "react";
 import { Missing } from "@/components/gap/Missing";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
+import { cx } from "@/utils/cx";
 import { moduleName } from "../api";
 import {
   type Block,
@@ -17,7 +16,7 @@ import {
 import { EventAxis } from "../visuals/EventAxis";
 import { EVENT_HEADERS, eventRecords } from "../visuals/EventLane";
 import { publishedTables, word } from "../visuals/visualData";
-import { Bento, Tile } from "./overview/Tile";
+import { Bento, GapNote, Tile, Well } from "./overview/Tile";
 import { PublishedSource } from "./PublishedTrace";
 
 type EventLocation = { owner: string; href: string };
@@ -253,16 +252,9 @@ function EventSource({ href, name }: { href: string; name: string }) {
   );
 }
 
-const TABLE_HEAD = [
-  "Event",
-  "Event date",
-  "Date precision",
-  "Published",
-  "Status",
-  "Credit relevance",
-  "Module",
-  "Evidence trace",
-];
+const TABLE_HEAD = ["Event", "Date", "Status", "Credit relevance", "Module", "Evidence trace"];
+const CAPTION =
+  "Events keep their recorded status (Historical or Scheduled) regardless of the run’s as-of date. Dates can be precise to the day, month, quarter or year.";
 
 function focusRow(id: string) {
   const row = document.getElementById(id);
@@ -271,53 +263,89 @@ function focusRow(id: string) {
   if (typeof row.scrollIntoView === "function") row.scrollIntoView({ block: "nearest" });
 }
 
+/** At 640px and below each row stacks as a block of label and value pairs; nothing scrolls. */
+const STACK = "max-[640px]:block";
+const CELL = cx(
+  "px-3 py-1.5 text-left align-top max-[640px]:justify-items-start max-[640px]:grid max-[640px]:grid-cols-[7.5rem_minmax(0,1fr)] max-[640px]:gap-x-3 max-[640px]:px-0 max-[640px]:py-1",
+  "max-[640px]:before:text-caption max-[640px]:before:text-text-tertiary max-[640px]:before:content-[attr(data-label)]",
+);
+
+function DateCell({ cells }: { cells: string[] }) {
+  return (
+    <td data-label="Date" className={CELL}>
+      <span className="min-w-0">
+        <span className="font-mono tabular-nums">{cells[0] || <Missing />}</span>{" "}
+        <span className="text-text-tertiary">{cells[1]}</span>
+        <span className="text-caption text-text-tertiary">
+          {" · Published "}
+          <span>{cells[2] || <Missing />}</span>
+        </span>
+      </span>
+    </td>
+  );
+}
+
 function EventsTable({ rows, rowId }: { rows: CalendarRow[]; rowId: (index: number) => string }) {
   return (
-    <div className="relative overflow-x-auto">
-      <table className="w-full border-collapse text-body">
-        <caption className="sr-only">Published events</caption>
-        <thead>
-          <tr className="border-b-2 border-border-hairline">
-            {TABLE_HEAD.map((heading) => (
-              <th
-                key={heading}
-                scope="col"
-                className="px-3 py-2 text-left font-medium whitespace-nowrap text-text-tertiary"
-              >
-                {heading}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map(({ cells, owner, href }, index) => (
-            <tr
-              key={index}
-              id={rowId(index)}
-              tabIndex={-1}
-              className="group/trace relative border-b border-border-hairline outline-hidden focus:ring-2 focus:ring-focus focus:ring-inset"
+    <table className={cx("w-full border-collapse text-small", STACK)}>
+      <caption className="sr-only">Published events</caption>
+      <thead className="max-[640px]:sr-only">
+        <tr className="border-b-2 border-border-hairline">
+          {TABLE_HEAD.map((heading) => (
+            <th
+              key={heading}
+              scope="col"
+              className="px-3 py-2 text-left font-medium whitespace-nowrap text-text-tertiary"
             >
-              <th scope="row" className="px-3 py-2 text-left font-medium">
-                {eventName(cells)}
-              </th>
-              {[cells[0], cells[1], cells[2], cells[4], cells[6], owner].map((value, at) => (
-                <td key={at} className="px-3 py-2 text-left align-top">
-                  {value || <Missing />}
-                </td>
-              ))}
-              <td className="px-3 py-2 align-top">
-                <EventSource href={href} name={`${eventName(cells)} · ${owner}`} />
-              </td>
-            </tr>
+              {heading}
+            </th>
           ))}
-        </tbody>
-      </table>
-    </div>
+        </tr>
+      </thead>
+      <tbody className={STACK}>
+        {rows.map(({ cells, owner, href }, index) => (
+          <tr
+            key={index}
+            id={rowId(index)}
+            tabIndex={-1}
+            className="group/trace relative border-b border-border-hairline outline-hidden focus:ring-2 focus:ring-focus focus:ring-inset max-[640px]:block max-[640px]:px-3 max-[640px]:py-3"
+          >
+            <th
+              scope="row"
+              data-label="Event"
+              className={cx(CELL, "font-medium max-[640px]:text-body")}
+            >
+              {eventName(cells)}
+            </th>
+            <DateCell cells={cells} />
+            {[
+              ["Status", cells[4]],
+              ["Credit relevance", cells[6]],
+              ["Module", owner],
+            ].map(([label, value]) => (
+              <td key={label} data-label={label} className={CELL}>
+                <span className="min-w-0">{value || <Missing />}</span>
+              </td>
+            ))}
+            <td data-label="Evidence trace" className={CELL}>
+              <EventSource href={href} name={`${eventName(cells)} · ${owner}`} />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
 function eventName(cells: string[]) {
   return cells[3] ?? "event";
+}
+
+function axisReading(events: { date: string }[], total: number) {
+  const first = events.at(0)?.date;
+  const last = events.at(-1)?.date;
+  const count = total === 1 ? "1 dated event" : `${String(total)} dated events`;
+  return first && last && first !== last ? `${count}, ${first} to ${last}` : count;
 }
 
 function CalendarFigure({ rows, asOf }: { rows: CalendarRow[]; asOf: string | null | undefined }) {
@@ -329,10 +357,16 @@ function CalendarFigure({ rows, asOf }: { rows: CalendarRow[]; asOf: string | nu
     rows: rows.map(({ cells }) => cells),
   });
   const time = asOfTimestamp(asOf);
+  const ordered = [...events].sort((a, b) => a.from - b.from || a.to - b.to);
   return (
-    <Tile span={12} label="Dated events" title="Published events">
-      <figure aria-label="Published events" className="grid min-w-0 gap-4">
-        {events.length ? (
+    <>
+      <Tile
+        span={12}
+        label="Dated events"
+        kicker="Calendar"
+        title={axisReading(ordered, events.length)}
+      >
+        <figure aria-label="Published events" className="grid min-w-0 gap-3">
           <EventAxis
             events={events}
             asOf={time === null || !asOf ? null : { time, text: asOf }}
@@ -341,10 +375,18 @@ function CalendarFigure({ rows, asOf }: { rows: CalendarRow[]; asOf: string | nu
               focusRow(rowId(index));
             }}
           />
-        ) : null}
+          <figcaption className="max-w-prose text-caption text-text-tertiary">{CAPTION}</figcaption>
+        </figure>
+      </Tile>
+      <Tile
+        span={12}
+        label="Event list"
+        kicker="Behind the axis"
+        title="Every event, in date order"
+      >
         <EventsTable rows={rows} rowId={rowId} />
-      </figure>
-    </Tile>
+      </Tile>
+    </>
   );
 }
 
@@ -389,6 +431,39 @@ function UnplacedTable({ owner, events }: { owner: string; events: UnplacedEvent
   );
 }
 
+function GapTile({ gap }: { gap: CalendarGap }) {
+  const { owner, href, title, reason, unplaced } = gap;
+  return (
+    <Tile span={12} label={title} tone="gap" className={TRACE_HOST}>
+      <Well className="grid gap-3 bg-surface-card p-4">
+        <h3 className="text-h4 font-medium text-text-primary">{title}</h3>
+        <p className="text-small text-text-secondary">{owner}</p>
+        <GapNote>
+          <span role="note">
+            {containsReference(reason)
+              ? "An event gap is recorded in Evidence."
+              : readerText(reason)}
+          </span>
+        </GapNote>
+        {unplaced ? (
+          <UnplacedTable owner={owner} events={unplaced} />
+        ) : (
+          <EventSource href={href} name={title} />
+        )}
+      </Well>
+    </Tile>
+  );
+}
+
+function emptySentence(calendar: ReturnType<typeof buildCalendar>) {
+  if (calendar.gaps.some(({ unplaced }) => unplaced?.some((event) => !event.unreadable))) {
+    return "No published events could be plotted. See the events and recorded gaps below.";
+  }
+  return calendar.gaps.length
+    ? "No events could be plotted. See the recorded gaps below."
+    : "No dated events were published for this run.";
+}
+
 export function Calendar({
   calendar,
   asOf,
@@ -398,44 +473,25 @@ export function Calendar({
 }) {
   return (
     <>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-4">
         <h2 className="font-display text-h2">Issuer calendar</h2>
-        <Button href="#overview" color="link-gray" size="sm" iconTrailing={ArrowRight}>
-          Back to Overview
-        </Button>
+        <a
+          href="#overview"
+          className="inline-flex min-h-8 items-center rounded-ds-sm text-small text-text-secondary underline underline-offset-4 hover:text-text-primary focus-visible:ring-2 focus-visible:ring-focus max-[480px]:min-h-11"
+        >
+          Overview
+        </a>
       </div>
-      <p className="reading-copy text-body text-text-secondary">
-        Events keep their recorded status (Historical or Scheduled) regardless of the run’s as-of
-        date. Dates can be precise to the day, month, quarter or year.
-      </p>
       <Bento>
         {calendar.rows.length ? (
           <CalendarFigure rows={calendar.rows} asOf={asOf} />
         ) : (
           <Tile span={12} label="Dated events" tone="gap">
-            <p>
-              {calendar.gaps.some(({ unplaced }) => unplaced?.some((event) => !event.unreadable))
-                ? "No published events could be plotted. See the events and recorded gaps below."
-                : calendar.gaps.length
-                  ? "No events could be plotted. See the recorded gaps below."
-                  : "No dated events were published for this run."}
-            </p>
+            <GapNote>{emptySentence(calendar)}</GapNote>
           </Tile>
         )}
-        {calendar.gaps.map(({ owner, href, title, reason, unplaced }) => (
-          <Tile key={href} span={12} label={title} title={title} tone="gap" className={TRACE_HOST}>
-            <p>{owner}</p>
-            <p role="note">
-              {containsReference(reason)
-                ? "An event gap is recorded in Evidence."
-                : readerText(reason)}
-            </p>
-            {unplaced ? (
-              <UnplacedTable owner={owner} events={unplaced} />
-            ) : (
-              <EventSource href={href} name={title} />
-            )}
-          </Tile>
+        {calendar.gaps.map((gap) => (
+          <GapTile key={gap.href} gap={gap} />
         ))}
       </Bento>
     </>

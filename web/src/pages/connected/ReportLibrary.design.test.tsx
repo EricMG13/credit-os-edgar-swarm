@@ -206,7 +206,7 @@ describe("connected library and report design", () => {
     render(<ReportChanges snapshot={snapshot} run={run} entries={[]} change={change} />);
     expect(screen.getByText("Net leverage")).toBeInTheDocument();
     expect(screen.queryByRole("columnheader", { name: "Earlier" })).toBeNull();
-    fireEvent.click(screen.getByRole("radio", { name: "Table" }));
+    fireEvent.click(screen.getByRole("button", { name: "Table" }));
     expect(screen.getByRole("columnheader", { name: "Earlier" })).toBeInTheDocument();
     expect(screen.getByRole("cell", { name: "3.2x (FY2025)" })).toBeInTheDocument();
     expect(screen.getByRole("cell", { name: "3.8x (FY2026)" })).toBeInTheDocument();

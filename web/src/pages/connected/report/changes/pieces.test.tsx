@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import type { PublishedChanges } from "../../publishedReport";
 import { Dumbbell } from "./Dumbbell";
@@ -27,15 +27,29 @@ describe("MaturityPair", () => {
     { period: "FY2029", prior: null, current: "7" },
     { period: "Thereafter", prior: "3", current: "3" },
   ];
-  it("spaces year periods truly, leaves unstated years empty and puts the rest after a break", () => {
+  it("draws the stated periods in the pack's order, inventing none", () => {
     render(<MaturityPair profile={{ unit: "US$m", rows }} />);
     const walls = within(screen.getByRole("region", { name: "Maturity walls" }));
     const labels = walls
       .getAllByText(/^(FY2026|2027|2028|FY2029|Thereafter)$/)
       .map((n) => n.textContent);
-    expect(labels).toEqual(["FY2026", "2027", "2028", "FY2029", "Thereafter"]);
-    expect(walls.getByText("//")).toBeInTheDocument();
-    expect(walls.getByTitle("Earlier run: not stated")).toBeInTheDocument();
+    expect(labels).toEqual(["FY2026", "FY2029", "Thereafter"]);
+    expect(walls.getByText("Not stated")).toBeInTheDocument();
+  });
+
+  it("draws a negative figure below the baseline, not as the same bar as its positive", () => {
+    const { container } = render(
+      <MaturityPair
+        profile={{ unit: "US$m", rows: [{ period: "FY2026", prior: "-100", current: "100" }] }}
+      />,
+    );
+    const earlier = container.querySelector<HTMLElement>('[data-bar="earlier"]');
+    const current = container.querySelector<HTMLElement>('[data-bar="current"]');
+    expect(earlier?.parentElement?.parentElement?.lastElementChild).not.toBe(
+      earlier?.parentElement,
+    );
+    expect(Number.parseFloat(current?.style.height ?? "0")).toBeGreaterThan(0);
+    expect(Number.parseFloat(earlier?.style.height ?? "1")).toBe(0);
   });
 
   it("is unusable without a unit, distinct periods or any stated figure", () => {
@@ -92,5 +106,15 @@ describe("ModuleMatrix", () => {
     expect(mark("Evidence validation")).toEqual([]);
     expect(within(table).getByText("Weakened")).toBeVisible();
     expect(within(table).getByText("Explanation not stated")).toBeVisible();
+  });
+
+  it("lists each module once and opens a row to its earlier and current conclusion", () => {
+    render(<ModuleMatrix change={change} source={() => undefined} />);
+    expect(screen.getAllByText("Financial foundation")).toHaveLength(1);
+    const toggle = screen.getByRole("button", { name: /Financial foundation/ });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(document.getElementById("matrix-CP-1")).not.toHaveAttribute("hidden");
   });
 });

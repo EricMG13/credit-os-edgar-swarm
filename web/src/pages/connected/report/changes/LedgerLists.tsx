@@ -7,9 +7,18 @@ export function LedgerList({ label, items }: { label: string; items: readonly Le
     <GapNote>None recorded</GapNote>
   ) : (
     <ul aria-label={label} className="grid gap-3">
-      {items.map(({ text, note, line }) => (
+      {items.map(({ text, note, line, href }) => (
         <li key={line} className="grid gap-0.5">
-          <span className="reading-copy text-small text-text-primary">{text}</span>
+          {text === null ? (
+            <a
+              className="text-link text-small underline underline-offset-2 max-[480px]:py-3"
+              href={href}
+            >
+              Read this limitation in Evidence
+            </a>
+          ) : (
+            <span className="reading-copy text-small text-text-primary">{text}</span>
+          )}
           {note && <span className="text-caption text-text-secondary">Closed by: {note}</span>}
         </li>
       ))}

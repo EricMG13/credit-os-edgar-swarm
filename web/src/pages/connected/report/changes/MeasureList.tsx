@@ -4,7 +4,7 @@ import { PublishedSource } from "../PublishedTrace";
 import { ToneMark } from "../ToneMark";
 import { Figure, GapNote } from "../overview/Tile";
 import { Dumbbell } from "./Dumbbell";
-import type { MeasureChange } from "./model";
+import type { Cause, MeasureChange } from "./model";
 
 const TONE = {
   better: "text-success-text",
@@ -12,25 +12,48 @@ const TONE = {
   flat: "text-text-secondary",
 } as const;
 
-/** The stated cause in words. "Unresolved" is drawn as written, in the signal edge, never hidden. */
-function Cause({ cause }: { cause: string | null }) {
-  if (cause === null) return <span className="text-caption text-gap-text">Cause not stated</span>;
-  const open = cause === "Unresolved";
-  return (
-    <span
-      className={
-        open
-          ? "rounded-ds-xs border border-warning-edge bg-warning-fill px-1.5 py-0.5 text-caption font-medium text-warning-text"
-          : "rounded-ds-xs border border-border-hairline bg-surface-subtle px-1.5 py-0.5 text-caption text-text-secondary"
-      }
-    >
-      Cause: {cause}
-    </span>
-  );
+const LINK = "text-link text-small underline underline-offset-2 max-[480px]:py-3";
+
+/** The stated cause in words. "Unresolved" is the one word set apart; a long cause is plain text. */
+function CauseLine({ cause, href }: { cause: Cause; href: string | undefined }) {
+  switch (cause.kind) {
+    case "written":
+      return cause.text === "Unresolved" ? (
+        <span className="rounded-ds-xs border border-warning-edge bg-warning-fill px-1.5 py-0.5 text-caption font-medium text-warning-text">
+          Cause: Unresolved
+        </span>
+      ) : (
+        <p className="reading-copy text-small text-text-secondary">Cause: {cause.text}</p>
+      );
+    case "referenced":
+      return (
+        <a className={LINK} href={href}>
+          Read this cause in Evidence
+        </a>
+      );
+    case "unmatched":
+      return (
+        <a className={LINK} href={href}>
+          The cause is in the comparison, in Evidence
+        </a>
+      );
+    case "absent":
+      return <span className="text-caption text-gap-text">Cause not stated</span>;
+  }
 }
 
 /** One measure: name, earlier → current as figures and as a dumbbell, the stated cause and effect. */
-function MeasureRow({ item, ranked }: { item: MeasureChange; ranked: boolean }) {
+function MeasureRow({
+  item,
+  ranked,
+  level,
+  evidence,
+}: {
+  item: MeasureChange;
+  ranked: boolean;
+  level: "h4" | "h5";
+  evidence: string | undefined;
+}) {
   const {
     label,
     before,
@@ -44,10 +67,14 @@ function MeasureRow({ item, ranked }: { item: MeasureChange; ranked: boolean }) 
     effect,
     href,
   } = item;
+  const Name = level;
+  const mark = ranked && beforeValue !== null && afterValue !== null;
   return (
     <li className="grid gap-2 border-t border-border-hairline py-4 first:border-t-0 first:pt-0 last:pb-0">
       <div className="flex items-start justify-between gap-3">
-        <h4 className="min-w-0 text-body font-medium text-text-primary">{label}</h4>
+        <Name className="min-w-0 text-body font-medium text-text-primary wrap-anywhere">
+          {label}
+        </Name>
         <div className="flex flex-none items-center gap-2">
           {delta !== null && (
             <span
@@ -68,18 +95,20 @@ function MeasureRow({ item, ranked }: { item: MeasureChange; ranked: boolean }) 
           )}
         </div>
       </div>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <Figure className="flex flex-wrap items-center gap-2 text-small">
+      <div className="grid items-center gap-x-4 gap-y-2 sm:grid-cols-[minmax(0,1fr)_9rem]">
+        <Figure className="flex min-w-0 flex-wrap items-center gap-x-2 text-small">
           <span className="text-text-secondary">{before}</span>
-          <ArrowRight aria-hidden="true" className="size-4 text-text-tertiary" />
+          <ArrowRight aria-hidden="true" className="size-4 flex-none text-text-tertiary" />
           <span className="font-medium">{after}</span>
         </Figure>
-        {ranked && beforeValue !== null && afterValue !== null && (
-          <Dumbbell before={beforeValue} after={afterValue} tone={tone} />
+        {mark && (
+          <span className="flex w-36">
+            <Dumbbell before={beforeValue} after={afterValue} tone={tone} />
+          </span>
         )}
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Cause cause={cause} />
+      <div className="grid gap-1">
+        <CauseLine cause={cause} href={href ?? evidence} />
         {reason && <span className="text-caption text-text-secondary">{reason}</span>}
       </div>
       {effect && <p className="reading-copy text-small text-text-secondary">{effect}</p>}
@@ -91,16 +120,20 @@ export function MeasureList({
   items,
   ranked = true,
   label,
+  level = "h4",
+  evidence,
 }: {
   items: readonly MeasureChange[];
   ranked?: boolean;
   label: string;
+  level?: "h4" | "h5";
+  evidence?: string;
 }) {
   if (items.length === 0) return <GapNote>None recorded</GapNote>;
   return (
     <ul aria-label={label} className="grid">
       {items.map((item) => (
-        <MeasureRow key={item.key} item={item} ranked={ranked} />
+        <MeasureRow key={item.key} item={item} ranked={ranked} level={level} evidence={evidence} />
       ))}
     </ul>
   );

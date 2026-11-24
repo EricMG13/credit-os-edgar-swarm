@@ -53,16 +53,17 @@ const rows = [
 
 function draw(asOf?: string | null, data = rows) {
   render(<Calendar calendar={buildCalendar([handoff(data)], "current")} asOf={asOf} />);
-  return within(screen.getByRole("group", { name: "Events on a time axis" }));
+  return within(screen.getByRole("group", { name: /^Events on a time axis/ }));
 }
 
-const widthOf = (button: HTMLElement) => Number.parseFloat(button.style.width);
+const widthOf = (button: HTMLElement) =>
+  Number.parseFloat(button.querySelector<HTMLElement>("[data-span-bar]")?.style.width ?? "");
 
 it("draws a period-only event as a span of its recorded width and a day event as a mark", () => {
   const axis = draw();
   const day = axis.getByRole("button", { name: "Day event, 2027-06-30, day, Scheduled" });
   expect(day).toHaveAttribute("data-event-shape", "mark");
-  expect(day.style.width).toBe("");
+  expect(day.querySelector("[data-span-bar]")).toBeNull();
   const spans = [
     axis.getByRole("button", { name: "Quarter event, 2027-Q2, quarter, Scheduled" }),
     axis.getByRole("button", { name: "Month event, 2026-11, month, Scenario — Conditional" }),
@@ -163,7 +164,8 @@ it("scrolls the axis in its own region and carries no hex colour or inline scrip
   draw("2027-01-15");
   const region = screen.getByTestId("event-axis");
   expect(region).toHaveClass("overflow-x-auto");
-  expect(region.firstElementChild).toHaveClass("min-w-[640px]");
+  expect(region.firstElementChild).toHaveClass("min-w-[720px]");
+  expect(region).toHaveAttribute("tabindex", "0");
   const styled = Array.from(document.querySelectorAll<HTMLElement>("[style]"));
   expect(styled.length).toBeGreaterThan(0);
   styled.forEach((element) => {
@@ -171,4 +173,108 @@ it("scrolls the axis in its own region and carries no hex colour or inline scrip
   });
   expect(document.querySelectorAll("style, script")).toHaveLength(0);
   expect(document.body.innerHTML).not.toMatch(/(?:fill|stroke|color)="#/i);
+});
+
+const ids = ["2026-01-15", "2026-06-30", "2026-10-01"];
+const oneYear = [
+  row(ids[0] ?? "", "day", "Notes issued", "Historical"),
+  row(ids[1] ?? "", "day", "Covenant test", "Scheduled"),
+  row(ids[2] ?? "", "day", "Review", "User reminder"),
+];
+
+it("labels both axis ends and ticks months when every event is in one year", () => {
+  const axis = draw(undefined, oneYear);
+  expect(document.querySelector("[data-axis-end='start']")).toHaveTextContent("2026-01-15");
+  expect(document.querySelector("[data-axis-end='end']")).toHaveTextContent("2026-10-01");
+  const ticks = Array.from(document.querySelectorAll("[data-axis-tick]")).map((tick) =>
+    tick.getAttribute("data-axis-tick"),
+  );
+  expect(ticks.length).toBeGreaterThan(2);
+  expect(ticks).toEqual(expect.arrayContaining(["2026-02", "2026-06"]));
+  expect(ticks).not.toContain("2026-01");
+  expect(axis.getByRole("button", { name: /Notes issued/ })).toBeInTheDocument();
+  expect(screen.getByRole("group", { name: /2026-01-15 to 2026-10-01/ })).toBeInTheDocument();
+});
+
+it("ticks years once the range passes two years", () => {
+  draw(undefined, rows);
+  const ticks = Array.from(document.querySelectorAll("[data-axis-tick]")).map((tick) =>
+    tick.getAttribute("data-axis-tick"),
+  );
+  expect(ticks).toEqual(["2027", "2028"]);
+});
+
+it("pads a single event so the axis renders with both ends dated", () => {
+  const axis = draw(undefined, [row("2026-06-30", "day", "Lone event", "Scheduled")]);
+  const lone = axis.getByRole("button", { name: /Lone event/ });
+  expect(Number.parseFloat(lone.style.left)).toBeCloseTo(50, 5);
+  expect(document.querySelector("[data-axis-end='start']")).toHaveTextContent("2026-05-31");
+  expect(document.querySelector("[data-axis-end='end']")).toHaveTextContent("2026-07-30");
+  expect(document.querySelector("[data-axis-tick]")).not.toBeNull();
+});
+
+it("draws each event's date and name beside its mark", () => {
+  const axis = draw(undefined, oneYear);
+  const button = axis.getByRole("button", { name: /Covenant test/ });
+  expect(button).toHaveTextContent("2026-06-30");
+  expect(button).toHaveTextContent("Covenant test");
+});
+
+it("gives every mark and span a hit area of 32px, 44px on a phone, and one legend", () => {
+  const axis = draw();
+  const button = axis.getByRole("button", { name: /Day event/ });
+  expect(button).toHaveClass("h-11", "w-8", "max-[480px]:w-11");
+  expect(axis.getByRole("button", { name: /Quarter event/ })).toHaveClass("h-11", "min-w-8");
+  expect(screen.getAllByRole("group", { name: "Show categories" })).toHaveLength(1);
+  const toggle = screen.getByRole("button", { name: "Scenario, 1 event" });
+  expect(toggle).toHaveClass("min-h-8", "max-[480px]:min-h-11");
+});
+
+it("moves a label to the left of a mark at the right end so it stays inside the plot", () => {
+  const axis = draw(undefined, oneYear);
+  const last = axis.getByRole("button", { name: /Review/ });
+  expect(last.querySelector(".right-full")).not.toBeNull();
+  const first = axis.getByRole("button", { name: /Notes issued/ });
+  expect(first.querySelector(".left-full")).not.toBeNull();
+});
+
+it("draws the calendar the same way with and without an as-of date", () => {
+  const { unmount } = render(<Calendar calendar={buildCalendar([handoff(oneYear)], "current")} />);
+  expect(screen.getByRole("table", { name: "Published events" })).toBeInTheDocument();
+  expect(document.querySelector("[data-as-of-rule]")).toBeNull();
+  unmount();
+  render(<Calendar calendar={buildCalendar([handoff(oneYear)], "current")} asOf="2026-08-01" />);
+  expect(screen.getByRole("table", { name: "Published events" })).toBeInTheDocument();
+  expect(document.querySelector("[data-as-of-rule='2026-08-01']")).not.toBeNull();
+  expect(screen.getByText("As of 2026-08-01")).toBeInTheDocument();
+  expect(document.querySelector("[data-axis-end='start']")).toHaveTextContent("2026-01-15");
+});
+
+it("widens the axis to an as-of date outside the events", () => {
+  draw("2027-03-01", oneYear);
+  expect(document.querySelector("[data-axis-end='end']")).toHaveTextContent("2027-03-01");
+});
+
+it("keeps the table to six columns and stacks each row below 640px", () => {
+  draw(undefined, oneYear);
+  const table = screen.getByRole("table", { name: "Published events" });
+  expect(
+    within(table)
+      .getAllByRole("columnheader")
+      .map((cell) => cell.textContent),
+  ).toEqual(["Event", "Date", "Status", "Credit relevance", "Module", "Evidence trace"]);
+  expect(table.querySelector("tr[id]")).toHaveClass("max-[640px]:block");
+  expect(table.closest("[tabindex]")).toBeNull();
+  expect(within(table).getAllByText("Published", { exact: false }).length).toBeGreaterThan(0);
+});
+
+it("lays the page out as a header, the axis tile above the table tile and gaps as tiles", () => {
+  draw(undefined, oneYear);
+  expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(1);
+  expect(screen.queryByText("Back to Overview")).toBeNull();
+  expect(screen.getByRole("link", { name: "Overview" })).toHaveAttribute("href", "#overview");
+  const tiles = screen.getAllByRole("region");
+  const names = tiles.map((tile) => tile.getAttribute("aria-label"));
+  expect(names.indexOf("Dated events")).toBeLessThan(names.indexOf("Event list"));
+  expect(screen.getByRole("heading", { level: 3, name: /3 dated events/ })).toBeInTheDocument();
 });

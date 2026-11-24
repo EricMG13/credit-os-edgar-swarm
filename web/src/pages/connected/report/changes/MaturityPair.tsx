@@ -1,179 +1,17 @@
-import { ChartWithTable } from "@/components/chart/ChartWithTable";
+import { useState } from "react";
+import { ChartTable } from "@/components/chart/ChartTable";
+import { Segmented } from "@/components/kit/Segmented";
 import { cx } from "@/utils/cx";
 import type { MaturityProfile } from "../../publishedReport";
 import { amount, distinct } from "../../visuals/visualData";
 import { PublishedSource } from "../PublishedTrace";
 import type { maturityTraces } from "../comparisonTrace";
+import { Figure, Tile } from "../overview/Tile";
 
 type Traces = ReturnType<typeof maturityTraces>;
 type Row = MaturityProfile["rows"][number];
-type Column = { key: string; label: string; row: Row | null };
 
-const HEIGHT = 144;
-const YEAR = /(?<!\d)((?:19|20)\d{2})(?!\d)/;
-
-/** Columns for the stated periods: consecutive years at true spacing when every period is a year, else as listed. */
-function maturityColumns(rows: readonly Row[]): { columns: Column[]; after: Column[] } {
-  const dated = rows.flatMap((row) => {
-    const year = YEAR.exec(row.period)?.[1];
-    return year ? [{ row, year: Number(year) }] : [];
-  });
-  const undated = rows.filter((row) => !YEAR.test(row.period));
-  const years = dated.map(({ year }) => year);
-  const trailing = undated.map((row) => ({ key: row.period, label: row.period, row }));
-  if (
-    !dated.length ||
-    new Set(years).size !== years.length ||
-    Math.max(...years) - Math.min(...years) > 40
-  )
-    return { columns: rows.map((row) => ({ key: row.period, label: row.period, row })), after: [] };
-  const [first, last] = [Math.min(...years), Math.max(...years)];
-  const columns = Array.from({ length: last - first + 1 }, (_, at): Column => {
-    const year = first + at;
-    const found = dated.find((item) => item.year === year);
-    return { key: String(year), label: found?.row.period ?? String(year), row: found?.row ?? null };
-  });
-  return { columns, after: trailing };
-}
-
-function Bar({
-  value,
-  cell,
-  scale,
-  fill,
-  name,
-}: {
-  value: number | null;
-  cell: string | null;
-  scale: number;
-  fill: string;
-  name: string;
-}) {
-  if (value === null)
-    return (
-      <span
-        className="gap-hatch block h-6 w-3 rounded-t-ds-xs border border-dashed border-border-gap"
-        title={`${name}: not stated`}
-      />
-    );
-  return (
-    <span
-      className={cx("block w-3 rounded-t-ds-xs", fill)}
-      style={{ height: `${String(Math.max(2, (Math.abs(value) / scale) * HEIGHT))}px` }}
-      title={`${name}: ${cell ?? ""}`}
-    />
-  );
-}
-
-function Wall({ column, scale }: { column: Column; scale: number }) {
-  const { row } = column;
-  const prior = row ? amount(row.prior ?? "") : null;
-  const current = row ? amount(row.current ?? "") : null;
-  return (
-    <div className="flex w-14 flex-none flex-col items-center gap-1">
-      <div className="flex items-end gap-1" style={{ height: `${String(HEIGHT)}px` }}>
-        {row ? (
-          <>
-            <Bar
-              value={prior}
-              cell={row.prior}
-              scale={scale}
-              fill="bg-chart-3"
-              name="Earlier run"
-            />
-            <Bar
-              value={current}
-              cell={row.current}
-              scale={scale}
-              fill="bg-chart-1"
-              name="Current run"
-            />
-          </>
-        ) : null}
-      </div>
-      <span className="h-px w-full bg-border-container" />
-      <span className="font-mono text-caption text-text-secondary tabular-nums">
-        {column.label}
-      </span>
-    </div>
-  );
-}
-
-/** The two debt maturity schedules side by side, per period, on one axis and one scale. */
-export function MaturityPair({ profile, traces }: { profile: MaturityProfile; traces?: Traces }) {
-  const { columns, after } = maturityColumns(profile.rows);
-  const values = profile.rows.flatMap((row) => [
-    amount(row.prior ?? ""),
-    amount(row.current ?? ""),
-  ]);
-  const scale = Math.max(...values.map((value) => Math.abs(value ?? 0)), 1);
-  return (
-    <ChartWithTable
-      title="Debt maturity schedules"
-      as="h3"
-      note={profile.unit}
-      actions={
-        <MaturitySources
-          name="Debt maturity schedules"
-          prior={traces?.prior?.table}
-          current={traces?.current.table}
-        />
-      }
-      chart={
-        <div className="grid gap-3">
-          <p className="flex flex-wrap items-center gap-4 text-caption text-text-secondary">
-            <span className="flex items-center gap-1.5">
-              <span aria-hidden="true" className="size-2.5 rounded-ds-xs bg-chart-3" />
-              Earlier run
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span aria-hidden="true" className="size-2.5 rounded-ds-xs bg-chart-1" />
-              Current run
-            </span>
-            <span>{profile.unit}</span>
-          </p>
-          <div
-            className="overflow-x-auto"
-            role="region"
-            aria-label="Maturity walls"
-            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
-            tabIndex={0}
-          >
-            <div className="flex min-w-max items-end gap-1 pb-1">
-              {columns.map((column) => (
-                <Wall key={column.key} column={column} scale={scale} />
-              ))}
-              {after.length > 0 && (
-                <span aria-hidden="true" className="px-2 pb-6 font-mono text-text-tertiary">
-                  //
-                </span>
-              )}
-              {after.map((column) => (
-                <Wall key={column.key} column={column} scale={scale} />
-              ))}
-            </div>
-          </div>
-        </div>
-      }
-      table={{
-        head: ["Period", "Earlier run", "Current run"],
-        endHeading: "Sources",
-        rows: profile.rows.map((row) => {
-          const prior = traces?.prior?.row(row.period, row.prior, profile.unit);
-          const current = traces?.current.row(row.period, row.current, profile.unit);
-          return {
-            label: row.period,
-            cells: [row.prior, row.current],
-            end:
-              prior || current ? (
-                <MaturitySources name={row.period} prior={prior} current={current} />
-              ) : undefined,
-          };
-        }),
-      }}
-    />
-  );
-}
+const HEIGHT = 128;
 
 /** Whether the profile can be drawn: a unit, distinct periods and at least one stated figure. */
 export function usableProfile(profile: MaturityProfile) {
@@ -190,15 +28,111 @@ export function usableProfile(profile: MaturityProfile) {
   );
 }
 
-function MaturitySources({
-  name,
-  prior,
+/** One side of one period: a bar when the cell is a number, its own words when it is not, a gap when absent. */
+function Bar({
+  cell,
+  value,
+  axis,
   current,
 }: {
-  name: string;
-  prior?: string;
-  current?: string;
+  cell: string | null;
+  value: number | null;
+  axis: { low: number; high: number };
+  current: boolean;
 }) {
+  const span = axis.high - axis.low || 1;
+  const label = (
+    <Figure className="max-w-16 text-center text-caption leading-tight wrap-anywhere">
+      {cell ?? "Not stated"}
+    </Figure>
+  );
+  if (value === null)
+    return (
+      <div className="flex w-16 flex-col items-center justify-end gap-1">
+        {label}
+        <span
+          className="gap-hatch block h-8 w-full rounded-t-ds-xs border border-dashed border-border-gap"
+          data-gap
+        />
+      </div>
+    );
+  const up = (Math.max(value, 0) / span) * HEIGHT;
+  const down = (Math.max(-value, 0) / span) * HEIGHT;
+  return (
+    <div className="flex w-16 flex-col items-center">
+      {label}
+      <div className="flex flex-col" style={{ height: `${String(HEIGHT)}px` }}>
+        <div
+          className="flex flex-col justify-end"
+          style={{ height: `${String((axis.high / span) * HEIGHT)}px` }}
+        >
+          <span
+            data-bar={current ? "current" : "earlier"}
+            className={cx(
+              "block w-16 rounded-t-ds-xs",
+              current ? "bg-chart-1" : "border-2 border-chart-3 bg-surface-subtle",
+            )}
+            style={{ height: `${String(Math.max(up, value > 0 ? 2 : 0))}px` }}
+          />
+        </div>
+        <span
+          className={cx(
+            "block w-16 rounded-b-ds-xs",
+            current ? "bg-chart-1" : "border-2 border-chart-3 bg-surface-subtle",
+          )}
+          style={{ height: `${String(down)}px` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function Walls({ rows }: { rows: readonly Row[] }) {
+  const values = rows
+    .flatMap((row) => [amount(row.prior ?? ""), amount(row.current ?? "")])
+    .filter((value): value is number => value !== null);
+  const axis = { low: Math.min(0, ...values), high: Math.max(0, ...values) };
+  return (
+    <div className="grid gap-3">
+      <p className="flex flex-wrap items-center gap-x-5 gap-y-1 text-caption text-text-secondary">
+        <span className="flex items-center gap-1.5">
+          <span
+            aria-hidden="true"
+            className="size-3 rounded-ds-xs border-2 border-chart-3 bg-surface-subtle"
+          />
+          Earlier run: outlined bar
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span aria-hidden="true" className="size-3 rounded-ds-xs bg-chart-1" />
+          This run: solid bar
+        </span>
+      </p>
+      <div
+        className="overflow-x-auto"
+        role="region"
+        aria-label="Maturity walls"
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+        tabIndex={0}
+      >
+        <div className="flex min-w-max gap-3 pb-1">
+          {rows.map((row) => (
+            <div key={row.period} className="flex min-w-36 flex-1 flex-col gap-2">
+              <div className="flex items-end justify-center gap-2 border-b border-border-container">
+                <Bar cell={row.prior} value={amount(row.prior ?? "")} axis={axis} current={false} />
+                <Bar cell={row.current} value={amount(row.current ?? "")} axis={axis} current />
+              </div>
+              <span className="text-center font-mono text-caption text-text-secondary wrap-anywhere">
+                {row.period}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Sources({ name, prior, current }: { name: string; prior?: string; current?: string }) {
   if (!prior && !current) return null;
   return (
     <div className="flex flex-wrap gap-2">
@@ -217,5 +151,60 @@ function MaturitySources({
         </PublishedSource>
       )}
     </div>
+  );
+}
+
+/** The two debt maturity schedules per stated period, in the pack's order, on one scale. */
+export function MaturityPair({ profile, traces }: { profile: MaturityProfile; traces?: Traces }) {
+  const [view, setView] = useState<"chart" | "table">("chart");
+  return (
+    <Tile
+      span={12}
+      label="Maturities then and now"
+      kicker={`Debt maturing by period, ${profile.unit}`}
+      title="Debt maturities, earlier run against this run"
+      trace={
+        <div className="flex items-center gap-3">
+          <Sources
+            name="Debt maturity schedules"
+            prior={traces?.prior?.table}
+            current={traces?.current.table}
+          />
+          <Segmented
+            label="Maturities view"
+            current={view}
+            onSelect={(key) => {
+              setView(key === "table" ? "table" : "chart");
+            }}
+            segments={[
+              { key: "chart", label: "Chart" },
+              { key: "table", label: "Table" },
+            ]}
+          />
+        </div>
+      }
+    >
+      {view === "chart" ? (
+        <Walls rows={profile.rows} />
+      ) : (
+        <ChartTable
+          caption="Debt maturity schedules"
+          head={["Period", "Earlier run", "Current run"]}
+          endHeading="Sources"
+          rows={profile.rows.map((row) => {
+            const prior = traces?.prior?.row(row.period, row.prior, profile.unit);
+            const current = traces?.current.row(row.period, row.current, profile.unit);
+            return {
+              label: row.period,
+              cells: [row.prior, row.current],
+              end:
+                prior || current ? (
+                  <Sources name={row.period} prior={prior} current={current} />
+                ) : undefined,
+            };
+          })}
+        />
+      )}
+    </Tile>
   );
 }

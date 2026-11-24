@@ -49,7 +49,7 @@ it("plots the valid events and lists an event whose date cannot be placed with i
   expect(calendar.rows.map(({ cells }) => cells[3])).toEqual(["Fine"]);
   render(<Calendar calendar={calendar} />);
   expect(screen.queryByText(/No dated events were published/)).toBeNull();
-  const figure = within(screen.getByRole("figure", { name: "Published events" }));
+  const figure = within(document.body);
   expect(figure.getAllByText("Fine").length).toBeGreaterThan(0);
   const unplaced = within(screen.getByRole("grid", { name: "Events not placed on the calendar" }));
   const row = within(unplaced.getByRole("row", { name: /Impossible date/ }));

@@ -201,9 +201,10 @@ function Marker({
   );
 }
 
-type Hidden = ReadonlySet<EventRecord["category"]>;
+export type Hidden = ReadonlySet<EventRecord["category"]>;
 
-function Legend({
+/** The one category legend: toggles with 32px targets (44px on a phone). */
+export function Legend({
   events,
   hidden,
   onToggle,
@@ -228,7 +229,7 @@ function Legend({
             aria-pressed={!off}
             aria-label={`${lane}, ${String(count)} ${count === 1 ? "event" : "events"}`}
             className={cx(
-              "flex cursor-pointer items-center gap-1.5 rounded-ds-sm px-1.5 py-0.5 focus-visible:ring-2 focus-visible:ring-focus max-[480px]:min-h-11",
+              "flex min-h-8 min-w-8 cursor-pointer items-center gap-1.5 rounded-ds-sm px-2 focus-visible:ring-2 focus-visible:ring-focus max-[480px]:min-h-11 max-[480px]:min-w-11",
               off ? "text-text-tertiary" : "text-text-secondary",
             )}
             onClick={() => {

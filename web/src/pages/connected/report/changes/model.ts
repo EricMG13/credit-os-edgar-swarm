@@ -1,6 +1,8 @@
 import {
   comparisonRows,
   containsReference,
+  evidencePath,
+  methodNote,
   passages,
   readParagraph,
   readerText,
@@ -8,10 +10,20 @@ import {
   type PublishedChanges,
 } from "../../publishedReport";
 import { namedTable } from "../../reportView";
+import { changeSign, tone } from "../../signal";
 import { amount } from "../../visuals/visualData";
-import { tone } from "../../signal";
 
 export type MeasureTone = "better" | "worse" | "flat";
+
+/** What the CP-8 issuer table says about one measure's cause. */
+export type Cause =
+  | { kind: "written"; text: string }
+  /** The cell cites a source: the page links to it in Evidence instead of drawing it. */
+  | { kind: "referenced" }
+  /** The row was found and its cell is empty. */
+  | { kind: "absent" }
+  /** No row of the issuer table carries this measure's name. */
+  | { kind: "unmatched" };
 
 export type MeasureChange = {
   key: string;
@@ -24,10 +36,9 @@ export type MeasureChange = {
   afterValue: number | null;
   delta: string | null;
   tone: MeasureTone | null;
-  /** The comparability sentence of the verdict. */
+  /** The comparability sentence of the verdict; a reference is replaced by a pointer to Evidence. */
   reason: string;
-  /** The cause and effect the CP-8 issuer table states for this measure; null where it states none. */
-  cause: string | null;
+  cause: Cause;
   effect: string | null;
   href: string | undefined;
 };
@@ -43,14 +54,16 @@ const plain = (text = "") =>
   text.replaceAll("**", "").replaceAll("`", "").trim().replace(/\s+/g, " ");
 const nothing = (text: string) => text === "" || /^[—–-]$/.test(text);
 
+function causeOf(cell: string | undefined): Cause {
+  const text = readerText(plain(cell));
+  if (nothing(text)) return { kind: "absent" };
+  return containsReference(text) ? { kind: "referenced" } : { kind: "written", text };
+}
+
 /** A written cell in the module's words; null for a placeholder or a cell that cites a source. */
 function written(cell: string | undefined) {
   const text = readerText(plain(cell));
   return nothing(text) || containsReference(text) ? null : text;
-}
-
-function numeric(value: string | number | null | undefined) {
-  return value == null ? null : amount(String(value));
 }
 
 function issuerRows(entry: OutputEntry | undefined) {
@@ -63,16 +76,24 @@ function issuerRows(entry: OutputEntry | undefined) {
       "Cause",
       "Effect on the credit view",
     ]);
-  return new Map(table?.rows.map(({ cells }) => [plain(cells[0]), cells] as const));
+  return new Map(table?.rows.map(({ cells }) => [plain(cells[0]).toLowerCase(), cells] as const));
 }
 
-/** The size of a move against where it started, used only to order the list. */
-function size({ beforeValue, afterValue }: MeasureChange) {
-  if (beforeValue === null || afterValue === null) return -1;
-  if (beforeValue === 0) return afterValue === 0 ? 0 : Number.POSITIVE_INFINITY;
-  return Math.abs(afterValue - beforeValue) / Math.abs(beforeValue);
+/** The pack's own reading of comparability, as `comparisonRows` applies it. */
+function comparable(
+  change: PublishedChanges,
+  measure: NonNullable<NonNullable<PublishedChanges["pack"]>["measures"]>[number],
+) {
+  return (
+    change.verdicts?.measures?.[measure.key]?.kind === "comparable" &&
+    (measure.prior?.unit ?? null) === (measure.current?.unit ?? null) &&
+    measure.comparable !== "no" &&
+    measure.prior?.value != null &&
+    measure.current?.value != null
+  );
 }
 
+/** The pack's measures in the pack's order, grouped by what the pack says about each. */
 export function classifyMeasures(
   change: PublishedChanges,
   trace: (label: string) => string | undefined,
@@ -84,35 +105,39 @@ export function classifyMeasures(
   (change.pack?.measures ?? []).forEach((measure, index) => {
     const [label = measure.label, before = "", after = "", delta = "—", reason = "", effect = ""] =
       rows[index] ?? [];
-    const written8 = causes.get(plain(label));
-    const comparable = change.verdicts?.measures?.[measure.key]?.kind === "comparable";
-    const difference = measure.difference == null ? null : Number(measure.difference);
-    const revision = reason.endsWith("Same-period analysis change");
+    const issuer = causes.get(plain(label).toLowerCase());
+    const sign = measure.difference == null ? null : changeSign(String(measure.difference));
     const shown = delta !== "—";
-    const toned =
-      shown && difference !== null ? tone(measure.key, String(measure.difference)) : "none";
+    const toned = shown && sign !== null ? tone(measure.key, String(measure.difference)) : "none";
+    const revision = reason.endsWith("Same-period analysis change");
     const item: MeasureChange = {
       key: measure.key,
       label,
       before,
       after,
-      beforeValue: numeric(measure.prior?.value),
-      afterValue: numeric(measure.current?.value),
+      beforeValue: amountOf(measure.prior?.value),
+      afterValue: amountOf(measure.current?.value),
       delta: shown ? delta : null,
       tone: toned === "none" ? null : toned,
-      reason: reason.replace(/ · Same-period analysis change$/, ""),
-      cause: written(written8?.[3]),
-      effect: written(effect) ?? written(written8?.[4]),
+      reason: stated(reason.replace(/ · Same-period analysis change$/, "")),
+      cause: issuer ? causeOf(issuer[3]) : { kind: "unmatched" },
+      effect: written(effect) ?? written(issuer?.[4]),
       href: trace(label),
     };
-    const known = comparable && difference !== null && !Number.isNaN(difference);
-    if (!known || reason === "Reporting units differ.") groups.notAssessable.push(item);
-    else if (revision) groups.revised.push(item);
-    else if (difference !== 0) groups.moved.push(item);
+    if (!comparable(change, measure) || sign === null) groups.notAssessable.push(item);
+    else if (revision && sign !== 0) groups.revised.push(item);
+    else if (sign !== 0) groups.moved.push(item);
     else groups.unmoved.push(item);
   });
-  groups.moved.sort((a, b) => size(b) - size(a));
   return groups;
+}
+
+function stated(reason: string) {
+  return containsReference(reason) ? "See comparison evidence." : reason;
+}
+
+function amountOf(value: string | number | null | undefined) {
+  return value == null ? null : amount(String(value));
 }
 
 export type StatusColumn = "unchanged" | "revised" | "new" | "missing";
@@ -131,31 +156,75 @@ export function statusColumn(status: string): StatusColumn | null {
   return Object.hasOwn(COLUMNS, status) ? (COLUMNS[status] ?? null) : null;
 }
 
-export type LedgerItem = { text: string; note: string | null; line: number };
+/** A ledger row: its text in the module's words, or null where it cites a source (then `href` is the link). */
+export type LedgerItem = { text: string | null; note: string | null; line: number; href: string };
 
 /** CP-8's limitations ledger as the two lists a reader wants: what is new and what closed. */
-export function ledgerLists(entry: OutputEntry | undefined) {
+export function ledgerLists(entry: OutputEntry | undefined, folder: string) {
   const table = entry && namedTable(entry, "Limitations ledger", ["Limitation", "Status"]);
-  if (!table) return null;
+  if (!entry || !table) return null;
   const at = (name: string) => table.headers.indexOf(name);
   const [limitation, status, closed] = [at("Limitation"), at("Status"), at("What closed it")];
   const lists: { added: LedgerItem[]; removed: LedgerItem[] } = { added: [], removed: [] };
   for (const { cells, line } of table.rows) {
-    const text = written(cells[limitation]);
+    if (nothing(plain(cells[limitation]))) continue;
     const kind = plain(cells[status]);
-    if (!text) continue;
-    if (kind === "New") lists.added.push({ text, note: null, line });
-    if (kind === "Closed") lists.removed.push({ text, note: written(cells[closed]), line });
+    const item = {
+      text: written(cells[limitation]),
+      note: written(cells[closed]),
+      line,
+      href: evidencePath(folder, entry, line),
+    };
+    if (kind === "New") lists.added.push({ ...item, note: null });
+    if (kind === "Closed") lists.removed.push(item);
   }
   return lists;
 }
 
-/** The first Bottom line paragraph of the comparison module, in its words; null if it cites a source. */
-export function verdictSentence(entry: OutputEntry | undefined) {
+export type Paragraph = { line: number; text: string | null; href: string };
+
+/** The paragraphs of one reader passage; `text` is null where the paragraph cites a source. */
+export function passageParagraphs(
+  entry: OutputEntry | undefined,
+  heading: string,
+  folder: string,
+): Paragraph[] | null {
   if (!entry) return null;
-  const section = passages(entry.sections).find(({ heading }) => heading === "Bottom line");
-  const block = section?.blocks.find((item) => item.type === "text");
-  if (block?.type !== "text") return null;
-  const body = plain(readParagraph(block.text).body);
-  return body && !containsReference(body) ? readerText(body) : null;
+  const sections = passages(entry.sections).filter((section) => section.heading === heading);
+  if (sections.length === 0) return null;
+  return sections
+    .flatMap(({ blocks }) => blocks)
+    .filter((block) => block.type === "text" && !methodNote(block.text))
+    .flatMap((block) => {
+      if (block.type !== "text") return [];
+      const body = plain(readParagraph(block.text).body);
+      if (!body) return [];
+      return [
+        {
+          line: block.line,
+          text: containsReference(body) ? null : readerText(body),
+          href: evidencePath(folder, entry, block.line),
+        },
+      ];
+    });
+}
+
+const FIRST_SENTENCE = /^(.+?[.!?])(?=\s+[A-Z0-9"“(]|$)/s;
+
+/**
+ * The verdict is the first sentence of the Bottom line (CP-8 method); the rest of the passage is
+ * its body. A first paragraph that cites a source has no verdict to draw: `referenced` is set.
+ */
+export function verdictOf(entry: OutputEntry | undefined, folder: string) {
+  const paragraphs = passageParagraphs(entry, "Bottom line", folder);
+  const [first, ...rest] = paragraphs ?? [];
+  if (!first) return null;
+  if (first.text === null) return { sentence: null, body: [], href: first.href, referenced: true };
+  const match = FIRST_SENTENCE.exec(first.text);
+  const sentence = match?.[1] ?? first.text;
+  const remainder = first.text.slice(sentence.length).trim();
+  const body = [remainder, ...rest.map((item) => item.text)].filter(
+    (text): text is string => text !== null && text !== "",
+  );
+  return { sentence, body, href: first.href, referenced: false };
 }
