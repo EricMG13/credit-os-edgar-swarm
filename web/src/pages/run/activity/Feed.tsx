@@ -62,9 +62,13 @@ export function Feed({ lines }: { lines: ActivityLine[] }) {
                   <span className="min-w-0 text-sm font-medium wrap-anywhere text-text-secondary">
                     {line.who}
                   </span>
-                  <time className="font-mono text-caption text-text-tertiary tabular-nums">{line.time}</time>
+                  <time className="font-mono text-caption text-text-tertiary tabular-nums">
+                    {line.time}
+                  </time>
                 </div>
-                <p className="text-small text-pretty wrap-anywhere text-text-secondary">{line.text}</p>
+                <p className="text-small text-pretty wrap-anywhere text-text-secondary">
+                  {line.text}
+                </p>
               </div>
             </article>
           </li>

@@ -166,7 +166,7 @@ function RunningCard({ run }: { run: LiveRun }) {
 function WaitingTable({ runs, held }: { runs: LiveRun[]; held: string }) {
   return (
     <div className={`${panel} overflow-x-auto`}>
-      <Table aria-label="Waiting runs" size="sm">
+      <Table aria-label="Waiting runs" size="sm" className="min-w-[24rem]">
         <Table.Header>
           <Table.Head id="issuer" isRowHeader label="Issuer" />
           <Table.Head id="pathway" label="Pathway" />
@@ -201,7 +201,7 @@ function WaitingTable({ runs, held }: { runs: LiveRun[]; held: string }) {
 function EndedTable({ runs }: { runs: EndedRun[] }) {
   return (
     <div className={`${panel} overflow-x-auto`}>
-      <Table aria-label="Runs that ended without a report" size="sm">
+      <Table aria-label="Runs that ended without a report" size="sm" className="min-w-[44rem]">
         <Table.Header>
           <Table.Head id="issuer" isRowHeader label="Issuer" />
           <Table.Head id="pathway" label="Pathway" />

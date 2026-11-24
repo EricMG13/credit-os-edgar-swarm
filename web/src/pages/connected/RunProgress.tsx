@@ -326,6 +326,7 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
           <Bento>
             <Tile
               span={8}
+              className="lg:col-span-12 xl:col-span-9"
               label="Pipeline"
               kicker="Module pipeline"
               title={
@@ -334,7 +335,7 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
                   : `${finishedFigure(run).value ?? ""} modules done`
               }
             >
-              <Well className="border border-border-hairline p-4 sm:p-6">
+              <Well className="border border-border-hairline p-4">
                 <Pipeline label="Modules in this run" stages={pipelineStages(run.modules, steps)} />
               </Well>
               {assessmentGaps.length > 0 && (

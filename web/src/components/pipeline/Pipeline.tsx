@@ -30,9 +30,9 @@ const DEFAULT_WORD: Record<PipelineState, string> = {
 };
 
 // On a wide screen a stage's edges live in the 24px gap beside it: a 12px stub per node and a
-// vertical bus from the first node's centre to the last (a node is 44px tall, so 22px in).
+// vertical bus drawn in pieces, one per node, from the first node's centre to the last's.
 const STUB = "absolute top-1/2 hidden h-px w-3 lg:block";
-const BUS = "absolute top-[22px] bottom-[22px] hidden border-l border-connector lg:block";
+const BUS = "absolute hidden w-0 border-l border-connector lg:block";
 
 type BadgeProps =
   | { set: "Run states"; state: keyof (typeof STATUS_SETS)["Run states"] }
@@ -92,29 +92,39 @@ function Stubs({ node, first, last }: { node: PipelineNode; first: boolean; last
   );
 }
 
+/** A delivered or queued node is marked quietly; any other state is a badge under the name. */
 function NodeBody({ node }: { node: PipelineNode }) {
   const badge = badgeOf(node);
+  const word = node.word ?? DEFAULT_WORD[node.state];
+  const quiet = node.state === "delivered" || node.state === "queued";
   return (
     <>
-      <span className="grid min-w-0">
-        <span className="truncate">{node.name}</span>
-        {node.detail !== undefined && (
-          <span className="text-caption font-normal text-pretty text-text-tertiary">
-            {node.detail}
+      <span className="flex min-w-0 items-start justify-between gap-2">
+        <span className="min-w-0 wrap-break-word">{node.name}</span>
+        {quiet && (
+          <span className="mt-1.5 flex flex-none items-center">
+            <span
+              aria-hidden="true"
+              className={cx(
+                "size-[7px] rounded-ds-full",
+                node.state === "delivered" ? "bg-action" : "border border-text-disabled",
+              )}
+            />
+            <span className="sr-only">{word}</span>
           </span>
         )}
       </span>
-      {node.state === "delivered" ? (
-        <span className="flex flex-none items-center">
-          <span aria-hidden="true" className="size-[7px] rounded-ds-full bg-action" />
-          <span className="sr-only">{node.word ?? DEFAULT_WORD.delivered}</span>
+      {node.detail !== undefined && (
+        <span className="text-caption font-normal text-pretty text-text-tertiary">
+          {node.detail}
         </span>
-      ) : (
+      )}
+      {!quiet && (
         <StatusBadge
           set={badge.set}
           state={badge.state as never}
           live={node.state === "running"}
-          className="flex-none"
+          className="max-w-full self-start px-1.5 text-xs"
         />
       )}
     </>
@@ -122,12 +132,39 @@ function NodeBody({ node }: { node: PipelineNode }) {
 }
 
 const BOX =
-  "flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-ds-sm border bg-surface-card px-3 py-1 text-small font-medium text-text-primary";
+  "flex min-h-11 min-w-0 flex-col justify-center gap-1 rounded-ds-sm border bg-surface-card px-3 py-2 text-small font-medium text-text-primary";
 
-function NodeItem({ node, first, last }: { node: PipelineNode; first: boolean; last: boolean }) {
+function NodeItem({
+  node,
+  first,
+  last,
+  top,
+  bottom,
+}: {
+  node: PipelineNode;
+  first: boolean;
+  last: boolean;
+  top: boolean;
+  bottom: boolean;
+}) {
   const classes = cx(BOX, boxClasses(node));
   return (
     <li className="relative">
+      {[!first && "-left-3", !last && "-right-3"].map(
+        (side) =>
+          side !== false && (
+            <span
+              key={side}
+              aria-hidden="true"
+              className={cx(
+                BUS,
+                side,
+                top ? "top-1/2" : "-top-2",
+                bottom ? "bottom-1/2" : "-bottom-2",
+              )}
+            />
+          ),
+      )}
       <Stubs node={node} first={first} last={last} />
       {node.href === undefined ? (
         <div data-node={node.state} className={classes}>
@@ -152,16 +189,21 @@ function NodeItem({ node, first, last }: { node: PipelineNode; first: boolean; l
 function Stage({ stage, first, last }: { stage: PipelineStage; first: boolean; last: boolean }) {
   return (
     <li className="grid min-w-0 grid-rows-[auto_1fr] gap-3">
-      <h3 className="flex items-baseline gap-2 truncate text-caption text-text-tertiary">
+      <h3 className="flex items-baseline gap-2 text-caption text-pretty text-text-tertiary">
         {stage.name}
         <span className="font-mono tabular-nums">{stage.nodes.length}</span>
       </h3>
       <div className="flex min-w-0 items-center">
         <ul className="relative grid min-w-0 flex-1 gap-2 sm:grid-cols-2 lg:grid-cols-1">
-          {!first && <span aria-hidden="true" className={cx(BUS, "-left-3")} />}
-          {!last && <span aria-hidden="true" className={cx(BUS, "-right-3")} />}
-          {stage.nodes.map((node) => (
-            <NodeItem key={node.id} node={node} first={first} last={last} />
+          {stage.nodes.map((node, index) => (
+            <NodeItem
+              key={node.id}
+              node={node}
+              first={first}
+              last={last}
+              top={index === 0}
+              bottom={index === stage.nodes.length - 1}
+            />
           ))}
         </ul>
       </div>

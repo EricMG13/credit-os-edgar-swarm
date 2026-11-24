@@ -87,7 +87,12 @@ export function SpendTile({
   elapsed: { value: string | null; note: string };
 }) {
   return (
-    <Tile span={4} label="Spend and progress" kicker="Spend against the cap">
+    <Tile
+      span={4}
+      className="lg:col-span-12 xl:col-span-3 xl:self-start"
+      label="Spend and progress"
+      kicker="Spend against the cap"
+    >
       <div className="flex flex-col gap-3">
         {spend.value === null ? (
           <GapNote>{spend.bar === null ? spend.note : "Spend is not known"}</GapNote>
@@ -96,7 +101,7 @@ export function SpendTile({
         )}
         {spend.value !== null && <Meter figure={spend} />}
       </div>
-      <dl className="grid gap-4 border-t border-border-hairline pt-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+      <dl className="grid gap-4 border-t border-border-hairline pt-4 sm:grid-cols-2 xl:grid-cols-1">
         <KeyValue term="Modules finished">
           <Figure className="text-h4">{finished.value ?? <Missing />}</Figure>
           <Meter figure={finished} />
