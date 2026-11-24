@@ -27,7 +27,7 @@ function forward(text: string): OutputEntry {
         blocks: [{ type: "text", line: 21, end: 21, text }],
       },
     ],
-  } as OutputEntry;
+  };
 }
 const view = (entries: OutputEntry[]) =>
   ({

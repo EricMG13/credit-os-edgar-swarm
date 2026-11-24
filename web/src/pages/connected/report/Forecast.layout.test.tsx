@@ -105,7 +105,7 @@ it("lays the tiles in the screen map's order, the lead first after the figures",
 
 it("draws no source reference, hash or module code on the page", () => {
   const { container } = render(<Forecast view={view([model])} run={run} />);
-  const text = container.textContent ?? "";
+  const text = container.textContent;
   expect(text).not.toMatch(/[0-9a-f]{64}/u);
   expect(text).not.toMatch(/\bCP-[A-Z0-9]+\b/u);
   expect(text).not.toMatch(/\.(?:md|json|txt|pdf|xlsx)\b/u);
