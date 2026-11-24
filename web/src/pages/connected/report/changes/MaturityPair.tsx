@@ -10,7 +10,7 @@ type Row = MaturityProfile["rows"][number];
 type Column = { key: string; label: string; row: Row | null };
 
 const HEIGHT = 144;
-const YEAR = /\b((?:19|20)\d{2})\b/;
+const YEAR = /(?<!\d)((?:19|20)\d{2})(?!\d)/;
 
 /** Columns for the stated periods: consecutive years at true spacing when every period is a year, else as listed. */
 export function maturityColumns(rows: readonly Row[]): { columns: Column[]; after: Column[] } {
