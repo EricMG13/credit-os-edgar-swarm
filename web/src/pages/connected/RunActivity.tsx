@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { Table } from "@/components/application/table/table";
 import { Badge } from "@/components/base/badges/badges";
 import { Button } from "@/components/base/buttons/button";
+import { StatsStrip } from "@/components/kit/StatsStrip";
 import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { StatusShape } from "@/components/status/shapes";
@@ -19,8 +20,10 @@ import {
   type EndedRun,
   type LiveRun,
   type ConnectedModuleState,
+  type Mode,
 } from "./api";
 import { heading } from "./layout";
+import { Figure, GapNote } from "./report/overview/Tile";
 import { finishedFigure, stamp } from "./runFigures";
 
 const RELOAD_MS = 5000;
@@ -36,7 +39,7 @@ const ENDED = {
   rejected: "Rejected",
   interrupted: "Interrupted",
 } as const satisfies Record<EndedRun["status"], string>;
-const panel = "rounded-ds-lg border border-border-subtle bg-surface-card shadow-1";
+const panel = "rounded-ds-lg border border-border-subtle bg-surface-card";
 const RUN_LINK = 'a[href^="/run/"]';
 
 const runPath = (run: { id: string }) => `/run/${encodeURIComponent(run.id)}`;
@@ -81,14 +84,10 @@ function useActivity(beforeUpdate: (next: Activity) => void) {
 
 function Tally({ counts }: { counts: [string, number][] }) {
   return (
-    <dl className="flex flex-wrap gap-x-8 gap-y-3">
-      {counts.map(([term, count]) => (
-        <div key={term}>
-          <dt className="text-sm text-text-tertiary">{term}</dt>
-          <dd className="text-2xl font-medium text-text-primary tabular-nums">{count}</dd>
-        </div>
-      ))}
-    </dl>
+    <StatsStrip
+      label="Run counts"
+      stats={counts.map(([label, count]) => ({ label, value: String(count) }))}
+    />
   );
 }
 
@@ -108,10 +107,10 @@ function RunningCard({ run }: { run: LiveRun }) {
   ).join(" · ");
   const foot = texts(fileCount(run), ...notes(run));
   return (
-    <li className={`${panel} flex flex-col gap-4 p-5`}>
+    <li className={`${panel} flex min-w-0 flex-col gap-4 p-5 sm:p-6`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-body font-semibold text-balance wrap-anywhere">
+          <h3 className="text-h4 font-medium text-balance wrap-anywhere">
             <RunIssuerLink run={run} />
           </h3>
           {line && (
@@ -120,7 +119,7 @@ function RunningCard({ run }: { run: LiveRun }) {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge color="gray">{pathwayName(run.pathway)}</Badge>
-          <StatusBadge set="Run states" state="Running" />
+          <StatusBadge set="Run states" state="Running" live />
           {run.stalled && (
             <Badge color="warning" className="gap-1.5 pl-2" icon={<StatusShape shape="triangle" />}>
               No activity in the last hour
@@ -130,11 +129,19 @@ function RunningCard({ run }: { run: LiveRun }) {
       </div>
       {run.modules.length > 0 && (
         <>
-          {bar && <ProgressBar value={bar.value} max={bar.max} label={bar.label} />}
-          <ul aria-label="Modules" className="flex flex-wrap gap-1.5">
+          {bar && (
+            <div className="flex flex-col gap-2">
+              <Figure className="text-h3 font-medium">{`${String(bar.value)} of ${String(bar.max)}`}</Figure>
+              <ProgressBar value={bar.value} max={bar.max} label={bar.label} />
+            </div>
+          )}
+          <ul
+            aria-label="Modules"
+            className="grid gap-x-4 gap-y-1.5 rounded-ds-sm bg-surface-subtle p-3 sm:grid-cols-2"
+          >
             {run.modules.map(([code, state]) => (
-              <li key={code} className="flex min-w-0 items-center gap-2">
-                <span className="min-w-0 text-sm wrap-anywhere text-text-secondary">
+              <li key={code} className="flex min-w-0 items-center justify-between gap-2">
+                <span className="min-w-0 text-small wrap-anywhere text-text-secondary">
                   {moduleName(code)}
                 </span>
                 <StatusBadge set="Run states" state={STEP[state]} />
@@ -144,7 +151,7 @@ function RunningCard({ run }: { run: LiveRun }) {
         </>
       )}
       {foot.length > 0 && (
-        <p className="flex flex-wrap gap-x-4 gap-y-1 border-t border-border-subtle pt-3 text-sm text-text-secondary">
+        <p className="flex flex-wrap gap-x-4 gap-y-1 border-t border-border-hairline pt-3 text-small text-text-secondary">
           {foot.map((text) => (
             <span key={text} className="min-w-0 wrap-anywhere">
               {text}
@@ -268,7 +275,7 @@ function groupForRunPath(activity: Activity, path: string) {
 }
 
 /** What is running, waiting and ended without a report. A run's own page has its spend, modules and activity. */
-export function RunActivity() {
+export function RunActivity({ mode }: { mode?: Mode } = {}) {
   useEffect(() => {
     document.title = "Run activity — Credit OS";
   }, []);
@@ -327,9 +334,12 @@ export function RunActivity() {
       <PageHeader
         title="Run activity"
         badges={
-          read && (
-            <span className="text-caption text-text-tertiary tabular-nums">{`Updated ${stamp(read.updated)}`}</span>
-          )
+          <>
+            {mode === "synthetic" && <Badge color="gray">Synthetic test</Badge>}
+            {read && (
+              <span className="text-caption text-text-tertiary tabular-nums">{`Updated ${stamp(read.updated)}`}</span>
+            )}
+          </>
         }
         actions={<Button href="/start">Start a run</Button>}
       />
@@ -350,16 +360,19 @@ export function RunActivity() {
           />
         )}
         {read === undefined && !failed && (
-          <div
-            role="status"
-            aria-label="Loading run activity"
-            className="grid gap-4 xl:grid-cols-2"
-          >
-            {[0, 1].map((key) => (
-              <div key={key} className={`${panel} p-5`}>
-                <Skeleton lines={5} />
-              </div>
-            ))}
+          <div role="status" aria-label="Loading run activity" className="grid gap-6">
+            <div className={`${panel} grid h-24 grid-cols-3 gap-4 p-5`}>
+              {[0, 1, 2].map((key) => (
+                <Skeleton key={key} lines={2} />
+              ))}
+            </div>
+            <div className="grid gap-4 xl:grid-cols-2">
+              {[0, 1].map((key) => (
+                <div key={key} className={`${panel} p-5 sm:p-6`}>
+                  <Skeleton lines={5} />
+                </div>
+              ))}
+            </div>
           </div>
         )}
         {read && running.length + waiting.length + ended.length > 0 && (
@@ -399,27 +412,19 @@ export function RunActivity() {
               : "No run is running or waiting. Finished runs are in the library."}
           </Empty>
         )}
-        {running.length + waiting.length > 0 && (
-          <div
-            className={
-              running.length && waiting.length ? "grid items-start gap-6 xl:grid-cols-2" : undefined
-            }
-          >
-            {running.length > 0 && (
-              <Group title="Running" group="running">
-                <ul className="grid gap-4">
-                  {running.map((run) => (
-                    <RunningCard key={run.id} run={run} />
-                  ))}
-                </ul>
-              </Group>
-            )}
-            {waiting.length > 0 && (
-              <Group title="Waiting" group="queued">
-                <WaitingTable runs={waiting} held={read?.held ?? ""} />
-              </Group>
-            )}
-          </div>
+        {running.length > 0 && (
+          <Group title="Running" group="running">
+            <ul className="grid items-start gap-4 xl:grid-cols-2">
+              {running.map((run) => (
+                <RunningCard key={run.id} run={run} />
+              ))}
+            </ul>
+          </Group>
+        )}
+        {waiting.length > 0 && (
+          <Group title="Waiting" group="queued">
+            <WaitingTable runs={waiting} held={read?.held ?? ""} />
+          </Group>
         )}
         {ended.length > 0 && (
           <Group title="Ended without a report" group="ended">
@@ -431,6 +436,20 @@ export function RunActivity() {
             <EndedTable runs={ended} />
           </Group>
         )}
+      </div>
+    </>
+  );
+}
+
+/** The preview that holds no run records: the screen's own header and a gap that says why. */
+export function RunReadOnly() {
+  return (
+    <>
+      <PageHeader title="Run activity" actions={<Button href="/">Back to Library</Button>} />
+      <div className="mt-6">
+        <GapNote>
+          Runs are not available in a read-only preview. The library and reports are.
+        </GapNote>
       </div>
     </>
   );
