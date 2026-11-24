@@ -460,7 +460,7 @@ export function PublishedTable({
   );
 }
 
-function readerBlock(block: Block): boolean {
+export function readerBlock(block: Block): boolean {
   return block.type === "table" || (block.type === "text" && !methodNote(block.text));
 }
 
@@ -470,7 +470,8 @@ const CODE = String.raw`[TP]\d+[A-Z]?(?:\.\d+)?`;
 const RECORD_PREFIX = new RegExp(String.raw`^${CODE}\s+(?:[-\u2013\u2014]\s*)?`);
 const RECORD_CODE = new RegExp(String.raw`^${CODE}\s`);
 
-function registerBlocks(section: Section, entry: OutputEntry) {
+/** The register tables a working page draws; every other register table is held in Evidence. */
+export function registerBlocks(section: Section, entry: OutputEntry) {
   if (entry.output.module === "CP-6" && /^T6E\.(?:4|6|7)\b/.test(section.heading))
     return section.blocks.filter(readerBlock);
   if (entry.output.module === "CP-8" && section.heading === "Limitations ledger")
@@ -515,7 +516,7 @@ export const drawingTitle = (heading: string) =>
   heading.replace(DRAWING_PREFIX, "").replace(RECORD_PREFIX, "");
 
 // `chartsDrawn` is true on a page that draws this module's charts with their qualifications.
-function drawingLines(entry: OutputEntry, figureTableLines: readonly number[] = []) {
+export function drawingLines(entry: OutputEntry, figureTableLines: readonly number[] = []) {
   return new Set(
     [
       ...(entry.output.charts ?? []),
@@ -635,7 +636,8 @@ function findingLabel(section: Section, overviewLabel?: string) {
   return section.heading === "Bottom line" ? (overviewLabel ?? section.heading) : section.heading;
 }
 
-function findingsTraces(snapshot: Snapshot, entry: OutputEntry, sections: Section[]) {
+/** One trace per paragraph and table row of `sections`, keyed by `traceKey`. */
+export function sectionTraces(snapshot: Snapshot, entry: OutputEntry, sections: Section[]) {
   const traces: Record<string, Trace> = {};
   const key = (line: number) => traceKey(entry, line);
   for (const section of sections) {
@@ -1097,7 +1099,7 @@ function findingsEvidence(
   drawnBottomLine: boolean,
 ) {
   const key = (line: number) => traceKey(entry, line);
-  const traces = findingsTraces(snapshot, entry, sections);
+  const traces = sectionTraces(snapshot, entry, sections);
   const summary = !drawnBottomLine && entry.output.summary;
   const summaryTrace = summary && traceForLine(snapshot, entry, entryIndex, summary.line);
   if (summaryTrace) traces[key(summary.line)] = summaryTrace;
