@@ -101,9 +101,14 @@ describe("Run progress layout", () => {
     render(<ConnectedApp path={`/run/${ID}`} mode="live" />);
     const spend = await screen.findByRole("region", { name: "Spend" });
     const pipeline = screen.getByRole("region", { name: "Pipeline" });
-    expect(spend.compareDocumentPosition(pipeline) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(spend).toHaveClass("lg:col-start-10", "lg:row-start-1");
-    expect(pipeline).toHaveClass("lg:col-start-1", "lg:row-start-1");
+    expect(pipeline.contains(spend)).toBe(true);
+    const title = within(pipeline).getByRole("heading", { level: 2 });
+    expect(spend.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(spend).toHaveClass("lg:col-start-7", "lg:row-start-1");
+    expect(within(pipeline).getByRole("heading", { level: 2 }).parentElement).toHaveClass(
+      "lg:col-start-1",
+      "lg:row-start-1",
+    );
   });
 
   it("draws the loading page in the same layout as the loaded one", async () => {

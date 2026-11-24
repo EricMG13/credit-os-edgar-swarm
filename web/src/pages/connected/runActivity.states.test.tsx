@@ -231,7 +231,7 @@ describe("the lists of waiting and ended runs", () => {
     for (const [name, issuer] of [
       ["Waiting", "Beta"],
       ["Ended without a report", "Gamma"],
-    ]) {
+    ] as const) {
       const group = screen.getByRole("region", { name }).closest("[data-run-group]");
       for (
         let node = screen.getByRole("link", { name: issuer }).parentElement;

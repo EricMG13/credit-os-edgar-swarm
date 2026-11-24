@@ -127,10 +127,10 @@ describe("Library batch findings", () => {
 });
 
 describe("Run activity batch findings", () => {
-  it("C1-018 draws the module name beside a visible state word", async () => {
+  it("C1-018 draws the module a run is on, in words, beside a visible state word", async () => {
     reply({ updated: "2026-11-17T08:00:00Z", held: "", runs: [running], ended: [] });
     render(<RunActivity />);
-    const item = (await screen.findByText("Financial foundation")).closest("li");
+    const item = (await screen.findByText("Now: Financial foundation")).closest("li");
     expect(item).not.toBeNull();
     expect(within(item as HTMLElement).getByText("Running")).not.toHaveClass("sr-only");
   });

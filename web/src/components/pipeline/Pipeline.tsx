@@ -56,9 +56,9 @@ function stateOf(node: PipelineNode): State & { word: string } {
 
 // Geometry in columns mode, in px: a node is 48 tall with an 8 gap; a second sub-column is offset
 // half a pitch so that every edge between sub-columns runs through a gap, never across a node.
-const NODE = 48;
-const PITCH = 56;
-const HALF = 28;
+const NODE = 44;
+const PITCH = 52;
+const HALF = 26;
 const WIDE = 4;
 
 type Sub = "S" | "A" | "B";
@@ -83,6 +83,12 @@ function place(nodes: readonly PipelineNode[]): { placed: Placed[]; height: numb
   return { placed, height: Math.max(...placed.map(({ top }) => top + NODE)) };
 }
 
+/** A stage's share of the width: two sub-columns take two, and a lone short name takes less. */
+function weight(stage: PipelineStage) {
+  if (stage.nodes.length > WIDE) return "2fr";
+  return stage.nodes.every((node) => node.name.length <= 8) ? "0.7fr" : "1fr";
+}
+
 const stops = (node: PipelineNode) => node.state === "blocked" || node.state === "failed";
 
 /** A bus from the stage's middle line out to the centres of the nodes it serves. */
@@ -94,29 +100,29 @@ function span(centres: readonly number[], middle: number) {
 // Written whole for each width at which the stages become columns, so the class scan finds them.
 const AT = {
   lg: {
-    list: "lg:grid lg:auto-cols-fr lg:grid-flow-col lg:gap-x-6 lg:gap-y-0 lg:border-l-0 lg:pl-0",
-    wide: "lg:col-span-2",
-    head: "lg:h-10",
+    list: "lg:grid lg:grid-cols-(--cols) lg:gap-x-6 lg:gap-y-0 lg:border-l-0 lg:pl-0",
+    head: "lg:h-8",
     body: "lg:flex lg:flex-1 lg:items-center",
     nodes: "lg:relative lg:block lg:h-(--h) lg:w-full",
-    item: "lg:absolute lg:top-(--top) lg:left-(--left) lg:h-12 lg:w-(--w)",
-    box: "lg:h-full lg:px-2 lg:py-1.5 lg:text-caption",
+    item: "lg:absolute lg:top-(--top) lg:left-(--left) lg:h-11 lg:w-(--w)",
+    box: "lg:h-full lg:px-1.5 lg:py-1.5 lg:text-caption",
     clamp: "lg:line-clamp-2",
-    tag: "lg:absolute lg:-top-2 lg:right-1.5 lg:z-10",
+    tag: "lg:sr-only",
+    mark: "hidden lg:absolute lg:-top-1 lg:-right-1 lg:z-10 lg:block",
     corner: "lg:absolute lg:-top-1 lg:-right-1 lg:z-10",
     detail: "lg:sr-only",
     show: "hidden lg:block",
   },
   xl: {
-    list: "xl:grid xl:auto-cols-fr xl:grid-flow-col xl:gap-x-6 xl:gap-y-0 xl:border-l-0 xl:pl-0",
-    wide: "xl:col-span-2",
-    head: "xl:h-10",
+    list: "xl:grid xl:grid-cols-(--cols) xl:gap-x-6 xl:gap-y-0 xl:border-l-0 xl:pl-0",
+    head: "xl:h-8",
     body: "xl:flex xl:flex-1 xl:items-center",
-    nodes: "xl:relative xl:block xl:h-(--h) xl:w-full",
-    item: "xl:absolute xl:top-(--top) xl:left-(--left) xl:h-12 xl:w-(--w)",
-    box: "xl:h-full xl:px-2 xl:py-1.5 xl:text-caption",
+    nodes: "lg:grid-cols-3 xl:relative xl:block xl:h-(--h) xl:w-full",
+    item: "xl:absolute xl:top-(--top) xl:left-(--left) xl:h-11 xl:w-(--w)",
+    box: "xl:h-full xl:px-1.5 xl:py-1.5 xl:text-caption",
     clamp: "xl:line-clamp-2",
-    tag: "xl:absolute xl:-top-2 xl:right-1.5 xl:z-10",
+    tag: "xl:sr-only",
+    mark: "hidden xl:absolute xl:-top-1 xl:-right-1 xl:z-10 xl:block",
     corner: "xl:absolute xl:-top-1 xl:-right-1 xl:z-10",
     detail: "xl:sr-only",
     show: "hidden xl:block",
@@ -149,16 +155,21 @@ function NodeBody({ node, at }: { node: PipelineNode; at: Classes }) {
       </span>
       {quiet && <span className="sr-only">{word}</span>}
       {!quiet && (
-        <span
-          className={cx(
-            "flex w-fit max-w-full items-center gap-1 rounded-ds-xs border border-border-hairline bg-surface-card px-1.5 py-0.5 text-caption font-medium",
-            MARK[tone],
-            at.tag,
-          )}
-        >
-          <StatusShape shape={shape} />
-          <span className="text-text-primary">{word}</span>
-        </span>
+        <>
+          <span className={cx("flex-none", at.mark)}>
+            <Mark shape={shape} tone={tone} />
+          </span>
+          <span
+            className={cx(
+              "flex w-fit max-w-full items-center gap-1 rounded-ds-xs border border-border-hairline bg-surface-card px-1.5 py-0.5 text-caption font-medium",
+              MARK[tone],
+              at.tag,
+            )}
+          >
+            <StatusShape shape={shape} />
+            <span className="text-text-primary">{word}</span>
+          </span>
+        </>
       )}
       {node.detail !== undefined && (
         <span className={cx("text-caption font-normal text-pretty text-text-tertiary", at.detail)}>
@@ -212,7 +223,7 @@ function Stubs({
           className={cx(
             STUB,
             at.show,
-            sub === "B" ? "right-full w-[calc(100%+28px)]" : "-left-3 w-3",
+            sub === "B" ? "right-full w-[calc(100%+24px)]" : "-left-3 w-3",
             node.state === "blocked"
               ? "border-t border-dashed border-warning-mark"
               : "bg-connector",
@@ -228,7 +239,7 @@ function Stubs({
             STUB,
             at.show,
             "bg-connector",
-            sub === "A" && wide ? "left-full w-[calc(100%+28px)]" : "left-full w-3",
+            sub === "A" && wide ? "left-full w-[calc(100%+24px)]" : "left-full w-3",
             flowing.out && "pipeline-flow",
           )}
         />
@@ -274,8 +285,8 @@ function NodeItem({
 }) {
   const { node, top, sub } = entry;
   const classes = cx(BOX, boxTone(node), at.box);
-  const left = sub === "B" ? "calc(50% + 8px)" : "0px";
-  const width = sub === "S" ? "100%" : "calc(50% - 8px)";
+  const left = sub === "B" ? "calc(50% + 6px)" : "0px";
+  const width = sub === "S" ? "100%" : "calc(50% - 6px)";
   return (
     <li
       data-sub={sub}
@@ -333,12 +344,7 @@ function Stage({
     placed.filter(({ node }) => keep(node)).map(({ top }) => top);
   const emitters = context.last ? [] : centres((node) => !stops(node));
   return (
-    <li
-      className={cx(
-        "grid min-w-0 grid-rows-[auto_1fr] gap-3",
-        stage.nodes.length > WIDE && at.wide,
-      )}
-    >
+    <li className="grid min-w-0 grid-rows-[auto_1fr] gap-3">
       <Heading className={cx("block text-caption text-text-tertiary", at.head)}>
         <span>{stage.name}</span>
         <span className="ml-2 font-mono tabular-nums">{stage.nodes.length}</span>
@@ -410,7 +416,7 @@ export function Pipeline({
   label,
   stages,
   flow = "none",
-  columns = "lg",
+  columns = "xl",
   stageLevel = 3,
   legend = true,
 }: {
@@ -435,7 +441,11 @@ export function Pipeline({
   ];
   return (
     <>
-      <ol aria-label={label} className={cx("grid gap-4 border-l border-connector pl-4", at.list)}>
+      <ol
+        aria-label={label}
+        style={{ "--cols": shown.map(weight).join(" ") } as CSSProperties}
+        className={cx("grid gap-4 border-l border-connector pl-4", at.list)}
+      >
         {shown.map((stage, i) => (
           <Stage
             key={`${String(i)}-${stage.name}`}

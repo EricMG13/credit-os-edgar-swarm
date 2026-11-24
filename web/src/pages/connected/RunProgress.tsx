@@ -24,10 +24,11 @@ import {
 import { Breadcrumb } from "./layout";
 import { Bento, GapNote, Tile, Well } from "./report/overview/Tile";
 import {
-  PIPELINE_TILE,
+  HEADER_BLOCK,
+  HEADER_GRID,
   pipelineStages,
-  SPEND_TILE,
-  SpendTile,
+  SPEND_BLOCK,
+  SpendBlock,
   stoppedAt,
 } from "./runProgressParts";
 import {
@@ -351,19 +352,26 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
             </Alert>
           )}
           <Bento>
-            <SpendTile spend={spendFigure(run)} elapsed={elapsedFigure(run)} />
-            <Tile span={8} className={PIPELINE_TILE} label="Pipeline">
-              <div className="flex flex-col gap-3">
-                <h2 className="text-h4 font-medium text-text-primary">Module pipeline</h2>
-                {finished?.bar ? (
-                  <ProgressBar
-                    value={finished.bar.value}
-                    max={finished.bar.max}
-                    label={finished.bar.label}
-                  />
-                ) : (
-                  <p className="text-small text-text-tertiary">{finished?.note}</p>
-                )}
+            <Tile span={12} label="Pipeline">
+              <div className={HEADER_GRID}>
+                <SpendBlock spend={spendFigure(run)} elapsed={elapsedFigure(run)} />
+                <div className={HEADER_BLOCK}>
+                  <h2 className="text-h4 font-medium text-text-primary">Module pipeline</h2>
+                  {finished?.bar ? (
+                    <ProgressBar
+                      value={finished.bar.value}
+                      max={finished.bar.max}
+                      label={finished.bar.label}
+                    />
+                  ) : (
+                    <p className="text-small text-text-tertiary">{finished?.note}</p>
+                  )}
+                  {assessmentGaps.length > 0 && (
+                    <p className="text-small text-text-secondary">
+                      No assessment status is recorded for {assessmentGaps.join(", ")}.
+                    </p>
+                  )}
+                </div>
               </div>
               <Well className="border border-border-hairline p-4">
                 <Pipeline
@@ -373,11 +381,6 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
                   columns="xl"
                 />
               </Well>
-              {assessmentGaps.length > 0 && (
-                <p className="text-small text-text-secondary">
-                  No assessment status is recorded for {assessmentGaps.join(", ")}.
-                </p>
-              )}
             </Tile>
             <Tile span={12} label="Activity">
               <h2 className="text-h4 font-medium text-text-primary">What just happened</h2>
@@ -401,15 +404,24 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
           className="mt-6"
         >
           <Bento>
-            <Tile span={3} className={SPEND_TILE} label="Spend, loading">
-              {problem ? <GapNote>Spend is not known.</GapNote> : <Skeleton lines={5} />}
-            </Tile>
-            <Tile span={8} className={PIPELINE_TILE} label="Pipeline, loading">
-              {problem ? (
-                <GapNote>Progress is not known while this run cannot be read.</GapNote>
-              ) : (
-                <Skeleton lines={7} />
-              )}
+            <Tile span={12} label="Pipeline, loading">
+              <div className={HEADER_GRID}>
+                <section aria-label="Spend, loading" className={SPEND_BLOCK}>
+                  <Well className="border border-border-hairline p-4">
+                    {problem ? <GapNote>Spend is not known.</GapNote> : <Skeleton lines={4} />}
+                  </Well>
+                </section>
+                <div className={HEADER_BLOCK}>
+                  <Skeleton lines={2} />
+                </div>
+              </div>
+              <Well className="border border-border-hairline p-4">
+                {problem ? (
+                  <GapNote>Progress is not known while this run cannot be read.</GapNote>
+                ) : (
+                  <Skeleton lines={7} />
+                )}
+              </Well>
             </Tile>
             <Tile span={12} label="Activity, loading">
               {problem ? <GapNote>No activity is known.</GapNote> : <Skeleton lines={3} />}

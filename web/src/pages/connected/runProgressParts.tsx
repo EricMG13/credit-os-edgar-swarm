@@ -2,7 +2,7 @@ import { useId } from "react";
 import { Missing } from "@/components/gap/Missing";
 import type { PipelineNode, PipelineStage, PipelineState } from "@/components/pipeline";
 import type { Figure as RunFigure, ModuleStep, ModuleWord } from "../run/slice-activity";
-import { Figure, GapNote, Tile } from "./report/overview/Tile";
+import { Figure, GapNote, Well } from "./report/overview/Tile";
 import { byStage } from "./report/stages";
 
 const REPORT = "Report";
@@ -59,9 +59,10 @@ export function stoppedAt(steps: readonly ModuleStep[]): {
   };
 }
 
-/** The tiles' places: spend first in reading order, beside the pipeline from lg up. */
-export const PIPELINE_TILE = "lg:col-span-9 lg:col-start-1 lg:row-start-1";
-export const SPEND_TILE = "lg:col-start-10 lg:row-start-1 lg:self-start";
+/** The header's places inside the pipeline tile: spend first in reading order, beside the title from lg up. */
+export const HEADER_BLOCK = "grid min-w-0 gap-3 lg:col-span-6 lg:col-start-1 lg:row-start-1";
+export const SPEND_BLOCK = "min-w-0 lg:col-span-6 lg:col-start-7 lg:row-start-1";
+export const HEADER_GRID = "grid gap-4 lg:grid-cols-12 lg:items-start";
 
 /** Value against a limit: a track you can see, the spend filled, the cap marked at its end. */
 function CapMeter({ bar }: { bar: { value: number; max: number; label: string } }) {
@@ -93,37 +94,43 @@ function capOf(label: string) {
 }
 
 /** Spend against the cap as the page's one meter, with the amount in mono; then the time. */
-export function SpendTile({
+export function SpendBlock({
   spend,
   elapsed,
+  label = "Spend",
 }: {
   spend: RunFigure;
   elapsed: { value: string | null; note: string };
+  label?: string;
 }) {
   const cap = spend.bar === null ? undefined : capOf(spend.bar.label);
   return (
-    <Tile span={3} className={SPEND_TILE} label="Spend">
-      <h2 className="text-caption text-text-tertiary">Spend against the cap</h2>
-      {spend.value === null ? (
-        <GapNote>{spend.bar === null ? spend.note : "Spend is not known"}</GapNote>
-      ) : (
-        <div className="flex flex-col gap-3">
-          <Figure className="text-metric font-medium">{spend.value}</Figure>
-          {spend.bar === null ? (
-            <span className="text-small text-text-tertiary">{spend.note}</span>
+    <section aria-label={label} className={SPEND_BLOCK}>
+      <Well className="grid gap-x-6 gap-y-3 border border-border-hairline p-4 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="flex min-w-0 flex-col gap-3">
+          <p className="text-caption text-text-tertiary">Spend against the cap</p>
+          {spend.value === null ? (
+            <GapNote>{spend.bar === null ? spend.note : "Spend is not known"}</GapNote>
           ) : (
-            <>
-              <CapMeter bar={spend.bar} />
-              {cap !== undefined && <Figure className="text-small">{`Cap ${cap}`}</Figure>}
-            </>
+            <div className="flex flex-col gap-3">
+              <Figure className="text-metric font-medium">{spend.value}</Figure>
+              {spend.bar === null ? (
+                <span className="text-small text-text-tertiary">{spend.note}</span>
+              ) : (
+                <>
+                  <CapMeter bar={spend.bar} />
+                  {cap !== undefined && <Figure className="text-small">{`Cap ${cap}`}</Figure>}
+                </>
+              )}
+            </div>
           )}
         </div>
-      )}
-      <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-t border-border-hairline pt-4 text-small text-text-secondary">
-        <span>Elapsed</span>
-        <Figure className="text-body font-medium">{elapsed.value ?? <Missing />}</Figure>
-        <span className="text-text-tertiary">{elapsed.note}</span>
-      </p>
-    </Tile>
+        <p className="flex flex-col gap-1 border-t border-border-hairline pt-3 text-small text-text-secondary sm:border-t-0 sm:border-l sm:pt-0 sm:pl-6">
+          <span className="text-caption text-text-tertiary">Elapsed</span>
+          <Figure className="text-h4 font-medium">{elapsed.value ?? <Missing />}</Figure>
+          <span className="text-text-tertiary">{elapsed.note}</span>
+        </p>
+      </Well>
+    </section>
   );
 }

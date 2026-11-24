@@ -177,3 +177,20 @@ which this package does not own: they are requests 1 and 2 above. No other defec
 from the record, polling, restart-note id, edges, no test weakened, no hex or inline style).
 Not run: the paid or live drive; reduced-motion
 rendering was checked only by the CSS (the animation sits inside `prefers-reduced-motion: no-preference`).
+
+## 8. Coordinator review round (23 Nov 24, 17 items) — what changed
+
+Items 1–17 of the coordinator's review of 34145e4 were fixed on this branch, tests first. Layout
+now: Run progress = one pipeline tile whose header holds the h2, the one modules meter and the spend
+block (spend first in reading order, beside the title from `lg`), then the graph full width, then the
+feed. Run activity = counts line, then Running (one compact row per run: state, "n of m modules" in
+mono with one meter, "Now: module"), then Ended without a report (reason on the row), then Waiting.
+The pipeline draws two sub-columns for a stage of more than four nodes, a key of the states in
+use, flow modes (`delivered` for the Overview, `running` for a run in flight, `none` otherwise),
+one bus per gap, and columns from `xl` (a single list below; a three-column grid inside each stage
+from `lg`). Not done: spend on the activity row (the activity feed carries none for a run in flight);
+stage headings on the Overview stay h3 beside the tile's h3 title, because `lowerRows.test.tsx`
+(not to be changed) pins h3 stage headings.
+Screenshots re-taken at 390, 768, 1024, 1280 and 1440 from the built page with fixtures (22-module
+run in flight, checker stop with three modules in flight, failed with no reason, capped, finished,
+unreachable; activity list with two running, one waiting, three ended with long reasons, empty).

@@ -1,10 +1,16 @@
 import type { ReactNode } from "react";
 import { Badge } from "@/components/base/badges/badges";
-import { ProgressBar } from "@/components/base/progress-indicators/progress-indicators";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { StatusShape } from "@/components/status/shapes";
 import { TextLink } from "../run/TextLink";
-import { moduleName, pathwayName, serviceText, type EndedRun, type LiveRun } from "./api";
+import {
+  moduleName,
+  pathwayName,
+  serviceText,
+  type ConnectedModuleState,
+  type EndedRun,
+  type LiveRun,
+} from "./api";
 import { Figure, Tile } from "./report/overview/Tile";
 import { finishedFigure, stamp } from "./runFigures";
 
@@ -70,7 +76,9 @@ export function RunGroup({
 /** The module the run is on now, as its record states it. */
 function nowRunning(run: LiveRun) {
   const names = run.modules
-    .filter(([code, state]) => code !== "Report" && state === "running")
+    .filter(
+      ([code, state]: [string, ConnectedModuleState]) => code !== "Report" && state === "running",
+    )
     .map(([code]) => moduleName(code));
   if (names.length === 0) return null;
   return names.length > 2
@@ -109,8 +117,23 @@ export function RunningRow({ run }: { run: LiveRun }) {
       <div className="flex min-w-0 flex-col gap-1.5">
         {bar && (
           <div className="flex items-center gap-3">
-            <Figure className="flex-none text-body font-medium">{`${String(bar.value)} of ${String(bar.max)}`}</Figure>
-            <ProgressBar value={bar.value} max={bar.max} label={bar.label} labelBelow={false} />
+            <span className="flex-none whitespace-nowrap">
+              <Figure className="text-body font-medium">{`${String(bar.value)} of ${String(bar.max)}`}</Figure>
+              <span className="text-small text-text-tertiary"> modules</span>
+            </span>
+            <div
+              role="progressbar"
+              aria-label={bar.label}
+              aria-valuenow={bar.value}
+              aria-valuemin={0}
+              aria-valuemax={bar.max}
+              className="h-2 min-w-0 flex-1 overflow-hidden rounded-ds-full border border-border-container bg-surface-subtle"
+            >
+              <div
+                className="h-full bg-chart-1"
+                style={{ width: `${String((bar.value * 100) / bar.max)}%` }}
+              />
+            </div>
           </div>
         )}
         {now && <p className="text-small text-text-secondary">{`Now: ${now}`}</p>}
@@ -156,15 +179,15 @@ export function WaitingRow({ run, held }: { run: LiveRun; held: string }) {
 export function EndedRow({ run }: { run: EndedRun }) {
   return (
     <li className={`${ROW} md:grid-cols-[minmax(0,1.5fr)_minmax(0,3fr)] md:items-start`}>
-      <div className="flex min-w-0 flex-col gap-1.5">
+      <div className="flex min-w-0 flex-col gap-1">
         <RunIssuerLink run={run} />
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <StatusBadge set="Run states" state={ENDED[run.status]} />
           <Badge color="gray">{pathwayName(run.pathway)}</Badge>
+          <span className="text-caption text-text-tertiary tabular-nums">
+            {run.ended_at ? stamp(run.ended_at) : "Not recorded"}
+          </span>
         </div>
-        <p className="text-caption text-text-tertiary tabular-nums">
-          {run.ended_at ? stamp(run.ended_at) : "Not recorded"}
-        </p>
       </div>
       <p className="reading-copy text-small text-text-secondary wrap-anywhere">
         {serviceText(run.reason) || "The run record gives no reason."}
