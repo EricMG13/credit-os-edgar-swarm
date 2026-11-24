@@ -1,5 +1,6 @@
 import { driverTable } from "./forecastDrivers";
 import { RecordedForecastAssumptions, type ForecastSource } from "./ForecastRecord";
+import { GapChip } from "./ForecastGaps";
 import { GapNote, Tile } from "./overview/Tile";
 
 const SPAN = "Assumptions by case";
@@ -7,11 +8,7 @@ const SHOCKED_CASE = "Downside case";
 
 /** "Not stated": the gap chip. */
 function NotStated() {
-  return (
-    <span className="gap-hatch inline-flex items-center rounded-ds-xs border border-dashed border-border-gap px-2 py-0.5 text-caption text-gap-text">
-      Not stated
-    </span>
-  );
+  return <GapChip>Not stated</GapChip>;
 }
 
 /** The small accent mark that, with the words, says a recorded value differs from base. */
@@ -45,7 +42,7 @@ export function AssumptionsByCase({
   downsideNote?: string | undefined;
 }) {
   const tile = {
-    span: 7,
+    span: 8,
     label: SPAN,
     kicker: "Drivers as the forward model states them · read-only",
     title: SPAN,

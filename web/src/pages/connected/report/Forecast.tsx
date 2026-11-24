@@ -346,12 +346,12 @@ function ModelTiles({
         caseNames={forecastCaseNames(cashflow)}
         downsideNote={stringsIn(cashflow.notes).find((note) => note.startsWith("Downside case is"))}
       />
-      <UsesOfCash model={model} group={group} caseName={caseName} source={source} />
       <Tile
         span={8}
         label="Forecast grid"
         title="Forecast grid"
         kicker="Rows by measure, columns by year · only cells the model wrote; the others are the gap cell"
+        className="lg:self-start"
       >
         <div
           id="forecast-model"
@@ -368,20 +368,23 @@ function ModelTiles({
             href="#evidence/record"
             color="link-gray"
             size="sm"
-            className="w-fit min-h-8 max-[480px]:min-h-11"
+            className="min-h-8 w-fit max-[480px]:min-h-11"
           >
             Model notes and limitations
           </Button>
         </div>
       </Tile>
-      <ForecastScopeTiles
-        model={model}
-        folder={run.folder}
-        source={source}
-        note={<BasisNote model={model} handoff={handoff} href={href} />}
-        register={Boolean(model.register)}
-        select={select}
-      />
+      <div className="flex min-w-0 flex-col gap-4 lg:col-span-4">
+        <UsesOfCash model={model} group={group} caseName={caseName} source={source} />
+        <ForecastScopeTiles
+          model={model}
+          folder={run.folder}
+          source={source}
+          note={<BasisNote model={model} handoff={handoff} href={href} />}
+          register={Boolean(model.register)}
+          select={select}
+        />
+      </div>
     </>
   );
 }

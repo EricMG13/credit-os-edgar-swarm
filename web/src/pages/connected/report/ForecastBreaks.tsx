@@ -60,7 +60,9 @@ function FundingGapPart({ view, folder }: { view: ReportView; folder: string }) 
     return (
       <Part title="Funding gap">
         <ModuleGap>
-          {`Neither ${moduleName("CP-2D")} nor ${moduleName("CP-3C")} states a funding gap figure. Looked at: ${looked.join(" ")}`}
+          {looked.every((reason) => reason.endsWith("states no funding gap figure."))
+            ? `Neither ${moduleName("CP-2D")} nor ${moduleName("CP-3C")} states a funding gap figure.`
+            : `Neither ${moduleName("CP-2D")} nor ${moduleName("CP-3C")} states a funding gap figure. Looked at: ${looked.join(" ")}`}
         </ModuleGap>
       </Part>
     );
@@ -289,12 +291,14 @@ function useMeasuredWidth(fallback: number) {
 
 const ROW = 30;
 const HEAD = 22;
-const NAMES = 96;
+const NAMES = 104;
+const LABEL = 56;
 const GUTTER = 12;
 const lead = (text: string) => text.split(" (")[0] ?? text;
 
-/** The stress scenarios as one small multiple: a row per scenario, a column per measure, each
- * column one scale from zero shared by every scenario. */
+/** The stress scenarios as one small multiple: a row per scenario, a panel per measure, each
+ * panel one scale from zero shared by every scenario. Panels sit side by side where they fit and
+ * stack where the tile is narrow. */
 function StressMultiple({
   cases,
   panels,
@@ -303,8 +307,10 @@ function StressMultiple({
   panels: DownsidePanel[];
 }) {
   const { ref, width } = useMeasuredWidth(400);
-  const room = (width - NAMES - GUTTER * panels.length) / panels.length;
-  const height = HEAD + cases.length * ROW + 4;
+  const across = (width - NAMES) / panels.length >= 150 ? panels.length : 1;
+  const room = (width - NAMES - GUTTER * across) / across;
+  const block = HEAD + cases.length * ROW + 8;
+  const height = Math.ceil(panels.length / across) * block;
   const reading = cases
     .map(
       (item, at) =>
@@ -321,41 +327,45 @@ function StressMultiple({
         viewBox={`0 0 ${String(width)} ${String(height)}`}
         className="block max-w-full"
       >
-        {cases.map((item, row) => (
-          <text
-            key={item.id}
-            x="0"
-            y={HEAD + row * ROW + 19}
-            className={cx(
-              "text-caption",
-              item.control ? "fill-text-secondary" : "fill-text-primary",
-            )}
-          >
-            {item.name.length > 16 ? `${item.name.slice(0, 15)}…` : item.name}
-          </text>
-        ))}
-        {panels.map((panel, column) => {
-          const left = NAMES + GUTTER + column * (room + GUTTER);
+        {panels.map((panel, index) => {
+          const top = Math.floor(index / across) * block;
+          const left = NAMES + GUTTER + (index % across) * (room + GUTTER);
+          // The bars leave room for their figures, so no figure runs past its panel.
+          const bars = Math.max(40, room - LABEL);
           const span = panel.max - panel.min || 1;
-          const at = (value: number) => left + ((value - panel.min) / span) * room;
+          const at = (value: number) => left + ((value - panel.min) / span) * bars;
           return (
             <g key={panel.measure}>
-              <text x={left} y="12" className="fill-text-secondary text-caption">
-                {panel.measure.length > 22 ? `${panel.measure.slice(0, 21)}…` : panel.measure}
+              <text x={left} y={top + 12} className="fill-text-secondary text-caption">
+                {panel.measure}
               </text>
+              {(across === 1 || index % across === 0) &&
+                cases.map((item, row) => (
+                  <text
+                    key={item.id}
+                    x="0"
+                    y={top + HEAD + row * ROW + 19}
+                    className={cx(
+                      "text-caption",
+                      item.control ? "fill-text-secondary" : "fill-text-primary",
+                    )}
+                  >
+                    {item.name.length > 16 ? `${item.name.slice(0, 15)}…` : item.name}
+                  </text>
+                ))}
               <line
                 x1={at(0)}
                 x2={at(0)}
-                y1={HEAD}
-                y2={height - 2}
+                y1={top + HEAD}
+                y2={top + block - 6}
                 className="stroke-border-container"
               />
               {panel.cells.map((cell, row) => {
-                const y = HEAD + row * ROW + 6;
+                const y = top + HEAD + row * ROW + 6;
                 if (cell.value === null)
                   return (
                     <text key={row} x={left} y={y + 13} className="fill-gap-text text-caption">
-                      n.c.
+                      Not calculated
                     </text>
                   );
                 const from = Math.min(at(0), at(cell.value));
@@ -377,11 +387,9 @@ function StressMultiple({
                       }
                     />
                     <text
-                      x={Math.min(left + room, Math.max(at(0), at(cell.value)) + 4)}
+                      x={Math.max(at(0), at(cell.value)) + 4}
                       y={y + 12}
-                      strokeWidth="3"
-                      paintOrder="stroke"
-                      className="fill-text-primary stroke-surface-card font-mono text-caption"
+                      className="fill-text-primary font-mono text-caption"
                     >
                       {lead(cell.text)}
                     </text>
@@ -482,7 +490,13 @@ export function WhatBreaks({
   const apart = modelLimitation(handoff, /maturit|refinanc/iu);
   const covenant = modelLimitation(handoff, /covenant/iu);
   return (
-    <Tile span={4} label="What breaks, and when" title="What breaks, and when" trace={trace}>
+    <Tile
+      span={4}
+      label="What breaks, and when"
+      title="What breaks, and when"
+      trace={trace}
+      className="lg:row-span-2 lg:self-start"
+    >
       <FundingGapPart view={view} folder={folder} />
       <LiquidityPart model={model} group={group} caseName={caseName} />
       {apart && (

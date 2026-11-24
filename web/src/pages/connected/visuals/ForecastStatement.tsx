@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
-import { field } from "../layout";
-import { unitLabel } from "../publishedReport";
-import type { ForecastSource } from "../report/ForecastRecord";
+import { Segmented } from "@/components/kit/Segmented";
+import { readerText } from "../publishedReport";
+import type { ForecastSelection, ForecastSource } from "../report/ForecastRecord";
+import { ForecastGrid, GridQualifications, type GridColumn, type GridRow } from "./ForecastGrid";
 import { forecastCaseNames, gridOf, type CaseNames, type Grid } from "./LegacyForecast";
-import { ForecastTable } from "./ForecastTable";
 import { record, stringsIn, word } from "./visualData";
 import { analyzeScenarioPeriods, scenarioComparisonNotice } from "./scenarioPeriods";
 
@@ -70,6 +69,57 @@ function statementColumns(
   }));
 }
 
+type StatementColumn = ReturnType<typeof statementColumns>[number];
+/** A column the grid draws: one of the grid's own, or a case that publishes no column for the
+ * compared year (`source` null). */
+type ShownColumn = GridColumn & { source: StatementColumn | null };
+
+const ACTUAL_YEAR = /^FY(\d{4})A?$/u;
+const INTEREST_ROW = /^(?:Interest|Interest coverage(?: \(.*\))?)$/i;
+const NOT_PUBLISHED = "Not published";
+
+function shownOf(column: StatementColumn, band: string, label = column.label): ShownColumn {
+  const title = column.start && column.end ? `${column.start} to ${column.end}` : undefined;
+  return { label, band, title, source: column };
+}
+
+/** The latest actual fiscal year the grid publishes, which leads the selected case's years. */
+function latestActual(history: StatementColumn[]) {
+  let latest: { column: StatementColumn; year: string } | undefined;
+  for (const column of history) {
+    const year = ACTUAL_YEAR.exec(column.label)?.[1];
+    if (year && (!latest || year >= latest.year)) latest = { column, year };
+  }
+  return latest ? [latest.column] : [];
+}
+
+function selectedView(
+  selected: StatementColumn[],
+  projections: StatementColumn[],
+  history: StatementColumn[],
+) {
+  const lead = selected.length ? selected : projections;
+  if (!lead.length) return history.map((column) => shownOf(column, readerText(column.group)));
+  return [
+    ...latestActual(history).map((column) => shownOf(column, "Actual")),
+    ...lead.map((column) => shownOf(column, `Forecast · ${readerText(column.group)}`)),
+  ];
+}
+
+/** One column per case for one year; a case with no column for it reads "Not published". */
+function compareView(projections: StatementColumn[], period: string) {
+  const band = `Forecast · ${period}`;
+  const cases = [...new Map(projections.map((column) => [column.rawGroup, column])).values()];
+  return cases.map((member): ShownColumn => {
+    const column = projections.find(
+      ({ rawGroup, label }) => rawGroup === member.rawGroup && label === period,
+    );
+    return column
+      ? shownOf(column, band, readerText(column.group))
+      : { label: readerText(member.group), band, source: null };
+  });
+}
+
 function displayedColumns(
   grid: Grid,
   selectedCase: string | undefined,
@@ -98,115 +148,115 @@ function displayedColumns(
     .filter(({ groups }) => groups.length > 1)
     .map(({ period }) => period);
   const period = periods.includes(requestedPeriod) ? requestedPeriod : periods.at(-1);
-  const canCompare = periods.length > 0;
-  const selectedColumns = [selected, projections, history].find((group) => group.length) ?? [];
-  const views = new Map<View, typeof columns>([["selected", selectedColumns]]);
-  if (canCompare)
+  const views = new Map<View, ShownColumn[]>([
+    ["selected", selectedView(selected, projections, history)],
+  ]);
+  if (period !== undefined) views.set("compare", compareView(projections, period));
+  if (history.length)
     views.set(
-      "compare",
-      projections.filter(({ label }) => label === period),
+      "history",
+      history.map((c) => shownOf(c, readerText(c.group))),
     );
-  if (history.length) views.set("history", history);
   const view = views.has(requestedView) ? requestedView : "selected";
-  const visible = views.get(view) ?? selectedColumns;
+  const shown = views.get(view) ?? [];
   return {
-    selected,
-    projections,
-    history,
+    hasSelected: selected.length > 0,
+    hasProjections: projections.length > 0,
+    hasHistory: history.length > 0,
     periods,
     period,
-    canCompare,
+    canCompare: period !== undefined,
     comparison,
     notice: scenarioComparisonNotice(comparison),
     view,
-    visible,
+    shown,
   };
 }
 
-function displayedRows(grid: Grid, requestedFamily: Family, visible: { index: number }[]) {
-  const rowsByFamily = new Map<Family, Grid["rows"]>();
-  for (const row of grid.rows) {
-    const family = familyOf(row);
-    const rows = rowsByFamily.get(family);
-    if (rows) rows.push(row);
-    else rowsByFamily.set(family, [row]);
-  }
-  const family = rowsByFamily.has(requestedFamily)
-    ? requestedFamily
-    : ((Object.keys(families) as Family[]).find((key) => rowsByFamily.has(key)) ?? "accounts");
-  const rows = (rowsByFamily.get(family) ?? []).map((row) => ({
-    ...row,
-    cells: visible.map(({ index }) => row.cells[index] ?? {}),
-  }));
-  return { rowsByFamily, family, rows };
+const unique = (values: string[]) => [...new Set(values)];
+
+/** What every trace in the grid covers: exactly the columns shown, by raw group and period, and
+ * the compared year's recorded span only when one year is compared. */
+function gridSelection({
+  view,
+  shown,
+  period,
+  comparison,
+}: ReturnType<typeof displayedColumns>): ForecastSelection {
+  const visible = shown.flatMap(({ source }) => (source ? [source] : []));
+  const groups = unique(visible.map(({ group }) => group));
+  const cases = unique(visible.filter(({ forecast }) => forecast).map(({ group }) => group));
+  const basis =
+    view === "compare"
+      ? comparison.periods.find((candidate) => candidate.period === period)
+      : undefined;
+  return {
+    // The band names one case where the forecast columns are one case's, actual year or not.
+    case: cases.length === 1 ? cases[0] : groups.length === 1 ? groups[0] : "",
+    groups,
+    rawGroups: unique(visible.map(({ rawGroup }) => rawGroup)),
+    periods: basis ? [basis.period] : unique(visible.map(({ label }) => label)),
+    periodStart: basis?.start || undefined,
+    periodEnd: basis?.end || undefined,
+  };
 }
 
-function StatementPeriodControls({
-  view,
-  period,
-  periods,
-  hasSelected,
-  hasProjections,
-  hasHistory,
-  canCompare,
-  notice,
+function gridRows(grid: Grid, shown: ShownColumn[], period: string | undefined): GridRow[] {
+  const unpublished = {
+    status: "absent",
+    display: NOT_PUBLISHED,
+    reason: `This case publishes no ${period ?? ""} column.`,
+  };
+  return grid.rows.map((row) => ({
+    label: row.label,
+    band: row.band,
+    total: row.total,
+    family: families[familyOf(row)],
+    cells: shown.map(({ source }) => (source ? (row.cells[source.index] ?? {}) : unpublished)),
+  }));
+}
+
+function ColumnControls({
+  facts,
   setView,
   setPeriod,
 }: {
-  view: View;
-  period?: string;
-  periods: string[];
-  hasSelected: boolean;
-  hasProjections: boolean;
-  hasHistory: boolean;
-  canCompare: boolean;
-  /** What the reader is told about comparing these columns' cases, where anything is. */
-  notice: string | null;
+  facts: ReturnType<typeof displayedColumns>;
   setView: (view: View) => void;
   setPeriod: (period: string) => void;
 }) {
+  const { view, period, periods, hasSelected, hasProjections, hasHistory, canCompare } = facts;
+  const segments = [
+    {
+      key: "selected",
+      label: hasSelected
+        ? "Selected case"
+        : hasProjections
+          ? "Forecast periods"
+          : "Recorded periods",
+    },
+    ...(canCompare ? [{ key: "compare", label: "Compare one year" }] : []),
+    ...(hasHistory && hasProjections ? [{ key: "history", label: "History" }] : []),
+  ];
   return (
     <>
-      <label className="grid gap-1 text-small text-text-secondary">
-        Statement columns
-        <select
-          className={field}
-          value={view}
-          onChange={(event) => {
-            setView(event.target.value as View);
+      {segments.length > 1 && (
+        <Segmented
+          label="Grid columns"
+          segments={segments}
+          current={view}
+          onSelect={(key) => {
+            setView(key as View);
           }}
-        >
-          <option value="selected">
-            {hasSelected
-              ? "Selected case"
-              : hasProjections
-                ? "Forecast periods"
-                : "Recorded periods"}
-          </option>
-          {canCompare && <option value="compare">Compare scenarios</option>}
-          {hasHistory && hasProjections && <option value="history">Historical periods</option>}
-        </select>
-      </label>
-      {view === "compare" && (
-        <label className="grid gap-1 text-small text-text-secondary">
-          Comparison period
-          <select
-            className={field}
-            value={period}
-            onChange={(event) => {
-              setPeriod(event.target.value);
-            }}
-          >
-            {periods.map((label) => (
-              <option key={label}>{label}</option>
-            ))}
-          </select>
-        </label>
+        />
       )}
-      {notice && (
-        <p role="status" className="text-small text-text-secondary">
-          {notice}
-        </p>
+      {view === "compare" && period !== undefined && (
+        <Segmented
+          label="Year"
+          segments={periods.map((key) => ({ key, label: key }))}
+          current={period}
+          onSelect={setPeriod}
+        />
       )}
     </>
   );
@@ -214,8 +264,8 @@ function StatementPeriodControls({
 
 function StatementView({
   grid,
-  title,
-  units,
+  name,
+  heading,
   selectedCase,
   selectedRawGroup,
   caseNames,
@@ -223,29 +273,18 @@ function StatementView({
   source,
 }: {
   grid: Grid;
-  title: string;
-  units: string;
+  name: string;
+  /** A visible heading, only where the grid is not the tile's own. */
+  heading?: string;
   selectedCase?: string;
   selectedRawGroup?: string;
   caseNames: CaseNames;
   limits: string[];
   source?: ForecastSource;
 }) {
-  const [requestedFamily, setFamily] = useState<Family>("accounts");
   const [requestedView, setView] = useState<View>("selected");
   const [requestedPeriod, setPeriod] = useState("");
-  const {
-    selected,
-    projections,
-    history,
-    periods,
-    period,
-    canCompare,
-    comparison,
-    notice,
-    view,
-    visible,
-  } = displayedColumns(
+  const facts = displayedColumns(
     grid,
     selectedCase,
     selectedRawGroup,
@@ -253,81 +292,41 @@ function StatementView({
     requestedView,
     requestedPeriod,
   );
-  const { rowsByFamily, family, rows } = displayedRows(grid, requestedFamily, visible);
-  const groups = [...new Set(visible.map(({ group }) => group))];
-  const rawGroups = [...new Set(visible.map(({ rawGroup }) => rawGroup))];
-  // Only the compare view shows one period; the other views trace every column they show.
-  const periodBasis =
-    view === "compare"
-      ? comparison.periods.find((candidate) => candidate.period === period)
-      : undefined;
+  const selection = gridSelection(facts);
+  const trace =
+    source &&
+    ((label: string, extra: ForecastSelection) => source(label, { ...selection, ...extra }));
+  // The recorded interest basis qualifies the interest rows; it is drawn once, under the grid.
+  const interest = grid.rows.some(({ label }) => INTEREST_ROW.test(label))
+    ? unique(limits.filter((text) => /^Base interest\b/i.test(text)))
+    : [];
+  const qualification = "Interest basis qualification";
   return (
-    <section className="grid min-w-0 content-start gap-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="font-display text-h4">{title}</h3>
-        <span className="text-small text-text-secondary">
-          {family === "accounts"
-            ? unitLabel(units) || "Units not recorded"
-            : { ratios: "Multiples and percentages", growth: "Percent", other: "Recorded units" }[
-                family
-              ]}
-        </span>
+    <div className="grid min-w-0 content-start gap-3">
+      {heading && <h3 className="text-small font-semibold">{heading}</h3>}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <ColumnControls facts={facts} setView={setView} setPeriod={setPeriod} />
       </div>
-      <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
-        <ButtonGroup
-          aria-label="Statement lines"
-          size="sm"
-          disallowEmptySelection
-          selectedKeys={[family]}
-          onSelectionChange={(keys) => {
-            setFamily([...keys][0] as Family);
-          }}
-        >
-          {(Object.keys(families) as Family[])
-            .filter((key) => rowsByFamily.has(key))
-            .map((key) => (
-              <ButtonGroupItem key={key} id={key}>
-                {families[key]}
-              </ButtonGroupItem>
-            ))}
-        </ButtonGroup>
-
-        <StatementPeriodControls
-          view={view}
-          period={period}
-          periods={periods}
-          hasSelected={selected.length > 0}
-          hasProjections={projections.length > 0}
-          hasHistory={history.length > 0}
-          canCompare={canCompare}
-          notice={notice}
-          setView={setView}
-          setPeriod={setPeriod}
-        />
-      </div>
-      <ForecastTable
-        key={family}
-        grid={{ columns: visible, rows }}
-        title={title}
-        limits={limits}
-        source={
-          source &&
-          ((name, selection) =>
-            source(name, {
-              case: groups.length === 1 ? groups[0] : "",
-              groups,
-              rawGroups,
-              periods: periodBasis ? [periodBasis.period] : undefined,
-              periodStart: periodBasis?.start || undefined,
-              periodEnd: periodBasis?.end || undefined,
-              ...selection,
-            }))
-        }
-        evidenceOnlyQualifications
-        statement
-        keepColumns={view === "compare"}
+      {facts.notice && (
+        <p role="status" className="text-small text-text-secondary">
+          {facts.notice}
+        </p>
+      )}
+      <ForecastGrid
+        name={name}
+        columns={facts.shown}
+        rows={gridRows(grid, facts.shown, facts.period)}
+        gapNotes={{ [NOT_PUBLISHED]: "the case publishes no column for this year." }}
+        source={trace && ((row) => trace(row, { row }))}
       />
-    </section>
+      <GridQualifications
+        items={interest.map((text) => ({
+          label: qualification,
+          text,
+          trace: trace?.(qualification, { recordedQualification: text }),
+        }))}
+      />
+    </div>
   );
 }
 
@@ -349,7 +348,6 @@ export function ForecastStatement({
   if (!main) return <p>This model has no readable calculation record.</p>;
   const grid = joinCases(main, other);
   const props = {
-    units: word(cashflow.units),
     selectedCase,
     selectedRawGroup,
     // The model's one case naming, whether its grids are drawn joined or as two statements.
@@ -359,8 +357,15 @@ export function ForecastStatement({
   };
   return (
     <div className="grid min-w-0 gap-5">
-      <StatementView grid={grid ?? main} title="Cash flow model" {...props} />
-      {!grid && other && <StatementView grid={other} title="Other forecast cases" {...props} />}
+      <StatementView grid={grid ?? main} name="Forecast grid" {...props} />
+      {!grid && other && (
+        <StatementView
+          grid={other}
+          name="Other forecast cases"
+          heading="Other forecast cases"
+          {...props}
+        />
+      )}
     </div>
   );
 }
