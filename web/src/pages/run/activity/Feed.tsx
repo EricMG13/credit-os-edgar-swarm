@@ -40,12 +40,12 @@ export function Feed({
     })
     .reverse();
   return (
-    <ul className={columns ? "grid gap-x-6 lg:grid-cols-2 xl:grid-cols-3" : undefined}>
+    <ul className={columns ? "gap-x-6 lg:columns-2 xl:columns-3" : undefined}>
       {entries.map(({ line, key }, i) => {
         const { shape, tone } = stateOf(line);
         const last = i === lines.length - 1;
         return (
-          <li key={key}>
+          <li key={key} className={columns ? "break-inside-avoid" : undefined}>
             <article className={cx("flex", columns ? "items-center gap-2 py-1" : "gap-3")}>
               <div className="flex flex-none flex-col items-center">
                 <span

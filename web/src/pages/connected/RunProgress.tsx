@@ -396,14 +396,16 @@ export function RunProgress({ id, mode }: { id: string; mode: Mode }) {
                   )}
                 </div>
               </div>
-              <Well className="border border-border-hairline p-1.5">
-                <Pipeline
-                  label="Modules in this run"
-                  stages={stages}
-                  flow={live ? "running" : "none"}
-                  legend={false}
-                />
-              </Well>
+              {stages.length > 0 && (
+                <Well className="border border-border-hairline p-1.5">
+                  <Pipeline
+                    label="Modules in this run"
+                    stages={stages}
+                    flow={live ? "running" : "none"}
+                    legend={false}
+                  />
+                </Well>
+              )}
             </Tile>
             <Tile span={12} label="Activity" className="gap-2 p-3 sm:p-4">
               <h2 className="text-h4 font-medium text-text-primary">What just happened</h2>

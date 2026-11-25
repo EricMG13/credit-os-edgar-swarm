@@ -179,29 +179,54 @@ describe("Run progress layout", () => {
     ended_at: "2026-11-24T21:03:30Z",
   };
 
-  it("names only the earliest unaccepted module when the checks stopped a run with several in flight", async () => {
+  it("names the module whose drafts the record says were rejected, not an earlier one still in flight", async () => {
     serve({
       ...stopped,
       modules: [
         ["CP-0", "done"],
         ["CP-2", "stopped"],
-        ["CP-3", "stopped"],
-        ["CP-4", "stopped"],
+        ["CP-2A", "stopped"],
+        ["CP-2D", "stopped"],
         ["Report", "waiting"],
       ],
       events: [
         { kind: "module_started", at: "2026-11-24T21:03:00Z", module: "CP-2" },
-        { kind: "module_started", at: "2026-11-24T21:03:01Z", module: "CP-3" },
-        { kind: "module_started", at: "2026-11-24T21:03:02Z", module: "CP-4" },
-        { kind: "draft_rejected", at: "2026-11-24T21:03:20Z", module: "CP-2" },
+        { kind: "module_started", at: "2026-11-24T21:03:01Z", module: "CP-2A" },
+        { kind: "module_started", at: "2026-11-24T21:03:02Z", module: "CP-2D" },
+        { kind: "draft_rejected", at: "2026-11-24T21:03:20Z", module: "CP-2A" },
+        { kind: "draft_rejected", at: "2026-11-24T21:03:25Z", module: "CP-2A" },
+        { kind: "stopped", at: "2026-11-24T21:03:30Z" },
+      ],
+    });
+    render(<ConnectedApp path={`/run/${ID}`} mode="live" />);
+    const alert = await screen.findByRole("alert");
+    // Fundamental credit is earlier in plan order and still open, but the record rejected Downside's drafts.
+    expect(
+      within(alert).getByText(
+        "Where it stopped: Downside. The run stopped here after the checks rejected its draft 2 times.",
+      ),
+    ).toBeVisible();
+    expect(alert).not.toHaveTextContent("Fundamental credit");
+  });
+
+  it("names the earliest module in plan order when the record names none it rejected", async () => {
+    serve({
+      ...stopped,
+      modules: [
+        ["CP-0", "done"],
+        ["CP-2", "stopped"],
+        ["CP-2A", "stopped"],
+        ["Report", "waiting"],
+      ],
+      events: [
+        { kind: "module_started", at: "2026-11-24T21:03:00Z", module: "CP-2" },
+        { kind: "module_started", at: "2026-11-24T21:03:01Z", module: "CP-2A" },
         { kind: "stopped", at: "2026-11-24T21:03:30Z" },
       ],
     });
     render(<ConnectedApp path={`/run/${ID}`} mode="live" />);
     const alert = await screen.findByRole("alert");
     expect(within(alert).getByText(/Where it stopped: Fundamental credit\./)).toBeVisible();
-    expect(alert).not.toHaveTextContent("Security selection");
-    expect(alert).not.toHaveTextContent("Where it stopped: Fundamental credit, ");
   });
 
   it("draws the stop notice, with its action inside, when the record gives no reason", async () => {
@@ -230,6 +255,23 @@ describe("Run progress layout", () => {
     render(<ConnectedApp path={`/run/${ID}`} mode="live" />);
     const alert = await screen.findByRole("alert");
     expect(within(alert).getByText("Where it stopped: the run record does not say.")).toBeVisible();
+  });
+
+  it("draws no empty well and no empty key when the run lists no modules", async () => {
+    serve({ ...run, modules: [] });
+    render(<ConnectedApp path={`/run/${ID}`} mode="live" />);
+    await screen.findByRole("region", { name: "Pipeline" });
+    expect(screen.queryByRole("list", { name: "Pipeline key" })).toBeNull();
+    expect(screen.queryByRole("list", { name: "Modules in this run" })).toBeNull();
+    expect(screen.getByText("No analytical modules listed")).toBeVisible();
+  });
+
+  it("orders the feed down each column, not across", async () => {
+    serve(run);
+    render(<ConnectedApp path={`/run/${ID}`} mode="live" />);
+    await screen.findByText("USD 7.40");
+    const feed = screen.getByRole("region", { name: "Activity" }).querySelector("ul");
+    expect(feed).toHaveClass("lg:columns-2", "xl:columns-3");
   });
 
   it("makes the stop notice compact: one paragraph, then its action", async () => {
@@ -333,7 +375,7 @@ describe("Run activity layout", () => {
     expect(within(running).queryByRole("grid")).toBeNull();
   });
 
-  it("says what a run is doing when only the report is left, from the record's own state", async () => {
+  it("says what a run is doing when only the report is left, from the record's own row", async () => {
     serve({
       ...list,
       runs: [
@@ -349,7 +391,7 @@ describe("Run activity layout", () => {
     render(<ConnectedApp path="/runs" mode="live" />);
     const row = (await screen.findByRole("link", { name: "Alder Metals" })).closest("li");
     expect(row).toHaveTextContent("2 of 2");
-    expect(within(row as HTMLElement).getByText("Now: building the report")).toBeVisible();
+    expect(within(row as HTMLElement).getByText("Now: Report delivery")).toBeVisible();
   });
 
   it("names every module that is running, none left to a count", async () => {

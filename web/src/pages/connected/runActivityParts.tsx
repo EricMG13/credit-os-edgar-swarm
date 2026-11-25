@@ -74,11 +74,11 @@ export function RunGroup({
   );
 }
 
-/** Every module the run is on now, as its record states it; the report's own state is its building. */
+/** Every module the run is on now, as its record states it; the report's own row is its delivery. */
 function nowRunning(run: LiveRun) {
   const names = run.modules
     .filter(([, state]: [string, ConnectedModuleState]) => state === "running")
-    .map(([code]) => (code === "Report" ? "building the report" : moduleName(code)));
+    .map(([code]) => (code === "Report" ? "Report delivery" : moduleName(code)));
   return names.length === 0 ? null : names.join(", ");
 }
 

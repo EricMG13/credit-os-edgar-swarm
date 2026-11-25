@@ -2027,6 +2027,10 @@ describe("connected activity and reports", () => {
     ).toHaveAttribute("href", "/runs");
     expect(screen.getByText("Source readiness")).toBeInTheDocument();
     expect(screen.getByRole("progressbar", { name: "Spend against cap" })).toHaveAttribute(
+      "aria-valuetext",
+      expect.stringMatching(/USD 0.00 of USD 25.00 cap usage/),
+    );
+    expect(screen.getByRole("progressbar", { name: "Spend against cap" })).toHaveAttribute(
       "aria-valuenow",
       "0",
     );

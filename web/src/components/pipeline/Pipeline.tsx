@@ -121,8 +121,8 @@ const AT = {
   box: "lg:h-full lg:min-h-0 lg:px-1.5 lg:py-1 lg:text-caption",
   clamp: "lg:line-clamp-2",
   tag: "lg:sr-only",
-  mark: "hidden lg:absolute lg:-top-1 lg:-right-1 lg:z-10 lg:block",
-  corner: "lg:absolute lg:-top-1 lg:-right-1 lg:z-10",
+  mark: "hidden lg:absolute lg:-top-1.5 lg:-right-2 lg:z-10 lg:block",
+  corner: "lg:absolute lg:-top-1.5 lg:-right-2 lg:z-10",
   detail: "lg:sr-only",
   show: "hidden lg:block",
 } as const;
@@ -438,6 +438,7 @@ export function PipelineKey({
       stages.flatMap((stage) => stage.nodes.map(stateOf)).map((state) => [state.word, state]),
     ).values(),
   ];
+  if (words.length === 0) return null;
   return (
     <ul
       aria-label="Pipeline key"

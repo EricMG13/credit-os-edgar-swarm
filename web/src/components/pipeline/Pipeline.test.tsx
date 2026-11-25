@@ -342,3 +342,9 @@ it("keeps every node of a two-column stage 40px, marking a blocked one instead o
     within(screen.getByRole("list", { name: "Pipeline key" })).getByText("Not assessable"),
   ).toBeVisible();
 });
+
+it("keeps the corner mark clear of the node's name", () => {
+  render(<Pipeline label="Stages" stages={stages} />);
+  const corner = nodeOf("Source readiness").querySelector('[class*="lg:-right-2"]');
+  expect(corner).not.toBeNull();
+});
