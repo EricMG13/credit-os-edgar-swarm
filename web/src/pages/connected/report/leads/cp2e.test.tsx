@@ -119,8 +119,11 @@ it("states the foreign-share gap, lists the hedge terms without sources and the 
   expect(within(terms).queryByText(/tdg-20240930/)).toBeNull();
   const dates = screen.getByRole("list", { name: "Hedge dates" });
   const rows = within(dates).getAllByRole("listitem");
-  expect(rows).toHaveLength(5);
+  // All five dated rows are drawn: the first three in the lane, the other two behind its disclosure.
+  expect(rows).toHaveLength(3);
   expect(rows[0]).toHaveTextContent("2023-03-31");
+  const more = screen.getByRole("list", { name: "Hedge dates, the other dated rows" });
+  expect(within(more).getAllByRole("listitem")).toHaveLength(2);
 });
 
 it("reads the hedge register by id where the canonical title does not match (h4)", () => {

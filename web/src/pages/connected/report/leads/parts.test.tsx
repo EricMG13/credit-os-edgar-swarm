@@ -383,3 +383,40 @@ it("puts a drawn map in a named, focusable region so a deep map can be scrolled 
   const region = screen.getByRole("region", { name: "Ownership map" });
   expect(region).toHaveAttribute("tabindex", "0");
 });
+
+it("shows a long lane's first three dated rows and keeps the rest behind a disclosure", () => {
+  const events = ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05"].map((date, at) => ({
+    date,
+    precision: "month",
+    published: "2024-11-07",
+    event: `Event ${String(at + 1)}`,
+    status: "Scheduled — maturity",
+    relevance: "",
+    line: 10 + at,
+  }));
+  const { container } = render(<DatedList label="Hedge dates" events={events} />);
+  expect(
+    within(screen.getByRole("list", { name: "Hedge dates" })).getAllByRole("listitem"),
+  ).toHaveLength(3);
+  const more = container.querySelector("details");
+  expect(more).not.toHaveAttribute("open");
+  expect(within(more as HTMLElement).getByText("Show the other 2 dated rows")).toBeInTheDocument();
+  expect(within(more as HTMLElement).getByText("Event 5")).toBeInTheDocument();
+});
+
+it("keeps a lane of four rows whole", () => {
+  const events = ["2025-01", "2025-02", "2025-03", "2025-04"].map((date, at) => ({
+    date,
+    precision: "month",
+    published: "2024-11-07",
+    event: `Event ${String(at + 1)}`,
+    status: "Scheduled — maturity",
+    relevance: "",
+    line: 10 + at,
+  }));
+  const { container } = render(<DatedList label="Funding dates" events={events} />);
+  expect(
+    within(screen.getByRole("list", { name: "Funding dates" })).getAllByRole("listitem"),
+  ).toHaveLength(4);
+  expect(container.querySelector("details")).toBeNull();
+});

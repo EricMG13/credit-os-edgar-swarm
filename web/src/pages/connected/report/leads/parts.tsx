@@ -592,6 +592,9 @@ function publishedText(text = "") {
  * Dated events, earliest first, each date at the precision the module states, with its status,
  * publication date and credit relevance; `notDrawn` rows of the table the page could not place.
  */
+/** How many dated rows a lane shows before the rest go behind a disclosure. */
+const FOLD_AFTER = 3;
+
 export function DatedList({
   label,
   events,
@@ -604,43 +607,55 @@ export function DatedList({
   href?: (line: number) => string;
 }) {
   const total = events.length + notDrawn;
+  // A long lane shows its first dated rows and keeps the rest one click away, so a P3 list does
+  // not outgrow the figures above it.
+  const folded = events.length > FOLD_AFTER + 1;
+  const first = folded ? events.slice(0, FOLD_AFTER) : events;
+  const rest = folded ? events.slice(FOLD_AFTER) : [];
+  const row = (item: DatedItem) => {
+    const cut = item.status.indexOf(" — ");
+    const kind = cut < 0 ? item.status : item.status.slice(0, cut);
+    const detail = cut < 0 ? "" : item.status.slice(cut + 3);
+    const published = publishedText(item.published);
+    return (
+      <li
+        key={item.line}
+        className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-3 border-t border-border-hairline py-2.5 first:border-t-0"
+      >
+        <span className="font-mono text-small text-text-primary tabular-nums">{item.date}</span>
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span className="flex items-start justify-between gap-2 text-small wrap-anywhere text-text-primary">
+            {item.event}
+            {href && <Trace href={href(item.line)} name={item.event} />}
+          </span>
+          <span className="text-caption text-text-tertiary">
+            <span>{kind}</span>
+            {detail ? ` · ${detail}` : ""}
+            {published ? ` · ${published}` : ""}
+          </span>
+          {item.relevance && (
+            <span className="text-caption wrap-anywhere text-text-secondary">{item.relevance}</span>
+          )}
+        </span>
+      </li>
+    );
+  };
   return (
     <div className="flex min-w-0 flex-col gap-2">
-      {events.length > 0 && (
+      {first.length > 0 && (
         <ol aria-label={label} className="flex flex-col">
-          {events.map((item) => {
-            const cut = item.status.indexOf(" — ");
-            const kind = cut < 0 ? item.status : item.status.slice(0, cut);
-            const detail = cut < 0 ? "" : item.status.slice(cut + 3);
-            const published = publishedText(item.published);
-            return (
-              <li
-                key={item.line}
-                className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-3 border-t border-border-hairline py-2.5 first:border-t-0"
-              >
-                <span className="font-mono text-small text-text-primary tabular-nums">
-                  {item.date}
-                </span>
-                <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="flex items-start justify-between gap-2 text-small wrap-anywhere text-text-primary">
-                    {item.event}
-                    {href && <Trace href={href(item.line)} name={item.event} />}
-                  </span>
-                  <span className="text-caption text-text-tertiary">
-                    <span>{kind}</span>
-                    {detail ? ` · ${detail}` : ""}
-                    {published ? ` · ${published}` : ""}
-                  </span>
-                  {item.relevance && (
-                    <span className="text-caption wrap-anywhere text-text-secondary">
-                      {item.relevance}
-                    </span>
-                  )}
-                </span>
-              </li>
-            );
-          })}
+          {first.map(row)}
         </ol>
+      )}
+      {rest.length > 0 && (
+        <details className="group min-w-0 border-t border-border-hairline">
+          <summary className="flex min-h-11 cursor-pointer items-center gap-2 rounded-ds-xs text-small font-medium text-text-link outline-focus-ring focus-visible:outline-2 sm:min-h-8">
+            {`Show the other ${String(rest.length)} dated rows`}
+          </summary>
+          <ol aria-label={`${label}, the other dated rows`} className="flex flex-col">
+            {rest.map(row)}
+          </ol>
+        </details>
       )}
       {notDrawn > 0 && (
         <p className="text-caption text-text-secondary">
