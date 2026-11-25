@@ -534,7 +534,7 @@ function PanelRow({
 function Downside({ data, href }: { data: Downside | null; href: NoteHref }) {
   const { frame, measured } = useFrameWidth();
   if (!data)
-    return <FigureGap reason="The downside handoff states no stressed metric that can be drawn." />;
+    return <FigureGap reason="The downside module states no stressed metric that can be drawn." />;
   const width = measured === null || measured <= 0 ? DOWNSIDE.width : Math.round(measured);
   const step = perRow(width);
   const rows = Array.from({ length: Math.ceil(data.panels.length / step) }, (_, at) =>

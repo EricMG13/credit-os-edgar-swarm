@@ -297,7 +297,7 @@ it("draws a passage the lead did not write as a gap, and nothing without a credi
     <JudgementRow snapshot={snapshot} run={run} view={view([lead], lead)} />,
   );
   expect(
-    screen.getAllByText("Not established for this run. The module's handoff has no such passage."),
+    screen.getAllByText("Not established for this run. The module wrote no such passage."),
   ).toHaveLength(2);
   expect(
     screen.getByText(/The two outcomes, resolved favourably and resolved adversely/),

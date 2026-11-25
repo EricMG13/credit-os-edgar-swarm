@@ -7,7 +7,7 @@ import { JudgementRow } from "./JudgementRow";
 afterEach(cleanup);
 
 const CONTRARY = "Contrary evidence and what would change the view";
-const MISSING = "Not established for this run. The module's handoff has no such passage.";
+const MISSING = "Not established for this run. The module wrote no such passage.";
 
 const words = (line: number, text: string): Block => ({ type: "text", line, end: line, text });
 const grid = (line: number, headers: string[], ...rows: string[][]): Block => ({

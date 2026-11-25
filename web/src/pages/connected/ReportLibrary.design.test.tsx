@@ -562,7 +562,7 @@ describe("the overview carries every module's bottom line and the run's limitati
       within(bottomLines).getByText(/Leverage is high; Liquidity covers two years\./),
     ).toBeVisible();
     // CP-3 wrote no bottom line: a gap. CP-4 wrote one that cites a file: a link, not a gap.
-    expect(within(bottomLines).getAllByText(/handoff has no bottom line/)).toHaveLength(1);
+    expect(within(bottomLines).getAllByText(/wrote no bottom line/)).toHaveLength(1);
     expect(
       within(bottomLines).getByRole("link", { name: "Read this bottom line in Evidence" }),
     ).toHaveAttribute(

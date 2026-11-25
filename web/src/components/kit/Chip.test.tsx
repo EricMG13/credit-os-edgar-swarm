@@ -47,7 +47,7 @@ it("draws a removable chip named for the filter it removes", () => {
 });
 
 it("wraps a long filter chip inside its column and keeps the remove mark in view", () => {
-  const long = "Module: Business & governance, No handoff; run plan not recorded";
+  const long = "Module: Business & governance, No output; run plan not recorded";
   render(<RemovableChip onRemove={vi.fn()}>{long}</RemovableChip>);
   const chip = screen.getByRole("button", { name: `Remove filter ${long}` });
   expect(chip).not.toHaveClass("whitespace-nowrap");

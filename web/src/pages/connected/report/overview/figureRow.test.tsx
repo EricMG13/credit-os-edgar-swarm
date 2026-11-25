@@ -236,7 +236,7 @@ describe("the latest figure is the latest period, never the last row", () => {
     );
     expect(
       within(gross()).getByText(
-        "No change is drawn: the handoff's period table does not state when FY2024 starts and ends.",
+        "No change is drawn: the period table does not state when FY2024 starts and ends.",
       ),
     ).toBeVisible();
     expect(gross()).not.toHaveTextContent(/Better|Worse|-1\.00x/);
@@ -458,7 +458,7 @@ describe("the true reason a figure is not drawn", () => {
     );
     expect(
       within(gross()).getByText(
-        "The financial foundation's handoff could not be read; it is in Evidence.",
+        "The financial foundation's output could not be read; it is in Evidence.",
       ),
     ).toBeVisible();
   });

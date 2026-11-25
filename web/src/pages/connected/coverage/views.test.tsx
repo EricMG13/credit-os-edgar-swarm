@@ -95,7 +95,7 @@ it("groups the module columns under the five stages and draws each state as a sh
   );
   expect(shapes).toEqual(["filled circle", "dashed ring", "slashed circle", "ring"]);
   expect(within(alpha).getByLabelText(/Fundamental credit.*: Delivered with gaps$/)).toBeVisible();
-  expect(within(alpha).getByLabelText(/Committee decision.*: No handoff published$/)).toBeVisible();
+  expect(within(alpha).getByLabelText(/Committee decision.*: No output published$/)).toBeVisible();
   const beta = within(table).getByRole("row", { name: /Beta SA/ });
   expect(within(beta).getByLabelText(/for Beta SA: Unreadable$/)).toBeVisible();
   expect(within(beta).getByLabelText(/for Beta SA: Not asked for in this run$/)).toBeVisible();
@@ -105,7 +105,7 @@ it("groups the module columns under the five stages and draws each state as a sh
   // Every state has its own shape, and the legend draws the cells' own marks.
   const legendShapes = legend.getAllByRole("listitem").map((item) => item.querySelector("svg")?.getAttribute("data-shape"));
   expect(new Set(legendShapes).size).toBe(7);
-  expect(legend.getByText("No handoff; run plan not recorded")).toBeVisible();
+  expect(legend.getByText("No output; run plan not recorded")).toBeVisible();
   expect(legend.getByText("Not assessable").closest("li")?.querySelector(".border-dashed")).not.toBeNull();
   expect(legend.getByText("Delivered with gaps")).toBeVisible();
 });
@@ -296,12 +296,12 @@ it("gives every cell focus and reads the issuer, module and state aloud under th
   );
   const status = screen.getByRole("status");
   expect(status).toHaveTextContent(
-    "Point at or focus a shape to read its state; a shape with a handoff opens the module.",
+    "Point at or focus a shape to read its state; a shape with an output opens the module.",
   );
   // A module with no handoff is a button, not an unfocusable mark.
-  const none = screen.getByRole("button", { name: /Committee decision for Alpha plc: No handoff published/ });
+  const none = screen.getByRole("button", { name: /Committee decision for Alpha plc: No output published/ });
   fireEvent.focus(none);
-  expect(status).toHaveTextContent(/Alpha plc .*Committee decision: No handoff published/);
+  expect(status).toHaveTextContent(/Alpha plc .*Committee decision: No output published/);
   const linked = screen.getByRole("link", { name: /Legal & covenants for Alpha plc: Not assessable/ });
   fireEvent.mouseEnter(linked);
   expect(status).toHaveTextContent(/Legal & covenants: Not assessable/);

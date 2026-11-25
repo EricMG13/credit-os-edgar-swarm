@@ -19,7 +19,7 @@ function side(ran: boolean, bottomLine: string | null) {
   if (bottomLine == null) return ran ? "Not stated" : "Did not run";
   const { body } = readParagraph(bottomLine);
   return containsReference(body)
-    ? "See the retained handoff in Evidence."
+    ? "See the module's output in Evidence."
     : words(body) || "Not stated";
 }
 

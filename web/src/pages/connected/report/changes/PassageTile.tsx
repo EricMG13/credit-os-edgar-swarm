@@ -61,7 +61,7 @@ export function PassageBody({
                 Read {item.label} in Evidence
               </a>
             ) : item.table.rows.length === 0 ? (
-              <p className="text-small text-gap-text">This table has no rows in the handoff.</p>
+              <p className="text-small text-gap-text">This table has no rows.</p>
             ) : (
               <PublishedTable
                 table={item.table}
@@ -105,7 +105,7 @@ export function PassageTile({
 }) {
   let body: ReactNode;
   if (items === null || items.length === 0)
-    body = <GapNote>Not established for this run: the handoff has no such passage.</GapNote>;
+    body = <GapNote>Not established for this run: the module wrote no such passage.</GapNote>;
   else
     body = (
       <PassageBody items={items} noun={noun} entry={entry} folder={folder} numbered={numbered} />

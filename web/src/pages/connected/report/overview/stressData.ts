@@ -97,7 +97,7 @@ const STATED_GAP = /^Not (?:supplied|calculated):\s*(\S.*)$/;
 function stressCell(text: string, unit: string): Cell {
   const plain = text.replaceAll("−", "-").trim();
   const value = amount(plain, unit) ?? amount(LEAD_NUMBER.exec(plain)?.[1] ?? "");
-  const reason = STATED_GAP.exec(text.trim())?.[1] ?? (plain ? null : "No value in the handoff");
+  const reason = STATED_GAP.exec(text.trim())?.[1] ?? (plain ? null : "No value stated");
   return { text, value, reason: value === null ? reason : null };
 }
 
@@ -152,10 +152,10 @@ function downsideCaseList(entry: OutputEntry, ids: string[]) {
   const named = ids.filter((id) => scenarios.get(id)?.name).length;
   const numbering =
     named === 0
-      ? ["This page could not read case names; cases are numbered in the handoff's order."]
+      ? ["This page could not read case names; cases are numbered in the order stated."]
       : named < ids.length
         ? [
-            "This page could not read some case names; those cases are numbered in the handoff's order.",
+            "This page could not read some case names; those cases are numbered in the order stated.",
           ]
         : [];
   const assumptions = cases.flatMap(({ id, name, control }) => {

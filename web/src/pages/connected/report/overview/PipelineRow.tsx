@@ -85,7 +85,7 @@ function LineText({
             Read this bottom line in Evidence
           </Button>
         ) : (
-          <GapPanel reason="This module's handoff has no bottom line; its handoff is in Evidence." />
+          <GapPanel reason="This module wrote no bottom line; its output is in Evidence." />
         )}
       </div>
       <PublishedSource href={source} name={line.name} linkLabel={`Source for ${line.name}`}>

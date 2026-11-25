@@ -69,9 +69,7 @@ function Sentence({
   className: string;
 }) {
   if (!passage)
-    return (
-      <GapNote>Not established for this run. The module&apos;s handoff has no bottom line.</GapNote>
-    );
+    return <GapNote>Not established for this run. The module wrote no bottom line.</GapNote>;
   const href = evidencePath(run.folder, entry, passage.line);
   if ("table" in passage)
     return (
@@ -480,8 +478,7 @@ function ChangesBody({ snapshot, run, view }: RowProps): ReactNode {
   const change = comparisonForRun(run, snapshot.workspace.runs);
   const entry = entryOf(view, "CP-8");
   if (change?.problem) return <GapNote>{change.problem}</GapNote>;
-  if (change?.pack && !entry)
-    return <GapNote>The changes module&apos;s handoff is not part of this run.</GapNote>;
+  if (change?.pack && !entry) return <GapNote>The changes module is not part of this run.</GapNote>;
   if (!change?.pack || !entry)
     return (
       <p className="text-small text-text-secondary">

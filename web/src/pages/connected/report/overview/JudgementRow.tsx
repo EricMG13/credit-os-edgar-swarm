@@ -6,7 +6,7 @@ import { passageBlocks, type Passage, type PassageTable, type RowProps } from ".
 import { Figure, GapNote, Tile, Well } from "./Tile";
 
 const CONTRARY = "Contrary evidence and what would change the view";
-const MISSING = "Not established for this run. The module's handoff has no such passage.";
+const MISSING = "Not established for this run. The module wrote no such passage.";
 
 /** One block of a passage: a paragraph or a table the module wrote there. */
 type Written = Passage | PassageTable;

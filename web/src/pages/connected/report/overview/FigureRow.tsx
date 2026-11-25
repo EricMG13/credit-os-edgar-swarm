@@ -156,7 +156,7 @@ const STATED = /^Not (?:supplied|calculated):\s*(\S.*)$/;
 /** What a period with no figure is said to be: the module's word, or that its words are not one. */
 function gapSaid(cell: string, words: string | null, stated: boolean) {
   if (stated) return words ?? gapReading(cell);
-  if (!cell.trim()) return "no value in the handoff";
+  if (!cell.trim()) return "no value stated";
   return gapWord(cell) === "No figure"
     ? "not shown here, the cell is not one figure"
     : gapReading(cell);

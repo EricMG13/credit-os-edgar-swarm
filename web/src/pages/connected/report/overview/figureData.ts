@@ -46,7 +46,7 @@ export function moduleSource(
   const entry = selectedEntry(view, module);
   if (!entry) return { reason: `${name} did not run in this run.` };
   if (entry.output.parseError)
-    return { entry, reason: `${name}'s handoff could not be read; it is in Evidence.` };
+    return { entry, reason: `${name}'s output could not be read; it is in Evidence.` };
   if (blocked(entry)) return { entry, reason: blockedReason(entry) };
   return { entry };
 }
@@ -68,7 +68,7 @@ export function figureSource(
       : undefined;
   return descriptor && table
     ? { state: "ready", entry, descriptor, table }
-    : { state: "gap", entry, reason: `${name}'s handoff has no ${title.toLowerCase()} table.` };
+    : { state: "gap", entry, reason: `${name}'s output has no ${title.toLowerCase()} table.` };
 }
 
 /** A column index a descriptor names, when it is a column of the table. */
@@ -89,7 +89,7 @@ export function readCell(text: string, scope: readonly string[], unit: string): 
   return {
     text,
     value,
-    reason: value === null ? (stated ?? (text.trim() ? null : "No value in the handoff")) : null,
+    reason: value === null ? (stated ?? (text.trim() ? null : "No value stated")) : null,
   };
 }
 

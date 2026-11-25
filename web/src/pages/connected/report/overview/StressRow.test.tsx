@@ -575,7 +575,7 @@ it("never draws a scenario id as a case name, and says the page could not read t
   expect(within(tile).getByText("Case 2")).toBeInTheDocument();
   expect(
     within(tile).getByText(
-      "This page could not read case names; cases are numbered in the handoff's order.",
+      "This page could not read case names; cases are numbered in the order stated.",
     ),
   ).toBeVisible();
 });
@@ -593,7 +593,7 @@ it("reads a figure with its unit, and draws a cell with no figure through the re
   );
   const tile = downsideTile();
   expect(tile.querySelector('[data-panel="Net leverage (x)"] [data-bar="7.5x"]')).not.toBeNull();
-  expect(tile).not.toHaveTextContent(/notes_2024|No value in the handoff/);
+  expect(tile).not.toHaveTextContent(/notes_2024|No value stated/);
   expect(within(tile).getByRole("img").getAttribute("aria-label")).not.toMatch(/notes_2024/);
   expect(within(tile).getByRole("link", { name: "Read the reason in Evidence" })).toBeVisible();
 });
@@ -618,7 +618,7 @@ it("draws every covenant cell and label through the reader rule", () => {
   expect(within(tile).getByText("headroom, Net leverage")).toBeVisible();
   const [cover] = within(tile).getAllByRole("listitem");
   expect(cover).toHaveTextContent("No figure");
-  expect(cover).not.toHaveTextContent("No value in the handoff");
+  expect(cover).not.toHaveTextContent("No value stated");
   expect(within(tile).getAllByRole("link", { name: "Read the reason in Evidence" })).toHaveLength(
     3,
   );
@@ -717,7 +717,7 @@ it("reads case names from a column headed with 'name', keeps a cited name's word
   expect(tile).not.toHaveTextContent(/T4\.18|notes_2024|module names none/);
   expect(
     within(tile).getByText(
-      "This page could not read some case names; those cases are numbered in the handoff's order.",
+      "This page could not read some case names; those cases are numbered in the order stated.",
     ),
   ).toBeVisible();
 });
@@ -763,7 +763,7 @@ it("says only that the page could not read the names when it finds no name colum
   expect(within(tile).getByText("Case 1")).toBeInTheDocument();
   expect(
     within(tile).getByText(
-      "This page could not read case names; cases are numbered in the handoff's order.",
+      "This page could not read case names; cases are numbered in the order stated.",
     ),
   ).toBeVisible();
   expect(tile).not.toHaveTextContent(/module names/);

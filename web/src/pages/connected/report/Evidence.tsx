@@ -90,7 +90,9 @@ function EvidenceLocation({
   line?: number;
 }) {
   if (entry.output.parseError)
-    return <p className="text-text-secondary">This handoff could not be read into sections.</p>;
+    return (
+      <p className="text-text-secondary">This module's output could not be read into sections.</p>
+    );
   const title = titleLine(entry.sections);
   const sections = classifySections(entry.sections)
     .filter(

@@ -7,9 +7,9 @@ export const STATE_WORDS: Record<CellState, string> = {
   assessed: "Delivered",
   "not-assessable": "Not assessable",
   unreadable: "Unreadable",
-  "no-handoff": "No handoff published",
+  "no-handoff": "No output published",
   "not-in-pathway": "Not asked for in this run",
-  "plan-unknown": "No handoff; run plan not recorded",
+  "plan-unknown": "No output; run plan not recorded",
 };
 
 /**

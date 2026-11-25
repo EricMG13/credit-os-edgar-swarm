@@ -145,7 +145,7 @@ const CHART_HEADERS = ["Period", "Reporting unit"];
 /** The one `Chart data: <chart>` table of the handoff, or why there is not one. */
 function chartTable(entry: OutputEntry, chart: string): Table | string {
   if (entry.output.parseError)
-    return "The financial foundation's handoff could not be read; it is in Evidence.";
+    return "The financial foundation's output could not be read; it is in Evidence.";
   const tables = entry.sections
     .filter((section) => section.heading === `Chart data: ${chart}`)
     .flatMap(({ blocks }) => blocks)
@@ -291,7 +291,7 @@ function yearEarlier(entry: OutputEntry, latest: Point, ordered: Point[]): Earli
   const [current] = now ?? [];
   if (!table || now?.length !== 1 || !current)
     return {
-      why: `No change is drawn: the handoff's period table does not state when ${latest.period} starts and ends.`,
+      why: `No change is drawn: the period table does not state when ${latest.period} starts and ends.`,
     };
   const from = oneYearBefore(cell(current, start));
   const to = oneYearBefore(cell(current, end));

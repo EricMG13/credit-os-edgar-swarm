@@ -1194,7 +1194,7 @@ describe("connected report Changes", () => {
     expect(tile.getByText("Margins")).toBeVisible();
     expect(tile.queryByText("E1")).toBeNull();
     expect(tile.queryByText("C2")).toBeNull();
-    expect(screen.getByText("This table has no rows in the handoff.")).toBeVisible();
+    expect(screen.getByText("This table has no rows.")).toBeVisible();
   });
 
   it("draws two leftover sections that share a heading without a key clash", () => {

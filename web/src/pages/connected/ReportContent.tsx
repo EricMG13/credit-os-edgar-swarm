@@ -451,7 +451,7 @@ export function PublishedTable({
   rowHref,
   href,
   heading: tableHeading,
-  emptyLabel = "Empty in the handoff",
+  emptyLabel = "Left blank",
   amounts,
   ...form
 }: {
@@ -831,7 +831,7 @@ function FindingsSummary({
   );
 }
 
-const MISSING_PASSAGE = "Not established for this run. The module's handoff has no such passage.";
+const MISSING_PASSAGE = "Not established for this run. The module wrote no such passage.";
 
 type FindingGroup = string | [Section, Section?];
 
@@ -928,8 +928,8 @@ function EmptyFindings({
     <>
       <p className="text-text-secondary">
         {entry.output.parseError
-          ? "This handoff could not be read into sections."
-          : "This handoff has no findings in this report format."}{" "}
+          ? "This module's output could not be read into sections."
+          : "This module wrote no findings in this report format."}{" "}
         <Button href={evidencePath(run.folder, entry)} color="link-gray" size="sm">
           Open Evidence
         </Button>

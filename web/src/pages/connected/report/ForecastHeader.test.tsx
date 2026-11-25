@@ -231,7 +231,7 @@ it("says an unreadable forward-model handoff could not be read", () => {
   const unreadable = { ...forward("x"), output: { ...forward("x").output, parseError: "bad" } };
   header([unreadable]);
   expect(
-    screen.getByText("Forward credit model's handoff could not be read; it is in Evidence."),
+    screen.getByText("Forward credit model's output could not be read; it is in Evidence."),
   ).toBeInTheDocument();
   expect(screen.queryByText(/wrote no bottom line/)).toBeNull();
 });

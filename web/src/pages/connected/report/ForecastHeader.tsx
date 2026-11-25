@@ -204,7 +204,7 @@ function BottomLine({
   const source = moduleSource(view, "CP-2G", name);
   const found = handoff
     ? handoff.output.parseError
-      ? { entry: handoff, reason: `${name}'s handoff could not be read; it is in Evidence.` }
+      ? { entry: handoff, reason: `${name}'s output could not be read; it is in Evidence.` }
       : { entry: handoff, reason: blocked(handoff) ? source.reason : undefined }
     : source;
   if (!found.entry || found.reason)

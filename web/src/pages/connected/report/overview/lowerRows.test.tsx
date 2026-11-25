@@ -125,7 +125,7 @@ it("keeps each bottom line's three text states and its source control", () => {
   expect(
     within(lines).getByRole("link", { name: "Read this bottom line in Evidence" }),
   ).toBeInTheDocument();
-  expect(within(lines).getByText(/has no bottom line/)).toBeInTheDocument();
+  expect(within(lines).getByText(/wrote no bottom line/)).toBeInTheDocument();
   expect(within(lines).getAllByRole("link", { name: /^Source for / })).toHaveLength(3);
 });
 

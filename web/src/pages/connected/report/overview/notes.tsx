@@ -112,7 +112,7 @@ export const gapReading = (text: string) => {
 export function gapText(cell: Cell) {
   if (cell.reason) return cell.reason;
   const trimmed = cell.text.trim();
-  if (!trimmed) return "No value in the handoff";
+  if (!trimmed) return "No value stated";
   return gapWord(trimmed) === trimmed ? null : trimmed;
 }
 

@@ -542,7 +542,7 @@ export function fundingGap(view: ReportView) {
     }
     const found = gapIn(entry, module);
     if (found) gaps.push(found);
-    else looked.push(`This page found no row named Funding gap in ${name}'s handoff.`);
+    else looked.push(`This page found no row named Funding gap in ${name}'s output.`);
   }
   return { gaps, looked };
 }

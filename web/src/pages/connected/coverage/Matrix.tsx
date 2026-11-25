@@ -276,7 +276,7 @@ export function Matrix({
         </table>
       </Scroller>
       <p role="status" className="min-h-5 text-small text-text-secondary">
-        {reading || "Point at or focus a shape to read its state; a shape with a handoff opens the module."}
+        {reading || "Point at or focus a shape to read its state; a shape with an output opens the module."}
       </p>
     </div>
   );

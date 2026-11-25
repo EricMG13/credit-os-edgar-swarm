@@ -315,7 +315,7 @@ it("says what it looked for when neither module states a funding gap", () => {
     tableSection("T2E.5 Liquidity", 40, ["Line", "Value"], [["Peak funding gap", "90"]]),
   ]);
   expect(fundingGap(view([liquidity])).looked).toEqual([
-    "This page found no row named Funding gap in Liquidity's handoff.",
+    "This page found no row named Funding gap in Liquidity's output.",
     "Refinancing & LME did not run in this run.",
   ]);
   expect(fundingGap(view([])).looked).toEqual([
