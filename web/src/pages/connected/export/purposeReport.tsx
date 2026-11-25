@@ -1322,21 +1322,35 @@ function archivedPortfolioDecision(entry: OutputEntry, safe: SafeText) {
   })[0];
 }
 
-export function portfolioDecision(
-  view: ReportView,
-  run: PublishedRun,
-  safe: SafeText,
-): Purpose | null {
-  const committee = selectedOutput(view, "CP-6");
-  if (!committee) return null;
-  const archived = earlierScope(run);
-  const archive = archived ? archivedPortfolioDecision(committee, safe) : undefined;
-  const treatment = decisionTreatment(view, run, "CP-6", "committee", safe);
-  const hold = treatment?.status === "withheld" ? treatment.reason : "";
-  if (!archive && !hold) return null;
-  const position = portfolioExposure(view, safe, archive ? undefined : (run.asOf ?? ""));
-  const historicalFinding = archive?.body === PORTFOLIO_DISPOSITION + " " + PORTFOLIO_EXPLANATION;
-  if (!historicalFinding && !position?.observed) return null;
+type PortfolioChallenge = ReturnType<typeof archivedCommitteeChallenge>[number];
+
+function portfolioRestriction(
+  label: string | undefined,
+  hold: string,
+  constraint: PortfolioChallenge | undefined,
+) {
+  const source = constraint && { owner: constraint.owner, line: constraint.line };
+  if (!label) {
+    return constraint && { label: "Sizing constraint", reason: constraint.body, source };
+  }
+  if (hold) return { label, reason: hold };
+  if (constraint) return { label, reason: constraint.body, source };
+  return { label, reason: UNAVAILABLE_DECISION };
+}
+
+interface PortfolioParts {
+  committee: OutputEntry;
+  run: PublishedRun;
+  safe: SafeText;
+  archived: boolean;
+  archive: ReturnType<typeof archivedPortfolioDecision>;
+  position: ReturnType<typeof portfolioExposure>;
+  hold: string;
+  status: string;
+}
+
+function portfolioPurpose(parts: PortfolioParts): Purpose {
+  const { committee, run, safe, archived, archive, position, hold, status } = parts;
   const challenge = archive ? archivedCommitteeChallenge(committee, safe) : [];
   const charts = portfolioFigure(committee, run, safe);
   const constraint = challenge.find(
@@ -1346,18 +1360,10 @@ export function portfolioDecision(
     ...(archive ? [archive] : []),
     ...(position?.observed ? [position.observed] : []),
   ];
-  const status = treatment?.status ?? "unavailable";
   // Only an archived disposition is printed with no recorded hold. Beside it, no label or reason
   // says the decision is not shown; the module's sizing-constraint row keeps its own label.
   const label = status === "not shown" ? undefined : `Portfolio action and size ${status}`;
-  const source = constraint && { owner: constraint.owner, line: constraint.line };
-  const restriction = !label
-    ? constraint && { label: "Sizing constraint", reason: constraint.body, source }
-    : hold
-      ? { label, reason: hold }
-      : constraint
-        ? { label, reason: constraint.body, source }
-        : { label, reason: UNAVAILABLE_DECISION };
+  const restriction = portfolioRestriction(label, hold, constraint);
   const gap = "No portfolio limits chart is shown in this report.";
   const title = "Portfolio decision and sizing";
   // The decision is chosen from the archived posture passages and the exposure passages: those the
@@ -1381,4 +1387,23 @@ export function portfolioDecision(
       { title: "Conditional stress on reported exposure", bodies: position?.conditions ?? [] },
     ],
   };
+}
+
+export function portfolioDecision(
+  view: ReportView,
+  run: PublishedRun,
+  safe: SafeText,
+): Purpose | null {
+  const committee = selectedOutput(view, "CP-6");
+  if (!committee) return null;
+  const archived = earlierScope(run);
+  const archive = archived ? archivedPortfolioDecision(committee, safe) : undefined;
+  const treatment = decisionTreatment(view, run, "CP-6", "committee", safe);
+  const hold = treatment?.status === "withheld" ? treatment.reason : "";
+  if (!archive && !hold) return null;
+  const position = portfolioExposure(view, safe, archive ? undefined : (run.asOf ?? ""));
+  const historicalFinding = archive?.body === PORTFOLIO_DISPOSITION + " " + PORTFOLIO_EXPLANATION;
+  if (!historicalFinding && !position?.observed) return null;
+  const status = treatment?.status ?? "unavailable";
+  return portfolioPurpose({ committee, run, safe, archived, archive, position, hold, status });
 }
