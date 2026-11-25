@@ -138,6 +138,8 @@ function measure(minTarget) {
     "a[href], button, summary, select, [role=button], input:not([type=hidden], [type=checkbox], [type=radio])";
   for (const el of document.querySelectorAll(controls)) {
     if (!shown(el) || el.closest("p, li > span, td > span") !== null) continue;
+    // A control inside a sideways-scrolled box is hit-tested where a reader scrolls it to.
+    el.scrollIntoView({ block: "nearest", inline: "nearest" });
     const box = el.getBoundingClientRect();
     const x = box.left + box.width / 2;
     const y = box.top + box.height / 2;

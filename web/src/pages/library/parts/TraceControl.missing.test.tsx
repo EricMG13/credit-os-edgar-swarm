@@ -22,7 +22,7 @@ it("draws a marker, not nothing, for a null trace, with the same footprint as a 
   const open = vi.fn();
   inRun(<TraceControl trace={null} label={LABEL} />, open);
   const marker = screen.getByRole("button", { name: MARKER });
-  expect(marker.className).toContain("size-7");
+  expect(marker.className).toContain("size-8");
   expect(marker.className).toContain("flex-none");
   expect(marker.className).toContain("border-dashed");
   expect(marker.querySelectorAll("svg")).toHaveLength(1);

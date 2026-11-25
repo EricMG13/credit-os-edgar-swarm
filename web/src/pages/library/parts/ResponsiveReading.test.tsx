@@ -18,10 +18,10 @@ it("gives the bottom-line tile a compact padding for phones", () => {
   expect(band.className).toContain("sm:p-8");
 });
 
-it("keeps source controls easy to tap on narrow screens and unchanged on desktop", () => {
+it("keeps source controls 32 px on desktop and 44 px to the touch on narrow screens", () => {
   render(<TraceButton label="Show sources for this chart" open={() => {}} />);
   const button = screen.getByRole("button", { name: "Show sources for this chart" });
-  expect(button.className).toContain("size-7");
-  expect(button.className).toContain("max-[480px]:after:-inset-[9px]");
+  expect(button.className).toContain("size-8");
+  expect(button.className).toContain("max-[480px]:after:-inset-[7px]");
   expect(button.className).not.toContain("max-[480px]:size-11");
 });

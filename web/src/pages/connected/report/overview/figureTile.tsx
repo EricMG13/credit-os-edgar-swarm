@@ -18,7 +18,9 @@ export function FigureTile({
   return (
     // A tile takes its content's height: no stretched tile with an empty interior.
     <Tile span={span} label={title} head="small" title={title} trace={trace} className="self-start">
-      <p className="-mt-3 text-caption font-normal text-text-tertiary">{basis}</p>
+      <p className="pointer-events-none -mt-3 text-caption font-normal text-text-tertiary">
+        {basis}
+      </p>
       {children}
     </Tile>
   );

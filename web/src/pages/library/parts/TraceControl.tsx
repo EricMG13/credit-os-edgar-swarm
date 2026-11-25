@@ -7,9 +7,9 @@ import { RunContext } from "./RunContext";
 /** Put on the element that holds a control, so hovering the figure reveals it. */
 export const TRACE_HOST = "group/trace relative";
 
-/** What a control and the marker for a missing trace share: one 28 px footprint, so either goes wherever a control goes. */
+/** What a control and the marker for a missing trace share: one 32 px footprint (44 px to the touch on a phone), so either goes wherever a control goes. */
 const FOOTPRINT =
-  "relative flex size-7 flex-none items-center justify-center rounded-ds-sm border bg-transparent focus-visible:ring-2 focus-visible:ring-offset-2 max-[480px]:after:absolute max-[480px]:after:-inset-[9px]";
+  "relative flex size-8 flex-none items-center justify-center rounded-ds-sm border bg-transparent focus-visible:ring-2 focus-visible:ring-offset-2 max-[480px]:z-10 max-[480px]:after:absolute max-[480px]:after:-inset-[7px]";
 
 /**
  * The one trace control per paragraph, row or figure. Visible at rest at every width; its box border
