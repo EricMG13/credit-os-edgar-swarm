@@ -29,6 +29,7 @@ import {
   TEMPLATE,
   WORKBOOK,
 } from "./goldenFixtures";
+import { chooseControl } from "./testControls";
 
 type Recorded = {
   method: string;
@@ -220,9 +221,9 @@ describe("the requests the Start run page sends", () => {
     await addAndInspect([FILING, AGREEMENT]);
     await toPurpose();
     fireEvent.click(screen.getByRole("radio", { name: "Deep credit assessment" }));
-    choose("Market view", "secondary");
-    choose("Case kind", "private");
-    choose("Run form level", "advanced");
+    chooseControl("Market view", "secondary");
+    chooseControl("Case kind", "private");
+    chooseControl("Run form level", "advanced");
     await toContext();
     choose("Model", "claude");
     choose("Reasoning effort", "high");

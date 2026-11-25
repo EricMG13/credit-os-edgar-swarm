@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { webcrypto } from "node:crypto";
 import { ConnectedApp } from "../ConnectedApp";
+import { chooseControl } from "./testControls";
 
 Element.prototype.scrollIntoView = vi.fn();
 beforeEach(() => {
@@ -66,8 +67,7 @@ async function toContext(pathway: string, level?: string) {
   fireEvent.click(screen.getByRole("button", { name: "Continue to purpose" }));
   await screen.findByRole("heading", { name: "Purpose" });
   fireEvent.click(screen.getByRole("radio", { name: pathway }));
-  if (level)
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: level } });
+  if (level) chooseControl("Run form level", level);
   fireEvent.click(screen.getByRole("button", { name: "Continue to context" }));
   await screen.findByRole("heading", { name: "More context" });
 }

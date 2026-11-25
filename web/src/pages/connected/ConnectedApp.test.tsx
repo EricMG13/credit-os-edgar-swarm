@@ -4,6 +4,7 @@ import { webcrypto } from "node:crypto";
 import { ConnectedApp } from "./ConnectedApp";
 import { SelectField, carriedModules, stepOfField } from "./StartRun";
 import { moduleName, pathwayModules, type Summary } from "./api";
+import { chooseControl, controlValue } from "./start/testControls";
 
 const scrollIntoView = vi.fn();
 Element.prototype.scrollIntoView = scrollIntoView;
@@ -251,9 +252,7 @@ describe("connected run start", () => {
     fireEvent.click(within(pathways).getByRole("radio", { name: "Deep credit assessment" }));
     expect(screen.getByRole("progressbar", { name: "USD 0.00 of USD 40.00" })).toBeVisible();
     expect(screen.getByText("20 base modules", { exact: true })).toBeVisible();
-    fireEvent.change(screen.getByLabelText("Run form level"), {
-      target: { value: "advanced" },
-    });
+    chooseControl("Run form level", "advanced");
     advanceToContext();
     expect(screen.queryByRole("checkbox", { name: "Cash flow model" })).toBeNull();
     fireEvent.click(screen.getByRole("checkbox", { name: "Source readiness" }));
@@ -631,7 +630,7 @@ describe("connected run start", () => {
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
     await advanceToPurpose();
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    chooseControl("Run form level", "advanced");
     advanceToContext();
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     await screen.findByRole("button", { name: "Submit run" });
@@ -647,7 +646,7 @@ describe("connected run start", () => {
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
     await advanceToPurpose();
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    chooseControl("Run form level", "advanced");
     advanceToContext();
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     await screen.findByRole("button", { name: "Submit run" });
@@ -722,7 +721,7 @@ describe("connected run start", () => {
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
     await advanceToPurpose();
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    chooseControl("Run form level", "advanced");
     advanceToContext();
     fireEvent.change(screen.getByLabelText("Legal documents"), { target: { value: "executed" } });
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
@@ -760,7 +759,7 @@ describe("connected run start", () => {
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
     await advanceToPurpose();
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    chooseControl("Run form level", "advanced");
     advanceToContext();
     fireEvent.change(screen.getByLabelText("Legal documents"), { target: { value: "executed" } });
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
@@ -782,7 +781,7 @@ describe("connected run start", () => {
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
     await advanceToPurpose();
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    chooseControl("Run form level", "advanced");
     advanceToContext();
     fireEvent.change(screen.getByLabelText("Legal documents"), { target: { value: "executed" } });
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
@@ -796,7 +795,7 @@ describe("connected run start", () => {
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
     await advanceToPurpose();
-    fireEvent.change(screen.getByLabelText("Market view"), { target: { value: "primary" } });
+    chooseControl("Market view", "primary");
     advanceToContext();
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Add at least one facility");
@@ -836,8 +835,8 @@ describe("connected run start", () => {
     await fillInputs();
     fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Dana R" } });
     await advanceToPurpose();
-    fireEvent.change(screen.getByLabelText("Market view"), { target: { value: "primary" } });
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    chooseControl("Market view", "primary");
+    chooseControl("Run form level", "advanced");
     advanceToContext();
     fireEvent.change(screen.getByLabelText("Model"), { target: { value: "claude" } });
     fireEvent.change(screen.getByLabelText("Reasoning effort"), { target: { value: "high" } });
@@ -870,14 +869,14 @@ describe("connected run start", () => {
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
     await advanceToPurpose();
-    fireEvent.change(screen.getByLabelText("Market view"), { target: { value: "primary" } });
+    chooseControl("Market view", "primary");
     advanceToContext();
     fireEvent.click(screen.getByRole("button", { name: "Add facility" }));
     fireEvent.change(screen.getByLabelText("Facility ID"), { target: { value: "TL-B" } });
     fireEvent.change(screen.getByLabelText("Tenor (years)"), { target: { value: "7" } });
     fireEvent.click(screen.getByRole("button", { name: "Previous" }));
     await screen.findByRole("heading", { name: "Purpose" });
-    fireEvent.change(screen.getByLabelText("Market view"), { target: { value: "secondary" } });
+    chooseControl("Market view", "secondary");
     advanceToContext();
     expect(screen.queryByLabelText("Tenor (years)")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
@@ -911,9 +910,9 @@ describe("connected run start", () => {
     await fillInputs();
     await advanceToPurpose();
     fireEvent.click(screen.getByRole("radio", { name: "Relative Value" }));
-    expect(screen.getByLabelText("Market view")).toHaveValue("secondary");
+    expect(controlValue("Market view")).toBe("secondary");
     fireEvent.click(screen.getByRole("radio", { name: "Earnings Update" }));
-    expect(screen.getByLabelText("Market view")).toHaveValue("earnings");
+    expect(controlValue("Market view")).toBe("earnings");
     advanceToContext();
     expect(screen.getByLabelText(/^Current period/)).toBeRequired();
     expect(screen.getByLabelText(/^Prior period/)).toBeRequired();
@@ -977,7 +976,7 @@ describe("connected run start", () => {
     fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2026-10-31" } });
     typeName();
     await advanceToPurpose();
-    expect(screen.getByLabelText("Run form level")).toHaveValue("advanced");
+    expect(controlValue("Run form level")).toBe("advanced");
     advanceToContext();
     expect(screen.getByLabelText("Turns per module")).toHaveValue(24);
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
@@ -1162,13 +1161,13 @@ describe("connected run start", () => {
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
     await advanceToPurpose();
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    chooseControl("Run form level", "advanced");
     advanceToContext();
     fireEvent.change(screen.getByLabelText("Peer source"), { target: { value: "none" } });
     fireEvent.click(screen.getByRole("checkbox", { name: "Pin Downside" }));
     fireEvent.click(screen.getByRole("button", { name: "Previous" }));
     await screen.findByRole("heading", { name: "Purpose" });
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "basic" } });
+    chooseControl("Run form level", "basic");
     advanceToContext();
     expect(screen.getByRole("button", { name: "Add rating" })).toBeInTheDocument();
     expect(screen.getByLabelText("Peer source")).toHaveValue("none");
@@ -1303,7 +1302,7 @@ describe("connected run start: Module options and Valuation as fields", () => {
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
     await advanceToPurpose();
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    chooseControl("Run form level", "advanced");
     advanceToContext();
     return fetchMock;
   }
@@ -1528,7 +1527,7 @@ describe("connected run start: Scenario assumptions as fields", () => {
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
     await advanceToPurpose();
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    chooseControl("Run form level", "advanced");
     advanceToContext();
     return fetchMock;
   }
@@ -3184,7 +3183,7 @@ describe("connected run start: one mechanism for a refusal that names a control"
     await fillInputs();
     await advanceToPurpose();
     fireEvent.click(screen.getByRole("radio", { name: "Deep credit assessment" }));
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    chooseControl("Run form level", "advanced");
     advanceToContext();
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
   }
@@ -3256,7 +3255,7 @@ describe("connected run start: a refusal goes to a control only when it is drawn
     await fillInputs();
     await advanceToPurpose();
     fireEvent.click(screen.getByRole("radio", { name: pathway }));
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: level } });
+    chooseControl("Run form level", level);
     advanceToContext();
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
   }
@@ -3326,7 +3325,7 @@ describe("the step each refusable control is drawn on", () => {
     if (step === "documents") return;
     await advanceToPurpose();
     fireEvent.click(screen.getByRole("radio", { name: "Deep credit assessment" }));
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    chooseControl("Run form level", "advanced");
     fireEvent.click(screen.getByRole("button", { name: "Continue to context" }));
     await screen.findByRole("heading", { name: "More context" });
   }
@@ -3376,12 +3375,12 @@ describe("connected run start: module choices sent", () => {
     await fillInputs();
     await advanceToPurpose();
     fireEvent.click(screen.getByRole("radio", { name: /Relative Value/ }));
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    chooseControl("Run form level", "advanced");
     advanceToContext();
     fireEvent.click(await screen.findByRole("checkbox", { name: moduleName("CP-3D") }));
     fireEvent.click(screen.getByRole("button", { name: "Previous" }));
     await screen.findByRole("heading", { name: "Purpose" });
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "basic" } });
+    chooseControl("Run form level", "basic");
     advanceToContext();
     fireEvent.click(await screen.findByRole("button", { name: "Review run" }));
     await screen.findByRole("button", { name: "Submit run" });
@@ -3476,7 +3475,7 @@ describe("connected run start: module choices sent", () => {
     await fillInputs();
     await advanceToPurpose();
     fireEvent.click(screen.getByRole("radio", { name: /Earnings Update/ }));
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    chooseControl("Run form level", "advanced");
     advanceToContext();
     earningsPeriods();
     fireEvent.click(await screen.findByRole("checkbox", { name: moduleName("CP-1D") }));
@@ -3506,7 +3505,7 @@ describe("connected run start: module choices sent", () => {
     await fillInputs();
     await advanceToPurpose();
     fireEvent.click(screen.getByRole("radio", { name: /Earnings Update/ }));
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    chooseControl("Run form level", "advanced");
     advanceToContext();
     earningsPeriods();
     fireEvent.click(await screen.findByRole("checkbox", { name: moduleName("CP-2E") }));
@@ -3608,7 +3607,7 @@ describe("connected run start: module choices sent", () => {
     await fillInputs();
     await advanceToPurpose();
     fireEvent.click(screen.getByRole("radio", { name: new RegExp(name) }));
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    chooseControl("Run form level", "advanced");
     advanceToContext();
     if (name === "Earnings Update") earningsPeriods();
     expect(screen.queryByRole("checkbox", { name: "Cash flow model" })).toBeNull();
@@ -3646,7 +3645,7 @@ describe("connected run start: module choices sent", () => {
     await fillInputs();
     await advanceToPurpose();
     fireEvent.click(screen.getByRole("radio", { name: /Earnings Update/ }));
-    fireEvent.change(screen.getByLabelText("Run form level"), { target: { value: "advanced" } });
+    chooseControl("Run form level", "advanced");
     advanceToContext();
     earningsPeriods();
     const drawn = pathwayModules("earnings_update").filter((code) => code !== "CP-MODEL");
