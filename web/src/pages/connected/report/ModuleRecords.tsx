@@ -1,17 +1,20 @@
 import { ArrowRight, ChevronDown, ChevronUp } from "@untitledui/icons";
-import { useId, useState } from "react";
+import { type ReactNode, useEffect, useId, useState } from "react";
 import { Button } from "@/components/base/buttons/button";
-import { Select } from "@/components/base/select/select";
 import { BarCell } from "@/components/kit/BarCell";
 import { Segmented } from "@/components/kit/Segmented";
+import { TraceControl, TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import {
+  containsReference,
   displayColumns,
   evidencePath,
   readerText,
   type OutputEntry,
   type PublishedRun,
+  type Table,
 } from "../publishedReport";
-import { FindingParagraph, PublishedTable } from "../ReportContent";
+import { FindingParagraph, isOneLine, PublishedTable } from "../ReportContent";
+import { plainText, richParts } from "../richText";
 import { traceKey } from "../reportView";
 import { GapNote, Tile } from "./overview/Tile";
 import {
@@ -90,19 +93,126 @@ function scaleNote(left: readonly string[]) {
   return `Bars: one scale per column.${named.length ? ` No bar: ${named.join(", ")}.` : ""}`;
 }
 
+/** Columns that hold a source reference in every row that is not blank: each row would draw
+ * only "In Evidence", so the column is left out and stated once under the table. */
+function referenceColumns(table: Table, columns: readonly number[]) {
+  return columns.filter((column) => {
+    const cells = table.rows.map(({ cells: row }) => row[column] ?? "").filter((c) => c.trim());
+    return cells.length > 0 && cells.every(containsReference);
+  });
+}
+
 /** How the chosen table is drawn: its columns (compact when wide), numerals, bars and one unit. */
 function tableForm(record: RecordTable, all: boolean) {
   const { table } = record;
   const displayed = displayColumns(table.headers, false, table.rows);
   const found = unitColumn(table);
   const unit = found && displayed.length > 1 && displayed.includes(found.column) ? found : null;
-  const shown = unit ? displayed.filter((column) => column !== unit.column) : displayed;
+  const kept = unit ? displayed.filter((column) => column !== unit.column) : displayed;
+  const referenced = referenceColumns(table, kept.slice(1));
+  const shown = kept.filter((column) => !referenced.includes(column));
   const compact = compactColumns(table, shown);
   const columns = all || !compact ? shown : compact;
   const bars = amountColumns(table, record.title);
   const drawnBars = new Map([...bars].filter(([column]) => columns.includes(column)));
   const numeric = new Set([...numericColumns(table)].filter((column) => !bars.has(column)));
-  return { displayed, unit, compact, columns, drawnBars, numeric };
+  return { displayed, unit, referenced, compact, columns, drawnBars, numeric };
+}
+
+const NARROW = "(max-width: 639px)";
+
+/** Whether the screen is below `sm`; the desktop view where the browser cannot say. */
+function useNarrow(): boolean {
+  const query = (): MediaQueryList | undefined =>
+    typeof window.matchMedia === "function" ? window.matchMedia(NARROW) : undefined;
+  const [narrow, setNarrow] = useState(() => query()?.matches ?? false);
+  useEffect(() => {
+    const list = query();
+    if (!list) return;
+    const sync = () => {
+      setNarrow(list.matches);
+    };
+    list.addEventListener("change", sync);
+    return () => {
+      list.removeEventListener("change", sync);
+    };
+  }, []);
+  return narrow;
+}
+
+/** A card's value: a reference as an Evidence link, a stated gap as its chip, else as written. */
+function cardValue(cell: string, column: number, href: string): ReactNode {
+  if (!cell.trim()) return <span aria-label="Empty in the handoff">—</span>;
+  if (containsReference(cell))
+    return (
+      <Button href={href} color="link-gray" size="sm">
+        In Evidence
+      </Button>
+    );
+  const chip = gapChip(column, cell);
+  if (chip) return chip;
+  const figure = /^[(+\-−]?\d[\d,]*(?:\.\d+)?\)?(?:%|x|bps)?$/.test(cell.trim());
+  return isOneLine(cell) ? (
+    <span
+      className={`whitespace-nowrap${figure ? " font-mono text-text-primary tabular-nums" : ""}`}
+    >
+      {cell}
+    </span>
+  ) : (
+    richParts(cell, readerText)
+  );
+}
+
+/** A wide register below `sm`: one card per row, its label, its compact columns and its trace. */
+function RecordCards({
+  run,
+  entry,
+  record,
+  columns,
+}: {
+  run: Run;
+  entry: OutputEntry;
+  record: RecordTable;
+  columns: readonly number[];
+}) {
+  const { table } = record;
+  const [first = 0, ...rest] = columns;
+  return (
+    <ul aria-label={record.title} className="grid gap-2">
+      {table.rows.map((row) => {
+        const name = row.cells[first] ?? "";
+        const href = evidencePath(run.folder, entry, row.line);
+        return (
+          <li
+            key={row.line}
+            className={`${TRACE_HOST} flex flex-col gap-2 rounded-ds-md border border-border-hairline p-3`}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <p className="min-w-0 text-small font-semibold text-text-primary">
+                {cardValue(name, first, href)}
+              </p>
+              <TraceControl
+                trace={traceKey(entry, row.line)}
+                label={`Show sources for ${readerText(name || "this row")}`}
+              />
+            </div>
+            <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-small">
+              {rest.map((column) => (
+                <div key={column} className="contents">
+                  <dt className="text-text-tertiary">
+                    {plainText(readerText(table.headers[column] ?? ""))}
+                  </dt>
+                  <dd className="min-w-0 text-text-secondary">
+                    {cardValue(row.cells[column] ?? "", column, href)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 function RecordGap({ run, entry, record }: { run: Run; entry: OutputEntry; record: RecordTable }) {
@@ -128,10 +238,13 @@ function RecordDrawing({
   record: RecordTable;
 }) {
   const [all, setAll] = useState(false);
+  const narrow = useNarrow();
   const form = tableForm(record, all);
   if (!record.table.rows.length || !form.displayed.length)
     return <RecordGap run={run} entry={entry} record={record} />;
-  const { unit, compact, drawnBars } = form;
+  const { unit, compact, referenced } = form;
+  const cards = narrow && compact !== null && !all;
+  const drawnBars = cards ? new Map<number, AmountColumn>() : form.drawnBars;
   return (
     <div className="flex min-w-0 flex-col gap-2">
       {(unit ?? compact) && (
@@ -156,23 +269,33 @@ function RecordDrawing({
           )}
         </div>
       )}
-      <PublishedTable
-        table={record.table}
-        heading={record.title}
-        traceAt={(line) => traceKey(entry, line)}
-        rowHref={(line) => evidencePath(run.folder, entry, line)}
-        amounts={drawnBars.size ? amountsOf(drawnBars) : undefined}
-        columns={form.columns}
-        numeric={form.numeric}
-        region
-        wideBars
-        drawCell={compact && !all ? gapChip : undefined}
-      />
+      {cards ? (
+        <RecordCards run={run} entry={entry} record={record} columns={form.columns} />
+      ) : (
+        <PublishedTable
+          table={record.table}
+          heading={record.title}
+          traceAt={(line) => traceKey(entry, line)}
+          rowHref={(line) => evidencePath(run.folder, entry, line)}
+          amounts={drawnBars.size ? amountsOf(drawnBars) : undefined}
+          columns={form.columns}
+          numeric={form.numeric}
+          region
+          wideBars
+          records
+          drawCell={compact && !all ? gapChip : undefined}
+        />
+      )}
       {drawnBars.size > 0 && (
         <p className="text-caption text-text-tertiary">
           {scaleNote(barExclusions(record.table, record.title))}
         </p>
       )}
+      {referenced.map((column) => (
+        <p key={column} className="text-caption text-text-tertiary">
+          {`${plainText(readerText(record.table.headers[column] ?? ""))}: in Evidence, by row.`}
+        </p>
+      ))}
     </div>
   );
 }
@@ -221,9 +344,26 @@ function kindSegments(tables: RecordTable[]) {
   });
 }
 
-const PILLS = 6;
+/** A row of tabs that never wraps: it scrolls sideways inside a named region the keyboard can
+ * focus. */
+function ScrollRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div
+      role="region"
+      aria-label={label}
+      // A region that scrolls sideways is focusable so the keyboard can scroll it.
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+      tabIndex={0}
+      className="max-w-full min-w-0 overflow-x-auto rounded-ds-md outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2"
+    >
+      {children}
+    </div>
+  );
+}
 
-/** The tables of one kind: pills for six or fewer, a select beyond, so the chooser stays short. */
+const ROW = "max-w-none flex-nowrap";
+
+/** The tables of one kind as one row of tabs, however many there are. */
 function TableChooser({
   own,
   current,
@@ -233,39 +373,16 @@ function TableChooser({
   current: string;
   onSelect: (key: string) => void;
 }) {
-  if (own.length > PILLS)
-    return (
-      <div className="w-full max-w-md min-w-0">
-        <Select
-          label="Table"
-          value={current}
-          placeholder="Choose a table"
-          onChange={(key) => {
-            if (key !== null) onSelect(String(key));
-          }}
-        >
-          {own.map((item) => (
-            <Select.Item
-              key={tableKey(item)}
-              id={tableKey(item)}
-              label={item.title}
-              value={{ id: tableKey(item), label: item.title }}
-            />
-          ))}
-        </Select>
-      </div>
-    );
   return (
-    <Segmented
-      label="Table"
-      segments={own.map((item) => ({
-        key: tableKey(item),
-        // A long title wraps inside its segment rather than widening the page at 390 px.
-        label: <span className="py-1 text-left whitespace-normal">{item.title}</span>,
-      }))}
-      current={current}
-      onSelect={onSelect}
-    />
+    <ScrollRow label="Tables">
+      <Segmented
+        label="Table"
+        className={ROW}
+        segments={own.map((item) => ({ key: tableKey(item), label: item.title }))}
+        current={current}
+        onSelect={onSelect}
+      />
+    </ScrollRow>
   );
 }
 
@@ -290,14 +407,17 @@ function RecordTabs({
   if (!kind || !record) return null;
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      <Segmented
-        label="Record kind"
-        segments={kinds}
-        current={kind}
-        onSelect={(key) => {
-          setChoice({ kind: key, table: null });
-        }}
-      />
+      <ScrollRow label="Record kinds">
+        <Segmented
+          label="Record kind"
+          className={ROW}
+          segments={kinds}
+          current={kind}
+          onSelect={(key) => {
+            setChoice({ kind: key, table: null });
+          }}
+        />
+      </ScrollRow>
       {own.length > 1 && (
         <TableChooser
           own={own}

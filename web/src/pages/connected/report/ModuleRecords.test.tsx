@@ -10,7 +10,7 @@ import {
   type Snapshot,
   type Table,
 } from "../publishedReport";
-import { sectionTraces } from "../ReportContent";
+import { PublishedTable, sectionTraces } from "../ReportContent";
 import { traceKey } from "../reportView";
 import { ModuleRecords } from "./ModuleRecords";
 
@@ -356,7 +356,7 @@ describe("records tables take the mockup's form", () => {
     const row = screen.getByRole("row", { name: /^Tranche J / });
     const bar = row.querySelector('[style*="width"]');
     expect(bar).not.toBeNull();
-    expect(bar?.closest("td")).toHaveClass("min-w-56");
+    expect(bar?.closest("td")).toHaveClass("min-w-72");
     expect(screen.getByText(/^Bars: one scale per column\./)).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "All columns" }));
     const adjustment = screen.getByRole("row", { name: /^Financing cost adjustment / });
@@ -393,23 +393,204 @@ describe("records tables take the mockup's form", () => {
     expect(screen.getByRole("cell", { name: "3813" })).toHaveClass("text-right");
   });
 
-  it("chooses among more than six tables of a kind with a select, six or fewer with pills", () => {
-    const many = Array.from({ length: 7 }, (_, at) =>
+  it("chooses among more than six tables of a kind with tabs in one scrolling row", () => {
+    const many = Array.from({ length: 9 }, (_, at) =>
       section(`Schedule ${String(at + 1)}`, 3, 100 + at * 10, [
         table(101 + at * 10, ["Line item", "FY2024"], [[`Line ${String(at + 1)}`, "1"]]),
       ]),
     );
     draw([section("Findings", 2, 1), ...many]);
     openRecords();
-    expect(screen.queryByRole("group", { name: "Table" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: /Table/ }));
-    fireEvent.click(screen.getByRole("option", { name: "Schedule 6" }));
+    expect(screen.queryByRole("combobox")).toBeNull();
+    expect(screen.queryByRole("option")).toBeNull();
+    const row = screen.getByRole("region", { name: "Tables" });
+    expect(row).toHaveAttribute("tabindex", "0");
+    expect(row).toHaveClass("overflow-x-auto");
+    const tabs = within(row).getByRole("group", { name: "Table" });
+    expect(tabs).toHaveClass("flex-nowrap");
+    expect(tabs).not.toHaveClass("flex-wrap");
+    expect(within(tabs).getAllByRole("button")).toHaveLength(9);
+    // A title stays on one line: the row scrolls rather than wrapping.
+    expect(within(tabs).getByRole("button", { name: "Schedule 6" })).toHaveClass(
+      "whitespace-nowrap",
+    );
+    expect(within(tabs).getByRole("button", { name: "Schedule 6" }).innerHTML).not.toContain(
+      "whitespace-normal",
+    );
+    fireEvent.click(within(tabs).getByRole("button", { name: "Schedule 6" }));
     expect(screen.getByRole("heading", { level: 4, name: "Schedule 6" })).toBeInTheDocument();
     expect(screen.getByText("Line 6")).toBeInTheDocument();
-    cleanup();
-    draw([section("Findings", 2, 1), ...many.slice(0, 6)]);
+  });
+
+  it("sets the record kinds in one non-wrapping row inside a named, focusable scroll region", () => {
+    draw();
     openRecords();
-    expect(screen.getByRole("group", { name: "Table" })).toBeInTheDocument();
+    const row = screen.getByRole("region", { name: "Record kinds" });
+    expect(row).toHaveAttribute("tabindex", "0");
+    expect(row).toHaveClass("overflow-x-auto");
+    const group = within(row).getByRole("group", { name: "Record kind" });
+    expect(group).toHaveClass("flex-nowrap");
+    expect(group).not.toHaveClass("flex-wrap");
+  });
+});
+
+describe("records tables are dense and keep their figures on one line", () => {
+  it("draws tighter rows in the small text size, only for records tables", () => {
+    draw(one("T4.4 Income statement", fixtureTable("T4.4 Income statement")));
+    openRecords();
+    const region = screen.getByRole("region", { name: "Income statement" });
+    expect(within(region).getByRole("table")).toHaveClass("text-small");
+    expect(within(region).getByRole("cell", { name: "7940" })).toHaveClass("py-1.5");
+    expect(within(region).getByRole("columnheader", { name: "FY2024" })).toHaveClass("py-1.5");
+    cleanup();
+    // A caller that does not ask for the records form draws the table exactly as before.
+    render(<PublishedTable table={fixtureTable("T4.4 Income statement")} heading="Plain" />);
+    const plain = screen.getByRole("region", { name: "Plain" });
+    expect(within(plain).getByRole("table")).toHaveClass("text-sm");
+    expect(within(plain).getByRole("table")).not.toHaveClass("text-small");
+    const cell = within(plain).getByRole("cell", { name: "7940" });
+    expect(cell).toHaveClass("py-2.5");
+    expect(cell).not.toHaveClass("whitespace-nowrap");
+    expect(plain.querySelector('[class*="28ch"], [class*="12ch"]')).toBeNull();
+  });
+
+  it("wraps text cells between 12 and 28 characters and never wraps a date or a figure", () => {
+    draw(one("T4.18 Debt instruments", fixtureTable("T4.18 Debt instruments")));
+    openRecords();
+    fireEvent.click(screen.getByRole("button", { name: "All columns" }));
+    const row = screen.getByRole("row", { name: /^2027 subordinated notes / });
+    // Text longer than 28 characters wraps at 28 and is never squeezed below 20.
+    const long = within(row).getByText("Not supplied: security not independently established");
+    expect(long).toHaveClass("block", "min-w-[20ch]", "max-w-[28ch]");
+    const short = within(row).getByText("Senior subordinated");
+    expect(short).toHaveClass("block", "min-w-[12ch]", "max-w-[28ch]");
+    expect(within(row).getByRole("cell", { name: "2027-11-15" })).toHaveClass("whitespace-nowrap");
+    expect(within(row).getByRole("cell", { name: "5.50%" })).toHaveClass("whitespace-nowrap");
+    // The first column holds its minimum at every width, not only where it is pinned.
+    const first = within(row).getByRole("cell", { name: "2027 subordinated notes" });
+    expect(first).toHaveClass("min-w-[12ch]", "sm:sticky");
+  });
+
+  it("keeps a period label such as FY2023 / 2023-09-30 on one line", () => {
+    draw(one("Net debt data", fixtureTable("Net debt data")));
+    openRecords();
+    expect(screen.getByRole("cell", { name: "FY2023 / 2023-09-30" })).toHaveClass(
+      "whitespace-nowrap",
+    );
+  });
+});
+
+describe("bars on records tables", () => {
+  it("gives a bar column room for its bar and sets its header over the figures", () => {
+    draw(one("T4.18 Debt instruments", fixtureTable("T4.18 Debt instruments")));
+    openRecords();
+    const region = screen.getByRole("region", { name: "Debt instruments" });
+    const header = within(region).getByRole("columnheader", { name: "Principal" });
+    expect(header.querySelector(".text-right.w-20")).toHaveTextContent("Principal");
+    const row = screen.getByRole("row", { name: /^Tranche J / });
+    expect(row.querySelector('[style*="width"]')?.closest("td")).toHaveClass("min-w-72");
+  });
+
+  it("draws a small principal as a visible bar and keeps it apart from zero", () => {
+    draw(one("T4.18 Debt instruments", fixtureTable("T4.18 Debt instruments")));
+    openRecords();
+    const advances = screen.getByRole("row", { name: /^Government refundable advances / });
+    expect(advances.querySelector('[style*="width"]')).toHaveStyle({ minWidth: "2px" });
+  });
+});
+
+describe("reference columns", () => {
+  it("drops a column that is a source reference in every row and states it once under the table", () => {
+    draw(one("Post-balance-sheet adjustments", fixtureTable("Post-balance-sheet adjustments")));
+    openRecords();
+    const region = screen.getByRole("region", { name: "Post-balance-sheet adjustments" });
+    expect(within(region).queryByRole("columnheader", { name: "Basis and limitation" })).toBeNull();
+    expect(within(region).queryByRole("link", { name: "In Evidence" })).toBeNull();
+    expect(screen.getAllByText("Basis and limitation: in Evidence, by row.")).toHaveLength(1);
+    expect(screen.queryByText(/Annual p63/)).toBeNull();
+    // The single reporting unit is still one statement in the handoff's words.
+    expect(screen.getAllByText("US$m")).toHaveLength(1);
+    expect(screen.getByText("US$m").closest("p")).toHaveTextContent("Reporting unit: US$m");
+    // Each row still leads to its sources.
+    expect(
+      within(region).getByRole("button", {
+        name: "Show sources for Remaining securitization draw",
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps a column that holds a reference in only some rows", () => {
+    draw();
+    const wide = openDebt();
+    expect(within(wide).getByRole("columnheader", { name: "Note" })).toBeInTheDocument();
+    expect(within(wide).getByRole("link", { name: "In Evidence" })).toBeInTheDocument();
+    expect(screen.queryByText(/in Evidence, by row\./)).toBeNull();
+  });
+});
+
+/** A phone-width screen: every `(max-width: 639px)` query matches. */
+function phone() {
+  window.matchMedia = ((query: string) => ({
+    matches: query.includes("max-width: 639px"),
+    media: query,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  })) as unknown as typeof window.matchMedia;
+}
+const desktop = () => {
+  // @ts-expect-error jsdom has no matchMedia; remove the stub
+  delete window.matchMedia;
+};
+
+describe("a wide register at phone width", () => {
+  afterEach(desktop);
+
+  it("draws one card per row with its label, compact columns and trace control", () => {
+    phone();
+    const { entry, open } = draw(
+      one("T4.18 Debt instruments", fixtureTable("T4.18 Debt instruments")),
+    );
+    openRecords();
+    expect(screen.queryByRole("table")).toBeNull();
+    const cards = screen.getByRole("list", { name: "Debt instruments" });
+    const items = within(cards).getAllByRole("listitem");
+    expect(items).toHaveLength(18);
+    const tranche = items.find((item) => item.textContent.startsWith("Tranche J"));
+    if (!tranche) throw new Error("no card for Tranche J");
+    const terms = within(tranche)
+      .getAllByRole("term")
+      .map((term) => term.textContent);
+    expect(terms).toEqual(["Ranking", "Principal", "Coupon or Margin", "Maturity"]);
+    const principal = within(tranche).getByText("Principal", { selector: "dt" });
+    expect(principal.nextElementSibling).toHaveTextContent("3632");
+    expect(within(tranche).getByText("3632")).toHaveClass("font-mono", "tabular-nums");
+    expect(within(tranche).getByText("SOFR + 2.50%")).toBeInTheDocument();
+    expect(within(tranche).getByText("2031-02-28")).toHaveClass("whitespace-nowrap");
+    expect(tranche.querySelector("[style]")).toBeNull();
+    fireEvent.click(within(tranche).getByRole("button", { name: "Show sources for Tranche J" }));
+    const line = fixtureTable("T4.18 Debt instruments").rows[1]?.line ?? -1;
+    expect(open).toHaveBeenCalledWith(traceKey(entry, line));
+    // No bar is drawn in a card, so no scale is stated.
+    expect(screen.queryByText(/^Bars:/)).toBeNull();
+  });
+
+  it("opens the scrolled full table from All columns", () => {
+    phone();
+    draw(one("T4.18 Debt instruments", fixtureTable("T4.18 Debt instruments")));
+    openRecords();
+    fireEvent.click(screen.getByRole("button", { name: "All columns" }));
+    expect(screen.queryByRole("list", { name: "Debt instruments" })).toBeNull();
+    const region = screen.getByRole("region", { name: "Debt instruments" });
+    expect(region).toHaveAttribute("tabindex", "0");
+    expect(within(region).getAllByRole("columnheader")).toHaveLength(17);
+  });
+
+  it("keeps a register of seven or fewer columns as a table", () => {
+    phone();
+    draw(one("T4.4 Income statement", fixtureTable("T4.4 Income statement")));
+    openRecords();
+    expect(screen.getByRole("region", { name: "Income statement" })).toBeInTheDocument();
+    expect(screen.queryByRole("list", { name: "Income statement" })).toBeNull();
   });
 });
 

@@ -374,11 +374,34 @@ type TableForm = {
   wideBars?: boolean;
   /** A cell's own drawing (a stated gap as a chip); undefined falls back to the text. */
   drawCell?: (column: number, cell: string) => ReactNode | undefined;
+  /** The records form: tighter rows in the small size; a text cell wraps between 12 and 28
+   * characters; a figure or a date stays on one line; the first column keeps its minimum at every
+   * width; a bar column's header sits over its figures. */
+  records?: boolean;
 };
 
 const NUMERALS = " text-right font-mono tabular-nums";
 /** A figure is set in mono numerals; a stated gap in the same column keeps the reading face. */
 const FIGURE = /^[(+-]?\d[\d,]*(?:\.\d+)?\)?(?:%|x|bps)?$/;
+
+/** A figure, a date or a period label; alone or paired ("FY2023 / 2023-09-30") it is one line. */
+const ONE_LINE_PART =
+  /(?:[(+\-−]?\$?\d[\d,]*(?:\.\d+)?\)?\s?(?:%|x|bps)?|\d{4}-\d{2}-\d{2}|(?:FY|CY|Q[1-4]|H[12]|LTM)\s?\d{2,4}|[A-Z][a-z]{2,8}\.? \d{4})/
+    .source;
+const ONE_LINE = new RegExp(`^${ONE_LINE_PART}(?:\\s?[/;–]\\s?${ONE_LINE_PART})*$`);
+/** Whether a records cell is a figure, a date or a period label, which is never wrapped. */
+export const isOneLine = (cell: string) => ONE_LINE.test(cell.trim());
+const WRAP_AT = 28;
+
+/** The records form's hold on a cell's text: a figure or a date on one line (its cell does not
+ * wrap); other text wraps at 28 characters, never squeezed below 12, and text that runs past 28
+ * never below 20, so a narrow screen scrolls the table rather than setting a word a line. */
+function heldText(cell: string) {
+  if (isOneLine(cell)) return null;
+  return cell.trim().length > WRAP_AT
+    ? "block min-w-[20ch] max-w-[28ch]"
+    : "block min-w-[12ch] max-w-[28ch]";
+}
 
 const amountCell = (amounts: Amounts | undefined, column: number, cell: string, line: number) =>
   amounts?.columns.has(column) ? amounts.draw(column, cell, line) : undefined;
@@ -414,11 +437,10 @@ function cellContent({
       "Source reference unavailable"
     );
   if (!cell.trim()) return <span aria-label={emptyLabel}>—</span>;
-  return (
-    amountCell(amounts, column, cell, line) ??
-    form.drawCell?.(column, cell) ??
-    richParts(cell, shown)
-  );
+  const drawn = amountCell(amounts, column, cell, line) ?? form.drawCell?.(column, cell);
+  if (drawn !== undefined && drawn !== null) return drawn;
+  const held = form.records ? heldText(cell) : null;
+  return held ? <span className={held}>{richParts(cell, shown)}</span> : richParts(cell, shown);
 }
 
 export function PublishedTable({
@@ -456,7 +478,22 @@ export function PublishedTable({
       : "";
   const numerals = (column: number, cell: string) =>
     form.numeric?.has(column) ? (FIGURE.test(cell.trim()) ? NUMERALS : " text-right") : "";
-  const barWidth = form.wideBars ? " min-w-56" : " min-w-40";
+  const barWidth = form.wideBars ? " min-w-72" : " min-w-40";
+  const { records } = form;
+  const pad = records ? "py-1.5" : "py-2.5";
+  // The records form holds the first column to a minimum at every width, not only where it pins.
+  const first = (column: number) => (records && column === columns[0] ? " min-w-[12ch]" : "");
+  const oneLine = (cell: string) => (records && isOneLine(cell) ? " whitespace-nowrap" : "");
+  // A bar column's header sits over its figures, right-aligned in their slot (BarCell's w-20),
+  // wrapping there when longer.
+  const header = (column: number) => {
+    const text = richParts(table.headers[column] ?? "", shown);
+    return records && amounts?.columns.has(column) ? (
+      <span className="block w-20 text-right">{text}</span>
+    ) : (
+      text
+    );
+  };
   const sources =
     rowSource ??
     (traceAt &&
@@ -470,7 +507,7 @@ export function PublishedTable({
   const rowName = (row: Table["rows"][number]) => row.cells[columns[0] ?? 0] ?? "";
   const name = tableHeading || "Table";
   const drawn = (
-    <table className="w-full border-collapse text-sm">
+    <table className={`w-full border-collapse ${records ? "text-small" : "text-sm"}`}>
       {amounts?.columns.size ? (
         <caption className="sr-only">{`${name} · bars on one scale per column`}</caption>
       ) : null}
@@ -480,13 +517,13 @@ export function PublishedTable({
             <th
               key={column}
               scope="col"
-              className={`px-3 py-2.5 ${form.numeric?.has(column) ? "text-right" : "text-left"} font-semibold${pinned(column, "bg-surface-subtle")}`}
+              className={`px-3 ${pad} ${form.numeric?.has(column) ? "text-right" : "text-left"} font-semibold${first(column)}${pinned(column, "bg-surface-subtle")}`}
             >
-              {richParts(table.headers[column] ?? "", shown)}
+              {header(column)}
             </th>
           ))}
           {sources && (
-            <th scope="col" className="px-2 py-2.5 text-left font-semibold">
+            <th scope="col" className={`px-2 ${pad} text-left font-semibold`}>
               <span className="sr-only">Sources</span>
             </th>
           )}
@@ -498,7 +535,7 @@ export function PublishedTable({
             {columns.map((column) => (
               <td
                 key={column}
-                className={`px-3 py-2.5 text-text-secondary${amounts?.columns.has(column) ? barWidth : ""}${numerals(column, row.cells[column] ?? "")}${pinned(column, "bg-surface-card")}`}
+                className={`px-3 ${pad} text-text-secondary${amounts?.columns.has(column) ? barWidth : ""}${numerals(column, row.cells[column] ?? "")}${first(column)}${oneLine(row.cells[column] ?? "")}${pinned(column, "bg-surface-card")}`}
               >
                 {cellContent({
                   cell: row.cells[column] ?? "",
@@ -514,7 +551,9 @@ export function PublishedTable({
               </td>
             ))}
             {sources && (
-              <td className="px-2 py-1.5">{sources(row.line, rowName(row) || "this row")}</td>
+              <td className={`px-2 ${records ? "py-0.5" : "py-1.5"}`}>
+                {sources(row.line, rowName(row) || "this row")}
+              </td>
             )}
           </tr>
         ))}
