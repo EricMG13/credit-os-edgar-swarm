@@ -399,6 +399,8 @@ type LadderSpec = {
   name: string;
   prefixes: readonly string[];
   sign: "paid" | "signed" | null;
+  /** A level's further label forms in the KPI dashboard (`Levered FCF after total capex, US$m`). */
+  kpi?: readonly string[];
 };
 
 // The contract's fixed rows (`EBITDA (Adjusted)`, `Net Cash from Operating Activities`, `Cash
@@ -448,6 +450,7 @@ const LADDER: readonly LadderSpec[] = [
     name: "Free cash flow after capex",
     prefixes: ["Levered free cash flow", "Free cash flow levered"],
     sign: null,
+    kpi: ["Levered FCF"],
   },
   {
     key: "dividends",
@@ -469,6 +472,7 @@ const LADDER: readonly LadderSpec[] = [
     name: "Cash flow after distributions",
     prefixes: ["Discretionary cash flow after"],
     sign: null,
+    kpi: ["DCF after"],
   },
   {
     key: "acquisitions",
@@ -480,15 +484,47 @@ const LADDER: readonly LadderSpec[] = [
 ];
 
 /** See the exported reader below; a string is the reason the figure is not drawn. */
+const KPI_UNIT = /,\s*([^,]+)$/;
+
+/**
+ * A ladder level from the KPI dashboard (`| KPI Category | Metric Name | FY2023 | FY2024 | …`), the
+ * documented second source for a level the cash flow statement does not state. The row is found by
+ * its Metric Name (one match), its unit is the name's trailing ", US$m", and the label drops it.
+ */
+function kpiLevel(entry: OutputEntry, spec: LadderSpec): StatementRow | string {
+  const NONE = "Not found in the cash flow statement or the KPI dashboard.";
+  const read = statement(entry, "T4.10 KPI dashboard");
+  const nameAt = typeof read === "string" ? -1 : columnOf(read.table, "Metric Name");
+  if (typeof read === "string" || nameAt < 0) return NONE;
+  const row = rowStarting(read.table, [...spec.prefixes, ...(spec.kpi ?? [])], nameAt);
+  if (row === "none") return NONE;
+  if (row === "several") return `${spec.name} matches more than one row of the KPI dashboard.`;
+  const name = (row.cells[nameAt] ?? "").trim();
+  const unit = KPI_UNIT.exec(name)?.[1]?.trim();
+  return {
+    ...statementRow(read, row),
+    label: name.replace(KPI_UNIT, "").trim(),
+    unit: unit ? unitLabel(unit) : null,
+  };
+}
+
+/** One ladder row: the cash flow statement first; a level it lacks may come from the KPI dashboard. */
+function ladderRow(entry: OutputEntry, spec: LadderSpec, source: Statement | string) {
+  if (typeof source === "string") return `${spec.name}: ${source}`;
+  const row = rowStarting(source.table, spec.prefixes);
+  if (row === "none" && spec.kind === "level" && spec.key !== "ebitda")
+    return kpiLevel(entry, spec);
+  return findRow(source, spec.prefixes, spec.name);
+}
+
 function readLadder(entry: OutputEntry): CashLadder | string {
   const cash = statement(entry, "T4.5 Cash flow statement");
   if (typeof cash === "string") return cash;
   const income = statement(entry, "T4.4 Income statement");
-  const rows = LADDER.map((spec) => {
-    const source = spec.key === "ebitda" ? income : cash;
-    if (typeof source === "string") return { spec, read: `${spec.name}: ${source}` };
-    return { spec, read: findRow(source, spec.prefixes, spec.name) };
-  });
+  const rows = LADDER.map((spec) => ({
+    spec,
+    read: ladderRow(entry, spec, spec.key === "ebitda" ? income : cash),
+  }));
   const anchor = rows.find(({ spec }) => spec.key === "cfo")?.read;
   const unit =
     anchor && typeof anchor !== "string"

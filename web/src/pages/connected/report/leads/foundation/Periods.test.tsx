@@ -198,6 +198,14 @@ describe("periodStrip", () => {
     ]);
     expect(strip.comparison).toEqual({ from: "FY2021", to: "FY2024" });
   });
+  it("draws a period list too long for the axis as rows, one period per row", () => {
+    const years = Array.from({ length: 14 }, (_, at) => `FY${String(2011 + at)}`);
+    render(<PeriodsTile lead={leadProps(revenue(years))} />);
+    const tile = screen.getByRole("region", { name: "Periods" });
+    expect(within(tile).getByRole("img").getAttribute("data-layout")).toBe("rows");
+    expect(tile.querySelectorAll("[data-period]")).toHaveLength(14);
+    expect(byData(tile, "period", "FY2024")?.textContent).toBe("FY2024Latest, compared");
+  });
   it("puts non-annual periods on the axis when no period is annual", () => {
     const strip = periodStrip(revenue(["H1 2024", "H2 2024"]));
     expect(strip.axis.map((p) => p.label)).toEqual(["H1 2024", "H2 2024"]);

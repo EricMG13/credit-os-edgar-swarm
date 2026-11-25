@@ -431,7 +431,8 @@ describe("cashLadder: the handoff's own levels and deductions, as written", () =
         "gap: source dash",
         "gap: source dash",
       ],
-      ["afterDistributions", "level", "Cash flow after distributions", null, null],
+      // Not in the cash flow statement: read from the KPI dashboard's Metric Name row.
+      ["afterDistributions", "level", "DCF after cash dividends and equivalents", "1198", "-158"],
       [
         "acquisitions",
         "deduction",
@@ -441,8 +442,40 @@ describe("cashLadder: the handoff's own levels and deductions, as written", () =
       ],
     ]);
     const after = ladder?.steps.find((s) => s.key === "afterDistributions");
+    expect([after?.stated, after?.absent, after?.line]).toEqual([true, null, 387]);
+  });
+  it("says what was checked when neither the cash flow statement nor the KPI dashboard states the level", () => {
+    const after = cashLadder(dropTable(distressed, "T4.10 KPI dashboard"))?.steps.find(
+      (s) => s.key === "afterDistributions",
+    );
     expect(after?.stated).toBe(false);
-    expect(after?.absent).toBe("Cash flow after distributions is not in the handoff.");
+    expect(after?.absent).toBe("Not found in the cash flow statement or the KPI dashboard.");
+    expect(after?.values.map((v) => v.cell)).toEqual([null, null]);
+  });
+  it("refuses a KPI dashboard level in another unit, and one that matches twice", () => {
+    const euro = setLabelled(
+      distressed,
+      "T4.10 KPI dashboard",
+      "Distribution retention",
+      "Metric Name",
+      "DCF after cash dividends and equivalents, EURm",
+    );
+    const after = (entry: OutputEntry) =>
+      cashLadder(entry)?.steps.find((s) => s.key === "afterDistributions");
+    expect(after(euro)?.absent).toBe(
+      "DCF after cash dividends and equivalents is stated in another unit.",
+    );
+    const twice = addRow(distressed, "T4.10 KPI dashboard", [
+      "Other",
+      "DCF after all distributions, US$m",
+      "1",
+      "1",
+      "-",
+      "-",
+    ]);
+    expect(after(twice)?.absent).toBe(
+      "Cash flow after distributions matches more than one row of the KPI dashboard.",
+    );
   });
   it("reads the single-period relative value ladder with its own label forms", () => {
     expect(ladderRows(cashLadder(relative))).toEqual([

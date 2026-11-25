@@ -146,13 +146,13 @@ export function periodStrip(entry: OutputEntry): PeriodStrip {
       ]),
     ),
   }));
-  const overall = (label: string) => {
-    const states = figures.map((figure) => figure.states[label] ?? { kind: "none" as const });
-    const all = stateOf([]);
-    if (states.some((state) => state.kind === "figures")) return { kind: "figures" as const };
-    const reasons = states.flatMap((state) => (state.kind === "gap" ? state.reasons : []));
-    if (reasons.length) return { kind: "gap" as const, reasons: [...new Set(reasons)] };
-    return states.some((state) => state.kind === "words") ? { kind: "words" as const } : all;
+  /** The lead's state for a period: numbers in any figure, else every figure's gaps, else words. */
+  const overall = (label: string): PeriodState => {
+    const states = figures.map((figure) => figure.states[label]);
+    if (states.some((state) => state?.kind === "figures")) return { kind: "figures" };
+    const reasons = states.flatMap((state) => (state?.kind === "gap" ? state.reasons : []));
+    if (reasons.length) return { kind: "gap", reasons: [...new Set(reasons)] };
+    return states.some((state) => state?.kind === "words") ? { kind: "words" } : { kind: "none" };
   };
   const partly = (label: string) =>
     figures.some((figure) => figure.states[label]?.kind === "figures") &&
