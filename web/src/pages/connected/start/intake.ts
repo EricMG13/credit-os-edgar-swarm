@@ -26,7 +26,7 @@ import {
 import { decided, groupLimits, needsCheck, type LimitGroup } from "./limits";
 import { ATTACHMENTS, documentDescription, LEGAL_CHOICES, PURPOSE_STEP, storedName } from "./plain";
 import { asSentence, errorText, isUnreachable } from "../useResource";
-import type { FieldProblem } from "./fields";
+import type { FieldKey, FieldProblem } from "./fields";
 
 export const FORM_STEPS = {
   documents: { title: "Documents", next: "Continue to purpose", previous: null },
@@ -244,6 +244,8 @@ export type IntakeView = {
   idNote: string;
   useIssuerId: (id: string) => void;
   focusProblem: () => void;
+  /** A control the browser found invalid when the step was sent, with the page's words for it. */
+  markInvalid: (field: FieldKey, message: string) => void;
   changeModel: (value: string) => void;
   changeEffort: (value: string) => void;
   changeTurns: (value: string) => void;

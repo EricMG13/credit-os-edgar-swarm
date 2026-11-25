@@ -1,4 +1,4 @@
-import type { RefObject, SubmitEvent } from "react";
+import { useRef, type RefObject, type SubmitEvent, type SyntheticEvent } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { Stepper } from "../../run/start/Stepper";
 import { Bento, Tile } from "../report/overview/Tile";
@@ -22,7 +22,7 @@ import { DocumentFields } from "./DocumentsStep";
 import { PurposeFields } from "./PurposeStep";
 import { ContextFields } from "./ContextStep";
 import { ReviewConfirmation } from "./ReviewStep";
-import { HEADING_FOCUS, focusStep } from "./fields";
+import { HEADING_FOCUS, focusStep, invalidMessage, type FieldKey } from "./fields";
 
 function StepFields({
   view,
@@ -234,9 +234,11 @@ function InputStepForm({
   onPrevious: () => void;
 }) {
   const blocked = view.step === "documents" && !view.canRead;
+  const onInvalid = useInvalidControls(view.markInvalid);
   return (
     <Tile span={12} label={`${title} step`}>
       <form
+        onInvalidCapture={onInvalid}
         onSubmit={(event) => {
           onAdvance(event);
         }}
@@ -298,4 +300,35 @@ function InputStepForm({
       </form>
     </Tile>
   );
+}
+
+/**
+ * The browser checks the step's controls when it is sent and fires `invalid` on each one that
+ * fails, in order. A control in a closed section is opened so it can be seen and focused. For a
+ * control the page has words for, the browser's bubble is replaced by the page's own message on
+ * the field (the first such control only; it takes the focus); the step is still not sent.
+ */
+function useInvalidControls(markInvalid: (field: FieldKey, message: string) => void) {
+  const marked = useRef(false);
+  return (event: SyntheticEvent<HTMLFormElement>) => {
+    const control = event.target;
+    if (!(
+      control instanceof HTMLInputElement ||
+      control instanceof HTMLSelectElement ||
+      control instanceof HTMLTextAreaElement
+    ))
+      return;
+    const section = control.closest("details");
+    if (section && !section.open) section.open = true;
+    const field = control.dataset.field as FieldKey | undefined;
+    const message = field && invalidMessage(field, control);
+    if (!field || !message) return;
+    event.preventDefault();
+    if (marked.current) return;
+    marked.current = true;
+    queueMicrotask(() => {
+      marked.current = false;
+    });
+    markInvalid(field, message);
+  };
 }

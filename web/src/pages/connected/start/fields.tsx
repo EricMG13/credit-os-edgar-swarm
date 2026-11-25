@@ -2,11 +2,13 @@ import { useId } from "react";
 import { RequestError } from "../api";
 import { field, label } from "../layout";
 import { refusalProblems } from "./plain";
+import { ANALYST_NAME_RULE } from "./analystName";
 import type { FormStep } from "./intake";
 
 export type FieldKey =
   | "issuer_name"
   | "issuer_id"
+  | "as_of"
   | "submitted_by"
   | "cutoff"
   | "current_period"
@@ -63,7 +65,10 @@ export function refusedField(
 
 /** The step a control is drawn on: the issuer name and analyst name on Documents, the rest on Context. */
 export function stepOfField(field: FieldKey): FormStep {
-  return field === "issuer_name" || field === "issuer_id" || field === "submitted_by"
+  return field === "issuer_name" ||
+    field === "issuer_id" ||
+    field === "as_of" ||
+    field === "submitted_by"
     ? "documents"
     : "context";
 }
@@ -156,4 +161,38 @@ export const HEADING_FOCUS =
 
 export function focusStep(node: HTMLElement | null) {
   node?.focus();
+}
+
+/** What a blank required field asks for, in the page's words. */
+const MISSING: Partial<Record<FieldKey, string>> = {
+  issuer_name: "Enter the issuer's name.",
+  issuer_id: "Enter an Issuer ID.",
+  as_of: "Enter the as-of date.",
+  submitted_by: ANALYST_NAME_RULE,
+  turns: "Enter the turns per module.",
+};
+
+/**
+ * The page's own words for a control the browser found invalid, in place of the browser's bubble;
+ * undefined for a control the page has no words for (the browser's bubble then stands).
+ */
+export function invalidMessage(
+  field: FieldKey,
+  control: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement,
+): string | undefined {
+  const { validity } = control;
+  if (validity.valueMissing) return MISSING[field];
+  if (validity.patternMismatch && field === "issuer_id")
+    return "Use letters a–z, digits and hyphens, starting with a letter or digit, up to 40 characters.";
+  if (validity.badInput || validity.typeMismatch)
+    return control instanceof HTMLInputElement && control.type === "date"
+      ? "Enter a whole date: day, month and year."
+      : "Enter a number.";
+  if (control instanceof HTMLInputElement) {
+    if (validity.rangeUnderflow || validity.rangeOverflow || validity.stepMismatch)
+      return control.type === "date"
+        ? `Enter a date on or before ${control.max}.`
+        : `Enter a whole number from ${control.min} to ${control.max}.`;
+  }
+  return undefined;
 }

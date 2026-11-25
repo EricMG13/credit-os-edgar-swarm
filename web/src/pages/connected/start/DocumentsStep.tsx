@@ -306,9 +306,7 @@ export function DocumentFields({
           <p className="text-small text-text-secondary">No documents yet.</p>
         )}
         {view.missing === undefined && view.documentRows.length > 0 && (
-          <GapNote>
-            Which modules each file serves is not reported before review.
-          </GapNote>
+          <GapNote>Which modules each file serves is not reported before review.</GapNote>
         )}
       </FileUpload.Root>
       {view.missing !== undefined && <MissingForModules missing={view.missing} />}
@@ -401,6 +399,7 @@ export function DocumentFields({
               className={FIELD}
               type="date"
               required
+              {...problemAttrs(view.problem, "as_of")}
               value={view.run.as_of}
               onChange={(event) => {
                 view.changeRun("as_of", event.target.value);
@@ -408,6 +407,7 @@ export function DocumentFields({
             />
           )}
         </Labelled>
+        <FieldMessage problem={view.problem} field="as_of" />
       </div>
       <div className="[&_select]:min-h-8 max-[480px]:[&_select]:min-h-11">
         <SelectField

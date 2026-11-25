@@ -460,7 +460,7 @@ function IntakeForm({
 
   function changeRun(key: keyof Context["run"], value: string) {
     if (key === "pathway") invalidateReview();
-    if (key === "current_period" || key === "prior_period") clearProblem(key);
+    if (key === "current_period" || key === "prior_period" || key === "as_of") clearProblem(key);
     setContext((previous) => ({ ...previous, run: { ...previous.run, [key]: value } }));
   }
 
@@ -1283,6 +1283,9 @@ function IntakeForm({
     useIssuerId: (id) => {
       clearProblem("issuer_id");
       setCustomSlug(id);
+    },
+    markInvalid: (field, message) => {
+      setFieldError(new FieldProblem(field, message));
     },
     focusProblem: () => {
       if (fieldError) focusField(fieldError.field);
