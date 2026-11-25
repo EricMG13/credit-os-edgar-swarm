@@ -18,6 +18,8 @@ export function heldModules(view: ReportView, run: PublishedRun): string[] {
   return decisionActions(view, run).flatMap(({ held, module }) => (held ? [module] : []));
 }
 
+const LEDGER_POINTER = /; the specific evidence restrictions are recorded in the gaps ledger\./gi;
+
 /**
  * The call's paragraphs and the passage they come from: the published lead paragraph first, then
  * the rest of its passage in the module's order. Empty when the lead paragraph is not found where
@@ -37,5 +39,12 @@ export function callBlocks(
   // The lead's own section: a reader passage or a finding, as the publication named it.
   const blocks = sectionBlocks(section);
   const at = blocks.findIndex((block) => block.line === line);
-  return { heading: section.heading, blocks: at < 0 ? [] : blocks.slice(at) };
+  if (at < 0) return { heading: section.heading, blocks: [] };
+  // The lead in the same words as the PDF and the Library draw it: no pointer to the gaps ledger.
+  const [first, ...rest] = blocks.slice(at);
+  const opening =
+    first && "text" in first && first.text !== null
+      ? { ...first, text: first.text.replaceAll(LEDGER_POINTER, ".") }
+      : first;
+  return { heading: section.heading, blocks: opening ? [opening, ...rest] : [] };
 }

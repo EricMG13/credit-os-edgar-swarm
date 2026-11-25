@@ -59,7 +59,7 @@ it("draws one row for an issuer with the three figures, the decision not shown, 
   draw([run("acme-2026", "2026-03-31", { metrics: METRICS })], ["acme-2026"]);
   const row = screen.getByRole("listitem");
   expect(within(row).getByRole("heading", { name: "Acme" })).toBeVisible();
-  expect(within(row).getByText("Not shown")).toBeVisible();
+  expect(within(row).getByText("Not shown in the Library")).toBeVisible();
   expect(within(row).getAllByText("2.25x")[0]).toHaveClass("font-mono");
   expect(within(row).getByText("better")).toBeVisible();
   expect(within(row).getByText("4.19x")).toBeVisible();

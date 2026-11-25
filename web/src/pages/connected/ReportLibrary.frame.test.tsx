@@ -195,7 +195,7 @@ it("states a network failure in a fixed sentence, never the browser's, and Try a
   expect(await screen.findByRole("region", { name: "Overview" })).toBeInTheDocument();
 });
 
-it("draws CP-8's bottom line once, as the since-earlier sentence, and keeps its limitations off Overview", async () => {
+it("keeps CP-8's bottom line and limitations off Overview, and points to Changes", async () => {
   const snap = snapshot({
     others: [
       {
@@ -217,8 +217,14 @@ it("draws CP-8's bottom line once, as the since-earlier sentence, and keeps its 
   serve({ [SNAPSHOT]: () => json(snap) });
   open();
   const since = await screen.findByRole("region", { name: "Since the earlier run" });
-  expect(within(since).getByText("Leverage fell, and the credit view improved.")).toBeVisible();
-  expect(screen.getAllByText("Leverage fell, and the credit view improved.")).toHaveLength(1);
+  expect(
+    within(since).getByText("A comparison with the earlier run is on the Changes page."),
+  ).toBeVisible();
+  expect(within(since).getByRole("link", { name: "Open Changes" })).toHaveAttribute(
+    "href",
+    "#changes",
+  );
+  expect(screen.queryByText("Leverage fell, and the credit view improved.")).toBeNull();
   const page = screen.getByRole("region", { name: "Overview" });
   expect(page).toHaveTextContent("The forecast rests on one year of audited figures.");
   expect(page).not.toHaveTextContent("The earlier run did not state gross debt.");

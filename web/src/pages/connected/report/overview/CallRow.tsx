@@ -26,7 +26,7 @@ import { plainText, richParts } from "../../richText";
 import { callBlocks } from "./decision";
 import { readerReason } from "./reason";
 import { useSvgScale } from "./svgScale";
-import { bottomLineBlocks, entryOf, type Passage, type PassageTable, type RowProps } from "./read";
+import { entryOf, type Passage, type PassageTable, type RowProps } from "./read";
 import { Figure, GapNote, Tile } from "./Tile";
 
 function Source({
@@ -67,10 +67,13 @@ function Sentence({
   entry,
   passage,
   className,
+  of = "bottom line",
 }: Pick<RowProps, "run"> & {
   entry: OutputEntry;
   passage: Said | undefined;
   className: string;
+  /** The passage the block is from, in lower case. */
+  of?: string;
 }) {
   if (!passage)
     return <GapNote>Not established for this run. The module wrote no bottom line.</GapNote>;
@@ -78,7 +81,7 @@ function Sentence({
   if ("table" in passage)
     return (
       <div className="flex flex-col items-start gap-1">
-        <p className="text-small text-text-secondary">The bottom line is a table.</p>
+        <p className="text-small text-text-secondary">{`The ${of} is a table.`}</p>
         <EvidenceLink href={href}>Read this table in Evidence</EvidenceLink>
       </div>
     );
@@ -88,7 +91,7 @@ function Sentence({
       <div className="flex flex-col items-start gap-1">
         {passage.cited && (
           <p className="text-small text-text-secondary">
-            The bottom line cites a source reference; read it in Evidence.
+            {`The ${of} cites a source reference; read it in Evidence.`}
           </p>
         )}
         <EvidenceLink href={href}>Read this passage in Evidence</EvidenceLink>
@@ -322,8 +325,9 @@ function CallTile({ snapshot, run, view }: RowProps) {
               "max-w-[840px] font-medium text-pretty text-text-primary",
               bottomLineSize(first),
             )}
+            of={heading.toLowerCase()}
           />
-          <Continuation run={run} entry={lead} rest={rest} />
+          <Continuation run={run} entry={lead} rest={rest} of={heading.toLowerCase()} />
         </div>
         <Decisions run={run} decisions={decisions} />
       </div>
@@ -338,7 +342,8 @@ function Paragraphs({
   entry,
   rest,
   className,
-}: Pick<RowProps, "run"> & { entry: OutputEntry; rest: Said[]; className: string }) {
+  of,
+}: Pick<RowProps, "run"> & { entry: OutputEntry; rest: Said[]; className: string; of: string }) {
   return (
     <div className={className}>
       {rest.map((passage, at) => (
@@ -348,12 +353,13 @@ function Paragraphs({
             entry={entry}
             passage={passage}
             className="reading-copy text-body text-text-secondary"
+            of={of}
           />
           <Source
             run={run}
             entry={entry}
             line={passage.line}
-            name={`paragraph ${String(at + 2)} of the bottom line`}
+            name={`paragraph ${String(at + 2)} of the call, from the ${of}`}
           />
         </div>
       ))}
@@ -370,7 +376,8 @@ function Continuation({
   run,
   entry,
   rest,
-}: Pick<RowProps, "run"> & { entry: OutputEntry; rest: Said[] }) {
+  of,
+}: Pick<RowProps, "run"> & { entry: OutputEntry; rest: Said[]; of: string }) {
   if (rest.length === 0) return null;
   return (
     <>
@@ -379,12 +386,19 @@ function Continuation({
         entry={entry}
         rest={rest}
         className="hidden md:flex md:flex-col md:gap-3"
+        of={of}
       />
       <details className="md:hidden">
         <summary className="flex min-h-11 w-fit cursor-pointer items-center rounded-ds-xs text-small font-medium text-text-link outline-focus-ring focus-visible:outline-2">
           Read on
         </summary>
-        <Paragraphs run={run} entry={entry} rest={rest} className="mt-2 flex flex-col gap-3" />
+        <Paragraphs
+          run={run}
+          entry={entry}
+          rest={rest}
+          className="mt-2 flex flex-col gap-3"
+          of={of}
+        />
       </details>
     </>
   );
@@ -576,17 +590,12 @@ function ChangesBody({ snapshot, run, view }: RowProps): ReactNode {
           : "No comparison with an earlier run is shown for this run."}
       </p>
     );
-  const [first, ...more] = bottomLineBlocks(entry);
+  // The changes module's bottom line can restate a decision no clearance is recorded for, so it
+  // stays on the Changes page, as the other decision passages stay on theirs.
   return (
-    <>
-      <Sentence
-        run={run}
-        entry={entry}
-        passage={first}
-        className="text-body font-medium text-pretty text-text-primary"
-      />
-      {more.length > 0 && <p className="text-caption text-text-secondary">More in Changes</p>}
-    </>
+    <p className="text-small text-text-secondary">
+      A comparison with the earlier run is on the Changes page.
+    </p>
   );
 }
 

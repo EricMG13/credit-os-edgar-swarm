@@ -11,7 +11,7 @@ export type LibraryRun = LibraryIndex["workspace"]["runs"][string];
 export type RunState = "Delivered" | "Test preview" | "No report published";
 
 /** Another published report of the issuer the row links to: newer, or of the same as-of date. */
-export type RelatedReport = { catalogue: CatalogueRun; run: LibraryRun; timing: string };
+type RelatedReport = { catalogue: CatalogueRun; run: LibraryRun; timing: string };
 
 /** One issuer of the library: its runs newest first, and what its selected run says about itself. */
 export type IssuerGroup = {

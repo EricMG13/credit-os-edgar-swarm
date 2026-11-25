@@ -103,44 +103,6 @@ const overviewModules = (run: PublishedRun) => moduleOrder(run).filter((id) => i
 const designated = (view: ReportView, id: string) =>
   view.entries.find((entry) => entry.selected && entry.output.module === id);
 
-/**
- * The key charts (ruling H5.4): the rows of `docs/visualisations/catalogue.csv` whose placement
- * names Overview and that are drawn as a chart, each by the module that owns it and the heading
- * it publishes the drawing under (`owners/cpos_launch_tables.py`). The catalogue's other Overview
- * rows are not drawings here: "Table/content only" rows (CP-2-V03, CP-2D-V02, CP-5-V01) and
- * CP-0-V02 are tables on their module pages, the chart index (CP-MODEL-V02) is a link to Forecast
- * and the cross-module calendar (DELIVERY-V02) is Dates to watch.
- */
-const OVERVIEW_DRAWINGS = [
-  ["CP-1A", "events", "Events: Issuer history"], // CP-1A-V01
-  ["CP-DR", "events", "Events: Research catalysts"], // CP-DR-V03
-  ["CP-2", "maps", "Map: credit-risk transmission"], // CP-2-V02
-] as const;
-
-/** The key charts the run has data for, in run order: each module's published drawings, gaps left out. */
-export function overviewCharts(view: ReportView, run: PublishedRun) {
-  return overviewModules(run).flatMap((id) => {
-    const entry = designated(view, id);
-    const wanted = OVERVIEW_DRAWINGS.filter(([module]) => module === id);
-    if (!entry || !wanted.length || entry.output.parseError || blocked(entry)) return [];
-    const headingOf = (line: unknown) =>
-      entry.sections.find(({ blocks }) =>
-        blocks.some((block) => block.type === "table" && block.line === line),
-      )?.heading;
-    const pick = (kind: "events" | "maps") =>
-      (entry.output[kind] ?? []).filter(
-        (figure) =>
-          typeof figure.gap !== "string" &&
-          wanted.some(([, of, heading]) => of === kind && headingOf(figure.table) === heading),
-      );
-    const events = pick("events");
-    const maps = pick("maps");
-    if (!events.length && !maps.length) return [];
-    const { id: output, sha256 } = entry.output;
-    return [{ id, name: moduleName(id), entry, output: { id: output, sha256, events, maps } }];
-  });
-}
-
 function passageTexts(entry: OutputEntry, heading: string) {
   return passages(entry.sections)
     .filter((section) => section.heading === heading)

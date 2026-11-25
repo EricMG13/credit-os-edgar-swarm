@@ -466,7 +466,7 @@ function compared(currentBias: string | null, priorBias: string | null, bottom: 
   return { snap, current, lead, changes };
 }
 
-it("draws the changes sentence as written and no stance move", () => {
+it("draws no changes sentence and no stance move, only the way to Changes", () => {
   const { snap, current, lead, changes } = compared(
     "Watchlist",
     "Requires More Work",
@@ -475,8 +475,9 @@ it("draws the changes sentence as written and no stance move", () => {
   render(<CallRow snapshot={snap} run={current} view={view([lead, changes], lead)} />);
   const tile = screen.getByRole("region", { name: "Since the earlier run" });
   expect(within(tile).queryByText(/Watchlist|Requires More Work|stance/i)).toBeNull();
+  expect(within(tile).queryByText(/About the same/)).toBeNull();
   expect(
-    within(tile).getByText("About the same: the credit picture has not changed."),
+    within(tile).getByText("A comparison with the earlier run is on the Changes page."),
   ).toBeVisible();
 });
 

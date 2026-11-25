@@ -51,7 +51,12 @@ function Runs({ group }: { group: IssuerGroup }) {
             {asOfDate(entry.date)}
           </time>
           <span className="text-text-secondary">{entry.title}</span>
-          {index === 0 && <Badge color="gray">Latest</Badge>}
+          {index === 0 && group.entries[1]?.date !== entry.date && (
+            <Badge color="gray">Latest</Badge>
+          )}
+          {group.entries.some((other) => other !== entry && other.date === entry.date) && (
+            <Badge color="gray">Same as-of date</Badge>
+          )}
           {group.openable.has(entry.id) ? (
             <TextLink href={reportPath(entry.id)} className={QUIET_LINK}>
               {`Open report of ${asOfDate(entry.date)}`}
@@ -183,7 +188,9 @@ export function IssuerRow({
   const trace = useFigureTrace(newest, load);
   const next = useNextEvent(linked?.id, opened, load);
   const { metrics } = newest;
-  const runs = `${String(entries.length)} ${entries.length === 1 ? "run" : "runs"}`;
+  // Published runs, as the run list the link opens counts them.
+  const count = group.openable.size || entries.length;
+  const runs = `${String(count)} ${count === 1 ? "run" : "runs"}`;
   const figure = (key: string, name: string, order: string) => {
     const shown = figureName(key, name, metrics[key]);
     const qualified = shown !== name;
@@ -286,7 +293,7 @@ export function IssuerRow({
         <div className="flex flex-wrap items-start gap-x-4 gap-y-3 xl:contents">
           <div className="flex min-w-0 flex-col gap-1 xl:order-2">
             <span className={CELL_LABEL}>Decision</span>
-            <GapChip>Not shown</GapChip>
+            <GapChip>Not shown in the Library</GapChip>
           </div>
           <div className="flex min-w-0 flex-wrap items-center gap-2 xl:order-6">
             <span className={`${CELL_LABEL} w-full`}>Run</span>
@@ -343,8 +350,8 @@ export function IssuerRow({
           >
             <h4 className="text-small font-medium text-text-primary">Decision</h4>
             <p className="text-small text-gap-text">
-              The Library shows a committee decision only with a recorded clearance. The report's
-              Committee decision page shows the decision as the module wrote it.
+              The Library shows a committee decision only with a recorded clearance. Where a report
+              has a Committee decision page, that page shows what the module wrote.
             </p>
           </section>
           <section

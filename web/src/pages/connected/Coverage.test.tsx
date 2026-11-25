@@ -632,3 +632,69 @@ test("periods no rule can order open on the first stated and say so", async () =
     ),
   ).toBeVisible();
 });
+
+test("the module, confidence, pathway, order, grouping and clear controls act on the page", async () => {
+  const [figure, gap, finding] = data.facts;
+  if (!figure || !gap || !finding) throw new Error("fixture");
+  answer({
+    ...data,
+    fields: [
+      ...data.fields,
+      { id: "conf", module: "CP-1", group: "Reader summary", label: "Confidence", kind: "choice" },
+    ],
+    facts: [
+      figure,
+      gap,
+      finding,
+      { ...finding, field: "conf", text: "High", impact: undefined, confidence: undefined },
+    ],
+  });
+  window.history.replaceState(null, "", "/coverage?view=rank");
+  render(<Coverage />);
+  await screen.findByRole("list", { name: /Net debt \/ EBITDA, FY2025/ });
+  const order = screen.getByRole("group", { name: "Order" });
+  const pressed = (name: string) =>
+    within(order).getByRole("button", { name }).getAttribute("aria-pressed");
+  expect(pressed("Highest first")).toBe("true");
+  fireEvent.click(within(order).getByRole("button", { name: "Lowest first" }));
+  expect(pressed("Lowest first")).toBe("true");
+  fireEvent.change(screen.getByRole("combobox", { name: "Group by" }), {
+    target: { value: "sector" },
+  });
+  expect(screen.getByRole("combobox", { name: "Group by" })).toHaveValue("sector");
+
+  expect(screen.queryByRole("combobox", { name: "Module state" })).not.toBeInTheDocument();
+  fireEvent.change(screen.getByRole("combobox", { name: "Module" }), { target: { value: "CP-2" } });
+  fireEvent.change(screen.getByRole("combobox", { name: "Module state" }), {
+    target: { value: "not-assessable" },
+  });
+  expect(screen.getByText("1 of 2 issuers shown")).toBeInTheDocument();
+
+  fireEvent.change(screen.getByRole("combobox", { name: "Module" }), { target: { value: "all" } });
+  fireEvent.change(screen.getByRole("combobox", { name: "Module confidence" }), {
+    target: { value: "conf" },
+  });
+  expect(screen.getByRole("combobox", { name: "Is" })).toHaveValue("all");
+  fireEvent.change(screen.getByRole("combobox", { name: "Is" }), { target: { value: "High" } });
+  expect(screen.getByText("1 of 2 issuers shown")).toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+  expect(screen.getByText("2 of 2 issuers shown")).toBeInTheDocument();
+});
+
+test("the trend view draws the figure by period, and only ticked issuers can be kept", async () => {
+  answer(data);
+  window.history.replaceState(null, "", "/coverage?view=trend");
+  render(<Coverage />);
+  expect(
+    await screen.findByRole("region", { name: "Net debt / EBITDA by period, table" }),
+  ).toBeInTheDocument();
+  expect(window.location.search).toContain("field=lev");
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "View" })).getByRole("button", { name: "Modules" }),
+  );
+  fireEvent.click(screen.getByRole("checkbox", { name: "Compare Beta SA" }));
+  fireEvent.click(screen.getByRole("checkbox", { name: /Only the 1 issuers ticked/ }));
+  expect(screen.getByText("1 of 2 issuers shown")).toBeInTheDocument();
+  expect(window.location.search).not.toContain("view=");
+});

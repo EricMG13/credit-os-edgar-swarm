@@ -157,7 +157,7 @@ it("counts the modules as the pipeline does and names each state that is not del
   ).toBeVisible();
 });
 
-it("shows CP-8's opening words as written and draws no verdict word of its own", () => {
+it("draws none of CP-8's words on the Overview, whatever they say, and no verdict word of its own", () => {
   const prior = { ...run, folder: "run-0", asOf: "2025-03-31", issuerKey: "nb", pathway: "full" };
   const current = {
     ...run,
@@ -186,10 +186,12 @@ it("shows CP-8's opening words as written and draws no verdict word of its own",
       <CallRow snapshot={snap} run={current} view={view([lead, changes], lead)} />,
     );
     const tile = screen.getByRole("region", { name: "Since the earlier run" });
-    expect(within(tile).getByText(sentence)).toBeVisible();
-    expect(within(tile).queryByText(/^(Better|Worse|About the same)$/)).toBeNull();
-    // The stance move is gone; the changes module's own words stay as written.
-    expect(within(tile).queryByText(/Earlier stance|Current stance/)).toBeNull();
+    // The changes module can restate the stance, so its words stay on the Changes page.
+    expect(within(tile).queryByText(sentence)).toBeNull();
+    expect(tile).not.toHaveTextContent(/Better|Worse|stance|Avoid/i);
+    expect(
+      within(tile).getByText("A comparison with the earlier run is on the Changes page."),
+    ).toBeVisible();
     unmount();
   }
 });
