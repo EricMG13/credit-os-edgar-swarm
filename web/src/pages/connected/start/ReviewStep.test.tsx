@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Answers, Summary } from "../api";
 import type { Review } from "./intake";
@@ -47,13 +47,19 @@ function show({
   synthetic = false,
   accepted = new Set<string>(),
   approved = false,
-}: { synthetic?: boolean; accepted?: Set<string>; approved?: boolean } = {}) {
+  summary: changed = {},
+}: {
+  synthetic?: boolean;
+  accepted?: Set<string>;
+  approved?: boolean;
+  summary?: Partial<Summary>;
+} = {}) {
   const onApprove = vi.fn();
   render(
     <ReviewConfirmation
       modelVerified
       idNote=""
-      review={review}
+      review={{ ...review, summary: { ...summary, ...changed } }}
       accepted={accepted}
       approved={approved}
       checksComplete={accepted.size > 0}
@@ -77,49 +83,61 @@ const before = (first: Element, second: Element) =>
   Boolean(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING);
 
 describe("Review and start", () => {
-  it("draws what the run will do, what it will not do, then every input and the cost", () => {
+  it("draws the decision as one tile: the run, its cost, the limits, what leaves, then Submit", () => {
     show();
-    const [glance, limits, run, cost] = [
-      screen.getByRole("region", { name: "Run summary" }),
-      screen.getByRole("region", { name: "Limits to decide" }),
-      screen.getByRole("region", { name: "What will run" }),
-      screen.getByRole("region", { name: "What it will cost" }),
+    const decision = screen.getByRole("region", { name: "Review and start" });
+    const [cost, limits, leaves, stages] = [
+      within(decision).getByRole("region", { name: "What it will cost" }),
+      within(decision).getByRole("region", { name: "Limits to decide" }),
+      within(decision).getByRole("region", { name: "What leaves the building" }),
+      within(decision).getByRole("region", { name: "Modules by stage" }),
     ];
-    expect(before(glance, limits)).toBe(true);
-    expect(before(limits, run)).toBe(true);
-    expect(before(run, cost)).toBe(true);
-    expect(glance).toHaveTextContent("What the run will do");
-    expect(within(glance).getByRole("heading", { level: 3 })).toHaveTextContent(
-      "Full credit assessment of Northbridge",
+    expect(within(decision).getByRole("heading", { level: 2 })).toHaveTextContent(
+      "Review and start",
     );
-    expect(glance).toHaveTextContent("As of 2025-03-31");
-    expect(glance).toHaveTextContent("1 document read · 3 modules");
-    expect(limits).toHaveTextContent("What it will not do");
+    expect(decision).toHaveTextContent("Full credit assessment of Northbridge");
+    expect(decision).toHaveTextContent("As of 2025-03-31");
+    expect(decision).toHaveTextContent("1 document read · 3 modules");
+    expect(within(decision).getByText("Paid run")).toBeInTheDocument();
+    // On a phone the limits follow the cost and the stages come last.
+    expect(before(cost, limits)).toBe(true);
+    expect(before(limits, leaves)).toBe(true);
+    expect(before(leaves, stages)).toBe(true);
     expect(within(limits).getByRole("checkbox", { name: "I accept this limit" })).toBeEnabled();
-    expect(run).toHaveTextContent("Every input Submit sends");
+    expect(within(stages).getByRole("list", { name: "Stages in this run" })).toBeInTheDocument();
+    const inputs = screen.getByRole("region", { name: "What will run" });
+    expect(before(decision, inputs)).toBe(true);
+    expect(inputs.closest("details")).not.toHaveAttribute("open");
   });
 
-  it("states the cap in mono, what leaves the building, then the consent and Submit, last", () => {
+  it("states the cap as the largest figure, in mono, and what leaves the building before the consent and Submit", () => {
     show();
-    const cost = screen.getByRole("region", { name: "What it will cost" });
+    const decision = screen.getByRole("region", { name: "Review and start" });
+    const cost = within(decision).getByRole("region", { name: "What it will cost" });
     const figure = within(cost).getByText("USD 25.00", { selector: "span" });
-    expect(figure).toHaveClass("font-mono", "tabular-nums");
-    expect(cost).toHaveTextContent("Spending cap · Full credit assessment");
-    const leaves = within(cost).getByRole("heading", { name: "What leaves the building" });
-    const search = within(cost).getByText(/The research module will search the web\./);
-    const consent = within(cost).getByRole("checkbox", {
+    expect(figure).toHaveClass("font-mono", "tabular-nums", "text-metric");
+    expect(cost).toHaveTextContent("Spending capUSD 25.00Cap · Full credit assessment");
+    const leaves = within(decision).getByRole("heading", { name: "What leaves the building" });
+    const search = within(decision).getByText(/The research module will search the web\./);
+    const consent = within(decision).getByRole("checkbox", {
       name: "Approve: I have read this summary and want this run started",
     });
-    const submit = within(cost).getByRole("button", { name: "Submit, spend up to USD 25.00" });
+    const submit = within(decision).getByRole("button", { name: "Submit, spend up to USD 25.00" });
     expect(before(figure, leaves)).toBe(true);
+    expect(before(leaves, search)).toBe(true);
     expect(before(search, consent)).toBe(true);
     expect(before(consent, submit)).toBe(true);
-    const buttons = screen.getAllByRole("button");
-    expect(buttons.at(-1)).toBe(submit);
     expect(submit).toHaveAttribute("aria-describedby", "run-submit-cost");
     expect(document.getElementById("run-submit-cost")).toHaveTextContent(
       "Once confirmed, this run can spend up to USD 25.00.",
     );
+  });
+
+  it("draws what leaves as a gap when the service says nothing about it, never as nothing", () => {
+    show({ summary: { web_search: false } });
+    const leaves = screen.getByRole("region", { name: "What leaves the building" });
+    expect(leaves).toHaveTextContent("The service does not say what leaves.");
+    expect(leaves).not.toHaveTextContent(/nothing|no data/i);
   });
 
   it("keeps the gating: consent waits for every decision, Submit for the consent", () => {
@@ -140,9 +158,23 @@ describe("Review and start", () => {
 
   it("says a synthetic test costs nothing and keeps its own Submit label", () => {
     show({ synthetic: true, accepted: new Set(["CP-4:agreement"]), approved: true });
-    const cost = screen.getByRole("region", { name: "What it will cost" });
+    const decision = screen.getByRole("region", { name: "Review and start" });
+    const cost = within(decision).getByRole("region", { name: "What it will cost" });
     expect(within(cost).getByText("USD 0.00", { selector: "span" })).toHaveClass("font-mono");
     expect(cost).toHaveTextContent("USD 0.00No-cost test");
-    expect(within(cost).getByRole("button", { name: "Submit run" })).toBeEnabled();
+    expect(within(decision).getByText("No-cost test", { selector: "span" })).toBeInTheDocument();
+    expect(within(decision).getByRole("button", { name: "Submit run" })).toBeEnabled();
+  });
+
+  it("restates the issuer, pathway and cap in the confirmation, with Cancel focused", async () => {
+    show({ accepted: new Set(["CP-4:agreement"]), approved: true });
+    fireEvent.click(screen.getByRole("button", { name: "Submit, spend up to USD 25.00" }));
+    const dialog = await screen.findByRole("dialog", { name: "Start a paid run?" });
+    expect(dialog).toHaveTextContent("IssuerNorthbridge");
+    expect(dialog).toHaveTextContent("PathwayFull credit assessment");
+    expect(dialog).toHaveTextContent("CapUSD 25.00");
+    await waitFor(() => {
+      expect(within(dialog).getByRole("button", { name: "Cancel" })).toHaveFocus();
+    });
   });
 });

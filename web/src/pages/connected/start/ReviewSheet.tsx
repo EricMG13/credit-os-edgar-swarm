@@ -1,4 +1,5 @@
 import { useId, type ReactNode } from "react";
+import { ChevronDown } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { cx } from "@/utils/cx";
 import {
@@ -27,9 +28,11 @@ import {
   storedName,
 } from "./plain";
 import { StatusBadge } from "@/components/status/StatusBadge";
-import { Figure, Tile, Well } from "../report/overview/Tile";
+import { Figure, GapNote, Tile, Well } from "../report/overview/Tile";
 import { decided, groupLimits, leaveOut, type LimitGroup } from "./limits";
 import { moduleNames, OUTCOME_STATE, scopeText } from "./limitWords";
+import { moduleReadiness } from "./moduleReadiness";
+import { StagePipeline } from "./StagePipeline";
 import {
   assumptionInputs,
   attachmentFacts,
@@ -44,6 +47,14 @@ import {
 } from "./reviewInputs";
 
 type EditStep = "documents" | "purpose" | "context";
+
+/** At least 32 px tall everywhere, 44 px at phone width. */
+const TARGET = "min-h-8 max-[480px]:min-h-11";
+const CHECK_TARGET = "min-h-8 max-[480px]:min-h-11";
+const SUMMARY = cx(
+  "flex w-fit cursor-pointer items-center rounded-ds-xs text-small font-medium text-text-secondary outline-focus-ring hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2",
+  TARGET,
+);
 
 /** Each term and its value; a fact whose value is `undefined` is left out. */
 function Facts({ rows }: { rows: readonly (readonly [string, string | number | undefined])[] }) {
@@ -66,39 +77,60 @@ function Block({
   edit,
   onEdit,
   disabled,
+  notGiven,
   children,
 }: {
   title: string;
   edit?: EditStep;
   onEdit: (step: EditStep) => void;
   disabled: boolean;
-  children: ReactNode;
+  /** When every input the block holds is not given: their names, and the block is one line. */
+  notGiven?: readonly string[];
+  children?: ReactNode;
 }) {
   const titleId = useId();
+  const editButton = edit && (
+    <Button
+      color="secondary"
+      size="sm"
+      className={TARGET}
+      isDisabled={disabled}
+      onPress={() => {
+        onEdit(edit);
+      }}
+    >
+      {`Edit ${title.toLowerCase()}`}
+    </Button>
+  );
   return (
     <div
       role="group"
       aria-labelledby={titleId}
-      className="grid min-w-0 content-start gap-3 rounded-ds-md bg-surface-subtle p-4"
+      className={cx("min-w-0", notGiven && "xl:col-span-2")}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h4 id={titleId} className="font-semibold text-text-primary">
-          {title}
-        </h4>
-        {edit && (
-          <Button
-            color="secondary"
-            size="sm"
-            isDisabled={disabled}
-            onPress={() => {
-              onEdit(edit);
-            }}
-          >
-            {`Edit ${title.toLowerCase()}`}
-          </Button>
-        )}
-      </div>
-      {children}
+      {notGiven ? (
+        <Well className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 py-2">
+          <div className="flex min-w-0 flex-wrap items-baseline gap-x-2">
+            <h4 id={titleId} className="text-small font-medium text-text-primary">
+              {title}
+            </h4>
+            <p className="min-w-0 text-small text-text-secondary">
+              {notGiven.length ? `${NOT_GIVEN}: ${notGiven.join(", ")}` : NOT_GIVEN}
+            </p>
+          </div>
+          {editButton}
+        </Well>
+      ) : (
+        <Well className="grid h-full content-start gap-3 p-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h4 id={titleId} className="text-body font-medium text-text-primary">
+              {title}
+            </h4>
+            {editButton}
+          </div>
+          {children}
+        </Well>
+      )}
     </div>
   );
 }
@@ -237,7 +269,48 @@ function LeaveOut({
   );
 }
 
-function LimitCard({
+/** How the limit can be lifted instead of accepted: the service's fixes and the leave-out choice. */
+function HowToLift({
+  group,
+  fixes,
+  choice,
+  disabled,
+}: {
+  group: LimitGroup;
+  fixes: readonly string[];
+  choice: ModuleChoice;
+  disabled: boolean;
+}) {
+  const canLeaveOut = leaveOut(group, choice.requested, choice.modules) !== null;
+  if (!fixes.length && !canLeaveOut) return null;
+  return (
+    <details className="min-w-0">
+      <summary className={SUMMARY}>How to lift it</summary>
+      <div className="mt-2 grid gap-2">
+        {fixes.map((fix) => (
+          <p key={fix}>{serviceText(fix)}</p>
+        ))}
+        {fixes.some((fix) => /portfolio workbook/i.test(fix)) && (
+          <Button
+            color="secondary"
+            size="sm"
+            className={cx("w-fit", TARGET)}
+            isDisabled={disabled}
+            onPress={() => {
+              choice.onEdit("context");
+            }}
+          >
+            Choose the Portfolio workbook
+          </Button>
+        )}
+        <LeaveOut group={group} choice={choice} disabled={disabled} />
+      </div>
+    </details>
+  );
+}
+
+/** One limit: its mark, what it limits and why, on one line; then the control that decides it. */
+function LimitRow({
   group,
   accepted,
   disabled,
@@ -255,45 +328,43 @@ function LimitCard({
   const affected = moduleNames(group.consequences).filter((name) => !refusing.includes(name));
   const reasonId = useId();
   return (
-    <li className="grid gap-2 rounded-lg border border-border-hairline p-3 text-sm text-text-secondary">
-      <StatusBadge set="Run limits" state={OUTCOME_STATE[group.outcome]} />
-      {group.causes.map((cause, index) => (
-        <div key={cause.id}>
-          <p className="font-semibold text-text-primary">{scopeText(cause.scope)}</p>
-          <p id={index === 0 ? reasonId : undefined}>{serviceText(cause.reason)}</p>
+    <li className="grid gap-1.5 py-3 text-small text-text-secondary first:pt-0 last:pb-0">
+      <div className="flex flex-wrap items-start gap-x-3 gap-y-1">
+        <StatusBadge set="Run limits" state={OUTCOME_STATE[group.outcome]} className="shrink-0" />
+        <div className="grid min-w-0 flex-1 gap-0.5">
+          {group.causes.map((cause, index) => (
+            <p key={cause.id}>
+              <span className="font-medium text-text-primary">{scopeText(cause.scope)}</span>
+              {" · "}
+              <span id={index === 0 ? reasonId : undefined}>{serviceText(cause.reason)}</span>
+            </p>
+          ))}
+          {refusing.length > 0 && (
+            <p className="text-caption">Will also refuse: {refusing.join(", ")}</p>
+          )}
+          {affected.length > 0 && (
+            <p className="text-caption">Also affects: {affected.join(", ")}</p>
+          )}
         </div>
-      ))}
-      {fixes.map((fix) => (
-        <p key={fix}>{serviceText(fix)}</p>
-      ))}
-      {fixes.some((fix) => /portfolio workbook/i.test(fix)) && (
-        <Button
-          color="secondary"
-          size="sm"
-          isDisabled={disabled}
-          onPress={() => {
-            choice.onEdit("context");
-          }}
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <label
+          className={cx("flex items-center gap-2 font-medium text-text-primary", CHECK_TARGET)}
         >
-          Choose the Portfolio workbook
-        </Button>
-      )}
-      {refusing.length > 0 && <p>Will also refuse: {refusing.join(", ")}</p>}
-      {affected.length > 0 && <p>Also affects: {affected.join(", ")}</p>}
-      <LeaveOut group={group} choice={choice} disabled={disabled} />
-      <label className="flex min-h-8 items-center gap-2 font-semibold text-text-primary max-sm:min-h-11">
-        <input
-          className="size-4 shrink-0"
-          type="checkbox"
-          aria-describedby={reasonId}
-          checked={decided(group, accepted)}
-          disabled={disabled}
-          onChange={(event) => {
-            onAccept(group.ids, event.target.checked);
-          }}
-        />
-        {acceptanceLabel(group)}
-      </label>
+          <input
+            className="size-4 shrink-0"
+            type="checkbox"
+            aria-describedby={reasonId}
+            checked={decided(group, accepted)}
+            disabled={disabled}
+            onChange={(event) => {
+              onAccept(group.ids, event.target.checked);
+            }}
+          />
+          {acceptanceLabel(group)}
+        </label>
+        <HowToLift group={group} fixes={fixes} choice={choice} disabled={disabled} />
+      </div>
     </li>
   );
 }
@@ -314,24 +385,21 @@ function LimitsToDecide({
   const { groups, passive } = groupLimits(items);
   const decidedCount = groups.filter((group) => decided(group, accepted)).length;
   return (
-    <Tile
-      span={12}
-      label="Limits to decide"
-      kicker="What it will not do"
-      title="Limits to decide"
-      className="wrap-anywhere"
-    >
-      {groups.length > 0 && (
-        <p className="text-sm text-text-tertiary tabular-nums">
-          {decidedCount} of {groups.length} decided
-        </p>
-      )}
+    <section aria-label="Limits to decide" className="grid min-w-0 gap-3 wrap-anywhere">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+        <h3 className="text-h4 font-medium text-text-primary">Limits to decide</h3>
+        {groups.length > 0 && (
+          <p className="font-mono text-small text-text-tertiary tabular-nums">
+            {decidedCount} of {groups.length} decided
+          </p>
+        )}
+      </div>
       {groups.length === 0 ? (
-        <p className="text-sm text-text-secondary">No limits found for this run.</p>
+        <p className="text-small text-text-secondary">No limits found for this run.</p>
       ) : (
-        <ul className="space-y-2">
+        <ul className="divide-y divide-border-hairline">
           {groups.map((group) => (
-            <LimitCard
+            <LimitRow
               key={group.key}
               group={group}
               accepted={accepted}
@@ -343,8 +411,8 @@ function LimitsToDecide({
         </ul>
       )}
       {passive.length > 0 && (
-        <details className="text-sm text-text-secondary">
-          <summary className="cursor-pointer">{`No action needed (${String(passive.length)})`}</summary>
+        <details className="text-small text-text-secondary">
+          <summary className={SUMMARY}>{`No action needed (${String(passive.length)})`}</summary>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {passive.map((item) => (
               <li key={item.id}>
@@ -360,92 +428,98 @@ function LimitsToDecide({
           </ul>
         </details>
       )}
-    </Tile>
+    </section>
   );
 }
 
 /**
  * What leaves the service for a run, in the service's own terms, stated before Submit: the
- * research module's search status, its web search and its Yahoo Finance lookups.
+ * research module's search status, its web search and its Yahoo Finance lookups. When the summary
+ * states none of these, the page says so as a gap; it never says that nothing leaves.
  */
 function LeavesTheBuilding({ summary }: { summary: Summary }) {
   const status = summary.copilot_search && summary.modules.includes("CP-DR");
-  if (!status && summary.web_search !== true && summary.web_lookup !== true) return null;
+  const stated = Boolean(status) || summary.web_search === true || summary.web_lookup === true;
   return (
-    <Well className="grid gap-2 p-4">
-      <h4 className="text-small font-medium text-text-primary">What leaves the building</h4>
-      {status && <p className="text-sm text-text-secondary">{summary.copilot_search}</p>}
-      {summary.web_search === true && (
-        <p className="text-sm text-text-secondary">
-          The research module will search the web. The issuer&apos;s name and the questions it
-          researches go to OpenAI&apos;s search.
-        </p>
+    <section aria-label="What leaves the building" className="grid min-w-0 gap-2 wrap-anywhere">
+      <h3 className="text-small font-medium text-text-primary">What leaves the building</h3>
+      {stated ? (
+        <Well className="grid gap-2">
+          {status && <p className="text-small text-text-secondary">{summary.copilot_search}</p>}
+          {summary.web_search === true && (
+            <p className="text-small text-text-secondary">
+              The research module will search the web. The issuer&apos;s name and the questions it
+              researches go to OpenAI&apos;s search.
+            </p>
+          )}
+          {summary.web_lookup === true && (
+            <p className="text-small text-text-secondary">
+              The research module may read Yahoo Finance pages. Their addresses name what it looks
+              up, such as the issuer&apos;s ticker, so Yahoo sees which issuer is researched; no
+              document is sent.
+            </p>
+          )}
+        </Well>
+      ) : (
+        <GapNote>The service does not say what leaves.</GapNote>
       )}
-      {summary.web_lookup === true && (
-        <p className="text-sm text-text-secondary">
-          The research module may read Yahoo Finance pages. Their addresses name what it looks up,
-          such as the issuer&apos;s ticker, so Yahoo sees which issuer is researched; no document is
-          sent.
-        </p>
-      )}
-    </Well>
+    </section>
   );
 }
 
-function CostBlock({
-  summary,
-  lead,
-  actions,
-}: {
-  summary: Summary;
-  lead?: ReactNode;
-  actions?: ReactNode;
-}) {
-  return (
-    <Tile span={12} label="What it will cost" title="What it will cost" className="wrap-anywhere">
-      {lead}
-      <LeavesTheBuilding summary={summary} />
-      {actions}
-    </Tile>
-  );
-}
-
-/**
- * What the run will do, in three lines from the reviewed answers and the summary: the pathway and
- * issuer, the case date and market view, and how many documents were read and modules will run.
- * Every input itself follows the limits, under "What will run".
- */
-function RunSummary({ answers, summary }: { answers: Answers; summary: Summary }) {
+/** The run in one line from the reviewed answers and the summary. */
+function RunLine({ answers, summary }: { answers: Answers; summary: Summary }) {
   const { run, identity } = answers.context;
   const view = chosen(PURPOSES, run.run_type);
   const documents = summary.documents.length;
   const modules = drawnModules(summary.modules).length;
   return (
-    <Tile
-      span={12}
-      label="Run summary"
-      kicker="What the run will do"
-      title={`${pathwayName(run.pathway)} of ${identity.issuer_name}`}
-      className="wrap-anywhere"
-    >
-      <div className="grid gap-1 text-body text-text-secondary">
-        <p>
-          {[`As of ${given(run.as_of)}`, view === NOT_GIVEN ? undefined : view]
-            .filter(Boolean)
-            .join(" · ")}
-        </p>
-        <p>
-          <Figure>{documents}</Figure> {documents === 1 ? "document" : "documents"} read ·{" "}
-          <Figure>{modules}</Figure> {modules === 1 ? "module" : "modules"}
-        </p>
-      </div>
-      <p className="text-small text-text-tertiary">
-        Decide each limit below; every input Submit sends is listed after them.
+    <div className="grid min-w-0 gap-0.5 wrap-anywhere">
+      <p className="text-body font-medium text-text-primary">
+        {`${pathwayName(run.pathway)} of ${identity.issuer_name}`}
       </p>
-    </Tile>
+      <p className="text-small text-text-secondary">
+        {[`As of ${given(run.as_of)}`, view === NOT_GIVEN ? undefined : view]
+          .filter(Boolean)
+          .join(" · ")}
+        {" · "}
+        <Figure>{documents}</Figure> {documents === 1 ? "document" : "documents"} read ·{" "}
+        <Figure>{modules}</Figure> {modules === 1 ? "module" : "modules"}
+      </p>
+    </div>
   );
 }
 
+/** Whether every input a group holds reads as not given. */
+function allNotGiven(group: InputGroup): boolean {
+  return group.facts.every(([, value]) => value === NOT_GIVEN) && group.groups.every(allNotGiven);
+}
+
+/** The names of a group's inputs; an inner group by its title, with its own inputs after it. */
+function inputNames(group: InputGroup): string[] {
+  return [
+    ...group.facts.map(([label]) => label),
+    ...group.groups.map((inner) => {
+      const names = inputNames(inner);
+      return names.length ? `${inner.title} (${names.join(", ")})` : inner.title;
+    }),
+  ];
+}
+
+/** The parts of the decision the review step draws: its heading, the cost, the consent and Submit. */
+export type DecisionParts = {
+  head: ReactNode;
+  mode: ReactNode;
+  cost: ReactNode;
+  submit: ReactNode;
+};
+
+/**
+ * Review and start: one decision tile, then everything Submit sends behind one closed disclosure.
+ * The tile holds the cap and its sentence, the run's modules by stage, each limit with the control
+ * that decides it, what leaves the building, then the consent and Submit. On a phone the limits
+ * follow the cap and the stages come last; from md the cost and stages sit beside the limits.
+ */
 export function ReviewSheet({
   review,
   accepted,
@@ -454,7 +528,7 @@ export function ReviewSheet({
   onModules,
   disabled,
   synthetic = false,
-  cost,
+  decision,
 }: {
   review: {
     answers: Answers;
@@ -467,8 +541,80 @@ export function ReviewSheet({
   onModules: (modules: string[]) => void;
   disabled: boolean;
   synthetic?: boolean;
-  /** What the review step draws in the cost block: the cap and its sentence; then consent and Submit. */
-  cost?: { lead: ReactNode; actions: ReactNode };
+  decision?: DecisionParts;
+}) {
+  const { summary, answers } = review;
+  const requested = pathwayModules(answers.context.run.pathway);
+  const choice = { requested, modules: answers.modules, onModules, onEdit };
+  return (
+    <>
+      <Tile span={12} label="Review and start" className="gap-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="grid min-w-0 gap-2">
+            {decision?.head}
+            <RunLine answers={answers} summary={summary} />
+          </div>
+          {decision?.mode}
+        </div>
+        <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-x-8">
+          <section
+            aria-label="What it will cost"
+            className="grid min-w-0 content-start gap-3 wrap-anywhere md:col-start-1 md:row-start-1"
+          >
+            {decision?.cost}
+          </section>
+          <div className="flex min-w-0 flex-col gap-5 md:col-start-2 md:row-span-2 md:row-start-1 md:border-l md:border-border-hairline md:pl-8">
+            <LimitsToDecide
+              items={summary.items}
+              accepted={accepted}
+              disabled={disabled}
+              onAccept={onAccept}
+              choice={choice}
+            />
+            <LeavesTheBuilding summary={summary} />
+            {decision?.submit}
+          </div>
+          <section
+            aria-label="Modules by stage"
+            className="grid min-w-0 content-start gap-2 md:col-start-1 md:row-start-2"
+          >
+            <h3 className="text-small font-medium text-text-primary">Modules by stage</h3>
+            <StagePipeline
+              readiness={moduleReadiness([], { modules: summary.modules, items: summary.items })}
+              label="Stages in this run"
+              named={false}
+            />
+          </section>
+        </div>
+      </Tile>
+      <EverythingSubmitSends
+        review={review}
+        disabled={disabled}
+        synthetic={synthetic}
+        onEdit={onEdit}
+        onModules={onModules}
+      />
+    </>
+  );
+}
+
+/** Every input Submit sends, grouped as the form asks for them, behind one closed disclosure. */
+function EverythingSubmitSends({
+  review,
+  disabled,
+  synthetic,
+  onEdit,
+  onModules,
+}: {
+  review: {
+    answers: Answers;
+    summary: Summary;
+    attachmentNames?: Readonly<Record<string, string | undefined>>;
+  };
+  disabled: boolean;
+  synthetic: boolean;
+  onEdit: (step: EditStep) => void;
+  onModules: (modules: string[]) => void;
 }) {
   const { summary, answers } = review;
   const { run, identity } = answers.context;
@@ -477,7 +623,6 @@ export function ReviewSheet({
     : changesSentence(summary.changes);
   const block = { onEdit, disabled };
   const requested = pathwayModules(run.pathway);
-  const choice = { requested, modules: answers.modules, onModules, onEdit };
   const leftOut = answers.modules.length
     ? requested.filter((code) => !answers.modules.includes(code)).map(moduleName)
     : [];
@@ -489,133 +634,136 @@ export function ReviewSheet({
     { group: valuationInputs(answers.context, advanced), drawn: advanced },
     { group: moduleOptionInputs(answers.context, requested, advanced), drawn: advanced },
     { group: assumptionInputs(answers.context, requested, advanced), drawn: advanced },
-  ];
+  ].flatMap(({ group, drawn }) => (group ? [{ group, drawn }] : []));
+  const empty = inputBlocks.filter(({ group }) => allNotGiven(group)).length;
+  const count = 4 + inputBlocks.length;
   return (
-    <>
-      {/* A short summary first, then the decisions that block Submit (C2-007: they are not
-          pushed below a screen of echoed inputs), then every input Submit sends, open, then the
-          cost, the consent and Submit. */}
-      <RunSummary answers={answers} summary={summary} />
-      <LimitsToDecide
-        items={summary.items}
-        accepted={accepted}
-        disabled={disabled}
-        onAccept={onAccept}
-        choice={choice}
-      />
-      <Tile
-        span={12}
-        label="What will run"
-        kicker="Every input Submit sends"
-        title="What will run"
-        className="wrap-anywhere"
-      >
-        <div className="grid min-w-0 gap-4 xl:grid-cols-2">
-          <Block title="Issuer and documents" edit="documents" {...block}>
-            <Facts
-              rows={[
-                ["Issuer", identity.issuer_name],
-                [ISSUER_ID, identity.issuer_id],
-                ["As-of date", given(run.as_of)],
-                [ISSUE_CLASSIFICATION, chosen(ISSUE_CLASSES, identity.issue_classification)],
-                ["Submitted by", answers.submitted_by],
-              ]}
-            />
-            <List
-              title="Documents read"
-              items={summary.documents.map(
-                (doc) => `${storedName(doc)} · ${documentDescription(doc)}`,
+    <details className="group min-w-0">
+      <summary className="flex min-h-11 cursor-pointer list-none flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-ds-lg border border-border-subtle bg-surface-card px-5 py-3 outline-focus-ring hover:bg-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-2 sm:px-6 [&::-webkit-details-marker]:hidden">
+        <span className="flex items-center gap-2 text-body font-medium text-text-primary">
+          <ChevronDown
+            aria-hidden="true"
+            className="size-4 shrink-0 text-text-tertiary transition-transform group-open:rotate-180"
+          />
+          Everything Submit sends
+        </span>
+        <span className="text-small text-text-secondary tabular-nums">
+          {`${String(count)} groups of inputs${empty ? ` · ${String(empty)} not given` : ""}`}
+        </span>
+      </summary>
+      <div className="mt-4">
+        <Tile
+          span={12}
+          label="What will run"
+          kicker="Every input Submit sends"
+          title="What will run"
+          className="wrap-anywhere"
+        >
+          <div className="grid min-w-0 gap-4 xl:grid-cols-2">
+            <Block title="Issuer and documents" edit="documents" {...block}>
+              <Facts
+                rows={[
+                  ["Issuer", identity.issuer_name],
+                  [ISSUER_ID, identity.issuer_id],
+                  ["As-of date", given(run.as_of)],
+                  [ISSUE_CLASSIFICATION, chosen(ISSUE_CLASSES, identity.issue_classification)],
+                  ["Submitted by", answers.submitted_by],
+                ]}
+              />
+              <List
+                title="Documents read"
+                items={summary.documents.map(
+                  (doc) => `${storedName(doc)} · ${documentDescription(doc)}`,
+                )}
+              />
+              {synthetic && summary.documents.some((doc) => doc.kind === "unrecognised") && (
+                <p className="text-small text-text-secondary">
+                  These are synthetic test documents; an unrecognised document type can still be a
+                  supplied sample file.
+                </p>
               )}
-            />
-            {synthetic && summary.documents.some((doc) => doc.kind === "unrecognised") && (
-              <p className="text-sm text-text-secondary">
-                These are synthetic test documents; an unrecognised document type can still be a
-                supplied sample file.
-              </p>
-            )}
-            <List
-              title="Documents ignored"
-              items={summary.ignored.map((doc) =>
-                typeof doc === "string" ? doc : `${doc.source} · ${doc.reason}`,
+              <List
+                title="Documents ignored"
+                items={summary.ignored.map((doc) =>
+                  typeof doc === "string" ? doc : `${doc.source} · ${doc.reason}`,
+                )}
+              />
+            </Block>
+            <Block title="Purpose and modules" edit="purpose" {...block}>
+              <Facts
+                rows={[
+                  ["Pathway", pathwayName(run.pathway)],
+                  ["Market view", chosen(PURPOSES, run.run_type)],
+                  ["Case kind", choiceLabel(CASE_KINDS, run.case_kind)],
+                  ["Form level", choiceLabel(LEVELS, answers.level)],
+                ]}
+              />
+              <List
+                title={`Modules (${String(drawnModules(summary.modules).length)})`}
+                items={drawnModules(summary.modules).map(moduleName)}
+                columns
+              />
+              {leftOut.length > 0 && (
+                <div className="flex flex-wrap items-center justify-between gap-3 text-small text-text-secondary">
+                  <p>Left out: {leftOut.join(", ")}</p>
+                  <Button
+                    color="secondary"
+                    size="sm"
+                    className={TARGET}
+                    isDisabled={disabled}
+                    onPress={() => {
+                      onModules([]);
+                    }}
+                  >
+                    Put back
+                  </Button>
+                  <p>You will return to More context and review again; approval will be cleared.</p>
+                </div>
               )}
-            />
-          </Block>
-          <Block title="Purpose and modules" edit="purpose" {...block}>
-            <Facts
-              rows={[
-                ["Pathway", pathwayName(run.pathway)],
-                ["Market view", chosen(PURPOSES, run.run_type)],
-                ["Case kind", choiceLabel(CASE_KINDS, run.case_kind)],
-                ["Form level", choiceLabel(LEVELS, answers.level)],
-              ]}
-            />
-            <List
-              title={`Modules (${String(drawnModules(summary.modules).length)})`}
-              items={drawnModules(summary.modules).map(moduleName)}
-              columns
-            />
-            {leftOut.length > 0 && (
-              <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-text-secondary">
-                <p>Left out: {leftOut.join(", ")}</p>
-                <Button
-                  color="secondary"
-                  size="sm"
-                  isDisabled={disabled}
-                  onPress={() => {
-                    onModules([]);
-                  }}
-                >
-                  Put back
-                </Button>
-                <p>You will return to More context and review again; approval will be cleared.</p>
-              </div>
-            )}
-            {summary.omitted.length > 0 && (
-              <p className="text-sm text-text-secondary">{omittedSentence(summary)}</p>
-            )}
-          </Block>
-          <Block title="Context" edit="context" {...block}>
-            <Facts
-              rows={[
-                ["Current period", given(run.current_period)],
-                ["Prior period", given(run.prior_period)],
-                ["Research cutoff", given(run.cutoff)],
-                // The service's own sentence, not an input: drawn only when it wrote one.
-                ["Changes", changes || undefined],
-                ...attachmentFacts(answers.context, review.attachmentNames),
-              ]}
-            />
-            <List title="Source lookup" items={(summary.lookup ?? []).map(lookupSentence)} />
-          </Block>
-          {inputBlocks.map(
-            ({ group, drawn }) =>
-              group && (
-                <Block
-                  key={group.title}
-                  title={group.title}
-                  edit={drawn ? "context" : undefined}
-                  {...block}
-                >
-                  <GroupBody group={group} depth={0} />
-                </Block>
-              ),
-          )}
-          <Block title="Advanced choices" {...block}>
-            <Facts
-              rows={[
-                ["Model and effort", modelAndEffort(summary)],
-                ["Turns per module", answers.max_turns],
-              ]}
-            />
-            {!advanced && (
-              <p className="text-sm text-text-secondary">
-                Model and effort are set at the Advanced form level.
-              </p>
-            )}
-          </Block>
-        </div>
-      </Tile>
-      <CostBlock summary={summary} lead={cost?.lead} actions={cost?.actions} />
-    </>
+              {summary.omitted.length > 0 && (
+                <p className="text-small text-text-secondary">{omittedSentence(summary)}</p>
+              )}
+            </Block>
+            <Block title="Context" edit="context" {...block}>
+              <Facts
+                rows={[
+                  ["Current period", given(run.current_period)],
+                  ["Prior period", given(run.prior_period)],
+                  ["Research cutoff", given(run.cutoff)],
+                  // The service's own sentence, not an input: drawn only when it wrote one.
+                  ["Changes", changes || undefined],
+                  ...attachmentFacts(answers.context, review.attachmentNames),
+                ]}
+              />
+              <List title="Source lookup" items={(summary.lookup ?? []).map(lookupSentence)} />
+            </Block>
+            {inputBlocks.map(({ group, drawn }) => (
+              <Block
+                key={group.title}
+                title={group.title}
+                edit={drawn ? "context" : undefined}
+                {...(allNotGiven(group) ? { notGiven: inputNames(group) } : {})}
+                {...block}
+              >
+                <GroupBody group={group} depth={0} />
+              </Block>
+            ))}
+            <Block title="Advanced choices" {...block}>
+              <Facts
+                rows={[
+                  ["Model and effort", modelAndEffort(summary)],
+                  ["Turns per module", answers.max_turns],
+                ]}
+              />
+              {!advanced && (
+                <p className="text-small text-text-secondary">
+                  Model and effort are set at the Advanced form level.
+                </p>
+              )}
+            </Block>
+          </div>
+        </Tile>
+      </div>
+    </details>
   );
 }

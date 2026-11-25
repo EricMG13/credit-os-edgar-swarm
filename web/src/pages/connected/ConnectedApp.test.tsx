@@ -533,9 +533,10 @@ describe("connected run start", () => {
     expect(fetchMock.mock.calls.filter(([, init]) => init?.body === file)).toHaveLength(2);
   });
 
-  // What leaves the building is stated in the cost block, directly above Submit (screen map,
-  // Start run, Review and start P2); the sentences were in the "What will run" block before.
-  const costBlock = () => screen.getByRole("region", { name: "What it will cost" });
+  // What leaves the building is stated in its own block in the decision tile, directly above the
+  // consent and Submit (screen map, Start run, Review and start P2); the sentences were in the
+  // "What will run" block before.
+  const costBlock = () => screen.getByRole("region", { name: "What leaves the building" });
 
   describe("web search statement", () => {
     const SENTENCE =
@@ -3565,6 +3566,7 @@ describe("connected run start: module choices sent", () => {
     earningsPeriods();
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     await screen.findByRole("button", { name: "Submit run" });
+    fireEvent.click(screen.getByText("Everything Submit sends"));
     expect(screen.getByText("Modules (8)")).toBeVisible();
     expect(screen.queryByText(/Cash flow model/)).toBeNull();
   });
@@ -4090,14 +4092,10 @@ describe("connected run start: the review sheet shows every input Submit sends",
 
   it("V15 reads a row section with no rows as not given", async () => {
     const { sheet } = await sheetAfter();
-    const details = part(sheet, "Context details");
-    for (const section of [
-      "Facilities and deal terms",
-      "Observed quotes",
-      "Ratings",
-      "Research questions",
-    ])
-      expect(part(details, section)).toHaveTextContent(`${section}Not given`);
+    // A block whose every input is not given is one line that names each of them.
+    expect(part(sheet, "Context details")).toHaveTextContent(
+      "Context detailsNot given: Facilities and deal terms, Observed quotes, Ratings, Research questions",
+    );
   });
 
   it("V16 shows the valuation the template sends at the Basic level", async () => {

@@ -57,7 +57,16 @@ function Mark({ row }: { row: ModuleRow }) {
  * summary exists, the modules that carry a limit by name with the limit's word. The reasons are
  * the limits block's to give; this is the overview.
  */
-export function StagePipeline({ readiness, label }: { readiness: ModuleReadiness; label: string }) {
+export function StagePipeline({
+  readiness,
+  label,
+  named = true,
+}: {
+  readiness: ModuleReadiness;
+  label: string;
+  /** Whether to name the modules carrying a limit under the stages (not where the limits are). */
+  named?: boolean;
+}) {
   const limited = limitedRows(readiness);
   return (
     <div className="flex min-w-0 flex-col gap-3">
@@ -99,7 +108,8 @@ export function StagePipeline({ readiness, label }: { readiness: ModuleReadiness
           </li>
         )}
       </ol>
-      {readiness.checked &&
+      {named &&
+        readiness.checked &&
         (limited.length > 0 ? (
           <ul aria-label="Carrying a limit" className="flex flex-col gap-1">
             {limited.map((row) => (

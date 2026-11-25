@@ -93,19 +93,24 @@ const followsInDocument = (first: HTMLElement, second: HTMLElement) =>
   Boolean(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING);
 
 describe("ReviewSheet", () => {
-  it("C2-007 draws the limits to decide before the echoed inputs", () => {
+  it("C2-007 draws the decision first, and every echoed input after it behind one closed disclosure", () => {
     renderSheet();
-    const summaryBlock = screen.getByRole("region", { name: "Run summary" });
-    const limits = screen.getByRole("region", { name: "Limits to decide" });
+    const decision = screen.getByRole("region", { name: "Review and start" });
+    const limits = within(decision).getByRole("region", { name: "Limits to decide" });
+    expect(within(decision).getByRole("region", { name: "What it will cost" })).toBeInTheDocument();
+    expect(
+      within(decision).getByRole("region", { name: "What leaves the building" }),
+    ).toBeInTheDocument();
     const inputs = screen.getByRole("region", { name: "What will run" });
-    const cost = screen.getByRole("region", { name: "What it will cost" });
     expect(followsInDocument(limits, inputs)).toBe(true);
-    // Only the short run summary comes before the limits; the cost block, with Submit, is last.
-    expect(followsInDocument(summaryBlock, limits)).toBe(true);
-    expect(followsInDocument(inputs, cost)).toBe(true);
-    expect(within(summaryBlock).queryAllByRole("group")).toHaveLength(0);
-    // Every echoed input is drawn open: what the approval rests on is not folded away.
-    expect(inputs.querySelector("details")).toBeNull();
+    expect(decision).not.toContainElement(inputs);
+    // One disclosure, closed until opened, holds every input; nothing is left out of it.
+    const disclosure = inputs.closest("details");
+    expect(disclosure).not.toBeNull();
+    expect(disclosure).not.toHaveAttribute("open");
+    expect(disclosure?.querySelector("summary")).toHaveTextContent("Everything Submit sends");
+    for (const title of ["Issuer and documents", "Purpose and modules", "Context"])
+      expect(within(decision).queryByRole("group", { name: title })).toBeNull();
   });
 
   it("C2-007 still draws every block and its rows, including those that are not given", () => {

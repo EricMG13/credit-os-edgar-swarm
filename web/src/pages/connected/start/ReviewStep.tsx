@@ -1,3 +1,4 @@
+import { Badge } from "@/components/base/badges/badges";
 import { SubmitConfirmation } from "../../run/start/Start";
 import { pathwayName } from "../api";
 import { Figure } from "../report/overview/Tile";
@@ -21,11 +22,11 @@ function ReviewApproval({
   return (
     <>
       {blocker && (
-        <p id="run-submit-blocker" className="text-sm text-text-secondary">
+        <p id="run-submit-blocker" className="text-small text-text-secondary">
           {blocker}
         </p>
       )}
-      <label className="flex min-h-8 items-center gap-2 text-sm font-semibold max-sm:min-h-11">
+      <label className="flex min-h-8 items-center gap-2 text-small font-medium text-text-primary max-[480px]:min-h-11">
         <input
           className="size-4 shrink-0"
           type="checkbox"
@@ -45,13 +46,13 @@ function ReviewApproval({
 function ReviewNotes({ synthetic, idNote }: { synthetic: boolean; idNote: string }) {
   return (
     <>
-      {synthetic && <p className="text-sm text-text-secondary">{SYNTHETIC_LIMITS}</p>}
-      {idNote && <p className="text-sm text-text-secondary">{idNote}</p>}
+      {synthetic && <p className="text-small text-text-secondary">{SYNTHETIC_LIMITS}</p>}
+      {idNote && <p className="text-small text-text-secondary">{idNote}</p>}
     </>
   );
 }
 
-/** The cap in mono, and the sentence Submit is described by. */
+/** The cap as the tile's largest figure, in mono, and the sentence Submit is described by. */
 function CostLead({
   synthetic,
   capText,
@@ -62,20 +63,34 @@ function CostLead({
   pathway: string;
 }) {
   const figure = synthetic
-    ? { amount: "USD 0.00", note: "No-cost test" }
-    : capText && { amount: capText, note: `Spending cap · ${pathwayName(pathway)}` };
+    ? { caption: "What it will cost", amount: "USD 0.00", note: "No-cost test" }
+    : capText && {
+        caption: "Spending cap",
+        amount: capText,
+        note: `Cap · ${pathwayName(pathway)}`,
+      };
   return (
-    <div className="grid gap-2">
+    <>
       {figure && (
-        <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <Figure className="text-h2 font-medium">{figure.amount}</Figure>
-          <span className="text-small text-text-secondary">{figure.note}</span>
-        </p>
+        <div className="grid gap-1">
+          <p className="text-caption text-text-tertiary">{figure.caption}</p>
+          <Figure className="text-metric font-medium">{figure.amount}</Figure>
+          <p className="text-small text-text-secondary">{figure.note}</p>
+        </div>
       )}
-      <p id="run-submit-cost" className="reading-copy text-body text-text-secondary">
+      <p id="run-submit-cost" className="reading-copy text-small text-text-secondary">
         <SubmissionCost synthetic={synthetic} capText={capText} />
       </p>
-    </div>
+    </>
+  );
+}
+
+/** Whether Submit spends: the mode, said once at the top of the decision. */
+function ModeChip({ synthetic }: { synthetic: boolean }) {
+  return (
+    <Badge size="md" color={synthetic ? "brand" : "warning"} className="shrink-0">
+      {synthetic ? "No-cost test" : "Paid run"}
+    </Badge>
   );
 }
 
@@ -90,6 +105,7 @@ function ReviewSubmit({
   ready,
   error,
   onSubmit,
+  facts,
 }: Pick<
   Parameters<typeof ReviewConfirmation>[0],
   | "synthetic"
@@ -102,7 +118,7 @@ function ReviewSubmit({
   | "ready"
   | "error"
   | "onSubmit"
->) {
+> & { facts: readonly (readonly [string, string])[] }) {
   const submitLabel = submitLabelFor({ busy, synthetic, capText });
   const confirmation = confirmationFor(synthetic, capText);
   const submitDisabled =
@@ -112,7 +128,7 @@ function ReviewSubmit({
     (!synthetic && (!capAvailable || !modelVerified));
   return (
     <>
-      <p className="text-caption text-text-tertiary tabular-nums lg:hidden">{ready}</p>
+      <p className="text-caption text-text-tertiary tabular-nums xl:hidden">{ready}</p>
       {error && <ErrorNotice>{error}</ErrorNotice>}
       <div className="flex justify-end">
         <SubmitConfirmation
@@ -122,6 +138,7 @@ function ReviewSubmit({
           isDisabled={submitDisabled}
           describedBy="run-submit-cost"
           noCost={synthetic}
+          facts={facts}
           onConfirm={onSubmit}
         />
       </div>
@@ -174,14 +191,6 @@ export function ReviewConfirmation({
   const blocker = submitBlocker(undecided, approved);
   return (
     <div className="flex min-w-0 flex-col gap-4">
-      <div className="grid gap-1 px-1">
-        <h2 ref={focusStep} tabIndex={-1} className={`${heading} ${HEADING_FOCUS}`}>
-          Review and start
-        </h2>
-        <p className="reading-copy text-body text-text-secondary">
-          Check what the run will do, decide each limit, then approve and submit.
-        </p>
-      </div>
       <ReviewSheet
         review={review}
         accepted={accepted}
@@ -190,45 +199,58 @@ export function ReviewConfirmation({
         onModules={onModules}
         onAccept={onAccept}
         synthetic={synthetic}
-        cost={{
-          lead: (
-            <CostLead
-              synthetic={synthetic}
-              capText={capText}
-              pathway={review.answers.context.run.pathway}
-            />
+        decision={{
+          head: (
+            <h2 ref={focusStep} tabIndex={-1} className={`${heading} ${HEADING_FOCUS}`}>
+              Review and start
+            </h2>
           ),
-          actions: (
+          mode: <ModeChip synthetic={synthetic} />,
+          cost: (
             <>
+              <CostLead
+                synthetic={synthetic}
+                capText={capText}
+                pathway={review.answers.context.run.pathway}
+              />
               <ReviewNotes synthetic={synthetic} idNote={idNote} />
               {!synthetic && !modelVerified && (
-                <p className="text-sm text-text-secondary">
+                <p className="text-small text-text-secondary">
                   Paid Submit is unavailable because this model and effort pair is not verified for
                   the current Copilot CLI service. You can keep this offline review and return when
                   a pair is available.
                 </p>
               )}
-              <div className="grid gap-3 border-t border-border-hairline pt-4">
-                <ReviewApproval
-                  blocker={blocker}
-                  approved={approved}
-                  disabled={!checksComplete || locked}
-                  onApprove={onApprove}
-                />
-                <ReviewSubmit
-                  modelVerified={modelVerified}
-                  synthetic={synthetic}
-                  checksComplete={checksComplete}
-                  approved={approved}
-                  busy={busy}
-                  error={error}
-                  capText={capText}
-                  capAvailable={capAvailable}
-                  ready={ready}
-                  onSubmit={onSubmit}
-                />
-              </div>
             </>
+          ),
+          submit: (
+            <div className="grid gap-3 border-t border-border-hairline pt-4">
+              <ReviewApproval
+                blocker={blocker}
+                approved={approved}
+                disabled={!checksComplete || locked}
+                onApprove={onApprove}
+              />
+              <ReviewSubmit
+                modelVerified={modelVerified}
+                synthetic={synthetic}
+                checksComplete={checksComplete}
+                approved={approved}
+                busy={busy}
+                error={error}
+                capText={capText}
+                capAvailable={capAvailable}
+                ready={ready}
+                facts={[
+                  ["Issuer", review.answers.context.identity.issuer_name],
+                  ["Pathway", pathwayName(review.answers.context.run.pathway)],
+                  synthetic
+                    ? ["Cost", "USD 0.00 · No-cost test"]
+                    : ["Cap", capText ?? "Unavailable"],
+                ]}
+                onSubmit={onSubmit}
+              />
+            </div>
           ),
         }}
       />
