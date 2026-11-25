@@ -1,5 +1,5 @@
 import { readerText, type OutputEntry, type Table } from "../../publishedReport";
-import { namesSource, safeText } from "./kit/reader";
+import { namesSource, reasonText, safeText } from "./kit/reader";
 import { difference, group, readCell, signOf, sum } from "./kit/numbers";
 import { allTables, tableWith } from "./kit/tables";
 
@@ -31,29 +31,39 @@ type Step = { label: string; amount: string; value: number; line: number };
 export type Bridge = {
   state: "ready";
   unit: string;
+  /** The heading of the section the bridge is in, to say which chart this lead draws. */
+  heading: string;
   line: number;
   opening: Step;
   closing: Step;
   /** The add-backs, in the order the handoff states them. */
-  changes: (Step & { support: Support | null; split: Split | null })[];
+  changes: (Step & {
+    support: Support | null;
+    split: Split | null;
+    /** The assessment's accepted and not accepted cells as written ("" without the column). */
+    accepted: string;
+    notAccepted: string;
+  })[];
   /** Whether the assessment table is there and states a word for at least one add-back. */
   supportStated: boolean;
   notes: string[];
 };
 export type BridgeGap = {
   state: "gap";
+  /** The heading of the section the bridge was looked for in, "" when there is none. */
+  heading: string;
   reason: string;
   /** The steps the handoff states, to list as text when they cannot be drawn. */
   stated: { label: string; text: string }[];
 };
 
-function stepTable(entry: OutputEntry): Table | null | "several" {
+function stepTable(entry: OutputEntry): { table: Table; heading: string } | null | "several" {
   const found = allTables(entry).filter(
     ({ table }) => table.headers.includes("Step") && table.headers.includes("Amount"),
   );
-  if (found.length <= 1) return found[0]?.table ?? null;
+  if (found.length <= 1) return found[0] ?? null;
   const bridges = found.filter(({ heading }) => /bridge/i.test(heading));
-  return bridges.length === 1 ? (bridges[0]?.table ?? null) : "several";
+  return bridges.length === 1 ? (bridges[0] ?? null) : "several";
 }
 
 /**
@@ -92,28 +102,31 @@ function splitOf(step: Step, stated: { accepted: string; notAccepted: string } |
   const accepted = readCell(stated?.accepted ?? "");
   const notAccepted = readCell(stated?.notAccepted ?? "");
   if (accepted.kind !== "number" || notAccepted.kind !== "number") return null;
-  if (accepted.value <= 0 || notAccepted.value <= 0) return null;
+  // A stated zero is a value: 217 accepted and 0 not accepted is a split.
+  if (accepted.value < 0 || notAccepted.value < 0) return null;
   const made = sum([accepted.text, notAccepted.text]);
   return made !== null && signOf(difference(step.amount, made)) === 0
     ? { accepted: accepted.text, notAccepted: notAccepted.text }
     : null;
 }
 
-const gapOf = (reason: string, stated: BridgeGap["stated"] = []): BridgeGap => ({
+const gapOf = (reason: string, stated: BridgeGap["stated"] = [], heading = ""): BridgeGap => ({
   state: "gap",
+  heading,
   reason,
   stated,
 });
 
 /** The add-back bridge, reconciled; or the gap, with the stated steps to list as words. */
 export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
-  const table = stepTable(entry);
+  const found = stepTable(entry);
+  const table = found === "several" || found === null ? found : found.table;
+  const heading = found === "several" || found === null ? "" : found.heading;
   if (table === "several")
     return gapOf(
-      "This page could not read the earnings quality bridge from the handoff because it appears more than once.",
+      "This page could not read the earnings quality bridge because it appears more than once.",
     );
-  if (!table)
-    return gapOf("This page could not read the earnings quality bridge from the handoff.");
+  if (!table) return gapOf("This page could not read the earnings quality bridge.");
   const unitAt = table.headers.indexOf("Reporting unit");
   const amountAt = table.headers.indexOf("Amount");
   const basisAt = table.headers.indexOf("Basis and limitation");
@@ -123,7 +136,7 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
     return { label: safeText(row.cells[0] ?? ""), text: unit ? `${cell} ${unit}` : cell };
   });
   if (table.rows.length < 2)
-    return gapOf("This page could not read two steps of the bridge from the handoff.", stated);
+    return gapOf("This page could not read two steps of the bridge.", stated, heading);
   const units = new Set(
     table.rows.map((row) => (unitAt < 0 ? "" : (row.cells[unitAt] ?? "").trim())),
   );
@@ -131,9 +144,10 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
   if (units.size !== 1 || !unit)
     return gapOf(
       unitAt < 0
-        ? "This page could not read the reporting unit of the bridge from the handoff."
-        : "This page could not read the bridge steps in one reporting unit from the handoff.",
+        ? "This page could not read the reporting unit of the bridge."
+        : "This page could not read the bridge steps in one reporting unit.",
       stated,
+      heading,
     );
   const steps = table.rows.map((row) => ({
     label: safeText(row.cells[0] ?? ""),
@@ -144,9 +158,10 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
   if (bad)
     return gapOf(
       bad.reading.kind === "gap"
-        ? `This page could not read the bridge from the handoff because ${bad.label} is not supplied: ${safeText(bad.reading.reason)}.`
+        ? `This page could not read the bridge because ${bad.label} is not supplied: ${reasonText(bad.reading.reason)}.`
         : `This page could not read “${safeText(bad.reading.text)}” as an amount for ${bad.label}, so the bridge is not drawn.`,
       stated,
+      heading,
     );
   const read: Step[] = steps.map((step) => {
     if (step.reading.kind !== "number") throw new Error("unreachable: steps are numbers here");
@@ -160,17 +175,24 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
   const [opening, ...rest] = read;
   const closing = rest.pop();
   if (!opening || !closing)
-    return gapOf("This page could not read two steps of the bridge from the handoff.", stated);
+    return gapOf("This page could not read two steps of the bridge.", stated, heading);
   const rebuilt = sum([opening.amount, ...rest.map((step) => step.amount)]);
   if (rebuilt === null || signOf(difference(closing.amount, rebuilt)) !== 0)
     return gapOf(
       `This page did not draw the bridge because the steps between ${opening.label} (${group(opening.amount)}) and ${closing.label} (${group(closing.amount)}) do not add up.`,
       stated,
+      heading,
     );
   const names = assessmentByName(entry);
   const changes = rest.map((step) => {
     const found = names.get(norm(step.label));
-    return { ...step, support: found?.support ?? null, split: splitOf(step, found) };
+    return {
+      ...step,
+      support: found?.support ?? null,
+      split: splitOf(step, found),
+      accepted: found?.accepted.trim() ? safeText(found.accepted) : "",
+      notAccepted: found?.notAccepted.trim() ? safeText(found.notAccepted) : "",
+    };
   });
   const notes = [
     ...new Set(
@@ -183,6 +205,7 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
   return {
     state: "ready",
     unit: safeText(unit),
+    heading,
     line: table.line,
     opening,
     closing,
@@ -192,28 +215,20 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
   };
 }
 
-type Reported = { text: string; value: number };
-export type LeverageMeasure =
-  | {
-      kind: "pair";
-      measure: string;
-      reported: Reported;
-      restated: Reported;
-    }
-  | { kind: "gap"; measure: string; reason: string };
+/** One basis of a leverage measure: the stated multiple, or the words / reason the table states instead. */
+export type Side = { value: number; text: string } | { gap: string; written: string };
 
-/** A multiple as the table writes it: a plain number with or without a trailing `x`. */
-function multiple(cell: string) {
+export type LeverageMeasure = { measure: string; reported: Side; restated: Side };
+
+/** A multiple as the table writes it: a number with or without a trailing `x`, else words or a gap as written. */
+function sideOf(cell: string): Side {
   const reading = readCell(cell.trim().replace(/x$/i, ""));
-  return reading.kind === "number"
-    ? ({ ok: true, text: reading.text, value: reading.value } as const)
-    : ({
-        ok: false,
-        reason:
-          reading.kind === "gap"
-            ? safeText(reading.reason)
-            : `this page could not read “${safeText(reading.text)}” as a multiple`,
-      } as const);
+  if (reading.kind === "number")
+    return { value: reading.value, text: `${reading.written ?? group(reading.text)}x` };
+  const written = safeText(cell);
+  return reading.kind === "gap"
+    ? { gap: reasonText(reading.reason), written }
+    : { gap: written, written };
 }
 
 const BASIS_ROWS = { reported: "statements", restated: "supported" } as const;
@@ -222,14 +237,13 @@ const MEASURES = ["Total leverage", "Net leverage"] as const;
 export type Leverage =
   { state: "ready"; line: number; measures: LeverageMeasure[] } | { state: "gap"; reason: string };
 
-/** Reported (statements) and restated (supported earnings) leverage, only where both multiples are stated. */
+/** Leverage on the statements and on supported earnings, each side as the table states it. */
 export function readLeverage(entry: OutputEntry): Leverage {
   const table = tableWith(entry, ["Total leverage", "Net leverage"]);
   if (!table)
     return {
       state: "gap",
-      reason:
-        "This page could not read the leverage on the statements and on supported earnings from the handoff.",
+      reason: "This page could not read the leverage on the statements and on supported earnings.",
     };
   const rowOf = (basis: string) =>
     table.rows.filter((row) => norm(row.cells[0] ?? "").replace(/\s*\(cp-1\)$/, "") === basis);
@@ -241,20 +255,22 @@ export function readLeverage(entry: OutputEntry): Leverage {
     return {
       state: "gap",
       reason:
-        "This page could not read one row each for the statements and for supported earnings from the handoff.",
+        "This page could not read one row each for the statements and for supported earnings.",
     };
   const measures = MEASURES.map((header): LeverageMeasure => {
     const at = table.headers.indexOf(header);
-    const a = multiple(from.cells[at] ?? "");
-    const b = multiple(to.cells[at] ?? "");
-    if (!a.ok || !b.ok) {
-      const why = [
-        a.ok ? null : `on the statements: ${a.reason}`,
-        b.ok ? null : `on supported earnings: ${b.reason}`,
-      ].filter((text) => text !== null);
-      return { kind: "gap", measure: header, reason: why.join("; ") };
-    }
-    return { kind: "pair", measure: header, reported: a, restated: b };
+    return {
+      measure: header,
+      reported: sideOf(from.cells[at] ?? ""),
+      restated: sideOf(to.cells[at] ?? ""),
+    };
   });
   return { state: "ready", line: table.line, measures };
+}
+
+/** The chart title the store publishes for a `Chart data:` heading ("Add-back share"), or null. */
+export function chartTitleOf(heading: string) {
+  if (!heading.startsWith("Chart data: ")) return null;
+  const name = heading.slice("Chart data: ".length).trim();
+  return name.charAt(0).toUpperCase() + name.slice(1);
 }

@@ -95,7 +95,7 @@ function BridgeTile({ props, bridge }: { props: LeadProps; bridge: Bridge }) {
       source="the earnings-quality bridge"
       notes={[
         ...(!bridge.supportStated
-          ? ["This page could not read a support word for this step from the handoff."]
+          ? ["This page could not read a support word for this step."]
           : []),
         ...bridge.notes,
       ]}
@@ -262,7 +262,7 @@ function LeverageTile({ props }: { props: LeadProps }) {
     >
       {pairs.length === 0 && (
         <GapNote>
-          This page could not read a leverage multiple on both bases from the handoff.
+          This page could not read a leverage multiple on both bases.
         </GapNote>
       )}
       {leverage.measures.map((item) =>

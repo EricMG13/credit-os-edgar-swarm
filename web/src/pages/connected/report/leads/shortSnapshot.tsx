@@ -1,14 +1,10 @@
-import { StatsStrip, type Stat } from "@/components/kit/StatsStrip";
-import { MiniSlope } from "../overview/marks";
 import type { FC } from "react";
+import { cx } from "@/utils/cx";
+import { Ruler } from "../overview/marks";
 import { FigureTile, GapTile, LeadFrame } from "./kit/LeadFrame";
-import {
-  MOST_FIGURES,
-  readChangeScreen,
-  readKeyFigures,
-  type Figure,
-  type KeyFigure,
-} from "./shortSnapshotData";
+import { GapChip } from "./kit/marks";
+import { reasonText } from "./kit/reader";
+import { readChangeScreen, readKeyFigures, type Figure, type KeyFigure } from "./shortSnapshotData";
 import type { LeadProps } from "./types";
 
 /*
@@ -16,51 +12,66 @@ import type { LeadProps } from "./types";
  * `Measure | Value | Period | Source` Key figures table) and bindings/cpl10.py; no CP-L10 handoff has
  * ever run on a real case, so this lead is unproven on a real run. The change screen is drawn only from
  * a table with Topic, Prior and Current columns (the contract names no others).
+ *
+ * Two periods of one measure a year apart are one figure, prior to current; any other pair of
+ * periods is two figures, each with its own period and no change between them.
  */
-
-/** A figure the module did not supply: the system's hatched not-known slot, with its reason. */
-function GapSlot({ reason }: { reason: string }) {
-  return (
-    <span className="gap-hatch flex min-h-9 items-center justify-center rounded-ds-xs border border-dashed border-border-gap p-1.5 text-caption text-gap-text">
-      <span className="rounded-ds-xs bg-surface-card px-1.5 py-0.5">{reason}</span>
-    </span>
-  );
-}
 
 const signed = (sign: -1 | 0 | 1, size: string) =>
   sign === 1 ? `+${size}` : sign === -1 ? `\u2212${size}` : size;
 
 const stated = (figure: Figure) => (figure.kind === "value" ? figure.text : "not supplied");
 
-function statOf(item: KeyFigure): Stat {
+const TONE_TEXT = { better: "text-success-text", worse: "text-warning-text" } as const;
+
+/** One key figure: label, value, then its change line, then its paired mark: the rows line up across a band. */
+function KeyFigureCell({ item }: { item: KeyFigure }) {
   const { current, prior, change, marks } = item;
-  const label = `${item.measure}, ${current.period}`;
-  const base: Stat =
-    current.kind === "gap"
-      ? { label, value: null, gap: "Not supplied", mark: <GapSlot reason={current.reason} /> }
-      : { label, value: current.text };
-  if (!prior) return base;
-  const stat: Stat = {
-    ...base,
-    prior:
-      prior.kind === "value" ? `${prior.text} in ${prior.period}` : `${prior.period}: not supplied`,
-  };
-  if (change) {
-    stat.delta = signed(change.sign, change.size);
-    if (change.tone === "better" || change.tone === "worse") stat.tone = change.tone;
-  }
-  if (marks && change)
-    stat.mark = (
-      <MiniSlope
-        marks={[
-          { label: prior.period, value: marks.prior, text: stated(prior) },
-          { label: current.period, value: marks.current, text: stated(current) },
-        ]}
-        tone={change.tone}
-        label={`${item.measure}: ${stated(prior)} in ${prior.period}, ${stated(current)} in ${current.period}`}
-      />
-    );
-  return stat;
+  const word = change && (change.tone === "better" || change.tone === "worse") ? change.tone : null;
+  return (
+    <li
+      data-figure={`${item.measure}, ${current.period}`}
+      className="row-span-4 grid min-w-0 grid-rows-subgrid gap-y-1.5 border-t border-l border-border-hairline p-4 -mt-px -ml-px sm:p-5"
+    >
+      <p className="text-caption text-text-tertiary">{`${item.measure}, ${current.period}`}</p>
+      <div>
+        {current.kind === "gap" ? (
+          <GapChip reason={reasonText(current.reason)} />
+        ) : (
+          <span className="font-mono text-h3 font-medium wrap-anywhere text-text-primary tabular-nums">
+            {current.text}
+          </span>
+        )}
+      </div>
+      <p className="text-caption text-text-secondary">
+        {change && (
+          <span
+            data-part="change"
+            className={cx("font-mono tabular-nums", word && TONE_TEXT[word])}
+          >
+            {signed(change.sign, change.size)}
+            {word ? ` ${word}` : ""}
+          </span>
+        )}
+        {change && prior ? " \u00b7 " : ""}
+        {prior &&
+          (prior.kind === "value"
+            ? `from ${prior.text} in ${prior.period}`
+            : `${prior.period}: not supplied`)}
+      </p>
+      <div>
+        {prior && marks && change && (
+          <Ruler
+            from={{ label: prior.period, value: marks.prior, text: stated(prior) }}
+            to={{ label: current.period, value: marks.current, text: stated(current) }}
+            tone={change.tone}
+            suffix={marks.suffix}
+            label={`${item.measure}: ${stated(prior)} in ${prior.period}, ${stated(current)} in ${current.period}`}
+          />
+        )}
+      </div>
+    </li>
+  );
 }
 
 function Strip({ props }: { props: LeadProps }) {
@@ -71,42 +82,36 @@ function Strip({ props }: { props: LeadProps }) {
         {read.reason}
       </GapTile>
     );
-  const shown = read.figures.slice(0, MOST_FIGURES);
-  const more = read.figures.length - shown.length;
   return (
     <FigureTile
       props={props}
       span={12}
       label="Key figures"
-      kicker="Each figure in the period the module states"
+      kicker="Each figure in its stated period"
       title="Key figures"
       line={read.line}
       source="the key figures"
-      notes={[
-        ...(more > 0
-          ? [`${String(more)} more figure${more === 1 ? " is" : "s are"} in the table view.`]
-          : []),
-      ]}
       table={{
         caption: "Key figures",
         headers: ["Measure", "Period", "Value", "Earlier period", "Earlier value", "Change"],
         rows: read.figures.map((item) => [
           item.measure,
           item.current.period,
-          item.current.kind === "value" ? item.current.text : item.current.text,
+          item.current.text,
           item.prior?.period ?? "Not stated",
-          item.prior
-            ? item.prior.kind === "value"
-              ? item.prior.text
-              : item.prior.text
-            : "Not stated",
-          item.change
-            ? `${item.change.sign === 1 ? "+" : item.change.sign === -1 ? "−" : ""}${item.change.size}`
-            : "Not stated",
+          item.prior ? item.prior.text : "Not stated",
+          item.change ? signed(item.change.sign, item.change.size) : "Not stated",
         ]),
       }}
     >
-      <StatsStrip label="Key figures" stats={shown.map(statOf)} />
+      <ul
+        aria-label="Key figures"
+        className="grid min-w-0 grid-cols-2 overflow-hidden rounded-ds-lg border border-border-subtle bg-surface-card md:grid-cols-3 xl:grid-cols-4"
+      >
+        {read.figures.map((item) => (
+          <KeyFigureCell key={`${String(item.line)}-${item.measure}`} item={item} />
+        ))}
+      </ul>
     </FigureTile>
   );
 }

@@ -36,20 +36,18 @@ function snapshot(figures: string[][] | null = FIGURES, extra: unknown[] = []) {
   );
 }
 
-describe("shortSnapshotData", () => {
-  it("joins one measure stated in two periods into prior and current, with the exact difference", () => {
-    const read = readKeyFigures(snapshot());
-    if (read.state !== "ready") throw new Error(read.reason);
-    expect(read.figures.map((item) => item.measure)).toEqual([
-      "Total leverage",
-      "Net leverage",
-      "Interest coverage",
-      "Liquidity",
-      "Revenue",
-      "Cash",
-      "Gross debt",
-    ]);
-    const [leverage, , , liquidity] = read.figures;
+const screenOf = (headers: string[], rows: string[][]) =>
+  section("Change screen", 40, table(41, headers, rows));
+
+function figuresOf(rows: string[][]) {
+  const read = readKeyFigures(snapshot(rows));
+  if (read.state !== "ready") throw new Error(read.reason);
+  return read.figures;
+}
+
+describe("shortSnapshotData: one rule for a change", () => {
+  it("prints the exact change for FY2023 to FY2024 on one unit, with the owner's tone word", () => {
+    const [leverage, , , liquidity] = figuresOf(FIGURES);
     expect(leverage).toMatchObject({
       current: { text: "6.1x", period: "FY2024" },
       prior: { text: "5.6x", period: "FY2023" },
@@ -59,82 +57,86 @@ describe("shortSnapshotData", () => {
     expect(liquidity?.change).toMatchObject({ text: "150", size: "USD 150m", tone: "better" });
   });
 
-  it("draws no change where the units differ, a period repeats, or the figure is not stated", () => {
-    const read = readKeyFigures(
-      snapshot([
-        ["Total leverage", "6.1x", "FY2024", SOURCE],
-        ["Total leverage", "5.6", "FY2023", SOURCE],
-        ["Net leverage", "5.0x", "FY2024", SOURCE],
-        ["Net leverage", "4.0x", "FY2024", SOURCE],
-        ["Cash", "Not supplied: not stated", "FY2024", SOURCE],
-        ["Cash", "10", "FY2023", SOURCE],
-        ["Revenue", "5", "FY2024", SOURCE],
-        ["Revenue", "6", "FY2023", SOURCE],
-        ["Revenue", "7", "FY2022", SOURCE],
-      ]),
-    );
-    if (read.state !== "ready") throw new Error(read.reason);
-    expect(
-      read.figures.map((item) => [
-        item.measure,
-        item.prior?.period ?? null,
-        item.change?.text ?? null,
-      ]),
-    ).toEqual([
-      ["Total leverage", "FY2023", null],
-      ["Net leverage", null, null],
-      ["Net leverage", null, null],
-      ["Cash", "FY2023", null],
-      ["Revenue", null, null],
-      ["Revenue", null, null],
-      ["Revenue", null, null],
+  it("prints no change between a quarter and a year, a year and an LTM end, or two years apart", () => {
+    const figures = figuresOf([
+      ["Revenue", "1920", "Q1 2024", SOURCE],
+      ["Revenue", "7940", "FY2025", SOURCE],
+      ["Net leverage", "4.88x", "FY2024", SOURCE],
+      ["Net leverage", "5.10x", "LTM Mar-2025", SOURCE],
+      ["Gross debt", "100", "FY2022", SOURCE],
+      ["Gross debt", "130", "FY2024", SOURCE],
     ]);
+    // Six figures, each with its own period, none paired and none with a change or a tone word.
+    expect(figures.map((item) => [item.measure, item.current.period])).toEqual([
+      ["Revenue", "Q1 2024"],
+      ["Revenue", "FY2025"],
+      ["Net leverage", "FY2024"],
+      ["Net leverage", "LTM Mar-2025"],
+      ["Gross debt", "FY2022"],
+      ["Gross debt", "FY2024"],
+    ]);
+    for (const item of figures) {
+      expect(item.prior).toBeNull();
+      expect(item.change).toBeNull();
+    }
   });
 
-  it("keeps a stated zero as a value and reads a zero change as unchanged", () => {
-    const read = readKeyFigures(
-      snapshot([
-        ["Cash", "0", "FY2024", SOURCE],
-        ["Cash", "0", "FY2023", SOURCE],
-      ]),
-    );
-    if (read.state !== "ready") throw new Error(read.reason);
-    expect(read.figures[0]).toMatchObject({
+  it("pairs the same quarter or LTM end a year apart, and not different units", () => {
+    const figures = figuresOf([
+      ["Revenue", "1800", "Q1 2024", SOURCE],
+      ["Revenue", "1920", "Q1 2025", SOURCE],
+      ["Net leverage", "4.88x", "LTM Mar-2024", SOURCE],
+      ["Net leverage", "5.10x", "LTM Mar-2025", SOURCE],
+      ["Cash", "10", "FY2023", SOURCE],
+      ["Cash", "12x", "FY2024", SOURCE],
+    ]);
+    expect(figures[0]?.change).toMatchObject({ text: "120", size: "120" });
+    expect(figures[1]?.change).toMatchObject({ text: "0.22", size: "0.22x" });
+    // Cash: paired as periods a year apart, but "10" and "12x" are not one unit: no change.
+    expect(figures[2]).toMatchObject({ prior: { text: "10" }, change: null });
+  });
+
+  it("draws no change for a figure not stated, and reads a stated zero as a value with no change", () => {
+    const figures = figuresOf([
+      ["Cash", "Not supplied: not stated", "FY2024", SOURCE],
+      ["Cash", "10", "FY2023", SOURCE],
+      ["Debt", "0", "FY2024", SOURCE],
+      ["Debt", "0", "FY2023", SOURCE],
+    ]);
+    expect(figures[0]).toMatchObject({ prior: { text: "10" }, change: null });
+    expect(figures[1]).toMatchObject({
       current: { kind: "value", text: "0" },
-      change: { text: "0", sign: 0 },
+      change: { sign: 0 },
     });
   });
 
   it("says the true condition, without naming any column, when the table is absent, repeated or empty", () => {
-    expect(readKeyFigures(snapshot(null))).toMatchObject({ state: "gap" });
     const gap = readKeyFigures(snapshot(null));
-    expect(gap.state === "gap" && gap.reason).toBe(
-      "This page could not read the key figures from the handoff.",
-    );
+    expect(gap.state === "gap" && gap.reason).toBe("This page could not read the key figures.");
     const twice = readKeyFigures(
       snapshot(FIGURES, [section("Key figures again", 30, table(31, HEAD, FIGURES))]),
     );
-    expect(twice.state === "gap" && twice.reason).toContain("because they appear more than once");
-    for (const result of [gap, twice, readKeyFigures(snapshot([]))])
-      expect(JSON.stringify(result)).not.toMatch(/Measure|Value|Period|Source|column/);
-    expect(readKeyFigures(snapshot([]))).toEqual({
-      state: "gap",
-      reason: "This page could not read a row of the key figures from the handoff.",
-    });
+    expect(twice.state === "gap" && twice.reason).toContain("more than once");
+    const empty = readKeyFigures(snapshot([]));
+    for (const result of [gap, twice, empty])
+      expect(JSON.stringify(result)).not.toMatch(/Measure|Value|Period|Source|column|handoff/);
   });
 
-  it("reads a change screen only from Topic, Prior and Current, and says what was expected otherwise", () => {
+  it("reads a change screen only from Topic, Prior and Current, and strips an inline [E3] marker", () => {
     expect(readChangeScreen(snapshot())).toBeNull();
     const ok = readChangeScreen(
       snapshot(FIGURES, [
-        section(
-          "Change screen",
-          40,
-          table(
-            41,
-            ["Topic", "Prior", "Current", "Direction", "Change"],
-            [["Liquidity", "1,050", "1,200", "Up", "Liquidity rose."]],
-          ),
+        screenOf(
+          ["Topic", "Prior", "Current", "Direction", "Change"],
+          [
+            [
+              "Liquidity",
+              "1,050",
+              "1,200",
+              "Up",
+              "Liquidity rose [E3] and stayed there [E12, E14].",
+            ],
+          ],
         ),
       ]),
     );
@@ -146,7 +148,7 @@ describe("shortSnapshotData", () => {
           prior: "1,050",
           current: "1,200",
           direction: "Up",
-          text: "Liquidity rose.",
+          text: "Liquidity rose and stayed there.",
         },
       ],
     });
@@ -163,9 +165,7 @@ describe("shortSnapshotData", () => {
   });
 });
 
-const dt = (strip: Element | null | undefined, label: string) =>
-  [...(strip?.querySelectorAll("dt") ?? [])].find((item) => item.textContent === label)
-    ?.parentElement;
+const cell = (label: string) => document.querySelector(`li[data-figure="${label}"]`);
 
 describe("no source reference in what is drawn", () => {
   it("screens a gap value, its reason and a change-screen cell that name a source", () => {
@@ -178,13 +178,7 @@ describe("no source reference in what is drawn", () => {
         {...leadProps(
           snapshot(
             [["Revenue", cited, "FY2024", SOURCE]],
-            [
-              section(
-                "Screen",
-                40,
-                table(41, ["Topic", "Prior", "Current"], [["Cash", "see C07 in T4.4", "1"]]),
-              ),
-            ],
+            [screenOf(["Topic", "Prior", "Current"], [["Cash", "see C07 in T4.4", "1"]])],
           ),
         )}
       />,
@@ -196,63 +190,102 @@ describe("no source reference in what is drawn", () => {
 });
 
 describe("ShortSnapshotLead", () => {
-  it("draws the first six figures as the strip, prior to current where both periods are stated", () => {
+  it("draws every figure, nothing hidden behind a count, prior to current where a year apart", () => {
     render(<ShortSnapshotLead {...leadProps(snapshot())} />);
     const tile = screen.getByRole("region", { name: "Key figures" });
-    const strip = tile.querySelector("dl");
-    expect(strip?.querySelectorAll("dt")).toHaveLength(6);
-    const leverage = dt(strip, "Total leverage, FY2024");
+    // Nine rows, two of them pairs: seven figures, all drawn.
+    expect(tile.querySelectorAll("li[data-figure]")).toHaveLength(7);
+    expect(within(tile).queryByText(/more figures? (is|are)/)).toBeNull();
+    const leverage = cell("Total leverage, FY2024");
     expect(leverage).toHaveTextContent("6.1x");
-    expect(leverage).toHaveTextContent("+0.5x worse");
+    expect(leverage?.querySelector('[data-part="change"]')).toHaveTextContent("+0.5x worse");
     expect(leverage).toHaveTextContent("from 5.6x in FY2023");
     expect(within(leverage as HTMLElement).getByRole("img")).toHaveAccessibleName(
       "Total leverage: 5.6x in FY2023, 6.1x in FY2024",
     );
-    const liquidity = dt(strip, "Liquidity, FY2024");
-    expect(liquidity).toHaveTextContent("+USD 150m better");
-    expect(within(tile).getByText("1 more figure is in the table view.")).toBeVisible();
+    expect(cell("Liquidity, FY2024")?.querySelector('[data-part="change"]')).toHaveTextContent(
+      "+USD 150m better",
+    );
     expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(/^Key figures$/);
   });
 
-  it("a single-period figure shows its period and no prior, no slope and no change", () => {
+  it("draws a pair as a ruler from the earlier to the later figure, never a two-point sparkline", () => {
     render(<ShortSnapshotLead {...leadProps(snapshot())} />);
-    const net = dt(
-      screen.getByRole("region", { name: "Key figures" }).querySelector("dl"),
-      "Net leverage, FY2024",
+    const leverage = cell("Total leverage, FY2024");
+    expect(leverage?.querySelectorAll("polyline")).toHaveLength(0);
+    expect(leverage?.querySelectorAll("circle").length).toBeGreaterThan(0);
+    expect(leverage?.querySelectorAll("polygon")).toHaveLength(1);
+  });
+
+  it("puts every figure's value on its own line, in the same row of its band, however long its label", () => {
+    render(
+      <ShortSnapshotLead
+        {...leadProps(
+          snapshot([
+            ["Interest coverage", "2.30x", "FY2024", SOURCE],
+            ["Cash", "1", "FY2024", SOURCE],
+            ["Net debt", "Not supplied: not stated", "FY2024", SOURCE],
+          ]),
+        )}
+      />,
     );
+    for (const item of document.querySelectorAll("li[data-figure]")) {
+      // Four rows in a fixed order: label, value, change line, mark; the subgrid aligns the bands.
+      expect(item.children).toHaveLength(4);
+      expect(item.className).toContain("grid-rows-subgrid");
+      expect(item.children[0]?.tagName).toBe("P");
+      expect(item.children[1]?.tagName).toBe("DIV");
+    }
+    expect(cell("Interest coverage, FY2024")?.children[1]).toHaveTextContent("2.30x");
+  });
+
+  it("a single-period figure shows its period and no prior, no ruler and no change", () => {
+    render(<ShortSnapshotLead {...leadProps(snapshot())} />);
+    const net = cell("Net leverage, FY2024");
     expect(net).toHaveTextContent("5.0x");
     expect(net).not.toHaveTextContent("from");
     expect(net?.querySelector("svg")).toBeNull();
   });
 
-  it("draws a missing figure as the handoff's own reason and a stated zero as a value", () => {
-    render(<ShortSnapshotLead {...leadProps(snapshot())} />);
-    const strip = screen.getByRole("region", { name: "Key figures" }).querySelector("dl");
-    const revenue = dt(strip, "Revenue, FY2024");
-    expect(revenue).toHaveTextContent("not stated in the filing");
-    // The gap treatment: a hatched slot holding the reason, not plain grey text.
+  it("draws a missing figure as the hatched chip with the module's reason, and 'source dash' as a dash", () => {
+    render(
+      <ShortSnapshotLead
+        {...leadProps(
+          snapshot([
+            ["Revenue", "Not supplied: not stated in the filing", "FY2024", SOURCE],
+            ["Debt", "Not supplied: source dash", "FY2024", SOURCE],
+            ["Cash", "0", "FY2024", SOURCE],
+          ]),
+        )}
+      />,
+    );
+    const revenue = cell("Revenue, FY2024");
     expect(revenue?.querySelector(".gap-hatch")).toHaveTextContent("not stated in the filing");
-    expect(dt(strip, "Revenue, FY2024")).not.toHaveTextContent(/^Revenue, FY2024\s*0/);
-    expect(dt(strip, "Cash, FY2024")).toHaveTextContent("0");
+    expect(cell("Debt, FY2024")?.querySelector("[data-gap]")).toHaveTextContent(/^—$/);
+    // A stated zero is a value, not a gap.
+    expect(cell("Cash, FY2024")).toHaveTextContent("0");
+    expect(cell("Cash, FY2024")?.querySelector(".gap-hatch")).toBeNull();
   });
 
-  it("does not put better or worse on a measure the owner's table does not know", () => {
+  it("puts no better or worse word on a measure the owner's table does not know, or where no change is printed", () => {
     render(
       <ShortSnapshotLead
         {...leadProps(
           snapshot([
             ["Cash", "5", "FY2024", SOURCE],
             ["Cash", "9", "FY2023", SOURCE],
+            ["Net leverage", "5.10x", "LTM Mar-2025", SOURCE],
+            ["Net leverage", "4.88x", "FY2024", SOURCE],
           ]),
         )}
       />,
     );
-    const cash = dt(
-      screen.getByRole("region", { name: "Key figures" }).querySelector("dl"),
-      "Cash, FY2024",
-    );
-    expect(cash).toHaveTextContent("−4");
+    const cash = cell("Cash, FY2024");
+    expect(cash?.querySelector('[data-part="change"]')).toHaveTextContent("−4");
     expect(cash).not.toHaveTextContent(/better|worse/);
+    expect(cell("Net leverage, LTM Mar-2025")).not.toHaveTextContent(/better|worse/);
+    expect(cell("Net leverage, FY2024")).not.toHaveTextContent(/better|worse/);
+    expect(cell("Net leverage, FY2024")?.querySelector('[data-part="change"]')).toBeNull();
   });
 
   it("gives the figure one trace control and a table view, and draws no source column or reference", () => {
@@ -265,36 +298,28 @@ describe("ShortSnapshotLead", () => {
 
   it("draws one plain gap tile when there is no key figures table", () => {
     render(<ShortSnapshotLead {...leadProps(snapshot(null))} />);
-    expect(
-      screen.getByText(/This page could not read the key figures from the handoff\./),
-    ).toBeVisible();
-    expect(document.querySelectorAll(".gap-hatch")).toHaveLength(1);
+    expect(screen.getByText(/This page could not read the key figures\./)).toBeVisible();
     expect(screen.queryByRole("img")).toBeNull();
+    expect(document.querySelectorAll(".gap-hatch")).toHaveLength(1);
   });
 
   it("draws one figure from a one-row table", () => {
     render(<ShortSnapshotLead {...leadProps(snapshot([["Cash", "5", "FY2024", SOURCE]]))} />);
     const tile = screen.getByRole("region", { name: "Key figures" });
-    expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(/^Key figures$/);
-    expect(tile.querySelectorAll("dt")).toHaveLength(1);
+    expect(tile.querySelectorAll("li[data-figure]")).toHaveLength(1);
   });
 
-  it("lists the change screen with a direction word only where the table states one", () => {
+  it("lists the change screen with a direction word only where the table states one, markers stripped", () => {
     render(
       <ShortSnapshotLead
         {...leadProps(
           snapshot(FIGURES, [
-            section(
-              "Change screen",
-              40,
-              table(
-                41,
-                ["Topic", "Prior", "Current", "Direction", "Change"],
-                [
-                  ["Liquidity", "1,050", "1,200", "Up", "Liquidity rose."],
-                  ["Maturities", "2026", "2027", "", ""],
-                ],
-              ),
+            screenOf(
+              ["Topic", "Prior", "Current", "Direction", "Change"],
+              [
+                ["Liquidity", "1,050", "1,200", "Up", "Liquidity rose [E3]."],
+                ["Maturities", "2026", "2027", "", ""],
+              ],
             ),
           ]),
         )}
@@ -303,15 +328,15 @@ describe("ShortSnapshotLead", () => {
     const tile = screen.getByRole("region", { name: "Change screen" });
     const items = within(tile).getAllByRole("listitem");
     expect(items).toHaveLength(2);
-    expect(items[0]).toHaveTextContent("Liquidity");
     expect(items[0]).toHaveTextContent("1,050");
     expect(items[0]).toHaveTextContent("Up");
     expect(items[0]).toHaveTextContent("Liquidity rose.");
+    expect(tile.textContent).not.toMatch(/\[E\d+\]/);
     expect(items[1]).toHaveTextContent("2026");
     expect(items[1]).not.toHaveTextContent(/Up|Down/);
   });
 
-  it("says what was expected for a change screen in another shape, and draws none when there is none", () => {
+  it("says why a change screen in another shape is not drawn, and draws none when there is none", () => {
     const { unmount } = render(
       <ShortSnapshotLead
         {...leadProps(
@@ -319,11 +344,7 @@ describe("ShortSnapshotLead", () => {
         )}
       />,
     );
-    expect(
-      screen.getByText(
-        /the change screen from the handoff because the table is not in a shape this page reads/,
-      ),
-    ).toBeVisible();
+    expect(screen.getByText(/could not read the change screen/)).toBeVisible();
     unmount();
     render(<ShortSnapshotLead {...leadProps(snapshot())} />);
     expect(screen.queryByRole("region", { name: "Change screen" })).toBeNull();
@@ -354,9 +375,9 @@ describe("ShortSnapshotLead", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("states no derived label and declares that it draws none of the module's typed figures", () => {
+  it("says nothing derived, never names the module in a kicker, and draws none of the typed figures", () => {
     render(<ShortSnapshotLead {...leadProps(snapshot())} />);
-    expect(document.body.textContent).not.toMatch(/derived|\bup \d|\bdown \d/i);
+    expect(document.body.textContent).not.toMatch(/derived|the module|from the handoff/i);
     expect(ShortSnapshotLead.draws).toEqual([]);
   });
 });

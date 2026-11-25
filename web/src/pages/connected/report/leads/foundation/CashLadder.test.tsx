@@ -85,21 +85,31 @@ describe("cash ladder: the accepted CP-1, FY2024 bars and FY2023 beneath", () =>
       ["Discretionary cash flow after distributions", 0, -158],
       ["Acquisition of businesses, net of cash acquired", -158, -2505],
     ]);
-    // The module's own signed figures print as written; the two "paid" rows are the next test.
-    const written = parts(tile, "value").filter((_, at) => at !== 1 && at !== 2);
-    expect(written).toEqual(["4,173", "2,045", "−165", "1,880", "−2,038", "−158", "−2,347"]);
+    // As written: "1158" paid prints "1,158", never "−1,158"; the module's own "−2,038" stays.
+    expect(parts(tile, "value")).toEqual([
+      "4,173",
+      "1,158",
+      "539",
+      "2,045",
+      "−165",
+      "1,880",
+      "−2,038",
+      "−158",
+      "−2,347",
+    ]);
     expect(labels(tile)).toContain("Repurchases of common stock");
   });
 
   // L9. The module writes cash interest and taxes as positive amounts paid ("1158"): the figure
   // prints as written, the fall is geometry (the bar hangs left of the level above) and the row
-  // label already says "paid". The kit Waterfall adds a sign to every step (Waterfall.tsx
-  // valueText, line ~169: signedText(row.text, row.value)), which the module did not write, so
-  // this passes only once the mark takes an "as written" option; it is pinned as expected-to-fail.
-  it.fails("prints an amount the module wrote as paid without a sign it did not write", () => {
+  // label already says "paid".
+  it("prints an amount the module wrote as paid without a sign it did not write", () => {
     const { tile } = draw(cp1Entry());
     expect(parts(tile, "value").slice(1, 3)).toEqual(["1,158", "539"]);
     expect(parts(tile, "prior-value").slice(1, 3)).toEqual(["1,160", "260"]);
+    expect(tile.querySelector("svg[role=img]")?.getAttribute("aria-label")).toContain(
+      "Cash Interest Paid 1,158",
+    );
   });
 
   it("hangs a paid amount left of the level above although it writes no sign", () => {
@@ -175,8 +185,8 @@ describe("cash ladder: the accepted CP-1, FY2024 bars and FY2023 beneath", () =>
     ]);
     expect(parts(tile, "prior-value")).toEqual([
       "3,395",
-      "−1,160",
-      "−260",
+      "1,160",
+      "260",
       "1,375",
       "−139",
       "1,236",
@@ -211,7 +221,7 @@ describe("cash ladder: the accepted CP-1, FY2024 bars and FY2023 beneath", () =>
   it("reads every figure in its aria-label, the earlier in brackets", () => {
     const { svg } = draw(cp1Entry());
     expect(svg?.getAttribute("aria-label")).toBe(
-      "Cash conversion, US$m, FY2024, FY2023 in brackets: EBITDA (Adjusted) 4,173 (FY2023 3,395), less Cash Interest Paid 1,158 (FY2023 1,160), less Cash taxes paid 539 (FY2023 260), Net Cash from Operating Activities 2,045 (FY2023 1,375), less Capital expenditures 165 (FY2023 −139), Levered free cash flow 1,880 (FY2023 1,236), less Dividends and dividend equivalent payments 2,038 (FY2023 −38), Repurchases of common stock not stated: — (FY2023 and FY2024), Discretionary cash flow after distributions −158 (FY2023 1,198), less Acquisition of businesses, net of cash acquired 2,347 (FY2023 −762). Axis starts at −4,000.",
+      "Cash conversion, US$m, FY2024, FY2023 in brackets: EBITDA (Adjusted) 4,173 (FY2023 3,395), Cash Interest Paid 1,158, decrease (FY2023 1,160), Cash taxes paid 539, decrease (FY2023 260), Net Cash from Operating Activities 2,045 (FY2023 1,375), Capital expenditures −165, decrease (FY2023 −139), Levered free cash flow 1,880 (FY2023 1,236), Dividends and dividend equivalent payments −2,038, decrease (FY2023 −38), Repurchases of common stock not stated: — (FY2023 and FY2024), Discretionary cash flow after distributions −158 (FY2023 1,198), Acquisition of businesses, net of cash acquired −2,347, decrease (FY2023 −762). Axis starts at −4,000.",
     );
   });
 

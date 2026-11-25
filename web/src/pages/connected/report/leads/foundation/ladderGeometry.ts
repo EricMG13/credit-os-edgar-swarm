@@ -93,6 +93,8 @@ export function ladderRows(data: CashLadder, periods: LadderPeriods): WaterfallR
       label,
       value: current.value,
       text: current.text,
+      // A step's figure prints as the module wrote it; its direction is the bar's.
+      ...(role === "step" ? { asWritten: true as const } : {}),
       ...(prior && periods.prior ? { prior: priorOf(prior, periods.prior) } : {}),
     };
   });

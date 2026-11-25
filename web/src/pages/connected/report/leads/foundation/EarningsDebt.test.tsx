@@ -372,3 +372,71 @@ describe("Dumbbell series (the one kit extension)", () => {
     ).toContain("fill-warning-mark");
   });
 });
+
+describe("a change prints only a year apart (L2)", () => {
+  /** The accepted handoff with FY2023 relabelled FY2022: periods two years apart, no change. */
+  const twoYearsApart = () => {
+    let entry = cp1Entry();
+    entry = setCell(entry, "Chart data: revenue and EBITDA", 0, "Period", "FY2022");
+    entry = setCell(entry, "Net debt data", 0, "Period", "FY2022 / 2022-09-30");
+    entry = setCell(entry, LEVERAGE, 0, "Period", "FY2022 / 2022-09-30");
+    return dropTable(entry, "T4.4 Income statement");
+  };
+  it("prints FY2023 → FY2024 as a change, with the owner's word", () => {
+    const tile = draw();
+    expect([...tile.querySelectorAll("[data-part=change]")].map((t) => t.textContent)).toEqual([
+      "+1,355",
+      "+665",
+      "+778",
+      "+5,130",
+    ]);
+    expect(tile.querySelector("[data-change]")?.textContent).toBe("+0.26x · worse");
+  });
+  it("prints each stated figure with its period and no change for FY2022 → FY2024", () => {
+    const tile = draw(twoYearsApart());
+    expect(tile.querySelectorAll("[data-part=change]")).toHaveLength(0);
+    expect(tile.querySelector("[data-change]")).toBeNull();
+    // Hand: revenue FY2022 6,585 and FY2024 7,940 are both drawn, each in its period.
+    const text = everything(tile);
+    expect(text).toContain("Revenue FY2022 6,585, FY2024 7,940");
+    expect(text).toContain("Total debt / EBITDA on its own scale: FY2022 6.27x, FY2024 6.53x.");
+    expect(text).not.toMatch(/better|worse|\+1,355|\+0\.26/);
+    fireEvent.click(within(tile).getByRole("button", { name: /Table view/ }));
+    const headers = [...within(tile).getByRole("table").querySelectorAll("thead th")].map(
+      (cell) => cell.textContent,
+    );
+    expect(headers).toEqual(["Measure", "FY2022", "FY2024"]);
+  });
+});
+
+describe("the head: caption and legend (N4, N8)", () => {
+  const kinds = (tile: HTMLElement) =>
+    [...tile.querySelectorAll("[data-legend]")].map((li) => [
+      li.getAttribute("data-legend"),
+      li.textContent,
+    ]);
+  it("says which period each figure is in, in the head under the kicker", () => {
+    const tile = draw();
+    expect(tile.querySelector("[data-part=caption]")?.textContent).toBe(
+      "Each figure in its stated period: FY2023, FY2024",
+    );
+    cleanup();
+    expect(draw(threePeriodCp1()).querySelector("[data-part=caption]")).toBeNull();
+  });
+  it("draws a ring for the earlier period, dots for the current ones and a line for leverage", () => {
+    expect(kinds(draw())).toEqual([
+      ["ring", "FY2023"],
+      ["dot", "FY2024 earnings"],
+      ["dot", "FY2024 gross debt"],
+      ["line", "Leverage, worse"],
+    ]);
+  });
+  it("draws bars for one period and lines for three", () => {
+    // One period: no change, so no "Leverage, worse" entry.
+    expect(kinds(draw(relativeValueCp1Entry())).map(([kind]) => kind)).toEqual(["bar", "bar"]);
+    cleanup();
+    const three = kinds(draw(threePeriodCp1())).map(([kind]) => kind);
+    expect(three).toContain("line");
+    expect(three).not.toContain("ring");
+  });
+});

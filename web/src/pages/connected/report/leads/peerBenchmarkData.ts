@@ -210,22 +210,22 @@ export function readPeerBenchmark(entry: OutputEntry): PeerRead {
     const [one] = found;
     if (found.length > 1) {
       read.gaps.push(
-        `This page could not read the peer range for ${names[kind]} from the handoff because it appears more than once.`,
+        `This page could not read the peer range for ${names[kind]} because it appears more than once.`,
       );
     } else if (!one) {
       absent += 1;
       read.gaps.push(
-        `This page could not read the peer range for ${names[kind]} from the handoff.`,
+        `This page could not read the peer range for ${names[kind]}.`,
       );
     } else {
       const missing = REQUIRED.filter((name) => !one.table.headers.includes(name));
       if (missing.length)
         read.gaps.push(
-          `This page could not read the peer range for ${names[kind]} from the handoff because the table is not in a shape this page reads.`,
+          `This page could not read the peer range for ${names[kind]} because the table is not in a shape this page reads.`,
         );
       else if (!one.table.rows.length)
         read.gaps.push(
-          `This page could not read a row of the peer range for ${names[kind]} from the handoff.`,
+          `This page could not read a row of the peer range for ${names[kind]}.`,
         );
       else {
         const rows = readRows(one.table.headers, one.table.rows);
@@ -235,7 +235,7 @@ export function readPeerBenchmark(entry: OutputEntry): PeerRead {
   }
   // Neither range table, under either heading: one plain statement of that.
   if (!read.tables.length && absent === read.gaps.length)
-    read.gaps = ["This page could not read a peer range table from the handoff."];
+    read.gaps = ["This page could not read a peer range table."];
   return read;
 }
 

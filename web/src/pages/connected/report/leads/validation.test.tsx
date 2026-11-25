@@ -1,7 +1,7 @@
 // Synthetic, built from the module contract (src/deploy_vii/cp5_integrity.py registers and
 // methods/cp5.md); not a real handoff. No real CP-5 handoff is retained. The empty/thin case uses
 // the retained synthetic CP-5 fixture. Every expected value below is written out by hand.
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import type { OutputEntry, Section } from "../../publishedReport";
 import { entry as buildEntry, table } from "../overview/rows.fixture";
@@ -117,8 +117,8 @@ describe("issues", () => {
     expect(
       found.groups.map((group) => [
         group.severity.word,
-        group.pips.filter((pip) => pip.kind === "gap").length,
-        group.pips.filter((pip) => pip.kind === "contradiction").length,
+        group.issues.filter((issue) => issue.kind === "gap").length,
+        group.issues.filter((issue) => issue.kind === "contradiction").length,
       ]),
     ).toEqual([
       ["Critical", 1, 1],
@@ -143,7 +143,7 @@ describe("issues", () => {
       issues(odd).groups.map((group) => [
         group.severity.word,
         group.severity.known,
-        group.pips.length,
+        group.issues.length,
       ]),
     ).toEqual([
       ["High", false, 1],
@@ -246,7 +246,7 @@ describe("module integrity", () => {
 const render5 = (entry: OutputEntry) => render(<ClearanceLead {...leadProps(entry)} />);
 
 describe("ClearanceLead", () => {
-  it("draws the status word with its shape, the scope quietly and the listed issues as pips", () => {
+  it("draws the status word with its shape, the scope quietly and each issue as a row under its severity word", () => {
     const { container } = render5(full());
     const tile = screen.getByRole("region", { name: "Clearance" });
     expect(within(tile).getByRole("heading", { level: 3 }).textContent).toBe("Clearance");
@@ -254,18 +254,63 @@ describe("ClearanceLead", () => {
     expect(within(tile).getByText("over the evaluated set")).toBeVisible();
     expect(tile.querySelector('[data-shape="half"]')).not.toBeNull();
     expect(within(tile).getByText("Not evaluated: Security selection")).toBeVisible();
-    expect(container.querySelectorAll("[data-pip]")).toHaveLength(5);
+    // The words in the handoff's order of first appearance: the gaps register comes first.
+    const groups = [...tile.querySelectorAll("li[data-group]")];
+    expect(groups.map((group) => group.getAttribute("data-group"))).toEqual([
+      "Critical",
+      "Minor",
+      "Material",
+    ]);
+    const rows = (group: Element | undefined) =>
+      [...(group?.querySelectorAll("li[data-issue]") ?? [])].map((row) => row.textContent);
+    expect(rows(groups[0])).toEqual([
+      "Gap · Debt schedule missingMaturities unknown",
+      "Contradiction · Cash differsCash is stated twice",
+    ]);
+    expect(rows(groups[1])).toEqual(["Gap · Cover ratio datedStale"]);
+    expect(rows(groups[2])).toEqual([
+      "Gap · Owner unknownCannot assign",
+      "Contradiction · Leverage differsTwo modules state different leverage",
+    ]);
     expect(container.querySelectorAll('[data-pip="gap"]')).toHaveLength(3);
     expect(container.querySelectorAll('[data-pip="contradiction"]')).toHaveLength(2);
-    expect(
-      within(tile).getByRole("img", { name: "Critical: 2 listed (1 gap, 1 contradiction)." }),
-    ).toBeVisible();
-    expect(within(tile).queryByText(/Counted from/)).toBeNull();
-    // The words in the handoff's order: gaps register first.
-    const words = [...tile.querySelectorAll("ul[aria-label] > li")].map((item) =>
-      item.textContent.replace(/\d+/, ""),
+  });
+  it("prints no count of issues: not as a figure, not in a label, not in the table view", () => {
+    const { container } = render5(full());
+    const tile = screen.getByRole("region", { name: "Clearance" });
+    expect(within(tile).queryAllByRole("img")).toHaveLength(0);
+    expect(container.innerHTML).not.toMatch(
+      /listed|Counted from|\d+ (?:issues|gaps|contradictions)/i,
     );
-    expect(words).toEqual(["Critical", "Minor", "Material"]);
+    fireEvent.click(within(tile).getByRole("button", { name: /Table view/ }));
+    const cells = [...tile.querySelectorAll("table td")].map((cell) => cell.textContent);
+    expect(cells).toContain("Minor");
+    expect(cells).toContain("Gap: Cover ratio dated");
+    expect(cells.join("|")).not.toMatch(/gaps \d|: \d|\b\d+ listed/);
+    expect(
+      [...tile.querySelectorAll("[data-group]")].some((group) => /^\d/.test(group.textContent)),
+    ).toBe(false);
+  });
+  it("orders the severity words by first appearance in the handoff, whichever register is written first", () => {
+    // Tables are built in the order the handoff writes them (the line numbers follow).
+    const first = tbl(
+      "T5B.3 Cross-module contradictions",
+      ["Contradiction", "Claims", "Nature", "Severity", "Rationale"],
+      ["Leverage differs", "A vs B", "Numeric", "Material", "Two modules differ"],
+      ["Cash differs", "C vs D", "Numeric", "Critical", "Cash is stated twice"],
+    );
+    const second = tbl(
+      "T5B.5 Integrity gaps",
+      ["Gap ID", "Gap", "Why it matters", "Affected modules", "Severity", "Action"],
+      ["g1", "Debt missing", "w", "CP-1", "Critical", "Obtain it"],
+      ["g2", "Cover dated", "w", "CP-2", "Minor", "Check it"],
+    );
+    const { container } = render5(cp5(first, second));
+    expect(
+      [...container.querySelectorAll("li[data-group]")].map((group) =>
+        group.getAttribute("data-group"),
+      ),
+    ).toEqual(["Material", "Critical", "Minor"]);
   });
   it("draws one trace control per figure and no source reference on the page", () => {
     const { container } = render5(full());
@@ -303,15 +348,13 @@ describe("ClearanceLead", () => {
     expect(container.querySelectorAll("[data-pip]")).toHaveLength(0);
     expect(
       screen.getByText(
-        "This page could not read a list of gaps or contradictions from the handoff. It reads: nothing to report.",
+        "This page could not read a list of gaps or contradictions. It reads: nothing to report.",
       ),
     ).toBeVisible();
     expect(screen.queryByText("No issues are listed.")).toBeNull();
     // The thin handoff still has its bottom line, drawn as the status fallback.
     expect(screen.getAllByText("The synthetic issuer shows one observed item.")[0]).toBeVisible();
-    expect(
-      screen.getByText(/This page could not read the gap actions from the handoff\./),
-    ).toBeVisible();
+    expect(screen.getByText(/This page could not read the actions for the gaps\./)).toBeVisible();
   });
   it("says no issues are listed only when both registers state none", () => {
     const empty = (headers: string[]) =>
@@ -333,9 +376,7 @@ describe("ClearanceLead", () => {
   it("draws counts from the one register present and says the page could not read the other", () => {
     const { container } = render5(cp5(VERDICT, CONTRADICTIONS));
     expect(container.querySelectorAll("[data-pip]")).toHaveLength(2);
-    expect(
-      screen.getByText("This page could not read the list of gaps from the handoff."),
-    ).toBeVisible();
+    expect(screen.getByText("This page could not read a list of gaps.")).toBeVisible();
   });
   it("shows a status that cites a source as a gap-free fallback, never the citation", () => {
     const { container } = render5(
@@ -367,19 +408,15 @@ describe("ClearanceLead", () => {
     const { container } = render5(full());
     expect(container.textContent).not.toMatch(/use restriction|committee use/i);
   });
-  it("gives every pip svg an explicit size and keeps Material off the teal 'better' colour", () => {
+  it("draws each issue's mark at a real size and keeps Material off the teal 'better' colour", () => {
     const { container } = render5(full());
-    const svgs = [...container.querySelectorAll("svg[data-group]")];
-    expect(svgs).toHaveLength(3);
-    for (const svg of svgs) {
-      expect(Number(svg.getAttribute("width"))).toBeGreaterThanOrEqual(12);
-      expect(Number(svg.getAttribute("height"))).toBeGreaterThanOrEqual(12);
-      expect(svg.getAttribute("class")).toContain("flex-none");
-      // The viewBox is as wide as the svg, so a pip is drawn at its own size and not squeezed.
-      expect(svg.getAttribute("viewBox")?.split(" ")[2]).toBe(svg.getAttribute("width"));
+    const marks = [...container.querySelectorAll("li[data-issue] svg")];
+    expect(marks).toHaveLength(5);
+    for (const mark of marks) {
+      expect(Number(mark.getAttribute("width"))).toBeGreaterThanOrEqual(14);
+      expect(Number(mark.getAttribute("height"))).toBeGreaterThanOrEqual(14);
+      expect(mark.getAttribute("class")).toContain("flex-none");
     }
-    // Two Material pips, each 22 px of the row: the svg is as wide as its pips.
-    expect(container.querySelector('svg[data-group="Material"]')?.getAttribute("width")).toBe("44");
     const material = container.querySelectorAll('[data-pip][data-severity="Material"]');
     expect(material).toHaveLength(2);
     for (const pip of material) {
@@ -466,12 +503,53 @@ describe("titles and what the lead draws", () => {
   });
   it("uses the one gap tile when the status, the issues and the actions are all absent", () => {
     render5(cp5());
-    expect(
-      screen.getByText(/This page could not read a clearance status from the handoff\./),
-    ).toBeVisible();
-    expect(
-      screen.getByText(/This page could not read the gap actions from the handoff\./),
-    ).toBeVisible();
+    expect(screen.getByText(/This page could not read a clearance status\./)).toBeVisible();
+    expect(screen.getByText(/This page could not read the actions for the gaps\./)).toBeVisible();
     expect(screen.queryByRole("img")).toBeNull();
+  });
+});
+
+describe("round 3 wording and text", () => {
+  it("strips inline reference markers from an action and from an issue's text", () => {
+    const { container } = render5(
+      cp5(
+        tbl(
+          "G",
+          ["Gap ID", "Gap", "Why it matters", "Affected modules", "Severity", "Action"],
+          [
+            "g",
+            "Leverage basis differs [E3]",
+            "Two bases [E12, E14]",
+            "CP-1",
+            "Material",
+            "Quote one basis [E3].",
+          ],
+        ),
+      ),
+    );
+    expect(container.textContent).not.toMatch(/\[E\d/);
+    expect(screen.getAllByText("Quote one basis.").length).toBeGreaterThan(0);
+    expect(container.textContent).toContain("Leverage basis differs");
+  });
+  it("prints a module's head status without nested brackets", () => {
+    const { container } = render5(full());
+    const chip = container.querySelector('[data-module-result="Blocked upstream: not evaluated"]');
+    expect(chip?.textContent).toContain("blocked up the input chain");
+    expect(container.textContent).not.toMatch(/\(blocked \(|\)\)/);
+  });
+  it("draws a source dash reason as a dash, and says nothing 'from the handoff' or 'the module' in a kicker", () => {
+    const { container } = render5(
+      cp5(
+        tbl(
+          "G",
+          ["Gap ID", "Gap", "Why it matters", "Affected modules", "Severity", "Action"],
+          ["g", "A gap", "Why", "CP-1", "Minor", "Not supplied: source dash"],
+        ),
+      ),
+    );
+    expect(container.textContent).toContain("Action not supplied: —");
+    expect(container.textContent).not.toMatch(/from the handoff/i);
+    for (const kicker of container.querySelectorAll("h3 ~ *, p.text-caption"))
+      expect(kicker.textContent).not.toMatch(/the module/i);
   });
 });

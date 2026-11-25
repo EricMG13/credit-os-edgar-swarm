@@ -38,7 +38,7 @@ export type KeyFigure = {
     tone: "better" | "worse" | "flat" | "none";
   } | null;
   /** Both figures as numbers for a mark. */
-  marks: { prior: number; current: number } | null;
+  marks: { prior: number; current: number; suffix: string } | null;
 };
 
 const TONE_KEYS: Record<string, string> = {
@@ -53,6 +53,9 @@ const TONE_KEYS: Record<string, string> = {
   revenue: "revenue",
   "undrawn committed facilities": "undrawn",
 };
+
+/** A year apart in either order. */
+const apart = (a: string, b: string) => yearApart(a, b) || yearApart(b, a);
 
 const norm = (text: string) => text.trim().replace(/\s+/g, " ").toLowerCase();
 
@@ -82,7 +85,7 @@ type Row = { fig: Figure; line: number };
 
 /** Two rows of one measure as prior and current, only when their periods are a year apart. */
 function pair(measure: string, a: Row, b: Row) {
-  if (!yearApart(a.fig.period, b.fig.period)) return null;
+  if (!apart(a.fig.period, b.fig.period)) return null;
   const [first, second] = [periodKey(a.fig.period), periodKey(b.fig.period)];
   if (!first || !second) return null;
   const [prior, current] = first.year < second.year ? [a, b] : [b, a];
@@ -91,7 +94,7 @@ function pair(measure: string, a: Row, b: Row) {
   let change: KeyFigure["change"] = null;
   let marks: KeyFigure["marks"] = null;
   if (p && c) {
-    marks = { prior: Number(p.number), current: Number(c.number) };
+    marks = { prior: Number(p.number), current: Number(c.number), suffix: c.suffix };
     const unit = (part: NonNullable<typeof p>) => `${part.prefix}|${part.suffix}`;
     const made = changeBetween(
       { period: prior.fig.period, cell: p.number, unit: unit(p) },
@@ -156,7 +159,7 @@ export function readKeyFigures(entry: OutputEntry): KeyFigures {
         otherIndex > index &&
         !used.has(otherIndex) &&
         norm(other.measure) === norm(row.measure) &&
-        yearApart(row.fig.period, other.fig.period),
+        apart(row.fig.period, other.fig.period),
     );
     const other = matchAt >= 0 ? rows[matchAt] : undefined;
     const joined = other ? pair(row.measure, row, other) : null;

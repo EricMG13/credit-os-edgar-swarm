@@ -1,7 +1,7 @@
 import { readerText, type OutputEntry, type Row, type Table } from "../../publishedReport";
 import { bottomLine } from "../overview/read";
 import { readCell } from "./kit/numbers";
-import { IN_EVIDENCE, namesSource, safeText as readerSafe } from "./kit/reader";
+import { IN_EVIDENCE, namesSource, reasonText, safeText as readerSafe } from "./kit/reader";
 import { allTables } from "./kit/tables";
 
 /** A handoff's words for a working page; null when they name a source (the trace control has it). */
@@ -21,10 +21,10 @@ export function said(cell: string | undefined): Said {
   const text = (cell ?? "").trim();
   if (text === "") return { kind: "empty" };
   const reading = readCell(text);
-  if (reading.kind === "gap")
-    return { kind: "gap", reason: safeText(reading.reason) ?? IN_EVIDENCE };
-  const safe = safeText(text);
-  return safe === null ? { kind: "evidence" } : { kind: "text", text: safe };
+  if (reading.kind === "gap") return { kind: "gap", reason: reasonText(reading.reason) };
+  const words = readerSafe(text);
+  if (words === "") return { kind: "empty" };
+  return words === IN_EVIDENCE ? { kind: "evidence" } : { kind: "text", text: words };
 }
 
 /** The words of a `Said` as a table view writes them. */
@@ -76,6 +76,10 @@ export type Issue = {
   kind: "gap" | "contradiction";
   severity: Severity;
   line: number;
+  /** What the issue is: the gap's or the contradiction's own cell. */
+  text: Said;
+  /** Why it matters (gaps) or the rationale (contradictions). */
+  why: Said;
   /** Gaps register only. */
   action: Said | null;
   affected: string[] | "evidence" | null;
@@ -131,19 +135,24 @@ function readRegister(entry: OutputEntry, headers: string[], kind: Issue["kind"]
       kind,
       severity: severityOf(cellAt(table, row, "Severity")),
       line: row.line,
+      text: said(cellAt(table, row, kind === "gap" ? "Gap" : "Contradiction")),
+      why: said(cellAt(table, row, kind === "gap" ? "Why it matters" : "Rationale")),
       action: kind === "gap" ? said(cellAt(table, row, "Action")) : null,
       affected: kind === "gap" ? affectedOf(cellAt(table, row, "Affected modules")) : null,
     })),
   };
 }
 
-type Pip = { kind: Issue["kind"]; line: number };
-export type Group = { severity: Severity; pips: Pip[] };
+export type Group = { severity: Severity; issues: Issue[] };
 
 export type Issues = {
   gaps: Register;
   contradictions: Register;
-  /** One group per severity word, Critical first; one pip per listed issue. */
+  /**
+   * One group per severity word as written, in the order each word first appears in the handoff
+   * (the register that comes first in the handoff first, then its rows in order); the issues of a
+   * group are its rows. No ranking of our own, and no count is drawn from these.
+   */
   groups: Group[];
   total: number;
   /** The reasons stated by a synthetic `Item | Value` register placeholder, when there is one. */
@@ -166,25 +175,27 @@ function placeholderReasons(entry: OutputEntry) {
   return [...new Set(reasons)];
 }
 
+const lineOf = (register: Register) => ("line" in register ? register.line : Infinity);
+
 export function issues(entry: OutputEntry): Issues {
   const gaps = readRegister(entry, GAP_HEADERS, "gap");
   const contradictions = readRegister(entry, CONTRADICTION_HEADERS, "contradiction");
-  const listed = [gaps, contradictions].flatMap((register) =>
-    register.state === "rows" ? register.issues : [],
-  );
+  // The handoff's own order: the register written first comes first, then each severity word where
+  // it first appears. No ranking of our own.
+  const listed = [gaps, contradictions]
+    .sort((a, b) => Number(lineOf(a) > lineOf(b)) - Number(lineOf(a) < lineOf(b)))
+    .flatMap((register) => (register.state === "rows" ? register.issues : []));
   const words = new Map<string, Group>();
   for (const issue of listed) {
     const key = issue.severity.word;
-    const group = words.get(key) ?? { severity: issue.severity, pips: [] };
-    group.pips.push({ kind: issue.kind, line: issue.line });
+    const group = words.get(key) ?? { severity: issue.severity, issues: [] };
+    group.issues.push(issue);
     words.set(key, group);
   }
-  // The handoff's own order: each severity word where it first appears, no ranking of our own.
-  const groups = [...words.values()];
   return {
     gaps,
     contradictions,
-    groups,
+    groups: [...words.values()],
     total: listed.length,
     placeholders: placeholderReasons(entry),
   };
@@ -298,6 +309,13 @@ function resultShape(result: string): Shape {
   return "ring";
 }
 
+/** "blocked (up the input chain)" as a phrase: the inner brackets read as words, never nested. */
+const unbracket = (text: string) =>
+  text
+    .replace(/\s*[([]([^()[\]]*)[)\]]/g, " $1")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
 export function moduleIntegrity(entry: OutputEntry): ModuleIntegrity[] | null {
   const found = locate(entry, ["Module", "Head status", "CP-5 findings", "Result"]);
   if (found.state !== "found" || found.table.rows.length === 0) return null;
@@ -308,7 +326,7 @@ export function moduleIntegrity(entry: OutputEntry): ModuleIntegrity[] | null {
     const written = result.kind === "text" ? result.text : saidText(result) || "Not stated";
     return {
       name: saidText(said(cellAt(table, item, "Module"))) || "A module",
-      head: head.kind === "text" ? head.text : null,
+      head: head.kind === "text" ? unbracket(head.text) : null,
       result: written,
       shape: result.kind === "text" ? resultShape(written) : "ring",
       line: item.line,

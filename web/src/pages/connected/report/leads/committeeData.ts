@@ -1,6 +1,6 @@
 import { readParagraph, type OutputEntry } from "../../publishedReport";
 import { readCell } from "./kit/numbers";
-import { safeText } from "./kit/reader";
+import { reasonText, safeText } from "./kit/reader";
 import { cellAt, locate, said, saidText, type Said } from "./validationData";
 
 // ---------------------------------------------------------------------------------------------
@@ -24,16 +24,13 @@ export type Stance =
 const SENTENCE =
   /^Action bias: ([A-Za-z][A-Za-z ]*[A-Za-z]) \(confidence ([A-Za-z][A-Za-z ]*[A-Za-z])\)\./;
 
-/** The Conditions cell as a short list: split only at a semicolon or a line end. */
+/** The Conditions cell as written: one item per cell, never split into parts. */
 function conditionsOf(cell: string | undefined): Conditions {
   const value = said(cell);
   if (value.kind === "gap") return { kind: "gap", reason: value.reason };
-  if (value.kind === "empty") return null;
-  const parts = (cell ?? "")
-    .split(/\s*(?:;|\n)\s*/)
-    .map((part) => part.trim())
-    .filter((part) => part !== "" && part.toLowerCase() !== "none stated");
-  return parts.length ? { kind: "list", items: parts.map(said) } : null;
+  if (value.kind === "empty" || (value.kind === "text" && /^none stated$/i.test(value.text)))
+    return null;
+  return { kind: "list", items: [value] };
 }
 
 function sentenceStance(entry: OutputEntry): Stance | null {
@@ -155,7 +152,7 @@ export type Figure =
 function figure(cell: string | undefined): Figure {
   const reading = readCell(cell ?? "");
   if (reading.kind === "number") return reading;
-  if (reading.kind === "gap") return { kind: "gap", reason: safeText(reading.reason) };
+  if (reading.kind === "gap") return { kind: "gap", reason: reasonText(reading.reason) };
   return { kind: "text", text: safeText(reading.text) };
 }
 
@@ -178,7 +175,7 @@ export function limitReason(
   values: { current: Figure; proposed: Figure; limit: Figure },
   unit: string | null,
 ): string | null {
-  if (unit === null) return "This page could not read the reporting unit from the handoff.";
+  if (unit === null) return "This page could not read the reporting unit.";
   const named = {
     limit: "Limit value",
     current: "Current exposure",
@@ -206,10 +203,11 @@ const LIMIT_HEADERS = [
   "Reporting unit",
 ];
 const WATCH_HEADERS = ["Event date", "Event", "Status"];
+const WATCH_RELEVANCE = "Credit relevance";
 
 /** Why a chart table is not drawn, in words: more than once, or not read at all. */
 function tableGap(entry: OutputEntry, headers: string[], what: string) {
-  const base = `This page could not read ${what} from the handoff`;
+  const base = `This page could not read ${what}`;
   return locate(entry, headers).state === "duplicate"
     ? `${base} because it appears more than once.`
     : `${base}.`;
@@ -250,10 +248,15 @@ type WatchItem = {
   date: string;
   event: string;
   status: string | null;
+  /** The module's Credit relevance cell, as written; null when the table has none or it is empty. */
+  relevance: string | null;
   line: number;
 };
 
-export type Watch = { line: number; items: WatchItem[] };
+export type Watch =
+  | { kind: "items"; line: number; items: WatchItem[] }
+  /** Every row states a gap in its date and its event: one gap, with the reasons as written. */
+  | { kind: "gap"; line: number; reasons: string[] };
 
 const asWritten = (value: Said) => (value.kind === "text" ? value.text : saidText(value));
 
@@ -262,14 +265,28 @@ export function watch(entry: OutputEntry): Watch | null {
   const found = locate(entry, WATCH_HEADERS);
   if (found.state !== "found" || found.table.rows.length === 0) return null;
   const { table } = found;
+  const rows = table.rows.map((row) => ({
+    row,
+    date: said(cellAt(table, row, "Event date")),
+    event: said(cellAt(table, row, "Event")),
+  }));
+  if (rows.every(({ date, event }) => date.kind === "gap" && event.kind === "gap")) {
+    const reasons = rows.flatMap(({ date, event }) =>
+      [date, event].flatMap((cell) => (cell.kind === "gap" ? [cell.reason] : [])),
+    );
+    return { kind: "gap", line: table.line, reasons: [...new Set(reasons)] };
+  }
   return {
+    kind: "items",
     line: table.line,
-    items: table.rows.map((row) => {
+    items: rows.map(({ row, date, event }) => {
       const status = said(cellAt(table, row, "Status"));
+      const relevance = said(cellAt(table, row, WATCH_RELEVANCE));
       return {
-        date: asWritten(said(cellAt(table, row, "Event date"))) || "Date not read",
-        event: asWritten(said(cellAt(table, row, "Event"))) || "Event not read",
+        date: asWritten(date) || "Date not read",
+        event: asWritten(event) || "Event not read",
         status: status.kind === "text" ? status.text : null,
+        relevance: relevance.kind === "text" ? relevance.text : null,
         line: row.line,
       };
     }),

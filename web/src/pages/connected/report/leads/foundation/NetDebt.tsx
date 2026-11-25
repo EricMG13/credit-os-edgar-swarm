@@ -215,40 +215,14 @@ function StripRowMark({ row }: { row: StripRow }) {
         </>
       )}
       {row.gap && (
-        <>
-          <GapSlot
-            x={row.gap.x}
-            y={row.centre - 7}
-            width={row.gap.width}
-            height={14}
-            reason={row.gap.reason}
-          />
-          <rect
-            x={row.gap.textX - 3}
-            y={row.centre - LINE + 3}
-            width={Math.max(...row.gap.lines.map((line) => line.length)) * SIZE.label * 0.6 + 6}
-            height={row.gap.lines.length * LINE + 2}
-            rx="3"
-            className="fill-surface-card"
-          />
-          <text
-            data-part="reason"
-            x={row.gap.textX}
-            y={row.centre + 4}
-            fontSize={SIZE.label}
-            className="fill-gap-text font-body"
-          >
-            {row.gap.lines.map((line, at) => (
-              <tspan
-                key={`${String(at)}-${line}`}
-                x={row.gap?.textX}
-                y={row.centre + 4 + at * LINE}
-              >
-                {line}
-              </tspan>
-            ))}
-          </text>
-        </>
+        <GapSlot
+          x={row.gap.x}
+          y={row.gap.y}
+          width={row.gap.width}
+          height={row.gap.height}
+          reason={row.gap.reason}
+          text={row.gap.reason}
+        />
       )}
     </g>
   );

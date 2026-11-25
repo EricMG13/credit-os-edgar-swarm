@@ -1,4 +1,4 @@
-import { LINE, SIZE, fittingTicks, niceAxis, textWidth, wrap } from "../kit/marks";
+import { LINE, SIZE, fittingTicks, gapSlotHeight, niceAxis, textWidth, wrap } from "../kit/marks";
 import { group, type Reading } from "../kit/numbers";
 import type { LiquidityPeriod, NetDebtPeriod, NetDebtView, ProForma } from "./foundationData";
 import { written } from "./periodsData";
@@ -227,7 +227,6 @@ export function stripReading(entries: readonly StripEntry[]) {
 
 const STRIP_ROW = 26;
 const DOT = 5;
-const SLOT = 40;
 
 export type StripRow = {
   entry: StripEntry;
@@ -241,8 +240,8 @@ export type StripRow = {
   x: number | null;
   value: number | null;
   valueText: string | null;
-  /** A stated gap: the hatched slot and the reason beside it on a plate. */
-  gap: { x: number; width: number; reason: string; lines: string[]; textX: number } | null;
+  /** A stated gap: the hatched slot across the plot with the reason on its solid chip. */
+  gap: { x: number; y: number; width: number; height: number; reason: string } | null;
   /** The earlier of two reported periods draws in the prior colour; the latest in the current. */
   tone: "prior" | "current" | "proForma";
 };
@@ -284,8 +283,9 @@ export function stripLayout(entries: readonly StripEntry[], width: number): Stri
     const reading = entry.cell;
     const isNumber = reading?.kind === "number";
     const reason = !isNumber ? ratioWords(reading) : "";
-    const lines = !isNumber ? wrap(reason, Math.max(80, width - left - SLOT - 14), SIZE.label) : [];
-    const height = block + Math.max(STRIP_ROW, lines.length * LINE + 10);
+    const slotWidth = Math.max(80, right - left);
+    const slotHeight = isNumber ? 0 : gapSlotHeight(slotWidth, 14, reason);
+    const height = block + Math.max(STRIP_ROW, slotHeight + 8);
     const centre = top + block + STRIP_ROW / 2;
     const row: StripRow = {
       entry,
@@ -297,7 +297,9 @@ export function stripLayout(entries: readonly StripEntry[], width: number): Stri
       x: isNumber ? x(reading.value) : null,
       value: isNumber ? reading.value : null,
       valueText: isNumber ? (texts[at] ?? null) : null,
-      gap: isNumber ? null : { x: left, width: SLOT, reason, lines, textX: left + SLOT + 8 },
+      gap: isNumber
+        ? null
+        : { x: left, y: top + block + 4, width: slotWidth, height: slotHeight, reason },
       tone: entry.proForma ? "proForma" : at === lastPeriod ? "current" : "prior",
     };
     top += height;

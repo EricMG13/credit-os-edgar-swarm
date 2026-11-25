@@ -84,6 +84,29 @@ const RETAINED_ORDER = [
 ];
 
 /** The retained table's order with its two split rows (gaps) where the handoff puts them. */
+/** The same rows as small multiples: the larger figure in the thousands, then in the hundreds (handoff order inside each). */
+const THOUSANDS = [
+  "Revenue",
+  "COGS",
+  "Gross profit",
+  "Reported EBITDA",
+  "Issuer-adjusted EBITDA",
+  "EBIT",
+  "Cash interest paid, net",
+  "Operating cash flow",
+  "Levered FCF",
+  "Discretionary cash flow",
+  "Net income",
+];
+const HUNDREDS = [
+  "SG&A",
+  "Total D&A",
+  "Intangible amortization",
+  "Cash taxes paid",
+  "Total capex, signed outflow",
+  "Working-capital cash movement",
+];
+
 const WITH_GAPS = [
   ...RETAINED_ORDER.slice(0, 12),
   "Maintenance capex",
@@ -96,20 +119,31 @@ describe("the prior and current results from the retained earnings table", () =>
   it("reads the unit from the sentence under the heading and takes the money rows only", () => {
     if (movers.kind !== "ready") throw new Error("expected movers");
     expect(movers.fallback).toBe(true);
-    const [only] = movers.groups;
-    expect(movers.groups).toHaveLength(1);
-    expect(only?.unit).toBe("US$m");
-    expect(only?.gaps.map((pair) => pair.label)).toEqual(["Maintenance capex", "Growth capex"]);
-    expect(only?.gaps[0]?.prior.reason).toBe("no split");
+    expect(movers.groups.map((one) => one.unit)).toEqual(["US$m", "US$m"]);
+    expect(movers.unstated.map((one) => one.pair.label)).toEqual([
+      "Maintenance capex",
+      "Growth capex",
+    ]);
+    expect(movers.unstated[0]?.pair.prior.reason).toBe("no split");
+  });
+  it("splits rows of very different size into small multiples, each on its own scale", () => {
+    if (movers.kind !== "ready") throw new Error("expected movers");
+    expect(movers.groups.map((one) => one.band)).toEqual([
+      { lo: 3, hi: 3 },
+      { lo: 2, hi: 2 },
+    ]);
   });
   it("lists every pair in the handoff's own order, not ranked by the size of its change", () => {
     if (movers.kind !== "ready") throw new Error("expected movers");
     // 17 money rows state both figures; the two margin rows and the two split rows are not among them.
-    expect(movers.groups[0]?.rows.map((pair) => pair.label)).toEqual(RETAINED_ORDER);
+    expect(movers.groups.map((one) => one.rows.map((pair) => pair.label))).toEqual([
+      THOUSANDS,
+      HUNDREDS,
+    ]);
   });
   it("prints the change the handoff states as written, and makes none where it states one", () => {
     if (movers.kind !== "ready") throw new Error("expected movers");
-    const pairs = movers.groups[0]?.rows ?? [];
+    const pairs = movers.groups.flatMap((one) => one.rows);
     const of = (label: string) => pairs.find((pair) => pair.label === label)?.change;
     expect(of("Revenue")).toMatchObject({ text: "+1,355", basis: "stated", sign: 1 });
     expect(of("Discretionary cash flow")).toMatchObject({
@@ -125,11 +159,12 @@ describe("the prior and current results from the retained earnings table", () =>
       basis: "stated",
       sign: 1,
     });
+    expect(pairs).toHaveLength(17);
     expect(pairs.every((pair) => pair.change?.basis === "stated")).toBe(true);
   });
   it("gives better or worse only for a measure the owner's table knows", () => {
     if (movers.kind !== "ready") throw new Error("expected movers");
-    const pairs = movers.groups[0]?.rows ?? [];
+    const pairs = movers.groups.flatMap((one) => one.rows);
     const toneOf = (label: string) => pairs.find((pair) => pair.label === label)?.tone;
     expect(toneOf("Revenue")).toBe("better");
     expect(toneOf("Issuer-adjusted EBITDA")).toBe("better");
@@ -174,11 +209,11 @@ describe("the prior and current results from the retained earnings table", () =>
     const empty = earningsDelta(entry("CP-1B", [], []));
     expect(empty.movers).toMatchObject({
       kind: "gap",
-      reason: "This page could not read the table of prior and current results from the handoff.",
+      reason: "This page could not read the prior and current results.",
     });
     expect(empty.kpis).toMatchObject({
       kind: "gap",
-      reason: "This page could not read the table of margin and KPI changes from the handoff.",
+      reason: "This page could not read the margin and KPI changes.",
     });
     expect(empty.bridge).toBeNull();
   });
@@ -275,15 +310,19 @@ describe("pairs from the chart tables", () => {
     );
     if (movers.kind !== "ready") throw new Error("expected movers");
     expect(movers.fallback).toBe(false);
-    expect(movers.groups.map((one) => one.unit)).toEqual(["US$m", "x"]);
-    const [money, times] = movers.groups;
-    expect(money?.rows.map((pair) => pair.label)).toEqual([
+    // US$m in two small multiples (the larger figure in the thousands, then in the hundreds), then x.
+    expect(movers.groups.map((one) => one.unit)).toEqual(["US$m", "US$m", "x"]);
+    const [money, small, times] = movers.groups;
+    expect(money?.drawn.map((pair) => pair.label)).toEqual([
       "Revenue",
       "Adjusted EBITDA",
-      "Flat measure",
+      "Net income",
     ]);
+    expect(money?.rows.map((pair) => pair.label)).toEqual(["Revenue", "Adjusted EBITDA"]);
+    expect(small?.rows.map((pair) => pair.label)).toEqual(["Flat measure"]);
     expect(money?.fromZero).toBe(true);
-    expect(times?.rows[0]?.change).toMatchObject({ text: "+0.58x", basis: "derived", sign: 1 });
+    expect(times?.band).toBeNull();
+    expect(times?.rows[0]?.change).toMatchObject({ text: "+0.58x", basis: "computed", sign: 1 });
     expect(times?.rows[0]?.tone).toBe("better");
   });
   it("keeps the handoff's order even when a later row moves more", () => {
@@ -291,8 +330,8 @@ describe("pairs from the chart tables", () => {
       delta(
         results([
           ["Small", "FY2023", "10", "FY2024", "11", "US$m", "x"],
-          ["Big", "FY2023", "10", "FY2024", "500", "US$m", "x"],
-          ["Middle", "FY2023", "10", "FY2024", "60", "US$m", "x"],
+          ["Big", "FY2023", "10", "FY2024", "90", "US$m", "x"],
+          ["Middle", "FY2023", "10", "FY2024", "50", "US$m", "x"],
         ]),
       ),
     );
@@ -320,18 +359,18 @@ describe("pairs from the chart tables", () => {
       delta(
         results([
           ["Revenue", "FY2024", "7940", "LTM Dec-2024", "8100", "US$m", "x"],
-          ["Costs", "FY2023", "100", "FY2024", "120", "US$m", "x"],
+          ["Costs", "FY2023", "1000", "FY2024", "1200", "US$m", "x"],
         ]),
       ),
     );
     if (movers.kind !== "ready") throw new Error("expected movers");
     const [mixed, plain] = movers.groups[0]?.rows ?? [];
-    expect(mixed).toMatchObject({ mixedBasis: true, change: null, tone: "none" });
+    expect(mixed).toMatchObject({ change: null, tone: "none" });
     expect(mixed?.prior.value).toBe(7940);
     expect(mixed?.current.value).toBe(8100);
-    expect(plain).toMatchObject({ mixedBasis: false });
-    expect(plain?.change).toMatchObject({ text: "+20", basis: "derived" });
-    expect(movers.notes.join(" ")).toMatch(/different kinds of period has no change figure/);
+    expect(plain?.change).toMatchObject({ text: "+200", basis: "computed" });
+    // A row without a change simply shows none: no method note says why.
+    expect(movers.notes).toEqual([]);
   });
   it("says a repeated chart table is repeated, not absent", () => {
     expect(earningsDelta(delta(results(MONEY), results(MONEY))).movers).toMatchObject({
@@ -343,26 +382,27 @@ describe("pairs from the chart tables", () => {
     const { movers } = earningsDelta(delta(results(MONEY)));
     if (movers.kind !== "ready") throw new Error("expected movers");
     const [money] = movers.groups;
-    expect(money?.gaps.map((pair) => pair.label)).toEqual(["Net income"]);
-    expect(money?.gaps[0]?.current).toMatchObject({
-      kind: "gap",
-      value: null,
-      reason: "not yet reported",
-    });
+    // Drawn with its stated side; the missing side is the gap with the module's reason, never zero.
+    const income = money?.drawn.find((pair) => pair.label === "Net income");
+    expect(income?.prior).toMatchObject({ kind: "number", value: 1299 });
+    expect(income?.current).toMatchObject({ kind: "gap", value: null, reason: "not yet reported" });
+    expect(income?.change).toBeNull();
     expect(money?.rows.map((pair) => pair.label)).not.toContain("Net income");
   });
   it("calls a pair whose prior equals its current flat, with no direction", () => {
     const { movers } = earningsDelta(delta(results(MONEY)));
     if (movers.kind !== "ready") throw new Error("expected movers");
-    const flat = movers.groups[0]?.rows.find((pair) => pair.label === "Flat measure");
-    expect(flat?.change).toMatchObject({ sign: 0, magnitude: 0, basis: "derived" });
+    const flat = movers.groups
+      .flatMap((one) => one.rows)
+      .find((pair) => pair.label === "Flat measure");
+    expect(flat?.change).toMatchObject({ sign: 0, magnitude: 0, basis: "computed" });
     expect(flat?.tone).toBe("none");
   });
   it("keeps a stated zero as a value, and a negative value on the axis", () => {
     const { movers } = earningsDelta(
       delta(
         results([
-          ["Revenue", "FY2023", "0", "FY2024", "250", "US$m", "x"],
+          ["Revenue", "FY2023", "0", "FY2024", "90", "US$m", "x"],
           ["Cash flow", "FY2023", "-50", "FY2024", "30", "US$m", "x"],
         ]),
       ),
@@ -370,52 +410,139 @@ describe("pairs from the chart tables", () => {
     if (movers.kind !== "ready") throw new Error("expected movers");
     const [one] = movers.groups;
     expect(one?.rows.map((pair) => [pair.label, pair.prior.value, pair.current.value])).toEqual([
-      ["Revenue", 0, 250],
+      ["Revenue", 0, 90],
       ["Cash flow", -50, 30],
     ]);
     expect(one?.rows[1]?.change?.text).toBe("+80");
   });
-  it("uses the exact difference, marked, when a stated change disagrees in direction", () => {
-    const earnings = {
-      heading: "T4.4 Earnings",
-      level: 3,
-      line: 1,
-      blocks: [
-        { type: "text" as const, line: 2, end: 2, text: "All money amounts are USD millions." },
-        table(
-          4,
-          ["Line Item", "FY2023", "FY2024", "YoY Change (Abs)"],
-          [
-            ["Revenue", "100", "80", "20"],
-            ["Costs", "50", "70", "20"],
-          ],
-        ),
+  it("prints the change the module states as written, even where it disagrees with the two figures", () => {
+    const earnings = earningsTable(
+      ["Line Item", "FY2023", "FY2024", "YoY Change (Abs)"],
+      [
+        ["Revenue", "100", "80", "20"],
+        ["Costs", "50", "70", "n.m."],
       ],
-    };
+    );
     const { movers } = earningsDelta(delta(earnings));
     if (movers.kind !== "ready") throw new Error("expected movers");
-    const pairs = movers.groups[0]?.rows ?? [];
-    // Revenue fell 20 but states "20": the exact difference is shown. Costs rose 20, as stated.
+    const pairs = movers.groups.flatMap((one) => one.rows);
     expect(pairs.find((pair) => pair.label === "Revenue")?.change).toMatchObject({
-      text: "\u221220",
-      basis: "derived",
-      conflict: true,
-    });
-    expect(pairs.find((pair) => pair.label === "Costs")?.change).toMatchObject({
       text: "+20",
       basis: "stated",
-      conflict: false,
+    });
+    // Words in the change cell are the module's: printed as written, with no direction and no better or worse.
+    expect(pairs.find((pair) => pair.label === "Costs")?.change).toMatchObject({
+      text: "n.m.",
+      basis: "stated",
+      sign: null,
     });
     lead(delta(earnings));
-    expect(screen.getByText(/disagreed in direction with its two figures/)).toBeVisible();
+    expect(screen.queryByText(/disagreed|derived/)).toBeNull();
   });
-  it("sets words where a figure belongs aside, drawn nowhere", () => {
+  it("draws a pair that states (1,160) or n.m. in place as written, with no method note", () => {
     const { movers } = earningsDelta(
-      delta(results([...MONEY, ["Odd", "FY2023", "n/a", "FY2024", "10", "US$m", "x"]])),
+      delta(
+        results([
+          ["Cash interest", "FY2023", "(1,160)", "FY2024", "n.m.", "US$m", "x"],
+          ["Cash taxes", "FY2023", "n.m.", "FY2024", "n.m.", "US$m", "x"],
+          ["Revenue", "FY2023", "1,000", "FY2024", "1,100", "US$m", "x"],
+        ]),
+      ),
     );
     if (movers.kind !== "ready") throw new Error("expected movers");
-    expect(movers.groups[0]?.words.map((pair) => pair.label)).toEqual(["Odd"]);
-    expect(movers.groups[0]?.rows.map((pair) => pair.label)).not.toContain("Odd");
+    const [interest] = movers.groups[0]?.drawn ?? [];
+    expect(interest?.prior).toMatchObject({ kind: "number", value: -1160, written: "(1,160)" });
+    expect(interest?.current).toMatchObject({ kind: "words", text: "n.m." });
+    expect(interest?.change).toBeNull();
+    expect(movers.groups[0]?.drawn.map((pair) => pair.label)).toEqual(["Cash interest", "Revenue"]);
+    // A pair stating no figure on either side is listed in its place with its words, not left out.
+    expect(movers.unstated.map((one) => one.pair.label)).toEqual(["Cash taxes"]);
+    expect(movers.notes).toEqual([]);
+  });
+  it("sets no change between two years apart, nor across kinds of period (the L2 inputs)", () => {
+    const change = (
+      label: string,
+      prior: [string, string],
+      current: [string, string],
+      unit: string,
+    ) => {
+      const { kpis: figure } = earningsDelta(
+        delta(kpis([[label, prior[0], prior[1], current[0], current[1], unit, "x"]])),
+      );
+      if (figure.kind !== "ready") throw new Error("expected kpis");
+      const [pair] = figure.groups[0]?.drawn ?? [];
+      return [pair?.change?.text ?? null, pair?.tone];
+    };
+    expect(change("Gross margin", ["FY2022", "58.3"], ["FY2024", "61.32"], "%")).toEqual([
+      null,
+      "none",
+    ]);
+    expect(change("Gross margin", ["FY2023", "58.3"], ["FY2024", "58.8"], "%")).toEqual([
+      "+0.5 percentage points",
+      "none",
+    ]);
+    expect(change("Total debt / EBITDA", ["FY2022", "6.1"], ["FY2024", "6.53"], "x")).toEqual([
+      null,
+      "none",
+    ]);
+    expect(change("Total debt / EBITDA", ["FY2024", "4.88"], ["LTM Mar-2025", "5.1"], "x")).toEqual(
+      [null, "none"],
+    );
+    expect(change("Revenue", ["Q1 2024", "1920"], ["FY2025", "7940"], "US$m")).toEqual([
+      null,
+      "none",
+    ]);
+    expect(change("Revenue", ["LTM Mar-2024", "7000"], ["LTM Mar-2025", "7500"], "US$m")).toEqual([
+      "+500",
+      "better",
+    ]);
+  });
+  it("splits a unit into at most four small multiples, by order of magnitude, groups in order of first appearance", () => {
+    const row = (label: string, value: string) => [
+      label,
+      "FY2023",
+      value,
+      "FY2024",
+      value,
+      "US$m",
+      "x",
+    ];
+    const { movers } = earningsDelta(
+      delta(
+        results([
+          row("a", "5"),
+          row("b", "50"),
+          row("c", "500"),
+          row("d", "5000"),
+          row("e", "50000"),
+          row("f", "7"),
+          row("g", "0"),
+        ]),
+      ),
+    );
+    if (movers.kind !== "ready") throw new Error("expected movers");
+    expect(movers.groups.map((one) => [one.band, one.drawn.map((pair) => pair.label)])).toEqual([
+      [{ lo: 0, hi: 1 }, ["a", "b", "f", "g"]],
+      [{ lo: 2, hi: 2 }, ["c"]],
+      [{ lo: 3, hi: 3 }, ["d"]],
+      [{ lo: 4, hi: 4 }, ["e"]],
+    ]);
+  });
+  it("keeps a unit whose rows are all one size as one group, and units apart", () => {
+    const { movers } = earningsDelta(
+      delta(
+        results([
+          ["a", "FY2023", "10", "FY2024", "20", "US$m", "x"],
+          ["b", "FY2023", "11", "FY2024", "90", "US$m", "x"],
+          ["c", "FY2023", "1000", "FY2024", "2000", "EURm", "x"],
+        ]),
+      ),
+    );
+    if (movers.kind !== "ready") throw new Error("expected movers");
+    expect(movers.groups.map((one) => [one.unit, one.band, one.drawn.length])).toEqual([
+      ["US$m", null, 2],
+      ["EURm", null, 1],
+    ]);
   });
   it("is a gap when a required column is missing, and when the table is empty", () => {
     const missing = section(

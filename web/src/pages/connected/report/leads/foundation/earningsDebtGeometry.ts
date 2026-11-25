@@ -121,8 +121,10 @@ export function leverageMarks(leverage: LeverageSeries): Mark[] {
 }
 
 /** The leverage change a lead may print, in `x`: the figures' exact change over the comparison. */
-export const leverageChange = (leverage: LeverageSeries, comparison: EarningsAgainstDebt["comparison"]) =>
-  printedChange(leverage.values, comparison, "x");
+export const leverageChange = (
+  leverage: LeverageSeries,
+  comparison: EarningsAgainstDebt["comparison"],
+) => printedChange(leverage.values, comparison, "x");
 
 /** "worse" or "better" where the owner's table judges the printed move; otherwise no word. */
 export function leverageWord(change: string | null) {
