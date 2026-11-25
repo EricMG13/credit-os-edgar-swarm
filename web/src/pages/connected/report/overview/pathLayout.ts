@@ -1,5 +1,5 @@
-import { TEXT, inside, textWidth } from "./chartText";
-import { PATH, pathGeometry } from "./stressData";
+import { inside, textWidth } from "./chartText";
+import { PATH, type pathGeometry } from "./stressData";
 
 type Geometry = ReturnType<typeof pathGeometry>;
 
@@ -30,5 +30,3 @@ export function pathLayout(geometry: Geometry, width: number) {
     ),
   };
 }
-
-export { TEXT };

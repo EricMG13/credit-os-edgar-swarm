@@ -1,5 +1,5 @@
 import { ticks } from "../../visuals/visualData";
-import { TEXT, textWidth, thinTicks, wrapText } from "./chartText";
+import { textWidth, thinTicks, wrapText } from "./chartText";
 import { figureText, gapWord } from "./notes";
 import { panelScale, type DownsidePanel } from "./stressData";
 
@@ -107,5 +107,3 @@ export function gapPlace(text: string, zero: number, room: number) {
     lines: fits(space) ? [word] : wrapText(word, space),
   } as const;
 }
-
-export { TEXT };

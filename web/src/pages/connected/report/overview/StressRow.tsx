@@ -36,8 +36,8 @@ import {
   type DownsidePanel,
   type HeadroomTest,
 } from "./stressData";
-import { DOWNSIDE, TEXT, gapPlace, perRow, rowLayout, type PanelLayout } from "./downsideLayout";
-import { inside, textWidth, thinTicks } from "./chartText";
+import { DOWNSIDE, gapPlace, perRow, rowLayout, type PanelLayout } from "./downsideLayout";
+import { TEXT, inside, textWidth, thinTicks } from "./chartText";
 import { pathLayout } from "./pathLayout";
 import { Figure } from "./Tile";
 import { entryLine } from "./traceLine";
