@@ -155,32 +155,61 @@ export function levelsBreak(rows: readonly WaterfallRow[]) {
 export const allGaps = (rows: readonly WaterfallRow[]) =>
   rows.length > 0 && rows.every((row) => row.kind === "gap");
 
-/** True when a row states a figure: its own, or an earlier period's beneath a gap. */
-const statesFigure = (row: WaterfallRow) =>
-  row.kind !== "gap" || (row.prior !== undefined && "value" in row.prior);
+/**
+ * True when the Waterfall would place at least one bar for these rows: a stated level, or a step
+ * that follows a stated level or step (a gap row, or a step with nothing stated above it, breaks
+ * the walk), in the drawn period or in the earlier one beneath it.
+ */
+export function placesBar(rows: readonly WaterfallRow[]) {
+  let running: boolean = true;
+  let earlier: boolean = true;
+  for (const row of rows) {
+    if (row.kind === "gap") running = false;
+    else if (row.kind !== "step") return true;
+    else if (running) return true;
+    const prior = row.prior;
+    const role = row.kind === "gap" ? row.of : row.kind;
+    if (!prior || "gap" in prior || role === undefined) earlier = false;
+    else if (role !== "step" || earlier) return true;
+  }
+  return false;
+}
 
-/** True when no row of any drawn ladder states a figure: there is nothing to put on an axis. */
-export const noFigure = (ladders: readonly (readonly WaterfallRow[])[]) =>
-  !ladders.some((rows) => rows.some(statesFigure));
+/** True when no drawn ladder places a bar: there is nothing to put on an axis. */
+export const noBar = (ladders: readonly (readonly WaterfallRow[])[]) => !ladders.some(placesBar);
+
+const NOT_PLACED = "not placed, an earlier step is not stated";
+
+export type UnplacedItem =
+  { kind: "figure"; text: string } | { kind: "gap"; reason: string; labels: string[] };
 
 /**
- * The stated gaps as lines, in handoff order: the rows that share one reason are one line, their
- * labels joined with "; ", the reason once (as CP-1B writes its unstated pairs).
+ * Every row in handoff order where no bar can be placed: a stated figure as written with its
+ * period and why it is not placed, once per period; the stated gaps as lines, the rows that share
+ * one reason merged (labels joined by "; ") into the line of the first.
  */
-export function gapLines(ladders: readonly (readonly WaterfallRow[])[]) {
-  const lines: { reason: string; labels: string[] }[] = [];
-  for (const row of ladders.flat()) {
-    const reasons = [
-      ...(row.kind === "gap" ? [row.reason] : []),
-      ...(row.prior && "gap" in row.prior ? [row.prior.gap] : []),
-    ];
-    for (const reason of reasons) {
-      const line = lines.find((one) => one.reason === reason);
-      if (!line) lines.push({ reason, labels: [row.label] });
-      else if (!line.labels.includes(row.label)) line.labels.push(row.label);
+export function unplacedItems(
+  ladders: readonly { periods: LadderPeriods; rows: readonly WaterfallRow[] }[],
+): UnplacedItem[] {
+  const items: UnplacedItem[] = [];
+  const figure = (label: string, text: string, period: string) => {
+    const line = `${label} ${text}, ${period}: ${NOT_PLACED}`;
+    if (!items.some((item) => item.kind === "figure" && item.text === line))
+      items.push({ kind: "figure", text: line });
+  };
+  const gap = (label: string, reason: string) => {
+    const same = items.find((item) => item.kind === "gap" && item.reason === reason);
+    if (!same) items.push({ kind: "gap", reason, labels: [label] });
+    else if (same.kind === "gap" && !same.labels.includes(label)) same.labels.push(label);
+  };
+  for (const { periods, rows } of ladders)
+    for (const row of rows) {
+      if (row.kind === "gap") gap(row.label, row.reason);
+      else figure(row.label, row.text, periods.current);
+      if (row.prior && "gap" in row.prior) gap(row.label, row.prior.gap);
+      else if (row.prior && periods.prior) figure(row.label, row.prior.text, periods.prior);
     }
-  }
-  return lines;
+  return items;
 }
 
 /** The distinct reasons of an all-gap period, in order, as written. */

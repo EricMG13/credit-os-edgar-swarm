@@ -456,16 +456,50 @@ describe("cash ladder: nothing stated (round 4b)", () => {
       expect(all).toContain(label);
     expect(openTable(tile)[0]).toEqual(["Step", "FY2023", "FY2024", "Kind"]);
   });
-  it("draws the axis as before when one figure is stated", () => {
+  it("lists a stated figure that cannot be placed once per period, and the gaps merged by reason", () => {
+    // The proof shape: EBITDA a gap, Cash Interest Paid 125 in both periods, everything else a gap.
     const entry = edited(allGap(), (table, heading) =>
       heading === "T4.5 Cash flow statement"
         ? {
             ...table,
             rows: table.rows.map((row) =>
-              row.cells[0] === "Capital expenditures"
+              row.cells[0] === "Cash Interest Paid"
                 ? {
                     ...row,
-                    cells: row.cells.map((cell, at) => (at === 1 || at === 2 ? "-165" : cell)),
+                    cells: row.cells.map((cell, at) => (at === 1 || at === 2 ? "125" : cell)),
+                  }
+                : row,
+            ),
+          }
+        : table,
+    );
+    const { tile } = draw(entry);
+    expect(tile.querySelector("svg[role=img]")).toBeNull();
+    expect(tile.textContent).not.toMatch(/1\.0|0\.2|not placed:/);
+    expect([...tile.querySelectorAll("[data-unplaced]")].map((item) => item.textContent)).toEqual([
+      "Cash Interest Paid 125, FY2024: not placed, an earlier step is not stated",
+      "Cash Interest Paid 125, FY2023: not placed, an earlier step is not stated",
+    ]);
+    expect(
+      [...tile.querySelectorAll("[data-gap-lines] [data-gap]")].map((c) =>
+        c.getAttribute("data-gap"),
+      ),
+    ).toEqual(["Not supplied: synthetic (FY2023 and FY2024)", "— (FY2023 and FY2024)"]);
+    const merged = tile.querySelector("[data-gap-line]")?.getAttribute("data-gap-line") ?? "";
+    expect(merged).toContain("Net Cash from Operating Activities");
+    expect(merged).toContain("Cash taxes paid");
+    expect(merged).not.toContain("Cash Interest Paid");
+  });
+  it("keeps the Waterfall for one placed level and the steps after it", () => {
+    const entry = edited(allGap(), (table, heading) =>
+      heading === "T4.5 Cash flow statement"
+        ? {
+            ...table,
+            rows: table.rows.map((row) =>
+              row.cells[0] === "Net Cash from Operating Activities"
+                ? {
+                    ...row,
+                    cells: row.cells.map((cell, at) => (at === 1 || at === 2 ? "2000" : cell)),
                   }
                 : row,
             ),
@@ -474,6 +508,6 @@ describe("cash ladder: nothing stated (round 4b)", () => {
     );
     const { tile } = draw(entry);
     expect(tile.querySelector("svg[role=img]")).not.toBeNull();
-    expect(parts(tile, "tick").length).toBeGreaterThan(0);
+    expect(tile.querySelector("[data-unplaced]")).toBeNull();
   });
 });

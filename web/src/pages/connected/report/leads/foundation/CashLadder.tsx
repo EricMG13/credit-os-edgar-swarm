@@ -7,7 +7,6 @@ import { cashLadder, figureGap, type CashLadder } from "./foundationData";
 import {
   alone,
   allGaps,
-  gapLines,
   gapReasons,
   LEVELS_AS_STATED,
   ladderKicker,
@@ -16,7 +15,8 @@ import {
   ladderRows,
   ladderTable,
   levelsBreak,
-  noFigure,
+  unplacedItems,
+  noBar,
   type LadderPeriods,
 } from "./ladderGeometry";
 
@@ -73,8 +73,8 @@ export function CashLadderTile({ lead }: { lead: LeadProps }) {
     each,
     rows: ladderRows(data, each),
   }));
-  if (noFigure(drawn.map(({ rows }) => rows)))
-    // Nothing is stated: no axis, no zero rule, no plot; the stated gaps and the table view.
+  if (noBar(drawn.map(({ rows }) => rows)))
+    // No bar can be placed: no axis, no zero rule, no plot; every row as text and the table view.
     return (
       <FigureTile
         props={lead}
@@ -87,18 +87,28 @@ export function CashLadderTile({ lead }: { lead: LeadProps }) {
         table={ladderTable(data)}
       >
         <ul data-gap-lines="" className="flex flex-col gap-2">
-          {gapLines(drawn.map(({ rows }) => rows)).map((line) => (
-            <li
-              key={line.reason}
-              data-gap-line={line.labels.join("; ")}
-              className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1"
-            >
-              <span className="text-small font-medium wrap-anywhere text-text-primary">
-                {line.labels.join("; ")}
-              </span>
-              <GapChip reason={line.reason} />
-            </li>
-          ))}
+          {unplacedItems(drawn.map(({ each, rows }) => ({ periods: each, rows }))).map((item) =>
+            item.kind === "figure" ? (
+              <li
+                key={item.text}
+                data-unplaced=""
+                className="text-small wrap-anywhere text-text-primary"
+              >
+                {item.text}
+              </li>
+            ) : (
+              <li
+                key={item.reason}
+                data-gap-line={item.labels.join("; ")}
+                className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1"
+              >
+                <span className="text-small font-medium wrap-anywhere text-text-primary">
+                  {item.labels.join("; ")}
+                </span>
+                <GapChip reason={item.reason} />
+              </li>
+            ),
+          )}
         </ul>
       </FigureTile>
     );
