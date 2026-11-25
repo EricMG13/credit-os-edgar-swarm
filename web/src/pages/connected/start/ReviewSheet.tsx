@@ -577,7 +577,7 @@ export function ReviewSheet({
           onAccept={onAccept}
           choice={choice}
         />
-        <div className="grid min-w-0 grid-cols-1 gap-5 border-t border-border-hairline pt-4 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-x-8">
+        <div className="grid min-w-0 grid-cols-1 gap-5 border-t border-border-hairline pt-4 md:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] md:gap-x-8">
           <div className="flex min-w-0 flex-col gap-3">
             <LeavesTheBuilding summary={summary} />
             {decision?.notes}
