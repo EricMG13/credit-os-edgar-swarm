@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "gva-861459-2026-11-18-credit_snapshot-host",
+    "issuer_id": "gva-861459",
+    "issuer_name": "Granite Construction Inc",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_gva-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_gva-20241231.htm.jsonl",
+      "sha256": "534d52cef6d622c0952233f2e7a6edae57d524686ee9a438797f58b6d478f4ba"
+    },
+    "10-K_2025-12-31_gva-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_gva-20251231.htm.jsonl",
+      "sha256": "acfffbeb192fc1b8147c7479344ae15f2da7d84de95eb39ab0cc17fb958cc0ae"
+    },
+    "10-Q_2026-03-31_gva-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_gva-20260331.htm.jsonl",
+      "sha256": "0c05b0b0190bc3b6f38a5779e638e3dd5c08fa7c17ac2486d0329afc8e9b6d29"
+    },
+    "10-Q_2026-06-30_gva-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_gva-20260630.htm.jsonl",
+      "sha256": "0c4ffa4311c6b4ce5353c077c09151ea4f3382ee977879135f25202837e9621b"
+    },
+    "10-Q_2026-09-30_gva-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_gva-20260930.htm.jsonl",
+      "sha256": "ea9d11b31cea8dbbe5a21ee2ce19abee7e7258c96aeb4305b4293ecccee9442f"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/861459-granite-construction-inc-gva.json",
+      "sha256": "1178591525d3dc9c141110d44e8be958966fbfa3f838b2a63b9460b92ffaca07"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "37c022269288e7f127182a2dec599780c87f7396b21f4b6798e759b028751003"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "cdd3fcb16f18c33c0acf2ad9f16d86b234a1d0082e93c992bfbea8519d8a6435"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "69212b71c2b003670728e9bad0684128a1f0a38d0808d342415ff799fcd7b7b1"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "ab845dffe8579767506cc53752c540ab06adb0d9e1c0ec925db37fb5fb206cbb"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Granite Construction Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Granite Construction Inc — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

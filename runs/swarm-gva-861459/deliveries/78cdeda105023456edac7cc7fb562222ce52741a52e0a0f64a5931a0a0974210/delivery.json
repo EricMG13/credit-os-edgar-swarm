@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Granite Construction Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "4984bf0b3e2833322bd90491e7dd6aaff9adca599980350a5311ca5b032ecaa4",
+    "CP-1.md": "4251be112cd0d88d248a43585d562e36d86f3d8d4eefccb6f8ce0593092cb1d5",
+    "CP-1A.md": "8b47b16b54e95ff4d388f11343a9a926a20a8324103e85640377b78ce14bc015",
+    "CP-2.md": "d8f421d833e9fed111d2bf27769ae503b5395f9a33e67e792cb946b5ca0b82e1",
+    "coverage.json": "fbd7e8ff9cae49266af3986a5edf08aa1e3ee5b946d52ff11bae2275b59fced6",
+    "view.json": "f49f7a1a61effcc9c3fa002223a31f7170598df08206b475389d99c2e411973f",
+    "report-view.json": "029cb774753580f431ba7b28294de494821d19c28a7119391fdd272bd4bfa509"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for MAXIMUS, INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "d36847807af64b136a659c216db610e4445ebb50804b6986a04e34e06541de36",
+    "CP-1.md": "6e9a004bc0a20e4c368a233d88020bb09eb8747e261687a2acb47a1b7123038b",
+    "CP-1A.md": "2ac4bc4d8cd642ae4eb97e68122c23fed700eb5a06fc426336f2fe1e4f74e026",
+    "CP-2.md": "828a45823d802738717822cbe28685296ddb5eddc57779e32a43861c05924bcc",
+    "coverage.json": "7719fa1e7d091f98cf8ca540811990fdb21d11f5054416e6d41438fdbc4f8e9e",
+    "view.json": "14da2cd447cf051d83f5d760e2a3fd435794a3b4fefe4e33599179be13e1a22a",
+    "report-view.json": "a9cea199befb95826f45e8490cfb3c05db567fa96f9fbb3cd491b7cce4a34492"
+  }
+}

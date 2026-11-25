@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Thor Industries Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/e8f9f2d161dbc78fcd3cd4c21485035bebb83d2ec4b604e02f54e1156806ccdc/1.response.md",
+    "CP-1": "requests/CP-1/d6a5f11ab8b0cc9ff559a43d395a97bcffac9d4ab66df95139002ac5d7eb2752/1.response.md",
+    "CP-1A": "requests/CP-1A/6a1e2a8bcd97e6c40358fee6c109afe310c88f07ce9bf0e8d911a70f74b42b1b/1.response.md",
+    "CP-2": "requests/CP-2/f7ca3221aeb8a0e8bbb25de0c2c7c160d54ecf29b886443c78ea04fafe5f41ca/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "d5dcf04da183d0f1c080dfa6bd33f4d28f3c3675db89def1f56e2d0ca2088aa2",
+  "delivery_sha256": "e45ce719d105a2d71091f658f0aec00d6a1335588d31e7a7528bb776aa2d91e2"
+}
