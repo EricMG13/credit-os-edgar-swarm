@@ -43,9 +43,12 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
   compliant"); `NET_DEBT.rules` asks one form per table, stricter than the check now enforced;
   `financial_reconciliation.py` and `statement_validation.py` can still pick a PF balance by date.
 - Not verified: any real or retained issuer run; a desktop browser on the connected foundation
-  leads; whole `tests/test_cpos_launch.py` and `tests/test_financial_workflow.py` on the final
-  tree (the first passed earlier, 1,048; the second exceeds the 5-minute limit); the weekly
-  suite; Windows. No paid execution.
+  leads; `tests/test_financial_workflow.py` (exceeds the 5-minute limit); the weekly suite;
+  Windows. No paid execution.
+- After merging `main` at `f6cebbd0` (PR 79): quality gate 0 findings; the targeted pytest files
+  above (1,561 passed); whole `tests/test_cpos_launch.py` (1,058 passed, 1 skipped); node 830;
+  web typecheck, lint, format, unused; vitest `connected/report` 2,560, rest of `connected` 2,039,
+  run, components, utils, model, library, styles, App, data 2,869.
 ## 2026-11-25 — Layer 1 modules in Lite, Full and Deep; CP-DR in Lite; caps 20/30/50 (branch `claude/busy-shannon-x4bwy3`, base `main` at `4aaec9d`)
 
 - Scope: the `lite_credit_assessment` and `credit_snapshot` presets (`contracts.py`, web `api.ts`),
