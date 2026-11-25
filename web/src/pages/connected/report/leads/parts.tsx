@@ -226,6 +226,8 @@ const BAR_TONE = {
   level: "bg-waterfall-total",
   adds: "bg-waterfall-up",
   uses: "bg-waterfall-down",
+  /** A waterfall step of zero: a mark at its place, neither a rise nor a fall. */
+  flat: "bg-connector",
 } as const;
 
 export type BarTone = keyof typeof BAR_TONE;

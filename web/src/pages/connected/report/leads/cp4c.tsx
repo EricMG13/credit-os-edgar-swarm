@@ -5,7 +5,7 @@ import { ticks, word, type SourceTable } from "../../visuals/visualData";
 import { basisNotes, readCell, type Cell } from "../overview/figureData";
 import { Key } from "../overview/figureParts";
 import { Bento, Tile } from "../overview/Tile";
-import { Bridge, BridgeLegend, bridgeOf } from "./bridge";
+import { Bridge, BridgeLegend, bridgeOf, rises } from "./bridge";
 import { spoken } from "./cp3c";
 import { withDraws } from "./draws";
 import {
@@ -75,7 +75,7 @@ function ValueAllocation({ entry, href }: { entry: Entry; href: Href }) {
       kicker={named === current.title ? undefined : named}
       title={TITLE}
       basis={read?.unit ? unitLabel(read.unit) : undefined}
-      legend={read && !read.why && <BridgeLegend />}
+      legend={read && !read.why && <BridgeLegend fall="Allocated" rises={rises(read.steps)} />}
       trace={trace}
       controls={scenario}
       figure={

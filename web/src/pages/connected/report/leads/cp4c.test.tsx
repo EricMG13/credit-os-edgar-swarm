@@ -278,8 +278,11 @@ it("puts the scenario switch in the control row beside Figure / Table", () => {
 it("names the waterfall's tones in words and stacks recovery and plan beside it", () => {
   render(<RestructuringLead {...leadProps(restructuring())} />);
   const tile = screen.getByRole("region", { name: "Value allocation" });
-  for (const word of ["Opening and closing", "Adds", "Uses"])
+  // Review 6, V5: allocations to claimants, no rise in either scenario.
+  for (const word of ["Opening and closing", "Allocated"])
     expect(within(tile).getByText(word)).toBeVisible();
+  expect(within(tile).queryByText("Adds")).toBeNull();
+  expect(within(tile).queryByText("Uses")).toBeNull();
   expect(within(tile).getByRole("img").querySelectorAll("[data-connector]").length).toBeGreaterThan(
     0,
   );

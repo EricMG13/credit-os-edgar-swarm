@@ -80,18 +80,30 @@ const share = (value: number) => `${String(value * 100)}%`;
 const HALF_BAR = "6px";
 const ROW_GAP = "0.5rem";
 
-/** The bridge's tones, each named in words in its legend: levels, rises and falls. */
-const TONES = [
-  { tone: "level", swatch: "bg-waterfall-total", word: "Opening and closing" },
-  { tone: "adds", swatch: "bg-waterfall-up", word: "Adds" },
-  { tone: "uses", swatch: "bg-waterfall-down", word: "Uses" },
-] as const;
+/** The bridge's legend tones: levels, rises and falls (a zero step is a plain mark, unnamed). */
+const SWATCH = {
+  level: "bg-waterfall-total",
+  adds: "bg-waterfall-up",
+  uses: "bg-waterfall-down",
+} as const;
 
-/** The bridge's legend: each tone with its word, so direction is never by colour alone. */
-export function BridgeLegend() {
+/** Whether a step between the opening and the closing rises. */
+export const rises = (steps: readonly Step[]) =>
+  steps.slice(1, -1).some((step) => (step.cell.value ?? 0) > 0);
+
+/**
+ * The bridge's legend: each tone with its word, so direction is never by colour alone. `fall` names
+ * the falls ("Uses" for liquidity, "Allocated" for a value allocation); "Adds" only with `rises`.
+ */
+export function BridgeLegend({ fall, rises: rise }: { fall: string; rises: boolean }) {
+  const tones = [
+    { swatch: SWATCH.level, word: "Opening and closing" },
+    ...(rise ? [{ swatch: SWATCH.adds, word: "Adds" }] : []),
+    { swatch: SWATCH.uses, word: fall },
+  ];
   return (
     <>
-      {TONES.map(({ swatch, word }) => (
+      {tones.map(({ swatch, word }) => (
         <span key={word} className="flex items-center gap-1.5 text-caption text-text-secondary">
           <span aria-hidden="true" className={`size-2.5 flex-none rounded-[2px] ${swatch}`} />
           {word}
@@ -99,6 +111,12 @@ export function BridgeLegend() {
       ))}
     </>
   );
+}
+
+/** A step's tone: the opening and closing are levels, a zero change neither adds nor uses. */
+function toneOf(value: number, total: boolean) {
+  if (total) return "level";
+  return value < 0 ? "uses" : value > 0 ? "adds" : "flat";
 }
 
 /** One half of a step connector: out of a bar's row down to the gap, or into the next bar's row. */
@@ -143,7 +161,7 @@ export function Bridge({ steps, unit, label }: { steps: Step[]; unit: string; la
         {steps.map((step, index) => {
           const total = index === 0 || index === last;
           const from = total ? 0 : (ends[index - 1] ?? 0);
-          const tone = total ? "level" : (values[index] ?? 0) < 0 ? "uses" : "adds";
+          const tone = toneOf(values[index] ?? 0, total);
           return (
             <li key={step.line} className="contents">
               <span className="flex min-w-0 flex-col gap-0.5 self-center">

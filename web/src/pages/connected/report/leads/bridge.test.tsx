@@ -72,7 +72,33 @@ it("joins each bar's end to the next bar's start with a step connector", () => {
 });
 
 it("names each tone in words: levels, adds, uses", () => {
-  render(<BridgeLegend />);
+  render(<BridgeLegend fall="Uses" rises />);
   for (const word of ["Opening and closing", "Adds", "Uses"])
     expect(screen.getByText(word)).toBeVisible();
+});
+
+// Review 6, V5: a zero step has no add or use tone; an allocation names its falls "Allocated".
+it("gives a zero step neither the adds nor the uses tone", () => {
+  render(
+    <Bridge
+      steps={[
+        step("Enterprise value", "1,000", 1000, 4),
+        step("Value not distributed", "0", 0, 5),
+        step("Senior unsecured notes", "-250", -250, 6),
+        step("Closing", "750", 750, 7),
+      ]}
+      unit="US$m"
+      label="Allocation"
+    />,
+  );
+  expect(bars().map((bar) => bar.dataset.tone)).toEqual(["level", "flat", "uses", "level"]);
+  expect(bars()[1]?.className).not.toMatch(/bg-waterfall-(up|down)/);
+});
+
+it("names an allocation's falls Allocated and draws no Adds entry without a rise", () => {
+  render(<BridgeLegend fall="Allocated" rises={false} />);
+  for (const word of ["Opening and closing", "Allocated"])
+    expect(screen.getByText(word)).toBeVisible();
+  expect(screen.queryByText("Adds")).toBeNull();
+  expect(screen.queryByText("Uses")).toBeNull();
 });

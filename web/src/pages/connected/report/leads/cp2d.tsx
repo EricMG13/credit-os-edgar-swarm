@@ -53,7 +53,7 @@ function LiquidityBridge({
       label={TITLE}
       title={TITLE}
       basis={unit ? unitLabel(unit) : undefined}
-      legend={!why && <BridgeLegend />}
+      legend={!why && <BridgeLegend fall="Uses" rises />}
       trace={<Trace href={href(table.line)} name={TITLE} />}
       figure={
         why ? (
