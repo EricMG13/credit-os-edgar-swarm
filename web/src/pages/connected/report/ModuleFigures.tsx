@@ -155,15 +155,15 @@ export function ModuleFigures({
           drawingCell(entry, run.folder, "maps", item),
         )
       : []),
-    ...gaps
-      .filter(({ kind }) => kinds.has(kind))
-      .map((gap) => ({
-        key: `gap-${String(gap.line)}`,
-        short: true,
-        node: (span: 6 | 12) => (
-          <DrawingGapTile gap={gap} entry={entry} folder={run.folder} span={span} />
-        ),
-      })),
+    // A drawing section the module wrote as prose with no table carries the module's own reason:
+    // the frame always draws it, whatever the lead claims, so those words are never lost.
+    ...gaps.map((gap) => ({
+      key: `gap-${String(gap.line)}`,
+      short: true,
+      node: (span: 6 | 12) => (
+        <DrawingGapTile gap={gap} entry={entry} folder={run.folder} span={span} />
+      ),
+    })),
   ];
   return cells.map((cell, at) => (
     <Fragment key={cell.key}>{cell.node(spanOf(cells, at))}</Fragment>
