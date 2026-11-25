@@ -203,7 +203,7 @@ function AsWritten({ series, href }: { series: Series; href: Href }) {
 
 const FIGURE = {
   large: "text-metric font-medium",
-  small: "min-w-0 text-h3 font-medium wrap-anywhere sm:text-h2",
+  small: "text-h3 font-medium whitespace-nowrap",
 } as const;
 
 /** The latest figure, its basis, how it moved and every gap in the series, in the module's words. */
@@ -222,8 +222,10 @@ function Level({ reading, large, href }: { reading: Reading; large: boolean; hre
     <div className="flex flex-col gap-1">
       <div
         className={cx(
-          "flex items-baseline gap-x-3 gap-y-1",
-          large ? "flex-wrap" : "min-w-0 gap-x-2",
+          // The figure never breaks; the better or worse word follows it, and drops under it
+          // only where the tile is too narrow for both.
+          "flex flex-wrap items-baseline gap-x-3 gap-y-1",
+          !large && "min-w-0 gap-x-2",
         )}
       >
         <Figure className={cx(size, !stated && "text-text-tertiary")}>

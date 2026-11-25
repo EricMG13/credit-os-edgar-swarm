@@ -664,7 +664,8 @@ describe("the figure rows' layout", () => {
       const tile = screen.getByRole("region", { name });
       const heading = within(tile).getByRole("heading", { level: 3, name });
       const row = heading.parentElement;
-      expect(row).not.toHaveClass("flex-wrap");
+      // One placement: the word follows the figure in the same row; the figure itself never breaks.
+      expect(row?.firstElementChild).toHaveClass("whitespace-nowrap");
       expect(heading).toHaveClass("min-w-0");
       const control = within(tile).getByRole("link", { name: `Source for ${name}` });
       expect(row).toContainElement(control);
@@ -677,7 +678,8 @@ describe("the figure rows' layout", () => {
     for (const name of ["Revenue", "EBITDA / cash interest", "Adjusted EBITDA"]) {
       const word = within(screen.getByRole("region", { name })).getByText(/^(Better|Worse)$/);
       const row = word.parentElement;
-      expect(row).not.toHaveClass("flex-wrap");
+      // One placement: the word follows the figure in the same row; the figure itself never breaks.
+      expect(row?.firstElementChild).toHaveClass("whitespace-nowrap");
       expect(row?.firstElementChild?.className).toMatch(/font-mono/);
     }
   });
