@@ -276,3 +276,7 @@ Scope: retained TransDigm FY2024 handoffs (outdated; shape only) and synthetic i
 - Rendered check (`docs/design/preview/check-render.cjs`, widths 1440/1280/1024/768/390, plain and stress text, harness `web/.lead-preview`, 15 lead entries): no failures. PNGs looked at: CP-1 accepted (1440, 390), CP-1B retained (1440, 390), CP-6 (1440, 390).
 - Seen and left (rendering only): at 390 the cash-ladder connector touches the "1,236" label, and on net debt the dotted pro forma rule crosses the first pro forma label; the Debt maturities tile sits alone in the last CP-1 row when two periods are stated (five span-6 tiles).
 - Not verified: any real handoff for CP-1C, CP-1D, CP-L10, CP-MODEL, CP-5, CP-6 (none retained); the CP-6 ledger subject when the CP-2 cell is a register id.
+
+### Verification (round 4: T1–T7 and the two judged items)
+
+Gates on c85f859: tsc 0; eslint, prettier, knip clean; `vitest src/pages/connected src/styles` 189 files / 3,304 tests pass; duplication exit 0; build ok; check-render 1440/1280/1024/768/390 plain and stress on 13 lead entries: no failures; CP-1B at 1440 looked at (axis-headed groups, one compact gap line). Not run: quality gate (uv pin mismatch). Not verified: any real handoff for these leads.
