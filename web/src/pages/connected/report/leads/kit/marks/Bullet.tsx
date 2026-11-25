@@ -30,6 +30,10 @@ export type BulletProps = {
 const stated = (side: BulletSide | undefined): side is BulletFigure =>
   side !== undefined && !("gap" in side);
 
+/** A figure that is not a finite number is drawn as the gap, with its text as written. */
+const finite = <T extends BulletSide | undefined>(side: T): T | { gap: string } =>
+  stated(side) && !Number.isFinite(side.value) ? { gap: side.text } : side;
+
 const BAND = 14;
 
 function isBeyond(figure: BulletSide | undefined, limit: number, kind: "max" | "min") {
@@ -76,7 +80,9 @@ function valueSpot(end: number, zero: number, others: readonly number[], size: n
 }
 
 export function Bullet(props: BulletProps) {
-  const { name, value, limit, proposed, width, limitKind = "max" } = props;
+  const { name, limit, width, limitKind = "max" } = props;
+  const value = finite(props.value);
+  const proposed = finite(props.proposed);
   const word = props.beyond ?? (limitKind === "max" ? "above the limit" : "below the limit");
   const names = { value: "Current", limit: "Limit", proposed: "Proposed", ...props.names };
   const narrow = width < NARROW;

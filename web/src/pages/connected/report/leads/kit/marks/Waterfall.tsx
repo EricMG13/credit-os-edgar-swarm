@@ -51,6 +51,14 @@ type Placed = {
   to: number | null;
 };
 
+/** A figure that is not a finite number is drawn as the gap, with its text as written. */
+const finite = (rows: readonly WaterfallRow[]): WaterfallRow[] =>
+  rows.map((row) =>
+    row.kind !== "gap" && !Number.isFinite(row.value)
+      ? { kind: "gap", label: row.label, reason: row.text }
+      : row,
+  );
+
 function place(rows: readonly WaterfallRow[]): Placed[] {
   let running: number | null = 0;
   return rows.map((row): Placed => {
@@ -113,7 +121,7 @@ function frame(placed: Placed[], axis: NiceAxis, width: number): Frame {
     one.to === null ? 0 : textWidth(valueText(one.row), SIZE.value),
   );
   const room = Math.max(24, ...values) + 10;
-  const longest = Math.max(...placed.map((one) => textWidth(one.row.label)));
+  const longest = Math.max(0, ...placed.map((one) => textWidth(one.row.label)));
   const labelWidth = narrow ? width : Math.min(longest + 16, Math.round(width * 0.34));
   const plotLeft = narrow ? 1 : labelWidth;
   const plotRight = Math.max(plotLeft + 60, width - room - 2);
@@ -298,7 +306,8 @@ function legendItems(legend: WaterfallProps["legend"], hasGap: boolean): LegendI
  * a fall drawn leftward with its minus sign, a step the module did not state as the hatched slot
  * with its reason. A cut axis is marked with the break on the totals and stated under the axis.
  */
-export function Waterfall({ rows, unit, width, axisStart, label, legend }: WaterfallProps) {
+export function Waterfall({ rows: given, unit, width, axisStart, label, legend }: WaterfallProps) {
+  const rows = finite(given);
   const axis = waterfallAxis(rows, axisStart);
   const placed = place(rows);
   const f = frame(placed, axis, width);

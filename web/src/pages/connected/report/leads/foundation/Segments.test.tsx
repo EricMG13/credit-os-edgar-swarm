@@ -1,6 +1,9 @@
 // The first cases read the retained TransDigm FY2024 CP-1 handoff (outdated evidence: shape and
 // scope only); expected values are written out by hand from its `Segment schedule`. The adversarial
 // cases are synthetic, built from the module contract (the CP-1 segment schedule headers); not a real handoff.
+// Round 2 (ruling i): the data layer returns no segment sums or group reconciliation; tests that
+// asserted them were updated (marked "ruling i"). The ratio column is still the old tile's own
+// geometry (segmentsGeometry), to be removed when the tile is rebuilt on foundationData.
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { entry, section, table } from "../../overview/rows.fixture";
@@ -123,13 +126,9 @@ describe("wrapName", () => {
 });
 
 describe("SegmentsTile on the retained handoff", () => {
-  it("titles the reading from the derived sales total and names unit and period", () => {
+  it("titles the tile from the period, with no derived sum (ruling i), and names unit and period", () => {
     const tile = draw(cp1Entry());
-    expect(
-      within(tile).getByRole("heading", {
-        name: "Segment net sales sum to 7,940 (derived) across 3 segments, FY2024",
-      }),
-    ).toBeVisible();
+    expect(within(tile).getByRole("heading", { name: "Segments, FY2024" })).toBeVisible();
     expect(within(tile).getByText("Segments · US$m, FY2024")).toBeVisible();
   });
   it("draws every bar on one scale from zero, in proportion to the stated amounts", () => {
@@ -174,16 +173,9 @@ describe("SegmentsTile on the retained handoff", () => {
     expect(tile.querySelector('[data-segment="Unallocated corporate"]')).toBeNull();
     expect(tile.querySelector('[data-bar^="Unallocated"]')).toBeNull();
   });
-  it("states the reconciliation with = only where the sums equal the group's figures", () => {
+  it("states no segment sum or reconciliation (ruling i)", () => {
     const tile = draw(cp1Entry());
-    expect(
-      within(tile).getByText("Segment sales sum to 7,940 = group net sales 7,940 (derived)."),
-    ).toBeVisible();
-    expect(
-      within(tile).getByText(
-        "Segment EBITDA with unallocated corporate sums to 4,173 = 4,173 for the group (derived).",
-      ),
-    ).toBeVisible();
+    expect(within(tile).queryByText(/sum to|sums to/)).toBeNull();
   });
   it("says every number in the aria-label and that the ratios are derived", () => {
     const tile = draw(cp1Entry());
@@ -264,11 +256,9 @@ describe("SegmentsTile states", () => {
     expect(width(loss) / width(sales)).toBeCloseTo(50 / 200, 6);
     expect(tile.querySelector('[data-ratio="Beta"]')?.textContent).toBe("−25.0%");
     expect(within(tile).getByText(/^One scale, −\d/)).toBeInTheDocument();
-    expect(
-      within(tile).getByText("Segment EBITDA sums to 110 = 110 for the group (derived)."),
-    ).toBeVisible();
+    expect(within(tile).queryByText(/sums to/)).toBeNull(); // ruling i
   });
-  it("states both sums without = when they differ from the group's", () => {
+  it("states no sum even when the segments do not add to the group's figures (ruling i)", () => {
     const tile = draw(
       segments(
         [
@@ -279,23 +269,12 @@ describe("SegmentsTile states", () => {
         ["400", "100"],
       ),
     );
-    expect(
-      within(tile).getByText("Segment sales sum to 390; group net sales 400 (derived)."),
-    ).toBeVisible();
-    expect(
-      within(tile).getByText(
-        "Segment EBITDA with unallocated corporate sums to 110, against 100 for the group (derived).",
-      ),
-    ).toBeVisible();
+    expect(within(tile).queryByText(/sum to|sums to/)).toBeNull();
   });
   it("draws no reconciliation when the group's figures are not in the handoff", () => {
     const tile = draw(segments([["Alpha", "FY2024", "300", "90"]], null));
     expect(within(tile).queryByText(/sum to|sums to/, { ignore: "h3" })).toBeNull();
-    expect(
-      within(tile).getByRole("heading", {
-        name: "Segment net sales sum to 300 (derived) across 1 segment, FY2024",
-      }),
-    ).toBeVisible();
+    expect(within(tile).getByRole("heading", { name: "Segments, FY2024" })).toBeVisible();
   });
   it("wraps a long name onto several lines inside the figure", () => {
     const tile = draw(
@@ -322,9 +301,10 @@ describe("SegmentsTile states", () => {
         ["Alpha", "FY2024", "310", "95"],
       ]),
     );
+    // Round 2: the data layer refuses the schedule and says why (figureGap).
     expect(
       within(tile).getByText(
-        "The segment schedule states Alpha more than once for FY2024; the segments are not drawn.",
+        "The segment schedule states Alpha net sales more than once for FY2024.",
       ),
     ).toBeVisible();
     expect(within(tile).queryByRole("img")).toBeNull();
@@ -339,7 +319,7 @@ describe("SegmentsTile states", () => {
     expect(within(all).queryByRole("img")).toBeNull();
     cleanup();
     const none = draw(entry("CP-1", [], []));
-    expect(within(none).getByText("The handoff has no segment schedule.")).toBeVisible();
+    expect(within(none).getByText("The segment schedule is not in the handoff.")).toBeVisible();
     expect(within(none).queryByRole("link", { name: /Source for/ })).toBeNull();
   });
 });

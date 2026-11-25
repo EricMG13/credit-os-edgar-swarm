@@ -78,6 +78,7 @@ function expectReadable(svg: SVGSVGElement, width: number) {
     expect(text.getAttribute("class") ?? "").not.toMatch(/text-\[(?:[0-9]|10)(?:\.\d+)?px\]/);
   }
   expect(svg.getAttribute("viewBox")?.split(" ")[2]).toBe(String(width));
+  expect(markBoxes(svg).length).toBeGreaterThan(0);
   const collisions = textBoxes(svg).flatMap((text) =>
     markBoxes(svg)
       .filter((mark) => hits(text, mark))
@@ -110,14 +111,22 @@ describe("niceAxis", () => {
 
   it("does not cut when the values spread down towards zero, and never clips a value", () => {
     expect(niceAxis([2.71, 6.53], { zero: false }).start).toBe(0);
-    expect(niceAxis([5, 9], { zero: false, start: 6 }).start).toBe(0);
+    // A start above the lowest value is not taken: the automatic cut (spread 4, step 2) is.
+    expect(niceAxis([5, 9], { zero: false, start: 6 }).start).toBe(2);
     expect(niceAxis([6.27, 6.53, 6.02], { zero: false, start: 5 }).start).toBe(5);
   });
 
   it("brackets negative values and writes the minus sign and suffix", () => {
     const axis = niceAxis([-158, 4173], { zero: false });
     expect(axis.ticks[0]?.label).toBe("−2,000");
-    expect(niceAxis([0.5, 1.2], { zero: true, suffix: "x" }).ticks.at(-1)?.label).toBe("1.4x");
+    expect(niceAxis([0.5, 1.2], { zero: true, suffix: "x" }).ticks.map((t) => t.label)).toEqual([
+      "0.00x",
+      "0.25x",
+      "0.50x",
+      "0.75x",
+      "1.00x",
+      "1.25x",
+    ]);
   });
 
   it("draws an axis for no values or text that is not a number", () => {
@@ -348,7 +357,10 @@ describe("Dumbbell", () => {
       "FY2023: Not supplied: outside the comparison scope",
     );
     expect(container.querySelector('[data-row="Restricted cash"] circle[data-prior]')).toBeNull();
-    expect(container.textContent).toContain("FY2023: Not supplied: outside the comparison scope");
+    const reason = [...container.querySelectorAll('[data-part="reason"]')].map(
+      (t) => t.textContent,
+    );
+    expect(reason.join(" ")).toBe("FY2023: Not supplied: outside the comparison scope");
     expect(svgOf(container).getAttribute("aria-label")).toContain(
       "Restricted cash FY2023 not stated: Not supplied: outside the comparison scope and 843 in FY2024",
     );
@@ -559,5 +571,57 @@ describe("Bullet", () => {
     expect(svgOf(container).getAttribute("data-layout")).toBe("narrow");
     const name = num(container.querySelector('[data-part="label"]') as Element, "y");
     expect(name).toBeLessThan(num(container.querySelector('[data-bar="value"]') as Element, "y"));
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+describe("adversarial inputs", () => {
+  const noNaN = (container: HTMLElement) => {
+    expect(container.innerHTML).not.toMatch(/="(?:NaN|-?Infinity)"/);
+  };
+
+  it("draws a figure that is not a number as the gap with its text, never as zero", () => {
+    const rows: WaterfallRow[] = [
+      { kind: "level", label: "Opening", value: 100, text: "100" },
+      { kind: "step", label: "Other", value: Number.NaN, text: "Not calculable: no split" },
+      { kind: "closing", label: "Closing", value: 90, text: "90" },
+    ];
+    const { container } = render(<Waterfall rows={rows} unit="USD m" width={WIDE} />);
+    expect(container.querySelector('[data-gap="Not calculable: no split"]')).not.toBeNull();
+    expect(container.querySelector('[data-step="Other"]')).toBeNull();
+    noNaN(container);
+    const pair = render(
+      <Dumbbell
+        rows={[
+          {
+            label: "Margin",
+            prior: { value: Number.NaN, text: "n/m" },
+            current: { value: 5, text: "5%" },
+          },
+        ]}
+        width={WIDE}
+        periods={PERIODS}
+        unit="%"
+      />,
+    );
+    expect(pair.container.querySelector('[data-gap="FY2023: n/m"]')).not.toBeNull();
+    noNaN(pair.container);
+  });
+
+  it("draws empty rows without broken geometry", () => {
+    noNaN(render(<Waterfall rows={[]} unit="USD m" width={PHONE} />).container);
+    noNaN(render(<Dumbbell rows={[]} width={PHONE} periods={PERIODS} unit="USD m" />).container);
+  });
+
+  it("signs an accounting negative and keeps a stated sign", () => {
+    const rows: WaterfallRow[] = [
+      { kind: "level", label: "Opening", value: 100, text: "100" },
+      { kind: "step", label: "Disposal", value: -10, text: "(10)" },
+      { kind: "step", label: "Uplift", value: 5, text: "+5" },
+      { kind: "closing", label: "Closing", value: 95, text: "95" },
+    ];
+    const { container } = render(<Waterfall rows={rows} unit="USD m" width={WIDE} />);
+    const values = [...container.querySelectorAll('[data-part="value"]')].map((t) => t.textContent);
+    expect(values).toEqual(["100", "−10", "+5", "95"]);
   });
 });

@@ -31,7 +31,9 @@ export function wrap(text: string, width: number, size: number = SIZE.label) {
 
 /** The stated figure with its sign shown: `+70`, `−10`, `0`. A hyphen minus becomes U+2212. */
 export function signedText(text: string, value: number) {
-  const trimmed = text.trim().replace(/^-/, "−");
+  const bare = text.trim();
+  // An accounting negative, "(10)", is written with the minus sign.
+  const trimmed = /^\(.*\)$/.test(bare) ? `−${bare.slice(1, -1)}` : bare.replace(/^-/, "−");
   if (/^[+−]/.test(trimmed)) return trimmed;
   return value > 0 ? `+${trimmed}` : value < 0 ? `−${trimmed}` : trimmed;
 }

@@ -5,6 +5,7 @@ import { plain } from "../kit/geometry";
 import { FigureTile, ScrollFigure } from "../kit/LeadFrame";
 import { difference, group, signOf, type Reading } from "../kit/numbers";
 import type { LeadProps } from "../types";
+import { figureGap } from "./foundationData";
 import { segmentView, type Segment, type SegmentView } from "./legacyData";
 import { SEG, ratioPercent, segmentGeometry, type BarMark } from "./segmentsGeometry";
 
@@ -275,7 +276,9 @@ export function SegmentsTile({ lead }: { lead: LeadProps }) {
   if (!view)
     return (
       <Tile span={6} label={LABEL} kicker="Segments" tone="gap" className="self-start">
-        <GapNote>The handoff has no segment schedule.</GapNote>
+        <GapNote>
+          {figureGap(lead.entry, "segments") ?? "The handoff has no segment schedule."}
+        </GapNote>
       </Tile>
     );
   const names = view.segments.map((segment) => segment.name);

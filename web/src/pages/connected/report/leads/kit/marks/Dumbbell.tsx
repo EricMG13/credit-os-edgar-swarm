@@ -2,16 +2,7 @@ import { cx } from "@/utils/cx";
 import type { MarkTone } from "../../../overview/marks";
 import { fittingTicks, niceAxis, type NiceAxis } from "./axis";
 import { GapSlot } from "./GapSlot";
-import {
-  AxisNote,
-  Grid,
-  HALO,
-  HALO_CLASS,
-  Legend,
-  TickLabels,
-  legendHeight,
-  type LegendItem,
-} from "./parts";
+import { AxisNote, Grid, Legend, TickLabels, legendHeight, type LegendItem } from "./parts";
 import { LINE, NARROW, SIZE, textWidth, wrap } from "./text";
 
 /** One side of a pair: a stated figure, or the module's reason it is not stated. */
@@ -45,6 +36,12 @@ export type DumbbellProps = {
 };
 
 const known = (side: DumbbellSide): side is { value: number; text: string } => !("gap" in side);
+
+/** A side that is not a finite number is drawn as the gap, with its text as written. */
+const finiteSide = (side: DumbbellSide): DumbbellSide =>
+  known(side) && !Number.isFinite(side.value) ? { gap: side.text } : side;
+const finite = (rows: readonly DumbbellRow[]) =>
+  rows.map((row) => ({ ...row, prior: finiteSide(row.prior), current: finiteSide(row.current) }));
 
 const GAP = 12;
 const MARK = 24;
@@ -110,7 +107,7 @@ function frame(rows: readonly DumbbellRow[], axis: NiceAxis, width: number): Fra
   const placed = rows.map(sides);
   const padLeft = Math.max(0, ...placed.map((one) => spotWidth(one.left))) + 16;
   const padRight = Math.max(0, ...placed.map((one) => spotWidth(one.right))) + 16;
-  const longest = Math.max(...rows.map((row) => textWidth(row.label)));
+  const longest = Math.max(0, ...rows.map((row) => textWidth(row.label)));
   const changes = rows.map((row) =>
     Math.max(textWidth(row.change ?? ""), textWidth(row.note ?? "")),
   );
@@ -218,23 +215,32 @@ function Figure({
   cy: number;
 }) {
   if (!spot) return null;
+  const size = textWidth(spot.text, SIZE.value);
+  // A card-coloured plate under the figure: a grid line near zero never runs through its digits.
   return (
-    <text
-      data-part="value"
-      data-side={spot.current ? "current" : "prior"}
-      x={x}
-      y={cy + 4}
-      textAnchor={anchor}
-      fontSize={SIZE.value}
-      {...HALO}
-      className={cx(
-        "font-mono",
-        HALO_CLASS,
-        spot.current ? "fill-text-primary font-medium" : "fill-text-secondary",
-      )}
-    >
-      {spot.text}
-    </text>
+    <g>
+      <rect
+        x={(anchor === "end" ? x - size : x) - 2}
+        y={cy - 7}
+        width={size + 4}
+        height={14}
+        className="fill-surface-card"
+      />
+      <text
+        data-part="value"
+        data-side={spot.current ? "current" : "prior"}
+        x={x}
+        y={cy + 4}
+        textAnchor={anchor}
+        fontSize={SIZE.value}
+        className={cx(
+          "font-mono",
+          spot.current ? "fill-text-primary font-medium" : "fill-text-secondary",
+        )}
+      >
+        {spot.text}
+      </text>
+    </g>
   );
 }
 
@@ -361,7 +367,7 @@ function Words({ one, f, width }: { one: Laid; f: Frame; width: number }) {
  * not state as the hatched strip with its reason.
  */
 export function Dumbbell({
-  rows,
+  rows: given,
   width,
   periods,
   unit,
@@ -369,6 +375,7 @@ export function Dumbbell({
   label,
   legend = true,
 }: DumbbellProps) {
+  const rows = finite(given);
   const axis = dumbbellAxis(rows, axisStart);
   const f = frame(rows, axis, width);
   const items: LegendItem[] = legend

@@ -29,6 +29,7 @@ import {
   cashLadder,
   earningsAgainstDebt,
   ebitdaBridge,
+  figureGap,
   NO_ADJUSTMENT,
   netDebtView,
   segmentView,
@@ -111,7 +112,9 @@ describe("earningsAgainstDebt", () => {
     expect(data?.unit).toBe("US$m");
     expect(data?.periods.map((p) => p.label)).toEqual(["FY2023", "FY2024"]);
     expect(data?.comparison).toEqual({ from: "FY2023", to: "FY2024" });
-    expect(data?.measures.map((m) => [m.key, m.label, ...cells(m.values)!, m.change])).toEqual([
+    expect(
+      data?.measures.map((m) => [m.key, m.label, ...(cells(m.values) ?? []), m.change]),
+    ).toEqual([
       ["sales", "Revenue", ["FY2023", "6585"], ["FY2024", "7940"], "1355"],
       ["reportedEbitda", "EBITDA (Reported)", ["FY2023", "3148"], ["FY2024", "3813"], "665"],
       ["adjustedEbitda", "Adjusted EBITDA", ["FY2023", "3395"], ["FY2024", "4173"], "778"],
@@ -146,7 +149,7 @@ describe("earningsAgainstDebt", () => {
     const data = earningsAgainstDebt(relative);
     expect(data?.periods.map((p) => p.label)).toEqual(["FY2024"]);
     expect(data?.comparison).toBeNull();
-    expect(data?.measures.map((m) => [m.key, ...cells(m.values)!, m.change])).toEqual([
+    expect(data?.measures.map((m) => [m.key, ...(cells(m.values) ?? []), m.change])).toEqual([
       ["sales", ["FY2024", "7940"], null],
       ["reportedEbitda", ["FY2024", "3813"], null],
       ["adjustedEbitda", ["FY2024", "4173"], null],
@@ -394,6 +397,21 @@ describe("cashLadder: the handoff's own levels and deductions, as written", () =
       "signed",
       null,
       "signed",
+    ]);
+  });
+  it("matches an income-taxes-paid label form too", () => {
+    const other = setLabelled(
+      accepted,
+      "T4.5 Cash flow statement",
+      "Cash taxes paid",
+      "Line item",
+      "Income taxes paid, net",
+    );
+    const taxes = cashLadder(other)?.steps.find((s) => s.key === "taxes");
+    expect([taxes?.label, ...(cells(taxes?.values) ?? [])]).toEqual([
+      "Income taxes paid, net",
+      ["FY2023", "260"],
+      ["FY2024", "539"],
     ]);
   });
   it('matches the distressed handoff\'s "Cash taxes paid, net of refunds" and keeps the stated repurchase gap', () => {
@@ -825,6 +843,23 @@ describe("segmentView: net sales and EBITDA per segment as written, no sum, no r
       ["Unallocated corporate", null, "-106"],
     ]);
   });
+  it("reads a wide schedule's segment rows and leaves out sub-lines and group totals", () => {
+    const wide = withRows(distressed, "Segment schedule", [
+      ["Alpha revenue", "10", "12", "USD millions", "-", "-"],
+      ["Alpha — Defense sales", "4", "5", "USD millions", "-", "-"],
+      ["Alpha — Commercial", "6", "7", "USD millions", "-", "-"],
+      ["Total Beta", "20", "0", "USD millions", "-", "-"],
+      ["Total segment revenue", "30", "12", "USD millions", "-", "-"],
+      ["Alpha EBITDA As Defined", "-1", "2", "USD millions", "-", "-"],
+      ["Total EBITDA As Defined", "9", "9", "USD millions", "-", "-"],
+    ]);
+    const view = segmentView(wide);
+    expect(segmentRows(view)).toEqual([
+      ["Alpha", "10", "12", "-1", "2"],
+      ["Beta", "20", "0", null, null],
+    ]);
+    expect(view?.apart).toEqual([]);
+  });
   it("keeps a business unit whose sales are a gap as a unit with the gap", () => {
     const gap = segmentView(
       setCell(accepted, "Segment schedule", 1, "Net sales", "Not supplied: no line"),
@@ -852,5 +887,66 @@ describe("segmentView: net sales and EBITDA per segment as written, no sum, no r
     expect(
       segmentView(setCell(accepted, "Segment schedule", 0, "Unit", "EUR millions")),
     ).toBeNull();
+  });
+});
+
+// ------------------------------------------------------------------------------------------------
+
+describe("figureGap: why a figure is not drawn, true of this handoff", () => {
+  it("is null for every figure of the three real handoffs", () => {
+    for (const entry of [accepted, relative, distressed])
+      for (const figure of ["earnings", "ladder", "netDebt", "bridge", "segments"] as const)
+        expect(figureGap(entry, figure), figure).toBeNull();
+  });
+  it("names an absent table, a repeated year, a twice-stated figure and units", () => {
+    expect(figureGap(dropTable(accepted, "Segment schedule"), "segments")).toBe(
+      "The segment schedule is not in the handoff.",
+    );
+    expect(figureGap(dropTable(accepted, "T4.5 Cash flow statement"), "ladder")).toBe(
+      "Cash flow statement is not in the handoff.",
+    );
+    const twice = addRow(accepted, "Net debt data", [
+      "FY2024 / 2024-09-30",
+      "1",
+      "1",
+      "0",
+      "US$m",
+      "-",
+    ]);
+    expect(figureGap(twice, "netDebt")).toBe("Net debt data: FY2024 is stated more than once.");
+    const segmentTwice = addRow(accepted, "Segment schedule", [
+      "Airframe",
+      "FY2024",
+      "1",
+      "1",
+      "USD millions",
+      "-",
+      "-",
+    ]);
+    expect(figureGap(segmentTwice, "segments")).toBe(
+      "The segment schedule states Airframe net sales more than once for FY2024.",
+    );
+    expect(
+      figureGap(
+        setCell(accepted, "Chart data: EBITDA bridge", 0, "Reporting unit", "EURm"),
+        "bridge",
+      ),
+    ).toBe("The EBITDA bridge is not stated in one unit.");
+    expect(figureGap(withRows(accepted, "Chart data: EBITDA bridge", []), "bridge")).toBe(
+      "The EBITDA bridge states fewer than an opening, a step and a closing.",
+    );
+  });
+  it("gives every measure's reason when no earnings measure is readable", () => {
+    let none: OutputEntry = accepted;
+    for (const heading of [
+      "Chart data: revenue and EBITDA",
+      "Net debt data",
+      "T4.4 Income statement",
+    ])
+      none = dropTable(none, heading);
+    expect(figureGap(none, "earnings")).toBe(
+      "Revenue is not in the handoff. EBITDA (Reported): Income statement is not in the handoff. " +
+        "Adjusted EBITDA is not in the handoff. Gross debt is not in the handoff.",
+    );
   });
 });

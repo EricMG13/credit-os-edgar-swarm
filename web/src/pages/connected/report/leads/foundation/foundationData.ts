@@ -200,7 +200,7 @@ export function statedPeriods(entry: OutputEntry): StatedPeriods {
       );
   }
   const segments = segmentSchedule(entry);
-  if (segments)
+  if (typeof segments !== "string")
     add("Segment schedule", { periods: segments.periods.map((period) => ({ period, item: 0 })) });
   const periods = unionPeriods(
     tables.map((table) => table.labels.flatMap((label) => periodOf(label) ?? [])),
@@ -271,8 +271,8 @@ function reportedEbitda(entry: OutputEntry): Read {
   return typeof row === "string" ? row : { ...row, line: read.table.line };
 }
 
-/** The composed figure's data: money measures on one unit and the leverage ratio, every stated period. */
-export function earningsAgainstDebt(entry: OutputEntry): EarningsAgainstDebt | null {
+/** See the exported reader below; a string is the reason the figure is not drawn. */
+function readEarnings(entry: OutputEntry): EarningsAgainstDebt | string {
   const REVENUE = "Chart data: revenue and EBITDA";
   const reads: { key: EarningsMeasure["key"]; label: string; read: Read }[] = [
     { key: "sales", label: "Revenue", read: chartMeasure(entry, REVENUE, "Revenue", "Revenue") },
@@ -289,7 +289,9 @@ export function earningsAgainstDebt(entry: OutputEntry): EarningsAgainstDebt | n
     },
   ];
   const anchor = reads.map(({ read }) => read).find((read) => typeof read !== "string");
-  if (!anchor?.unit) return null;
+  if (!anchor)
+    return reads.flatMap(({ read }) => (typeof read === "string" ? [read] : [])).join(" ");
+  if (!anchor.unit) return `${anchor.label} states no unit.`;
   const unit = anchor.unit;
   const ready = reads.flatMap(({ key, read }) =>
     typeof read !== "string" && read.unit === unit ? [{ key, read }] : [],
@@ -423,7 +425,7 @@ const LADDER: readonly LadderSpec[] = [
     key: "taxes",
     kind: "deduction",
     name: "Cash taxes paid",
-    prefixes: ["Cash taxes paid"],
+    prefixes: ["Cash taxes paid", "Income taxes paid", "Taxes paid"],
     sign: "paid",
   },
   {
@@ -477,10 +479,10 @@ const LADDER: readonly LadderSpec[] = [
   },
 ];
 
-/** The ladder from the handoff's own stated levels and deductions, every period; no plug, no end level. */
-export function cashLadder(entry: OutputEntry): CashLadder | null {
+/** See the exported reader below; a string is the reason the figure is not drawn. */
+function readLadder(entry: OutputEntry): CashLadder | string {
   const cash = statement(entry, "T4.5 Cash flow statement");
-  if (typeof cash === "string") return null;
+  if (typeof cash === "string") return cash;
   const income = statement(entry, "T4.4 Income statement");
   const rows = LADDER.map((spec) => {
     const source = spec.key === "ebitda" ? income : cash;
@@ -492,7 +494,7 @@ export function cashLadder(entry: OutputEntry): CashLadder | null {
     anchor && typeof anchor !== "string"
       ? anchor.unit
       : (rows.map(({ read }) => read).find((read) => typeof read !== "string")?.unit ?? null);
-  if (!unit) return null;
+  if (!unit) return "The cash flow statement states no unit for the ladder's rows.";
   const usable = rows.map(({ spec, read }) => ({
     spec,
     read:
@@ -603,13 +605,15 @@ function liquidityTotal(entry: OutputEntry): NetDebtView["liquidityTotal"] {
   return typeof row === "string" ? null : { label: row.label, values: row.values, line: row.line };
 }
 
-/** Net debt for every stated period, the stated adjustments as written, and stated liquidity. */
-export function netDebtView(entry: OutputEntry): NetDebtView | null {
-  const read = periodTable(entry, "Net debt data", "Net debt");
-  if (typeof read === "string" || !read.unit) return null;
+/** See the exported reader below; a string is the reason the figure is not drawn. */
+function readNetDebt(entry: OutputEntry): NetDebtView | string {
+  const read = periodTable(entry, "Net debt data", "Net debt data");
+  if (typeof read === "string") return read;
+  if (!read.unit) return "Net debt data is not stated in one unit.";
   const at = (name: string) => columnOf(read.table, name);
   const [g, c, n] = [at("Gross debt"), at("Cash"), at("Net debt")];
-  if ([g, c, n].some((index) => index < 0)) return null;
+  if ([g, c, n].some((index) => index < 0))
+    return "Net debt data does not state gross debt, cash and net debt columns.";
   const lev = periodTable(entry, "Chart data: leverage", "Leverage");
   const levAt = typeof lev === "string" ? -1 : columnOf(lev.table, "Net debt / EBITDA");
   const periods = read.rows.map(({ period, row }): NetDebtPeriod => {
@@ -699,15 +703,19 @@ export function bridgeKinds(bridge: EbitdaBridge): BridgeKind[] {
   return [...new Set(bridge.steps.map(bridgeKind))];
 }
 
-/** The steps of `Chart data: EBITDA bridge`; the first is the opening, the last the closing. */
-export function ebitdaBridge(entry: OutputEntry): EbitdaBridge | null {
+/** See the exported reader below; a string is the reason the figure is not drawn. */
+function readBridge(entry: OutputEntry): EbitdaBridge | string {
   const table = tableUnder(entry, "Chart data: EBITDA bridge");
-  if (!table || table.rows.length < 3) return null;
+  if (!table) return NOT_IN("The EBITDA bridge");
+  if (table.rows.length < 3)
+    return "The EBITDA bridge states fewer than an opening, a step and a closing.";
   const amount = columnOf(table, "Amount");
   const unitAt = columnOf(table, "Reporting unit");
   const units = new Set(table.rows.map((row) => row.cells[unitAt] ?? ""));
   const [unit] = [...units];
-  if (amount < 0 || unitAt < 0 || units.size !== 1 || !unit) return null;
+  if (amount < 0 || unitAt < 0)
+    return "The EBITDA bridge states no Amount or Reporting unit column.";
+  if (units.size !== 1 || !unit) return "The EBITDA bridge is not stated in one unit.";
   const last = table.rows.length - 1;
   const steps = table.rows.map((row, at): BridgeStep => ({
     label: (row.cells[0] ?? "").trim(),
@@ -770,7 +778,10 @@ const SEPARATOR = /[\s,—–-]+/;
 /**
  * A wide schedule row label read as segment and measure: "Airframe revenue", "Corporate and
  * eliminations, EBITDA As Defined", "Total Power & Control" (sales), "Unallocated corporate EBITDA
- * As Defined — deduction". A sub-line ("Power & Control — Defense") names no measure: null.
+ * As Defined — deduction". Null for a row that is not one segment's figure: a sub-line ("Power &
+ * Control — Defense", "Power & Control — Commercial OEM sales") or a group total ("Total segment
+ * revenue", "Total revenue"). The handoff contract fixes no label form here; these are the forms
+ * the retained handoffs write.
  */
 function wideLabel(label: string): { name: string; measure: "sales" | "ebitda" } | null {
   const ebitda = EBITDA_WORDS.exec(label);
@@ -778,15 +789,17 @@ function wideLabel(label: string): { name: string; measure: "sales" | "ebitda" }
   const sales = SALES_WORDS.exec(label);
   const measure = ebitda ? "ebitda" : total || sales ? "sales" : null;
   if (!measure) return null;
-  const cut = ebitda?.index ?? (total ? label.length : (sales?.index ?? label.length));
+  const cut = ebitda?.index ?? sales?.index ?? label.length;
   const name = label
     .slice(total ? total[0].length : 0, cut)
     .replace(new RegExp(`${SEPARATOR.source}$`), "")
     .trim();
-  return name ? { name, measure } : null;
+  const groupTotal = total && (sales || /\b(?:segments?|consolidated|group)\b/i.test(name));
+  if (!name || groupTotal || /\s[—–]\s/.test(name)) return null;
+  return { name, measure };
 }
 
-function longSchedule(table: Table, at: (name: string) => number): SegmentRead | null {
+function longSchedule(table: Table, at: (name: string) => number): SegmentRead | string {
   const [nameAt, periodAt, salesAt, ebitdaAt, unitAt] = [
     at("Business unit"),
     at("Period"),
@@ -794,12 +807,14 @@ function longSchedule(table: Table, at: (name: string) => number): SegmentRead |
     at("EBITDA As Defined"),
     at("Unit"),
   ];
-  if ([nameAt, periodAt, salesAt, ebitdaAt, unitAt].some((index) => index < 0)) return null;
+  if ([nameAt, periodAt, salesAt, ebitdaAt, unitAt].some((index) => index < 0))
+    return "The segment schedule does not state business unit, net sales, EBITDA As Defined and unit columns.";
   const labels = [...new Set(table.rows.map((row) => (row.cells[periodAt] ?? "").trim()))];
   const ordered = orderByPeriod(labels.map((cell) => ({ cell, item: cell })));
   const units = new Set(table.rows.map((row) => row.cells[unitAt] ?? ""));
   const [unit] = [...units];
-  if ("reason" in ordered || units.size !== 1 || !unit) return null;
+  if ("reason" in ordered) return `Segment schedule: ${ordered.reason}`;
+  if (units.size !== 1 || !unit) return SEGMENT_UNITS;
   const cells = table.rows.flatMap((row): SegmentCell[] => {
     const name = (row.cells[nameAt] ?? "").trim();
     const label = periodOf(row.cells[periodAt] ?? "")?.label ?? "";
@@ -818,17 +833,19 @@ function longSchedule(table: Table, at: (name: string) => number): SegmentRead |
   };
 }
 
-function wideSchedule(table: Table): SegmentRead | null {
+function wideSchedule(table: Table): SegmentRead | string {
   const columns = statementColumns(table);
   const unitAt = columnOf(table, "Unit");
-  if ("reason" in columns || unitAt < 0) return null;
+  if ("reason" in columns) return `Segment schedule: ${columns.reason}`;
+  if (unitAt < 0) return SEGMENT_UNITS;
   const read = table.rows.flatMap((row) => {
     const parsed = wideLabel((row.cells[0] ?? "").trim());
     return parsed ? [{ row, ...parsed }] : [];
   });
   const units = new Set(read.map(({ row }) => row.cells[unitAt] ?? ""));
   const [unit] = [...units];
-  if (read.length === 0 || units.size !== 1 || !unit) return null;
+  if (read.length === 0) return "No row of the segment schedule names net sales or EBITDA.";
+  if (units.size !== 1 || !unit) return SEGMENT_UNITS;
   const cells = read.flatMap(({ row, name, measure }) =>
     columns.periods.map(({ period, item }): SegmentCell => ({
       name,
@@ -853,22 +870,31 @@ function wideSchedule(table: Table): SegmentRead | null {
 }
 
 /** The schedule in either shape the handoffs write: a Period column, or one column per period. */
-function segmentSchedule(entry: OutputEntry): SegmentRead | null {
+function segmentSchedule(entry: OutputEntry): SegmentRead | string {
   const table = tableUnder(entry, "Segment schedule");
-  if (!table) return null;
+  if (!table) return NOT_IN("The segment schedule");
   const at = (name: string) => columnOf(table, name);
   return at("Period") >= 0 ? longSchedule(table, at) : wideSchedule(table);
 }
 
+const SEGMENT_UNITS = "The segment schedule is not stated in one unit.";
 const isApart = (name: string) => /^unallocated|\bcorporate\b|\beliminations?\b/i.test(name);
 
-/** Net sales and EBITDA per segment as written, every stated period; corporate lines apart; no sum, no ratio. */
-export function segmentView(entry: OutputEntry): SegmentView | null {
+/** See the exported reader below; a string is the reason the figure is not drawn. */
+function readSegments(entry: OutputEntry): SegmentView | string {
   const read = segmentSchedule(entry);
-  if (!read) return null;
+  if (typeof read === "string") return read;
   const key = (cell: SegmentCell) => `${normalLabel(cell.name)}|${cell.measure}|${cell.label}`;
-  const keys = read.cells.map(key);
-  if (new Set(keys).size !== keys.length) return null; // one figure stated twice: the table is a gap
+  const twice = read.cells.find(
+    (cell, at) => read.cells.findIndex((other) => key(other) === key(cell)) !== at,
+  );
+  if (twice) {
+    const label = twice.measure === "sales" ? read.salesLabel : read.ebitdaLabel;
+    const measure = /^[A-Z][a-z]/.test(label)
+      ? label.charAt(0).toLowerCase() + label.slice(1)
+      : label;
+    return `The segment schedule states ${twice.name} ${measure} more than once for ${twice.label}.`;
+  }
   const names = [...new Set(read.cells.map((cell) => cell.name))];
   const series = (name: string, measure: SegmentCell["measure"]) =>
     onto(
@@ -892,4 +918,39 @@ export function segmentView(entry: OutputEntry): SegmentView | null {
     apart: all.filter((segment) => isApart(segment.name)),
     tableLine: read.table.line,
   };
+}
+
+// ---------------------------------------------------------------------------------------------
+// The readers, and why a figure is not drawn
+// ---------------------------------------------------------------------------------------------
+
+const ready = <T>(read: T | string): T | null => (typeof read === "string" ? null : read);
+
+/** The composed figure's data: money measures on one unit and the leverage ratio, every stated period. */
+export const earningsAgainstDebt = (entry: OutputEntry) => ready(readEarnings(entry));
+/** The ladder from the handoff's own stated levels and deductions, every period; no plug, no end level. */
+export const cashLadder = (entry: OutputEntry) => ready(readLadder(entry));
+/** Net debt for every stated period, the stated adjustments as written, and stated liquidity. */
+export const netDebtView = (entry: OutputEntry) => ready(readNetDebt(entry));
+/** The steps of `Chart data: EBITDA bridge`; the first is the opening, the last the closing. */
+export const ebitdaBridge = (entry: OutputEntry) => ready(readBridge(entry));
+/** Net sales and EBITDA per segment as written, every stated period; corporate lines apart; no sum, no ratio. */
+export const segmentView = (entry: OutputEntry) => ready(readSegments(entry));
+
+export type Figure = "earnings" | "ladder" | "netDebt" | "bridge" | "segments";
+const READERS: Record<Figure, (entry: OutputEntry) => unknown> = {
+  earnings: readEarnings,
+  ladder: readLadder,
+  netDebt: readNetDebt,
+  bridge: readBridge,
+  segments: readSegments,
+};
+
+/**
+ * Why a figure's reader returns null, in words true of this handoff ("Net debt data: FY2024 is
+ * stated more than once.", "The segment schedule is not in the handoff."), or null when it draws.
+ */
+export function figureGap(entry: OutputEntry, figure: Figure): string | null {
+  const read = READERS[figure](entry);
+  return typeof read === "string" ? read : null;
 }

@@ -34,3 +34,24 @@ page is to show it; none is a number or sentence the handoff states today.
 | CP-L10 | The note "Changes are the exact difference of the two stated figures." | None: the signed change is the only computed figure. |
 | CP-MODEL | "Base case peaks at X in FY…" title, "peak X" and "high X" labels on the chart, the note "the highest stated value is …" | A stated peak or maximum per case in the model's own text (the page now singles out no value). |
 | CP-MODEL | The hatched full-height "no figure" column across all cases | Nothing: replaced by a hatched slot on the lacking case's own line. |
+
+## CP-1 data layer (`foundation/foundationData.ts`, `kit/tables.ts`, `kit/numbers.ts`)
+
+### For the methodology plan: the module should write it
+
+Removed from the data layer's outputs under ruling (i); each is a figure the module would have to state in its handoff for a page to show it.
+
+| Removed | Was computed from (handoff table) | What the module would write |
+|---|---|---|
+| Growth % per measure (net sales, reported EBITDA, EBITDA As Defined, gross debt), and the growth axis it fed | `Chart data: revenue and EBITDA` (Revenue, Adjusted EBITDA), `T4.4 Income statement` (EBITDA (Reported)), `Net debt data` (Gross debt) | A growth or change column per measure, on its stated basis. |
+| `percentOf` itself (kit): no ratio or share is computed anywhere in the kit | — | — |
+| The "Other items, not itemised here" plug (EBITDA As Defined less cash interest, cash taxes and cash from operations) | `T4.4 Income statement` (EBITDA (Adjusted)), `T4.5 Cash flow statement` (Cash Interest Paid, Cash taxes paid, Net Cash from Operating Activities) | A stated EBITDA-to-operating-cash bridge row (working capital and other items), as the issuer's management bridge does. |
+| The "Acquisitions and distributions" outflow sum | `T4.5 Cash flow statement` (Acquisition of businesses, net of cash acquired; Dividends and dividend equivalent payments) | Nothing: the two outflows are drawn as stated steps. |
+| The invented end level "Free cash flow after acquisitions and distributions" (−2,505 / 436) | `T4.5 Cash flow statement` (Levered free cash flow less the sum above) | A stated after-acquisitions cash measure, if the reader needs one; the ladder now ends at the module's own "Discretionary cash flow after distributions" level and the stated acquisitions outflow. |
+| The bridge's `addBacks` total (+360) | `Chart data: EBITDA bridge` (the change rows) | A stated total of the adjustments. The exact reconciliation check stays internal (it decides whether the bridge is drawn); its sum is never returned. |
+| Segment `salesTotal` and `ebitdaTotal`, and the segment-to-group reconciliation built on them | `Segment schedule` (Net sales, EBITDA As Defined), `Chart data: revenue and EBITDA` | A stated segment total and a stated reconciliation to the group (the handoff's corporate and eliminations rows). |
+| Segment group figures (`groupSales`, `groupEbitda`) dropped from the segment view | `Chart data: revenue and EBITDA` | None: the group figures stay in the earnings figure; they were only in the segment view to feed the sums. |
+| The choice of "the largest adjustment" as the pro forma bar (a ranking by computed absolute amount) | `Post-balance-sheet adjustments` (Amount) | Which adjustment is the headline pro forma, if one is. The data layer now lists every row in handoff order. |
+| A liquidity sum (cash plus undrawn facilities) | `Chart data: liquidity` (Cash, Undrawn committed facilities) | Already written where it exists: `Financials and credit metrics` "Cash plus available revolver" is read as stated (`liquidityTotal`); with no such row, no total. |
+
+Kept, as the one allowed computed figure: `change`, the exact difference of one stated measure between the two comparison periods (the latest two of one kind, annual first), on one unit, only when both cells are stated numbers; leverage tone from `signal.ts`. Never computed across measures (debt against EBITDA) or across kinds of period (FY against LTM).
