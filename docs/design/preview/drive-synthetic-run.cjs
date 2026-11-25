@@ -16,10 +16,16 @@ const ORIGIN = process.env.PREVIEW_ORIGIN || 'http://127.0.0.1:8765';
  await page.getByRole('button',{name:'Continue to purpose',...x}).click();
  await page.getByRole('radio',{name:'Full credit assessment',...x}).waitFor();
  await page.getByRole('button',{name:'Continue to context',...x}).click();
+ // More context is an accordion of closed sections, one open at a time: open each before its fields.
+ const openSection=(name)=>page.getByRole('heading',{level:3,name,...x}).click();
+ await openSection('For the research');
  await page.getByLabel(/Anything the analysis should know/u).fill('Check the 2028 maturities.\nInclude refinancing risk.');
+ await openSection('Files with a role');
  await page.getByRole('combobox',{name:'Portfolio workbook',...x}).selectOption({label:'northbridge-portfolio.xlsx'});
+ await openSection('Legal documents');
  await page.getByRole('combobox',{name:'Legal documents',...x}).selectOption('executed');
  await page.getByRole('combobox',{name:'The agreement',...x}).selectOption({label:'northbridge-credit-agreement.txt'});
+ await openSection('Ratings, quotes and facilities');
  const ratings=page.getByRole('region',{name:'Ratings',...x});
  await ratings.getByRole('button',{name:'Add rating',...x}).click();
  await ratings.getByLabel('Agency',x).selectOption("Moody's"); await ratings.getByLabel('Scope',x).selectOption('issuer');

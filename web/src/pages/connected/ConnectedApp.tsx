@@ -165,11 +165,7 @@ function CurrentPage({
   if (route.kind === "coverage") return <Coverage />;
   if (readOnly && route.kind === "run-list") return <RunReadOnly title="Run activity" />;
   if (readOnly && route.kind === "run") return <RunReadOnly title="Run progress" />;
-  if (readOnly && route.kind === "start") {
-    return (
-      <PageHeader title="Read-only preview" actions={<Button href="/">Back to Library</Button>} />
-    );
-  }
+  if (readOnly && route.kind === "start") return <RunReadOnly title="Start run" />;
   if (route.kind === "start")
     return <StartRun key={prior} mode={mode} navigate={navigate} from={prior ?? undefined} />;
   if (route.kind === "run-list") return <RunActivity mode={mode} />;
