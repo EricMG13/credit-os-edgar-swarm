@@ -151,3 +151,43 @@ def test_optional_rating_column_is_read_by_name():
     assert rows == [
         {"#": "1", "Issuer": "X Corp", "Ticker": "XC", "CIK": "0000042", "Rating": "BB"}
     ]
+
+
+L1 = ("--set", "layer1-dr", "--plan", "plan-layer1-dr.json")
+
+
+def layer1(inputs: dict[str, Path]) -> dict[str, Any]:
+    return prepare.prepare(**inputs, set_name="layer1-dr", plan_name="plan-layer1-dr.json")
+
+
+def test_layer1_dr_plan_has_its_own_folders_and_retains_only_a_published_issuer(inputs):
+    plan = run(inputs)
+    plan["issuers"][0].update(status="published", attempts=4, claims=1)  # CIK 1000001
+    plan_file = inputs["root"] / "swarm" / "plan.json"
+    plan_file.write_text(json.dumps(plan), encoding="utf-8")
+    before = plan_file.read_bytes()
+
+    entries = {i["cik"]: i for i in layer1(inputs)["issuers"]}
+
+    runs = inputs["root"] / "_engine" / "runs"
+    assert {c: i["modules"] for c, i in entries.items()} == dict.fromkeys(OK_IDS, "layer1-dr")
+    assert entries["1000001"]["run_folder"] == str(runs / "swarm-alph-l1")
+    assert entries["1000001"]["retain_from"] == str(runs / "swarm-alph")
+    assert entries["1000002"]["run_folder"] == str(runs / "swarm-beta-l1")
+    assert "retain_from" not in entries["1000002"]
+    assert entries["1000001"]["status"] == "pending"
+    on_disk = inputs["root"] / "swarm" / "plan-layer1-dr.json"
+    assert json.loads(on_disk.read_text(encoding="utf-8"))["issuers"][0] == entries["1000001"]
+    assert plan_file.read_bytes() == before
+
+
+def test_the_default_set_adds_no_modules_or_retain_key(inputs):
+    assert all("modules" not in i and "retain_from" not in i for i in run(inputs)["issuers"])
+
+
+def test_layer1_dr_is_refused_with_plan_json_before_anything_is_written(inputs, capsys):
+    argv = [f"--{k}={v}" for k, v in inputs.items()]
+    assert prepare.main([*argv, "--set", "layer1-dr"]) == 2
+    assert "plan.json" in capsys.readouterr().err
+    assert not (inputs["root"] / "swarm").exists()
+    assert prepare.main([*argv, *L1]) == 0

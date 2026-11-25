@@ -84,7 +84,7 @@ def test_host_is_a_config_choice_beside_the_provider_configs():
 
 
 def test_the_named_set_expands_in_place_once_each_and_combines():
-    assert MODULE_SETS == {"through-cp2": THROUGH_CP2}
+    assert MODULE_SETS["through-cp2"] == THROUGH_CP2
     assert expand_modules(None) is None
     assert expand_modules(("CP-4", "through-cp2", "CP-1", "CP-2A")) == (
         "CP-4",
@@ -306,3 +306,108 @@ def test_a_finished_host_run_is_published_to_the_library_unless_no_library(
     out = capsys.readouterr()
     assert "Library:" in out.out, out
     assert (tmp_path / "library/data.js").is_file()  # main's library publishes data.js
+
+
+LAYER1_DR = ("CP-0", "CP-1", "CP-1A", "CP-1B", "CP-DR", "CP-1C", "CP-1D", "CP-2")
+# Written by hand: what a layer1-dr run asks when CP-0, CP-1 and CP-1A are retained.
+ASKED_AFTER_RETAINING = ("CP-1B", "CP-DR", "CP-1C", "CP-1D", "CP-2")
+
+
+def drive(tmp_path: Path, capsys, argv: list[str], modules: tuple[str, ...]) -> list[str]:
+    """Answer the launcher until it stops asking; returns the modules it asked, in order."""
+    routes = prepare(
+        tmp_path / "context.json",
+        tmp_path / "issuer",
+        tmp_path / f"preview-{len(modules)}",
+        config="host",
+        cap=0,
+        modules=modules,
+    ).plan.layout.routes
+    asked_modules: list[str] = []
+    while (code := main(argv)) == ANSWER_NEEDED:
+        asked, answer_path = asked_of(capsys.readouterr().out)
+        asked_modules.append(asked["module_id"])
+        answer_path.write_text(answer_for(asked, routes))
+    assert code == 0, capsys.readouterr().err
+    capsys.readouterr()
+    return asked_modules
+
+
+def args_of(tmp_path: Path, *extra: str) -> list[str]:
+    """`host_argv` without an `--out`; the issuer files are written once."""
+    if not (tmp_path / "issuer").exists():
+        context_file(tmp_path, "credit_snapshot"), issuer_folder(tmp_path)
+    return [
+        *("--context", str(tmp_path / "context.json"), "--sources", str(tmp_path / "issuer")),
+        *("--config", "host", *extra),
+    ]
+
+
+def finished_first_run(tmp_path: Path, capsys) -> Path:
+    first = tmp_path / "first"
+    argv = args_of(
+        tmp_path,
+        *("--modules", "through-cp2", "--no-library", "--prior", "none"),
+        "--out",
+        str(first),
+    )
+    assert drive(tmp_path, capsys, argv, THROUGH_CP2) == list(THROUGH_CP2)
+    return first
+
+
+def layer1_argv(tmp_path: Path, first: Path, out: str = "second") -> list[str]:
+    return args_of(
+        tmp_path,
+        *("--modules", "layer1-dr", "--no-library", "--prior", "none"),
+        *("--retain-from", str(first), "--out", str(tmp_path / out)),
+    )
+
+
+def delivered(folder: Path, module: str) -> bytes:
+    return next(folder.glob(f"deliveries/*/{module}.md")).read_bytes()
+
+
+def test_layer1_dr_is_a_named_set_in_the_priority_order():
+    assert MODULE_SETS["layer1-dr"] == LAYER1_DR
+
+
+def test_retained_layer1_dr_asks_only_the_new_modules_and_delivers_the_old_bytes(tmp_path, capsys):
+    first = finished_first_run(tmp_path, capsys)
+    argv = layer1_argv(tmp_path, first)
+    asked = drive(tmp_path, capsys, argv, LAYER1_DR)
+    second = tmp_path / "second"
+    assert tuple(asked) == ASKED_AFTER_RETAINING
+    for module in ("CP-0", "CP-1", "CP-1A"):
+        assert delivered(second, module) == delivered(first, module)
+        # CP-OS keeps its own record of a retained dispatch; the answer in it is the old one.
+        (kept,) = second.glob(f"requests/{module}/*/*.response.md")
+        assert kept.read_bytes() == delivered(first, module)
+    assert delivered(second, "CP-2") != delivered(first, "CP-2")
+    before = snapshot(second)
+    assert main(argv) == 0
+    assert snapshot(second) == before
+
+
+def test_a_changed_earlier_source_is_refused_before_any_request(tmp_path, capsys):
+    first = finished_first_run(tmp_path, capsys)
+    (tmp_path / "issuer" / "annual.txt").write_text("Net sales were 101.")
+    assert main(layer1_argv(tmp_path, first)) == 1
+    assert "cpos_retained_sources" in capsys.readouterr().err
+    assert not list((tmp_path / "second").glob("requests/*/*/*.request.json"))
+
+
+@pytest.mark.parametrize("kind", ["missing", "not-a-run", "unfinished"])
+def test_retain_from_that_is_not_a_finished_run_exits_2_with_one_line(tmp_path, capsys, kind):
+    folder = tmp_path / "earlier"
+    if kind != "missing":
+        folder.mkdir()
+    if kind == "unfinished":
+        argv = args_of(
+            tmp_path, "--modules", "through-cp2", "--prior", "none", "--out", str(folder)
+        )
+        assert main(argv) == 3
+        capsys.readouterr()
+    assert main(layer1_argv(tmp_path, folder)) == 2
+    err = capsys.readouterr().err.strip().splitlines()
+    assert len(err) == 1 and "--retain-from" in err[0]
+    assert not (tmp_path / "second").exists()

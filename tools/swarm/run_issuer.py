@@ -22,14 +22,14 @@ from pathlib import Path
 from typing import Any, cast
 
 SCHEMA = "swarm-plan/1"
-PLAN_RELATIVE = Path("swarm") / "plan.json"
+PLAN_NAME = "plan.json"  # A file under ``<root>/swarm/``; ``--plan`` names another.
 LAUNCHER = ("uv", "run", "python", "-m", "deploy_workflow.owners.cpos_launch")
 REPO = Path(__file__).resolve().parents[2]
 Runner = Callable[[Sequence[str], Path], int]
 
 
-def load_issuer(root: Path, issuer_id: str) -> dict[str, Any]:
-    path = root / PLAN_RELATIVE
+def load_issuer(root: Path, issuer_id: str, plan_name: str = PLAN_NAME) -> dict[str, Any]:
+    path = root / "swarm" / plan_name
     plan = json.loads(path.read_text(encoding="utf-8"))
     if plan.get("schema") != SCHEMA:
         raise ValueError(f"{path} is not a {SCHEMA} plan")
@@ -40,7 +40,8 @@ def load_issuer(root: Path, issuer_id: str) -> dict[str, Any]:
 
 
 def command(issuer: dict[str, Any]) -> list[str]:
-    """The launcher argument vector for one plan entry."""
+    """The launcher argument vector for one plan entry: `through-cp2` unless it names a set, and
+    a retained earlier run when it names one."""
     return [
         *LAUNCHER,
         "--context",
@@ -50,12 +51,13 @@ def command(issuer: dict[str, Any]) -> list[str]:
         "--config",
         "host",
         "--modules",
-        "through-cp2",
+        issuer.get("modules", "through-cp2"),
         "--prior",
         "none",
         "--no-library",
         "--out",
         issuer["run_folder"],
+        *(["--retain-from", issuer["retain_from"]] if "retain_from" in issuer else []),
     ]
 
 
@@ -85,10 +87,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("issuer_id")
     parser.add_argument("action", nargs="?", choices=("verify",))
     parser.add_argument("--root", type=Path, required=True)
+    parser.add_argument(
+        "--plan", default=PLAN_NAME, help="plan file name under ROOT/swarm/ (default plan.json)"
+    )
     parser.add_argument("--repo", type=Path, default=REPO, help="the repository root to run in")
     args = parser.parse_args(argv)
     try:
-        issuer = load_issuer(args.root, args.issuer_id)
+        issuer = load_issuer(args.root, args.issuer_id, args.plan)
     except (ValueError, OSError) as error:
         print(f"run_issuer: {error}", file=sys.stderr)
         return 2

@@ -5,7 +5,8 @@
 // Launch: Workflow({scriptPath: 'tools/swarm/analyse.workflow.js', args: {...}})
 //   args.root     root holding swarm/plan.json (from tools/swarm/prepare.py) and inputs/
 //   args.repo     repository checkout to run uv in
-//   args.issuers  issuer ids to analyse, all present in ROOT/swarm/plan.json
+//   args.issuers  issuer ids to analyse, all present in the plan file
+//   args.plan     plan file name under ROOT/swarm/ (default plan.json)
 //   args.effort   analyst effort: low, medium, high, xhigh or max; default high
 
 export const meta = {
@@ -17,6 +18,10 @@ export const meta = {
 const { root, repo, issuers } = args
 if (!root || !repo || !Array.isArray(issuers) || issuers.length === 0) {
   throw new Error('args.root, args.repo and a non-empty args.issuers list are required')
+}
+const plan = args.plan ?? 'plan.json'
+if (!/^[A-Za-z0-9][A-Za-z0-9._-]*\.json$/.test(plan)) {
+  throw new Error(`args.plan must be a plan file name such as plan.json, not ${plan}`)
 }
 const effort = args.effort ?? 'high'
 if (!['low', 'medium', 'high', 'xhigh', 'max'].includes(effort)) {
@@ -47,7 +52,7 @@ const brief = (id) => `You answer CP-OS modules for one issuer (issuer id ${id})
 No provider is called; you are the model. Follow this order exactly.
 
 1. Read ${repo}/docs/templates/host-analyst-checklist.md and follow it for every answer.
-2. From ${repo} run: env -u UV_NATIVE_TLS UV_SYSTEM_CERTS=1 uv run python tools/swarm/run_issuer.py ${id} --root ${root}
+2. From ${repo} run: env -u UV_NATIVE_TLS UV_SYSTEM_CERTS=1 uv run python tools/swarm/run_issuer.py ${id} --root ${root} --plan ${plan}
    It prints the launcher command; run that command, as printed, from ${repo}. Exit 3 means a module needs your answer: read the
    files named on its Source: and Handoff: lines, write your draft under ${root}/swarm/drafts/${id}/,
    work the checklist's "Before you submit" on the draft, copy it to the Answer: path printed,
@@ -56,7 +61,7 @@ No provider is called; you are the model. Follow this order exactly.
    module at most 2 times (3 attempts in all); if a module is rejected a third time, stop.
 4. Rules: no web, no network; no edits to the repository; write drafts only in
    ${root}/swarm/drafts/${id}/; do not read any other issuer's folder or draft; do not touch
-   ${root}/swarm/plan.json. An accepted answer cannot be replaced.
+   ${root}/swarm/${plan}. An accepted answer cannot be replaced.
 5. Reply with: issuer_id ${id}; exit_code, the last launcher exit code; attempts_by_module for
    CP-0, CP-1, CP-1A and CP-2 (0 for a module never submitted); notes, one sentence on any defect
    you saw but could not fix.`

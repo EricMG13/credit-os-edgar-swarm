@@ -54,6 +54,26 @@ launcher command (`--config host --modules through-cp2 --prior none --no-library
 exit 3 means write the answer at the printed `Answer:` path and rerun it; `... verify` reruns it and
 passes only on exit 0 with no new file.
 
+## Layer 1 and CP-DR extension
+
+A second plan takes every issuer through CP-0, CP-1, CP-1A, CP-1B, CP-DR, CP-1C, CP-1D and CP-2
+(the `layer1-dr` module set) in a new run folder, `swarm-<id>-l1`. The 187 published `through-cp2`
+runs, `plan.json` and its relaunch check stay as they are.
+
+1. Prepare it beside the first plan (same root; `--set layer1-dr` with `plan.json` is refused):
+   `uv run python tools/swarm/prepare.py --approved hy-list.md --packs packs/ --contexts contexts/ --root ROOT --set layer1-dr --plan plan-layer1-dr.json`
+2. Run the workflow with `args {root, repo, plan: 'plan-layer1-dr.json', ...}`; the ledger and
+   `run_issuer.py` take the same `--plan plan-layer1-dr.json`.
+3. `retain_from`: an issuer that `plan.json` records `published` gets
+   `"retain_from": ROOT/_engine/runs/swarm-<id>`, and its launcher command ends
+   `--retain-from <that run>`. CP-OS then keeps the earlier run's delivered CP-0, CP-1 and CP-1A
+   byte for byte (CP-2 is asked again: its instructions differ) and asks only CP-1B, CP-DR,
+   CP-1C, CP-1D and CP-2. It does so only if the earlier run's source hashes and the producers'
+   hashes still match, else it stops with `cpos_retained_sources` or `cpos_retained_stale` and
+   writes no request. An issuer not yet published has no `retain_from`: all eight modules are asked.
+4. Host mode makes no web lookup (`--config host` refuses `--web-lookup`), so CP-DR and CP-1C
+   state peer and web gaps instead of fetching them; no peer pack is supplied.
+
 ## Ledger statuses
 
 | Status | Meaning |

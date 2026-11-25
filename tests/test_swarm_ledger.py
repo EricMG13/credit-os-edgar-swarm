@@ -318,3 +318,35 @@ def test_shard_leaves_finished_issuers_and_refuses_a_bad_index(tmp_path: Path) -
     assert _statuses(path)["co0"] == "published"
     with pytest.raises(ledger.LedgerError):
         ledger.shard(tmp_path, 2, 2)
+
+
+THROUGH_CP2_ARGV = [
+    *("uv", "run", "python", "-m", "deploy_workflow.owners.cpos_launch"),
+    *("--context", "C", "--sources", "P", "--config", "host", "--modules", "through-cp2"),
+    *("--prior", "none", "--no-library", "--out", "R"),
+]  # Written out by hand: the answer key for an entry without `modules`.
+
+
+def test_an_entry_without_modules_keeps_the_through_cp2_argv_byte_for_byte() -> None:
+    assert run_issuer.command({"context": "C", "pack": "P", "run_folder": "R"}) == THROUGH_CP2_ARGV
+
+
+def test_a_layer1_dr_entry_names_the_set_and_retains_only_when_it_has_a_source() -> None:
+    entry = {"context": "C", "pack": "P", "run_folder": "R", "modules": "layer1-dr"}
+    swapped = [("layer1-dr" if a == "through-cp2" else a) for a in THROUGH_CP2_ARGV]
+    assert run_issuer.command(entry) == swapped
+    assert run_issuer.command({**entry, "retain_from": "E"}) == [*swapped, "--retain-from", "E"]
+
+
+def test_a_named_plan_is_read_and_claimed_apart_from_plan_json(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    plan = _plan(tmp_path, 1)
+    other = plan.with_name("plan-layer1-dr.json")
+    other.write_text(plan.read_text().replace("/runs/co0", "/runs/co0-l1"))
+    assert run_issuer.main(["co0", "--root", str(tmp_path), "--plan", other.name]) == 0
+    assert capsys.readouterr().out.strip().endswith("--out /runs/co0-l1")
+    assert ledger.main(["--root", str(tmp_path), "--plan", other.name, "next", "--n", "1"]) == 0
+    assert _statuses(other) == {"co0": "running"} and _statuses(plan) == {"co0": "pending"}
+    assert ledger.main(["--root", str(tmp_path), "--plan", other.name, "status"]) == 0
+    assert json.loads(capsys.readouterr().out.splitlines()[-1])["running"] == 1

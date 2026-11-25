@@ -2,6 +2,8 @@
 //
 // Launch: Workflow({scriptPath: 'tools/swarm/swarm.workflow.js', args: {...}})
 //   args.root          shared root holding swarm/plan.json (written by tools/swarm/prepare.py)
+//   args.plan          plan file name under swarm/ (default plan.json; plan-layer1-dr.json for the
+//                      Layer 1 and CP-DR set)
 //   args.repo          repository checkout to run uv in
 //   args.concurrency   issuers claimed (and analysts started) per batch; default 10
 //   args.limit         stop after this many issuers are claimed (pilot: 5); default no limit
@@ -36,6 +38,10 @@ const limit = args.limit === undefined || args.limit === null ? Infinity : Numbe
 const staleSeconds = Number(args.stale_seconds ?? 3600)
 const secondPass = args.secondPass === true
 const { results, trailer } = args
+const plan = args.plan ?? 'plan.json'
+if (!/^[A-Za-z0-9][A-Za-z0-9._-]*\.json$/.test(plan)) {
+  throw new Error(`args.plan must be a plan file name such as plan.json, not ${plan}`)
+}
 const effort = args.effort ?? 'high'
 if (!['low', 'medium', 'high', 'xhigh', 'max'].includes(effort)) {
   throw new Error(`args.effort must be low, medium, high, xhigh or max, not ${effort}`)
@@ -46,7 +52,7 @@ const q = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`
 // UV_SYSTEM_CERTS is its replacement and keeps the same certificates.
 const uv = 'env -u UV_NATIVE_TLS UV_SYSTEM_CERTS=1 uv'
 const tool = (script, rest) => `cd ${q(repo)} && ${uv} run python tools/swarm/${script} ${rest}`
-const ledger = (rest) => tool('ledger.py', `--root ${q(root)} ${rest}`)
+const ledger = (rest) => tool('ledger.py', `--root ${q(root)} --plan ${q(plan)} ${rest}`)
 
 // Every save copies all runs again, so a save that failed is made good by the next one.
 // data.js can be rebuilt from the saved runs if it grows past GitHub's 100 MiB limit.
@@ -56,7 +62,7 @@ const save = (message) =>
   `--exclude='library/data.js' -cf - runs library | tar -xf -; ` +
   `data=${q(root)}/_engine/library/data.js; ` +
   `if [ -f "$data" ] && [ "$(wc -c < "$data")" -le 104857600 ]; then cp "$data" library/data.js; fi; ` +
-  `cp ${q(root)}/swarm/plan.json plan.json; ` +
+  `cp ${q(root)}/swarm/${q(plan)} ${q(plan)}; ` +
   `git add -A; git diff --cached --quiet || git commit -q -m ${q(message)}` +
   `${trailer ? ` -m ${q(trailer)}` : ''}; ` +
   `for i in 1 2 3 4; do git push -q origin HEAD && exit 0; sleep $((i * 4)); done; exit 1) 2>&1`
@@ -115,7 +121,7 @@ No provider is called; you are the model. Follow this order exactly.
 3. Count the launcher attempts for each module (the first submission is 1). You may resubmit a
    module at most 2 times (3 attempts in all); if a module is rejected a third time, stop.
 4. Rules: no web, no network; no edits to the repository; write drafts only in ${c.drafts}/;
-   do not read any other issuer's folder or draft; do not touch ${root}/swarm/plan.json (the
+   do not read any other issuer's folder or draft; do not touch ${root}/swarm/${plan} (the
    ledger; the controller writes it). An accepted answer cannot be replaced.
 5. Reply with: issuer_id ${c.id}; exit_code, the last launcher exit code; attempts_by_module for
    CP-0, CP-1, CP-1A and CP-2; notes, one sentence on any defect you saw but could not fix.`
@@ -150,7 +156,7 @@ while (claimed < limit) {
   phase('Analyse')
   const analysed = await parallel(
     batch.map((issuer) => async () => {
-      const cmd = await run(`command ${issuer.issuer_id}`, 'Analyse', tool('run_issuer.py', `${q(issuer.issuer_id)} --root ${q(root)}`))
+      const cmd = await run(`command ${issuer.issuer_id}`, 'Analyse', tool('run_issuer.py', `${q(issuer.issuer_id)} --root ${q(root)} --plan ${q(plan)}`))
       if (!cmd || cmd.exit_code !== 0) return { issuer, fail: 'could not build the launcher command' }
       const report = await agent(
         brief({
@@ -183,7 +189,7 @@ while (claimed < limit) {
       reason = `launcher stopped, exit ${report.exit_code}: ${report.notes}`
     }
     if (!reason) {
-      const check = await run(`verify ${id}`, 'Verify and record', tool('run_issuer.py', `${q(id)} --root ${q(root)} verify`))
+      const check = await run(`verify ${id}`, 'Verify and record', tool('run_issuer.py', `${q(id)} --root ${q(root)} --plan ${q(plan)} verify`))
       if (!check) reason = 'verify runner returned nothing'
       else if (check.exit_code !== 0) reason = `relaunch check failed: ${check.stdout.trim()}`
     }
