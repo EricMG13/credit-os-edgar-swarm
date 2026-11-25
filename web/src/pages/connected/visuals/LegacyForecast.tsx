@@ -587,7 +587,7 @@ export function ForecastScope({
             {!limits.length && !base.length && (
               <p>No qualifications are available in this summary.</p>
             )}
-            <Button href="#evidence/record" color="link-gray" size="sm" className="w-fit">
+            <Button href="#evidence/record/notes" color="link-gray" size="sm" className="w-fit">
               Full model notes and limitations
             </Button>
           </div>
@@ -1036,7 +1036,7 @@ export function LegacyForecast({
         </>
       )}
       {evidenceOnlyQualifications && (
-        <a className="text-secondary underline" href="#evidence/record">
+        <a className="text-secondary underline" href="#evidence/record/notes">
           Model notes and limitations
         </a>
       )}

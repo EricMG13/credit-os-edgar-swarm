@@ -198,7 +198,7 @@ function forecastSources(
       return (
         <PublishedSource
           name={name}
-          href="#evidence/record"
+          href="#evidence/record/notes"
           linkLabel={`Read ${name} in Evidence Record`}
         >
           Read in Evidence Record
@@ -402,7 +402,7 @@ function ModelTiles({
         className="lg:self-start"
         trace={
           <Button
-            href="#evidence/record"
+            href="#evidence/record/notes"
             color="secondary"
             size="sm"
             iconTrailing={ArrowRight}

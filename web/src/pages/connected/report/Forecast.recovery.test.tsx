@@ -185,7 +185,7 @@ it("keeps the full model qualification ledger once on Evidence Record, not on Fo
   expect(document.body.textContent).not.toContain(ledger);
   expect(screen.getByRole("link", { name: "Model notes and limitations" })).toHaveAttribute(
     "href",
-    "#evidence/record",
+    "#evidence/record/notes",
   );
   drawn.unmount();
   vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("not available")));
@@ -241,7 +241,7 @@ it("ties promoted excerpts to the full recorded input and sends generated notes 
   const note = screen.getByText("Base case is a conditional illustration.", { selector: "p" });
   const group = note.parentElement;
   if (!group) throw new Error("Missing base case qualification");
-  expect(within(group).getByRole("link")).toHaveAttribute("href", "#evidence/record");
+  expect(within(group).getByRole("link")).toHaveAttribute("href", "#evidence/record/notes");
 
   const scope = screen.getByRole("region", { name: "Scope and limits" });
   const excerpt = within(scope).getByText("Standalone perimeter applies.").parentElement;
@@ -851,7 +851,7 @@ it("retains a cell qualification even when its calculation grid cannot be drawn"
   const forecast = render(<Forecast view={view} run={run} />);
   expect(screen.getByRole("link", { name: "Model notes and limitations" })).toHaveAttribute(
     "href",
-    "#evidence/record",
+    "#evidence/record/notes",
   );
   forecast.unmount();
   vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("not available")));

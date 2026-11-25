@@ -133,7 +133,7 @@ export function ScopeTile({
       {note}
       <div className="flex flex-wrap gap-x-4">
         <Button
-          href="#evidence/record"
+          href="#evidence/record/notes"
           color="link-gray"
           size="sm"
           iconTrailing={ArrowRight}
@@ -142,7 +142,7 @@ export function ScopeTile({
           Full model notes and limitations
         </Button>
         {register && (
-          <Button href="#evidence/record" color="link-gray" size="sm" className={TARGET}>
+          <Button href="#evidence/record/notes" color="link-gray" size="sm" className={TARGET}>
             View model records in Evidence
           </Button>
         )}
