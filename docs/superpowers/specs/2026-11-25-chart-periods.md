@@ -1,0 +1,84 @@
+# Chart periods: every supplied period, one order, periods on X
+
+Owner's ruling, 2026-11-25: (1) when issuer financials carry several periods, charts display all
+of them, ordered oldest fiscal year → latest fiscal year → YTD/PYTD → LTM → PF (pro forma) →
+forecast years; (2) every time-series chart has periods on the X axis. Desktop only.
+
+## The rule (one, written twice)
+
+`src/deploy_vii/period_order.py` and `web/src/utils/periodOrder.ts` implement the same rule.
+Both test suites read `tests/fixtures/period-order-cases.json`, written by hand from the ruling.
+No other code in the repository parses a period label for ordering.
+
+A label is normalised (trimmed, upper-cased, apostrophes to spaces, runs of spaces to one) and
+read as a **class** and an optional **end**:
+
+| Class (in order) | Recognised by |
+|---|---|
+| actual | no marker below |
+| ytd | `YTD`, `PYTD`, or `3M`/`6M`/`9M` |
+| ltm | `LTM`, `TTM` |
+| pf | `PF`, `PRO FORMA`, `PRO-FORMA`, `PROFORMA` |
+| forecast | a year directly followed by `E` or `F` (`FY2025E`, `26E`), or the word `FORECAST`, `PROJECTED` or `BUDGET` |
+
+The highest class present wins (`PF FY2025E` is a forecast, `Pro forma LTM Jun 2025` is PF).
+
+End, first match wins: an ISO date (a real calendar date, else the label is unparseable); else a
+year with a month name; a quarter (`Q3`, `3Q` → month 3n); a half (`H1`, `1H` → month 6n); a
+`3M`/`6M`/`9M` count; or the year alone (month 12). A year is four digits, a split year
+(`FY2024/25` → 2025; the second part must be the next year), or, when the label also has `FY`,
+a part, a month or a class marker, the last two-digit number (`FY24` → 2024). Fiscal labels are
+placed as if the fiscal year ends in the calendar year it names; a label that carries its own
+date (`FY2024 / 2024-09-30`) goes by that date.
+
+Sort key: class, then end (year, month, day), then span (date or month, quarter, half, year),
+so on one end date the shorter period comes first. Within ytd, ltm and pf an undated label sorts
+after the dated ones, except an undated `PYTD`, which sorts first. An actual label with no year
+is **unparseable**. Unparseable labels keep their authored relative order after every ordered
+label, and the ordering function returns them as gaps; a caller shows them and states the gap,
+never drops them. Labels with equal keys keep their authored order.
+
+Structured periods (T4.14 rows: `period_type` and `end_date`) use the same key built from the
+type and date, not from a label. `FinancialPeriod.period_type` gains `PF`.
+
+## What each chart does
+
+- **Strip charts S.1, S.2, S.3, S.5** (`financial_series.py`): every T4.14 period that carries a
+  fact for the metric is plotted (FY, QUARTER, YTD, LTM, PF), in rule order; no four-quarter
+  requirement. A period without a fact for a metric is a gap for that point, not a reason to
+  drop the chart.
+- **S.4 maturity wall**: X categories in maturity-date order.
+- **Markdown chart routes** (`markdown_delivery._chronological`), **issuer-library reader
+  charts** (`handoff_fields._chart_table` supplies row order; the browser code draws rows in the
+  order supplied), **connected report charts** (`charts.tsx`, `seriesData.ts`): rows ordered by
+  the rule; unparseable periods drawn last with a stated gap.
+- **`period_order` / `periodOrder`** (catalogue, reader): delegate to the rule, so LTM, PF,
+  quarters and forecasts order instead of being rejected. `chart_rows` still raises on an
+  unparseable Period or two rows with one key. "Latest period" (`chart_row` and its TypeScript
+  twin) is the last row in rule order among the actual, ytd and ltm classes: a pro forma or
+  forecast row is never reported as the latest reported figure.
+- **Forecast charts** (`forecastData.ts`, `scenarioPeriods.ts`): every actual, YTD, LTM and PF
+  column of the grid is shown before the forecast years, not one latest actual; forecast
+  periods are recognised by the rule, not by `FY\d{4}E` alone. Scenario comparison across cases
+  still applies only to forecast periods.
+- **HTML Model charts M1–M3** (`model_handoff_delivery.py`): the model layout is annual by
+  contract, so these charts cannot mix quarters; they show every annual period plus LTM and PF
+  columns when the handoff supplies them, in rule order. This is the one annual-plus-LTM/PF
+  chart family.
+- **Legacy issuer-library charts**: `screen.js` trend chart and `views.js` path chart read their
+  periods from the table (all columns, rule order supplied by Python or by column order after
+  ordering), no fixed `[3,2,1]` or FY2025–FY2027 axis. `comparisonChart`, where its categories
+  are periods, puts periods on X with series in the legend.
+
+## Excluded: X is rightly not time
+
+Cash bridge and EBITDA bridge steps (waterfalls), recovery waterfalls, peer ranges and peer
+comparison bars, covenant bullets and limits, stack/row charts keyed by instrument or segment,
+the hedge timeline and calendar (continuous dates, already ordered), and the maturity wall's
+facility legend (its X is fixed by this work).
+
+## Tests
+
+Each defect has a test that fails on `main` at `4aaec9d1` and passes after. The shared table has
+an explicit case that LTM and PF sit after every fiscal year and before forecasts, oldest first.
+Expected values are literals in tests or the shared table, never computed by production code.
