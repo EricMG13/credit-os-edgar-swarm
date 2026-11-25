@@ -261,3 +261,28 @@ it("keeps an actual year and a forecast year of the same fiscal year apart, by t
   expect(row("FY2025E")).toEqual(["", "2.20x"]);
   expect(row("FY2026E")).toEqual(["", "2.00x"]);
 });
+
+it("draws every schedule row of a year that has two, side by side and in the table", () => {
+  const cell = (text: string, amount: number) => ({ text, value: amount, reason: null });
+  const { container } = draw(
+    measureOf(cols("Base case", ["FY2025E", "FY2026E"]), [value("2"), value("1.5")]),
+    {
+      schedule: {
+        years: [
+          { year: 2026, label: "FY2026", key: "FY2026-0", cell: cell("300", 300) },
+          { year: 2026, label: "FY2026", key: "FY2026-1", cell: cell("200", 200) },
+        ],
+        offAxis: [],
+        unit: "US$m",
+      },
+    },
+  );
+  const figure = within(screen.getByRole("figure"));
+  expect(figure.getByText("300")).toBeInTheDocument();
+  expect(figure.getByText("200")).toBeInTheDocument();
+  expect(container.querySelectorAll("rect.fill-chart-2")).toHaveLength(2);
+  fireEvent.click(screen.getByRole("button", { name: "Table" }));
+  const table = within(screen.getByRole("table", { name: /Net leverage by case/ }));
+  expect(table.getByText("FY2026: 300")).toBeInTheDocument();
+  expect(table.getByText("FY2026: 200")).toBeInTheDocument();
+});
