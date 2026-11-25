@@ -1,5 +1,5 @@
 import { ArrowRight } from "@untitledui/icons";
-import { useContext, type ReactNode } from "react";
+import { Fragment, useContext, type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { STATUS_SETS } from "@/components/status/sets";
@@ -26,10 +26,11 @@ import {
   CONTRARY,
   KEY_FINDINGS,
   readable,
+  type Basis,
   type BottomLineSource,
   type TextBlock,
 } from "./moduleFrame";
-import { readableTitle } from "./moduleRecords";
+import { proseWithoutMachinery, readableTitle } from "./moduleRecords";
 
 const MISSING_PASSAGE = "Not established for this run. The module's handoff has no such passage.";
 
@@ -139,6 +140,47 @@ function stageLine(module: FrameModule) {
   return stage.number ? `${stage.name} · stage ${String(stage.number)} of ${String(stage.of)}` : "";
 }
 
+/** The basis of the figures, as the handoff states it: the entity named, a gap cell drawn as one. */
+function BasisLine({
+  basis,
+  entry,
+  folder,
+}: {
+  basis: NonNullable<Basis>;
+  entry: OutputEntry;
+  folder: string;
+}) {
+  if (basis.kind === "periods")
+    return <p className="text-small text-text-secondary">Periods {basis.periods.join(", ")}</p>;
+  return (
+    <p className="text-small text-text-secondary">
+      {basis.entity && <span className="font-medium text-text-primary">{basis.entity}: </span>}
+      {basis.parts.map((part, at) => (
+        <Fragment key={part.name}>
+          {at > 0 && " · "}
+          {part.gap ? (
+            <span className="rounded-ds-xs border border-dashed border-border-gap px-1 text-gap-text">
+              {part.name}: {part.text}
+            </span>
+          ) : part.name === "Fiscal year end" ? (
+            `Fiscal year end ${part.text}`
+          ) : (
+            part.text
+          )}
+        </Fragment>
+      ))}
+      {basis.entities > 1 && (
+        <span className="text-text-tertiary">
+          {` · ${String(basis.entities)} reporting entities; first shown. `}
+          <Button href={evidencePath(folder, entry, basis.line)} color="link-gray" size="sm">
+            Entity period key in Evidence
+          </Button>
+        </span>
+      )}
+    </p>
+  );
+}
+
 /** Below the title, across the tile, under a hairline. */
 function Bottom({ children }: { children: ReactNode }) {
   return (
@@ -242,7 +284,7 @@ export function ModuleHeader({
   owed: boolean;
   folder: string;
   /** The basis of the module's figures as its handoff states it. */
-  basis?: string;
+  basis?: Basis;
   /** The Bottom line passage when it holds no paragraph to read. */
   hollow?: Section;
   /** What the module says the issuer is (Business & governance only). */
@@ -261,7 +303,7 @@ export function ModuleHeader({
         <div className="flex min-w-0 flex-col gap-1.5">
           <TitleRow module={module} />
           {stage && <p className="text-small text-text-tertiary">{stage}</p>}
-          {basis && <p className="text-small text-text-secondary">{basis}</p>}
+          {entry && basis && <BasisLine basis={basis} entry={entry} folder={folder} />}
           {about}
         </div>
         {confidence && (
@@ -509,6 +551,9 @@ const GAP_WORD = /^(Not supplied|Not calculated|Not assessable|Not established|W
 /** The module's reason as written; one that cites a source keeps its word and leaves the rest to Evidence. */
 function gapReason(reason: string) {
   if (!containsReference(reason)) return readerText(reason);
+  // The module's own words without the clause that cites the source; the source is in Evidence.
+  const kept = proseWithoutMachinery(reason).replace(/[\s,;:\u2013\u2014-]+$/, "");
+  if (kept) return `${kept}.`.replace(/\.\.$/, ".");
   return `${GAP_WORD.exec(reason)?.[1] ?? "Not established"}. The reason cites a source, shown in Evidence.`;
 }
 
@@ -613,8 +658,13 @@ export function ModuleLimitations({
             />
           </GapWell>
         ))}
-        {gaps.map((gap) => (
-          <ChartGapWell key={`gap-${String(gap.line)}`} gap={gap} entry={entry} folder={folder} />
+        {gaps.map((gap, at) => (
+          <ChartGapWell
+            key={`gap-${String(at)}-${String(gap.line)}`}
+            gap={gap}
+            entry={entry}
+            folder={folder}
+          />
         ))}
       </ul>
       {tables.map((table) => (

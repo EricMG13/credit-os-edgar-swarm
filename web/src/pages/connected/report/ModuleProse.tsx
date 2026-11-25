@@ -3,7 +3,6 @@ import { Button } from "@/components/base/buttons/button";
 import { cx } from "@/utils/cx";
 import { FindingParagraph } from "../ReportContent";
 import {
-  containsReference,
   evidencePath,
   readParagraph,
   readerText,
@@ -14,7 +13,9 @@ import { richParts } from "../richText";
 import { typedModuleTable } from "./ModuleTable";
 import { Anchor, ANCHOR, HeldTrace } from "./ModuleFrame";
 import type { DrawingGap, ProseSection } from "./moduleFrame";
+import { proseWithoutMachinery, statedGap } from "./moduleRecords";
 import { GapNote, Tile } from "./overview/Tile";
+import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 
 /** A section this long reads in two columns on a wide screen; a shorter one shares its row. */
 const LONG = 180;
@@ -133,24 +134,28 @@ export function DrawingGapTile({
       title={<span className="first-letter:uppercase">{gap.title}</span>}
     >
       {gap.blocks.map((block) => {
-        const body = readParagraph(block.text).body;
+        const text = proseWithoutMachinery(readParagraph(block.text).body);
+        // The module's words as written; hatched only where they state a gap.
+        const words = text ? (
+          richParts(text, readerText)
+        ) : (
+          <Button
+            href={evidencePath(folder, entry, block.line)}
+            color="link-gray"
+            size="sm"
+            iconTrailing={ArrowRight}
+          >
+            Read this passage in Evidence
+          </Button>
+        );
         return (
-          <div key={block.line} className="flex items-start gap-2">
+          <div key={block.line} className={`${TRACE_HOST} flex items-start gap-2`}>
             <div className="min-w-0 flex-1">
-              <GapNote>
-                {containsReference(body) ? (
-                  <Button
-                    href={evidencePath(folder, entry, block.line)}
-                    color="link-gray"
-                    size="sm"
-                    iconTrailing={ArrowRight}
-                  >
-                    Read this passage in Evidence
-                  </Button>
-                ) : (
-                  richParts(body, readerText)
-                )}
-              </GapNote>
+              {text && statedGap(text) ? (
+                <GapNote>{words}</GapNote>
+              ) : (
+                <p className="reading-copy text-body text-text-secondary">{words}</p>
+              )}
             </div>
             <HeldTrace
               trace={traceKey(entry, block.line)}

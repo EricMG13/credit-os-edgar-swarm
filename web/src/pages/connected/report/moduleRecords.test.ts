@@ -757,3 +757,37 @@ describe("H1: bars leave out only rows the table itself marks as totals", () => 
     expect(amountColumns(item).size).toBe(0);
   });
 });
+
+describe("H10: registers the screen map ranks on the module page stay in the records", () => {
+  it.each([
+    ["CP-2E", "T2F.4 Hedge register"],
+    ["CP-1B", "Variance register"],
+    ["CP-1D", "Add-back register"],
+    ["CP-2H", "Rating register"],
+    ["CP-4", "T4C.2 Document register"],
+    ["CP-0", "Source assessment"],
+  ])("keeps the %s %s as a register in the records", (module, heading) => {
+    const hedges = table(11, ["Instrument", "Notional", "Rate"], [["Swap", "500", "4%"]]);
+    const records = moduleRecords(
+      entry([section("Findings", 2, 1), section(heading, 3, 10, [hedges])], { module }),
+    );
+    expect(records.tables.map(({ kind, table: item }) => [kind, item])).toEqual([
+      ["registers", hedges],
+    ]);
+    expect(records.evidence).toEqual([]);
+  });
+
+  it("holds another module's register, and a source register on any module, in Evidence", () => {
+    const item = table(11, ["A", "B"], [["x", "1"]]);
+    for (const [module, heading] of [
+      ["CP-2", "Hedge register"],
+      ["CP-0", "Source register"],
+    ] as const) {
+      const records = moduleRecords(
+        entry([section("Findings", 2, 1), section(heading, 3, 10, [item])], { module }),
+      );
+      expect(records.tables).toEqual([]);
+      expect(records.evidence.map(({ title }) => title)).toEqual([heading]);
+    }
+  });
+});

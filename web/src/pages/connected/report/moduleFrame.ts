@@ -118,43 +118,87 @@ function drawingGaps(entry: OutputEntry): DrawingGap[] {
   });
 }
 
-/** A cell as written, for a basis line; nothing for one that cites a source or states a gap. */
-const plainCell = (text: string | undefined) => {
-  const cell = text?.trim() ?? "";
-  return cell && !containsReference(cell) && !/^(?:not |withheld)/i.test(cell)
-    ? readerText(cell)
-    : "";
-};
+/** One part of the basis line: the cell as written, or a gap the module stated in its words. */
+export type BasisPart = { name: string; text: string; gap: boolean };
 
-function entityBasis(entry: OutputEntry) {
+/** The basis of the module's figures as its handoff states it; nothing is inferred. */
+export type Basis =
+  | {
+      kind: "entity";
+      entity: string;
+      parts: BasisPart[];
+      /** How many reporting entities the key lists; the first is shown. */
+      entities: number;
+      line: number;
+    }
+  | { kind: "periods"; periods: string[] }
+  | null;
+
+const BASIS_COLUMNS = [
+  ["Fiscal Year End", "Fiscal year end"],
+  ["Reporting Currency", "Currency"],
+  ["Reporting Unit", "Unit"],
+  ["Accounting Basis", "Accounting basis"],
+  ["Available Periods", "Periods"],
+] as const;
+
+/** A cell for the basis line: as written, a stated gap as a gap, nothing for a cited source. */
+function basisPart(name: string, text: string | undefined): BasisPart | null {
+  const cell = text?.trim() ?? "";
+  if (!cell || containsReference(cell)) return null;
+  return { name, text: readerText(cell), gap: /^(?:not |withheld)/i.test(cell) };
+}
+
+/** Currency and unit read as one part ("USD millions") where both are stated. */
+function joinMoney(parts: BasisPart[]) {
+  const currency = parts.find(({ name, gap }) => name === "Currency" && !gap);
+  const unit = parts.find(({ name, gap }) => name === "Unit" && !gap);
+  if (!currency || !unit) return parts;
+  return parts.flatMap((part) =>
+    part === currency
+      ? [{ ...part, text: `${currency.text} ${unit.text}` }]
+      : part === unit
+        ? []
+        : [part],
+  );
+}
+
+function entityBasis(entry: OutputEntry): Basis {
   const key = entry.sections.find((section) => /entity period key/i.test(section.heading));
   const table = key?.blocks.find((block): block is Table => block.type === "table");
-  const row = table?.rows[0]?.cells;
-  if (!table || !row) return "";
-  const at = (name: string) =>
-    plainCell(row[table.headers.findIndex((header) => header.trim() === name)]);
-  const yearEnd = at("Fiscal Year End");
-  return [
-    yearEnd && `Fiscal year end ${yearEnd}`,
-    [at("Reporting Currency"), at("Reporting Unit")].filter(Boolean).join(" "),
-    at("Accounting Basis"),
-    at("Available Periods"),
-  ]
-    .filter(Boolean)
-    .join(" · ");
+  const row = table?.rows[0];
+  if (!table || !row) return null;
+  const at = (header: string) =>
+    row.cells[table.headers.findIndex((name) => name.trim() === header)];
+  const parts = joinMoney(
+    BASIS_COLUMNS.flatMap(([header, name]) => basisPart(name, at(header)) ?? []),
+  );
+  if (!parts.length) return null;
+  const entity = basisPart("Entity", at("Entity Name") ?? row.cells[0]);
+  return {
+    kind: "entity",
+    entity: entity && !entity.gap ? entity.text : "",
+    parts,
+    entities: table.rows.length,
+    line: key?.line ?? table.line,
+  };
 }
 
 /**
- * The basis of the module's figures as its handoff states it: the reporting entity's row of the
- * entity period key (year end, currency and unit, accounting basis, periods), else the periods of
- * its Period table. Nothing is inferred.
+ * The basis of the module's figures as its handoff states it: the first reporting entity of the
+ * entity period key, named, with each of its cells as written or as the gap it states; else the
+ * periods of its Period table.
  */
-function basisOf(entry: OutputEntry) {
+function basisOf(entry: OutputEntry): Basis {
   const stated = entityBasis(entry);
   if (stated) return stated;
   const periods = namedTable(entry, "Period table", ["Period", "Start", "End"]);
-  const names = periods?.rows.map(({ cells }) => plainCell(cells[0])).filter(Boolean) ?? [];
-  return names.length ? `Periods ${names.join(", ")}` : "";
+  const names =
+    periods?.rows.flatMap(({ cells }) => {
+      const part = basisPart("Period", cells[0]);
+      return part && !part.gap ? [part.text] : [];
+    }) ?? [];
+  return names.length ? { kind: "periods", periods: names } : null;
 }
 
 /**

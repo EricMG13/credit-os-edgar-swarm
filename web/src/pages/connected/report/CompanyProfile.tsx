@@ -1,5 +1,6 @@
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import {
+  blocked,
   containsReference,
   evidencePath,
   readerText,
@@ -63,8 +64,10 @@ function sectorOf(entry: OutputEntry) {
 
 /** The issuer's sector and business description, as Business & governance states them. */
 export function CompanyProfile({ entry, folder }: { entry: OutputEntry; folder: string }) {
-  const described = describeCompany(entry);
-  const sector = sectorOf(entry);
+  // Only the selected output that could run describes the issuer, as the report header did.
+  const usable = entry.selected && !blocked(entry);
+  const described = usable ? describeCompany(entry) : undefined;
+  const sector = usable ? sectorOf(entry) : undefined;
   const referenced = described !== undefined && containsReference(described.text);
   return (
     <div className="flex min-w-0 flex-col gap-1 pt-1">

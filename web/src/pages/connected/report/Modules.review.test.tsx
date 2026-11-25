@@ -133,7 +133,7 @@ it("6: keeps a chart gap's word and its source link when the reason cites a sour
     },
   );
   const limits = screen.getByRole("region", { name: "Limitations of this module" });
-  expect(within(limits).getByText(/^Not supplied\. The reason cites a source/)).toBeVisible();
+  expect(within(limits).getByText("Not supplied.")).toBeVisible();
   expect(within(limits).queryByText(/10-K/)).toBeNull();
   expect(
     within(limits).getAllByRole("link", { name: "Source table in Evidence" })[0],
@@ -311,11 +311,11 @@ it("14: states the basis from the entity period key and puts the code after the 
     { module: "CP-1", name: "Financial foundation" },
   );
   const header = screen.getByRole("region", { name: "Financial foundation" });
-  expect(
-    within(header).getByText(
-      "Fiscal year end September 30 · USD millions · US GAAP · FY2024; FY2023",
-    ),
-  ).toBeVisible();
+  expect(within(header).getByText("Issuer:")).toBeVisible();
+  // The parts are read with real separators, not run together.
+  expect(header).toHaveTextContent(
+    "Issuer: Fiscal year end September 30 · USD millions · US GAAP · FY2024; FY2023",
+  );
   const name = within(header).getByRole("heading", { level: 2, name: "Financial foundation" });
   const code = within(header).getByText("CP-1");
   expect(name.compareDocumentPosition(code)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
@@ -450,4 +450,129 @@ it("H5: shows the catalogue's figures only on the selected output, a gap line on
     <Modules snapshot={{ chips: {} } as Snapshot} run={run} view={view} module="CP-1" output="0" />,
   );
   expect(screen.getByLabelText("Headline figures")).toBeVisible();
+});
+
+it.each([
+  [
+    "Not disclosed: see TDG_2024-09-30_10-K_0001260221-24-000083_tdg-20240930.htm.jsonl, page 63",
+    "Not disclosed.",
+  ],
+  ["Not calculable per annual.pdf p. 4", "Not calculable."],
+  [
+    "The filing (annual.pdf, page 12) does not split the facility",
+    "The filing does not split the facility.",
+  ],
+])(
+  "H6: keeps the module's words of a cited chart-gap reason %#, cutting only the citation",
+  (gap, kept) => {
+    page(
+      [
+        findings,
+        bottom,
+        section("Chart data: liquidity", 3, 30, [table(31, ["Period", "Cash"], [["FY2024", "1"]])]),
+      ],
+      { extra: { chartGaps: [{ table: 31, title: "Liquidity", gap }] } },
+    );
+    const limits = screen.getByRole("region", { name: "Limitations of this module" });
+    expect(within(limits).getByText(kept)).toBeVisible();
+    expect(limits.textContent).not.toMatch(/\.pdf|\.jsonl|page \d|p\. \d/);
+  },
+);
+
+it("H7: draws a drawing's prose plainly unless it states a gap, without register codes", () => {
+  page(
+    [
+      findings,
+      bottom,
+      section("Map: transmission", 3, 20, [
+        text(21, "Relationships are drawn from T4.18 rows only."),
+      ]),
+      section("Map: control", 3, 25, [text(26, "Not supplied: no relationships were documented.")]),
+    ],
+    {
+      extra: {
+        chartGaps: [{ table: 31, title: "Leverage", gap: "Not supplied: one period" }],
+        maps: [{ table: 31, name: "Transmission", gap: "Withheld: no executed documents" }],
+      },
+    },
+  );
+  const plain = screen.getByRole("region", { name: "transmission" });
+  expect(within(plain).getByText("Relationships are drawn from rows only.")).toBeVisible();
+  expect(plain.querySelector(".gap-hatch")).toBeNull();
+  const gap = screen.getByRole("region", { name: "control" });
+  expect(gap.querySelector(".gap-hatch")).not.toBeNull();
+  // A chart gap and a map gap on one table are two limitations, each drawn once.
+  const limits = screen.getByRole("region", { name: "Limitations of this module" });
+  expect(within(limits).getByText("Leverage: not drawn")).toBeVisible();
+  expect(within(limits).getByText("Transmission: not drawn")).toBeVisible();
+});
+
+it("H8: names the entity, draws a gap cell as a gap, and says when the key lists more entities", () => {
+  page(
+    [
+      findings,
+      bottom,
+      section("T4.2 Entity period key", 3, 10, [
+        table(
+          12,
+          [
+            "Entity Name",
+            "Fiscal Year End",
+            "Reporting Currency",
+            "Reporting Unit",
+            "Accounting Basis",
+          ],
+          [
+            ["Parent plc", "Not supplied: no standalone periods", "USD", "millions", "IFRS"],
+            ["Issuer Ltd", "December 31", "USD", "millions", "IFRS"],
+            ["Guarantors", "December 31", "USD", "millions", "IFRS"],
+          ],
+        ),
+      ]),
+    ],
+    { module: "CP-1", name: "Financial foundation" },
+  );
+  const header = screen.getByRole("region", { name: "Financial foundation" });
+  expect(within(header).getByText("Parent plc:")).toBeVisible();
+  expect(
+    within(header).getByText("Fiscal year end: Not supplied: no standalone periods"),
+  ).toHaveClass("border-dashed");
+  expect(header).toHaveTextContent("3 reporting entities; first shown.");
+  expect(
+    within(header).getByRole("link", { name: "Entity period key in Evidence" }),
+  ).toHaveAttribute("href", expect.stringContaining("#evidence/"));
+});
+
+it.each([
+  ["a blocked output", true, "Not assessable: no filings were supplied."],
+  ["an output that is not the selected one", false, "Makes parts."],
+])("H9: draws no business description from %s", (_, selected, bottomText) => {
+  const entry: OutputEntry = {
+    selected,
+    output: { id: "r/CP-1A.md", module: "CP-1A", label: "a", href: "", sha256: "a".repeat(64) },
+    sections: [
+      findings,
+      section("Bottom line", 3, 2, [text(3, bottomText)]),
+      profile([["Business", "Makes aircraft parts."]]),
+    ],
+  };
+  const view = {
+    entries: [entry],
+    modules: [{ id: "CP-1A", name: "Business & governance", state: "Delivered", outputs: [entry] }],
+    catalogue: undefined,
+    lead: undefined,
+    models: [],
+  } as unknown as ReportView;
+  const run = { folder: "r", issuer: "Issuer", asOf: "2026-10-31", modules: {} } as PublishedRun;
+  render(
+    <Modules
+      snapshot={{ chips: {} } as Snapshot}
+      run={run}
+      view={view}
+      module="CP-1A"
+      output="0"
+    />,
+  );
+  expect(screen.queryByText("Makes aircraft parts.")).toBeNull();
+  expect(screen.getByText("Business description not in this run")).toBeVisible();
 });

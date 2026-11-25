@@ -119,6 +119,17 @@ unit, CP-1 headline figures) and `run` (folder, as-of). Nothing else.
 - When a lead is defined the typed module tables are not drawn in the flow (the lead owns the
   module's visual); every one of their tables stays in the records region.
 
+- Lead contract (coordinator, 2026-11-25): a lead component may carry a static
+  `draws?: readonly ("figures" | "events" | "maps")[]`; after the lead the frame draws every kind
+  the lead does not list. **A lead that lists a kind in `draws` must also draw that kind's stated
+  gaps (the drawing sections the module wrote as prose with no table), because the frame then
+  draws them nowhere.** Declared chart, lane and map gaps (`chartGaps`, gap descriptors) stay in
+  the limitations block whatever the lead draws.
+- Registers ranked on the module page by the screen map stay in the records region although their
+  heading says register or ledger: CP-0 source assessment and timeline, CP-1B variance register,
+  CP-1D add-back register, CP-2E hedge schedule, CP-2H rating register and trigger terms, CP-4
+  document register and legal events (`PAGE_REGISTERS`, moduleRecords.ts).
+
 ### 2.6 Findings — `ModuleFindings` (new, `report/ModuleFrame.tsx`)
 
 - Key findings: an ordered list of numbered claims ("01", "02", …, mono), one per paragraph of

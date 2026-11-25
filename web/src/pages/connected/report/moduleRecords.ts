@@ -54,10 +54,36 @@ function descriptorTitles(entry: OutputEntry) {
   return titles;
 }
 
-function kindOf(role: string, heading: string, drawn: boolean): RecordKind | "evidence" | null {
+/**
+ * Analytical registers the screen map ranks on their module's own page (§ Modules, "Also show"
+ * and "On demand"): kept in the records region although their heading says "register" or
+ * "ledger". Every other register stays in Evidence.
+ */
+const PAGE_REGISTERS: Record<string, RegExp> = {
+  "CP-0": /source assessment|source timeline/i,
+  "CP-1B": /variance/i,
+  "CP-1D": /add-?back/i,
+  "CP-2E": /hedg/i,
+  "CP-2H": /rating register|trigger/i,
+  "CP-4": /document register|legal event/i,
+};
+
+function onModulePage(module: string, heading: string) {
+  return Object.hasOwn(PAGE_REGISTERS, module) && Boolean(PAGE_REGISTERS[module]?.test(heading));
+}
+
+function kindOf(
+  role: string,
+  heading: string,
+  drawn: boolean,
+  module: string,
+): RecordKind | "evidence" | null {
   if (role === "calculations") return "calculations";
   if (role === "drawing") return "charts";
-  if (role === "registers") return drawn ? "registers" : "evidence";
+  if (role === "registers")
+    return drawn || (onModulePage(module, heading) && !heldInEvidence(heading, role))
+      ? "registers"
+      : "evidence";
   if (role !== "finding" && role !== "passage") return null;
   return heldInEvidence(heading, role) ? "evidence" : "statements";
 }
@@ -88,7 +114,7 @@ export function moduleRecords(entry: OutputEntry) {
     for (const table of own) {
       const kind = charted.has(table.line)
         ? "charts"
-        : kindOf(role, section.heading, drawn.includes(table));
+        : kindOf(role, section.heading, drawn.includes(table), entry.output.module);
       if (kind === null) continue;
       if (kind === "evidence") {
         if (!evidence.some(({ line }) => line === section.line))
@@ -124,9 +150,22 @@ function wordsOfIds(title: string) {
   return words === title ? title : words.charAt(0).toUpperCase() + words.slice(1);
 }
 
+/** A dotted register code inside prose ("drawn from T4.18 rows"): machinery, not a word. */
+const INLINE_CODE = /\s?\b(?:TL|T|P)[A-Z0-9]{0,5}\.\d+(?:\.\d+)?\b/g;
+
+/** Prose as the page draws it: without the source it cites and the register codes it names;
+ * empty where nothing readable remains. */
+export function proseWithoutMachinery(text: string) {
+  const cut = withoutReference(text)
+    .replace(INLINE_CODE, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  return cut && !containsReference(cut) ? readerText(cut) : "";
+}
+
 /** The title without its cited source: a parenthesised reference, then a trailing clause that
  * cites one, then any word that is one. */
-function withoutReference(title: string) {
+export function withoutReference(title: string) {
   if (!containsReference(title)) return title;
   const bare = title.replace(PARENTHESISED, (group) => (containsReference(group) ? "" : group));
   const cuts = [...bare.matchAll(CLAUSE)].filter(({ index }) =>
