@@ -121,11 +121,12 @@ describe("Shell scroll container", () => {
     expect(screen.getByRole("main")).toHaveClass("relative");
   });
 
-  it("lets the area list shrink and scroll inside the bar instead of widening the page", () => {
+  it("lets the area list shrink and wrap inside the bar instead of scrolling or widening the page", () => {
     render(<Shell current="library">content</Shell>);
     const rail = screen.getByRole("navigation", { name: "Areas" });
     const list = within(rail).getByRole("list");
     expect(rail).toHaveClass("flex", "min-w-0");
-    expect(list).toHaveClass("flex-1", "min-w-0", "overflow-x-auto");
+    expect(list).toHaveClass("flex-1", "min-w-0", "flex-wrap");
+    expect(list).not.toHaveClass("overflow-x-auto");
   });
 });
