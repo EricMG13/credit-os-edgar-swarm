@@ -1,7 +1,7 @@
 import type { RefObject, SubmitEvent } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { Stepper } from "../../run/start/Stepper";
-import { Bento } from "../report/overview/Tile";
+import { Bento, Tile } from "../report/overview/Tile";
 import { pathwayName } from "../api";
 import { ErrorNotice, heading } from "../layout";
 import { moduleReadiness } from "./moduleReadiness";
@@ -126,7 +126,7 @@ export function IntakePanels(props: IntakePanelsProps) {
     <div className="mt-6">
       <Bento>
         <div className="flex min-w-0 flex-col gap-4 lg:col-span-12 xl:col-span-8">
-          <div className="@container flex flex-col gap-3 rounded-ds-lg border border-border-subtle bg-surface-card px-5 py-4">
+          <Tile span={12} label="Progress" className="@container gap-3 py-4 sm:py-4">
             <Stepper
               step={review ? "start" : step}
               steps={STEPPER_STEPS.map((item) =>
@@ -149,11 +149,11 @@ export function IntakePanels(props: IntakePanelsProps) {
                 ? `Step ${String(STEP_TOTAL)} of ${String(STEP_TOTAL)} · Review and start`
                 : `Step ${String(FORM_STEP_KEYS.indexOf(step) + 1)} of ${String(STEP_TOTAL)} · ${title}`}
             </p>
-          </div>
+          </Tile>
           {error && !review && <RefusalNotice lines={refusalLines(error)} />}
-          {view.changeNotice && (
-            <p className="text-small text-text-secondary">{view.changeNotice}</p>
-          )}
+          <p role="status" className="text-small text-text-secondary empty:hidden">
+            {view.changeNotice}
+          </p>
           {otherProblems.length > 0 && <RefusalNotice lines={otherProblems} />}
           {review ? (
             <ReviewConfirmation
@@ -234,65 +234,67 @@ function InputStepForm({
 }) {
   const blocked = view.step === "documents" && !view.canRead;
   return (
-    <form
-      onSubmit={(event) => {
-        onAdvance(event);
-      }}
-      className="grid min-w-0 grid-cols-1 gap-5 rounded-ds-lg border border-border-subtle bg-surface-card p-5 sm:p-6"
-    >
-      <div className="grid gap-1">
-        <h2
-          key={view.step}
-          ref={focusHeading ? focusStep : undefined}
-          tabIndex={-1}
-          className={`${heading} ${HEADING_FOCUS}`}
-        >
-          {title}
-        </h2>
-        <p className="reading-copy text-body text-text-secondary">
-          {view.step === "context" && view.earnings
-            ? EARNINGS_CONTEXT_GUIDANCE
-            : STEP_GUIDANCE[view.step]}
-        </p>
-      </div>
-      <fieldset
-        disabled={view.busy !== undefined}
-        className="grid min-w-0 grid-cols-1 items-start gap-4 sm:grid-cols-2"
+    <Tile span={12} label={`${title} step`}>
+      <form
+        onSubmit={(event) => {
+          onAdvance(event);
+        }}
+        className="grid min-w-0 grid-cols-1 gap-5"
       >
-        <StepFields view={view} folderInput={folderInput} />
-      </fieldset>
-      <p className="text-caption text-text-tertiary tabular-nums lg:hidden">{ready}</p>
-      <div className="flex flex-wrap items-center gap-3">
-        {previous && (
-          <Button color="secondary" isDisabled={view.busy !== undefined} onPress={onPrevious}>
-            Previous
-          </Button>
-        )}
-        {view.problem && (
-          <Button
-            color="link-destructive"
-            size="sm"
-            className="max-w-full text-left whitespace-normal"
-            onPress={view.focusProblem}
+        <div className="grid gap-1">
+          <h2
+            key={view.step}
+            ref={focusHeading ? focusStep : undefined}
+            tabIndex={-1}
+            className={`${heading} ${HEADING_FOCUS}`}
           >
-            {`1 problem to fix: ${view.problem.message}`}
-          </Button>
-        )}
-        <div className="ml-auto flex flex-wrap items-center justify-end gap-3">
-          {blocked && (
-            <p id="run-step-blocker" className="text-small text-text-secondary">
-              Add at least one document to continue.
-            </p>
-          )}
-          <Button
-            type="submit"
-            aria-describedby={blocked ? "run-step-blocker" : undefined}
-            isDisabled={view.busy !== undefined || blocked}
-          >
-            {view.busy === "review" ? "Preparing review…" : next}
-          </Button>
+            {title}
+          </h2>
+          <p className="reading-copy text-body text-text-secondary">
+            {view.step === "context" && view.earnings
+              ? EARNINGS_CONTEXT_GUIDANCE
+              : STEP_GUIDANCE[view.step]}
+          </p>
         </div>
-      </div>
-    </form>
+        <fieldset
+          disabled={view.busy !== undefined}
+          className="grid min-w-0 grid-cols-1 items-start gap-4 sm:grid-cols-2"
+        >
+          <StepFields view={view} folderInput={folderInput} />
+        </fieldset>
+        <p className="text-caption text-text-tertiary tabular-nums xl:hidden">{ready}</p>
+        <div className="flex flex-wrap items-center gap-3">
+          {previous && (
+            <Button color="secondary" isDisabled={view.busy !== undefined} onPress={onPrevious}>
+              Previous
+            </Button>
+          )}
+          {view.problem && (
+            <Button
+              color="link-destructive"
+              size="sm"
+              className="max-w-full text-left whitespace-normal"
+              onPress={view.focusProblem}
+            >
+              {`1 problem to fix: ${view.problem.message}`}
+            </Button>
+          )}
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-3">
+            {blocked && (
+              <p id="run-step-blocker" className="text-small text-text-secondary">
+                Add at least one document to continue.
+              </p>
+            )}
+            <Button
+              type="submit"
+              aria-describedby={blocked ? "run-step-blocker" : undefined}
+              isDisabled={view.busy !== undefined || blocked}
+            >
+              {view.busy === "review" ? "Preparing review…" : next}
+            </Button>
+          </div>
+        </div>
+      </form>
+    </Tile>
   );
 }
