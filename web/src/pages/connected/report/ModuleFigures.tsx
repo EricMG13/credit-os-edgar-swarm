@@ -1,11 +1,11 @@
-import { Fragment, type FC, type ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { cx } from "@/utils/cx";
 import { evidencePath, type OutputEntry, type PublishedRun } from "../publishedReport";
 import { runMoneyUnit, type ReportView } from "../reportView";
 import { LegacyVisuals } from "../visuals";
 import { BreakPoints, breakPointView } from "./BreakPoints";
 import { Downside, downsideView } from "./Downside";
-import type { LeadProps } from "./leads/types";
+import type { Lead } from "./leads/types";
 import { MacroSensitivity, macroView } from "./MacroSensitivity";
 import type { DrawingGap, FigureKind } from "./moduleFrame";
 import { DrawingGapTile } from "./ModuleProse";
@@ -14,10 +14,9 @@ import { Securities, securityView } from "./Securities";
 
 /**
  * A lead visual, and the kinds of the module's own visuals it draws itself. The frame keeps
- * drawing, after the lead, every kind the lead does not list. (Typed here until the coordinator
- * adds `draws` to `leads/types.ts`.)
+ * drawing, after the lead, every kind the lead does not list.
  */
-export type DrawingLead = FC<LeadProps> & { draws?: readonly FigureKind[] };
+export type DrawingLead = Lead;
 
 /** The kinds the frame still draws beside this lead: all of them when there is no lead. */
 export function framed(lead: DrawingLead | undefined): ReadonlySet<FigureKind> {

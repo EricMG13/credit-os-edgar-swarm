@@ -16,7 +16,7 @@ import { moduleState, traceKey, type ReportView } from "../reportView";
 import { CompanyProfile } from "./CompanyProfile";
 import { ModuleConfidence } from "./Confidence";
 import { leadFor } from "./leads";
-import { framed, ModuleFigures, moduleFigures, type DrawingLead } from "./ModuleFigures";
+import { framed, ModuleFigures, moduleFigures } from "./ModuleFigures";
 import { CONTRARY, KEY_FINDINGS, moduleFrame } from "./moduleFrame";
 import {
   ANCHOR,
@@ -71,7 +71,7 @@ function nextModule(view: ReportView, id: string): FrameModule | undefined {
 /** Everything the page draws for one module output, read once per render. */
 function pageOf(run: PublishedRun, entry: OutputEntry) {
   const figures = moduleFigures(entry, run);
-  const Lead = leadFor(entry.output.module) as DrawingLead | undefined;
+  const Lead = leadFor(entry.output.module);
   const kinds = framed(Lead);
   const frame = moduleFrame(entry, {
     figureTableLines: figures.tableLines,

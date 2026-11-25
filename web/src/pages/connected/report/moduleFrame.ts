@@ -14,6 +14,7 @@ import { drawingLines, findingBlocks } from "../ReportContent";
 import { namedTable } from "../reportView";
 import { typedModuleTable } from "./ModuleTable";
 import { heldInEvidence, readableTitle } from "./moduleRecords";
+import type { LeadKind } from "./leads/types";
 
 export type TextBlock = Extract<Block, { type: "text" }>;
 
@@ -23,7 +24,7 @@ const LIMITATIONS = "Limitations";
 const PASSAGE_NAMES = ["Bottom line", KEY_FINDINGS, CONTRARY, LIMITATIONS] as const;
 
 /** What a module's visuals are, so a lead can say which of them it draws itself. */
-export type FigureKind = "figures" | "events" | "maps";
+export type FigureKind = LeadKind;
 
 /** The bottom line as the module wrote it: the passage's first paragraph, else its summary. */
 export type BottomLineSource =

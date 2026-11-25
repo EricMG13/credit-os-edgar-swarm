@@ -11,5 +11,14 @@ export interface LeadProps {
   entryIndex: number;
 }
 
+/** A kind of drawing a module's output publishes: chart figures, event lanes, relationship maps. */
+export type LeadKind = "figures" | "events" | "maps";
+
+/**
+ * A module's lead visual. `draws` lists the kinds it draws itself, gaps included: the page frame
+ * draws every kind not listed, so each figure is drawn once.
+ */
+export type Lead = FC<LeadProps> & { draws?: readonly LeadKind[] };
+
 /** A stage's lead visuals, keyed by module code ("CP-1"). A module without one draws none. */
-export type Leads = Record<string, FC<LeadProps>>;
+export type Leads = Record<string, Lead>;
