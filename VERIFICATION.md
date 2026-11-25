@@ -12,7 +12,7 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
   and `docs/methodology/portfolio-recommendation.md`; amended four bullets of `AGENTS.md` (one
   permitted workbook, the proposed-recommendation exception, the Deliverables page in the reader
   and completion bullets; cap sentence untouched); one `METHODOLOGY-REVIEW.md` paragraph. Trimmed
-  here: the two oldest entries, both 2026-11-16.
+  here: the oldest entries, all 2026-11-16 (the last three at the merge with `f6cebbd`).
 - Checked: the rubric's 85 level cells against the spec by script; `tools/quality_gate.py` exit 0
   (no Python in scope); `check_live_gate` refuses the new ruling for all four configurations, run
   directly (the test that sweeps `docs/rulings` and one other in `tests/model/test_gate.py` are in
@@ -25,6 +25,59 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
 - Not verified: anything the documents describe, none of which is built; the rubric text against
   the owner's image (not in the repository; taken from the spec's transcription); the SSGA file
   columns; the full suite.
+## 2026-11-25 — Layer 1 modules in Lite, Full and Deep; CP-DR in Lite; caps 20/30/50 (branch `claude/busy-shannon-x4bwy3`, base `main` at `4aaec9d`)
+
+- Scope: the `lite_credit_assessment` and `credit_snapshot` presets (`contracts.py`, web `api.ts`),
+  their report sections (`report_view.py`), the two cap tables (`PATHWAY_CAP_USD`,
+  `RULED_CAPS_USD`), the cap sentences of `AGENTS.md` and `PRODUCT.md`, the Deep card's question,
+  three synthetic proof handoffs and the tests that pin these. Ruling
+  `docs/rulings/2026-11-25-layer-1-in-all-assessment-pathways.md`; `METHODOLOGY-REVIEW.md` entry.
+  Registry, method files, `changes.py` and delivery code unchanged. No provider was called.
+- Owner, 2026-11-25: "all credit assessment pathways (lite, full and deep) should include all layer
+  1 modules"; "lite runs cp-dr too, user only provides comps if they want to at launcher."; "raise
+  cap to 20/30/50". The second and third were relayed by the coordinating session; the cap raise
+  was confirmed in this session ("Yes, raise to 20/30/50"). That the purpose pathways stay at USD 20
+  is the coordinating session's reading.
+- Modules: Lite is CP-0, CP-1, CP-1A, CP-1B, CP-DR, CP-1C, CP-1D, CP-2, CP-2A (9 calls without
+  CP-8). Full gains CP-1B, CP-1C, CP-1D (17 calls; run order CP-0, CP-1, CP-1A, CP-1B, CP-DR, CP-1C,
+  CP-1D, CP-2, CP-4, CP-2A, CP-2E, CP-2D, CP-2G, CP-3C, CP-3, CP-5, CP-6). Deep is unchanged: Full
+  plus CP-2H, CP-3D, CP-4C. CP-DR runs in all three; CP-1C takes its peer pack only with the default
+  peer source (CP-DR's public peers), otherwise no pack is requested. Comparables are optional.
+- Coverage page: its fixed columns follow Full's preset, so 14 become 17; a Full run made before the
+  change shows CP-1B, CP-1C and CP-1D as not in the pathway (disclosed in the ruling; no layout
+  test covers the column count).
+- Sections: Lite (9 to 12) and Full (12 to 15) gain headline results, earnings quality and peer
+  positioning, owned and placed as in Deep; the peer figure draws in both. Fidelity scope: synthetic
+  handoffs only, through the launcher and library browser tests for Lite and Full (7 passed); no
+  delivered report from a model was read.
+- Instructions (test input): Lite 416,093 to 669,952 characters, Full 1,468,993 to 1,650,316; each
+  ceiling rose by its measured increase. The seven other pathways are byte-identical.
+- Caps: Lite USD 15 to 20, Full 25 to 30, Deep 40 to 50; the rest stay 20. Kept and tested: `--cap`
+  above the pathway cap is refused, a folder's cap never rises, start-up refuses a table entry above
+  its ruled figure. The page reads its caps from the service; web fixtures and 18 goldens changed
+  only in cap figures.
+- CP-8: an earlier preset Lite or Full run stays the comparison base; the pack marks the added
+  modules as run now and not before, and the checker accepts `New` only with cause `Method change`
+  (`tests/test_changes.py`, synthetic).
+- Cost, estimate not measured (GPT Sol, Balanced, with CP-8 and one USD 5.73 hold): Lite about
+  USD 11.2, Full 19.7, Deep 22.2. Claude Opus at 2.26 times: Full with CP-8 is about USD 31 to 41
+  with a hold, past USD 30; left open for the owner.
+- Review: one independent review of the diff. It found four tests still at Full's 14 modules
+  (`test_react_coverage`, `test_react_runtime_identity`), the proof script's "14 of 14 modules", the
+  legacy-cap rule without a discriminating test (restored: a table entry of 12 gives 12, and the
+  test fails under `return LEGACY_CAP`), cent slips in the ruling and kit copy at the old Full cap;
+  all repaired. Left: the kit's saved example run (`web/fixtures/run.json`, USD 25, 13 modules).
+- Commands, exit 0: `uv run python tools/quality_gate.py` (0 findings, 16 files); pytest, not
+  browser, one file at a time: 87 files, 6,857 passed (`test_financial_workflow` timed out under
+  parallel load and was not rerun); browser files for the library, launcher, changes, model shell
+  and signal pages passed; web `tsc`, eslint, prettier, and the whole vitest suite (461 files,
+  7,899 passed).
+- Not verified: no paid or live run exercised the new presets or caps (no Lite run of any kind
+  exists, nor a Full run with CP-1B, CP-1C, CP-1D); CP-DR's web lookup feeding CP-1C in Lite; the
+  three sections in a delivered report; the Changes page against a real earlier run; the cost
+  estimate; a resume of a real folder started at an old cap; `npm run proof:connected` (needs
+  Chrome, Edge and a built `web/dist`); `test_reporting_currency_proof` (same); the Coverage page at
+  17 columns in a browser; the slow Python tests.
 
 ## 2026-11-25 — Export PDF control and preview restyled to the redesign
 
@@ -934,66 +987,3 @@ Scope: the run-start summary and review: `src/deploy_workflow/owners/cpos_launch
 - Rulings / Known: from `docs/rulings/2026-11-11-run-start-submit.md`, amendment 2026-11-12 (for a private case the page states this before Submit; no such text existed under `web/src`). Ruling by the PR-manager session, for the owner to confirm or reverse: the statement shows whenever search will run (public and private), not only for private cases.
 - For the owner: confirm or reverse that ruling. The Start plan's unstarted PRs C and D will edit `ReviewSheet.tsx` and `ConnectedApp.test.tsx` and must branch after this merge.
 - Not verified: a live or paid launch (no provider called); a browser render; the three web tests were not seen failing before the component existed (covered by the mutants); a ruling file or pause changing between summary and launch; Windows; the gates and CI ran on the branch head, not re-run on the merged tree.
-
-## 2026-11-16 — Issuer calendar: one shape per category, category word visible in each row (PR #16, merged to `main` as `8bbb74ab`)
-
-Scope: presentation only: `web/src/pages/connected/visuals/EventLane.tsx` and `EventLane.test.tsx`. `EventLane.fixture.ts` unchanged.
-- Changed: the four event categories differ by shape, the same in the year strip, the list rows and the legend toggles: Historical filled circle, Scheduled half-filled circle, User reminder ring (all from `StatusShape`), Scenario an outlined diamond drawn inline. The category word is visible text in each row; its screen-reader-only copy is gone. Reason: #10 left Historical and Scheduled differing by colour alone and Scenario on the dashed ring, against `docs/design/design-system.md` (every state carries a shape and a word, each state in a set has its own shape, the dashed ring means a gap and nothing else).
-- Answer key: the design-system rule above; tests written first (29 of 41 failed before the change).
-- Gates at `7f070cc8`, from `web/`, exit 0: lint, format:check, typecheck, unused, duplication, vitest on `EventLane.test.tsx`, `report/Calendar.test.tsx`, `visuals/LegacyVisuals.test.tsx` (71 tests).
-- Reviews: task review (`mx-precise`): approved, no High or Medium; nine hand mutants, all killed. One Low (status-only-in-panel is not asserted directly for rows with a quoted status) and one Info (Scenario handled outside the shape lookup), both parked for the end-of-phase batch.
-- Rulings / Known: one existing assertion was removed and one replaced, because fixture rows whose status equals their category word would now match twice; the reviewer confirmed no check weakened. No other open PR or in-flight session edits `EventLane.tsx`.
-- Not verified: the layout at 375px and 44px targets (read from classes only); the look in a browser or grayscale; a screen reader; the full suite; `proof:connected`; the gates and CI ran on the branch head, not re-run on the merged tree.
-
-## 2026-11-16 — Reader: plain module names, CP-1's own lead and labels, confidence score (PR #13, merged to `main` as `7fcff960`)
-
-Scope: the connected issuer report reader only, under `web/src/pages/connected/` (`reportView.ts`, `publishedReport.ts`, `api.ts`, `ReportContent.tsx`, `ReportLibrary.tsx`, `report/{Modules,Calendar,Changes,Confidence,Evidence,calculations}`, `start/{plain,ReviewSheet}`) with their tests, plus the plan `docs/superpowers/plans/2026-11-16-connected-reader-high-gaps.md` (PR 1 of 3). No Python, handoff, provider or model change. Gated code head `550bb2dc`; the merged head `b85899f5` adds only plan text.
-- Changed: `moduleName` returns the plain name and `plainModuleNames` drops " (CP-x)" from handoff text wherever drawn (prose, tables, bottom lines, trace drawers and control names, Evidence Gaps, calculation steps, Changes cards); a stored file name such as `Deck (CP-1) Q3.pdf` is shown as stored. CP-1 leads with its own bottom line (the app-written "Lease-adjusted gross leverage is …" sentence is gone) and its tiles carry the handoff's own row label, column header or calculation text, selected by a typed `MetricKey`. The published `confidence` field is drawn as one tile on the module page (value and band as published, or the publisher's sentence when there is none); its trace opens the Confidence inputs rows, and that table leaves the reading path for Evidence. `moduleTitle` is folded into `moduleName`.
-- Rulings applied: `docs/rulings/2026-11-11-reader-and-issuer-report.md` amendment 2026-11-12 (no module code on screen); `docs/rulings/2026-11-12-module-output-review-changes.md` item 9 (confidence score on the module page); AGENTS.md (delivery adds no analysis).
-- Gates on `550bb2dc`, from `web/`, exit 0: test (159 files, 3,319 tests), lint, format:check, typecheck, unused, duplication. CI's two checks passed on the merged head `b85899f5`. The build, `test:scripts` and `test:file:gates` are not recorded as run.
-- Reviews: task reviews by `mx-precise` (Task 1 one fix round; Tasks 2 and 3 clean); whole-branch `adversarial-reviewer` by `mx-architect`: 0 High, 3 Medium, all fixed in `550bb2dc` and re-reviewed clean. Not run: `/sweep refactoring discover`, `confidence-review`, `rewrite-tournament`.
-- Known, Low, parked for the batch: a " (CP-x)" is kept only when a known file extension follows before the next `;`, `,`, `|` or newline, so an unlisted extension (`Scan (CP-1).png`), a comma inside a file name, and a calculation note whose source part names a file still show the code; forecast model strings are not filtered; four small test gaps; two leftover uses of the literal "Confidence inputs".
-- For the owner: 856 changed lines of code and tests against the 800-line cap (lift unconfirmed past 09:00 GMT 2026-11-16), plus the 650-line plan; the plan's PR 2 and PR 3 were refreshed only for PR 2 (split into 2a and 2b) and PR 3 needs the same before it starts.
-- Not verified: the reader in a browser (no fidelity check of the plain names, CP-1 lead or confidence tile on a retained run); `proof:connected`; a screen reader; Windows; Python gates (no Python changed); a mutation run. No paid execution.
-
-## 2026-11-16 — Start a run: limits as grouped decisions (PRs #11 and #12, merged to `main` as `8868f96d` and `915b0f79`)
-
-Scope: the connected Start a run review only, under `web/` (`start/limits.ts`, `start/ReviewSheet.tsx`, `StartRun.tsx`, `components/status/sets.ts`, `scripts/connected-proof.mjs`) plus the design-system and plan docs. The Python service, the submit request and the Submit gate (`checksComplete`, `capForPathway`, `requireSummaryCap`, `invalidateReview`, `makeReview`, `submitReviewed`) are byte-identical to `main`. No provider called.
-- Changed: "Readiness checks" becomes "Limits to decide": one card per decision (status badge Will refuse / Gap / Limited / Check, cause and fix in plain words, `Will also refuse:` and `Also affects:` lines, one acceptance per group); items needing no decision fold under "No action needed (n)"; no module code is drawn. A line above the approval says how many decisions remain. An acceptance carries across a stepper or Edit return only for the same limit id and reason, issuer ID and pathway; the approval is never carried; "Carry over from latest run" and "This is a different issuer" drop it.
-- Answer key: the 180 cases built from the service's own readiness rows in the whole-branch review, and the reviewer's 13-case probe with 400 generated summaries (#11): no item needing a decision falls outside a group, no code is drawn, and ticking every card hands over exactly the required ids.
-- Gates at `fb1fb3ba` (branch cut from `8c4abeb7`), exit 0: `npm --prefix web run gates`, Chrome 157 `connected-proof.mjs`, `uv run python tools/quality_gate.py`. CI's `changed code passes…` and `fast tests and page logic` passed on #11 and on #12 at its final head (`aaa33fbe` plus three later commits) before each merge; #12 was retargeted to `main` after #11 merged and CI was not re-run on the merged tree.
-- Reviews: task review (one Low, fixed); paid-submit path by `mx-adversary` (one Medium, an acceptance carried to a different typed issuer, fixed test-first in `2056ece7`, re-review approved); sweep `refactoring discover changed-update` (no defect, one Info); whole-branch `adversarial-reviewer` (one Medium, a following module that will refuse listed only under "Also affects", fixed test-first in `6805f268`, re-review approved); `confidence-review`, `ponytail-review`, `rewrite-tournament` (no defect).
-- Rulings: the issuer ID is the carry identity (renaming under the same ID still carries); changing pathway and back before the next review carries; limit acceptance is enforced by the page only, as on `main`. Parked for the plan's last PR: a following module whose refusal has a different root cause can sit in a card whose cause is only "limited".
-- Not verified: the gates and Chrome proof on the merged tree and on the last two fixes (`2056ece7`, `6805f268`); the review in Chrome after those two fixes (viewed at desktop and mobile widths before them); Edge and Windows; keyboard and screen-reader behaviour in a real browser (jsdom only); paid mode against the live service (mock fetch); behaviour against the live service for #11's grouping. No paid execution.
-
-## 2026-11-16 — Browser proof script brought up to the merged reader (branch `claude/proof-forecast-every-scenario`, from `main` at `8bbb74ab`)
-
-- Scope: `web/scripts/connected-proof.mjs` only; no product code. On `main` the proof failed 0 of 2 (Chrome 157.0.8103.78 and Edge, macOS) at two assertions that predate deliberate, unit-tested product changes. (1) Cash proxy table with "Downside shock" selected: the script expected no "Base case" row; since `cc836f5f` every case is drawn and the selected one emphasised (`LegacyForecast.test.tsx`), so it now expects exactly one "Base case" and one "Downside shock" row. (2) Phone trace control: the script measured the button box as at least 44px; since `8d2089bc` the box is 28px with a 9px outset hit area (`ResponsiveReading.test.tsx`), which computes to exactly 44px by 44px, so it now requires the corner pixels of that square (22px before the centre to 21px after it, both ways) to hit the button.
-- Result: `npm run proof:connected` exits 0, 2 of 2, all synthetic upload-to-finished-report checks in both browsers; evidence `proof-artifacts/run-4T32BF/proof.json`. This is the first execution of the calendar check written for the year strip (Scenario marker and category toggle, Table view, trace drawer): it passes in both browsers. `lint`, `format:check` and `test:scripts` exit 0. Synthetic data, no provider.
-- Seen while measuring, not fixed (predates): at 390px wide the trace controls in the last column of the Forecast "Scenario comparison" table have their hit area cut off on the right by the table's edge.
-- Review: one scoped review, pass, three Low (probe the full 44px, applied; no browser assertion that the selected case is emphasised, the unit test holds it; clearance near a viewport edge, not seen).
-- Not verified: that the hit-area check fails on a build without the outset (reasoned from the 28px box, not run); Windows; the full suite on this branch (script-only change).
-
-## 2026-11-16 — Issuer calendar: year strip over a grouped list (PR #10, branch `claude/calendar-compact-strip`, base `main` at `a9aec10a`)
-
-Scope: presentation only: `web/src/pages/connected/visuals/EventLane.tsx`, its tests and answer key, the old-drawing assertions in `report/Calendar.test.tsx` and `visuals/LegacyVisuals.test.tsx`, and the calendar check in `web/scripts/connected-proof.mjs`. No backend, handoff, provider or model change. Gated code head `84e41de3`.
-- Changed: the per-event rows with a position track are replaced by (1) a strip with one column per year that has events and one marker per event, the years with no event in the input named ("No events 1974 to 2013"), and (2) one list in date order grouped by year. A row shows date and precision, category mark, title, credit relevance, module and trace control; status, published date and (where the host does not send it to the drawer) source are in a per-row detail panel, closed at first, with "Show all details". The legend entries are toggles that show or hide a category (owner request). A marker moves focus to its row; row and marker highlight each other on hover and focus. Layout switches on the drawing's own width (container query), so a half-width module card gets the stacked layout. No heading elements in the drawing (the old `h5` skipped a level).
-- Rulings by this session: a linear date axis was rejected (60 of 69 Caesars events fall in 2020–2032, 18 in 2026, so positions overplot); every detail line visible at 14px/22px cannot reach half height (about 200 characters per event), so status and published date moved to the detail panel; markers are outside the tab order (`tabIndex=-1`) and the rows' own controls are the keyboard path; collapsing one row after "Show all details" returns the button to "Show all details". The brief's figure target of 3,300px was missed by 46px (3,346px); the page target (half of 8,480px) is met.
-- Prior art: nothing reusable in the owner's repositories (`gh search code`, owner `EricMG13`: timeline, strip, calendar); patterns taken from Preline Timeline (date-group label beside rows) and Preline Accordion (button `aria-expanded`/`aria-controls`, hidden panel), read on the live pages; no approved library has a unit dot strip; Flowbite's pages returned HTTP 429 and were not read. No dependency added.
-- Answer key: `EventLane.fixture.ts`, 14 hand-written events (four categories, four precisions, a same-date pair, a "Not supplied" published text) with stated year, order and gaps, committed with the implementation; `EventLane.test.tsx` asserts each event's title, date, precision, relevance, status, published and source text once per row, its marker, category, year group, order and original row index against it.
-- Gates on `84e41de3` from `web/`, all exit 0: lint, format:check, typecheck, test (159 files, 3,311 tests, statements 93.49%), unused, duplication, build, test:scripts, test:file:gates.
-- Reviews: one task review (no High or Medium; five Low, applied). Sweep `refactoring discover changed-update` on the PR diff: one confirmed defect (with "Show all details" on, a row's own button did nothing and the row stayed open after "Hide all details"), fixed with its probe failing first and its first test passing after; the probe's second test looks for a "Hide all details" button the ruling above removes, and an added test covers that cause; one measured cost deferred to the phase sweep (the hover and focus handlers repeat in `Marker` and `EventRow`, 15 lines). Browser check found the half-width card defect (466px card, text columns about 100px), fixed. Whole-branch adversarial review on `b8c47da1`: no High; one Medium, this record describing the first commit, corrected here; four Low, applied in `84e41de3` (its stale-highlight probe exit 1 before, 0 after). Not run: `confidence-review` and `rewrite-tournament` as named steps.
-- Fidelity check on `84e41de3`, retained Caesars run `20261115-114658-01`, read-only preview of the built branch, 69 events. At 1440x900: calendar page 4,138px (8,480px before in the same browser pane, recorded earlier as 8,568px), figure 3,346px (7,688px); 69 markers and 69 rows, each marker's `aria-controls` resolving to a distinct row; 138 row controls in tab order; no duplicate id; headings h1, h2, h3, h3; no horizontal overflow; Historical off leaves 23 rows (1,992px), Scheduled off 46 rows (3,139px), the five gap texts unchanged in both; "Show all details" opens all 69 panels (7,588px) and closes them; a marker click puts a visible focus ring on its row and Tab moves on to that row's trace control, Enter opens the drawer. At 375x812: 12,854px (27,904px before), no horizontal overflow, 141 row and toggle targets all at least 44x44 with none overlapping, markers not touch targets. Module pages: the drawing appears on six (CP-0, CP-1A, CP-2E, CP-3, CP-4, CP-DR) with no overflow; the 466px card for CP-1A is 2,546px for 20 events with the title at the card's width. The accessibility tree names each year group, gap and marker.
-- For the owner: the PR is 1,061 changed lines against the 800-line cap, whose lift was not confirmed past 09:00 GMT today; the entry trimmed to keep this file under 1,000 lines (2026-11-13, negative cash) is in git history; status text reaches the marker name and detail panel as written, unscreened for source references, as on `main`.
-- Not verified: a real screen reader; real touch devices; Windows; `proof:connected` (run here, 0 of 2: Chrome timed out waiting for the synthetic run to finish using the main checkout's Python environment, Edge is not installed, so the edited calendar check never executed; not tried on `main`); Scenario and User reminder events in a browser (answer key only); a mutation run beyond the reviewer's 12 hand mutants. No paid execution.
-
-## 2026-11-16 — Report reader design critique: five priorities, review fixes, main merged (branch `claude/fable-reviewers-critique-b4de59`)
-
-Scope: presentation only, all under `web/`; no backend, handoff, provider or model change. Source: an Impeccable critique of the connected issuer report reader (21/40; snapshot under `.impeccable/critique/`). Gated code head `8d2089bc`; the branch holds `origin/main` at `8c4abeb7` (three merges, the last docs only; the first resolved conflicts in `ReportContent.tsx`, `ReportLibrary.tsx` and `ReportLibrary.design.test.tsx`, resolution reviewed from git objects: nothing dropped from either side). Nothing pushed.
-- Changed: numbered record tables (`T4.4 …`, `P3 …`, `Confidence inputs`) leave module pages for a "Statements and records" card linking to Evidence, while every module-written sentence in such a section stays on the page; trace controls visible at rest, drawer values wrap; "Chart data:" headings and tables a chart already draws removed; qualifications moved from forecast table headers to a note list under the table; axis ticks from zero on round steps, every scenario drawn with one emphasised and one end value label; scroll-spy navigator; skip link, per-page title, heading order, 44px phone targets, a disclosure for empty forecast columns. Calendar: the shared-lane drawing was built, measured taller (17,038px against 11,168px) and withdrawn; rows kept with a wider label column.
-- Gates on `8d2089bc`, from `web/`, all exit 0: lint, format:check, typecheck, test (159 files, 3,287 tests, statements 93.51%), unused, duplication, build, test:scripts, test:file:gates.
-- Reviews: per-task review of each change; whole-branch adversarial review (1 High, 2 Medium), confidence review (2 Medium) and a rewrite tournament on the pre-merge head; one fix wave; its re-review found all four fixed and nothing above Low. The High was a qualification sentence inside a coded section no longer drawn (fixture `tests/fixtures/esg/CP-2E-h4.md` lines 134 and 232); it is drawn once again.
-- Fidelity check, retained Caesars run `20261115-114658-01` in a read-only preview of the built head at 1440x900: CP-1 module page 10,716px (28,702px before) with no register-code heading and no "Chart data:" heading; records card lists 8 tables and the Evidence link; 63 trace controls, none hidden; no heading-level skip; navigator marks "Figures and records" while its block is in view, the last entry at the bottom and "Bottom line" at the top; Forecast headers at most 77px (273px before) with the interest-basis qualification once per note list and in no header; no overlapping chart text in 10 charts; calendar 8,568px with no horizontal overflow; Overview shows the labelled "Test preview" note. At 375x812: no horizontal overflow, trace hit area 44x44, no pinned column.
-- Open, not fixed: a table's scroll-region label can differ from its heading on the Overview; `ticks` keeps an unused parameter; a heading that only looks like a code ("P50 …") is treated as one; promoted monitoring tables keep their code in the heading (`T2.12`, predates); a non-finite chart value falls back to an empty axis without a log (unreachable today); a scenario ending early could put its name near the emphasised value label (not measured).
-- For the owner: the calendar's planned lane layout is not delivered and needs a different design; five uncoded CP-1 summary tables stay on the module page; module-written prose defects, the repeated run charts on Forecast and the History list reading "Finished" for a test-preview run predate this work.
-- Not verified: a screen reader; real touch devices; Windows and CI; the browser proof script (`proof:connected`); the CP-2E coded-section fix in a browser (its handoffs are fixtures, not a retained run); the Changes page beyond its shared code path; a mutation run. No paid execution.

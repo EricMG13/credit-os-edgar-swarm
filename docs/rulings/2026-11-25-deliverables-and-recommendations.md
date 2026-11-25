@@ -106,10 +106,11 @@ The methodology an analyst can audit, with the rubric's level text, is
   a phase the analyst ticks; and the CP-8 bullet of `AGENTS.md` is refined so that a custom run is
   compared only with an earlier custom run of the same module and phase selection. Neither text
   is edited in PR 0.
-- Not amended: the cap sentence of `AGENTS.md` and the cap table of
-  `2026-11-15-pathway-tiers-and-caps.md`. The two caps above are recorded here only. By that
-  ruling a cap enters `PATHWAY_CAP_USD` and `RULED_CAPS_USD` by deliberate edits, which belong to
-  the pathway PRs (6 and 7), after the in-flight change to the Lite, Full and Deep caps has merged.
+- Not amended: the cap sentence of `AGENTS.md` and the cap tables of
+  `2026-11-15-pathway-tiers-and-caps.md` and `2026-11-25-layer-1-in-all-assessment-pathways.md`
+  (Lite USD 20, Full 30, Deep 50). The two caps above are recorded here only. By those rulings a
+  cap enters `PATHWAY_CAP_USD` and `RULED_CAPS_USD` by deliberate edits, which belong to the
+  pathway PRs (6 and 7).
 - Follow-up, not edited here: `PRODUCT.md` still says "No workbook is a deliverable". That is true
   of the build until the workbook lands (PR 4), and another open PR edits that file; the line is
   to be brought into step with this ruling then.
