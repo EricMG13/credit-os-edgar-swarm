@@ -51,7 +51,15 @@ function amountsOf(bars: Map<number, AmountColumn>) {
     draw: (column: number, cell: string, line: number) => {
       const bar = bars.get(column);
       const share = bar?.share(cell, line) ?? null;
-      if (!bar || share === null) return undefined;
+      if (!bar) return undefined;
+      // A figure kept off the scale (a total, an aggregate, a control row) is drawn in the
+      // column's figure slot with no bar; a stated gap keeps its words.
+      if (share === null)
+        return /^[(+-]?\d[\d,]*(?:\.\d+)?\)?$/.test(cell.trim()) ? (
+          <span className="block w-20 text-right font-mono text-small text-text-primary tabular-nums">
+            {cell}
+          </span>
+        ) : undefined;
       return (
         <BarCell text={cell} share={share} tone={bar.negative(cell) ? "secondary" : "primary"} />
       );

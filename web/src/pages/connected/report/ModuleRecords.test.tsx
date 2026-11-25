@@ -455,3 +455,41 @@ describe("records states and targets", () => {
       expect(link).toHaveClass("min-h-8", "max-[480px]:min-h-11");
   });
 });
+
+it("draws a figure kept off the scale in the figure slot, with no bar", () => {
+  const entry: OutputEntry = {
+    selected: true,
+    output: { id: "r/CP-1.md", module: "CP-1", label: "a", href: "", sha256: "a".repeat(64) },
+    sections: [
+      { heading: "Findings", level: 2, line: 1, blocks: [] },
+      {
+        heading: "T4.18 Debt instruments",
+        level: 3,
+        line: 2,
+        blocks: [
+          {
+            type: "table",
+            line: 3,
+            headers: ["Instrument", "Principal"],
+            rows: [
+              { line: 5, cells: ["Tranche I", "1871"] },
+              { line: 6, cells: ["Tranche J", "3632"] },
+              { line: 7, cells: ["Term loans — aggregate control, not additive", "8702"] },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+  const traces = sectionTraces({ chips: {} } as Snapshot, entry, entry.sections);
+  render(
+    <RunContext.Provider value={{ traces, open: () => undefined }}>
+      <ModuleRecords run={{ folder: "r" }} entry={entry} />
+    </RunContext.Provider>,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Show records" }));
+  const figure = screen.getByText("8702");
+  expect(figure).toHaveClass("font-mono", "text-right");
+  expect(figure.closest("td")?.querySelector("[style]")).toBeNull();
+  expect(screen.getByText("3632").closest("td")?.querySelector("[style]")).not.toBeNull();
+});
