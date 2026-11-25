@@ -584,7 +584,7 @@ const CODE = String.raw`[TP]\d+[A-Z]?(?:\.\d+)?`;
 const DOTTED_CODE = String.raw`(?:TL|T|P)[A-Z0-9]{0,5}\.\d+(?:\.\d+)?`;
 const SET_OFF_CODE = String.raw`(?:TL|T|P)[A-Z0-9]{0,5}`;
 const RECORD_PREFIX = new RegExp(
-  String.raw`^(?:${DOTTED_CODE}\s+(?:[-\u2013\u2014:]\s*)?|${SET_OFF_CODE}\s*[-\u2013\u2014:]\s+)`,
+  String.raw`^(?:${DOTTED_CODE}(?:\s*[-\u2013\u2014:]\s*|\s+)|${SET_OFF_CODE}\s*[-\u2013\u2014:]\s+)`,
 );
 const RECORD_CODE = new RegExp(String.raw`^${CODE}\s`);
 

@@ -3,24 +3,26 @@ import {
   blocked,
   containsReference,
   evidencePath,
-  readerText,
   type OutputEntry,
   type Table,
 } from "../publishedReport";
 import { namedRow, namedTable } from "../reportView";
+import { proseWithoutMachinery } from "./moduleRecords";
 import { PublishedSource } from "./PublishedTrace";
 
 /*
  * What Business & governance says the issuer is. These are the rules the report header used for
  * its business description before the redesign moved it here: the company_description register
  * over the Company profile's Business row; two candidate rows are a gap, never a guess; text
- * through readerText; a description that cites a file or register id is not printed, only its
- * place in Evidence.
+ * through readerText (in proseWithoutMachinery); a description that cites a file or register id is not printed, only its
+ * place in Evidence; a register code it cites goes with the words that cite it, or, where that
+ * leaves no clean sentence, the description is not printed either.
  */
 
 const NO_DESCRIPTION = "Business description not in this run";
 const DESCRIPTION = "Business description";
 const IN_EVIDENCE = "Business description in Evidence";
+const ON_SELECTED = "The business description is shown for the selected output.";
 
 const filled = (text: string | undefined) => (text?.trim() ? text : undefined);
 
@@ -59,23 +61,29 @@ function sectorOf(entry: OutputEntry) {
   const registered =
     register && filled(register.row.cells[register.table.headers.indexOf("Sector")]);
   const sector = registered ?? profileCell(entry, "Sector and segments")?.text;
-  return sector === undefined || containsReference(sector) ? undefined : readerText(sector);
+  return sector === undefined || containsReference(sector)
+    ? undefined
+    : proseWithoutMachinery(sector) || undefined;
 }
 
 /** The issuer's sector and business description, as Business & governance states them. */
 export function CompanyProfile({ entry, folder }: { entry: OutputEntry; folder: string }) {
-  // Only the selected output that could run describes the issuer, as the report header did.
-  const usable = entry.selected && !blocked(entry);
-  const described = usable ? describeCompany(entry) : undefined;
-  const sector = usable ? sectorOf(entry) : undefined;
-  const referenced = described !== undefined && containsReference(described.text);
+  // A blocked module's frame states that it could not run; the description adds nothing there.
+  if (blocked(entry)) return null;
+  // Only the selected output describes the issuer, as the report header did.
+  if (!entry.selected) return <p className="pt-1 text-small text-text-tertiary">{ON_SELECTED}</p>;
+  const described = describeCompany(entry);
+  const sector = sectorOf(entry);
+  const shown =
+    described && !containsReference(described.text) && proseWithoutMachinery(described.text);
+  const referenced = described !== undefined && !shown;
   return (
     <div className="flex min-w-0 flex-col gap-1 pt-1">
       {sector && <p className="text-caption text-text-tertiary">{sector}</p>}
       {described ? (
         <p className={`${TRACE_HOST} flex items-start gap-2 text-small text-text-primary`}>
           <span className={referenced ? "min-w-0 text-text-tertiary" : "min-w-0"}>
-            {referenced ? IN_EVIDENCE : readerText(described.text)}
+            {shown || IN_EVIDENCE}
           </span>
           <PublishedSource href={evidencePath(folder, entry, described.line)} name={DESCRIPTION}>
             {DESCRIPTION}

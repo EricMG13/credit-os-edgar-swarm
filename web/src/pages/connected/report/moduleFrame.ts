@@ -178,7 +178,8 @@ function entityBasis(entry: OutputEntry): Basis {
   return {
     kind: "entity",
     entity: entity && !entity.gap ? entity.text : "",
-    parts,
+    // An entity the key does not state is a gap cell like the others: "Entity: Not stated".
+    parts: entity?.gap ? [entity, ...parts] : parts,
     entities: table.rows.length,
     line: key?.line ?? table.line,
   };

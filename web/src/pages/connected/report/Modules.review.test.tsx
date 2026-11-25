@@ -576,35 +576,68 @@ it("H8: names the entity, draws a gap cell as a gap, and says when the key lists
 });
 
 it.each([
-  ["a blocked output", true, "Not assessable: no filings were supplied."],
-  ["an output that is not the selected one", false, "Makes parts."],
-])("H9: draws no business description from %s", (_, selected, bottomText) => {
-  const entry: OutputEntry = {
-    selected,
-    output: { id: "r/CP-1A.md", module: "CP-1A", label: "a", href: "", sha256: "a".repeat(64) },
-    sections: [
+  ["a blocked output", true, "Not assessable: no filings were supplied.", null],
+  [
+    "an output that is not the selected one",
+    false,
+    "Makes parts.",
+    "The business description is shown for the selected output.",
+  ],
+])(
+  "H9, C3: draws no business description from %s, and no false gap",
+  (_, selected, bottomText, said) => {
+    const entry: OutputEntry = {
+      selected,
+      output: { id: "r/CP-1A.md", module: "CP-1A", label: "a", href: "", sha256: "a".repeat(64) },
+      sections: [
+        findings,
+        section("Bottom line", 3, 2, [text(3, bottomText)]),
+        profile([["Business", "Makes aircraft parts."]]),
+      ],
+    };
+    const view = {
+      entries: [entry],
+      modules: [
+        { id: "CP-1A", name: "Business & governance", state: "Delivered", outputs: [entry] },
+      ],
+      catalogue: undefined,
+      lead: undefined,
+      models: [],
+    } as unknown as ReportView;
+    const run = { folder: "r", issuer: "Issuer", asOf: "2026-10-31", modules: {} } as PublishedRun;
+    render(
+      <Modules
+        snapshot={{ chips: {} } as Snapshot}
+        run={run}
+        view={view}
+        module="CP-1A"
+        output="0"
+      />,
+    );
+    expect(screen.queryByText("Makes aircraft parts.")).toBeNull();
+    expect(screen.queryByText("Business description not in this run")).toBeNull();
+    if (said) expect(screen.getByText(said)).toBeVisible();
+    else expect(screen.queryByText(/business description/i)).toBeNull();
+  },
+);
+
+it("C6: draws an entity the key does not state as a gap, like its other gap cells", () => {
+  page(
+    [
       findings,
-      section("Bottom line", 3, 2, [text(3, bottomText)]),
-      profile([["Business", "Makes aircraft parts."]]),
+      bottom,
+      section("T4.2 Entity period key", 3, 10, [
+        table(
+          12,
+          ["Entity Name", "Fiscal Year End", "Reporting Currency", "Reporting Unit"],
+          [["Not stated", "September 30", "EUR", "Not supplied"]],
+        ),
+      ]),
     ],
-  };
-  const view = {
-    entries: [entry],
-    modules: [{ id: "CP-1A", name: "Business & governance", state: "Delivered", outputs: [entry] }],
-    catalogue: undefined,
-    lead: undefined,
-    models: [],
-  } as unknown as ReportView;
-  const run = { folder: "r", issuer: "Issuer", asOf: "2026-10-31", modules: {} } as PublishedRun;
-  render(
-    <Modules
-      snapshot={{ chips: {} } as Snapshot}
-      run={run}
-      view={view}
-      module="CP-1A"
-      output="0"
-    />,
+    { module: "CP-1", name: "Financial foundation" },
   );
-  expect(screen.queryByText("Makes aircraft parts.")).toBeNull();
-  expect(screen.getByText("Business description not in this run")).toBeVisible();
+  const header = screen.getByRole("region", { name: "Financial foundation" });
+  expect(within(header).getByText("Entity: Not stated")).toHaveClass("border-dashed");
+  expect(within(header).getByText("Unit: Not supplied")).toHaveClass("border-dashed");
+  expect(within(header).queryByText("Not stated:")).toBeNull();
 });

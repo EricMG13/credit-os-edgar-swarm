@@ -272,10 +272,10 @@ describe("prose in a coded section goes with its table", () => {
     page(coded());
     // Closed, the page draws neither the tables nor their notes: a note belongs to its table.
     expect(screen.queryByText(DEBT_SENTENCE)).toBeNull();
-    expect(screen.queryByRole("region", { name: "debt and rate exposure" })).toBeNull();
+    expect(screen.queryByRole("region", { name: "Debt and rate exposure" })).toBeNull();
     openRecords();
     expect(screen.getAllByText(DEBT_SENTENCE)).toHaveLength(1);
-    expect(screen.getByRole("heading", { name: "debt and rate exposure" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Debt and rate exposure" })).toBeInTheDocument();
     expect(document.body.textContent).not.toContain("T2F.2");
     expect(screen.getByRole("columnheader", { name: "Amount" })).toBeInTheDocument();
   });
@@ -286,8 +286,8 @@ describe("prose in a coded section goes with its table", () => {
     openRecords();
     const tables = within(screen.getByRole("group", { name: "Table" }));
     expect(tables.getAllByRole("button").map((button) => button.textContent)).toEqual([
-      "debt and rate exposure",
-      "macro sensitivity summary",
+      "Debt and rate exposure",
+      "Macro sensitivity summary",
     ]);
     expect(screen.getByRole("columnheader", { name: "Amount" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Statements and records" }).textContent).not.toMatch(

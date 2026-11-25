@@ -61,7 +61,7 @@ it("allows the sole retained output without a designation but withholds ambiguou
   const { rerender } = render(<Modules {...fixture([output("a")])} />);
   expect(screen.getByRole("link", { name: "Open Evidence" })).toBeInTheDocument();
   rerender(<Modules {...fixture([output("a"), output("b")])} />);
-  expect(screen.getByRole("heading", { name: "Handoff unavailable" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Module output unavailable" })).toBeInTheDocument();
   expect(screen.queryByRole("link", { name: "Open Evidence" })).toBeNull();
 });
 
@@ -69,7 +69,7 @@ it.each(["", "00", "01", "-1", "+1", "1e0", "1.0", " 1", "2", "99999999999999999
   "does not substitute the default for an invalid or absent output address: %j",
   (address) => {
     render(<Modules {...fixture([output("a"), output("b", true)])} output={address} />);
-    expect(screen.getByRole("heading", { name: "Handoff unavailable" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Module output unavailable" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Open Evidence" })).toBeNull();
   },
 );
@@ -78,7 +78,7 @@ it("respects explicit modules and does not substitute for an unknown module", ()
   const props = fixture([output("a", true)]);
   const { rerender } = render(<Modules {...props} module="CP-2" />);
   expect(screen.getByRole("heading", { name: "Credit analysis" })).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "Handoff unavailable" })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { name: "Module output unavailable" })).toBeInTheDocument();
   rerender(<Modules {...props} module="missing" />);
   expect(screen.getByText("This module is unavailable in the published run.")).toBeInTheDocument();
   expect(screen.queryByLabelText("Module")).toBeNull();

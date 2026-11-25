@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
-import { readerText, type Block, type OutputEntry, type Section } from "../publishedReport";
+import { type Block, type OutputEntry, type Section } from "../publishedReport";
 import { CompanyProfile } from "./CompanyProfile";
 import { PublishedTraceProvider } from "./PublishedTrace";
 
@@ -32,10 +32,16 @@ const register = (cells: string[]) =>
     table(22, ["Issuer", "Business description", "Country", "Sector"], [cells]),
   ]);
 
-function draw(sections: Section[]) {
+function draw(sections: Section[], { selected = true }: { selected?: boolean } = {}) {
   const entry: OutputEntry = {
-    selected: true,
-    output: { id: "acme/CP-1A.md", module: "CP-1A", label: "a", href: "", sha256: "a".repeat(64) },
+    selected,
+    output: {
+      id: "acme/CP-1A.md",
+      module: "CP-1A",
+      label: "a",
+      href: "",
+      sha256: "a".repeat(64),
+    },
     sections,
   };
   // The provider resolves the control's Evidence address to a handoff block; the trace itself is
@@ -98,11 +104,31 @@ it("draws the description and sector through readerText", () => {
       ["Sector and segments", sector],
     ]),
   ]);
-  const shown = readerText(raw);
-  expect(shown).not.toContain("CP-2A");
+  // Written by hand: the module's code becomes its name, every other word as stated.
+  const shown = "Makes components; see Downside for the downside case.";
   expect(screen.getByText(shown).textContent).toBe(shown);
-  expect(screen.getByText(readerText(sector))).toBeVisible();
-  expect(readerText(sector)).not.toContain("CP-2A");
+  expect(screen.getByText("Aerospace, see Downside")).toBeVisible();
+});
+
+it("C4: drops a register code the description cites, with the words that cite it", () => {
+  draw([profile([["Business", "Designs components; segment detail in T4.18."]])]);
+  expect(screen.getByText("Designs components; segment detail.")).toBeVisible();
+  expect(document.body.textContent).not.toContain("T4.18");
+});
+
+it("C4: names Evidence where cutting the code leaves no clean sentence", () => {
+  draw([profile([["Business", "Designs components described in (T4.18)."]])]);
+  expect(screen.getByText(IN_EVIDENCE)).toBeVisible();
+  expect(document.body.textContent).not.toContain("T4.18");
+});
+
+it("C3: on an output that is not the selected one, says where the description is shown", () => {
+  draw([profile([["Business", "Makes aircraft parts."]])], { selected: false });
+  expect(
+    screen.getByText("The business description is shown for the selected output."),
+  ).toBeVisible();
+  expect(screen.queryByText(GAP)).toBeNull();
+  expect(screen.queryByText("Makes aircraft parts.")).toBeNull();
 });
 
 it("draws no description text or title when the description holds a file name", () => {
@@ -123,4 +149,17 @@ it("draws no description text when the register's description holds a register i
 it("omits a sector that holds a reference", () => {
   const container = draw([profile([["Sector and segments", `Aerospace per ${FILE}`]])]);
   expect(container.innerHTML).not.toContain(FILE);
+});
+
+it("C3: draws nothing on a blocked output: the frame states the blocked module", () => {
+  // As a handoff writes it: the passages under a level-2 Findings heading.
+  draw([
+    { heading: "Findings", level: 2, line: 1, blocks: [] },
+    section("Bottom line", 2, [
+      { type: "text", line: 3, end: 3, text: "Not assessable: no filings were supplied." },
+    ]),
+    profile([["Business", "Makes aircraft parts."]]),
+  ]);
+  expect(screen.queryByText(/business description/i)).toBeNull();
+  expect(screen.queryByText("Makes aircraft parts.")).toBeNull();
 });

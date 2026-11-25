@@ -9,6 +9,7 @@ import {
   heldInEvidence,
   moduleRecords,
   numericColumns,
+  proseWithoutMachinery,
   readableTitle,
   statedGap,
   unitColumn,
@@ -387,7 +388,14 @@ describe("readableTitle", () => {
     ["T2DS.6 Break points", "Break points"],
     ["P3 - Priorities", "Priorities"],
     ["P2.1 Programme risks", "Programme risks"],
-    ["TDR.3 limitations", "limitations"],
+    ["TDR.3 limitations", "Limitations"],
+    ["P3 - programme review", "Programme review"],
+    // C4: a dotted code with a colon or dash straight after it.
+    ["T4.18: Debt stack", "Debt stack"],
+    ["T4.18—Debt stack", "Debt stack"],
+    ["T4.18–Debt stack", "Debt stack"],
+    ["T4.18-Debt stack", "Debt stack"],
+    ["T4.18 : Debt stack", "Debt stack"],
     ["TDR.2 - Register", "Register"],
     ["T1 - Register", "Register"],
     ["T5: Hedges", "Hedges"],
@@ -705,10 +713,11 @@ describe("H1: bars leave out only rows the table itself marks as totals", () => 
     "Group",
     "Consolidated",
     "Aggregate",
-    "Net debt",
+    "Combined",
     "Total debt",
+    "Subtotal secured",
     "Segment total",
-    "Less cash",
+    "Secured subtotal",
     "**Notes**",
   ])("leaves the row %s out of the scale and names it", (name) => {
     const item = table(
@@ -727,22 +736,98 @@ describe("H1: bars leave out only rows the table itself marks as totals", () => 
     expect(barExclusions(item)).toEqual([name.replaceAll("**", "")]);
   });
 
-  it.each(["Power & Control", "Group A notes", "Control systems", "Netherlands notes"])(
-    "keeps %s as a peer: a word inside a name says nothing",
-    (name) => {
-      const item = table(
-        1,
-        ["Item name", "Principal"],
-        [
-          [name, "100"],
-          ["Loan", "50"],
-          ["Bond", "20"],
-        ],
-      );
-      expect(amountColumns(item).get(1)?.share("100", 3)).toBe(1);
-      expect(barExclusions(item)).toEqual([]);
-    },
-  );
+  it.each([
+    "Power & Control",
+    "Group A notes",
+    "Control systems",
+    "Netherlands notes",
+    // C1: "Net" and "Less" begin names, not totals.
+    "Net debt issuer A",
+    "Less than one year",
+  ])("keeps %s as a peer: a word inside a name says nothing", (name) => {
+    const item = table(
+      1,
+      ["Item name", "Principal"],
+      [
+        [name, "100"],
+        ["Loan", "50"],
+        ["Bond", "20"],
+      ],
+    );
+    expect(amountColumns(item).get(1)?.share("100", 3)).toBe(1);
+    expect(barExclusions(item)).toEqual([]);
+  });
+
+  it("C1: bars every rung of a maturity ladder, the first one included", () => {
+    const ladder = table(
+      1,
+      ["Due", "Principal"],
+      [
+        ["Less than one year", "120"],
+        ["One to two years", "300"],
+        ["Two to five years", "800"],
+        ["More than five years", "1,200"],
+      ],
+    );
+    const bars = amountColumns(ladder).get(1);
+    expect(bars?.share("120", 3)).toBe(0.1);
+    expect(bars?.share("300", 4)).toBe(0.25);
+    expect(bars?.share("1,200", 6)).toBe(1);
+    expect(barExclusions(ladder)).toEqual([]);
+  });
+
+  it("C1: bars each region of a net sales table", () => {
+    const sales = table(
+      1,
+      ["Segment", "Net sales"],
+      [
+        ["Net sales Americas", "400"],
+        ["Net sales Europe", "300"],
+        ["Net sales Asia", "200"],
+      ],
+    );
+    const bars = amountColumns(sales).get(1);
+    expect(bars?.share("400", 3)).toBe(1);
+    expect(bars?.share("300", 4)).toBe(0.75);
+    expect(bars?.share("200", 5)).toBe(0.5);
+    expect(barExclusions(sales)).toEqual([]);
+  });
+
+  it("C2: reads the label past a rank, and puts every row after a total below the line", () => {
+    const ranked = table(
+      1,
+      ["Rank", "Instrument", "Principal"],
+      [
+        ["1", "Revolver", "500"],
+        ["2", "Term loan B", "1,000"],
+        ["3", "Senior notes", "2,000"],
+        ["", "Total debt", "3,500"],
+        ["", "Cash", "(300)"],
+        ["", "Net debt", "3,200"],
+      ],
+    );
+    const bars = amountColumns(ranked).get(2);
+    expect(bars?.share("500", 3)).toBe(0.25);
+    expect(bars?.share("1,000", 4)).toBe(0.5);
+    expect(bars?.share("2,000", 5)).toBe(1);
+    expect(bars?.share("3,500", 6)).toBeNull();
+    expect(bars?.share("(300)", 7)).toBeNull();
+    expect(bars?.share("3,200", 8)).toBeNull();
+    expect(barExclusions(ranked)).toEqual(["Total debt", "Cash", "Net debt"]);
+  });
+
+  it("C2: takes no gap mark in the rank column for a row's name", () => {
+    const ranked = table(
+      1,
+      ["Rank", "Instrument", "Principal"],
+      [
+        ["1", "Revolver", "500"],
+        ["2", "Senior notes", "2,000"],
+        ["—", "Total debt", "2,500"],
+      ],
+    );
+    expect(barExclusions(ranked)).toEqual(["Total debt"]);
+  });
 
   it("draws no bars where an unlabelled row is the sum of the others", () => {
     const item = table(
@@ -789,5 +874,31 @@ describe("H10: registers the screen map ranks on the module page stay in the rec
       expect(records.tables).toEqual([]);
       expect(records.evidence.map(({ title }) => title)).toEqual([heading]);
     }
+  });
+});
+
+describe("C5: a cited register code goes with the words that govern it", () => {
+  it.each([
+    [
+      "Not supplied in T4.18; the 10-K (annual.pdf) omits it, so no series is drawn.",
+      "Not supplied; the 10-K omits it, so no series is drawn.",
+    ],
+    ["Covenant headroom per T4.18 and TDR.3 is thin.", "Covenant headroom is thin."],
+    ["Leverage of 6.5x (T4.18) is high.", "Leverage of 6.5x is high."],
+    ["Leverage of 6.5x (T4.18, TDR.3) is high.", "Leverage of 6.5x is high."],
+    ["Coverage, see T4.18, is thin.", "Coverage is thin."],
+    // A code that names the rows it qualifies goes alone; the sentence keeps its preposition.
+    ["Relationships are drawn from T4.18 rows only.", "Relationships are drawn from rows only."],
+    ["No series is drawn.", "No series is drawn."],
+  ])("draws %j as %j", (text, shown) => {
+    expect(proseWithoutMachinery(text)).toBe(shown);
+  });
+
+  it.each([
+    "Detail is in (T4.18).",
+    "The rates are those of T4.18's annex.",
+    "Detail is in T4.18 and the notes.",
+  ])("prints nothing where the cut leaves no clean sentence: %j", (text) => {
+    expect(proseWithoutMachinery(text)).toBe("");
   });
 });

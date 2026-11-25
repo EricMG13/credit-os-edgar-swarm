@@ -261,7 +261,11 @@ function UnavailableHandoff({ current, next }: { current: ModuleItem; next?: Fra
   return (
     <Bento>
       <ModuleHeader module={current} bottomLine={null} owed={false} folder="" />
-      <Tile span={next ? 8 : 12} label="Handoff unavailable" title="Handoff unavailable">
+      <Tile
+        span={next ? 8 : 12}
+        label="Module output unavailable"
+        title="Module output unavailable"
+      >
         <GapNote>
           {count > 1
             ? "Choose a saved output above."

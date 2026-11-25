@@ -137,7 +137,7 @@ export function moduleRecords(entry: OutputEntry) {
 /** The handoff's register codes at the start of a heading (T4.18, T2B.7, T2DS.6, TL10.2, P3), with
  * the dash that follows. A heading that only starts with a letter and digits ("Q4 2025") keeps them. */
 const REGISTER_CODE =
-  /^(?:(?:TL|T|P)[A-Z0-9]{0,5}\.\d+(?:\.\d+)?\s+(?:[-–—:]\s*)?|(?:TL|T|P)[A-Z0-9]{0,5}\s*[-–—:]\s+)/;
+  /^(?:(?:TL|T|P)[A-Z0-9]{0,5}\.\d+(?:\.\d+)?(?:\s*[-–—:]\s*|\s+)|(?:TL|T|P)[A-Z0-9]{0,5}\s*[-–—:]\s+)/;
 const PARENTHESISED = /\s*\([^()]*\)/g;
 const CLAUSE = /\s+(?:per|from|in|see)\s|\s+source:\s*|\s+[\u2013\u2014]\s/gi;
 const LOOSE_END = /[\s,;:\u2013\u2014-]+$/;
@@ -151,16 +151,38 @@ function wordsOfIds(title: string) {
 }
 
 /** A dotted register code inside prose ("drawn from T4.18 rows"): machinery, not a word. */
-const INLINE_CODE = /\s?\b(?:TL|T|P)[A-Z0-9]{0,5}\.\d+(?:\.\d+)?\b/g;
+const DOTTED = String.raw`\b(?:TL|T|P)[A-Z0-9]{0,5}\.\d+(?:\.\d+)?\b`;
+const CODES = String.raw`${DOTTED}(?:\s*(?:,|and|&|/|or)\s*${DOTTED})*`;
+const INLINE_CODE = new RegExp(String.raw`\s?${DOTTED}`, "g");
+/** A code read as a possessive ("T4.18's annex") leaves no sentence: it marks the cut unclean. */
+const POSSESSIVE_CODE = new RegExp(String.raw`${DOTTED}['\u2019]s\b`, "g");
+/** A bracket that holds nothing but codes: it goes whole. */
+const CODE_BRACKET = new RegExp(String.raw`\s*\(\s*${CODES}\s*\)`, "g");
+/** A citation of codes by the word that governs it ("in T4.18", "per T4.18 and TDR.3", ", see
+ * T4.18,"), where the codes end the phrase; a code that names the rows after it goes alone. */
+const CITATION = new RegExp(
+  String.raw`(,\s*)?\s*\b(?:in|per|see|from|cf\.?|according to)\s+${CODES}(\s*,)?` +
+    String.raw`(?=\s*(?:[,;:.!?)]|$)|\s+(?:is|are|was|were|has|have|had|but|so|which|that)\b)`,
+  "gi",
+);
+/** What a cut can leave that no sentence has: a dangling preposition, an empty bracket, a space
+ * before punctuation, a stray possessive, or a sentence that opens on punctuation. */
+const UNCLEAN =
+  /\b(?:in|per|see|from|of|by|at|to|and|or|with|on|under|cf)\s*(?=[,;:.!?)]|$)|\b(?:in|per|see|from|of|by|at|to|with|on|under)\s+(?:and|or|but|so|is|are|was|were)\b|\(\s*\)|\s[,;:.!?]|(?:^|\s)['\u2019]|^[,;:.]/i;
 
-/** Prose as the page draws it: without the source it cites and the register codes it names;
- * empty where nothing readable remains. */
+/** Prose as the page draws it: without the source it cites and the register codes it names,
+ * each with the words that cite it; empty where nothing readable, or no clean sentence, remains. */
 export function proseWithoutMachinery(text: string) {
-  const cut = withoutReference(text)
-    .replace(INLINE_CODE, "")
+  const codeless = text
+    .replace(POSSESSIVE_CODE, "()")
+    .replace(CODE_BRACKET, "")
+    .replace(CITATION, (_, lead?: string, trail?: string) => (lead || !trail ? "" : ","))
+    .replace(INLINE_CODE, "");
+  const cut = withoutReference(codeless)
     .replace(/\s{2,}/g, " ")
     .trim();
-  return cut && !containsReference(cut) ? readerText(cut) : "";
+  if (!cut || containsReference(cut) || (cut !== text.trim() && UNCLEAN.test(cut))) return "";
+  return readerText(cut);
 }
 
 /** The title without its cited source: a parenthesised reference, then a trailing clause that
@@ -181,7 +203,14 @@ function withoutReference(title: string) {
 /** A heading as the reader sees it: no drawing prefix or register code, module names for codes,
  * and the title's own words without the source it cites, which belongs in Evidence. */
 export function readableTitle(heading: string, untitled = "Untitled table") {
-  const coded = wordsOfIds(plainText(drawingTitle(heading)).replace(REGISTER_CODE, ""));
+  const stripped = plainText(drawingTitle(heading)).replace(REGISTER_CODE, "");
+  // A title left after its code begins with a capital ("TDR.3 limitations" → "Limitations");
+  // drawingTitle takes the code too, so the test reads the heading without its drawing prefix.
+  const coded = wordsOfIds(
+    REGISTER_CODE.test(plainText(heading).replace(DRAWING_PREFIX, ""))
+      ? stripped.charAt(0).toUpperCase() + stripped.slice(1)
+      : stripped,
+  );
   // A leading name such as "P3 programme" reads to the page-citation test as "p 3": a name, not
   // a source, when the rest of the title cites none.
   const name = LEADING_NAME.exec(coded)?.[0] ?? "";
@@ -190,6 +219,8 @@ export function readableTitle(heading: string, untitled = "Untitled table") {
   return title && !containsReference(title.slice(name.length)) ? title : untitled;
 }
 
+/** The drawing prefix ReportContent's drawingTitle removes. */
+const DRAWING_PREFIX = /^(?:Chart data|Map|Events): /;
 const LEADING_NAME = /^[A-Z]{1,3}\d+[A-Z]?\s+(?=\S)/;
 
 /** Whether a section of this heading and role is listed under "Held in Evidence" by its heading:
@@ -223,9 +254,10 @@ const PERIOD_HEADER = /^(?:FY|H[12] |Q[1-4] |LTM |20\d\d)/;
 const MEASURES_HEADER = /^(?:item|items|metric|metrics|measure|line item|kpi|indicator)s?$/i;
 const BRIDGE = /bridge|waterfall|walk|reconciliation/i;
 const BRIDGE_ROW = /^(?:opening|closing|starting|ending)\b/i;
-/** A row's own label, whole, that names a total; never a word inside another name ("Power & Control"). */
+/** A row's own label, whole, that names a total; never a word inside another name ("Power &
+ * Control"), nor "Net …" or "Less …", which begin names ("Net sales Americas", "Less than one year"). */
 const TOTAL_LABEL =
-  /^(?:total|subtotal|sum|group|consolidated|aggregate|combined)$|^(?:total|net|less)\s|\s(?:sub)?total$/i;
+  /^(?:total|subtotal|sum|group|consolidated|aggregate|combined)$|^(?:sub)?total\s|\s(?:sub)?total$/i;
 /** The handoff's own mark that a row is no peer of the others. */
 const MARKED = /not additive|\baggregate control\b/i;
 
@@ -270,25 +302,33 @@ const label = (cell: string) =>
     .trim();
 const bold = (cell: string) => /^\*\*.+\*\*$/.test(cell.trim());
 
-/** The rows that are no peers of the others: a first cell that is, whole, a total word, a bold
- * row, or a row the module marks as not additive or an aggregate control. Never guessed from a
- * word inside a name. */
+/** A row's name: its first shown cell that holds text, not a number or a gap mark (a rank, or
+ * the "—" a rank column holds on a total, comes before it). */
+const rowName = (cells: string[], columns: number[]) =>
+  columns
+    .map((column) => cells[column] ?? "")
+    .find((cell) => !isGap(cell) && amount(cell) === null) ?? "";
+
+/** The rows that are no peers of the others: a row whose name is, whole, a total word, a bold
+ * row, a row the module marks as not additive or an aggregate control, and every row after such a
+ * row, below the line. Never guessed from a word inside a name. */
 function notPeers(table: Table, columns: number[]) {
-  const first = columns[0] ?? 0;
+  const total = ({ cells }: Table["rows"][number]) => {
+    const name = rowName(cells, columns);
+    return (
+      TOTAL_LABEL.test(label(name)) ||
+      bold(name) ||
+      columns.some((column) => {
+        const cell = cells[column] ?? "";
+        return !isGap(cell) && MARKED.test(cell);
+      })
+    );
+  };
+  const line = table.rows.findIndex(total);
   return new Map(
     table.rows
-      .filter(({ cells }) => {
-        const name = cells[first] ?? "";
-        return (
-          TOTAL_LABEL.test(label(name)) ||
-          bold(name) ||
-          columns.some((column) => {
-            const cell = cells[column] ?? "";
-            return !isGap(cell) && MARKED.test(cell);
-          })
-        );
-      })
-      .map(({ line, cells }) => [line, label(cells[first] ?? "")]),
+      .filter((row, at) => line !== -1 && (at >= line || total(row)))
+      .map(({ line: at, cells }) => [at, label(rowName(cells, columns))]),
   );
 }
 
