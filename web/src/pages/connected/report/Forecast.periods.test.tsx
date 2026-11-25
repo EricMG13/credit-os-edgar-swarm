@@ -59,7 +59,7 @@ const caseFigure = () => screen.getByLabelText("Selected case cash proxy");
 const caseCard = () => caseFigure().parentElement as HTMLElement;
 const caseButton = (name: string) =>
   within(screen.getByRole("group", { name: "Case" })).getByRole("button", {
-    name: `${name}`,
+    name: name,
   });
 const compareOneYear = () =>
   fireEvent.click(

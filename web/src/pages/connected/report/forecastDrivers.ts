@@ -205,7 +205,7 @@ export function driverTable(document: Record<string, unknown>, shockName = "Down
       key,
       name: DRIVER_NAMES[key] ?? key.replaceAll("_", " "),
       shock: isShock,
-      unit: FRACTIONS.has(key) ? "Fraction" : MONEY.has(key) ? unit : "",
+      unit: FRACTIONS.has(key) ? "Fraction" : MONEY.has(key) ? unit : "unit not recorded",
       cells,
     };
   });

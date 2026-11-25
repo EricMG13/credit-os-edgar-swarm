@@ -381,9 +381,7 @@ export function maturitySchedule(view: ReportView) {
     year: dated(slot.label) ?? 0,
     label: slot.label,
     cell: slot.cell,
-    line:
-      ("line" in slot ? (slot.line as number | undefined) : undefined) ??
-      rowLine(table, slot.label),
+    line: slot.line ?? rowLine(table, slot.label),
     key: `${slot.label}-${String(at)}`,
   }));
   const years = read.filter((row) => row.year !== 0);

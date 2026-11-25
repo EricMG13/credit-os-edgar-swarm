@@ -205,7 +205,7 @@ it("draws a null year as Not stated and keeps the other years' values", () => {
   expect(cell?.text).not.toContain("null");
 });
 
-it("gives no unit to a key whose kind is unknown, a caption only to known money and fraction keys", () => {
+it("says an unknown key's unit is not recorded, and names known money and fraction units", () => {
   const table = driverTable({
     currency: "USD",
     scale: 1,
@@ -216,7 +216,7 @@ it("gives no unit to a key whose kind is unknown, a caption only to known money 
     },
   });
   expect(table.rows.map(({ key, unit }) => [key, unit])).toEqual([
-    ["mystery", ""],
+    ["mystery", "unit not recorded"],
     ["dividends", "USD millions"],
     ["interest_rate", "Fraction"],
   ]);
@@ -246,4 +246,11 @@ it("draws exponent numbers as exact plain decimals and keeps the recorded text i
   const cell = table.rows[0]?.cells[0];
   expect(cell?.text).toBe("0.0000001 · 0.0025 · 150");
   expect(cell?.title).toBe("1e-7 · 2.5e-3 · 1.5e2");
+});
+
+it("says a driver's unit is not recorded where the page does not know the driver", () => {
+  const table = driverTable({ base_drivers: { mystery: { values: ["1"] } } });
+  const row = table.rows.find(({ key }) => key === "mystery");
+  expect(row?.cells[0]?.text).toBe("1");
+  expect(row?.unit).toBe("unit not recorded");
 });

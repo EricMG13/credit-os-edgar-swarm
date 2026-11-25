@@ -179,10 +179,14 @@ function fixture() {
 
 afterEach(() => vi.unstubAllGlobals());
 
-it("keeps the full model qualification ledger once on Evidence Record, not on Forecast", () => {
+it("lists each model limit once on Forecast, under Scope and limits, and once on Evidence Record", () => {
   const { view, model } = fixture();
   const drawn = render(<Forecast view={view} run={run} />);
-  expect(document.body.textContent).not.toContain(ledger);
+  // Every limit the model records is listed once, in reader words, in Scope and limits only.
+  expect(
+    within(screen.getByRole("region", { name: "Scope and limits" })).getByText(ledger),
+  ).toBeInTheDocument();
+  expect(document.body.textContent.split(ledger)).toHaveLength(2);
   expect(screen.getByRole("link", { name: "Model notes and limitations" })).toHaveAttribute(
     "href",
     "#evidence/record/notes",
@@ -244,7 +248,8 @@ it("ties promoted excerpts to the full recorded input and sends generated notes 
   expect(within(group).getByRole("link")).toHaveAttribute("href", "#evidence/record/notes");
 
   const scope = screen.getByRole("region", { name: "Scope and limits" });
-  const excerpt = within(scope).getByText("Standalone perimeter applies.").parentElement;
+  // The limit whole, as recorded, with the trace to the recorded input.
+  const excerpt = within(scope).getByText(recorded).parentElement;
   if (!excerpt) throw new Error("Missing scope qualification");
   expect(within(excerpt).getByRole("link")).toHaveAttribute("href", expect.stringContaining("-72"));
   expect(

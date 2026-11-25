@@ -1,4 +1,4 @@
-import { useCallback, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { ArrowRight, Download01 } from "@untitledui/icons";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
@@ -13,6 +13,8 @@ import { GapNote, Tile } from "./overview/Tile";
 type FileLink = { label: string; href: string };
 
 const TARGET = "min-h-8 max-[480px]:min-h-11";
+/** Limits shown before the rest are one press away. */
+const MOST_LIMITS = 8;
 
 /** The run's calculation JSON for this model, as the artifacts listing publishes it. */
 function CalculationDownload({ folder, model }: { folder: string; model: string }) {
@@ -81,7 +83,10 @@ export function ScopeTile({
   limitationHref?: (line: number) => string;
 }) {
   const { base, limits } = scopeQualifications(model);
-  const passages = [...base, ...limits];
+  const [allLimits, setAllLimits] = useState(false);
+  // Every limit, in the model's order; beyond eight, the rest one press away.
+  const shownLimits = allLimits ? limits : limits.slice(0, MOST_LIMITS);
+  const passages = [...base, ...shownLimits];
   return (
     <Tile
       span={8}
@@ -97,13 +102,28 @@ export function ScopeTile({
               key={JSON.stringify([recorded, text])}
               className={`${TRACE_HOST} flex items-start justify-between gap-2 border-t border-border-hairline pt-3 first:border-t-0 first:pt-0`}
             >
-              <p className="text-small text-text-secondary">{text}</p>
+              <p className="text-small text-text-secondary">
+                {text ?? "This limit carries a reference; read it in Evidence."}
+              </p>
               {source?.("Model scope qualification", { recordedQualification: recorded })}
             </li>
           ))}
         </ul>
       ) : (
         <GapNote>No qualifications are available in this summary.</GapNote>
+      )}
+      {limits.length > MOST_LIMITS && (
+        <Button
+          color="link-gray"
+          size="sm"
+          aria-expanded={allLimits}
+          onClick={() => {
+            setAllLimits(!allLimits);
+          }}
+          className={`w-fit ${TARGET}`}
+        >
+          {allLimits ? "Fewer limits" : `All ${String(limits.length)} limits`}
+        </Button>
       )}
       {limitations.length > 0 && (
         <section aria-label={`${moduleName("CP-2G")}'s limitations`} className="grid min-w-0 gap-2">

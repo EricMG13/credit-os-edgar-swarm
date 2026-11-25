@@ -83,7 +83,7 @@ const caseShowing = (figure: string) => {
 const selectCase = (name: string) =>
   fireEvent.click(
     within(screen.getByRole("group", { name: "Case" })).getByRole("button", {
-      name: `${name}`,
+      name: name,
     }),
   );
 

@@ -397,3 +397,32 @@ it("draws a funding-gap figure as written with the unit it states, and the row's
   expect(part.getByText("uses RCF")).toBeInTheDocument();
   expect(part.queryByText(/T2E\.5/)).toBeNull();
 });
+
+it("opens each stress measure's own matrix row from its trace", () => {
+  breaks([downside()]);
+  const stress = within(screen.getByRole("group", { name: "Point-in-time stress" }));
+  const cover = stress
+    .getByRole("link", { name: "Source for stress, All-in cover (x)" })
+    .getAttribute("href");
+  const leverage = stress
+    .getByRole("link", { name: "Source for stress, Net leverage (x)" })
+    .getAttribute("href");
+  // The table's rows sit at lines 108 and 109: each measure opens its own.
+  expect(cover).toMatch(/108$/u);
+  expect(leverage).toMatch(/109$/u);
+});
+
+it("names the table, not a row, where the matrix records no row line", () => {
+  const entry = downside();
+  const flows = entry.sections.find(
+    ({ heading }) => heading === "T2DS.4 Stressed flows and metrics",
+  );
+  const block = flows?.blocks[0];
+  if (block?.type !== "table") throw new Error("fixture");
+  for (const row of block.rows) delete (row as { line?: number }).line;
+  breaks([entry]);
+  const stress = within(screen.getByRole("group", { name: "Point-in-time stress" }));
+  expect(
+    stress.getByRole("link", { name: "Source table for stress, All-in cover (x)" }),
+  ).toHaveAttribute("href", expect.stringMatching(/106$/u) as string);
+});

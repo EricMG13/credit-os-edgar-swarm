@@ -62,14 +62,11 @@ function rowTrace(
   entry: OutputEntry | undefined,
   line: number | undefined,
   name: string,
+  linkLabel = `Source for ${name}`,
 ) {
   if (!entry) return undefined;
   return (
-    <PublishedSource
-      href={evidencePath(folder, entry, line)}
-      name={name}
-      linkLabel={`Source for ${name}`}
-    >
+    <PublishedSource href={evidencePath(folder, entry, line)} name={name} linkLabel={linkLabel}>
       View source
     </PublishedSource>
   );
@@ -517,12 +514,16 @@ function StressPart({ view, folder }: { view: ReportView; folder: string }) {
               className="flex items-center gap-1 text-caption text-text-secondary"
             >
               {panel.measure}
-              {rowTrace(
-                folder,
-                entry,
-                ("line" in panel ? (panel.line as number | undefined) : undefined) ?? data.line,
-                `stress, ${panel.measure}`,
-              )}
+              {/* The measure's own matrix row; where the table records none, the table, named so. */}
+              {panel.line === undefined
+                ? rowTrace(
+                    folder,
+                    entry,
+                    data.line,
+                    `stress, ${panel.measure}`,
+                    `Source table for stress, ${panel.measure}`,
+                  )
+                : rowTrace(folder, entry, panel.line, `stress, ${panel.measure}`)}
             </li>
           ))}
         </ul>

@@ -714,7 +714,7 @@ it("tells the reader when the cases share no period, instead of drawing blank co
   const caseItem = (name: string) => {
     fireEvent.click(
       within(screen.getByRole("group", { name: "Case" })).getByRole("button", {
-        name: `${name}`,
+        name: name,
       }),
     );
     expect(figure()).toHaveTextContent(`Cash proxy, ${name} · `);

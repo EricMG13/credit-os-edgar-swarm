@@ -1,5 +1,6 @@
 import { type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
+import { readerReason } from "../report/overview/reason";
 import { ForecastTable } from "./ForecastTable";
 import { PathChart } from "@/components/chart/PathChart";
 import { ChartTable } from "@/components/chart/ChartTable";
@@ -539,10 +540,20 @@ function limitPassages(cashflow: Record<string, unknown>) {
   );
 }
 
-/** The qualifications `ForecastScope` draws, each with the recorded passage it comes from. */
+/**
+ * The scope qualifications the Forecast page lists: the base case's own notes, then every limit the
+ * model records, in its order, each with the recorded text its trace opens. A limit's words go
+ * through the reader rule; a limit that carries a reference has no words here (null).
+ */
 export function scopeQualifications(model: unknown) {
   const cashflow = record(record(model).cashflow);
-  return { base: basePassages(cashflow), limits: limitPassages(cashflow) };
+  return {
+    base: basePassages(cashflow),
+    limits: [...new Set(stringsIn(cashflow.limits))].map((recorded) => ({
+      recorded,
+      text: readerReason(recorded),
+    })),
+  };
 }
 
 /** The base-case qualifications `ForecastScope` promotes, as the reader sees them. */
