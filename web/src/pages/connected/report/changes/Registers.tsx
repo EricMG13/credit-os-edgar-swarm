@@ -1,4 +1,4 @@
-import type { OutputEntry } from "../../publishedReport";
+import type { OutputEntry, Table } from "../../publishedReport";
 import { PublishedSource } from "../PublishedTrace";
 import { Tile } from "../overview/Tile";
 import { EmptyLedger, LedgerList } from "./LedgerLists";
@@ -32,21 +32,17 @@ function CellText({ cell, href }: { cell: Cell; href: string }) {
  */
 export function FactsTile({ result }: { result: ReturnType<typeof issuerFacts> }) {
   const { facts, noChange } = result;
-  if (facts.length === 0 && !noChange) return null;
-  const statement = noChange && (
-    <div className="flex items-start justify-between gap-3">
+  if (facts.length === 0 && noChange.length === 0) return null;
+  const statement = noChange.map(({ reason, href }) => (
+    <div key={href} className="flex items-start justify-between gap-3">
       <p className="reading-copy text-body text-text-primary">
-        No material change at the issuer. <CellText cell={noChange.reason} href={noChange.href} />
+        No material change at the issuer. <CellText cell={reason} href={href} />
       </p>
-      <PublishedSource
-        href={noChange.href}
-        name="This statement"
-        linkLabel="Source for this statement"
-      >
+      <PublishedSource href={href} name="This statement" linkLabel="Source for this statement">
         Source
       </PublishedSource>
     </div>
-  );
+  ));
   if (facts.length === 0)
     return (
       <Tile span={12} label="At the issuer" title="At the issuer">
@@ -152,7 +148,7 @@ export function LedgerTile({
     return (
       <Tile span={12} label="Limitations ledger" title="Limitations ledger">
         <PublishedTable
-          table={ledger.table}
+          table={withoutReferenceColumns(ledger.table)}
           rowSource={(line, label) => (
             <PublishedSource
               href={evidencePath(folder, entry, line)}
@@ -206,12 +202,22 @@ export function LeftoverTile({
   if (sections.length === 0) return null;
   return (
     <Tile span={12} label="More from the comparison" title="More from the comparison">
-      {sections.map(({ heading, items }) => (
-        <section key={heading} className="grid gap-3" aria-label={heading}>
+      {sections.map(({ heading, items }, index) => (
+        <section key={`${String(index)}-${heading}`} className="grid gap-3" aria-label={heading}>
           <h4 className="text-caption text-text-tertiary">{heading}</h4>
           <PassageBody items={items} noun="passage" entry={entry} folder={folder} />
         </section>
       ))}
     </Tile>
   );
+}
+
+/** The ledger table as written, without its reference columns (E1, C2): they are for Evidence. */
+function withoutReferenceColumns(table: Table): Table {
+  const keep = table.headers.flatMap((header, at) => (/\bref\b/i.test(header) ? [] : [at]));
+  return {
+    ...table,
+    headers: keep.map((at) => table.headers[at] ?? ""),
+    rows: table.rows.map((row) => ({ ...row, cells: keep.map((at) => row.cells[at] ?? "") })),
+  };
 }

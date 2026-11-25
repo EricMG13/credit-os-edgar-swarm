@@ -143,10 +143,10 @@ describe("classifyMeasures", () => {
     };
     const { moved } = classifyMeasures(change, () => undefined, entry);
     expect(moved.map((item) => [item.key, item.cause, item.effect])).toEqual([
-      ["big", { kind: "written", text: "Unresolved" }, "Weaker cover"],
-      ["small", { kind: "written", text: "New period" }, null],
-      ["referenced", { kind: "referenced" }, null],
-      ["blank", { kind: "dash" }, null],
+      ["big", { kind: "written", text: "Unresolved" }, { kind: "written", text: "Weaker cover" }],
+      ["small", { kind: "written", text: "New period" }, { kind: "dash" }],
+      ["referenced", { kind: "referenced" }, { kind: "absent" }],
+      ["blank", { kind: "dash" }, { kind: "absent" }],
       ["elsewhere", { kind: "unmatched" }, null],
     ]);
   });
@@ -307,7 +307,7 @@ describe("issuerFacts placeholders and labels", () => {
       new Set(),
     );
     expect(result.facts).toEqual([]);
-    expect(result.noChange).toMatchObject({
+    expect(result.noChange[0]).toMatchObject({
       reason: { kind: "written", text: "Nothing at the issuer moved." },
     });
   });
@@ -487,7 +487,7 @@ describe("cause matching on the whole label", () => {
       ["New term loan", "", "Signed", "—", ""],
     ]);
     const { facts, noChange } = issuerFacts(entry, "cur", new Set());
-    expect(noChange?.reason).toEqual({ kind: "written", text: "Nothing else moved." });
+    expect(noChange[0]?.reason).toEqual({ kind: "written", text: "Nothing else moved." });
     expect(facts[0]).toMatchObject({
       before: { kind: "absent" },
       after: { kind: "written", text: "Signed" },
@@ -547,5 +547,96 @@ describe("handoff content that is off-contract", () => {
       note: "Superseded by the new agreement",
       noteLabel: "What closed it",
     });
+  });
+});
+
+describe("final checks on matching, placeholders and ledger groups", () => {
+  const rowsOf = (rows: string[][]) =>
+    entryWith([
+      table(
+        "What changed: the issuer",
+        ["Measure or fact", "Earlier", "Current", "Cause", "Effect on the credit view"],
+        rows,
+      ),
+    ]);
+
+  it("links an unmatched measure to the issuer table, never to an exact-text row the matcher refused", () => {
+    const entry = rowsOf([
+      ["Net leverage", "6x", "7x", "New period", ""],
+      ["net leverage", "6x", "7x", "Unresolved", ""],
+    ]);
+    const change: PublishedChanges = {
+      pack: { measures: [measure("net_leverage", "6", "7", 1, { label: "Net leverage" })] },
+      verdicts: verdicts(["net_leverage"]),
+    };
+    const [item] = classifyMeasures(change, (label) => `#exact/${label}`, entry, "cur").moved;
+    expect(item?.cause).toEqual({ kind: "unmatched" });
+    // the table is at line 11; neither row (12, 13) is claimed
+    expect(item?.href).toMatch(/^\/report\/cur#evidence\/.*-11$/);
+  });
+
+  it("draws every No material change row in order, and the written cause when the effect is a dash", () => {
+    const entry = rowsOf([
+      ["No material change", "—", "—", "Nothing moved at the issuer.", "—"],
+      ["New facility", "", "Signed", "New source", "More debt"],
+      ["No material change", "—", "—", "None", "Still nothing."],
+    ]);
+    const { noChange } = issuerFacts(entry, "cur", new Set());
+    expect(noChange.map((row) => row.reason)).toEqual([
+      { kind: "written", text: "Nothing moved at the issuer." },
+      { kind: "written", text: "Still nothing." },
+    ]);
+    expect(noChange[0]?.href).toMatch(/-12$/);
+    expect(noChange[1]?.href).toMatch(/-14$/);
+  });
+
+  it("drops a bracket only when it has the module-code shape, in either case", () => {
+    expect(words("Short credit memo (cp-memo)")).toBe("Short credit memo");
+    expect(words("Backstop lines (CP-backstop)")).toBe("Backstop lines (CP-backstop)");
+    expect(words("Liquidity (CP-9X) and Downside (cp-2a)")).toBe("Liquidity and Downside");
+  });
+
+  it("gives a measure's effect the same states as a fact's", () => {
+    const entry = rowsOf([
+      ["A", "1x", "2x", "New period", ""],
+      ["B", "1x", "2x", "New period", "Per filing.pdf p. 3 the effect is large"],
+      ["C", "1x", "2x", "New period", "Wider cover"],
+    ]);
+    const change: PublishedChanges = {
+      pack: {
+        measures: ["A", "B", "C"].map((label) =>
+          measure(label.toLowerCase(), "1", "2", 1, { label }),
+        ),
+      },
+      verdicts: verdicts(["a", "b", "c"]),
+    };
+    expect(
+      classifyMeasures(change, () => undefined, entry, "cur").moved.map((m) => m.effect),
+    ).toEqual([
+      { kind: "absent" },
+      { kind: "referenced" },
+      { kind: "written", text: "Wider cover" },
+    ]);
+  });
+
+  it("keeps an empty status and a written dash apart, each its own group", () => {
+    const result = ledgerOf(
+      entryWith([
+        table(
+          "Limitations ledger",
+          ["Earlier ref", "Current ref", "Limitation", "Status", "What closed it"],
+          [
+            ["E1", "—", "One", "", ""],
+            ["E2", "—", "Two", "—", ""],
+          ],
+        ),
+      ]),
+      "cur",
+    );
+    if (!result || "table" in result) throw new Error("expected groups");
+    expect(result.groups.map((g) => [g.heading, g.items.length])).toEqual([
+      ["—", 1],
+      ["Not stated", 1],
+    ]);
   });
 });

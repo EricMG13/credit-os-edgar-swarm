@@ -258,6 +258,12 @@ function Measures({
         <GapNote>The comparison carries no measures for these two runs.</GapNote>
       </Tile>
     );
+  const hrefs = new Map(
+    [...groups.moved, ...groups.revised, ...groups.unmoved, ...groups.notAssessable].map((item) => [
+      item.label,
+      item.href,
+    ]),
+  );
   const { moved, revised, notAssessable } = groups;
   const none = noMovement(groups);
   return (
@@ -282,7 +288,7 @@ function Measures({
     >
       {view === "table" ? (
         <section aria-label="Earlier against current">
-          <ComparisonTable rows={rows} source={trace.measure} />
+          <ComparisonTable rows={rows} source={(label) => hrefs.get(label)} />
         </section>
       ) : (
         <>

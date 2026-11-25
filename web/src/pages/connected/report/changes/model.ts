@@ -45,7 +45,8 @@ export type MeasureChange = {
   /** The comparability sentence of the verdict; a reference is replaced by a pointer to Evidence. */
   reason: string;
   cause: Cause;
-  effect: string | null;
+  /** The effect on the credit view, in the states a fact's effect has; null where there is no comparison row to read. */
+  effect: Cause | null;
   href: string | undefined;
 };
 
@@ -57,7 +58,10 @@ type MeasureGroups = {
 };
 
 /** The module's words: a module named where it is cited, and a bracketed code the reader does not know dropped. */
-export const words = (text: string) => readerText(text).replace(/\s*\(CP-[A-Za-z0-9-]+\)/g, "");
+/** A module code as the methodology names them: CP-2A, CP-L10, CP-DR, CP-MEMO. */
+const MODULE_CODE = /\s*\(CP-(?:\d+[A-Z]?|L\d+|DR|MEMO|MODEL|OS|PARSE)\)/gi;
+
+export const words = (text: string) => readerText(text).replace(MODULE_CODE, "");
 
 const plain = (text = "") =>
   text.replaceAll("**", "").replaceAll("`", "").trim().replace(/\s+/g, " ");
@@ -182,8 +186,17 @@ export function classifyMeasures(
         : issuer
           ? causeOf(issuer.cells[3])
           : { kind: "unmatched" },
-      effect: written(effect) ?? written(issuer?.cells[4]),
-      href: entry && issuer ? evidencePath(folder, entry, issuer.line) : trace(label),
+      effect:
+        !entry || (!issuer && !written(effect))
+          ? null
+          : written(effect)
+            ? { kind: "written", text: written(effect) ?? "" }
+            : causeOf(issuer?.cells[4]),
+      href: !entry
+        ? trace(label)
+        : issuer
+          ? evidencePath(folder, entry, issuer.line)
+          : evidencePath(folder, entry, issuerTable(entry)?.line),
     };
     if (!comparable(change, measure) || sign === null) groups.notAssessable.push(item);
     else if (revision && sign !== 0) groups.revised.push(item);
@@ -241,13 +254,22 @@ export function issuerFacts(
     cause: Cell;
     effect: Cell;
   }[] = [];
-  let noChange: { reason: Cell; href: string } | null = null;
+  const noChange: { reason: Cell; href: string }[] = [];
   if (!entry || !table) return { facts, noChange };
   for (const { cells, line } of table.rows) {
     if (matchedLines.has(line)) continue;
     const href = evidencePath(folder, entry, line);
     if (fullKey(cells[0]) === "no material change") {
-      noChange = { reason: cellOf(cells[4]), href };
+      const cause = cellOf(cells[3]);
+      const effect = cellOf(cells[4]);
+      // The module may write its reason in the Cause cell and leave Effect a dash.
+      const reason =
+        effect.kind === "written"
+          ? effect
+          : cause.kind === "written" && cause.text !== "None"
+            ? cause
+            : effect;
+      noChange.push({ reason, href });
       continue;
     }
     facts.push({
@@ -329,8 +351,10 @@ export function ledgerOf(
     const empty = nothing(plain(cells[limitation]));
     const note = closed < 0 ? null : written(cells[closed]);
     if (empty && !note && nothing(plain(cells[status]))) continue;
-    const asWritten = words(plain(cells[status])) || "Not stated";
-    const key = statusKey(asWritten) || "not stated";
+    const raw = words(plain(cells[status]));
+    const asWritten = raw === "" ? "Not stated" : raw;
+    const key =
+      raw === "" ? "not stated" : nothing(raw) ? "dash" : statusKey(raw) || raw.toLowerCase();
     const item: LedgerItem = {
       text: written(cells[limitation]),
       missing: empty,

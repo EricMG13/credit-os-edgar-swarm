@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type {
   PublishedChanges,
   OutputEntry,
@@ -988,11 +988,19 @@ describe("connected report Changes", () => {
         blocks: [{ type: "text", line: 61, end: 61, text: "How the runs were matched." }],
       },
     );
-    const findings = entry.sections.findIndex((s) => s.heading === "Findings");
-    entry.sections.splice(findings + 1, 0, entry.sections.pop() as never);
     renderChanges(withPack, [entry]);
     expect(screen.getByText("Limitation not stated")).toBeVisible();
     expect(screen.getByText("Closed by: Superseded by the new agreement")).toBeVisible();
+    const link = within(screen.getByRole("region", { name: "More from the comparison" })).getByRole(
+      "link",
+      {
+        name: "Read Period table in Evidence",
+      },
+    );
+    expect(link).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/report\/current#evidence\/.*-50$/),
+    );
     expect(screen.getByText("How the runs were matched.")).toBeVisible();
   });
 
@@ -1064,5 +1072,145 @@ describe("connected report Changes", () => {
     );
     expect(items[0]?.className).toMatch(/list-none/);
     expect(items[1]?.className).not.toMatch(/list-none/);
+  });
+
+  it("opens each measure's own issuer row in both the list and the table view, and the table for an unmatched one", () => {
+    const entry = cp8([]);
+    entry.sections.push(
+      issuerSection([
+        ["Interest cover", "2.1x", "1.7x", "New period", "Thinner"],
+        ["Revenue", "1x", "2x", "Unresolved", ""],
+        ["Net leverage", "6x", "7x", "New period", ""],
+        ["net leverage", "6x", "7x", "Unresolved", ""],
+      ]),
+    );
+    const side = (v: string, p: string, u = "x") => ({ value: v, unit: u, period: p });
+    const m = (key: string, label: string, a: string, b: string, d: number) => ({
+      key,
+      label,
+      prior: side(a, "FY2025"),
+      current: side(b, "FY2026"),
+      difference: d,
+      unit: "x",
+    });
+    renderChanges(
+      {
+        pack: {
+          measures: [
+            m("coverage", "Interest Cover (x)", "2.1", "1.7", -0.4),
+            m("revenue", "Revenue", "1", "2", 1),
+            m("net_leverage", "Net leverage", "6", "7", 1),
+          ],
+        },
+        verdicts: {
+          measures: Object.fromEntries(
+            ["coverage", "revenue", "net_leverage"].map((k) => [
+              k,
+              { kind: "comparable", label: "L" },
+            ]),
+          ),
+        },
+      },
+      [entry],
+    );
+    const lineOf = (el: HTMLElement) => /-(\d+)$/.exec(el.getAttribute("href") ?? "")?.[1];
+    const rows = within(screen.getByRole("list", { name: "Measures that moved" })).getAllByRole(
+      "listitem",
+    );
+    expect(
+      rows.map((row) => lineOf(within(row).getByRole("link", { name: "Comparison row" }))),
+    ).toEqual(["32", "33", "31"]);
+    fireEvent.click(screen.getByRole("button", { name: "Table" }));
+    const table = within(screen.getByRole("region", { name: "Earlier against current" }));
+    expect(table.getAllByRole("link", { name: "Comparison row" }).map(lineOf)).toEqual([
+      "32",
+      "33",
+      "31",
+    ]);
+  });
+
+  it("says a measure's effect is not stated or links to Evidence, as a fact's does", () => {
+    const entry = cp8([]);
+    entry.sections.push(
+      issuerSection([
+        ["A", "1x", "2x", "New period", ""],
+        ["B", "1x", "2x", "New period", "Per filing.pdf p. 3 the effect is large"],
+      ]),
+    );
+    const side = (v: string, p: string) => ({ value: v, unit: "x", period: p });
+    renderChanges(
+      {
+        pack: {
+          measures: ["A", "B"].map((label) => ({
+            key: label.toLowerCase(),
+            label,
+            prior: side("1", "FY2025"),
+            current: side("2", "FY2026"),
+            difference: 1,
+            unit: "x",
+          })),
+        },
+        verdicts: {
+          measures: {
+            a: { kind: "comparable", label: "L" },
+            b: { kind: "comparable", label: "L" },
+          },
+        },
+      },
+      [entry],
+    );
+    expect(screen.getByText("Effect not stated")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Read the effect in Evidence" })).toBeVisible();
+  });
+
+  it("draws every No material change row, each with its own source", () => {
+    const entry = cp8([]);
+    entry.sections.push(
+      issuerSection([
+        ["No material change", "—", "—", "Nothing moved at the issuer.", "—"],
+        ["No material change", "—", "—", "None", "Still nothing."],
+      ]),
+    );
+    renderChanges(withPack, [entry]);
+    const tile = within(screen.getByRole("region", { name: "At the issuer" }));
+    expect(tile.getByText(/Nothing moved at the issuer\./)).toBeVisible();
+    expect(tile.getByText(/Still nothing\./)).toBeVisible();
+    expect(tile.getAllByRole("link", { name: "Source for this statement" })).toHaveLength(2);
+  });
+
+  it("hides the reference columns in the ledger fallback and says a table with no rows has none", () => {
+    const entry = ledgerOf(
+      ["Earlier ref", "Current ref", "Limitation", "State"],
+      [["E1", "C2", "Margins", "Open"]],
+    );
+    entry.sections.push({
+      heading: "Notes table",
+      level: 3,
+      line: 70,
+      blocks: [{ type: "table", headers: ["A", "B"], line: 71, rows: [] }],
+    });
+    renderChanges(withPack, [entry]);
+    const tile = within(screen.getByRole("region", { name: "Limitations ledger" }));
+    expect(tile.getByText("Margins")).toBeVisible();
+    expect(tile.queryByText("E1")).toBeNull();
+    expect(tile.queryByText("C2")).toBeNull();
+    expect(screen.getByText("This table has no rows in the handoff.")).toBeVisible();
+  });
+
+  it("draws two leftover sections that share a heading without a key clash", () => {
+    const spy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const entry = cp8([]);
+    const same = (line: number, text: string) => ({
+      heading: "Unresolved differences",
+      level: 3,
+      line,
+      blocks: [{ type: "text" as const, line: line + 1, end: line + 1, text }],
+    });
+    entry.sections.push(same(80, "First difference."), same(90, "Second difference."));
+    renderChanges(withPack, [entry]);
+    expect(screen.getByText("First difference.")).toBeVisible();
+    expect(screen.getByText("Second difference.")).toBeVisible();
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
   });
 });

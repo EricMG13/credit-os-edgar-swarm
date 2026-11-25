@@ -60,6 +60,8 @@ export function PassageBody({
               <a className={LINK} href={item.href}>
                 Read {item.label} in Evidence
               </a>
+            ) : item.table.rows.length === 0 ? (
+              <p className="text-small text-gap-text">This table has no rows in the handoff.</p>
             ) : (
               <PublishedTable
                 table={item.table}

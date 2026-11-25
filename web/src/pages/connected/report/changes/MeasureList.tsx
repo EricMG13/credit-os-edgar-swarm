@@ -113,7 +113,19 @@ function MeasureRow({
         <CauseLine cause={cause} href={href ?? evidence} />
         {reason && <span className="text-caption text-text-secondary">{reason}</span>}
       </div>
-      {effect && <p className="reading-copy text-small text-text-secondary">{effect}</p>}
+      {effect && (
+        <p className="reading-copy text-small text-text-secondary">
+          {effect.kind === "written" ? (
+            effect.text
+          ) : effect.kind === "referenced" ? (
+            <a className={LINK} href={href ?? evidence}>
+              Read the effect in Evidence
+            </a>
+          ) : (
+            <span className="text-gap-text">Effect not stated</span>
+          )}
+        </p>
+      )}
     </li>
   );
 }
