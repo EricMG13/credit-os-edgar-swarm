@@ -1,4 +1,3 @@
-import type { FC } from "react";
 import { GapNote } from "../overview/Tile";
 import {
   NO_BRIDGE,
@@ -26,7 +25,7 @@ import {
 } from "./kit/marks";
 import { group } from "./kit/numbers";
 import { UnreadFigures } from "./kit/UnreadFigures";
-import type { LeadProps } from "./types";
+import type { Lead, LeadProps } from "./types";
 
 const RESULTS_NAME = "Prior and current results";
 const KPIS_NAME = "Margins and KPIs";
@@ -366,9 +365,7 @@ function Gap({ name, children }: { name: string; children: string }) {
  * Earnings delta: the variance bridge where the handoff has one that adds up, the prior and current
  * results in the handoff's own order as small multiples, and the margins and KPIs.
  */
-export const EarningsDeltaLead: FC<LeadProps> & {
-  draws?: readonly ("figures" | "events" | "maps")[];
-} = (props) => {
+export const EarningsDeltaLead: Lead = (props) => {
   const { bridges, movers, kpis } = earningsDelta(props.entry);
   const nothing =
     bridges.length === 0 &&

@@ -1,9 +1,8 @@
-import type { FC } from "react";
 import { forwardPath, pathGeometry, PATH } from "../overview/stressData";
 import { FigureTile, GapTile, LeadFrame, Link } from "./kit/LeadFrame";
 import { BAR, GapSlot, Legend, LINE, Measured, NARROW, SIZE, textWidth, wrap } from "./kit/marks";
 import { safeText } from "./kit/reader";
-import type { LeadProps } from "./types";
+import type { Lead, LeadProps } from "./types";
 
 /*
  * CP-MODEL lead. The model is the run's published forecast: the page reads only the net leverage row
@@ -345,13 +344,12 @@ function Content(props: LeadProps) {
 }
 
 /** CP-MODEL: net leverage by case from the published model, and the way to the Forecast page. */
-export const ModelLead: FC<LeadProps> & { draws?: readonly ("figures" | "events" | "maps")[] } =
-  function ModelLead(props) {
-    return (
-      <LeadFrame props={props}>
-        <Content {...props} />
-      </LeadFrame>
-    );
-  };
+export const ModelLead: Lead = function ModelLead(props) {
+  return (
+    <LeadFrame props={props}>
+      <Content {...props} />
+    </LeadFrame>
+  );
+};
 // This lead draws no typed figure, event lane or map of the module's own.
 ModelLead.draws = [];

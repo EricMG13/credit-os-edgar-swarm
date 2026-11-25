@@ -1,4 +1,3 @@
-import type { FC } from "react";
 import { FigureTile, GapTile, LeadFrame } from "./kit/LeadFrame";
 import {
   BAR,
@@ -25,7 +24,7 @@ import {
   type PeerRow,
   type PeerTable,
 } from "./peerBenchmarkData";
-import type { LeadProps } from "./types";
+import type { Lead, LeadProps } from "./types";
 
 /*
  * CP-1C peer benchmark lead. Synthetic contract: built from the launcher's two range tables
@@ -422,9 +421,7 @@ function Content(props: LeadProps) {
 }
 
 /** CP-1C: a range strip per metric, the issuer marked; percent metrics and multiples on separate axes. */
-export const PeerBenchmarkLead: FC<LeadProps> & {
-  draws?: readonly ("figures" | "events" | "maps")[];
-} = function PeerBenchmarkLead(props) {
+export const PeerBenchmarkLead: Lead = function PeerBenchmarkLead(props) {
   return (
     <LeadFrame props={props}>
       <Content {...props} />

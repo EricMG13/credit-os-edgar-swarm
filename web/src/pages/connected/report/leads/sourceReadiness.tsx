@@ -1,4 +1,3 @@
-import type { FC } from "react";
 import { moduleName } from "../../api";
 import { FigureTile, GapTile, LeadFrame } from "./kit/LeadFrame";
 import {
@@ -7,7 +6,7 @@ import {
   type ReadinessMark,
   type ReadinessRow,
 } from "./sourceReadinessData";
-import type { LeadProps } from "./types";
+import type { Lead, LeadProps } from "./types";
 
 const ABSENT = "This page could not read the readiness by area.";
 const NOT_HERE = "This page could not read the key evidence located or the conflicts.";
@@ -136,8 +135,6 @@ function MatrixRow({ row, layout }: { row: ReadinessRow; layout: Layout }) {
     </li>
   );
 }
-
-type Lead = FC<LeadProps> & { draws?: readonly ("figures" | "events" | "maps")[] };
 
 function Readiness(props: LeadProps) {
   const result = sourceReadiness(props.entry);

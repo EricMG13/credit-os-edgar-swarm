@@ -1,4 +1,3 @@
-import type { FC } from "react";
 import {
   chartTitleOf,
   readBridge,
@@ -17,7 +16,7 @@ import {
 } from "./kit/marks";
 import { group } from "./kit/numbers";
 import { UnreadFigures } from "./kit/UnreadFigures";
-import type { LeadProps } from "./types";
+import type { Lead, LeadProps } from "./types";
 
 /*
  * CP-1D earnings quality lead. Synthetic contract: built from src/deploy_vii/bindings/cp1d.py and
@@ -221,9 +220,7 @@ function Content(props: LeadProps) {
 }
 
 /** CP-1D: the earnings-quality bridge from reported to adjusted EBITDA, and leverage restated on supported earnings. */
-export const EarningsQualityLead: FC<LeadProps> & {
-  draws?: readonly ("figures" | "events" | "maps")[];
-} = function EarningsQualityLead(props) {
+export const EarningsQualityLead: Lead = function EarningsQualityLead(props) {
   return (
     <LeadFrame props={props}>
       <Content {...props} />

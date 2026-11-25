@@ -1,7 +1,7 @@
 import { figureSource } from "../../overview/figureData";
 import { GapTile, LeadFrame } from "../kit/LeadFrame";
 import { UnreadFigures, chartTitles } from "../kit/UnreadFigures";
-import type { LeadKind, LeadProps } from "../types";
+import type { Lead, LeadProps } from "../types";
 import { CashLadderTile } from "./CashLadder";
 import { DebtStackTile } from "./DebtStack";
 import { EarningsDebtTile } from "./EarningsDebt";
@@ -59,7 +59,7 @@ function nothingToDraw(props: LeadProps) {
  * these tiles draws follows as its stated rows (kit `UnreadFigures`); a handoff with no drawable
  * figure draws one gap.
  */
-export function FoundationLead(props: LeadProps) {
+function Foundation(props: LeadProps) {
   return (
     <LeadFrame props={props}>
       {nothingToDraw(props) ? (
@@ -88,4 +88,5 @@ export function FoundationLead(props: LeadProps) {
  * The kinds the lead draws itself, so the module frame does not draw them again: the lead draws
  * the maturity wall (the module's typed figure) as its own tile.
  */
-FoundationLead.draws = ["figures"] as const satisfies readonly LeadKind[];
+export const FoundationLead: Lead = Foundation;
+FoundationLead.draws = ["figures"];

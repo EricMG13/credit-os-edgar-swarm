@@ -1,11 +1,10 @@
-import type { FC } from "react";
 import { cx } from "@/utils/cx";
 import { Ruler } from "../overview/marks";
 import { FigureTile, GapTile, LeadFrame } from "./kit/LeadFrame";
 import { GapChip } from "./kit/marks";
 import { reasonText } from "./kit/reader";
 import { readChangeScreen, readKeyFigures, type Figure, type KeyFigure } from "./shortSnapshotData";
-import type { LeadProps } from "./types";
+import type { Lead, LeadProps } from "./types";
 
 /*
  * CP-L10 short snapshot lead. Synthetic contract: built from src/deploy_vii/methods/cpl10.md (the
@@ -173,9 +172,7 @@ function ChangeScreen({ props }: { props: LeadProps }) {
 }
 
 /** CP-L10: the key-figure strip, each figure prior to current where the table states both periods; then the change screen. */
-export const ShortSnapshotLead: FC<LeadProps> & {
-  draws?: readonly ("figures" | "events" | "maps")[];
-} = function ShortSnapshotLead(props) {
+export const ShortSnapshotLead: Lead = function ShortSnapshotLead(props) {
   return (
     <LeadFrame props={props}>
       <Strip props={props} />
