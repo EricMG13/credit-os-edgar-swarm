@@ -44,6 +44,39 @@
         "CP-2": 1
       },
       "notes": "The accepted CP-1 handoff wrongly says the 2024 hospital count is not in the sources (the 10-K prints 166 at 2024-12-31) and cannot be replaced, so CP-1A and CP-2 each record the correction; CP-0 was already accepted before this session, and its single attempt is counted from the existing record."
+    },
+    {
+      "issuer_id": "amkr-1047127",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "CP-0, CP-1 and CP-1A were already accepted in the partial run (one attempt each) and CP-2 was accepted on its first submission, so the run finished with exit 0; defects seen but not fixable (earlier handoffs cannot be edited): CP-1A lists the non-current split of customer advances as not stated although the September 10-Q notes give it (corrected in CP-2 Gaps), and CP-1's attribution of the net-debt rise mainly to capex omits that cash-only net debt also rose from payouts, the capped call and about USD 160 million of net purchases of short-term investments."
+    },
+    {
+      "issuer_id": "cmco",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "CP-0 and CP-1 were accepted at attempt 1 in the resumed partial run folder and I did not resubmit them; CP-1A and CP-2 were each accepted at attempt 1 in this session, and the run finished with exit 0 (delivery built, no provider called). One defect I could not fix is that the accepted Source readiness handoff says no document dates the change of principal financial officer, although the June 2026 10-Q exhibit list dates the separation agreement and successor offer letter 2026-07-01; CP-1A states this correction in its conflict log and key findings because the earlier handoff cannot be edited."
+    },
+    {
+      "issuer_id": "abg-1144980",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The launcher finished (exit 0) with all four modules accepted on the first submission, and no defect was left unfixed. One data caveat: the FY2025 10-K lease maturity table labels its first row 2025 for a December 31, 2025 liability. CP-0 logged this as a gap, and it feeds no CP-1 figure. The launcher's closing note says only automated checks were run."
     }
   ]
 }

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for COLUMBUS MCKINNON CORP as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/6543e5629c82a64a98f24c88364f55875049c7b4991a9554be67b5b9cd524dee/1.response.md",
+    "CP-1": "requests/CP-1/b5e9517825d9589761b36943cb35c69a142ebd6f6846d23b81b0a87b7fbf22f5/1.response.md",
+    "CP-1A": "requests/CP-1A/85be33c25f6a5896a121ee69da7c3a9154476d5f6f126a539bd58b8dc74ab02e/1.response.md",
+    "CP-2": "requests/CP-2/71e7067d6a89bfebed3b78d38987a6789aa3e15abb32cc5d168537f268b0dd7a/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "0c48c92a20e69ae21c5dc9c1e762da1cf36458925bb5a4da05629e2c85fcc635",
+  "delivery_sha256": "6e177272741832a6c6c6abddc8abe89b183155f96edffcc76b262e4c113e3894"
+}

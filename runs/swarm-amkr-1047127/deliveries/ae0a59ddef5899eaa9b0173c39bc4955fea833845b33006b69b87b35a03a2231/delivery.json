@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Amkor Technology, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "c5f3a008a6c931a03f0caea071c8339bdc86ad16a1236ebe679c6893f8fce309",
+    "CP-1.md": "1ea04103841408a2ccfbd0accb782cb845444d344e8ddadadb0e0755c0bb9248",
+    "CP-1A.md": "00a077d4f7e75775c0e1dfaaa29c4495a06dcb89ceeb81b93d30708d64a4e9f5",
+    "CP-2.md": "937a0157dc0c92dd85448c003a7d434850ea045c6cfbbb7c479e33d0df30e7a5",
+    "coverage.json": "7b38f13c05c370c6d94b35d12a107348184b5bd862699908abce6c59a8eeb126",
+    "view.json": "2af05b7e210a81b228ff16f54244e7ed49c5828355dd247a732fd34eca342f90",
+    "report-view.json": "17d25d02ee30d10dd2f1540d2c1105d910fa2b851d42df395b0a07eef4bcff0c"
+  }
+}

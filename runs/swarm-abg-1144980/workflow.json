@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "abg-1144980-2026-11-18-credit_snapshot-host",
+    "issuer_id": "abg-1144980",
+    "issuer_name": "Asbury Automotive Group Inc",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_abg_abg-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_abg_abg-20241231.htm.jsonl",
+      "sha256": "c0f85975876733a38ac8c4c9a53391af74c4566da948223d619a78ba1a1c9e67"
+    },
+    "10-K_2025-12-31_abg_abg-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_abg_abg-20251231.htm.jsonl",
+      "sha256": "51718e50cf3bbd267b1533309c3b354cd5146560d81b3f1f6ff06a25bbeb282e"
+    },
+    "10-Q_2026-03-31_abg_abg-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_abg_abg-20260331.htm.jsonl",
+      "sha256": "e8cb17d6cfc8aef7ca56701027e2c4e79f8e47007c050525b910558158b169d9"
+    },
+    "10-Q_2026-06-30_abg_abg-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_abg_abg-20260630.htm.jsonl",
+      "sha256": "d7dacc148b055ec61ece1b7a46b28e0a38847b54a87aa68c3875efd7c9c0abe4"
+    },
+    "10-Q_2026-09-30_abg_abg-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_abg_abg-20260930.htm.jsonl",
+      "sha256": "557f148856704a318d4ed2145c111e4e5e5d880fe6d5144192522183d016891f"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1144980-asbury-automotive-group-inc.json",
+      "sha256": "d703a3059861702d077a0577dc250b98238359be91b6fedbe74148dab5335929"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "aace8e3c8d57f50ab005b1518ffdb092c8c1ac1d6413ac45005695bd75ff4152"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "0d0a7ee34877cb37af971036e7109090bb6df751b8e9bb639cae43947b507ca8"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "fb4859754ed3e9e9f0fce626801cad7be8af7e2c4ecff54a3967de4a82075b64"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "92ea86297519bed67d82fc2f0fa3c672dfe4f9a2d34edbb809efc24bd68bd0ee"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Asbury Automotive Group Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Asbury Automotive Group Inc — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

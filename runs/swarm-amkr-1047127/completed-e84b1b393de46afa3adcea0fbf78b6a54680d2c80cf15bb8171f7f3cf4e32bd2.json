@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Amkor Technology, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/d359185d2af15e8f12ec405817a6b7724a59927937f07558b5dad044f160025e/1.response.md",
+    "CP-1": "requests/CP-1/00823d6ea2248114efb39a976c2e24d447591837642d05717b5e883371222280/1.response.md",
+    "CP-1A": "requests/CP-1A/66f536d88e928fdcda22223611207fec2fb03aea51f207d0f1ea6cba635d31de/1.response.md",
+    "CP-2": "requests/CP-2/4aa6c320aca599988513b6378ea53914e3b037f76f24d7126a10fc519ad5d079/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "68608c78c5f825d0aa3243e633888ecbe89c4ec0fede3f48a15cb4f56c21e4ad",
+  "delivery_sha256": "50386fbeab9e3e7790dd3c830436b96c1bd6929fc83040b6a4bd0a8490d88222"
+}
