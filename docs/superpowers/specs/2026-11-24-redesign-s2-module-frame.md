@@ -90,13 +90,14 @@ unit, CP-1 headline figures) and `run` (folder, as-of). Nothing else.
 
 ### 2.4 Headline figures — `StatsStrip` (kit)
 
-- CP-1: the `foundationMetrics` records (net debt, contractual principal, interest cover,
-  leverage, liquidity, free cash flow, maturities as the handoff states them), each as a `Stat`:
-  label, value as written, `prior` and `delta` from the record's `yearChange` (exact difference
-  already computed by `reportView`), `tone` from `signal.tone` where the owner's table gives a
-  direction, one trace control per stat (`traceForLine`).
-- Other modules: no headline-figure source exists in their handoffs today; the strip is not
-  drawn (nothing implied). A lead may draw its own figures (request 6.1).
+- CP-1: the run catalogue's headline metrics (net leverage, gross leverage, interest coverage,
+  revenue, adjusted EBITDA, cash: the figures the Overview and Library draw), each as a `Stat`
+  with its value and unit as stated, the prior value with its period, the change only where the
+  catalogue gives one, `tone` from `signal.tone`, the period and basis as a quiet line, and the
+  trace to the handoff row (`headlineSources`) or the missing-trace marker. An absent figure is
+  "Not shown here" (or the module's Not supplied words), never zero. (Round 1 read
+  `foundationMetrics` and wrongly stated that the catalogue held no CP-1 figures.)
+- Other modules: no headline-figure source; the strip is not drawn. A lead may draw its own.
 - 1440: span 12, cells divided by hairlines. 390: two columns.
 
 ### 2.5 Lead — `leadFor(module)`
@@ -256,6 +257,24 @@ links, states and gaps are kept.
    module of each stage (`report/stageNumber.ts`); a plain export would remove the probe.
 
 ## 7. Verification
+
+### Round 2 (coordinator review of 664baae, 21 items), on `4b07aac`
+
+Rendered with the retained TransDigm CP-1 handoffs swapped into the synthetic run through
+`react_frontend.preview` (read-only; the CP-1 output's sections and fields from the library's own
+`handoff_parts`; other modules and the catalogue stay synthetic, so the strip shows synthetic
+figures and its trace controls draw the missing-trace marker), plus a blocked CP-4 handoff the
+same way. Looked at, 1440 and 390: CP-1 accepted draft (page; Debt instruments; Income statement),
+CP-1 relative value (page; Debt instruments), CP-4 blocked, and synthetic CP-1, CP-2A, CP-0, CP-6.
+No page error; no page-level horizontal scroll at 390 (scroll width 390).
+
+| Check | Result |
+|---|---|
+| `npx tsc --noEmit`; eslint on changed files; prettier | Pass (eslint's one finding is in `stages.ts`, untouched, pre-existing) |
+| `npx vitest run src/pages src/components src/styles` | 318 files, 5430 tests pass (on bb08fce; +1 test since, 23/23 in its file) |
+| `npm run unused`; `npm run build` | Clean; pass |
+
+### Round 1
 
 Checks run on `b56b83d` (web/, Node 22; each under five minutes):
 
