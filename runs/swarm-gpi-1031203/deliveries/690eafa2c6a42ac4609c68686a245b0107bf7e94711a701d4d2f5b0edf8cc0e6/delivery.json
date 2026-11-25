@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Group 1 Automotive Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "d0f4d77457349a2ade1aaafe45d3777e081911d3c60d33c4d6f0603afd8c4ca0",
+    "CP-1.md": "8b19e33a4951bae152f4a200910bad14d8ff2992ac89a6e00b4ed791a5823d10",
+    "CP-1A.md": "463225ad6a3cbb516d05213bf5d7d4a96b6d3367c0a49b0f086964b24cf537f5",
+    "CP-2.md": "d193e24bc2f8a29e6b172a52df64d0995a590c8fbd97bb2b0b8c86319abfc889",
+    "coverage.json": "6e57a1712f1d8f7d7e4ca3fbc2cbb2b842b7776707f66d95919572a5b65fd360",
+    "view.json": "193893a6bc9bbba3c424d00b3aede89c982497643306253ef55a9b000ac1d0c7",
+    "report-view.json": "7c383683b91e9339c23c810fb0eeafbfdf276bd6ad5f9f8c6a5f73028d54d56e"
+  }
+}
