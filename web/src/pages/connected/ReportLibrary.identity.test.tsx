@@ -152,6 +152,8 @@ it("captions the ratings as entered at run start, once and visibly, only when th
   expect(ratingChips(el)).toHaveLength(2);
   expect(within(el).getAllByText("Ratings entered at run start")).toHaveLength(1);
   expect(within(el).getByText("Ratings entered at run start")).toBeVisible();
+  // Its own line after the chips, however many ratings there are.
+  expect(within(el).getByText("Ratings entered at run start")).toHaveClass("basis-full");
   cleanup();
   const none = await band(fixture());
   expect(ratingChips(none)).toHaveLength(0);

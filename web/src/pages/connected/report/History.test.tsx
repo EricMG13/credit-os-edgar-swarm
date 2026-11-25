@@ -90,20 +90,20 @@ function rows() {
 it("lists this issuer's runs newest first with the as-of date and the heading", () => {
   const items = rows();
   expect(screen.getByRole("heading", { name: "Runs of Acme" })).toBeTruthy();
-  expect(items.map((item) => /\d{4}-\d{2}-\d{2}/.exec(item.textContent)?.[0])).toEqual([
-    "2026-03-31",
-    "2025-09-30",
-    "2025-03-31",
-    "2024-03-31",
+  expect(items.map((item) => /\d{1,2} \w+ \d{4}/.exec(item.textContent)?.[0])).toEqual([
+    "31 March 2026",
+    "30 September 2025",
+    "31 March 2025",
+    "31 March 2024",
   ]);
 });
 
 it("reads the stance of each run the page holds, and sends the reader to the run for the others", () => {
   const items = rows();
   expect(within(row(items, 0)).getByText("Watchlist")).toBeTruthy();
-  expect(within(row(items, 1)).getByText("Open the run to see its stance")).toBeTruthy();
+  expect(within(row(items, 1)).getByText("Stance not in the run list")).toBeTruthy();
   expect(within(row(items, 2)).getByText("Requires More Work")).toBeTruthy();
-  expect(within(row(items, 3)).getByText("Open the run to see its stance")).toBeTruthy();
+  expect(within(row(items, 3)).getByText("Stance not in the run list")).toBeTruthy();
   expect(screen.queryByText("Stance not stated")).toBeNull();
 });
 
@@ -127,7 +127,7 @@ it("claims no order between runs of the same as-of date", () => {
   );
   const same = items.filter((item) => within(item).queryByText("Same as-of date"));
   expect(same).toHaveLength(2);
-  expect(same.every((item) => item.textContent.includes("2025-09-30"))).toBe(true);
+  expect(same.every((item) => item.textContent.includes("30 September 2025"))).toBe(true);
 });
 
 it("marks only the current run", () => {
@@ -162,4 +162,10 @@ it("leaves out runs of another issuer and says when the date is missing", () => 
   expect(screen.getAllByRole("listitem")).toHaveLength(4);
   expect(screen.getByText("As-of date not recorded")).toBeTruthy();
   expect(screen.queryByText("2026-06-30")).toBeNull();
+});
+
+it("lays the runs tile on the report's 12-column grid", () => {
+  rows();
+  const tile = screen.getByRole("region", { name: "Runs of Acme" });
+  expect(tile.parentElement).toHaveClass("lg:grid-cols-12");
 });

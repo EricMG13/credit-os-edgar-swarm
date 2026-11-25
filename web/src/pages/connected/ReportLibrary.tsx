@@ -417,7 +417,7 @@ function FactChips({
         <RatingChip key={`rating-${String(index)}`} rating={rating} className={cx(CHIP, QUIET)} />
       ))}
       {ratings.length > 0 ? (
-        <li className="text-caption text-text-tertiary">Ratings entered at run start</li>
+        <li className="basis-full text-caption text-text-tertiary">Ratings entered at run start</li>
       ) : (
         <li className={cx(CHIP, QUIET)}>Ratings not entered</li>
       )}

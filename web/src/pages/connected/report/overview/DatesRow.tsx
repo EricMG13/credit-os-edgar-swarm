@@ -4,7 +4,6 @@ import type { PublishedRun, Snapshot } from "../../publishedReport";
 import type { ReportView } from "../../reportView";
 import { buildCalendar, upcomingCalendarRows } from "../Calendar";
 import { asOfDate } from "../../runFigures";
-import { cx } from "@/utils/cx";
 import { TextLink } from "../../../run/TextLink";
 import { PublishedSource } from "../PublishedTrace";
 import { GapNote, Tile } from "./Tile";
@@ -44,17 +43,39 @@ function events(rows: readonly WatchRow[]): Event[] {
 const shown = (date: string) => asOfDate(date);
 const owners = (event: Event) => [...new Set(event.rows.map((row) => row.owner))].join(", ");
 
-/** Where each event falls between the first and the last, and the lane that keeps it clear. */
-function positions(list: readonly Event[]) {
-  const start = Math.min(...list.map((event) => event.from));
-  const span = Math.max(...list.map((event) => event.from)) - start;
+/** The events of one day share one mark, numbered by their places in the list below. */
+type Mark = { key: string; from: number; numbers: number[] };
+
+function dayMarks(list: readonly Event[]): Mark[] {
+  const days = new Map<number, Mark>();
+  for (const [at, event] of list.entries()) {
+    const known = days.get(event.from);
+    if (known) known.numbers.push(at + 1);
+    else days.set(event.from, { key: event.key, from: event.from, numbers: [at + 1] });
+  }
+  return [...days.values()];
+}
+
+/** A mark's numbers: "3", or "1–2" for a run of consecutive places, else "1, 3". */
+function numbersText(numbers: readonly number[]) {
+  const first = numbers[0] ?? 0;
+  const last = numbers.at(-1) ?? first;
+  if (numbers.length === 1) return String(first);
+  const consecutive = numbers.every((n, at) => n === first + at);
+  return consecutive ? `${String(first)}–${String(last)}` : numbers.join(", ");
+}
+
+/** Where each mark falls between the first and the last, and the lane that keeps it clear. */
+function positions(marks: readonly Mark[]) {
+  const start = Math.min(...marks.map((mark) => mark.from));
+  const span = Math.max(...marks.map((mark) => mark.from)) - start;
   const ends: number[] = [];
-  return list.map((event) => {
-    const left = span === 0 ? 50 : ((event.from - start) / span) * 100;
+  return marks.map((mark) => {
+    const left = span === 0 ? 50 : ((mark.from - start) / span) * 100;
     const free = ends.findIndex((end) => left - end >= NEAR);
     const lane = free >= 0 ? free : Math.min(ends.length, LANES - 1);
     ends[lane] = left;
-    return { left, lane };
+    return { ...mark, left, lane };
   });
 }
 
@@ -96,14 +117,17 @@ function AxisEnds({ list }: { list: readonly Event[] }) {
   );
 }
 
-/** A true time axis: numbered marks placed by date, each on a lane that keeps it clear of its neighbours. */
+/**
+ * A true time axis: one numbered mark per day, placed by date, each on a lane that keeps it clear
+ * of its neighbours. Names are in the numbered list under the axis, never cut on the axis.
+ */
 function Axis({ list }: { list: readonly Event[] }) {
-  const marks = positions(list);
+  const marks = positions(dayMarks(list));
   const lanes = Math.max(...marks.map(({ lane }) => lane)) + 1;
-  // Room above the line for each lane's ring and its name; the dates sit under the line.
-  const line = 28 + lanes * LANE;
+  // Room above the line for each lane's ring; the dates sit under the line.
+  const line = 8 + lanes * LANE;
   return (
-    <div aria-hidden="true" className="relative mx-4" style={{ height: `${String(line + 40)}px` }}>
+    <div aria-hidden="true" className="relative mx-4" style={{ height: `${String(line + 36)}px` }}>
       <span
         className="absolute inset-x-0 border-t border-connector"
         style={{ top: `${String(line)}px` }}
@@ -118,23 +142,15 @@ function Axis({ list }: { list: readonly Event[] }) {
           <span className="font-mono text-caption text-text-tertiary tabular-nums">{year}</span>
         </span>
       ))}
-      {marks.map(({ left, lane }, index) => (
+      {marks.map(({ key, left, lane, numbers }) => (
         <span
-          key={list[index]?.key}
+          key={key}
           data-mark
           className="absolute -translate-x-1/2"
           style={{ left: `${String(left)}%`, top: `${String(line - 12 - lane * LANE)}px` }}
         >
-          <span className="relative flex size-6 items-center justify-center rounded-ds-full border-2 border-action bg-surface-card font-mono text-caption text-text-primary tabular-nums">
-            {index + 1}
-            <span
-              className={cx(
-                "absolute -top-5 hidden max-w-32 truncate font-body text-caption whitespace-nowrap text-text-secondary lg:block",
-                left > 70 ? "right-0" : "left-0",
-              )}
-            >
-              {list[index]?.name}
-            </span>
+          <span className="flex h-6 min-w-6 items-center justify-center rounded-ds-full border-2 border-action bg-surface-card px-1 font-mono text-caption whitespace-nowrap text-text-primary tabular-nums">
+            {numbersText(numbers)}
           </span>
         </span>
       ))}
@@ -217,7 +233,7 @@ function Watch({ rows }: { rows: readonly WatchRow[] | null }) {
           className="inline-flex min-h-8 w-fit items-center max-[480px]:min-h-11"
           href="#calendar"
         >
-          {`${String(more)} more dated ${more === 1 ? "item" : "items"} on the Calendar`}
+          {`${String(more)} later ${more === 1 ? "date" : "dates"} in the Calendar`}
         </TextLink>
       )}
     </>
@@ -238,7 +254,13 @@ export function DatesRow({ run, view }: RowProps) {
           <CalendarIcon aria-hidden="true" className="size-4 text-text-secondary" />
           Dates to watch
         </h3>
-        <Button href="#calendar" color="secondary" size="sm" iconTrailing={ArrowRight}>
+        <Button
+          href="#calendar"
+          color="secondary"
+          size="sm"
+          iconTrailing={ArrowRight}
+          className="max-[480px]:min-h-11"
+        >
           Open issuer calendar
         </Button>
       </div>

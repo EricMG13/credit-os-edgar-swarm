@@ -14,7 +14,8 @@ import {
 import { moduleOrder } from "../reportView";
 import { StanceChip } from "./overview/CallRow";
 import { runStance } from "./overview/changeData";
-import { Tile } from "./overview/Tile";
+import { asOfDate } from "../runFigures";
+import { Bento, Tile } from "./overview/Tile";
 
 function runDetails(snapshot: Snapshot, key: string, run: PublishedRun) {
   if (run.history)
@@ -56,7 +57,7 @@ const held = (record: PublishedRun) => !record.history && Object.hasOwn(record, 
 
 /** The run's stance in the Overview's own chip; what is not stated, or not held here, says so. */
 function Stance({ record, stance }: { record: PublishedRun; stance: string | undefined }) {
-  if (!held(record)) return <span className={QUIET}>Open the run to see its stance</span>;
+  if (!held(record)) return <span className={QUIET}>Stance not in the run list</span>;
   if (stance === undefined) return <span className={QUIET}>Stance not stated</span>;
   return <StanceChip stance={stance} />;
 }
@@ -95,7 +96,9 @@ function RunRow({
       <Node current={current} />
       <div className="flex flex-wrap items-center gap-2">
         {record.asOf ? (
-          <span className="font-mono text-h4 text-text-primary tabular-nums">{record.asOf}</span>
+          <span className="font-mono text-h4 text-text-primary tabular-nums">
+            {asOfDate(record.asOf)}
+          </span>
         ) : (
           <span className="text-h4 text-gap-text">As-of date not recorded</span>
         )}
@@ -161,26 +164,28 @@ export function RunHistory({
   for (const [, record] of records)
     if (record.asOf) dates.set(record.asOf, (dates.get(record.asOf) ?? 0) + 1);
   return (
-    <Tile span={12} as="h2" label={`Runs of ${issuer}`} title={`Runs of ${issuer}`}>
-      <p className="text-caption text-gap-text">
-        Who started each run is not published with the report.
-      </p>
-      <ol
-        aria-label="Runs, newest first"
-        className="ml-1.5 flex min-w-0 flex-col border-l border-connector"
-      >
-        {records.map(([key, record]) => (
-          <RunRow
-            key={key}
-            record={record}
-            stance={runStance(snapshot, key, record)}
-            current={record === run}
-            tie={Boolean(record.asOf) && (dates.get(record.asOf ?? "") ?? 0) > 1}
-            catalogue={byFolder.get(record.folder)}
-            details={runDetails(snapshot, key, record)}
-          />
-        ))}
-      </ol>
-    </Tile>
+    <Bento>
+      <Tile span={12} as="h2" label={`Runs of ${issuer}`} title={`Runs of ${issuer}`}>
+        <p className="text-caption text-gap-text">
+          Who started each run is not published with the report.
+        </p>
+        <ol
+          aria-label="Runs, newest first"
+          className="ml-1.5 flex min-w-0 flex-col border-l border-connector"
+        >
+          {records.map(([key, record]) => (
+            <RunRow
+              key={key}
+              record={record}
+              stance={runStance(snapshot, key, record)}
+              current={record === run}
+              tie={Boolean(record.asOf) && (dates.get(record.asOf ?? "") ?? 0) > 1}
+              catalogue={byFolder.get(record.folder)}
+              details={runDetails(snapshot, key, record)}
+            />
+          ))}
+        </ol>
+      </Tile>
+    </Bento>
   );
 }

@@ -22,7 +22,7 @@ export function Bento({ children }: { children: ReactNode }) {
   return <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12">{children}</div>;
 }
 
-/** The small tile head: the 13 px heading and, at its right, a quiet caption and the trace. */
+/** The small tile head: the 14 px (ramp `small`) heading and, at its right, a quiet caption and the trace. */
 function SmallHead({
   as: Heading,
   title,
@@ -52,7 +52,7 @@ function SmallHead({
 /**
  * One bento tile: one fact with one visual. `title` states the reading; `kicker` is the small
  * label above it; `trace` is the tile's single source control. `head="small"` draws the
- * Overview's 13 px head with the kicker as a quiet caption at its right; `as` sets its level.
+ * Overview's 14 px (`small`) head with the kicker as a quiet caption at its right; `as` sets its level.
  */
 export function Tile({
   span,

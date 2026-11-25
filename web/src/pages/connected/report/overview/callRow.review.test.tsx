@@ -1,6 +1,6 @@
 // Coordinator review, part 1, items A3–A6, B10, B17, C20–C21: the call row draws only the
 // modules' words, groups nothing into good or bad, and states every missing side.
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import type { OutputEntry, PublishedRun, Section, Snapshot } from "../../publishedReport";
 import type { ReportView } from "../../reportView";
@@ -178,11 +178,16 @@ it("shows or links every bottom-line paragraph, each with its own trace", () => 
   ]);
   render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
   const call = screen.getByRole("region", { name: "The call" });
-  fireEvent.click(within(call).getByText("Read on"));
-  expect(within(call).getByText("Cover held at 2.1x.")).toBeVisible();
-  expect(within(call).getByRole("link", { name: "Read this passage in Evidence" })).toBeVisible();
   expect(call).not.toHaveTextContent(/annual_report/);
-  expect(within(call).getAllByRole("link", { name: /^Source for / })).toHaveLength(3);
+  // The desktop copy of the continuation (the phone copy behind Read on holds the same).
+  const desktop = call.querySelector<HTMLElement>(".hidden.md\\:flex");
+  if (!desktop) throw new Error("no desktop continuation");
+  expect(within(desktop).getByText("Cover held at 2.1x.")).toBeInTheDocument();
+  expect(
+    within(desktop).getByRole("link", { name: "Read this passage in Evidence" }),
+  ).toBeInTheDocument();
+  expect(within(desktop).getAllByRole("link", { name: /^Source for / })).toHaveLength(2);
+  expect(within(call).getAllByRole("link", { name: "Source for the bottom line" })).toHaveLength(1);
 });
 
 it("names the second score's band, and says when the second module recorded no score", () => {
@@ -226,20 +231,16 @@ it("links from the run facts to the limitations and dates on this page", () => {
 
 // Coordinator review, part 2, items 3–5.
 
-it("makes the bottom line the largest text at desktop, a step smaller on a phone, with its continuation behind Read on", () => {
+it("makes a short bottom line the display size at desktop and a step smaller on a phone", () => {
   const lead = entry("CP-6", [
     text("Bottom line", "Leverage rose.", "Cover held at 2.1x.", "Liquidity covers two years."),
   ]);
   render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
   const call = screen.getByRole("region", { name: "The call" });
-  const first = within(call).getByText("Leverage rose.");
-  expect(first).toHaveClass("text-h2", "lg:text-display");
+  expect(within(call).getByText("Leverage rose.")).toHaveClass("text-h2", "lg:text-display");
   const more = within(call).getByText("Read on");
   expect(more.tagName).toBe("SUMMARY");
   expect(more.closest("details")).not.toHaveAttribute("open");
-  expect(within(call).getByText("Cover held at 2.1x.").closest("details")).toBe(
-    more.closest("details"),
-  );
 });
 
 it("does not repeat the lead module's name as a link in the call tile", () => {
@@ -297,4 +298,50 @@ it("shows or links every paragraph of the validation module's bottom line, each 
   expect(within(tile).getByRole("link", { name: "Read this passage in Evidence" })).toBeVisible();
   expect(tile).not.toHaveTextContent(/ledger\.xlsx/);
   expect(within(tile).getAllByRole("link", { name: /^Source for / })).toHaveLength(3);
+});
+
+// Coordinator review, round 2, part 2: D2, D4, D8, D9, D10.
+
+it("sizes the bottom line by its length on the ramp, never below the headline figures", () => {
+  const short = entry("CP-6", [text("Bottom line", "Leverage rose.")]);
+  const { unmount } = render(<CallRow snapshot={snapshot} run={run} view={view([short], short)} />);
+  expect(screen.getByText("Leverage rose.")).toHaveClass("text-h2", "lg:text-display");
+  unmount();
+  const words =
+    "Gross leverage rose to 6.53x despite stronger earnings, and the declared dividend paid in October reverses the apparent year-end net deleveraging.";
+  const long = entry("CP-6", [text("Bottom line", words)]);
+  render(<CallRow snapshot={snapshot} run={run} view={view([long], long)} />);
+  const shown = screen.getByText(words);
+  expect(shown).toHaveClass("text-h3", "lg:text-metric");
+  expect(shown.className).not.toMatch(/text-display/);
+});
+
+it("shows the bottom line's continuation in full from md and behind Read on only below md", () => {
+  const lead = entry("CP-6", [text("Bottom line", "Leverage rose.", "Cover held at 2.1x.")]);
+  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  const call = screen.getByRole("region", { name: "The call" });
+  const copies = within(call).getAllByText("Cover held at 2.1x.");
+  expect(copies).toHaveLength(2);
+  expect(copies.some((copy) => copy.closest(".hidden.md\\:flex"))).toBe(true);
+  expect(within(call).getByText("Read on").closest("details")).toHaveClass("md:hidden");
+});
+
+it("names the clearance trace apart from the validation module's own bottom-line trace", () => {
+  const lead = entry("CP-6", [text("Bottom line", "The view.")]);
+  const validation = entry("CP-5", [text("Bottom line", "Pass with Remediation.")]);
+  render(<CallRow snapshot={snapshot} run={run} view={view([lead, validation], lead)} />);
+  const tile = screen.getByRole("region", { name: "Evidence clearance" });
+  expect(
+    within(tile).getByRole("link", { name: "Source for the evidence clearance" }),
+  ).toBeVisible();
+});
+
+it("lets no tile in the call row stretch past its content", () => {
+  const lead = entry("CP-6", [text("Bottom line", "The view.")]);
+  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  for (const name of ["The call", "Since the earlier run"]) {
+    const tile = screen.getByRole("region", { name });
+    expect(tile.className).not.toMatch(/\bflex-1\b|justify-between/);
+  }
+  expect(document.body.innerHTML).not.toMatch(/text-\[\d+px\]/);
 });

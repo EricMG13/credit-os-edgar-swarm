@@ -206,9 +206,12 @@ it("C3-015 C3-027 J1-009 names and attributes the lead view and its continuation
   ).toBeInTheDocument();
   const first = within(call).getByText("The credit view is stable.");
   expect(first).toHaveClass("lg:text-display");
-  const rest = within(call).getByText("The second paragraph remains qualified.");
+  const [rest, behind] = within(call).getAllByText("The second paragraph remains qualified.");
+  if (!rest || !behind)
+    throw new Error("the continuation is drawn twice: in full and behind Read on");
   expect(rest).not.toHaveClass("lg:text-display");
-  expect(rest.closest("details")).toContainElement(within(call).getByText("Read on"));
+  expect(rest.closest("details")).toBeNull();
+  expect(behind.closest("details")).toContainElement(within(call).getByText("Read on"));
   expect(first.compareDocumentPosition(rest) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   // The lead is attributed by the tile's heading and reached through its pipeline node.
   const nodes = screen.getAllByRole("link", { name: /^Committee decision/ });

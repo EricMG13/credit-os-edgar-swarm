@@ -219,16 +219,16 @@ it("places marks by date, keeps marks clear of each other, and lists at most fiv
   expect(within(within(tile).getByRole("list")).getAllByRole("listitem")).toHaveLength(5);
   expect(within(tile).queryByText("Sixth")).toBeNull();
   const marks = [...container.querySelectorAll<HTMLElement>("[data-mark]")];
+  // The two events of 1 July 2025 share one mark; the two a month apart take separate lanes.
   expect(marks.map((mark) => mark.style.left)).toEqual([
-    "0%",
     "0%",
     expect.any(String),
     expect.any(String),
     "100%",
   ]);
+  expect(marks[0]).toHaveTextContent("1–2");
   const tops = (at: number) => marks[at]?.style.top;
-  expect(tops(0)).not.toBe(tops(1));
-  expect(tops(3)).not.toBe(tops(4));
+  expect(tops(2)).not.toBe(tops(3));
   expect(within(tile).getByText("2026")).toBeInTheDocument();
 });
 
@@ -340,6 +340,64 @@ it("shows the next five dated items and says how many more are on the Calendar",
   const tile = screen.getByRole("region", { name: "Dates to watch" });
   expect(within(within(tile).getByRole("list")).getAllByRole("listitem")).toHaveLength(5);
   expect(
-    within(tile).getByRole("link", { name: "2 more dated items on the Calendar" }),
+    within(tile).getByRole("link", { name: "2 later dates in the Calendar" }),
   ).toHaveAttribute("href", "#calendar");
+});
+
+it("groups events of one day under one mark with their count, and names marks only in the numbered list", () => {
+  const rows = [
+    event("2025-07-01", "Coupon"),
+    event("2025-07-01", "Securitization matures"),
+    event("2026-07-01", "Notes mature"),
+  ];
+  mocks.calendar = rows;
+  mocks.upcoming = rows;
+  const { container } = render(<DatesRow {...props} />);
+  const marks = [...container.querySelectorAll<HTMLElement>("[data-mark]")];
+  expect(marks).toHaveLength(2);
+  expect(marks[0]).toHaveTextContent("1–2");
+  expect(container.querySelector("[data-mark] .truncate")).toBeNull();
+  const tile = screen.getByRole("region", { name: "Dates to watch" });
+  expect(within(within(tile).getByRole("list")).getAllByRole("listitem")).toHaveLength(3);
+});
+
+it("prints a date that is not a full date as the handoff states it", () => {
+  const quarter = {
+    ...event("2025-07-01", "Review"),
+    cells: ["2025-Q3", "", "", "Review", "Scenario", "", "Rating"],
+  };
+  const year = {
+    ...event("2026-01-01", "Maturity"),
+    cells: ["2026", "", "", "Maturity", "Scheduled", "", "Wall"],
+  };
+  mocks.calendar = [quarter, year];
+  mocks.upcoming = [quarter, year];
+  render(<DatesRow {...props} />);
+  const tile = screen.getByRole("region", { name: "Dates to watch" });
+  expect(within(tile).getAllByText("2025-Q3").length).toBeGreaterThan(0);
+  expect(within(tile).getAllByText("2026").length).toBeGreaterThan(0);
+  expect(tile).not.toHaveTextContent(/1 July 2025|1 January 2026/);
+});
+
+it("draws the limitations as one list when every module recorded one, after the blocked wells", () => {
+  mocks.limitations = [
+    {
+      id: "CP-2",
+      name: "Fundamental credit",
+      entry: entry("CP-2"),
+      text: "Two periods only.",
+      line: 7,
+    },
+    { id: "CP-3", name: "Security selection", entry: entry("CP-3"), text: "No yields.", line: 9 },
+  ];
+  mocks.lines = [line("CP-4", "Legal & covenants", "Not assessable", "No document.")];
+  render(<LimitsRow {...props} />);
+  const tile = screen.getByRole("region", { name: "What this run could not do" });
+  expect(within(tile).queryAllByText(/recorded$/)).toHaveLength(0);
+  const list = within(tile).getByRole("list", { name: "Limitations by module" });
+  expect(list.children).toHaveLength(2);
+  expect(within(list).getByRole("link", { name: "Fundamental credit" })).toHaveAttribute(
+    "href",
+    "#modules/CP-2",
+  );
 });

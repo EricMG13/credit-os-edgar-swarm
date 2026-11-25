@@ -238,7 +238,7 @@ it("opens this issuer's runs from the issuer crumb, as a timeline", async () => 
   const runs = await screen.findByRole("region", { name: "Runs of Acme Holdings" });
   const list = within(runs).getByRole("list", { name: "Runs, newest first" });
   const rows = [...list.children];
-  expect(rows[0]).toHaveTextContent("2026-03-31");
+  expect(rows[0]).toHaveTextContent("31 March 2026");
   expect(within(runs).getByText("Watchlist")).toBeVisible();
   expect(within(runs).getByText("Stance not stated")).toBeVisible();
   const current = screen.getByRole("navigation", { name: "Breadcrumb" });

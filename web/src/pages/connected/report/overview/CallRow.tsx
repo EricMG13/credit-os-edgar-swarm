@@ -179,7 +179,7 @@ function CallTile({ run, view }: Pick<RowProps, "run" | "view">) {
   const [first, ...rest] = bottomLine(lead);
   const name = moduleName(lead.output.module);
   return (
-    <Tile span={8} label="The call" className="justify-between gap-7">
+    <Tile span={8} label="The call" className="gap-7 self-start">
       <div className="flex flex-col gap-6">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
           <h3 className="text-small font-medium text-text-secondary">The call · {name}</h3>
@@ -194,7 +194,10 @@ function CallTile({ run, view }: Pick<RowProps, "run" | "view">) {
             run={run}
             entry={lead}
             passage={first}
-            className="max-w-[840px] text-h2 font-medium text-pretty text-text-primary sm:text-h1 lg:text-display lg:font-medium"
+            className={cx(
+              "max-w-[840px] font-medium text-pretty text-text-primary",
+              bottomLineSize(first),
+            )}
           />
           <Continuation run={run} entry={lead} rest={rest} />
         </div>
@@ -204,7 +207,40 @@ function CallTile({ run, view }: Pick<RowProps, "run" | "view">) {
   );
 }
 
-/** The bottom line's further paragraphs, closed behind "Read on" so the trust tiles stay in view. */
+/** The bottom line's further paragraphs, each shown or linked with its own trace. */
+function Paragraphs({
+  run,
+  entry,
+  rest,
+  className,
+}: Pick<RowProps, "run"> & { entry: OutputEntry; rest: Passage[]; className: string }) {
+  return (
+    <div className={className}>
+      {rest.map((passage, at) => (
+        <div key={passage.line} className="flex items-start justify-between gap-3">
+          <Sentence
+            run={run}
+            entry={entry}
+            passage={passage}
+            className="reading-copy text-body text-text-secondary"
+          />
+          <Source
+            run={run}
+            entry={entry}
+            line={passage.line}
+            name={`paragraph ${String(at + 2)} of the bottom line`}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The continuation: in full from md, where the decider reads it with the call; on a phone behind
+ * "Read on", so the trust tiles stay within the first screens. CSS alone chooses: the hidden copy
+ * is out of the accessibility tree.
+ */
 function Continuation({
   run,
   entry,
@@ -212,31 +248,34 @@ function Continuation({
 }: Pick<RowProps, "run"> & { entry: OutputEntry; rest: Passage[] }) {
   if (rest.length === 0) return null;
   return (
-    <details className="group">
-      <summary className="flex min-h-8 w-fit cursor-pointer items-center rounded-ds-xs text-small font-medium text-text-link outline-focus-ring focus-visible:outline-2 max-[480px]:min-h-11">
-        Read on
-      </summary>
-      <div className="mt-2 flex flex-col gap-3">
-        {rest.map((passage, at) => (
-          <div key={passage.line} className="flex items-start justify-between gap-3">
-            <Sentence
-              run={run}
-              entry={entry}
-              passage={passage}
-              className="reading-copy text-body text-text-secondary"
-            />
-            <Source
-              run={run}
-              entry={entry}
-              line={passage.line}
-              name={`paragraph ${String(at + 2)} of the bottom line`}
-            />
-          </div>
-        ))}
-      </div>
-    </details>
+    <>
+      <Paragraphs
+        run={run}
+        entry={entry}
+        rest={rest}
+        className="hidden md:flex md:flex-col md:gap-3"
+      />
+      <details className="md:hidden">
+        <summary className="flex min-h-11 w-fit cursor-pointer items-center rounded-ds-xs text-small font-medium text-text-link outline-focus-ring focus-visible:outline-2">
+          Read on
+        </summary>
+        <Paragraphs run={run} entry={entry} rest={rest} className="mt-2 flex flex-col gap-3" />
+      </details>
+    </>
   );
 }
+
+/**
+ * A bottom line up to this many characters is one short line at desktop and takes the display
+ * size; a longer one steps down the ramp so the headline figures stay on the first screen. No
+ * figure on the page is larger than either step (headline figures are metric, 36 px).
+ */
+const SHORT_BOTTOM_LINE = 90;
+
+const bottomLineSize = (passage: Passage | undefined) =>
+  (passage?.text ?? "").length <= SHORT_BOTTOM_LINE
+    ? "text-h2 sm:text-h1 lg:text-display"
+    : "text-h3 sm:text-h2 lg:text-metric";
 
 type Score = { value: number; band: string };
 type Scored = { name: string; score: Score };
@@ -279,10 +318,10 @@ function Meter({ first, second }: { first: Scored; second: Second }) {
             className="stroke-text-primary"
           />
         )}
-        <text x="0" y="30" className="fill-text-tertiary font-mono text-[11px]">
+        <text x="0" y="30" className="fill-text-tertiary font-mono text-caption">
           0
         </text>
-        <text x="408" y="30" textAnchor="end" className="fill-text-tertiary font-mono text-[11px]">
+        <text x="408" y="30" textAnchor="end" className="fill-text-tertiary font-mono text-caption">
           100
         </text>
       </svg>
@@ -366,7 +405,9 @@ function ClearanceTile({ run, view }: Pick<RowProps, "run" | "view">) {
   const [first, ...rest] = bottomLine(entry);
   return (
     <Tile span={12} label="Evidence clearance" className="gap-3">
-      <Head trace={<Source run={run} entry={entry} line={first?.line} name={name} />}>
+      <Head
+        trace={<Source run={run} entry={entry} line={first?.line} name="the evidence clearance" />}
+      >
         Evidence clearance
       </Head>
       {moduleState(entry) !== "Delivered" && (
@@ -469,7 +510,7 @@ function StanceMove({ was, now }: { was: string | undefined; now: string | undef
 
 function ChangesTile(props: RowProps) {
   return (
-    <Tile span={12} label="Since the earlier run" className="flex-1 gap-3">
+    <Tile span={12} label="Since the earlier run" className="gap-3">
       <Head>
         <ClockRewind aria-hidden="true" className="size-4" />
         Since the earlier run
@@ -498,7 +539,7 @@ export function CallRow(props: RowProps) {
   return (
     <>
       <CallTile run={props.run} view={props.view} />
-      <div className="flex min-w-0 flex-col gap-4 lg:col-span-4">
+      <div className="flex min-w-0 flex-col gap-4 self-start lg:col-span-4">
         <ConfidenceTile run={props.run} view={props.view} />
         <ClearanceTile run={props.run} view={props.view} />
         <ChangesTile {...props} />

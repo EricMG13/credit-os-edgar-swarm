@@ -112,7 +112,46 @@ function LimitationWell({ run, rows }: { run: PublishedRun; rows: Limitation[] }
   );
 }
 
-/** What this run could not do, as a first-class tile: one hatched, dashed well per module. */
+/** One module's single limitation as a row of the compact list: the module, its words, its trace. */
+function ListRow({ run, row }: { run: PublishedRun; row: Limitation }) {
+  return (
+    <li className="flex min-w-0 flex-col gap-1 border-t border-border-hairline py-2.5">
+      <a
+        href={`#modules/${row.id}`}
+        className={cx(MODULE_LINK, "w-fit text-small font-medium text-text-primary")}
+      >
+        {row.name}
+      </a>
+      <ul>
+        <LimitationLine run={run} row={row} />
+      </ul>
+    </li>
+  );
+}
+
+/**
+ * The limitations of the modules that are not blocked: one hatched well per module where a module
+ * recorded several, or, when every module recorded one, a single compact list in two columns.
+ */
+function Recorded({ run, groups }: { run: PublishedRun; groups: Limitation[][] }) {
+  if (groups.length === 0) return null;
+  const single = groups.every((rows) => rows.length === 1);
+  if (single)
+    return (
+      <ul aria-label="Limitations by module" className="grid gap-x-8 md:grid-cols-2">
+        {groups.map(([row]) => row && <ListRow key={row.id} run={run} row={row} />)}
+      </ul>
+    );
+  return (
+    <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(260px,100%),1fr))] gap-3">
+      {groups.map((rows) => (
+        <LimitationWell key={rows[0]?.id} run={run} rows={rows} />
+      ))}
+    </ul>
+  );
+}
+
+/** What this run could not do, as a first-class tile: blocked modules first, then what the others recorded. */
 export function LimitsRow({ run, view }: RowProps) {
   const blocked = blockedModules(view, run);
   const groups = grouped(runLimitations(view, run));
@@ -138,14 +177,16 @@ export function LimitsRow({ run, view }: RowProps) {
           recorded.
         </p>
       ) : (
-        <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(260px,100%),1fr))] gap-3">
-          {blocked.map((module) => (
-            <BlockedWell key={module.id} {...module} />
-          ))}
-          {groups.map((rows) => (
-            <LimitationWell key={rows[0]?.id} run={run} rows={rows} />
-          ))}
-        </ul>
+        <>
+          {blocked.length > 0 && (
+            <ul className="grid grid-cols-[repeat(auto-fit,minmax(min(260px,100%),1fr))] gap-3">
+              {blocked.map((module) => (
+                <BlockedWell key={module.id} {...module} />
+              ))}
+            </ul>
+          )}
+          <Recorded run={run} groups={groups} />
+        </>
       )}
     </Tile>
   );
