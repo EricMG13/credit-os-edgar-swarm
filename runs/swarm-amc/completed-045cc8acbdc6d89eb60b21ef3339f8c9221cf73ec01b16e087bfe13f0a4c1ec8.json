@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for AMC ENTERTAINMENT HOLDINGS, INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/2f362c0bd48117143f7c17ce68e21d20a5170e9bb96f498b17c18f81777cd623/1.response.md",
+    "CP-1": "requests/CP-1/1107e9f6bf30a022b50b420ccfbf7aac4fb66f45e9d8692dd18f70705ea551ad/1.response.md",
+    "CP-1A": "requests/CP-1A/ea3694eabf2abc85071b02d2d918db560f142f1c48bb48eb0aaf46fb55650d0b/1.response.md",
+    "CP-2": "requests/CP-2/7f4f6d1b793af7fd3ff19d3eb68f737ab7e26d6694ebd9422f28dc8084c62f11/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "765ee0f9c4c8f02e6aa42d64f951cc2a7b50033f1247f4b6c8cb5b0f16dca24b",
+  "delivery_sha256": "ba82b4476f529ebd65b666218fe8d5f76085b9af0de0c9564c4c12501e6370fb"
+}

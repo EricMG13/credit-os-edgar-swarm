@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for PBF Holding Co LLC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "390c5df9b4114b88da04d6058e1dba60a2f0f164626d983660a0f36103eeb2fd",
+    "CP-1.md": "3abf33dc9f93ea51d1838cae054e376586f0fd48018e943d0aeba4d7fbcf1dec",
+    "CP-1A.md": "314797c03d8f87a57189623f3cc031e04e627bace70a7a28f14a170cd0b75861",
+    "CP-2.md": "f3ec19e9c0c74253ba9c08075a3d494c4fbb2056d99a02a9c5d8e36921b30e68",
+    "coverage.json": "8eaeadd92d98f1037585bf443b77be9bd49bac3f852c6c377cc12bcd366d196b",
+    "view.json": "443eff4626e1379ac2c9f9c719d0ecce22476c299893161f492bf76aead2e0fb",
+    "report-view.json": "92d0442a0637283789b944c95c86b5e080f61672f5745cf76ebe7426a1ae800b"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for NCL CORP Ltd. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/f37d4e615a682624ffe03190e81781b181e93c0899018a61787afe720c39fe2d/1.response.md",
+    "CP-1": "requests/CP-1/dcd5e54d852182bb09d8931f68e2ba310f10381b5091324526fa0de95444406f/1.response.md",
+    "CP-1A": "requests/CP-1A/f751d9bb181989b42a4ff2791b36a351bd1c30065d6265d7158f3fa77010ddcc/1.response.md",
+    "CP-2": "requests/CP-2/a816198f9ea67de367c55390bfd18ce633ed549b36c4ec23da09a7837c52ea35/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "6a7d16e3cceda5813c549105fd4bdfcff05a53a90f814868e5ae4f4554c10849",
+  "delivery_sha256": "ac8d399863af3aa81cbfe893f5ed9eddb2d8048e983ad1fa98bf462f62bd658d"
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Lindblad Expeditions Holdings, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/471932581b7e66c8348f86d3e8b96675b011154637b3a4b4192511f3673f3a47/1.response.md",
+    "CP-1": "requests/CP-1/1f76d57a6a44155976275983d04611d8ac1ddeb66dbebaa44839e9bc06475e96/1.response.md",
+    "CP-1A": "requests/CP-1A/fd816e5e540fb78aabdb00e9a19ad2019f7b4f22f521d606dd5ec9f0dea0a7f1/1.response.md",
+    "CP-2": "requests/CP-2/15c1db97e7297ea018ed603fcbab0e7349e0fec2c57c74cc3bb969d8fd97ccc6/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "a0af5921b6181cc672ac8d972548205d4b8b048904ec05818c43371c01298ec3",
+  "delivery_sha256": "e98a526e3ac56e03f10fcf886b786f9a99742163cfcb4abf32baa3801c6fd7e6"
+}

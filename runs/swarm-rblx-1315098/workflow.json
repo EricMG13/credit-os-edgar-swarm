@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "rblx-1315098-2026-11-18-credit_snapshot-host",
+    "issuer_id": "rblx-1315098",
+    "issuer_name": "Roblox Corp",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_rblx.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_rblx.htm.jsonl",
+      "sha256": "d51fa3de895b8bb3b3294c21a1119f18046a740d2a62c471a5a9fe67699ce844"
+    },
+    "10-K_2025-12-31_rblx.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_rblx.htm.jsonl",
+      "sha256": "140e59f83d9389bdd7d62056fd19c8391cbd99e6dd29b7c75a9c866b2ce9cccb"
+    },
+    "10-Q_2026-03-31_rblx.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_rblx.htm.jsonl",
+      "sha256": "ec51c4be99777e5e30f468885fee8d94f310b5be993030cbe401e8850281f814"
+    },
+    "10-Q_2026-06-30_rblx.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_rblx.htm.jsonl",
+      "sha256": "e499e9b2e33f026ff3c11ed0c07b1871780b6ce036c0521fefd2ad700da9d1ed"
+    },
+    "10-Q_2026-09-30_rblx.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_rblx.htm.jsonl",
+      "sha256": "8c8d4aaa8a18a1c64231f65a91da27ec5ced353785e839f22399485b9735eff1"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1315098-roblox-corp.json",
+      "sha256": "67959264b74b3c6566127cc5533e07c67623045f07d6cc95204783ede2caa634"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "9e1b6b0ccef551292fc0f856fd3c8e0a1f1b6ab0c74478d93f054596fa485635"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "ca5abc1e8409cb2f8baca127928d87af6d62233f48deec3a52f24b2ce51a1a02"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "d3166ec61b572cdbfb3f6789e901945a836fddcfcc54deeda8b98c192ca2f145"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "0b7f4edd43de53001728af324ef5126117d8256c8fff56a5c71b0757e471f850"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Roblox Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Roblox Corp — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

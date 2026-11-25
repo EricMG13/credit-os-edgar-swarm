@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for WEX Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/b5b5115cb45c3713dff3cfa9c2f14b0dc7b82e747eee8000eaf00be59093d23b/1.response.md",
+    "CP-1": "requests/CP-1/bf2733237d4b1386f7cf07113deedb06854d4c1981e06af39271ccb9156c6407/1.response.md",
+    "CP-1A": "requests/CP-1A/799ce406117e7637cf55e9d4389621e03deb0459386c1226c5fa5329231f8410/1.response.md",
+    "CP-2": "requests/CP-2/ff004e17963e4430d6e45a053792360c0a8c26a0ff86c70fa480cacaf8f38543/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "9868c8c47a908d04e4336e9ff3e97fc8cb3088053af5b541b90392b201fb09d6",
+  "delivery_sha256": "6a5840feb745a3a8cdb9167e4f9a4b76951daf3a89209f1c7840823e4cc6ee6e"
+}

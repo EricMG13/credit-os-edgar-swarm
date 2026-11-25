@@ -1,0 +1,244 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "alsn-2026-11-05-credit_snapshot-host",
+    "issuer_id": "alsn",
+    "issuer_name": "Allison Transmission Holdings Inc",
+    "as_of": "2026-11-05",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2025-12-31_alsn-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_alsn-20251231.htm.jsonl",
+      "sha256": "4759ff666c33cf9b4aa9fc9af406b5ff948ca8c7e8b83ef1d1b8c3371ee474c1"
+    },
+    "10-Q_2026-03-31_alsn-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_alsn-20260331.htm.jsonl",
+      "sha256": "be0a328aec24e49cdf0300569cba1bccab7cce3c7f95d5658c5db76418cb7b3d"
+    },
+    "10-Q_2026-06-30_alsn-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_alsn-20260630.htm.jsonl",
+      "sha256": "0d35855e179d244457d2146b580b35b12b14abea216ea0bdfab3dfa942713609"
+    },
+    "10-Q_2026-09-30_alsn-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_alsn-20260930.htm.jsonl",
+      "sha256": "45fe422f6a742d85a38f1278f190cb497541b353ed938208d565068e9ab989b0"
+    },
+    "EX-99.1_2026-05-04_d138525dex991.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-05-04_d138525dex991.htm.jsonl",
+      "sha256": "fe207b266e861065ca33402f15b822e8bf63e3f1f6c76c7ba33719a7889867e5"
+    },
+    "EX-99.1_2026-08-03_d95413dex991.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-08-03_d95413dex991.htm.jsonl",
+      "sha256": "351a085e364488314b64d2b881181e5b5b95879fe010b71d75af6ac7e45fdd04"
+    },
+    "EX-99.1_2026-11-02_d187329dex991.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-11-02_d187329dex991.htm.jsonl",
+      "sha256": "b8087f0341293bcafb0ca28c8fc71ee181a5c666b45fe74a0ca9cfe109b0ba65"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1411207-allison-transmission-holdings-inc-alsn.json",
+      "sha256": "f65312705cd8bb204fde9755509326ba975099b166b8d246c949fcd0ea955b5a"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "e94f96086620a00b9270e60a28d4befa35416ba67462a6f4ff1a26544fe6a102"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "740d6982fffe0abe239d75bb9f597ef33ef6bc3a202d5ac44e8adb94931e87c8"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "3ca49637cabc175cb418e95d7ed2d78a49bb4bc0b2a5d55fac655e92fbe10a78"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "aaf67c47514c846c800d4a3cb38dd4192b34f14d9a72b2c6cbedeeeca5de21c5"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Allison Transmission Holdings Inc as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Allison Transmission Holdings Inc — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

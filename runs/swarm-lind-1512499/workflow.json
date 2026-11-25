@@ -1,0 +1,248 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "lind-1512499-2026-11-18-credit_snapshot-host",
+    "issuer_id": "lind-1512499",
+    "issuer_name": "Lindblad Expeditions Holdings, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_lindb20241231c_10k.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_lindb20241231c_10k.htm.jsonl",
+      "sha256": "a5e3af31ec0e92f6efa0af1dd89766dc3add535dc23d5f6369ae2755f465ea1f"
+    },
+    "10-K_2025-12-31_lindb20251231c_10k.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_lindb20251231c_10k.htm.jsonl",
+      "sha256": "d247482db6c06f23ac307ea7f1a96278048b2e683d1cf18b0a2ce3f4955ef084"
+    },
+    "10-Q_2026-03-31_lindb20260331_10q.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_lindb20260331_10q.htm.jsonl",
+      "sha256": "e08b31e925e9272ef3f3dbe9d1f69640ac7438a5801386581c0f246d967d6660"
+    },
+    "10-Q_2026-06-30_lindb20260630c_10q.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_lindb20260630c_10q.htm.jsonl",
+      "sha256": "16b3bee49cdfa7ee3a1b14276e4652ef28d8d67b0cddb2a3459ddacdb0f0b855"
+    },
+    "10-Q_2026-09-30_lindb20260930c_10q.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_lindb20260930c_10q.htm.jsonl",
+      "sha256": "b41aa2879190d958da2ed2c9bd04a01fc6c66ec62b40abf4b93bf8e2e951e0c2"
+    },
+    "EX-99.1_2026-05-05_ex_943646.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-05-05_ex_943646.htm.jsonl",
+      "sha256": "f41155abef1273a3653f00f3ea0cb49cd87b0c4ed060e048dd7b99ec57cf7022"
+    },
+    "EX-99.1_2026-08-03_ex_969381.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-08-03_ex_969381.htm.jsonl",
+      "sha256": "c075447b15653f1a80749fa86eba032c897b362cb8a99b3c77148d5860d78378"
+    },
+    "EX-99.1_2026-11-03_ex_1021914.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-11-03_ex_1021914.htm.jsonl",
+      "sha256": "a847c13f48b99c043af0b5afff416ea538aa14e4ab59925fa8e28f03d874e3a6"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1512499-lindblad-expeditions-holdings-inc.json",
+      "sha256": "5c032713cae621cbbd40298c01c32c1b869a563f8a9af429a26da9fd745f2ec2"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "be7014d8d984af69b9a812bd83234bc6de3a62853033f42ee5ed1387c82a12e7"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "18d4ff701693bb3696b789313524f19380f24271e295d024584f58cc591974aa"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "7c06f979ba570df5508c84c81bbacf3d38eb909688405138306b1d6759ba8066"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "a40e190d1b521b9dc25bb070088dda257c13a39e953ed75d5ad88f25f82f4323"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Lindblad Expeditions Holdings, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Lindblad Expeditions Holdings, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}
