@@ -233,6 +233,21 @@ it("draws the fundamental value matrix in the shared table style, one trace per 
     "href",
     "#evidence/5-24",
   );
+  // Review 4, Q8: below sm the rationale is one card per row, as the instrument table is.
+  expect(matrix.parentElement).toHaveClass("hidden", "sm:block");
+  const cards = screen.getByRole("list", { name: "Credit and recovery rationale" });
+  expect(cards).toHaveClass("sm:hidden");
+  const [secured] = within(cards).getAllByRole("listitem");
+  if (!secured) throw new Error("missing rationale card");
+  expect(within(secured).getByRole("heading", { name: "Secured notes" })).toBeInTheDocument();
+  expect(within(secured).getByText("Rationale")).toBeInTheDocument();
+  expect(within(secured).getByText("Secondary quote only")).toBeInTheDocument();
+  expect(within(secured).queryByText("S1")).toBeNull();
+  expect(within(secured).queryByText("Filing p.1")).toBeNull();
+  expect(within(secured).getByRole("link", { name: "Source for Secured notes" })).toHaveAttribute(
+    "href",
+    "#evidence/5-24",
+  );
 });
 
 it.each([
@@ -351,3 +366,23 @@ it.each(["GBP thousands", "£ millions", "GBPm", "gbp millions", "GBP millions a
     expect(view?.records).toHaveLength(3);
   },
 );
+
+// Review 4, Q8: the card's columns are the system's two-column key-value list.
+it("lists each card's columns as the two-column key-value list", () => {
+  const view = securityView(dataset("1 Oct 2026", [basis("2026-10-01")]), "2026-10-02");
+  if (!view) throw new Error("missing security review");
+  render(<Securities data={view} href={(line) => `#evidence/5-${String(line)}`} />);
+  const list = within(card("Secured notes")).getByText("Rank").closest("dl");
+  expect(list).toHaveClass("grid-cols-[auto_minmax(0,1fr)]");
+  expect(list).not.toHaveClass("grid-cols-1");
+});
+
+// Review 4, Q7: the last trade's gap carries its reason, the market level's own reason once.
+it("gives a last trade the page cannot read the gap cell with its reason", () => {
+  const view = securityView(dataset("1 Oct 2026", [basis("2026-10-01")]), "2026-10-02");
+  if (!view) throw new Error("missing security review");
+  render(<Securities data={view} href={(line) => `#evidence/5-${String(line)}`} />);
+  const loan = instrumentRow("Term loan");
+  expect(within(loan).getByText("This page could not read a last trade.")).toBeInTheDocument();
+  expect(within(loan).getAllByText("No loan observation")).toHaveLength(1);
+});

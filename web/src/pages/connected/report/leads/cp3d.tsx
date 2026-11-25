@@ -33,7 +33,10 @@ const COLUMNS = [
 const DAY = 86_400_000;
 /** The fewest points a date axis is drawn for; fewer are a list of figures. */
 const AXIS_FROM = 3;
-const CURVE_GAP = "This page could not read an issuer curve.";
+const CURVE_GAP = "This page could not read the issuer curve.";
+const NO_YIELDS = "This page could not read the yields by maturity.";
+/** A key longer than this goes above its value, so the value keeps its measure. */
+const LONG_KEY = 16;
 
 /** A stated calendar date as a time, or null for any other text. */
 function dayOf(text: string) {
@@ -205,12 +208,12 @@ function YieldFigure({ entry, href }: { entry: LeadProps["entry"]; href: Href })
     return (
       <ChartGap
         chart={chart}
-        span={8}
+        span={12}
         label={TITLE}
         title={TITLE}
         href={href}
-        unread="This page could not read the yield against maturity table."
-        absent="This page could not read a yield against maturity table."
+        unread={NO_YIELDS}
+        absent={NO_YIELDS}
       />
     );
   const candidates = rows
@@ -234,7 +237,7 @@ function YieldFigure({ entry, href }: { entry: LeadProps["entry"]; href: Href })
   const axis = placed.length >= AXIS_FROM;
   return (
     <LeadFigure
-      span={8}
+      span={12}
       label={TITLE}
       title={TITLE}
       basis={
@@ -294,10 +297,10 @@ function Implied({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
   if (!table?.rows.length)
     return (
       <LeadGap
-        span={4}
+        span={12}
         label={label}
         title={label}
-        reason="This page could not read an implied risk register."
+        reason="This page could not read the market-implied default."
       />
     );
   const security = table.headers.findIndex((header) => /^security/i.test(header.trim()));
@@ -305,21 +308,23 @@ function Implied({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
     const at = table.headers.findIndex((header) => test.test(header.trim()));
     return at < 0 ? [] : [{ name: name === "Implied" ? (table.headers[at] ?? name) : name, at }];
   });
+  const stacked = fields.some((field) => field.name.length > LONG_KEY);
   return (
-    <Tile span={4} label={label} title={label} className="w-full self-start">
-      <ul aria-label={label} className="flex flex-col">
+    <Tile span={12} label={label} title={label} className="w-full self-start">
+      <ul aria-label={label} className="grid min-w-0 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
         {table.rows.map(({ line, cells }, index) => {
           const name = rowName(security < 0 ? "" : readerCell(cells[security] ?? ""), index);
           return (
             <li
               key={line}
-              className="flex items-start justify-between gap-3 border-t border-border-hairline py-2.5 first:border-t-0 first:pt-0"
+              className="flex min-w-0 items-start justify-between gap-3 border-t border-border-hairline pt-2.5"
             >
               <span className="flex min-w-0 flex-col gap-1">
                 <span className="text-small font-medium wrap-anywhere text-text-primary">
                   {name}
                 </span>
                 <KeyValues
+                  stacked={stacked}
                   items={fields.map((field) => ({
                     key: field.name,
                     value: readerCell(cells[field.at] ?? ""),

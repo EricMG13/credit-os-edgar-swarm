@@ -76,10 +76,52 @@ export function stepTable(
 
 const share = (value: number) => `${String(value * 100)}%`;
 
+/** A bar's half-height (h-3), and the room between two rows (gap-y-2), for the step connectors. */
+const HALF_BAR = "6px";
+const ROW_GAP = "0.5rem";
+
+/** The bridge's tones, each named in words in its legend: levels, rises and falls. */
+const TONES = [
+  { tone: "level", swatch: "bg-waterfall-total", word: "Opening and closing" },
+  { tone: "adds", swatch: "bg-waterfall-up", word: "Adds" },
+  { tone: "uses", swatch: "bg-waterfall-down", word: "Uses" },
+] as const;
+
+/** The bridge's legend: each tone with its word, so direction is never by colour alone. */
+export function BridgeLegend() {
+  return (
+    <>
+      {TONES.map(({ swatch, word }) => (
+        <span key={word} className="flex items-center gap-1.5 text-caption text-text-secondary">
+          <span aria-hidden="true" className={`size-2.5 flex-none rounded-[2px] ${swatch}`} />
+          {word}
+        </span>
+      ))}
+    </>
+  );
+}
+
+/** One half of a step connector: out of a bar's row down to the gap, or into the next bar's row. */
+function Connector({ at, name, into }: { at: number; name: string; into: boolean }) {
+  return (
+    <span
+      data-connector={name}
+      // Inset at either end of the track, so a connector never overhangs it.
+      className={`absolute w-px bg-connector ${at >= 1 ? "-translate-x-full" : at <= 0 ? "" : "-translate-x-1/2"}`}
+      style={
+        into
+          ? { left: share(at), top: 0, bottom: `calc(50% + ${HALF_BAR})` }
+          : { left: share(at), top: `calc(50% + ${HALF_BAR})`, bottom: `-${ROW_GAP}` }
+      }
+    />
+  );
+}
+
 /**
- * A horizontal bridge: the opening and closing from zero, each change floating from where the one
- * before ended. Every figure is the module's, as written, in its own column; the running positions
- * place bars only.
+ * A horizontal waterfall: the opening and closing as full levels from zero, each change floating
+ * from where the one before ended, rises and falls in their own tones (named in `BridgeLegend`), a
+ * step connector from each bar's end to the next bar's start. Every figure is the module's, as
+ * written and with its sign, under its step's name; the running positions place bars only.
  */
 export function Bridge({ steps, unit, label }: { steps: Step[]; unit: string; label: string }) {
   const values = steps.map((step) => step.cell.value ?? 0);
@@ -93,40 +135,50 @@ export function Bridge({ steps, unit, label }: { steps: Step[]; unit: string; la
   const hi = scale.at(-1)?.value ?? 1;
   const at = (value: number) => (value - lo) / (hi - lo || 1);
   const marks = scale.map((tick) => at(tick.value)).filter((mark) => mark !== at(0));
-  const row =
-    "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 sm:grid-cols-[12rem_minmax(0,1fr)_auto]";
+  const columns =
+    "grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-x-3 sm:grid-cols-[12rem_minmax(0,1fr)]";
   return (
     <div role="img" aria-label={label} className="flex min-w-0 flex-col gap-1">
-      <ol aria-hidden="true" className="flex flex-col gap-2">
+      <ol aria-hidden="true" className={`${columns} gap-y-2`}>
         {steps.map((step, index) => {
           const total = index === 0 || index === last;
           const from = total ? 0 : (ends[index - 1] ?? 0);
+          const tone = total ? "level" : (values[index] ?? 0) < 0 ? "uses" : "adds";
           return (
-            <li key={step.line} className={row}>
-              <span
-                className={`col-span-2 text-small sm:col-span-1 ${total ? "font-medium text-text-primary" : "text-text-secondary"}`}
-              >
-                {step.label}
+            <li key={step.line} className="contents">
+              <span className="flex min-w-0 flex-col gap-0.5 self-center">
+                <span
+                  className={`text-small wrap-anywhere ${total ? "font-medium text-text-primary" : "text-text-secondary"}`}
+                >
+                  {step.label}
+                </span>
+                <span data-figure className="font-mono text-small text-text-primary tabular-nums">
+                  {step.cell.text}
+                </span>
               </span>
-              <BarRow
-                start={at(from)}
-                end={at(ends[index] ?? 0)}
-                tone={total ? "primary" : "secondary"}
-                ticks={marks}
-                zero={at(0)}
-              />
-              <span
-                data-figure
-                className="text-right font-mono text-small text-text-primary tabular-nums"
-              >
-                {step.cell.text}
+              <span className="relative flex min-w-0 items-center self-stretch">
+                {index > 0 && (
+                  <Connector at={at(ends[index - 1] ?? 0)} name={`${String(index - 1)}-in`} into />
+                )}
+                <BarRow
+                  start={at(from)}
+                  end={at(ends[index] ?? 0)}
+                  tone={tone}
+                  ticks={marks}
+                  zero={at(0)}
+                  bar={{ "data-bar": step.cell.text, "data-tone": tone }}
+                  className="w-full"
+                />
+                {index < last && (
+                  <Connector at={at(ends[index] ?? 0)} name={`${String(index)}-out`} into={false} />
+                )}
               </span>
             </li>
           );
         })}
       </ol>
-      <div aria-hidden="true" className={row}>
-        <span className="hidden sm:block" />
+      <div aria-hidden="true" className={columns}>
+        <span />
         <span className="relative h-4">
           {scale.map((tick, index) => (
             <span
@@ -144,7 +196,6 @@ export function Bridge({ steps, unit, label }: { steps: Step[]; unit: string; la
             </span>
           ))}
         </span>
-        <span />
       </div>
       <p className="sr-only">{`Amounts in ${unitLabel(unit)}.`}</p>
     </div>

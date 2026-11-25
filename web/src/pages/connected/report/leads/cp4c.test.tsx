@@ -117,7 +117,10 @@ it("draws the value allocation of the first scenario as a waterfall, steps as wr
   // Ruling (a): the title is the subject; the scenario is its kicker.
   expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(/^Value allocation$/);
   // F1, G7: the fulcrum gap says only what the page checked, in the figure's place, not a note.
-  const fulcrum = within(tile).getByText("This page could not read a fulcrum class.");
+  // Review 4, Q6: the kicker names the scenario only, never the title again.
+  const kicker = within(tile).getByRole("heading", { level: 3 }).previousElementSibling;
+  expect(kicker).toHaveTextContent(/^Scenario 1$/);
+  const fulcrum = within(tile).getByText("This page could not read the fulcrum class.");
   expect(fulcrum).toBeVisible();
   expect(fulcrum.closest("li")).toBeNull();
   expect(tile.textContent).not.toMatch(/does not state the fulcrum|methodology|Needs/);
@@ -214,9 +217,9 @@ it("draws the plan treatment as written, and the gaps when the module wrote none
     <RestructuringLead {...leadProps(handoff("## Findings\n\n### Bottom line\n\nThin.\n"))} />,
   );
   for (const [name, text] of [
-    ["Value allocation", "This page could not read a value allocation table."],
-    ["Recovery by class", "This page could not read a recovery by class table."],
-    ["Plan treatment", "This page could not read a plan treatment register."],
+    ["Value allocation", "This page could not read the value allocation."],
+    ["Recovery by class", "This page could not read the recovery by class."],
+    ["Plan treatment", "This page could not read the plan treatment."],
   ] as const)
     expect(within(screen.getByRole("region", { name })).getByText(text)).toBeVisible();
   // Ruling vii: no build note on the reader's page.
@@ -269,4 +272,36 @@ it("puts the scenario switch in the control row beside Figure / Table", () => {
   );
   fireEvent.click(within(tile).getByRole("button", { name: "Scenario 2" }));
   expect(within(tile).getByRole("img")).toHaveAccessibleName(/Enterprise value 800/);
+});
+
+// Review 4, Q3(a) and Q5.
+it("names the waterfall's tones in words and stacks recovery and plan beside it", () => {
+  render(<RestructuringLead {...leadProps(restructuring())} />);
+  const tile = screen.getByRole("region", { name: "Value allocation" });
+  for (const word of ["Opening and closing", "Adds", "Uses"])
+    expect(within(tile).getByText(word)).toBeVisible();
+  expect(within(tile).getByRole("img").querySelectorAll("[data-connector]").length).toBeGreaterThan(
+    0,
+  );
+  expect(tile).toHaveClass("lg:col-span-8");
+  const column = screen.getByRole("region", { name: "Recovery by class" }).parentElement;
+  expect(column).toHaveClass("lg:col-span-4", "self-start");
+  expect(screen.getByRole("region", { name: "Plan treatment" }).parentElement).toBe(column);
+});
+
+it("makes a value allocation that is only a gap one full row, recovery and plan beneath", () => {
+  render(
+    <RestructuringLead
+      {...leadProps(
+        handoff(
+          RESTRUCTURING.replace(
+            /### Chart data: value allocation[\s\S]*?(?=### Chart data: recovery)/,
+            "",
+          ),
+        ),
+      )}
+    />,
+  );
+  expect(screen.getByRole("region", { name: "Value allocation" })).toHaveClass("lg:col-span-12");
+  expect(screen.getByRole("region", { name: "Plan treatment" })).toHaveClass("lg:col-span-6");
 });

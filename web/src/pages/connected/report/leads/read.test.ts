@@ -7,6 +7,7 @@ import { fixtureEntry, retained } from "./markdown.fixture";
 import {
   chartOf,
   chartsStartingWith,
+  axisAsOf,
   eventsOf,
   leadingMillions,
   mapOf,
@@ -328,4 +329,51 @@ it("prints a lane's stated gap", () => {
     line: 3,
   });
   expect(eventsOf(made, "Hedges")).toBeNull();
+});
+
+it("reads the run's as-of date for the event axis only as a calendar date", () => {
+  expect(axisAsOf("2025-06-30")).toEqual({ time: Date.UTC(2025, 5, 30), text: "2025-06-30" });
+  for (const text of ["2025-02-30", "30 Jun 2025", "", null, undefined])
+    expect(axisAsOf(text)).toBeNull();
+});
+
+it("gives each placed lane event the category and days the event axis places", () => {
+  const made = entry(
+    "CP-2D",
+    [],
+    [
+      {
+        heading: "Events: Financing",
+        level: 3,
+        line: 20,
+        blocks: [
+          {
+            type: "table" as const,
+            line: 21,
+            headers: [
+              "Event date",
+              "Date precision",
+              "Published",
+              "Event",
+              "Status",
+              "Source",
+              "Credit relevance",
+            ],
+            rows: [
+              {
+                line: 23,
+                cells: ["2025-Q3", "quarter", "—", "Review", "Scenario — modelled", "Memo", ""],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  );
+  const lane = eventsOf(made, "Financing");
+  expect(lane?.state === "ready" && lane.events[0]).toMatchObject({
+    category: "Scenario",
+    from: Date.UTC(2025, 6, 1),
+    to: Date.UTC(2025, 8, 30),
+  });
 });

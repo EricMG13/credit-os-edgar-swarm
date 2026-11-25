@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import { Bento } from "../overview/Tile";
 import {
   CompactGap,
@@ -8,6 +8,7 @@ import {
   edgeTable,
   GapCell,
   KeyValues,
+  LaneTile,
   LeadFigure,
   LeadGap,
   mapLayout,
@@ -17,7 +18,34 @@ import {
   TableRegion,
 } from "./parts";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+/** The tile's measured width, as a laid-out browser would report it to a ResizeObserver. */
+function measured(width: number) {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      constructor(private readonly callback: ResizeObserverCallback) {}
+      observe(target: Element) {
+        this.callback([{ target, contentRect: { width } } as unknown as ResizeObserverEntry], this);
+      }
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+}
+
+const edge = (from: string, to: string, line: number, relationship = "r", type = "t") => ({
+  from,
+  relationship,
+  type,
+  to,
+  line,
+});
 
 it("draws the figure first and its table behind a pressed Figure / Table switch", () => {
   render(
@@ -294,13 +322,6 @@ it("lists named values as a two-column list", () => {
 });
 
 it("lays a map's nodes in columns by depth, a loop edge not moving them", () => {
-  const edge = (from: string, to: string, line: number) => ({
-    from,
-    relationship: "r",
-    type: "t",
-    to,
-    line,
-  });
   const columns = mapLayout([
     edge("Parent", "Issuer", 1),
     edge("Issuer", "Notes", 2),
@@ -376,15 +397,83 @@ it("draws a compact gap: dashed, sized to its words, no hatch", () => {
   expect(gap).not.toHaveClass("gap-hatch");
 });
 
-it("puts a drawn map in a named, focusable region so a deep map can be scrolled by keyboard", () => {
-  render(
+// Review 4, Q1: the layout follows the tile's measured width, never the viewport's.
+it("draws a one-edge map as a compact inline figure in a narrow tile, both nodes whole", () => {
+  measured(200);
+  const { container } = render(
     <NodeList
-      label="Ownership"
-      edges={[{ from: "Parent", relationship: "Owns", type: "Ownership", to: "Issuer", line: 4 }]}
+      label="Legal entities"
+      edges={[edge("Synthetic A", "Synthetic B", 4, "Synthetic link", "Ownership")]}
     />,
   );
-  const region = screen.getByRole("region", { name: "Ownership map" });
-  expect(region).toHaveAttribute("tabindex", "0");
+  // The map's one list is the figure: drawn in a line, at its content's width.
+  const list = screen.getByRole("list", { name: "Legal entities" });
+  expect(list).toHaveAttribute("data-map", "inline");
+  expect(list).not.toHaveClass("sr-only");
+  expect(list).toHaveTextContent("Synthetic A→Synthetic link·Ownership→Synthetic B");
+  const [node] = within(list).getAllByRole("listitem");
+  expect(node).toHaveClass("w-fit", "flex-wrap");
+  expect(within(list).getByRole("heading", { name: "Synthetic A" })).toBeInTheDocument();
+  expect(within(list).getAllByText(/Synthetic (B|link)|Ownership/)).toHaveLength(3);
+  expect(container.querySelector("[data-map-columns]")).toBeNull();
+  expect(container.querySelector(".overflow-x-auto, .w-max")).toBeNull();
+});
+
+it("draws a two-node map in a tile too narrow for columns as the vertical flow, never sideways", () => {
+  measured(300);
+  const { container } = render(
+    <NodeList
+      label="Intercreditor"
+      edges={[
+        edge("Lenders", "Issuer", 4, "Lend to", "Debt"),
+        edge("Lenders", "Issuer", 5, "Hold security over", "Security"),
+      ]}
+    />,
+  );
+  expect(container.querySelector("[data-map-columns]")).toBeNull();
+  expect(container.querySelector(".overflow-x-auto, .w-max")).toBeNull();
+  const list = screen.getByRole("list", { name: "Intercreditor" });
+  expect(list).not.toHaveClass("sr-only");
+  expect(within(list).getByText("Hold security over")).toBeInTheDocument();
+  expect(within(list).getByText("Security")).toBeInTheDocument();
+});
+
+it("lays a deep map in columns only when they fit the tile, each connector with its relationship and type", () => {
+  const deep = [
+    edge("Parent", "Holdco", 1, "Owns", "Ownership"),
+    edge("Holdco", "Issuer", 2, "Owns", "Ownership"),
+    edge("Issuer", "Notes", 3, "Issues", "Debt"),
+    edge("Parent", "Notes", 4, "Guarantees", "Guarantee"),
+  ];
+  measured(600);
+  const { container, unmount } = render(<NodeList label="Ownership" edges={deep} />);
+  expect(container.querySelector("[data-map-columns]")).toBeNull();
+  expect(screen.getByRole("list", { name: "Ownership" })).not.toHaveClass("sr-only");
+  unmount();
+  measured(1200);
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+    x: 0,
+    y: 0,
+    top: 0,
+    left: 0,
+    right: 1200,
+    bottom: 300,
+    width: 1200,
+    height: 300,
+    toJSON: () => ({}),
+  });
+  const wide = render(<NodeList label="Ownership" edges={deep} />);
+  const drawing = wide.container.querySelector("[data-map-columns]");
+  expect(drawing).toHaveAttribute("data-map-columns", "4");
+  // Columns by a class, sized to the tile: never wider than it.
+  expect(drawing).toHaveClass("auto-cols-[minmax(8rem,1fr)]", "w-full");
+  expect(drawing).not.toHaveClass("w-max");
+  expect((drawing as HTMLElement).style.gridTemplateColumns).toBe("");
+  expect(screen.getByRole("list", { name: "Ownership" })).toHaveClass("sr-only");
+  const labels = [...wide.container.querySelectorAll("[data-route]")].map(
+    (item) => item.textContent,
+  );
+  expect(labels).toEqual(["OwnsOwnership", "OwnsOwnership", "IssuesDebt", "GuaranteesGuarantee"]);
 });
 
 it("shows a long lane's first three dated rows and keeps the rest behind a disclosure", () => {
@@ -422,4 +511,134 @@ it("keeps a lane of four rows whole", () => {
     within(screen.getByRole("list", { name: "Funding dates" })).getAllByRole("listitem"),
   ).toHaveLength(4);
   expect(container.querySelector("details")).toBeNull();
+});
+
+// Review 4, Q6: a date never breaks, and the trace stays near its row's text.
+it("keeps every date on one line, numbers the rows and caps the row measure", () => {
+  const { container } = render(
+    <DatedList
+      label="Funding dates"
+      events={[
+        {
+          date: "2025-03-31",
+          precision: "day",
+          published: "2024-11-07",
+          event: "Notes mature",
+          status: "Scheduled — maturity",
+          line: 4,
+        },
+        { date: "2026", precision: "year", event: "Loan", status: "Scheduled — x", line: 5 },
+      ]}
+    />,
+  );
+  const list = screen.getByRole("list", { name: "Funding dates" });
+  const date = within(list).getByText("2025-03-31");
+  expect(date).toHaveClass("whitespace-nowrap");
+  expect(date).not.toHaveClass("wrap-anywhere");
+  expect(within(list).getByText("Published 2024-11-07")).toHaveClass("whitespace-nowrap");
+  expect(
+    within(list)
+      .getAllByRole("listitem")
+      .map((row) => row.querySelector("[data-number]")?.textContent),
+  ).toEqual(["1", "2"]);
+  expect(container.firstElementChild).toHaveClass("max-w-3xl");
+});
+
+const placed = (count: number) =>
+  ["2025-03-31", "2025-06-30", "2025-09-30", "2026-03-31"].slice(0, count).map((date, at) => ({
+    date,
+    precision: "day",
+    published: "",
+    event: `Event ${String(at + 1)}`,
+    status: "Scheduled — maturity",
+    relevance: "",
+    category: "Scheduled" as const,
+    from: Date.parse(`${date}T00:00:00Z`),
+    to: Date.parse(`${date}T00:00:00Z`),
+    line: 10 + at,
+  }));
+
+const laneTile = (count: number, asOf?: string | null) => (
+  <LaneTile
+    lane={{ state: "ready", events: placed(count), unplaced: [], line: 9 }}
+    span={12}
+    label="Refinancing dates"
+    title="Refinancing dates"
+    href={(line) => `#evidence/run/${String(line)}`}
+    asOf={asOf}
+  />
+);
+
+// Review 4, Q4: the Calendar's own event axis above the numbered list, from three placed events.
+it("draws the event axis above the numbered list for three events in a wide tile, linked to the rows", () => {
+  measured(1100);
+  const { container } = render(laneTile(3, "2025-05-01"));
+  const tile = screen.getByRole("region", { name: "Refinancing dates" });
+  const axis = within(tile).getByTestId("event-axis");
+  const list = within(tile).getByRole("list", { name: "Refinancing dates" });
+  expect(axis.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(container.querySelector("[data-as-of-rule='2025-05-01']")).not.toBeNull();
+  const rows = within(list).getAllByRole("listitem");
+  const mark = within(axis).getByRole("button", { name: /^Event 2,/ });
+  expect(mark).toHaveAttribute("aria-controls", rows[1]?.id);
+  fireEvent.click(mark);
+  expect(rows[1]).toHaveFocus();
+});
+
+it("draws the list only for two events, or in a tile too narrow for the axis", () => {
+  measured(1100);
+  render(laneTile(2));
+  expect(screen.queryByTestId("event-axis")).toBeNull();
+  expect(screen.getByRole("list", { name: "Refinancing dates" })).toBeInTheDocument();
+  cleanup();
+  measured(500);
+  render(laneTile(4));
+  expect(screen.queryByTestId("event-axis")).toBeNull();
+  expect(
+    within(screen.getByRole("list", { name: "Refinancing dates" })).getAllByRole("listitem"),
+  ).toHaveLength(4);
+});
+
+it("opens the folded rows when an axis mark names one of them", () => {
+  measured(1100);
+  const events = [
+    ...placed(4),
+    ...placed(1).map((item) => ({
+      ...item,
+      date: "2026-09-30",
+      event: "Event 5",
+      line: 20,
+      from: Date.parse("2026-09-30T00:00:00Z"),
+      to: Date.parse("2026-09-30T00:00:00Z"),
+    })),
+  ];
+  const { container } = render(
+    <LaneTile
+      lane={{ state: "ready", events, unplaced: [], line: 9 }}
+      span={12}
+      label="Refinancing dates"
+      title="Refinancing dates"
+      href={(line) => `#evidence/run/${String(line)}`}
+    />,
+  );
+  const more = container.querySelector("details");
+  expect(more).not.toHaveAttribute("open");
+  fireEvent.click(
+    within(screen.getByTestId("event-axis")).getByRole("button", { name: /^Event 5,/ }),
+  );
+  expect(more).toHaveAttribute("open");
+  expect(
+    within(more as HTMLElement)
+      .getByText("Event 5")
+      .closest("li"),
+  ).toHaveFocus();
+});
+
+it("lays named values key above value when asked, for long keys", () => {
+  render(
+    <KeyValues stacked items={[{ key: "Implied annual default probability", value: "4.2%" }]} />,
+  );
+  const list = screen.getByRole("term").closest("dl");
+  expect(list).toHaveClass("grid-cols-1");
+  expect(list).not.toHaveClass("grid-cols-[auto_minmax(0,1fr)]");
 });

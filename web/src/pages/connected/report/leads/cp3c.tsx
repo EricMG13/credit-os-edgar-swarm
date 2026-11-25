@@ -6,10 +6,12 @@ import { basisNotes, readCell, type Cell } from "../overview/figureData";
 import { Bento, Tile } from "../overview/Tile";
 import { withDraws } from "./draws";
 import {
+  Beside,
   CompactGap,
   GapCell,
   KeyValues,
   LaneTile,
+  laneHasAxis,
   LeadFigure,
   LeadGap,
   statedGap,
@@ -174,6 +176,7 @@ function YearAxis({
             >
               {slot.label}
             </span>
+            {!slot.row && <span className="text-caption text-text-tertiary">No row stated</span>}
             {slot.row?.cells.map((cell, at) =>
               placeable(cell) ? (
                 <span
@@ -253,6 +256,15 @@ function Unplaced({ slots, unplaced }: { slots: Slot[]; unplaced: NeedRow[] }) {
   );
 }
 
+/** The need as the figure reads it: its table and rows, or null when the figure is a gap. */
+function needOf(entry: LeadProps["entry"]) {
+  const chart = chartOf(entry, TITLE);
+  const rows = chart.state === "ready" ? needRows(chart.table) : null;
+  return { chart, rows };
+}
+
+const NO_NEED = "This page could not read the refinancing need.";
+
 function NeedFigure({
   entry,
   href,
@@ -260,18 +272,17 @@ function NeedFigure({
   entry: LeadProps["entry"];
   href: (line?: number) => string;
 }) {
-  const chart = chartOf(entry, TITLE);
-  const rows = chart.state === "ready" ? needRows(chart.table) : null;
+  const { chart, rows } = needOf(entry);
   if (chart.state !== "ready" || !rows)
     return (
       <ChartGap
         chart={chart}
-        span={8}
+        span={12}
         label={TITLE}
         title={TITLE}
         href={href}
-        unread="This page could not read the refinancing need table."
-        absent="This page could not read a refinancing need table."
+        unread={NO_NEED}
+        absent={NO_NEED}
       />
     );
   const units = new Set(chart.table.rows.map((row) => row.at(-2) ?? ""));
@@ -342,21 +353,29 @@ function PathItem({ row, columns, index }: { row: Row; columns: number[]; index:
   );
 }
 
-function Paths({ entry, href }: { entry: LeadProps["entry"]; href: (line?: number) => string }) {
+function Paths({
+  entry,
+  href,
+  span,
+}: {
+  entry: LeadProps["entry"];
+  href: (line?: number) => string;
+  span: 6 | 12;
+}) {
   const label = "Liability-management paths";
   const table = registerTable(entry, "T3D.6", ["Path Type", "Feasibility"]);
   if (!table?.rows.length)
     return (
       <LeadGap
-        span={12}
+        span={span}
         label={label}
         title={label}
-        reason="This page could not read a liability-management path register."
+        reason="This page could not read the liability-management paths."
       />
     );
   const columns = ["Path Type", ...PATH_FIELDS].map((name) => columnOf(table, name));
   return (
-    <Tile span={12} label={label} title={label} className="w-full self-start">
+    <Tile span={span} label={label} title={label} className="w-full self-start">
       <ul aria-label={label} className="flex flex-col">
         {table.rows.map((row, index) => (
           <li
@@ -377,25 +396,46 @@ function Paths({ entry, href }: { entry: LeadProps["entry"]; href: (line?: numbe
   );
 }
 
-/** CP-3C: what falls due, against what is committed to meet it. */
+/**
+ * CP-3C: what falls due, against what is committed to meet it. The paths and a short lane stack
+ * beside the need; a lane with an axis takes the full row; a need that is only a gap is one full
+ * row, the paths and the dates side by side under it.
+ */
 export const RefinancingLead = withDraws(
   function RefinancingLead(props: LeadProps) {
-    const { entry } = props;
+    const { entry, run } = props;
     if (drawsNothing(entry)) return null;
     const href = leadHref(props);
+    const { chart, rows } = needOf(entry);
+    const drawn = chart.state === "ready" && rows !== null;
+    const lane = eventsOf(entry, "Refinancing");
+    const axis = laneHasAxis(lane);
+    const dates = (span: 6 | 12) => (
+      <LaneTile
+        lane={lane}
+        span={span}
+        label="Refinancing dates"
+        title="Refinancing dates"
+        href={href}
+        asOf={run.asOf}
+      />
+    );
+    if (!drawn)
+      return (
+        <Bento>
+          <NeedFigure entry={entry} href={href} />
+          <Paths entry={entry} href={href} span={axis || !lane ? 12 : 6} />
+          {dates(axis ? 12 : 6)}
+        </Bento>
+      );
     return (
       <Bento>
         <NeedFigure entry={entry} href={href} />
-        <div className="flex min-w-0 flex-col gap-4 self-start lg:col-span-4">
-          <Paths entry={entry} href={href} />
-          <LaneTile
-            lane={eventsOf(entry, "Refinancing")}
-            span={12}
-            label="Refinancing dates"
-            title="Refinancing dates"
-            href={href}
-          />
-        </div>
+        <Beside>
+          <Paths entry={entry} href={href} span={12} />
+          {!axis && dates(12)}
+        </Beside>
+        {axis && dates(12)}
       </Bento>
     );
   },

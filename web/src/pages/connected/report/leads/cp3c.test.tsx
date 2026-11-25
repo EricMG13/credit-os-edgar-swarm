@@ -1,11 +1,14 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, expect, it } from "vitest";
-import type { OutputEntry } from "../../publishedReport";
+import { afterEach, expect, it, vi } from "vitest";
+import type { OutputEntry, PublishedRun } from "../../publishedReport";
 import { RefinancingLead } from "./cp3c";
 import { leadProps } from "./lead.fixture";
 import { sectionsOf } from "./markdown.fixture";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 /** A handoff as the store publishes it: its owner tables' descriptors point at their table lines. */
 function handoff(markdown: string, output: Partial<OutputEntry["output"]> = {}): OutputEntry {
@@ -183,12 +186,12 @@ it("states the gaps when the module wrote neither table, and draws nothing when 
   render(<RefinancingLead {...leadProps(handoff("## Findings\n\n### Bottom line\n\nThin.\n"))} />);
   expect(
     within(screen.getByRole("region", { name: "Refinancing need" })).getByText(
-      "This page could not read a refinancing need table.",
+      "This page could not read the refinancing need.",
     ),
   ).toBeVisible();
   const paths = screen.getByRole("region", { name: "Liability-management paths" });
   expect(
-    within(paths).getByText("This page could not read a liability-management path register."),
+    within(paths).getByText("This page could not read the liability-management paths."),
   ).toBeVisible();
   expect(paths.textContent).not.toMatch(/Built from the module's contract/);
   expect(screen.queryByRole("list", { name: "Refinancing dates" })).toBeNull();
@@ -265,4 +268,84 @@ it("draws no source reference in a period or a cell of the need table", () => {
   expect(tile.textContent).not.toMatch(/facility_agreement|CP-3C/);
   fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
   expect(tile.textContent).not.toMatch(/facility_agreement|CP-3C/);
+});
+
+// Review 4, Q6: a year the module states no row for says so in its slot.
+it("says No row stated in a year's slot that has no row", () => {
+  const spaced = MARKDOWN.replace("| FY2027 | 1,250 |", "| FY2029 | 1,250 |");
+  render(<RefinancingLead {...leadProps(made(spaced))} />);
+  const tile = screen.getByRole("region", { name: "Refinancing need" });
+  const empty = within(tile).getAllByText("No row stated");
+  expect(empty).toHaveLength(2);
+  // In the slot of its year, with no figure beside it.
+  expect(empty[0]?.parentElement).toHaveTextContent(/^FY2027No row stated$/);
+  expect(empty[0]?.parentElement?.querySelector("[data-figure]")).toBeNull();
+});
+
+const lanes = (count: number) => {
+  const rows = ["2025-03-31", "2025-09-30", "2026-03-31"]
+    .slice(0, count)
+    .map(
+      (date, at) =>
+        `| ${date} | day | 2024-11-07 | Event ${String(at + 1)} | Scheduled — matures | Filing p.1 | Wall |`,
+    )
+    .join("\n");
+  return MARKDOWN.replace(
+    /### Events: Refinancing[\s\S]*?\n\n/,
+    `### Events: Refinancing\n\n| Event date | Date precision | Published | Event | Status | Source | Credit relevance |\n| --- | --- | --- | --- | --- | --- | --- |\n${rows}\n\n`,
+  );
+};
+
+// Review 4, Q5: the shorter tiles stack beside the need; an axis lane takes the full row.
+it("stacks the paths and a short lane in one column beside the need", () => {
+  render(<RefinancingLead {...leadProps(made())} />);
+  const need = screen.getByRole("region", { name: "Refinancing need" });
+  const paths = screen.getByRole("region", { name: "Liability-management paths" });
+  const dates = screen.getByRole("region", { name: "Refinancing dates" });
+  expect(need).toHaveClass("lg:col-span-8");
+  expect(paths.parentElement).toBe(dates.parentElement);
+  expect(paths.parentElement).toHaveClass("lg:col-span-4", "self-start");
+});
+
+it("gives a lane of three dated rows the full row, its axis drawn with the run's as-of date", () => {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      constructor(private readonly callback: ResizeObserverCallback) {}
+      observe(target: Element) {
+        this.callback(
+          [{ target, contentRect: { width: 1100 } } as unknown as ResizeObserverEntry],
+          this,
+        );
+      }
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+  const three = lanes(3);
+  const props = {
+    ...leadProps(made(three)),
+    run: { folder: "run", asOf: "2025-06-30" } as PublishedRun,
+  };
+  const { container } = render(<RefinancingLead {...props} />);
+  const dates = screen.getByRole("region", { name: "Refinancing dates" });
+  expect(dates).toHaveClass("lg:col-span-12");
+  expect(dates.parentElement).not.toBe(
+    screen.getByRole("region", { name: "Liability-management paths" }).parentElement,
+  );
+  expect(within(dates).getByTestId("event-axis")).toBeInTheDocument();
+  expect(container.querySelector("[data-as-of-rule='2025-06-30']")).not.toBeNull();
+});
+
+it("makes a need that is only a gap one full row, the paths and dates side by side under it", () => {
+  render(
+    <RefinancingLead
+      {...leadProps(handoff(`## Findings\n\n### Bottom line\n\nThin.\n\n${EVENTS}\n${PATHS}`))}
+    />,
+  );
+  expect(screen.getByRole("region", { name: "Refinancing need" })).toHaveClass("lg:col-span-12");
+  expect(screen.getByRole("region", { name: "Liability-management paths" })).toHaveClass(
+    "lg:col-span-6",
+  );
+  expect(screen.getByRole("region", { name: "Refinancing dates" })).toHaveClass("lg:col-span-6");
 });

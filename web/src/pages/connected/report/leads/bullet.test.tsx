@@ -180,3 +180,17 @@ it("ends a bullet's reading with one full stop when the headroom is n.m.", () =>
     "Net leverage: 4.2x against a threshold of 5.0x, headroom n.m.",
   );
 });
+
+// Review 4, Q8: a threshold at the scale's maximum sits inside the track, never past its end.
+it("insets a threshold tick at either end of the scale so it never overhangs the track", () => {
+  render(<Bullets label="Covenant tests" tests={TESTS} />);
+  const [leverage, cover] = within(screen.getByRole("list", { name: "Covenant tests" }))
+    .getAllByRole("listitem")
+    .map((row) => row.querySelector<HTMLElement>("[data-threshold]"));
+  // 5.0 is the top of 0 to 5: the tick's right edge is the track's end.
+  expect(leverage?.style.left).toBe("100%");
+  expect(leverage).toHaveClass("-translate-x-full");
+  expect(leverage).not.toHaveClass("-translate-x-1/2");
+  // 2.0 inside 0 to 3: centred on its value.
+  expect(cover).toHaveClass("-translate-x-1/2");
+});

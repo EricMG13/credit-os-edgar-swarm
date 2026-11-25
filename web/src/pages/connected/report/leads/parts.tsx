@@ -1,10 +1,13 @@
 import { useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { ChartTable, type TableRowData } from "@/components/chart/ChartTable";
+import { Missing } from "@/components/gap/Missing";
 import { Segmented } from "@/components/kit/Segmented";
 import { cx } from "@/utils/cx";
+import { EventAxis } from "../../visuals/EventAxis";
 import { PublishedSource } from "../PublishedTrace";
 import { Tile, Well } from "../overview/Tile";
 import {
+  axisAsOf,
   IN_EVIDENCE,
   type Edge,
   type Lane,
@@ -62,6 +65,49 @@ export function TableRegion({ label, table }: { label: string; table: LeadTable 
   );
 }
 
+function CardCell({ cell }: { cell: TableRowData["cells"][number] }) {
+  if (cell === null) return <Missing />;
+  if (typeof cell !== "string")
+    return <GapCell word={"withheld" in cell ? "Withheld" : "Not supplied"} />;
+  const gap = statedGap(cell);
+  return gap ? <GapCell word={gap.word} reason={gap.reason} /> : <>{cell}</>;
+}
+
+/**
+ * A table in its named region from sm up; below sm, one card per row, its label as the card's
+ * heading, every other column as the two-column key-value list, its trace in the card's head.
+ */
+export function TableOrCards({ label, table }: { label: string; table: LeadTable }) {
+  return (
+    <>
+      <div className="hidden min-w-0 sm:block">
+        <TableRegion label={label} table={table} />
+      </div>
+      <ul aria-label={label} className="flex min-w-0 flex-col gap-3 sm:hidden">
+        {table.rows.map((row, at) => (
+          <li
+            key={`${String(at)}-${row.label}`}
+            className="flex min-w-0 flex-col gap-2 rounded-ds-sm border border-border-hairline p-3"
+          >
+            <span className="flex items-start justify-between gap-2">
+              <h4 className="min-w-0 text-small font-medium wrap-anywhere text-text-primary">
+                {row.label}
+              </h4>
+              {row.end}
+            </span>
+            <KeyValues
+              items={row.cells.map((cell, column) => ({
+                key: table.head[column + 1] ?? "",
+                value: <CardCell cell={cell} />,
+              }))}
+            />
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
 /** A table a reader opens when they want it: closed until asked, in the same scroll region. */
 export function Disclosure({
   label,
@@ -106,25 +152,33 @@ export function Notes({ notes }: { notes: readonly ReactNode[] }) {
   );
 }
 
-/** Named values as a two-column list, caption-sized labels. */
+/**
+ * Named values as a two-column list, caption-sized labels; `stacked` puts each key above its value,
+ * for keys long enough to squeeze their values.
+ */
 export function KeyValues({
   items,
+  stacked = false,
   className,
 }: {
   items: readonly { key: string; value: ReactNode }[];
+  stacked?: boolean;
   className?: string;
 }) {
   return (
     <dl
       className={cx(
-        "grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-caption",
+        "grid gap-x-3 text-caption",
+        stacked ? "grid-cols-1 gap-y-0" : "grid-cols-[auto_minmax(0,1fr)] gap-y-0.5",
         className,
       )}
     >
       {items.map(({ key, value }) => (
         <div key={key} className="contents">
           <dt className="text-text-tertiary">{key}</dt>
-          <dd className="wrap-anywhere text-text-secondary">{value}</dd>
+          <dd className={cx("wrap-anywhere text-text-secondary", stacked && "mb-1.5 last:mb-0")}>
+            {value}
+          </dd>
         </div>
       ))}
     </dl>
@@ -168,7 +222,13 @@ const BAR_TONE = {
   primary: "bg-chart-1",
   secondary: "bg-chart-2",
   prior: "bg-chart-3",
+  /** A waterfall's opening and closing levels, its rises and its falls. */
+  level: "bg-waterfall-total",
+  adds: "bg-waterfall-up",
+  uses: "bg-waterfall-down",
 } as const;
+
+export type BarTone = keyof typeof BAR_TONE;
 
 /** The one bar track of the leads: its height and radius. */
 const BAR = { track: "relative block h-3 min-w-0", bar: "rounded-ds-xs" } as const;
@@ -191,7 +251,7 @@ export function BarRow({
 }: {
   start?: number;
   end: number;
-  tone?: keyof typeof BAR_TONE;
+  tone?: BarTone;
   ticks?: readonly number[];
   zero?: number;
   /** Data attributes for the bar itself. */
@@ -304,6 +364,26 @@ export function LeadFigure({
   );
 }
 
+const COLUMN_SPANS = { 4: "lg:col-span-4", 6: "lg:col-span-6" } as const;
+
+/**
+ * A column of shorter tiles stacked beside a P1, each as tall as its content, so the two columns
+ * end near each other. Its tiles take span 12 (their full column).
+ */
+export function Beside({
+  span = 4,
+  children,
+}: {
+  span?: keyof typeof COLUMN_SPANS;
+  children: ReactNode;
+}) {
+  return (
+    <div className={cx("flex min-w-0 flex-col gap-4 self-start", COLUMN_SPANS[span])}>
+      {children}
+    </div>
+  );
+}
+
 /** A lead tile whose figure the run does not carry: the reason in words, in the figure's place. */
 export function LeadGap({
   span,
@@ -386,10 +466,52 @@ export function mapLayout(edges: readonly Edge[]) {
 
 const NODE =
   "w-fit max-w-full rounded-ds-sm border border-border-hairline bg-surface-card px-3 py-2 text-small font-medium wrap-anywhere text-text-primary";
+const EDGE_TYPE =
+  "rounded-ds-xs border border-border-hairline px-1.5 text-caption text-text-tertiary";
 
-type Route = { key: number; path: string; x: number; y: number; text: string };
+/**
+ * An element's measured content width, from the browser's ResizeObserver; null until measured, so
+ * a layout that needs room is never drawn before the room is known.
+ */
+function useMeasuredWidth<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [width, setWidth] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver((entries) => {
+      const measured = entries[0]?.contentRect.width ?? node.clientWidth;
+      if (measured > 0) setWidth(measured);
+    });
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+  return { ref, width };
+}
 
-/** Connectors between the measured nodes, the relationship word at each one's middle. */
+/** A map's column (8rem) and the room between two columns (gap-x-36), which holds an edge's words. */
+const COLUMN_PX = 128;
+const BETWEEN_PX = 144;
+
+/** Whether a map of `columns` depth columns fits a tile `width` pixels wide. */
+const fits = (columns: number, width: number | null) =>
+  width !== null && columns * COLUMN_PX + (columns - 1) * BETWEEN_PX <= width;
+
+/** An edge's words: its relationship as written and its edge type, both at every width. */
+function EdgeWords({ edge }: { edge: Edge }) {
+  return (
+    <>
+      {edge.relationship && <span className="wrap-anywhere">{edge.relationship}</span>}
+      {edge.type && <span className={EDGE_TYPE}>{edge.type}</span>}
+    </>
+  );
+}
+
+type Route = { key: number; path: string; x: number; y: number; edge: Edge };
+
+/** Connectors between the measured nodes, the edge's words at each one's middle. */
 function useRoutes(edges: readonly Edge[]) {
   const box = useRef<HTMLDivElement>(null);
   const [drawn, setDrawn] = useState<{ width: number; height: number; routes: Route[] }>({
@@ -416,7 +538,7 @@ function useRoutes(edges: readonly Edge[]) {
         const y2 = to.top + to.height / 2 - frame.top;
         const mid = (x1 + x2) / 2;
         const path = `M${String(x1)},${String(y1)} C${String(mid)},${String(y1)} ${String(mid)},${String(y2)} ${String(x2)},${String(y2)}`;
-        return [{ key, path, x: mid, y: (y1 + y2) / 2, text: edge.relationship }];
+        return [{ key, path, x: mid, y: (y1 + y2) / 2, edge }];
       });
       setDrawn({ width: frame.width, height: frame.height, routes });
     };
@@ -430,7 +552,10 @@ function useRoutes(edges: readonly Edge[]) {
   return { box, drawn };
 }
 
-/** The map as drawn on a wide screen: columns by depth, a connector and its words per edge. */
+/**
+ * The map in columns by depth, a connector and its words per edge; drawn only where the columns
+ * fit the tile, so it is never wider than the tile.
+ */
 function MapDrawing({ edges }: { edges: readonly Edge[] }) {
   const columns = mapLayout(edges);
   const arrow = useId();
@@ -440,8 +565,7 @@ function MapDrawing({ edges }: { edges: readonly Edge[] }) {
       ref={box}
       aria-hidden="true"
       data-map-columns={columns.length}
-      className="relative hidden w-max min-w-full gap-x-36 gap-y-12 py-10 md:grid"
-      style={{ gridTemplateColumns: `repeat(${String(columns.length)}, minmax(8rem, 1fr))` }}
+      className="relative grid w-full auto-cols-[minmax(8rem,1fr)] grid-flow-col gap-x-36 gap-y-12 py-4"
     >
       {columns.map((nodes, at) => (
         <div key={at} className="flex min-w-0 flex-col justify-center gap-3">
@@ -487,10 +611,11 @@ function MapDrawing({ edges }: { edges: readonly Edge[] }) {
         drawn.routes.map((route) => (
           <span
             key={route.key}
-            className="absolute w-32 -translate-x-1/2 -translate-y-1/2 bg-surface-card px-1 text-center text-caption leading-tight wrap-anywhere text-text-secondary"
+            data-route
+            className="absolute flex w-32 -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-0.5 bg-surface-card px-1 text-center text-caption leading-tight text-text-secondary"
             style={{ left: route.x, top: route.y }}
           >
-            {route.text}
+            <EdgeWords edge={route.edge} />
           </span>
         ))}
     </div>
@@ -498,10 +623,11 @@ function MapDrawing({ edges }: { edges: readonly Edge[] }) {
 }
 
 /**
- * A node map. On a wide screen: nodes in columns by depth, connectors between them with the
- * relationship on each. On a narrow one, and for assistive technology always: the same map as a
- * vertical flow, each source node once in the order the module wrote it, its edges under it. Rows
- * the page does not draw as edges are listed after, each with its reason.
+ * A node map, laid out by the tile's measured width. One edge: a compact inline figure. More: nodes
+ * in columns by depth with a connector and its words per edge, where the columns fit the tile;
+ * otherwise, and for assistive technology always, the same map as a vertical flow, each source node
+ * once in the order the module wrote it, its edges under it. Rows the page does not draw as edges
+ * are listed after, each with its reason.
  */
 export function NodeList({
   label,
@@ -514,40 +640,66 @@ export function NodeList({
   gaps?: readonly MapGap[];
   href?: (line: number) => string;
 }) {
+  const { ref, width } = useMeasuredWidth<HTMLDivElement>();
   const nodes = [...new Map(edges.map((edge) => [nodeOf(edge), edge.from])).entries()];
+  const [only] = edges;
+  const layout =
+    only && edges.length === 1
+      ? "inline"
+      : edges.length && fits(mapLayout(edges).length, width)
+        ? "columns"
+        : "flow";
+  const inline = layout === "inline";
   return (
-    <div className="flex min-w-0 flex-col gap-3">
-      {edges.length > 0 && (
-        <div
-          role="region"
-          aria-label={`${label} map`}
-          // A deep map scrolls sideways inside its tile; the region takes focus so a keyboard can.
-          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
-          tabIndex={0}
-          className={cx("relative -my-6 hidden min-w-0 overflow-x-auto md:block", FOCUS)}
-        >
-          <MapDrawing edges={edges} />
-        </div>
-      )}
-      <ul aria-label={label} className="flex min-w-0 flex-col gap-3 md:sr-only">
+    <div ref={ref} className="flex min-w-0 flex-col gap-3">
+      {layout === "columns" && <MapDrawing edges={edges} />}
+      {/* One edge reads in a line at its content's width: node → relationship · type → node. */}
+      <ul
+        aria-label={label}
+        data-map={inline ? "inline" : undefined}
+        className={cx("flex min-w-0 flex-col gap-3", layout === "columns" && "sr-only")}
+      >
         {nodes.map(([node, name]) => (
-          <li key={node} className="flex min-w-0 flex-col gap-1.5">
+          <li
+            key={node}
+            className={cx(
+              "flex min-w-0",
+              inline
+                ? "w-fit max-w-full flex-wrap items-center gap-x-2 gap-y-1.5"
+                : "flex-col gap-1.5",
+            )}
+          >
             <h4 className={NODE}>{name}</h4>
-            <ul className="flex flex-col gap-1.5">
+            <ul className={cx("flex min-w-0", inline ? "flex-wrap" : "flex-col gap-1.5")}>
               {edges
                 .filter((edge) => nodeOf(edge) === node)
-                .map((edge) => (
-                  <li key={edge.line} className="flex min-w-0 flex-col gap-1.5 pl-3">
-                    <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-l border-connector pl-3 text-small text-text-secondary">
-                      <span aria-hidden="true">↓</span>
-                      <span className="wrap-anywhere">{edge.relationship}</span>
-                      <span className="rounded-ds-xs border border-border-hairline px-1.5 text-caption text-text-tertiary">
-                        {edge.type}
+                .map((edge) =>
+                  inline ? (
+                    <li
+                      key={edge.line}
+                      className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5"
+                    >
+                      <span className="flex min-w-0 flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-small text-text-secondary">
+                        <span aria-hidden="true">→</span>
+                        {edge.relationship && (
+                          <span className="wrap-anywhere">{edge.relationship}</span>
+                        )}
+                        {edge.relationship && edge.type && <span aria-hidden="true">·</span>}
+                        {edge.type && <span className={EDGE_TYPE}>{edge.type}</span>}
+                        <span aria-hidden="true">→</span>
                       </span>
-                    </span>
-                    <span className={NODE}>{edge.to}</span>
-                  </li>
-                ))}
+                      <span className={NODE}>{edge.to}</span>
+                    </li>
+                  ) : (
+                    <li key={edge.line} className="flex min-w-0 flex-col gap-1.5 pl-3">
+                      <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-l border-connector pl-3 text-small text-text-secondary">
+                        <span aria-hidden="true">↓</span>
+                        <EdgeWords edge={edge} />
+                      </span>
+                      <span className={NODE}>{edge.to}</span>
+                    </li>
+                  ),
+                )}
             </ul>
           </li>
         ))}
@@ -582,32 +734,48 @@ export function edgeTable(edges: readonly Edge[], href?: (line: number) => strin
 export type DatedItem = Pick<LaneEvent, "date" | "precision" | "event" | "status" | "line"> &
   Partial<Pick<LaneEvent, "published" | "relevance">>;
 
+const DAY_TEXT = /^\d{4}-\d{2}-\d{2}$/;
+
 /** A publication date as the row states it: a date, a stated gap, or nothing for a dash. */
-function publishedText(text = "") {
+function Published({ text = "" }: { text?: string }) {
   const gap = statedGap(text);
-  if (gap) return `Publication date not supplied — ${gap.reason}`;
-  return text.trim() && !/^[—–-]$/.test(text.trim()) ? `Published ${text.trim()}` : "";
+  if (gap) return <>{` · Publication date not supplied — ${gap.reason}`}</>;
+  const shown = text.trim();
+  if (!shown || /^[—–-]$/.test(shown)) return null;
+  return (
+    <>
+      {" · "}
+      <span className={DAY_TEXT.test(shown) ? "whitespace-nowrap" : undefined}>
+        {`Published ${shown}`}
+      </span>
+    </>
+  );
 }
 
 /** How many dated rows a lane shows before the rest go behind a disclosure. */
 const FOLD_AFTER = 3;
 
-/**
- * Dated events, earliest first, each date at the precision the module states, with its status,
- * publication date and credit relevance; `unplaced`, the rows of the table the page could not
- * place by date, listed as written with their traces.
- */
+/** The row grid: its number, its date (never broken), its text. */
+const DATED_ROW = "grid grid-cols-[1.25rem_6.5rem_minmax(0,1fr)] gap-x-3";
 
+/**
+ * Dated events, earliest first and numbered, each date at the precision the module states, with
+ * its status, publication date and credit relevance; `unplaced`, the rows of the table the page
+ * could not place by date, listed as written with their traces. `rowId(index)` names the row of
+ * `events[index]`, so an axis mark can point at it.
+ */
 export function DatedList({
   label,
   events,
   unplaced = [],
   href,
+  rowId,
 }: {
   label: string;
   events: readonly DatedItem[];
   unplaced?: readonly UnplacedEvent[];
   href?: (line: number) => string;
+  rowId?: (index: number) => string;
 }) {
   const total = events.length + unplaced.length;
   // A long lane shows its first dated rows and keeps the rest one click away, so a P3 list does
@@ -615,17 +783,27 @@ export function DatedList({
   const folded = events.length > FOLD_AFTER + 1;
   const first = folded ? events.slice(0, FOLD_AFTER) : events;
   const rest = folded ? events.slice(FOLD_AFTER) : [];
-  const row = (item: DatedItem) => {
+  const row = (item: DatedItem, index: number) => {
     const cut = item.status.indexOf(" — ");
     const kind = cut < 0 ? item.status : item.status.slice(0, cut);
     const detail = cut < 0 ? "" : item.status.slice(cut + 3);
-    const published = publishedText(item.published);
     return (
       <li
         key={item.line}
-        className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-3 border-t border-border-hairline py-2.5 first:border-t-0"
+        id={rowId?.(index)}
+        tabIndex={rowId ? -1 : undefined}
+        className={cx(
+          DATED_ROW,
+          "rounded-ds-xs border-t border-border-hairline py-2.5 first:border-t-0",
+          FOCUS,
+        )}
       >
-        <span className="font-mono text-small text-text-primary tabular-nums">{item.date}</span>
+        <span data-number className="font-mono text-small text-text-tertiary tabular-nums">
+          {index + 1}
+        </span>
+        <span className="font-mono text-small whitespace-nowrap text-text-primary tabular-nums">
+          {item.date}
+        </span>
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="flex items-start justify-between gap-2 text-small wrap-anywhere text-text-primary">
             {item.event}
@@ -634,7 +812,7 @@ export function DatedList({
           <span className="text-caption text-text-tertiary">
             <span>{kind}</span>
             {detail ? ` · ${detail}` : ""}
-            {published ? ` · ${published}` : ""}
+            <Published text={item.published} />
           </span>
           {item.relevance && (
             <span className="text-caption wrap-anywhere text-text-secondary">{item.relevance}</span>
@@ -644,10 +822,10 @@ export function DatedList({
     );
   };
   return (
-    <div className="flex min-w-0 flex-col gap-2">
+    <div className="flex max-w-3xl min-w-0 flex-col gap-2">
       {first.length > 0 && (
         <ol aria-label={label} className="flex flex-col">
-          {first.map(row)}
+          {first.map((item, at) => row(item, at))}
         </ol>
       )}
       {rest.length > 0 && (
@@ -656,7 +834,7 @@ export function DatedList({
             {`Show the other ${String(rest.length)} dated rows`}
           </summary>
           <ol aria-label={`${label}, the other dated rows`} className="flex flex-col">
-            {rest.map(row)}
+            {rest.map((item, at) => row(item, at + FOLD_AFTER))}
           </ol>
         </details>
       )}
@@ -668,7 +846,7 @@ export function DatedList({
           <ul aria-label={`${label}, rows not placed by date`} className="flex flex-col">
             {unplaced.map((item) => (
               <li key={item.line} className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-3 py-1.5">
-                <span className="font-mono text-small text-gap-text">{item.date}</span>
+                <span className="font-mono text-small break-words text-gap-text">{item.date}</span>
                 <span className="flex items-start justify-between gap-2 text-small wrap-anywhere text-text-primary">
                   {item.event}
                   {href && <Trace href={href(item.line)} name={item.event} />}
@@ -715,9 +893,65 @@ export function Prose({
   );
 }
 
+/** The fewest placed events drawn on a time axis, and the least tile width the axis is drawn in. */
+const AXIS_FROM = 3;
+const AXIS_MIN_PX = 720;
+
+/** Focus a row an axis mark names, opening the folded rows when it is among them. */
+function focusRow(id: string) {
+  const row = document.getElementById(id);
+  const fold = row?.closest("details");
+  if (fold && !fold.open) fold.open = true;
+  row?.focus();
+}
+
+/**
+ * A ready lane: from three placed events, in a tile wide enough for it, the Calendar's event axis
+ * above the numbered list, each mark pointing at its row; otherwise the list only (a narrower axis
+ * would repeat the list down the page).
+ */
+function LaneFigure({
+  label,
+  lane,
+  href,
+  asOf,
+}: {
+  label: string;
+  lane: Extract<Lane, { state: "ready" }>;
+  href: (line?: number) => string;
+  asOf: string | null;
+}) {
+  const { ref, width } = useMeasuredWidth<HTMLDivElement>();
+  const prefix = useId();
+  const rowId = (index: number) => `${prefix}-row-${String(index)}`;
+  const axis = lane.events.length >= AXIS_FROM && width !== null && width >= AXIS_MIN_PX;
+  return (
+    <div ref={ref} className="flex min-w-0 flex-col gap-4">
+      {axis && (
+        <EventAxis
+          events={lane.events.map((event, index) => ({ ...event, index, source: "" }))}
+          asOf={axisAsOf(asOf)}
+          rowId={rowId}
+          onSelect={(index) => {
+            focusRow(rowId(index));
+          }}
+        />
+      )}
+      <DatedList
+        label={label}
+        events={lane.events}
+        unplaced={lane.unplaced}
+        href={href}
+        rowId={rowId}
+      />
+    </div>
+  );
+}
+
 /**
  * One of the module's dated lanes as a tile: its events, the lane's stated gap, or, when the
- * handoff has no such lane, `absent` in words (nothing when no words are given).
+ * handoff has no such lane, `absent` in words (nothing when no words are given). `asOf` is the
+ * run's as-of date, drawn on the event axis.
  */
 export function LaneTile({
   lane,
@@ -726,6 +960,7 @@ export function LaneTile({
   title,
   href,
   absent,
+  asOf = null,
 }: {
   lane: Lane | null;
   span: Span;
@@ -733,6 +968,7 @@ export function LaneTile({
   title: ReactNode;
   href: (line?: number) => string;
   absent?: string;
+  asOf?: string | null;
 }) {
   if (!lane)
     return absent ? <LeadGap span={span} label={label} title={title} reason={absent} /> : null;
@@ -745,10 +981,14 @@ export function LaneTile({
       label={label}
       title={title}
       trace={trace}
-      figure={<DatedList label={label} events={lane.events} unplaced={lane.unplaced} href={href} />}
+      figure={<LaneFigure label={label} lane={lane} href={href} asOf={asOf} />}
     />
   );
 }
+
+/** Whether a lane holds enough placed events for its event axis. */
+export const laneHasAxis = (lane: Lane | null) =>
+  lane?.state === "ready" && lane.events.length >= AXIS_FROM;
 
 /**
  * One of the module's node maps as a tile: its stated edges with any gap rows marked, the map's

@@ -228,16 +228,17 @@ it("states the gaps when the module wrote no headroom table, map or basket regis
   render(<LegalLead {...leadProps(handoff("## Findings\n\n### Bottom line\n\nThin.\n"))} />);
   expect(
     within(screen.getByRole("region", { name: "Covenant headroom" })).getByText(
-      "This page could not read a covenant headroom table.",
+      "This page could not read the covenant headroom.",
     ),
   ).toBeVisible();
   for (const [name, text] of [
-    ["Legal entities", "This page could not read a legal entities map."],
-    ["Intercreditor", "This page could not read an intercreditor map."],
-    ["Baskets and capacity", "This page could not read a basket and capacity register."],
+    ["Legal entities", "This page could not read the legal-entity map."],
+    ["Intercreditor", "This page could not read the intercreditor map."],
+    ["Baskets and capacity", "This page could not read the baskets and capacity."],
   ] as const)
     expect(within(screen.getByRole("region", { name })).getByText(text)).toBeVisible();
   expect(document.body.textContent).not.toMatch(/supplied at run start/);
+  expect(document.body.textContent).not.toMatch(/register|passage|table\./);
 });
 
 it("says the store withheld the headroom table, traces it and opens the table as written", () => {
@@ -279,4 +280,63 @@ it("prints a cell with its unit once: 12%, (12.3x), 5.0x", () => {
     "Fixed charge: 15% against a threshold of 12%, headroom 3%. Passes at or above.",
   );
   expect(tile.textContent).not.toMatch(/%%|\)x|xx/);
+});
+
+// Review 4, Q5: the shorter tiles stack in one column beside the headroom; a deep map takes a row.
+it("stacks the one-edge maps and the baskets in one column beside the headroom", () => {
+  render(<LegalLead {...leadProps(synthetic())} />);
+  expect(screen.getByRole("region", { name: "Covenant headroom" })).toHaveClass("lg:col-span-8");
+  const column = screen.getByRole("region", { name: "Legal entities" }).parentElement;
+  expect(column).toHaveClass("lg:col-span-4", "self-start");
+  for (const name of ["Intercreditor", "Baskets and capacity"])
+    expect(screen.getByRole("region", { name }).parentElement).toBe(column);
+});
+
+it("gives a map of more than one edge the full row under the headroom", () => {
+  const deep = SYNTHETIC.replace(
+    "| Synthetic A | Synthetic link | Payment rank | Synthetic B | Synthetic p.1 |\n\n### T4C.5",
+    "| Synthetic A | Synthetic link | Payment rank | Synthetic B | Synthetic p.1 |\n| Synthetic B | Second link | Security rank | Synthetic C | Synthetic p.2 |\n\n### T4C.5",
+  );
+  const made = synthetic();
+  made.sections = sectionsOf(deep);
+  render(<LegalLead {...leadProps(made)} />);
+  const map = screen.getByRole("region", { name: "Intercreditor" });
+  expect(map).toHaveClass("lg:col-span-12");
+  expect(map.parentElement).not.toBe(
+    screen.getByRole("region", { name: "Legal entities" }).parentElement,
+  );
+  cleanup();
+  // Both maps deep: the baskets would stand alone beside the headroom, so every tile is a row.
+  const both = deep.replace(
+    "| Synthetic A | Synthetic link | Ownership | Synthetic B | Synthetic p.1 |",
+    "| Synthetic A | Synthetic link | Ownership | Synthetic B | Synthetic p.1 |\n| Synthetic B | Owns | Ownership | Synthetic C | Synthetic p.3 |",
+  );
+  made.sections = sectionsOf(both);
+  made.output.maps = [
+    { name: "legal entities", table: lineOf(both, "Map: legal entities"), gap: null },
+    { name: "intercreditor", table: lineOf(both, "Map: intercreditor"), gap: null },
+  ];
+  made.output.charts = synthetic().output.charts?.map((chart) => ({
+    ...(chart as Record<string, unknown>),
+    table: lineOf(both, "Chart data: covenant headroom"),
+  }));
+  render(<LegalLead {...leadProps(made)} />);
+  for (const name of ["Covenant headroom", "Legal entities", "Baskets and capacity"])
+    expect(screen.getByRole("region", { name })).toHaveClass("lg:col-span-12");
+});
+
+it("makes a headroom that is only a gap one full row, the rest beneath it", () => {
+  const made = synthetic();
+  made.output.charts = [];
+  made.output.chartGaps = [
+    {
+      title: "Covenant headroom",
+      table: lineOf(SYNTHETIC, "Chart data: covenant headroom"),
+      gap: "no compliance certificate",
+    },
+  ];
+  render(<LegalLead {...leadProps(made)} />);
+  expect(screen.getByRole("region", { name: "Covenant headroom" })).toHaveClass("lg:col-span-12");
+  expect(screen.getByRole("region", { name: "Legal entities" })).toHaveClass("lg:col-span-6");
+  expect(screen.getByRole("region", { name: "Intercreditor" })).toHaveClass("lg:col-span-6");
 });

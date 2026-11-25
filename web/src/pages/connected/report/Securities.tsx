@@ -12,7 +12,7 @@ import {
 } from "../publishedReport";
 import { namedTable } from "../reportView";
 import { amount, distinct } from "../visuals/visualData";
-import { GapCell, KeyValues, LeadFigure, statedGap, TableRegion, Trace } from "./leads/parts";
+import { GapCell, KeyValues, LeadFigure, statedGap, TableOrCards, Trace } from "./leads/parts";
 import { readerCell, rowName } from "./leads/read";
 import { sourceOf, writtenTable } from "./leads/written";
 import { Bento, Tile } from "./overview/Tile";
@@ -137,11 +137,21 @@ function reader(text: string) {
   return text.trim() ? readerCell(text) : "Not stated";
 }
 
-/** A cell as written, or its stated gap as the word and the module's reason. */
-function Written({ text }: { text: string }) {
+/** "Relative value" → "the relative value"; a heading that opens on an acronym keeps it. */
+const theColumn = (name: string) =>
+  `the ${/^[A-Z][a-z]/.test(name) ? name.charAt(0).toLowerCase() + name.slice(1) : name}`;
+
+/** A cell as written, or its stated gap as the word and the module's reason; `column` its heading. */
+function Written({ text, column }: { text: string; column: string }) {
   const gap = statedGap(text);
   if (gap) return <GapCell word={gap.word} reason={gap.reason} />;
-  if (!text.trim()) return <GapCell word="Not stated" />;
+  if (!text.trim())
+    return (
+      <GapCell
+        word="Not stated"
+        reason={`This page could not read ${theColumn(reader(column))}.`}
+      />
+    );
   return <>{reader(text)}</>;
 }
 
@@ -194,6 +204,7 @@ export type Instruments = {
 
 const NO_PAIR = "No pair of comparable last trades is supplied for this run.";
 const NO_SPREAD = "This page could not read a spread.";
+const NO_TRADE = "This page could not read a last trade.";
 
 /**
  * The decision summary's instruments: a yield bar and a price bar only where the trade is
@@ -292,7 +303,16 @@ export function recommendationInstruments(entry: OutputEntry): Instruments | nul
  * The last trade: price and yield bars where the trade is comparable, the stated yield as text
  * otherwise, or the gap. `marks` tags the bars for the table's checks.
  */
-function LastTrade({ item, marks = false }: { item: Instrument; marks?: boolean }) {
+function LastTrade({
+  item,
+  market,
+  marks = false,
+}: {
+  item: Instrument;
+  /** The market level's place in the row's cells. */
+  market: number;
+  marks?: boolean;
+}) {
   if (item.yieldText !== null && item.share !== null)
     return (
       <span className="flex min-w-0 flex-col gap-1.5">
@@ -308,7 +328,12 @@ function LastTrade({ item, marks = false }: { item: Instrument; marks?: boolean 
     );
   if (item.yieldText !== null)
     return <span className="font-mono text-text-primary tabular-nums">{item.yieldText}</span>;
-  return <GapCell word={statedGap(item.cells[0] ?? "") ? "Not supplied" : "Not stated"} />;
+  return (
+    <GapCell
+      word={statedGap(item.cells[market] ?? "") ? "Not supplied" : "Not stated"}
+      reason={NO_TRADE}
+    />
+  );
 }
 
 const tradeHeading = (data: Instruments) =>
@@ -353,7 +378,7 @@ function InstrumentGrid({ data, href }: { data: Instruments; href: EvidenceHref 
             const name = rowName(reader(item.name), index);
             const cell = (text: string, at: number) => (
               <td key={at} className={BODY}>
-                <Written text={text} />
+                <Written text={text} column={data.columns[at] ?? ""} />
               </td>
             );
             return (
@@ -364,7 +389,7 @@ function InstrumentGrid({ data, href }: { data: Instruments; href: EvidenceHref 
                 {item.cells.slice(0, data.market + 1).map(cell)}
                 {trade && (
                   <td className={BODY}>
-                    <LastTrade item={item} marks />
+                    <LastTrade item={item} market={Math.max(0, data.market)} marks />
                   </td>
                 )}
                 {item.cells
@@ -403,13 +428,11 @@ function InstrumentCards({ data, href }: { data: Instruments; href: EvidenceHref
               <Trace href={href(item.line)} name={name} />
             </span>
             <Recommendation state={item.recommendation} />
-            {data.yields && <LastTrade item={item} />}
-            {/* Each heading over its value: the module's headings are long. */}
+            {data.yields && <LastTrade item={item} market={Math.max(0, data.market)} />}
             <KeyValues
-              className="grid-cols-1"
               items={data.columns.map((column, at) => ({
                 key: reader(column),
-                value: <Written text={item.cells[at] ?? ""} />,
+                value: <Written text={item.cells[at] ?? ""} column={column} />,
               }))}
             />
           </li>
@@ -453,7 +476,7 @@ export function ValueMatrix({ table, href }: { table: Table; href: EvidenceHref 
       trace={<Trace href={href(table.line)} name={label} />}
       className="w-full self-start"
     >
-      {written && <TableRegion label={label} table={written} />}
+      {written && <TableOrCards label={label} table={written} />}
     </Tile>
   );
 }

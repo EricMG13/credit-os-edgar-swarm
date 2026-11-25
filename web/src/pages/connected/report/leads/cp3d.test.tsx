@@ -158,7 +158,7 @@ it("lists an unquoted instrument with its reason and draws the issuer curve gap 
   expect(within(loan).getByText("No loan quote in the files")).toBeVisible();
   // G7: no raw "X: Not supplied: reason".
   expect(tile.textContent).not.toMatch(/: Not supplied: /);
-  expect(within(tile).getByText("This page could not read an issuer curve.")).toBeVisible();
+  expect(within(tile).getByText("This page could not read the issuer curve.")).toBeVisible();
   // Ruling vii: no method notes on the reader's page.
   expect(tile.textContent).not.toMatch(/No curve is drawn|methodology/);
 });
@@ -198,11 +198,11 @@ it("states the gaps when the module wrote neither table, and draws nothing when 
   render(<MarketLead {...leadProps(handoff("## Findings\n\n### Bottom line\n\nThin.\n"))} />);
   const figure = screen.getByRole("region", { name: "Yield against maturity" });
   expect(
-    within(figure).getByText("This page could not read a yield against maturity table."),
+    within(figure).getByText("This page could not read the yields by maturity."),
   ).toBeVisible();
   const implied = screen.getByRole("region", { name: "Market-implied default" });
   expect(
-    within(implied).getByText("This page could not read an implied risk register."),
+    within(implied).getByText("This page could not read the market-implied default."),
   ).toBeVisible();
   expect(document.body.textContent).not.toMatch(/supplied at run start/);
   cleanup();
@@ -244,7 +244,7 @@ it("places no point when the yields are in more than one unit, and says so", () 
   const tile = screen.getByRole("region", { name: "Yield against maturity" });
   expect(tile.querySelectorAll("[data-point]")).toHaveLength(0);
   expect(within(tile).getByText("The yields are stated in more than one unit.")).toBeVisible();
-  expect(within(tile).queryByText(/could not read an issuer curve/)).toBeNull();
+  expect(within(tile).queryByText(/could not read the issuer curve/)).toBeNull();
   expect(within(tile).queryByText(/^Yield in/)).toBeNull();
   fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
   expect(within(tile).getByRole("cell", { name: "680" })).toBeVisible();
@@ -279,4 +279,20 @@ it("names an implied-risk row without a security by its place", () => {
   const tile = screen.getByRole("region", { name: "Market-implied default" });
   expect(within(tile).getByText("Row 1")).toBeVisible();
   expect(within(tile).getByRole("link", { name: "Source for Row 1" })).toBeVisible();
+});
+
+// Review 4, Q6 and Q5: a long key above its value; the lone shorter tile takes the full row.
+it("puts the implied default's long keys above their values, in a full row under the yields", () => {
+  render(<MarketLead {...leadProps(market())} />);
+  const tile = screen.getByRole("region", { name: "Market-implied default" });
+  const key = within(tile).getByText("implied default/loss/break-even");
+  expect(key.closest("dl")).toHaveClass("grid-cols-1");
+  expect(tile).toHaveClass("lg:col-span-12");
+  expect(screen.getByRole("region", { name: "Yield against maturity" })).toHaveClass(
+    "lg:col-span-12",
+  );
+  // Rows side by side in the full row, each with its trace.
+  expect(within(tile).getByRole("list", { name: "Market-implied default" })).toHaveClass(
+    "sm:grid-cols-2",
+  );
 });

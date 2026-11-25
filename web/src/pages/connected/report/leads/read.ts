@@ -9,7 +9,7 @@ import {
   type OutputEntry,
   type Table,
 } from "../../publishedReport";
-import { eventRecords } from "../../visuals/EventLane";
+import { eventRecords, type EventRecord } from "../../visuals/EventLane";
 import { readerReason } from "../overview/reason";
 import type { Cell } from "../overview/figureData";
 import { items, publishedTables, record, word, type SourceTable } from "../../visuals/visualData";
@@ -326,6 +326,10 @@ export type LaneEvent = {
   event: string;
   status: string;
   relevance: string;
+  /** The row's status category and the days it covers, as the Calendar's event axis places them. */
+  category: EventRecord["category"];
+  from: number;
+  to: number;
   line: number;
 };
 /** A lane row the page could not place by date: its date cell and event as written. */
@@ -363,6 +367,9 @@ export function eventsOf(entry: OutputEntry, lane: string): Lane | null {
       event: readerCell(event.event) || "Not stated",
       status: readerCell(event.status),
       relevance: readerCell(event.relevance),
+      category: event.category,
+      from: event.from,
+      to: event.to,
       line: table.rowLines?.[event.index] ?? table.line,
     }));
   const placed = new Set(records.map((event) => event.index));
@@ -379,6 +386,15 @@ export function eventsOf(entry: OutputEntry, lane: string): Lane | null {
         ],
   );
   return { state: "ready", events, unplaced, line: table.line };
+}
+
+/** The run's as-of date for the event axis: a calendar date as its time and its text, else null. */
+export function axisAsOf(text: string | null | undefined) {
+  if (!text || !/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
+  const time = Date.parse(`${text}T00:00:00Z`);
+  return Number.isFinite(time) && new Date(time).toISOString().slice(0, 10) === text
+    ? { time, text }
+    : null;
 }
 
 const MONEY_LEAD =

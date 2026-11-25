@@ -193,12 +193,21 @@ it("draws the relative value and portfolio fit passages and the peer gap", () =>
 it("states each gap when the module wrote neither table nor passage", () => {
   render(<SecurityLead {...props(handoff("## Findings\n\n### Bottom line\n\nNeutral.\n"))} />);
   const tile = screen.getByRole("region", { name: "Instrument decisions" });
-  expect(within(tile).getByText("This page could not read an instrument table.")).toBeVisible();
+  // Review 4, Q8: the gap names the thing in the reader's words.
+  expect(
+    within(tile).getByText("This page could not read the instrument decisions."),
+  ).toBeVisible();
   expect(
     within(screen.getByRole("region", { name: "Relative value" })).getByText(
-      "This page could not read a relative value passage.",
+      "This page could not read the relative value.",
     ),
   ).toBeVisible();
+  expect(
+    within(screen.getByRole("region", { name: "Portfolio fit" })).getByText(
+      "This page could not read the portfolio fit.",
+    ),
+  ).toBeVisible();
+  expect(document.body.textContent).not.toMatch(/passage|register|table\./);
   expect(document.body.textContent).not.toMatch(/The module wrote no/);
 });
 
@@ -213,4 +222,26 @@ it("draws nothing for a blocked module", () => {
     />,
   );
   expect(container).toBeEmptyDOMElement();
+});
+
+// Review 4, Q5: no hole beside the relative value: the shorter tiles stack in one column beside it.
+it("stacks the portfolio fit over the peer gap in one column beside the relative value", () => {
+  render(<SecurityLead {...props(handoff(REAL))} />);
+  const value = screen.getByRole("region", { name: "Relative value" });
+  const fit = screen.getByRole("region", { name: "Portfolio fit" });
+  const peers = screen.getByRole("region", { name: "Relative value against peers" });
+  expect(value).toHaveClass("lg:col-span-6");
+  const column = fit.parentElement;
+  expect(peers.parentElement).toBe(column);
+  expect(column).toHaveClass("lg:col-span-6", "self-start", "flex-col");
+  expect(column?.firstElementChild).toBe(fit);
+});
+
+// Review 4, Q7: a last trade the page cannot read is the one gap cell, with its reason.
+it("gives a last-trade gap its reason, never a bare chip", () => {
+  render(<SecurityLead {...props(handoff(SYNTHETIC))} />);
+  const loan = row("Synthetic term loan");
+  expect(within(loan).getByText("This page could not read a last trade.")).toBeInTheDocument();
+  // The market level's own reason stays once.
+  expect(within(loan).getAllByText("No loan observation")).toHaveLength(1);
 });

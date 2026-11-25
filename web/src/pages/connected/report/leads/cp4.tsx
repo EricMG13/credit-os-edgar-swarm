@@ -5,7 +5,7 @@ import { basisNotes } from "../overview/figureData";
 import { Bento, Tile } from "../overview/Tile";
 import { Bullets, leadTests } from "./bullet";
 import { withDraws } from "./draws";
-import { KeyValues, LeadFigure, LeadGap, MapTile, Trace } from "./parts";
+import { Beside, KeyValues, LeadFigure, LeadGap, MapTile, Trace } from "./parts";
 import {
   chartOf,
   columnOf,
@@ -24,23 +24,39 @@ type Href = (line?: number) => string;
 const TITLE = "Covenant headroom";
 
 const MAPS = [
-  { name: "legal entities", title: "Legal entities", span: 4, noun: "a legal entities map" },
-  { name: "intercreditor", title: "Intercreditor", span: 6, noun: "an intercreditor map" },
+  { name: "legal entities", title: "Legal entities", noun: "the legal-entity map" },
+  { name: "intercreditor", title: "Intercreditor", noun: "the intercreditor map" },
 ] as const;
 
-function Headroom({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
+const NO_HEADROOM = "This page could not read the covenant headroom.";
+
+/** The headroom as the figure reads it: its chart and tests, the tests null when it is a gap. */
+function headroomOf(entry: LeadProps["entry"]) {
   const chart = chartOf(entry, TITLE);
   const tests = chart.state === "ready" ? leadTests(chart.table, chart.descriptor) : null;
-  if (chart.state !== "ready" || !tests?.length)
+  return { chart, tests: tests?.length ? tests : null };
+}
+
+function Headroom({
+  entry,
+  href,
+  span = 8,
+}: {
+  entry: LeadProps["entry"];
+  href: Href;
+  span?: 8 | 12;
+}) {
+  const { chart, tests } = headroomOf(entry);
+  if (chart.state !== "ready" || !tests)
     return (
       <ChartGap
         chart={chart}
-        span={8}
+        span={12}
         label={TITLE}
         title={TITLE}
         href={href}
-        unread="This page could not read the covenant headroom table."
-        absent="This page could not read a covenant headroom table."
+        unread={NO_HEADROOM}
+        absent={NO_HEADROOM}
       />
     );
   const { table, descriptor } = chart;
@@ -48,7 +64,7 @@ function Headroom({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
   const rowHref = (at: number) => href(table.rowLines?.[at] ?? table.line);
   return (
     <LeadFigure
-      span={8}
+      span={span}
       label={TITLE}
       title={TITLE}
       basis={
@@ -75,16 +91,16 @@ function Headroom({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
 
 const BASKET_FIELDS = ["Estimated Capacity", "Remaining Capacity", "Status"] as const;
 
-function Baskets({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
+function Baskets({ entry, href, span }: { entry: LeadProps["entry"]; href: Href; span: 6 | 12 }) {
   const label = "Baskets and capacity";
   const table = registerTable(entry, "T4C.5", ["Capacity Type", "Basket / Test"]);
   if (!table?.rows.length)
     return (
       <LeadGap
-        span={6}
+        span={span}
         label={label}
         title={label}
-        reason="This page could not read a basket and capacity register."
+        reason="This page could not read the baskets and capacity."
       />
     );
   const name = columnOf(table, "Basket / Test");
@@ -92,7 +108,7 @@ function Baskets({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
     ({ at }) => at >= 0,
   );
   return (
-    <Tile span={6} label={label} title={label} className="w-full self-start">
+    <Tile span={span} label={label} title={label} className="w-full self-start">
       <ul aria-label={label} className="flex flex-col">
         {table.rows.map(({ line, cells }, index) => {
           const basket = rowName(readerCell(cells[name] ?? ""), index);
@@ -121,27 +137,56 @@ function Baskets({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
   );
 }
 
-/** CP-4: how much room each test leaves, and who stands where. */
+/**
+ * CP-4: how much room each test leaves, and who stands where. The one-edge maps and the baskets
+ * stack in one column beside the headroom; a deeper map takes a full row under it; a headroom that
+ * is only a gap is one full row, the rest beneath it two by two.
+ */
 export const LegalLead = withDraws(
   function LegalLead(props: LeadProps) {
     const { entry } = props;
     if (drawsNothing(entry)) return null;
     const href = leadHref(props);
+    const maps = MAPS.map((item) => ({ ...item, map: mapOf(entry, item.name) }));
+    const tile = (item: (typeof maps)[number], span: 6 | 12) => (
+      <MapTile
+        key={item.name}
+        map={item.map}
+        span={span}
+        label={item.title}
+        title={item.title}
+        href={href}
+        absent={`This page could not read ${item.noun}.`}
+      />
+    );
+    const deep = (item: (typeof maps)[number]) =>
+      item.map.state === "ready" && item.map.edges.length > 1;
+    if (!headroomOf(entry).tests)
+      return (
+        <Bento>
+          <Headroom entry={entry} href={href} />
+          {maps.map((item) => tile(item, 6))}
+          <Baskets entry={entry} href={href} span={12} />
+        </Bento>
+      );
+    const compact = maps.filter((item) => !deep(item));
+    // With both maps deep the baskets would stand alone beside the headroom: a full row instead.
+    if (!compact.length)
+      return (
+        <Bento>
+          <Headroom entry={entry} href={href} span={12} />
+          {maps.map((item) => tile(item, 12))}
+          <Baskets entry={entry} href={href} span={12} />
+        </Bento>
+      );
     return (
       <Bento>
         <Headroom entry={entry} href={href} />
-        {MAPS.map(({ name, title, span, noun }) => (
-          <MapTile
-            key={name}
-            map={mapOf(entry, name)}
-            span={span}
-            label={title}
-            title={title}
-            href={href}
-            absent={`This page could not read ${noun}.`}
-          />
-        ))}
-        <Baskets entry={entry} href={href} />
+        <Beside>
+          {compact.map((item) => tile(item, 12))}
+          <Baskets entry={entry} href={href} span={12} />
+        </Beside>
+        {maps.filter(deep).map((item) => tile(item, 12))}
       </Bento>
     );
   },

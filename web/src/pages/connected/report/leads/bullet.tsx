@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { cx } from "@/utils/cx";
 import { withUnit } from "../../publishedReport";
 import type { SourceTable } from "../../visuals/visualData";
 import { columnAt } from "../overview/figureData";
@@ -41,6 +42,9 @@ export const shown = (test: HeadroomTest, cell: HeadroomTest["current"]) =>
 
 /** A position on the bullet's scale as a share of its track. */
 const share = (x: number) => (x - BULLET.left) / (BULLET.right - BULLET.left);
+
+/** A tick's offset at its share: centred on its value, inset at either end of the track. */
+const inset = (at: number) => (at >= 1 ? "-translate-x-full" : at <= 0 ? "" : "-translate-x-1/2");
 
 function reading(test: HeadroomTest) {
   const headroom = test.headroom ? `, headroom ${test.headroom}` : "";
@@ -110,7 +114,10 @@ function BulletRow({ test, href }: { test: LeadTest; href?: string }) {
           >
             <span
               data-threshold
-              className="absolute -inset-y-1 w-0.5 -translate-x-1/2 bg-text-primary"
+              className={cx(
+                "absolute -inset-y-1 w-0.5 bg-text-primary",
+                inset(share(geometry.threshold)),
+              )}
               style={{ left: `${String(share(geometry.threshold) * 100)}%` }}
             />
           </BarRow>

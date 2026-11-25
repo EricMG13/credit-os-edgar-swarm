@@ -5,11 +5,12 @@ import { ticks, word, type SourceTable } from "../../visuals/visualData";
 import { basisNotes, readCell, type Cell } from "../overview/figureData";
 import { Key } from "../overview/figureParts";
 import { Bento, Tile } from "../overview/Tile";
-import { Bridge, bridgeOf } from "./bridge";
+import { Bridge, BridgeLegend, bridgeOf } from "./bridge";
 import { spoken } from "./cp3c";
 import { withDraws } from "./draws";
 import {
   BarRow,
+  Beside,
   CompactGap,
   GapCell,
   KeyValues,
@@ -39,7 +40,8 @@ type Entry = LeadProps["entry"];
 
 const TITLE = "Value allocation";
 const RECOVERY = "Recovery by class";
-const FULCRUM = "This page could not read a fulcrum class.";
+const FULCRUM = "This page could not read the fulcrum class.";
+const NO_ALLOCATION = "This page could not read the value allocation.";
 
 /** "Value allocation — scenario 1" → "Scenario 1"; the title itself when it names no scenario. */
 function scenarioName(title: string) {
@@ -51,15 +53,7 @@ function ValueAllocation({ entry, href }: { entry: Entry; href: Href }) {
   const scenarios = chartsStartingWith(entry, TITLE);
   const [chosen, choose] = useState(scenarios[0]?.title ?? "");
   const current = scenarios.find((item) => item.title === chosen) ?? scenarios[0];
-  if (!current)
-    return (
-      <LeadGap
-        span={8}
-        label={TITLE}
-        title={TITLE}
-        reason="This page could not read a value allocation table."
-      />
-    );
+  if (!current) return <LeadGap span={12} label={TITLE} title={TITLE} reason={NO_ALLOCATION} />;
   const { chart } = current;
   const read = bridgeOf(chart);
   const table = read ? writtenTable(read.table, href) : undefined;
@@ -72,32 +66,22 @@ function ValueAllocation({ entry, href }: { entry: Entry; href: Href }) {
     />
   );
   const trace = read && <Trace href={href(read.table.line)} name={current.title} />;
+  // The scenario's own name above the subject; nothing when the title names no scenario.
+  const named = scenarioName(current.title);
   return (
     <LeadFigure
       span={8}
       label={TITLE}
-      kicker={current.title}
+      kicker={named === current.title ? undefined : named}
       title={TITLE}
       basis={read?.unit ? unitLabel(read.unit) : undefined}
-      legend={
-        read &&
-        !read.why && (
-          <>
-            <Key tone="primary">Value and residual</Key>
-            <Key tone="secondary">Cost or distribution</Key>
-          </>
-        )
-      }
+      legend={read && !read.why && <BridgeLegend />}
       trace={trace}
       controls={scenario}
       figure={
         <div className="flex min-w-0 flex-col gap-3">
           {!read ? (
-            <CompactGap>
-              {chart.state === "gap"
-                ? chart.reason
-                : "This page could not read a value allocation table."}
-            </CompactGap>
+            <CompactGap>{chart.state === "gap" ? chart.reason : NO_ALLOCATION}</CompactGap>
           ) : read.why ? (
             <>
               <p role="note" className="text-small text-text-secondary">
@@ -120,6 +104,8 @@ function ValueAllocation({ entry, href }: { entry: Entry; href: Href }) {
     />
   );
 }
+
+const NO_RECOVERY = "This page could not read the recovery by class.";
 
 const RECOVERY_COLUMNS = ["Class", "Scenario", "Claim", "Recovery", "Recovery %"] as const;
 
@@ -197,19 +183,19 @@ function AmountRow({
   );
 }
 
-function RecoveryByClass({ entry, href }: { entry: Entry; href: Href }) {
+function RecoveryByClass({ entry, href, span }: { entry: Entry; href: Href; span: 6 | 12 }) {
   const chart = chartOf(entry, RECOVERY);
   const rows = chart.state === "ready" ? recoveries(chart.table) : null;
   if (chart.state !== "ready" || !rows?.length)
     return (
       <ChartGap
         chart={chart}
-        span={12}
+        span={span}
         label={RECOVERY}
         title={RECOVERY}
         href={href}
-        unread="This page could not read the recovery by class table."
-        absent="This page could not read a recovery by class table."
+        unread={NO_RECOVERY}
+        absent={NO_RECOVERY}
       />
     );
   const unit = word(chart.descriptor.unit);
@@ -225,7 +211,7 @@ function RecoveryByClass({ entry, href }: { entry: Entry; href: Href }) {
     .join(" ")}`;
   return (
     <LeadFigure
-      span={12}
+      span={span}
       label={RECOVERY}
       title={RECOVERY}
       basis={unit ? `${unitLabel(unit)} · recovery % as stated` : undefined}
@@ -271,16 +257,16 @@ function RecoveryByClass({ entry, href }: { entry: Entry; href: Href }) {
 
 const PLAN_FIELDS = ["class treatment", "consent/vote", "probability class"] as const;
 
-function PlanTreatment({ entry, href }: { entry: Entry; href: Href }) {
+function PlanTreatment({ entry, href, span }: { entry: Entry; href: Href; span: 6 | 12 }) {
   const label = "Plan treatment";
   const table = registerTable(entry, "T4E.4", ["path", "class treatment"]);
   if (!table?.rows.length)
     return (
       <LeadGap
-        span={12}
+        span={span}
         label={label}
         title={label}
-        reason="This page could not read a plan treatment register."
+        reason="This page could not read the plan treatment."
       />
     );
   const path = columnOf(table, "path");
@@ -288,7 +274,7 @@ function PlanTreatment({ entry, href }: { entry: Entry; href: Href }) {
     ({ at }) => at >= 0,
   );
   return (
-    <Tile span={12} label={label} title={label} className="w-full self-start">
+    <Tile span={span} label={label} title={label} className="w-full self-start">
       <ul aria-label={label} className="flex flex-col">
         {table.rows.map(({ line, cells }, index) => {
           const name = rowName(readerCell(cells[path] ?? ""), index);
@@ -317,20 +303,31 @@ function PlanTreatment({ entry, href }: { entry: Entry; href: Href }) {
   );
 }
 
-/** CP-4C: who is paid from the value in a restructuring, class by class. */
+/**
+ * CP-4C: who is paid from the value in a restructuring, class by class. Recovery and plan
+ * treatment stack beside the allocation, each as tall as its content; an allocation that is only a
+ * gap is one full row, the two beneath it side by side.
+ */
 export const RestructuringLead = withDraws(
   function RestructuringLead(props: LeadProps) {
     const { entry } = props;
     if (drawsNothing(entry)) return null;
     const href = leadHref(props);
+    if (!chartsStartingWith(entry, TITLE).length)
+      return (
+        <Bento>
+          <ValueAllocation entry={entry} href={href} />
+          <RecoveryByClass entry={entry} href={href} span={6} />
+          <PlanTreatment entry={entry} href={href} span={6} />
+        </Bento>
+      );
     return (
       <Bento>
         <ValueAllocation entry={entry} href={href} />
-        {/* Recovery and plan treatment stack beside the allocation, each as tall as its content. */}
-        <div className="flex min-w-0 flex-col gap-4 self-start lg:col-span-4">
-          <RecoveryByClass entry={entry} href={href} />
-          <PlanTreatment entry={entry} href={href} />
-        </div>
+        <Beside>
+          <RecoveryByClass entry={entry} href={href} span={12} />
+          <PlanTreatment entry={entry} href={href} span={12} />
+        </Beside>
       </Bento>
     );
   },

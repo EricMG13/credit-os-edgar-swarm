@@ -8,7 +8,7 @@ import {
   ValueMatrix,
 } from "../Securities";
 import { withDraws } from "./draws";
-import { LeadGap, Prose } from "./parts";
+import { Beside, LeadGap, Prose } from "./parts";
 import { leadHref, sectionParagraphs, drawsNothing } from "./read";
 import type { LeadProps } from "./types";
 
@@ -19,24 +19,26 @@ function Passage({
   heading,
   title,
   href,
+  span,
 }: {
   entry: LeadProps["entry"];
   heading: string;
   title: string;
   href: (line?: number) => string;
+  span: 6 | 12;
 }) {
   const paragraphs = sectionParagraphs(entry, heading);
   if (!paragraphs.length)
     return (
       <LeadGap
-        span={6}
+        span={span}
         label={title}
         title={title}
-        reason={`This page could not read a ${title.toLowerCase()} passage.`}
+        reason={`This page could not read the ${title.toLowerCase()}.`}
       />
     );
   return (
-    <Tile span={6} label={title} title={title} className="w-full self-start">
+    <Tile span={span} label={title} title={title} className="w-full self-start">
       <Prose label={title} paragraphs={paragraphs} href={href} />
     </Tile>
   );
@@ -61,18 +63,33 @@ export const SecurityLead = withDraws(
             span={12}
             label={TITLE}
             title={TITLE}
-            reason="This page could not read an instrument table."
+            reason="This page could not read the instrument decisions."
           />
         )}
-        <Passage entry={entry} heading="Relative value" title="Relative value" href={href} />
-        <Passage entry={entry} heading="Portfolio Fit" title="Portfolio fit" href={href} />
-        {data?.outcomes && <ValueMatrix table={data.outcomes} href={href} />}
-        <LeadGap
+        <Passage
+          entry={entry}
+          heading="Relative value"
+          title="Relative value"
+          href={href}
           span={6}
-          label="Relative value against peers"
-          title="Relative value against peers"
-          reason="This page could not read peer levels."
         />
+        {/* The shorter tiles stack in one column beside the relative value, so neither leaves a hole. */}
+        <Beside span={6}>
+          <Passage
+            entry={entry}
+            heading="Portfolio Fit"
+            title="Portfolio fit"
+            href={href}
+            span={12}
+          />
+          <LeadGap
+            span={12}
+            label="Relative value against peers"
+            title="Relative value against peers"
+            reason="This page could not read peer levels."
+          />
+        </Beside>
+        {data?.outcomes && <ValueMatrix table={data.outcomes} href={href} />}
       </Bento>
     );
   },
