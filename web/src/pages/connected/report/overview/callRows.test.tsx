@@ -105,7 +105,7 @@ function published(base: PublishedRun, lead: OutputEntry, heading = "Bottom line
       line: block.line,
       text: block.text,
     },
-  } as PublishedRun;
+  };
 }
 
 const credit = () =>
@@ -191,7 +191,7 @@ it("draws the call: the published credit view, the decisions not shown, confiden
         "CP-5": ran("CP-5"),
         "CP-6": ran("CP-6"),
       },
-    } as unknown as PublishedRun,
+    },
     lead,
   );
   render(

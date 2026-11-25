@@ -91,7 +91,7 @@ function on(lead: OutputEntry, base: PublishedRun = run): PublishedRun {
       line: block.line,
       text: block.text,
     },
-  } as PublishedRun;
+  };
 }
 
 it("shows no stance in the call, whatever the committee decides", () => {

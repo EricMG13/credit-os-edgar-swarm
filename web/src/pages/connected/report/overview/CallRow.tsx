@@ -10,6 +10,8 @@ import {
   evidenceHref,
   evidencePath,
   evidenceToken,
+  publishedRunForFolder,
+  readerText,
   runPathway,
   runTiming,
   unitLabel,
@@ -18,7 +20,9 @@ import {
 import { moduleBottomLines, moduleState, runMoneyUnit, type ReportView } from "../../reportView";
 import { TextLink } from "../../../run/TextLink";
 import { PublishedSource } from "../PublishedTrace";
-import { decisionActions, type Action } from "../frontPage";
+import { decisionActions, type Action, type SpecialistOverview } from "../frontPage";
+import { reportSpecialistOverview } from "../../export/reportExport";
+import { plainText, richParts } from "../../richText";
 import { callBlocks } from "./decision";
 import { readerReason } from "./reason";
 import { useSvgScale } from "./svgScale";
@@ -199,11 +203,88 @@ function Decisions({ run, decisions }: { run: RowProps["run"]; decisions: Action
   );
 }
 
-function CallTile({ run, view }: Pick<RowProps, "run" | "view">) {
+/**
+ * A relative value or portfolio run publishes no credit view: it leads with its purpose findings,
+ * each as written with its own trace, and the restriction on its decision where one applies.
+ */
+function SpecialistCall({
+  run,
+  specialist,
+}: Pick<RowProps, "run"> & { specialist: SpecialistOverview }) {
+  const { title, findings, restriction } = specialist;
+  const trace = (owner: { id: string; sha256: string }, line: number) =>
+    evidenceHref(run.folder, evidenceToken({ output: owner }, line));
+  return (
+    <div className="flex flex-col gap-6">
+      <h3 className="text-small font-medium text-text-secondary">The call · {title}</h3>
+      {findings.map((finding, index) => {
+        const name =
+          index === 0
+            ? title.toLowerCase()
+            : `${title.toLowerCase()}, finding ${String(index + 1)}`;
+        return (
+          <div
+            key={`${finding.owner.id}:${String(finding.line)}`}
+            className="flex items-start justify-between gap-3"
+          >
+            <p
+              className={cx(
+                "max-w-[840px] text-pretty text-text-primary",
+                index === 0
+                  ? cx(
+                      "font-medium",
+                      bottomLineSize({ line: finding.line, text: plainText(finding.body) }),
+                    )
+                  : "text-body",
+              )}
+            >
+              {richParts(finding.body, readerText)}
+            </p>
+            <PublishedSource
+              href={trace(finding.owner, finding.line)}
+              name={`the ${name}`}
+              linkLabel={`Source for the ${name}`}
+            >
+              View source
+            </PublishedSource>
+          </div>
+        );
+      })}
+      {restriction && (
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <p className="text-small font-medium text-text-primary">{restriction.label}</p>
+          <p className="min-w-0 flex-1 text-small text-text-secondary">
+            {richParts(restriction.screenReason ?? restriction.reason, readerText)}
+          </p>
+          {restriction.source && (
+            <PublishedSource
+              href={trace(restriction.source.owner, restriction.source.line)}
+              name={restriction.label.toLowerCase()}
+              linkLabel={`Source for the ${restriction.label.toLowerCase()}`}
+            >
+              View source
+            </PublishedSource>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CallTile({ snapshot, run, view }: RowProps) {
   const lead = view.lead;
   const decisions = decisionActions(view, run);
   const { heading, blocks } = callBlocks(view, run);
   const [first, ...rest] = blocks;
+  const key = publishedRunForFolder(snapshot.workspace.runs, run.folder)?.[0];
+  const specialist = key === undefined ? null : reportSpecialistOverview(view, run, key);
+  if (specialist)
+    return (
+      <Tile span={8} label="The call" className="gap-7 self-start">
+        <SpecialistCall run={run} specialist={specialist} />
+        <RunFacts run={run} view={view} />
+      </Tile>
+    );
   if (!lead || !first)
     return (
       <Tile span={8} label="The call" className="gap-6 self-start">
@@ -539,7 +620,7 @@ function ChangesTile(props: RowProps) {
 export function CallRow(props: RowProps) {
   return (
     <>
-      <CallTile run={props.run} view={props.view} />
+      <CallTile {...props} />
       <div className="flex min-w-0 flex-col gap-4 self-start lg:col-span-4">
         <ConfidenceTile run={props.run} view={props.view} />
         <ClearanceTile view={props.view} />
