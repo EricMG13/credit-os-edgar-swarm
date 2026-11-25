@@ -134,7 +134,7 @@ it("lists the liability-management paths as written and the refinancing dates", 
   ).toEqual([expect.stringContaining("2025-03-31"), expect.stringContaining("2026")]);
 });
 
-it("states the gaps when the module wrote neither table, and draws a blocked module", () => {
+it("states the gaps when the module wrote neither table, and draws nothing when blocked", () => {
   render(<RefinancingLead {...leadProps(handoff("## Findings\n\n### Bottom line\n\nThin.\n"))} />);
   expect(
     within(screen.getByRole("region", { name: "Refinancing need" })).getByText(
@@ -143,11 +143,12 @@ it("states the gaps when the module wrote neither table, and draws a blocked mod
   ).toBeVisible();
   const paths = screen.getByRole("region", { name: "Liability-management paths" });
   expect(
-    within(paths).getByText("Built from the module's contract; to be proven on a real run."),
+    within(paths).getByText("The module wrote no liability-management path register."),
   ).toBeVisible();
+  expect(paths.textContent).not.toMatch(/Built from the module's contract/);
   expect(screen.queryByRole("list", { name: "Refinancing dates" })).toBeNull();
   cleanup();
-  render(
+  const { container } = render(
     <RefinancingLead
       {...leadProps(
         handoff(
@@ -156,9 +157,7 @@ it("states the gaps when the module wrote neither table, and draws a blocked mod
       )}
     />,
   );
-  const tile = screen.getByRole("region", { name: "Refinancing need" });
-  expect(within(tile).getByText("Not assessable")).toBeVisible();
-  expect(within(tile).getByText("No debt schedule was supplied.")).toBeVisible();
+  expect(container).toBeEmptyDOMElement();
 });
 
 it("draws the module's stated reason when the whole table is a gap", () => {

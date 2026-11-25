@@ -1,9 +1,12 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import type { OutputEntry } from "../../publishedReport";
 import { entry, table } from "../overview/rows.fixture";
 import { LiquidityLead } from "./cp2d";
 import { bottomLine, EVENT_HEADERS, leadProps, tableSection } from "./lead.fixture";
+import { sectionsOf } from "./markdown.fixture";
 
 afterEach(cleanup);
 
@@ -65,8 +68,10 @@ it("draws the bridge from opening to closing with each step as written, and its 
   const tile = screen.getByRole("region", { name: "Liquidity bridge" });
   const figure = within(tile).getByRole("img");
   expect(figure).toHaveAccessibleName(/900.*570/);
-  for (const text of ["900", "+120", "-450", "570"])
+  // F14: each figure as the module wrote it; no "+" it did not write.
+  for (const text of ["900", "120", "-450", "570"])
     expect(within(figure).getByText(text)).toBeInTheDocument();
+  expect(within(figure).queryByText("+120")).toBeNull();
   expect(within(tile).getByText("US$m")).toBeVisible();
   fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
   expect(within(tile).getByRole("cell", { name: "-450" })).toBeVisible();
@@ -75,25 +80,6 @@ it("draws the bridge from opening to closing with each step as written, and its 
       .getAllByRole("link", { name: /Source for/ })
       .at(-1),
   ).toHaveAttribute("href", expect.stringContaining("#evidence/"));
-});
-
-it("keeps a bridge that does not reconcile, or has a stated gap, out of the figure", () => {
-  const broken = BRIDGE.map((row) => [...row]);
-  (broken[3] as string[])[1] = "600";
-  render(<LiquidityLead {...leadProps(liquidity(broken))} />);
-  const tile = screen.getByRole("region", { name: "Liquidity bridge" });
-  expect(within(tile).queryByRole("img")).toBeNull();
-  expect(within(tile).getByText(/does not reconcile/)).toBeVisible();
-  cleanup();
-  const gap = BRIDGE.map((row) => [...row]);
-  (gap[1] as string[])[1] = "Not supplied: cash flow not stated";
-  render(<LiquidityLead {...leadProps(liquidity(gap))} />);
-  const again = screen.getByRole("region", { name: "Liquidity bridge" });
-  expect(within(again).queryByRole("img")).toBeNull();
-  expect(
-    within(again).getByText(/Free cash flow is not supplied: cash flow not stated/),
-  ).toBeVisible();
-  expect(within(again).queryByText("0")).toBeNull();
 });
 
 it("lists the funding dates earliest first and states the runway gap", () => {
@@ -106,10 +92,11 @@ it("lists the funding dates earliest first and states the runway gap", () => {
   ).toEqual([expect.stringContaining("2025-03-31"), expect.stringContaining("2026")]);
   const runway = screen.getByRole("region", { name: "Runway" });
   expect(within(runway).getByText("This handoff states no runway figure.")).toBeVisible();
-  expect(within(runway).getByText(/methodology/)).toBeVisible();
+  // Ruling vii: no methodology note on the reader's page.
+  expect(runway.textContent).not.toMatch(/methodology|Needs/);
 });
 
-it("says why when the module wrote no bridge, and draws a blocked module as Not assessable", () => {
+it("says why when the module wrote no bridge, and draws nothing for a blocked module", () => {
   const none = entry("CP-2D", [], []);
   render(<LiquidityLead {...leadProps(none)} />);
   expect(
@@ -123,11 +110,8 @@ it("says why when the module wrote no bridge, and draws a blocked module as Not 
     [],
     bottomLine("Not assessable: no cash flow statement was supplied."),
   );
-  render(<LiquidityLead {...leadProps(stopped)} />);
-  const tile = screen.getByRole("region", { name: "Liquidity bridge" });
-  expect(within(tile).getByText("Not assessable")).toBeVisible();
-  expect(within(tile).getByText("No cash flow statement was supplied.")).toBeVisible();
-  expect(screen.queryByRole("region", { name: "Runway" })).toBeNull();
+  const { container } = render(<LiquidityLead {...leadProps(stopped)} />);
+  expect(container).toBeEmptyDOMElement();
 });
 
 it("draws no source reference or module code in a bridge step's label or a gap's reason", () => {
@@ -148,7 +132,7 @@ it("draws no source reference or module code in a bridge step's label or a gap's
   expect(again.textContent).not.toMatch(/cash_flow\.xlsx/);
 });
 
-it("keeps a bar's figure inside the track when the bar spans most of it", () => {
+it("keeps every step's figure in its own column, on screen whatever the bar's length", () => {
   const full = [
     ["Opening accessible liquidity", "1,000", "US$m", "Synthetic."],
     ["Debt repayment", "-400", "US$m", "Synthetic."],
@@ -156,14 +140,54 @@ it("keeps a bar's figure inside the track when the bar spans most of it", () => 
   ];
   render(<LiquidityLead {...leadProps(liquidity(full))} />);
   const figure = within(screen.getByRole("region", { name: "Liquidity bridge" })).getByRole("img");
-  // The opening fills its 0 to 1,000 axis: its figure sits inside the bar, not off the left edge.
-  const placed = [...figure.querySelectorAll("[data-label]")].map((label) => [
-    label.textContent,
-    label.getAttribute("data-label"),
+  expect([...figure.querySelectorAll("[data-figure]")].map((label) => label.textContent)).toEqual([
+    "1,000",
+    "-400",
+    "600",
   ]);
-  expect(placed).toEqual([
-    ["1,000", "inside"],
-    ["-400", "before"],
-    ["600", "after"],
-  ]);
+});
+
+const PROOF = path.resolve(import.meta.dirname, "../../../../../../proof/handoffs/CP-2D.md");
+
+/** proof/handoffs/CP-2D.md as written, with one bridge cell changed; the store then withholds the chart. */
+function withheld(row: number, amount: string) {
+  const text = readFileSync(PROOF, "utf8").split("\n");
+  const at = text.findIndex((line) => line.startsWith("| Opening accessible liquidity |")) + row;
+  const cells = (text[at] ?? "").split("|");
+  cells[2] = ` ${amount} `;
+  text[at] = cells.join("|");
+  const made = entry("CP-2D", [], sectionsOf(text.join("\n")));
+  made.output.events = [{ lane: "Financing", table: 31, gap: null }];
+  return made;
+}
+
+it("reads a bridge the store withheld from the handoff and says why it is not drawn", () => {
+  render(<LiquidityLead {...leadProps(withheld(3, "600"))} />);
+  const tile = screen.getByRole("region", { name: "Liquidity bridge" });
+  expect(within(tile).queryByRole("img")).toBeNull();
+  expect(within(tile).getByText(/does not reconcile/)).toBeVisible();
+  expect(tile.textContent).not.toMatch(/has no liquidity bridge table/);
+  expect(within(tile).getByRole("link", { name: "Source for Liquidity bridge" })).toHaveAttribute(
+    "href",
+    expect.stringContaining("#evidence/"),
+  );
+  fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
+  expect(within(tile).getByRole("cell", { name: "600" })).toBeVisible();
+  cleanup();
+  render(<LiquidityLead {...leadProps(withheld(1, "Not supplied: cash flow not stated"))} />);
+  const gap = screen.getByRole("region", { name: "Liquidity bridge" });
+  expect(
+    within(gap).getByText("Free cash flow is not supplied: cash flow not stated"),
+  ).toBeVisible();
+  expect(within(gap).queryByText("0")).toBeNull();
+});
+
+it("says only that it could not draw a withheld table whose own check passes", () => {
+  // The handoff's bridge reconciles, yet no descriptor was published: the page says what it knows.
+  render(<LiquidityLead {...leadProps(withheld(0, "900"))} />);
+  const tile = screen.getByRole("region", { name: "Liquidity bridge" });
+  expect(
+    within(tile).getByText("This page could not draw the table the handoff has."),
+  ).toBeVisible();
+  expect(within(tile).queryByRole("img")).toBeNull();
 });

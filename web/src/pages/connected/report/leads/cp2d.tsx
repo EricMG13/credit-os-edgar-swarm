@@ -1,10 +1,11 @@
-import { unitLabel } from "../../publishedReport";
+import { blocked, unitLabel } from "../../publishedReport";
 import { Key } from "../overview/figureParts";
 import { basisNotes } from "../overview/figureData";
 import { Bento } from "../overview/Tile";
-import { Bridge, bridgeSteps } from "./bridge";
-import { DatedList, LeadBlocked, LeadFigure, LeadGap, NEEDS, Trace } from "./parts";
-import { blockedState, chartOf, eventsOf, leadHref } from "./read";
+import { Bridge, bridgeOf, stepTable } from "./bridge";
+import { withDraws } from "./draws";
+import { LaneTile, LeadFigure, LeadGap, Trace } from "./parts";
+import { chartOf, eventsOf, leadHref } from "./read";
 import type { LeadProps } from "./types";
 
 const TITLE = "Liquidity bridge";
@@ -17,7 +18,8 @@ function LiquidityBridge({
   href: (line?: number) => string;
 }) {
   const chart = chartOf(entry, TITLE);
-  if (chart.state !== "ready")
+  const read = bridgeOf(chart);
+  if (!read)
     return (
       <LeadGap
         span={8}
@@ -30,8 +32,7 @@ function LiquidityBridge({
         }
       />
     );
-  const { table } = chart;
-  const { steps, unit, why } = bridgeSteps(table);
+  const { steps, unit, why, table } = read;
   const first = steps[0];
   const last = steps.at(-1);
   const reading =
@@ -69,59 +70,39 @@ function LiquidityBridge({
           />
         )
       }
-      table={{
-        head: ["Step", "Amount"],
-        rows: steps.map((step) => ({
-          label: step.label,
-          cells: [step.cell.text || null],
-          end: <Trace href={href(step.line)} name={step.label} />,
-        })),
-        endHeading: "Source",
-      }}
+      table={stepTable(steps, href)}
       notes={basisNotes(table)}
     />
   );
 }
 
 /** CP-2D: does cash last, and until when. */
-export function LiquidityLead(props: LeadProps) {
-  const { entry } = props;
-  const href = leadHref(props);
-  const stopped = blockedState(entry);
-  if (stopped)
+export const LiquidityLead = withDraws(
+  function LiquidityLead(props: LeadProps) {
+    const { entry } = props;
+    if (blocked(entry)) return null;
+    const href = leadHref(props);
     return (
       <Bento>
-        <LeadBlocked span={12} label={TITLE} title={TITLE} reason={stopped.reason} />
-      </Bento>
-    );
-  const events = eventsOf(entry, "Financing") ?? [];
-  return (
-    <Bento>
-      <LiquidityBridge entry={entry} href={href} />
-      <div className="flex min-w-0 flex-col gap-4 lg:col-span-4">
-        {events.length ? (
-          <LeadFigure
+        <LiquidityBridge entry={entry} href={href} />
+        <div className="flex min-w-0 flex-col gap-4 self-start lg:col-span-4">
+          <LaneTile
+            lane={eventsOf(entry, "Financing")}
             span={12}
             label="Funding dates"
             title="Funding dates"
-            figure={<DatedList label="Funding dates" events={events} href={href} />}
+            href={href}
+            absent="The handoff states no dated financing event."
           />
-        ) : (
           <LeadGap
             span={12}
-            label="Funding dates"
-            title="Funding dates"
-            reason="The handoff states no dated financing event."
+            label="Runway"
+            title="Runway"
+            reason="This handoff states no runway figure."
           />
-        )}
-        <LeadGap
-          span={12}
-          label="Runway"
-          title="Runway"
-          reason="This handoff states no runway figure."
-          needs={NEEDS.method}
-        />
-      </div>
-    </Bento>
-  );
-}
+        </div>
+      </Bento>
+    );
+  },
+  ["figures", "events"],
+);

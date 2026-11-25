@@ -62,7 +62,7 @@ it("draws the gaps truthfully on the retained real T2DS.1 tables, where the read
     expect(
       within(ladder).getByText("The handoff writes its break points in prose, not as a table."),
     ).toBeVisible();
-    expect(within(ladder).getByText(/methodology change/)).toBeVisible();
+    expect(ladder.textContent).not.toMatch(/methodology|Needs/);
     const scenarios = screen.getByRole("region", { name: "Downside scenarios" });
     expect(
       within(scenarios).getByText(
@@ -76,15 +76,12 @@ it("draws the gaps truthfully on the retained real T2DS.1 tables, where the read
   }
 });
 
-it("draws a blocked module as Not assessable in place of both tiles", () => {
+it("draws nothing for a blocked module", () => {
   const stopped = entry(
     "CP-2A",
     [],
     bottomLine("Not assessable: no financial base was supplied. Rest of the line."),
   );
-  render(<DownsideLead {...leadProps(stopped)} />);
-  const tile = screen.getByRole("region", { name: "EBITDA break points" });
-  expect(within(tile).getByText("Not assessable")).toBeVisible();
-  expect(within(tile).getByText("No financial base was supplied. Rest of the line.")).toBeVisible();
-  expect(screen.queryByRole("region", { name: "Downside scenarios" })).toBeNull();
+  const { container } = render(<DownsideLead {...leadProps(stopped)} />);
+  expect(container).toBeEmptyDOMElement();
 });

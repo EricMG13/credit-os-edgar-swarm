@@ -74,12 +74,14 @@ function business(options: { op?: string[][]; own?: string[][]; prose?: boolean 
 const OP = [["Synthetic A", "Synthetic link", "Documentary Fact", "Synthetic B", "Synthetic p.1"]];
 const OWN = [["Synthetic C", "Synthetic holds", "Ownership", "Synthetic D", "Synthetic p.1"]];
 
-it("draws the operating model map as the module wrote it, with a table view and a note", () => {
+it("draws the operating model map as the module wrote it, with a table view", () => {
   render(<BusinessLead {...leadProps(business({ op: OP, own: OWN, prose: true }))} />);
   const tile = screen.getByRole("region", { name: "Operating model to credit" });
-  expect(within(tile).getByText("Synthetic A")).toBeVisible();
-  expect(within(tile).getByText("Synthetic link")).toBeVisible();
-  expect(within(tile).getByText(/their role .* is not typed in the handoff/)).toBeVisible();
+  const map = within(tile).getByRole("list", { name: "Operating model to credit" });
+  expect(within(map).getByText("Synthetic A")).toBeVisible();
+  expect(within(map).getByText("Synthetic link")).toBeVisible();
+  // Ruling vii: no build note on how the map is typed.
+  expect(tile.textContent).not.toMatch(/is not typed in the handoff/);
   expect(within(tile).getAllByRole("link", { name: /Source for/ })[0]).toHaveAttribute(
     "href",
     expect.stringContaining("#evidence/"),
@@ -93,15 +95,11 @@ it("states the revenue mix gap and draws ownership, the transaction passage and 
   const mix = screen.getByRole("region", { name: "Revenue mix" });
   expect(within(mix).getByText("This handoff has no revenue-mix table.")).toBeVisible();
   expect(within(mix).queryByText("0")).toBeNull();
-  const own = screen.getByRole("region", { name: "Ownership and control" });
+  const own = screen.getByRole("list", { name: "Ownership and control" });
   expect(within(own).getByText("Synthetic C")).toBeVisible();
   const deal = screen.getByRole("region", { name: "Transaction and new debt" });
   expect(within(deal).getByText(/A USD 3,000 million secured issue/)).toBeVisible();
-  expect(
-    within(deal).getByText(
-      "A list of new debt by instrument, date and amount needs a typed table in the handoff.",
-    ),
-  ).toBeVisible();
+  expect(deal.textContent).not.toMatch(/needs a typed table/);
   const dates = screen.getByRole("list", { name: "Issuer history" });
   expect(
     within(dates)
@@ -133,15 +131,57 @@ it("says why when a map or the transaction passage is absent or gapped", () => {
   expect(screen.getByText("This handoff has no ownership and control map.")).toBeVisible();
 });
 
-it("draws a blocked module as Not assessable", () => {
-  render(
+it("draws nothing for a blocked module", () => {
+  const { container } = render(
     <BusinessLead
       {...leadProps(entry("CP-1A", [], bottomLine("Not assessable: no filing was supplied.")))}
     />,
   );
-  expect(screen.getByText("Not assessable")).toBeVisible();
-  expect(screen.getByText("No filing was supplied.")).toBeVisible();
-  expect(screen.queryByRole("region", { name: "Revenue mix" })).toBeNull();
+  expect(container).toBeEmptyDOMElement();
+});
+
+it("draws a map's stated edges with its gap row, and a withheld lane's rows with the count not placed", () => {
+  const made = business({
+    own: [
+      ...OWN,
+      ["Not supplied: shareholder register absent", "Holds", "Ownership", "Issuer", "—"],
+    ],
+  });
+  // The store withholds a map or lane with one bad row: no descriptor, the handoff's table stands.
+  made.output.maps = [];
+  made.output.events = [];
+  made.sections.push(
+    tableSection(
+      "Events: Issuer history",
+      table(80, EVENT_HEADERS, [
+        ["2024", "year", "—", "Listed", "Historical — listed", "Filing", "Equity"],
+        ["Q5 2024", "quarter", "—", "Unplaced", "Historical — x", "Filing", "Equity"],
+      ]),
+    ),
+  );
+  made.sections.splice(0, 1);
+  render(<BusinessLead {...leadProps(made)} />);
+  const own = screen.getByRole("region", { name: "Ownership and control" });
+  expect(within(own).getByRole("list", { name: "Ownership and control" })).toHaveTextContent(
+    "Synthetic C",
+  );
+  expect(within(own).getByText("Row not drawn: Shareholder register absent")).toBeVisible();
+  const history = screen.getByRole("region", { name: "Issuer history" });
+  expect(within(history).getByText("Listed")).toBeVisible();
+  expect(
+    within(history).getByText("This page could not place 1 of the 2 dated rows."),
+  ).toBeVisible();
+});
+
+it("prints a lane's stated gap instead of drawing nothing", () => {
+  const made = business();
+  made.output.events = [{ lane: "Issuer history", table: 10, gap: "no dated history supplied" }];
+  render(<BusinessLead {...leadProps(made)} />);
+  expect(
+    within(screen.getByRole("region", { name: "Issuer history" })).getByText(
+      "No dated history supplied",
+    ),
+  ).toBeVisible();
 });
 
 it("draws no source reference or module code from a map edge or a dated event", () => {

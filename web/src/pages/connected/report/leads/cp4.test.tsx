@@ -148,40 +148,15 @@ function synthetic() {
   });
 }
 
-it("draws the real blocked module as Not assessable with the headroom table's own reason", () => {
-  render(<LegalLead {...leadProps(blockedEntry())} />);
-  const tile = screen.getByRole("region", { name: "Covenant headroom" });
-  expect(within(tile).getByText("Not assessable")).toBeVisible();
-  expect(within(tile).getByText("No executed governing document available")).toBeVisible();
-  expect(
-    within(tile).getByText(
-      "Covenant headroom needs the executed credit agreement and indentures supplied at run start.",
-    ),
-  ).toBeVisible();
-  expect(within(tile).queryByRole("img")).toBeNull();
-  expect(within(tile).queryByText(/7\.50x|transport/)).toBeNull();
-  expect(
-    within(screen.getByRole("region", { name: "Legal entities" })).getByText(
-      /^Guarantor exhibit, guarantee and collateral agreement and indentures absent/,
-    ),
-  ).toBeVisible();
-  expect(
-    within(screen.getByRole("region", { name: "Intercreditor" })).getByText(
-      /^Intercreditor agreement referenced but absent/,
-    ),
-  ).toBeVisible();
-  expect(screen.queryByRole("region", { name: "Baskets and capacity" })).toBeNull();
-});
-
-it("falls back to the bottom line's reason when the headroom table states no gap", () => {
+it("draws nothing for the real blocked module: no unlock line and no map gap tiles", () => {
+  // Ruling v and F5: the frame draws the blocked state; the lead draws nothing.
+  const { container } = render(<LegalLead {...leadProps(blockedEntry())} />);
+  expect(container).toBeEmptyDOMElement();
+  cleanup();
   const made = blockedEntry();
   made.output.chartGaps = [];
-  render(<LegalLead {...leadProps(made)} />);
-  expect(
-    within(screen.getByRole("region", { name: "Covenant headroom" })).getByText(
-      "No executed governing document available. The source set holds no executed credit agreement, amendment, guarantee or indenture, and the filing's summaries cannot be used in this transport.",
-    ),
-  ).toBeVisible();
+  const again = render(<LegalLead {...leadProps(made)} />);
+  expect(again.container).toBeEmptyDOMElement();
 });
 
 it("draws a headroom bullet per test, each on its own scale, a gap row with its reason", () => {
@@ -197,8 +172,11 @@ it("draws a headroom bullet per test, each on its own scale, a gap row with its 
   expect(within(tile).getAllByRole("img")).toHaveLength(2);
   const liquidity = rows[2];
   if (!liquidity) throw new Error("gap row");
-  expect(within(liquidity).getByText("Not supplied")).toBeVisible();
+  // F9: the stated threshold is drawn; the current and headroom carry their own reasons.
+  expect(within(liquidity).getByText("US$100m")).toBeVisible();
+  expect(within(liquidity).getAllByText("Not supplied")).toHaveLength(2);
   expect(within(liquidity).getByText("Not stated")).toBeVisible();
+  expect(within(liquidity).getByText("No current")).toBeVisible();
   expect(within(liquidity).queryByText(/^0/)).toBeNull();
   expect(within(tile).getByText("Synthetic.")).toBeVisible();
   fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
@@ -235,10 +213,11 @@ it("states the gaps when the module wrote no headroom table, map or basket regis
       "The module wrote no covenant headroom table.",
     ),
   ).toBeVisible();
-  for (const name of ["Legal entities", "Intercreditor", "Baskets and capacity"])
-    expect(
-      within(screen.getByRole("region", { name })).getByText(
-        "Needs executed documents supplied at run start.",
-      ),
-    ).toBeVisible();
+  for (const [name, text] of [
+    ["Legal entities", "The module wrote no legal entities map."],
+    ["Intercreditor", "The module wrote no intercreditor map."],
+    ["Baskets and capacity", "The module wrote no basket and capacity register."],
+  ] as const)
+    expect(within(screen.getByRole("region", { name })).getByText(text)).toBeVisible();
+  expect(document.body.textContent).not.toMatch(/supplied at run start/);
 });

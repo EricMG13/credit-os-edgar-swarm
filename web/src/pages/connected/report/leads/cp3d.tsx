@@ -1,12 +1,12 @@
 import { Fragment } from "react";
-import { withUnit } from "../../publishedReport";
+import { blocked, withUnit } from "../../publishedReport";
 import { ticks, type SourceTable } from "../../visuals/visualData";
 import { basisNotes, readCell } from "../overview/figureData";
 import { Key } from "../overview/figureParts";
 import { Bento, GapNote, Tile } from "../overview/Tile";
-import { LeadBlocked, LeadFigure, LeadGap, NEEDS, Trace } from "./parts";
+import { withDraws } from "./draws";
+import { LeadFigure, LeadGap, Trace } from "./parts";
 import {
-  blockedState,
   chartOf,
   columnOf,
   leadHref,
@@ -14,13 +14,13 @@ import {
   readerCellOf,
   registerTable,
   rowName,
+  WITHHELD,
 } from "./read";
 import type { LeadProps } from "./types";
 
 type Href = (line?: number) => string;
 
 const TITLE = "Yield against maturity";
-const MARKET_DATA = NEEDS.input("market data");
 const COLUMNS = [
   "Instrument",
   "Maturity date",
@@ -202,9 +202,13 @@ function YieldFigure({ entry, href }: { entry: LeadProps["entry"]; href: Href })
             ? chart.reason
             : chart.state === "ready"
               ? "The yield table is not in its fixed shape."
-              : "The module wrote no yield against maturity table."
+              : chart.state === "withheld"
+                ? WITHHELD
+                : "The module wrote no yield against maturity table."
         }
-        needs={chart.state === "gap" ? undefined : MARKET_DATA}
+        trace={
+          chart.state === "withheld" ? <Trace href={href(chart.line)} name={TITLE} /> : undefined
+        }
       />
     );
   const candidates = rows
@@ -256,12 +260,7 @@ function YieldFigure({ entry, href }: { entry: LeadProps["entry"]; href: Href })
         })),
         endHeading: "Source",
       }}
-      notes={[
-        ...unplotted,
-        "No curve is drawn: the handoff states observed points only.",
-        NEEDS.method,
-        ...basisNotes(chart.table),
-      ]}
+      notes={[...unplotted, ...basisNotes(chart.table)]}
     />
   );
 }
@@ -283,7 +282,6 @@ function Implied({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
         label={label}
         title={label}
         reason="The module wrote no implied risk register."
-        needs={MARKET_DATA}
       />
     );
   const security = table.headers.findIndex((header) => /^security/i.test(header.trim()));
@@ -292,7 +290,7 @@ function Implied({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
     return at < 0 ? [] : [{ name: name === "Implied" ? (table.headers[at] ?? name) : name, at }];
   });
   return (
-    <Tile span={4} label={label} title={label}>
+    <Tile span={4} label={label} title={label} className="w-full self-start">
       <ul aria-label={label} className="flex flex-col">
         {table.rows.map(({ line, cells }, index) => {
           const name = rowName(security < 0 ? "" : readerCell(cells[security] ?? ""), index);
@@ -326,20 +324,17 @@ function Implied({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
 }
 
 /** CP-3D: where the market prices the issuer's debt, and what that implies. */
-export function MarketLead(props: LeadProps) {
-  const { entry } = props;
-  const href = leadHref(props);
-  const stopped = blockedState(entry);
-  if (stopped)
+export const MarketLead = withDraws(
+  function MarketLead(props: LeadProps) {
+    const { entry } = props;
+    if (blocked(entry)) return null;
+    const href = leadHref(props);
     return (
       <Bento>
-        <LeadBlocked span={12} label={TITLE} title={TITLE} reason={stopped.reason} />
+        <YieldFigure entry={entry} href={href} />
+        <Implied entry={entry} href={href} />
       </Bento>
     );
-  return (
-    <Bento>
-      <YieldFigure entry={entry} href={href} />
-      <Implied entry={entry} href={href} />
-    </Bento>
-  );
-}
+  },
+  ["figures"],
+);

@@ -84,14 +84,12 @@ it("keeps h4's compound gross cell and unread impact cells as text, never a numb
       name: "USD 9,189 million principal; USD 9,128 million carrying",
     }),
   ).toBeVisible();
-  // h4 writes "USD +57.89 million …", which the strict amount read does not take.
+  // h4 writes "USD +57.89 million …; FCF USD -57.89 million …": two amounts, so words; the
+  // receivables component states one ("USD +4.87 million …") and is the one step placed.
   const ladder = screen.getByRole("region", { name: "Rate sensitivity" });
-  expect(within(ladder).queryByRole("img")).toBeNull();
-  expect(
-    within(ladder).getByText(
-      "The sensitivity table states no shock step with an amount the figure can place.",
-    ),
-  ).toBeVisible();
+  const figure2 = within(ladder).getByRole("img");
+  expect(figure2.querySelectorAll("[data-bar]")).toHaveLength(1);
+  expect(within(figure2).getByText("USD +4.87 million")).toBeInTheDocument();
   expect(
     within(ladder).getByText(/^\+100 bp, closing portfolio: USD \+57\.89 million/),
   ).toBeVisible();
@@ -101,9 +99,8 @@ it("states the foreign-share gap, lists the hedge terms without sources and the 
   render(<MacroLead {...leadProps(h3())} />);
   const share = screen.getByRole("region", { name: "Foreign share" });
   expect(within(share).getByText("The handoff states no currency shares.")).toBeVisible();
-  expect(
-    within(share).getByText(/currency exposure by currency supplied at run start/),
-  ).toBeVisible();
+  // Ruling vii: no note on what a run would need.
+  expect(share.textContent).not.toMatch(/supplied at run start/);
   const terms = screen.getByRole("region", { name: "Hedge terms" });
   expect(
     within(terms).getAllByRole("cell", { name: "Three-month SOFR floor 2.00%; ceiling 3.50%" }),
@@ -136,9 +133,11 @@ it("draws the rate-shock grid first when the handoff carries it, with the after-
     within(figure).getByText("Not supplied: no hedge sensitivity retained"),
   ).toBeInTheDocument();
   expect(screen.queryByRole("region", { name: "Rate sensitivity" })).toBeNull();
-  // "USD 300m" is not the "USD n million" form, so the bar is not drawn.
+  // proof T2F.4 writes "USD 300m" / "USD 500m": read as written, one bar of the two.
   const hedge = screen.getByRole("region", { name: "Hedged against unhedged" });
-  expect(within(hedge).queryByRole("img")).toBeNull();
+  const bar = within(hedge).getByRole("img");
+  expect(within(bar).getByText("USD 300m")).toBeInTheDocument();
+  expect(within(bar).getByText("USD 500m")).toBeInTheDocument();
 });
 
 it("gives the module's own FX limitation as the foreign-share gap", () => {
@@ -193,13 +192,10 @@ it("gives the module's own FX limitation as the foreign-share gap", () => {
   ).toBeVisible();
 });
 
-it("draws a blocked module as Not assessable", () => {
+it("draws nothing for a blocked module", () => {
   const stopped = entry("CP-2E", [], bottomLine("Not assessable: no debt schedule was supplied."));
-  render(<MacroLead {...leadProps(stopped)} />);
-  const tile = screen.getByRole("region", { name: "Rate sensitivity" });
-  expect(within(tile).getByText("Not assessable")).toBeVisible();
-  expect(within(tile).getByText("No debt schedule was supplied.")).toBeVisible();
-  expect(screen.queryByRole("region", { name: "Foreign share" })).toBeNull();
+  const { container } = render(<MacroLead {...leadProps(stopped)} />);
+  expect(container).toBeEmptyDOMElement();
 });
 
 it("places only a cash impact that states exactly one amount; a range or a qualified one stays words", () => {

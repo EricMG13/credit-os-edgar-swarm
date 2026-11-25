@@ -1,11 +1,18 @@
-import { useState, type ReactNode } from "react";
+import { useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { ChartTable, type TableRowData } from "@/components/chart/ChartTable";
 import { Segmented } from "@/components/kit/Segmented";
-import { StatusBadge } from "@/components/status/StatusBadge";
 import { cx } from "@/utils/cx";
 import { PublishedSource } from "../PublishedTrace";
-import { GapNote, Tile, Well } from "../overview/Tile";
-import type { Edge, Paragraph } from "./read";
+import { Tile, Well } from "../overview/Tile";
+import {
+  IN_EVIDENCE,
+  type Edge,
+  type Lane,
+  type LaneEvent,
+  type MapGap,
+  type MapRead,
+  type Paragraph,
+} from "./read";
 
 type Span = Parameters<typeof Tile>[0]["span"];
 
@@ -25,9 +32,207 @@ const VIEWS = [
   { key: "table", label: "Table" },
 ] as const;
 
+const FOCUS = "outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2";
+
 /**
- * A lead tile: the reading as its title, the basis once, a legend, one trace control, and the
- * figure with its table behind a Figure / Table switch.
+ * A table in a named, focusable region that scrolls sideways inside the tile, never the page; long
+ * cells wrap at about 28 characters.
+ */
+export function TableRegion({ label, table }: { label: string; table: LeadTable }) {
+  return (
+    <div
+      role="region"
+      aria-label={`${label} table`}
+      // A region that scrolls sideways takes focus so a keyboard can scroll it (WCAG 2.1.1).
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+      tabIndex={0}
+      className={cx(
+        "relative max-w-full min-w-0 overflow-x-auto rounded-ds-xs [&_td]:max-w-[28ch] [&_td]:whitespace-normal [&_td]:wrap-anywhere [&>div]:overflow-visible",
+        FOCUS,
+      )}
+    >
+      <ChartTable
+        caption={label}
+        head={table.head}
+        rows={table.rows}
+        endHeading={table.endHeading}
+      />
+    </div>
+  );
+}
+
+/** A table a reader opens when they want it: closed until asked, in the same scroll region. */
+export function Disclosure({
+  label,
+  summary,
+  table,
+}: {
+  label: string;
+  summary?: ReactNode;
+  table: LeadTable;
+}) {
+  return (
+    <details className="group min-w-0 rounded-ds-sm border border-border-hairline">
+      <summary
+        className={cx(
+          "flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-ds-sm px-3 text-small font-medium text-text-primary",
+          FOCUS,
+        )}
+      >
+        <span className="min-w-0 wrap-anywhere">{summary ?? label}</span>
+        <span aria-hidden="true" className="text-text-tertiary group-open:rotate-90">
+          ›
+        </span>
+      </summary>
+      <div className="border-t border-border-hairline p-3">
+        <TableRegion label={label} table={table} />
+      </div>
+    </details>
+  );
+}
+
+/** The one notes list under a figure: the module's own words on its basis or its gaps. */
+export function Notes({ notes }: { notes: readonly ReactNode[] }) {
+  if (!notes.length) return null;
+  return (
+    <ul className="flex flex-col gap-1.5 border-t border-border-hairline pt-3 text-caption text-text-secondary">
+      {notes.map((note, at) => (
+        <li key={at} className="wrap-anywhere">
+          {note}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** Named values as a two-column list, caption-sized labels. */
+export function KeyValues({
+  items,
+  className,
+}: {
+  items: readonly { key: string; value: ReactNode }[];
+  className?: string;
+}) {
+  return (
+    <dl
+      className={cx(
+        "grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-caption",
+        className,
+      )}
+    >
+      {items.map(({ key, value }) => (
+        <div key={key} className="contents">
+          <dt className="text-text-tertiary">{key}</dt>
+          <dd className="wrap-anywhere text-text-secondary">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+const STATED_GAP = /^(Not [a-z]+):\s*(\S.*)$/i;
+
+/** A cell that states a gap ("Not supplied: no current"), as its word and its reason; else null. */
+export function statedGap(text: string) {
+  const match = STATED_GAP.exec(text.trim());
+  if (!match) return null;
+  const reason = match[2] ?? "";
+  return { word: match[1] ?? "", reason: reason.charAt(0).toUpperCase() + reason.slice(1) };
+}
+
+/**
+ * A missing value inside a figure: a dashed chip with the module's word ("Not supplied") and the
+ * reason in words beside it. Never a zero, never a double colon. Hatch is for areas on a plot only.
+ */
+export function GapCell({
+  reason,
+  word = "Not supplied",
+  className,
+}: {
+  reason?: string | null;
+  word?: string;
+  className?: string;
+}) {
+  return (
+    <span className={cx("inline-flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1", className)}>
+      <span className="rounded-ds-xs border border-dashed border-border-gap px-1.5 text-caption whitespace-nowrap text-gap-text">
+        {word}
+      </span>
+      {reason && <span className="min-w-0 text-caption wrap-anywhere text-gap-text">{reason}</span>}
+    </span>
+  );
+}
+
+const BAR_TONE = {
+  primary: "bg-chart-1",
+  secondary: "bg-chart-2",
+  prior: "bg-chart-3",
+} as const;
+
+/** The one bar track of the leads: its height and radius. */
+const BAR = { track: "relative block h-3 min-w-0", bar: "rounded-ds-xs" } as const;
+
+const pct = (share: number) => `${String(Number((share * 100).toFixed(6)))}%`;
+
+/**
+ * One horizontal bar on its track, from `start` to `end` as shares of the track (0 to 1); `ticks`
+ * are hairlines at shares, `zero` the darker one. Extra marks (a threshold) go in `children`.
+ */
+export function BarRow({
+  start = 0,
+  end,
+  tone = "primary",
+  ticks = [],
+  zero,
+  bar,
+  className,
+  children,
+}: {
+  start?: number;
+  end: number;
+  tone?: keyof typeof BAR_TONE;
+  ticks?: readonly number[];
+  zero?: number;
+  /** Data attributes for the bar itself. */
+  bar?: Record<`data-${string}`, string>;
+  className?: string;
+  children?: ReactNode;
+}) {
+  const left = Math.min(start, end);
+  return (
+    <span aria-hidden="true" className={cx(BAR.track, className)}>
+      {ticks.map((at) => (
+        <span
+          key={at}
+          className="absolute inset-y-0 w-px bg-border-hairline"
+          style={{ left: pct(at) }}
+        />
+      ))}
+      {zero !== undefined && (
+        <span className="absolute -inset-y-0.5 w-px bg-connector" style={{ left: pct(zero) }} />
+      )}
+      <span
+        {...bar}
+        className={cx("absolute inset-y-0 min-w-0.5", BAR.bar, BAR_TONE[tone])}
+        style={{ left: pct(left), width: pct(Math.abs(end - start)) }}
+      />
+      {children}
+    </span>
+  );
+}
+
+/** A gap in place of a figure, sized to its words: no stretch, no hatch. */
+export function CompactGap({ children }: { children: ReactNode }) {
+  return (
+    <p className="w-fit max-w-full rounded-ds-sm border border-dashed border-border-gap px-3 py-2 text-small wrap-anywhere text-gap-text">
+      {children}
+    </p>
+  );
+}
+
+/**
+ * A lead tile: a subject name as its title, the Figure / Table switch and the one trace control in
+ * its head, the basis and legend under the title, and the figure or its table.
  */
 export function LeadFigure({
   span,
@@ -45,6 +250,7 @@ export function LeadFigure({
   span: Span;
   label: string;
   kicker?: ReactNode;
+  /** The figure's subject ("Liquidity bridge"), not a reading. */
   title: ReactNode;
   basis?: string;
   legend?: ReactNode;
@@ -57,62 +263,41 @@ export function LeadFigure({
 }) {
   const [view, setView] = useState<string>("figure");
   const showing = table && view === "table" ? "table" : "figure";
+  const controls =
+    table || trace ? (
+      <div className="ml-auto flex flex-none flex-wrap items-center justify-end gap-2">
+        {table && (
+          <Segmented
+            label={`${label}: figure or table`}
+            segments={VIEWS}
+            current={showing}
+            onSelect={setView}
+          />
+        )}
+        {trace}
+      </div>
+    ) : null;
   return (
-    <Tile
-      span={span}
-      label={label}
-      kicker={kicker}
-      title={title}
-      trace={trace}
-      className={className}
-    >
-      {(basis !== undefined || legend !== undefined || table !== undefined) && (
-        <div className="-mt-2 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-          <div className="flex min-w-0 flex-col gap-2">
-            {basis && <p className="text-caption text-text-tertiary">{basis}</p>}
-            {legend && (
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">{legend}</div>
-            )}
-          </div>
-          {table && (
-            <Segmented
-              label={`${label}: figure or table`}
-              segments={VIEWS}
-              current={showing}
-              onSelect={setView}
-            />
-          )}
+    <Tile span={span} label={label} className={cx("w-full self-start", className)}>
+      {/* The tile's own head, wrapping: the subject keeps its width, the controls go under it. */}
+      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+        <div className="flex min-w-48 flex-1 flex-col gap-1">
+          {kicker != null && <p className="text-caption text-text-tertiary">{kicker}</p>}
+          <h3 className="text-h4 font-medium text-balance text-text-primary">{title}</h3>
+        </div>
+        {controls}
+      </div>
+      {(basis || legend) && (
+        <div className="-mt-2 flex min-w-0 flex-col gap-2">
+          {basis && <p className="text-caption text-text-tertiary">{basis}</p>}
+          {legend && <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">{legend}</div>}
         </div>
       )}
-      {showing === "table" && table ? (
-        <ChartTable
-          caption={label}
-          head={table.head}
-          rows={table.rows}
-          endHeading={table.endHeading}
-        />
-      ) : (
-        figure
-      )}
-      {notes && notes.length > 0 && (
-        <ul className="flex flex-col gap-1.5 border-t border-border-hairline pt-3 text-caption text-text-secondary">
-          {notes.map((note, at) => (
-            <li key={at} className="wrap-anywhere">
-              {note}
-            </li>
-          ))}
-        </ul>
-      )}
+      {showing === "table" && table ? <TableRegion label={label} table={table} /> : figure}
+      {notes && <Notes notes={notes} />}
     </Tile>
   );
 }
-
-/** What unlocks a gap, in the reader's words. */
-export const NEEDS = {
-  method: "Needs a typed table in the module's handoff: a methodology change.",
-  proof: "Built from the module's contract; to be proven on a real run.",
-  input: (what: string) => `Needs ${what} supplied at run start.`,
-} as const;
 
 /** A lead tile whose figure the run does not carry: the reason in words, in the figure's place. */
 export function LeadGap({
@@ -121,7 +306,7 @@ export function LeadGap({
   kicker,
   title,
   reason,
-  needs,
+  trace,
   children,
 }: {
   span: Span;
@@ -129,112 +314,243 @@ export function LeadGap({
   kicker?: ReactNode;
   title: ReactNode;
   reason: string;
-  needs?: string;
+  trace?: ReactNode;
   children?: ReactNode;
 }) {
   return (
-    <Tile span={span} label={label} kicker={kicker} title={title}>
-      <GapNote>{reason}</GapNote>
-      {needs && <p className="text-caption text-text-secondary">{needs}</p>}
+    <Tile
+      span={span}
+      label={label}
+      kicker={kicker}
+      title={title}
+      trace={trace}
+      className="w-full self-start"
+    >
+      <CompactGap>{reason}</CompactGap>
       {children}
     </Tile>
   );
 }
 
-/** The reason without a leading "Not assessable", which the badge already says. */
-function withoutState(reason: string) {
-  const rest = reason.replace(/^not assessable\s*[,:;.]\s*/i, "");
-  return rest ? rest.charAt(0).toUpperCase() + rest.slice(1) : reason;
+/** A source node's identity: its words on the page, or as written when it reads In Evidence. */
+const nodeOf = (edge: Edge) => (edge.from === IN_EVIDENCE ? (edge.key ?? edge.from) : edge.from);
+
+type Placed = { id: string; name: string; depth: number };
+
+/** Each node's column: its longest chain of edges from a node with none in; a loop edge does not move it. */
+export function mapLayout(edges: readonly Edge[]) {
+  const names = new Map<string, string>();
+  for (const edge of edges) {
+    if (!names.has(nodeOf(edge))) names.set(nodeOf(edge), edge.from);
+    if (!names.has(edge.to)) names.set(edge.to, edge.to);
+  }
+  const out = new Map<string, string[]>();
+  const reaches = (from: string, to: string) => {
+    const pending = [from];
+    const seen = new Set<string>();
+    for (const name of pending) {
+      if (name === to) return true;
+      if (seen.has(name)) continue;
+      seen.add(name);
+      pending.push(...(out.get(name) ?? []));
+    }
+    return false;
+  };
+  for (const edge of edges) {
+    const from = nodeOf(edge);
+    if (from !== edge.to && !reaches(edge.to, from))
+      out.set(from, [...(out.get(from) ?? []), edge.to]);
+  }
+  const depth = new Map([...names.keys()].map((id) => [id, 0]));
+  for (let pass = 0; pass < names.size; pass += 1) {
+    let changed = false;
+    for (const [from, targets] of out)
+      for (const to of targets) {
+        const next = (depth.get(from) ?? 0) + 1;
+        if ((depth.get(to) ?? 0) < next) {
+          depth.set(to, next);
+          changed = true;
+        }
+      }
+    if (!changed) break;
+  }
+  const nodes: Placed[] = [...names].map(([id, name]) => ({ id, name, depth: depth.get(id) ?? 0 }));
+  const columns = Math.max(0, ...nodes.map((node) => node.depth)) + 1;
+  return Array.from({ length: columns }, (_, at) => nodes.filter((node) => node.depth === at));
 }
 
-/** The longest reason set as a lead; a longer one reads as body text. */
-const LEAD_REASON = 160;
+const NODE =
+  "w-fit max-w-full rounded-ds-sm border border-border-hairline bg-surface-card px-3 py-2 text-small font-medium wrap-anywhere text-text-primary";
 
-/** A module that could not run, in place of its lead: Not assessable, why, and what would fix it. */
-export function LeadBlocked({
-  span,
-  label,
-  title,
-  reason,
-  unlock,
-}: {
-  span: Span;
-  label: string;
-  title: ReactNode;
-  reason: string;
-  unlock?: string;
-}) {
-  const shown = withoutState(reason);
+type Route = { key: number; path: string; x: number; y: number; text: string };
+
+/** Connectors between the measured nodes, the relationship word at each one's middle. */
+function useRoutes(edges: readonly Edge[]) {
+  const box = useRef<HTMLDivElement>(null);
+  const [drawn, setDrawn] = useState<{ width: number; height: number; routes: Route[] }>({
+    width: 0,
+    height: 0,
+    routes: [],
+  });
+  useLayoutEffect(() => {
+    const node = box.current;
+    if (!node) return;
+    const measure = () => {
+      const frame = node.getBoundingClientRect();
+      const rect = (id: string) =>
+        [...node.querySelectorAll<HTMLElement>("[data-node]")]
+          .find((item) => item.dataset.node === id)
+          ?.getBoundingClientRect();
+      const routes = edges.flatMap((edge, key): Route[] => {
+        const from = rect(nodeOf(edge));
+        const to = rect(edge.to);
+        if (!from || !to) return [];
+        const x1 = from.right - frame.left;
+        const y1 = from.top + from.height / 2 - frame.top;
+        const x2 = to.left - frame.left;
+        const y2 = to.top + to.height / 2 - frame.top;
+        const mid = (x1 + x2) / 2;
+        const path = `M${String(x1)},${String(y1)} C${String(mid)},${String(y1)} ${String(mid)},${String(y2)} ${String(x2)},${String(y2)}`;
+        return [{ key, path, x: mid, y: (y1 + y2) / 2, text: edge.relationship }];
+      });
+      setDrawn({ width: frame.width, height: frame.height, routes });
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+    };
+  }, [edges]);
+  return { box, drawn };
+}
+
+/** The map as drawn on a wide screen: columns by depth, a connector and its words per edge. */
+function MapDrawing({ edges }: { edges: readonly Edge[] }) {
+  const columns = mapLayout(edges);
+  const arrow = useId();
+  const { box, drawn } = useRoutes(edges);
   return (
-    <Tile
-      span={span}
-      label={label}
-      title={title}
-      className="border-dashed border-warning-edge bg-surface-card"
+    <div
+      ref={box}
+      aria-hidden="true"
+      data-map-columns={columns.length}
+      className="relative hidden w-max min-w-full gap-x-36 gap-y-12 py-10 md:grid"
+      style={{ gridTemplateColumns: `repeat(${String(columns.length)}, minmax(8rem, 1fr))` }}
     >
-      <div className="flex flex-col gap-3">
-        <StatusBadge set="Module state" state="Not assessable" className="w-fit" />
-        <p
-          className={cx(
-            "text-balance text-text-primary",
-            shown.length <= LEAD_REASON ? "text-lead" : "text-body",
-          )}
+      {columns.map((nodes, at) => (
+        <div key={at} className="flex min-w-0 flex-col justify-center gap-3">
+          {nodes.map((node) => (
+            <span key={node.id} data-node={node.id} className={NODE}>
+              {node.name}
+            </span>
+          ))}
+        </div>
+      ))}
+      {drawn.width > 0 && (
+        <svg
+          className="pointer-events-none absolute inset-0 overflow-visible"
+          width={drawn.width}
+          height={drawn.height}
+          viewBox={`0 0 ${String(drawn.width)} ${String(drawn.height)}`}
         >
-          {shown}
-        </p>
-        {unlock && <p className="text-small text-text-secondary">{unlock}</p>}
-      </div>
-    </Tile>
+          <defs>
+            <marker
+              id={arrow}
+              viewBox="0 0 8 8"
+              refX="8"
+              refY="4"
+              markerWidth="8"
+              markerHeight="8"
+              orient="auto"
+            >
+              <path d="M0,0 L8,4 L0,8 z" className="fill-connector" />
+            </marker>
+          </defs>
+          {drawn.routes.map((route) => (
+            <path
+              key={route.key}
+              d={route.path}
+              fill="none"
+              className="stroke-connector"
+              markerEnd={`url(#${arrow})`}
+            />
+          ))}
+        </svg>
+      )}
+      {drawn.width > 0 &&
+        drawn.routes.map((route) => (
+          <span
+            key={route.key}
+            className="absolute w-32 -translate-x-1/2 -translate-y-1/2 bg-surface-card px-1 text-center text-caption leading-tight wrap-anywhere text-text-secondary"
+            style={{ left: route.x, top: route.y }}
+          >
+            {route.text}
+          </span>
+        ))}
+    </div>
   );
 }
 
-/** A node map as lists: each source node once, in the order the module wrote it, its edges under it. */
+/**
+ * A node map. On a wide screen: nodes in columns by depth, connectors between them with the
+ * relationship on each. On a narrow one, and for assistive technology always: the same map as a
+ * vertical flow, each source node once in the order the module wrote it, its edges under it. Rows
+ * the page does not draw as edges are listed after, each with its reason.
+ */
 export function NodeList({
   label,
   edges,
+  gaps = [],
   href,
 }: {
   label: string;
   edges: readonly Edge[];
+  gaps?: readonly MapGap[];
   href?: (line: number) => string;
 }) {
-  const nodeOf = (edge: Edge) => edge.key ?? edge.from;
   const nodes = [...new Map(edges.map((edge) => [nodeOf(edge), edge.from])).entries()];
   return (
-    <ul aria-label={label} className="flex min-w-0 flex-col gap-3">
-      {nodes.map(([node, name]) => (
-        <li key={node} className="flex min-w-0 flex-col gap-2">
-          <h4 className="w-fit max-w-full rounded-ds-sm border border-border-control bg-surface-card px-3 py-1.5 text-small font-medium wrap-anywhere text-text-primary">
-            {name}
-          </h4>
-          <ul className="ml-4 flex flex-col gap-2 border-l border-connector pl-4">
-            {edges
-              .filter((edge) => nodeOf(edge) === node)
-              .map((edge) => (
-                <li key={edge.line} className="relative flex min-w-0 flex-col gap-0.5">
-                  <span
-                    aria-hidden="true"
-                    className="absolute top-2.5 -left-4 h-px w-3 bg-connector"
-                  />
-                  <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                    <span className="text-small text-text-secondary">→</span>
-                    <span className="text-small font-medium wrap-anywhere text-text-primary">
-                      {edge.to}
+    <div className="flex min-w-0 flex-col gap-3">
+      {edges.length > 0 && (
+        <div className="-my-6 hidden min-w-0 overflow-x-auto md:block">
+          <MapDrawing edges={edges} />
+        </div>
+      )}
+      <ul aria-label={label} className="flex min-w-0 flex-col gap-3 md:sr-only">
+        {nodes.map(([node, name]) => (
+          <li key={node} className="flex min-w-0 flex-col gap-1.5">
+            <h4 className={NODE}>{name}</h4>
+            <ul className="flex flex-col gap-1.5">
+              {edges
+                .filter((edge) => nodeOf(edge) === node)
+                .map((edge) => (
+                  <li key={edge.line} className="flex min-w-0 flex-col gap-1.5 pl-3">
+                    <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 border-l border-connector pl-3 text-small text-text-secondary">
+                      <span aria-hidden="true">↓</span>
+                      <span className="wrap-anywhere">{edge.relationship}</span>
+                      <span className="rounded-ds-xs border border-border-hairline px-1.5 text-caption text-text-tertiary">
+                        {edge.type}
+                      </span>
                     </span>
-                    <span className="rounded-ds-xs border border-border-hairline px-1.5 text-caption text-text-tertiary">
-                      {edge.type}
-                    </span>
-                    {href && <Trace href={href(edge.line)} name={`${edge.from} to ${edge.to}`} />}
-                  </span>
-                  <span className="text-small wrap-anywhere text-text-secondary">
-                    {edge.relationship}
-                  </span>
-                </li>
-              ))}
-          </ul>
-        </li>
-      ))}
-    </ul>
+                    <span className={NODE}>{edge.to}</span>
+                  </li>
+                ))}
+            </ul>
+          </li>
+        ))}
+      </ul>
+      {gaps.length > 0 && (
+        <ul aria-label={`${label}: rows not drawn`} className="flex flex-col gap-1.5">
+          {gaps.map((gap) => (
+            <li key={gap.line} className="flex items-start justify-between gap-2">
+              <span className="text-caption wrap-anywhere text-gap-text">{`Row not drawn: ${gap.reason}`}</span>
+              {href && <Trace href={href(gap.line)} name={`${label}, row not drawn`} />}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -251,50 +567,76 @@ export function edgeTable(edges: readonly Edge[], href?: (line: number) => strin
   };
 }
 
-export type DatedItem = {
-  date: string;
-  precision: string;
-  event: string;
-  status: string;
-  line: number;
-};
+export type DatedItem = Pick<LaneEvent, "date" | "precision" | "event" | "status" | "line"> &
+  Partial<Pick<LaneEvent, "published" | "relevance">>;
 
-/** Dated events, earliest first, each date at the precision the module states. */
+/** A publication date as the row states it: a date, a stated gap, or nothing for a dash. */
+function publishedText(text = "") {
+  const gap = statedGap(text);
+  if (gap) return `Publication date not supplied — ${gap.reason}`;
+  return text.trim() && !/^[—–-]$/.test(text.trim()) ? `Published ${text.trim()}` : "";
+}
+
+/**
+ * Dated events, earliest first, each date at the precision the module states, with its status,
+ * publication date and credit relevance; `notDrawn` rows of the table the page could not place.
+ */
 export function DatedList({
   label,
   events,
+  notDrawn = 0,
   href,
 }: {
   label: string;
   events: readonly DatedItem[];
+  notDrawn?: number;
   href?: (line: number) => string;
 }) {
+  const total = events.length + notDrawn;
   return (
-    <ol aria-label={label} className="flex flex-col">
-      {events.map((item) => {
-        const cut = item.status.indexOf(" — ");
-        const kind = cut < 0 ? item.status : item.status.slice(0, cut);
-        const detail = cut < 0 ? "" : item.status.slice(cut + 3);
-        return (
-          <li
-            key={item.line}
-            className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-3 border-t border-border-hairline py-2.5 first:border-t-0"
-          >
-            <span className="font-mono text-small text-text-primary tabular-nums">{item.date}</span>
-            <span className="flex min-w-0 flex-col gap-0.5">
-              <span className="flex items-start justify-between gap-2 text-small wrap-anywhere text-text-primary">
-                {item.event}
-                {href && <Trace href={href(item.line)} name={item.event} />}
-              </span>
-              <span className="text-caption text-text-tertiary">
-                <span>{kind}</span>
-                {detail ? ` · ${detail}` : ""}
-              </span>
-            </span>
-          </li>
-        );
-      })}
-    </ol>
+    <div className="flex min-w-0 flex-col gap-2">
+      {events.length > 0 && (
+        <ol aria-label={label} className="flex flex-col">
+          {events.map((item) => {
+            const cut = item.status.indexOf(" — ");
+            const kind = cut < 0 ? item.status : item.status.slice(0, cut);
+            const detail = cut < 0 ? "" : item.status.slice(cut + 3);
+            const published = publishedText(item.published);
+            return (
+              <li
+                key={item.line}
+                className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-3 border-t border-border-hairline py-2.5 first:border-t-0"
+              >
+                <span className="font-mono text-small text-text-primary tabular-nums">
+                  {item.date}
+                </span>
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="flex items-start justify-between gap-2 text-small wrap-anywhere text-text-primary">
+                    {item.event}
+                    {href && <Trace href={href(item.line)} name={item.event} />}
+                  </span>
+                  <span className="text-caption text-text-tertiary">
+                    <span>{kind}</span>
+                    {detail ? ` · ${detail}` : ""}
+                    {published ? ` · ${published}` : ""}
+                  </span>
+                  {item.relevance && (
+                    <span className="text-caption wrap-anywhere text-text-secondary">
+                      {item.relevance}
+                    </span>
+                  )}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+      {notDrawn > 0 && (
+        <p className="text-caption text-text-secondary">
+          {`This page could not place ${String(notDrawn)} of the ${String(total)} dated rows.`}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -328,5 +670,87 @@ export function Prose({
         </div>
       ))}
     </Well>
+  );
+}
+
+/**
+ * One of the module's dated lanes as a tile: its events, the lane's stated gap, or, when the
+ * handoff has no such lane, `absent` in words (nothing when no words are given).
+ */
+export function LaneTile({
+  lane,
+  span,
+  label,
+  title,
+  href,
+  absent,
+}: {
+  lane: Lane | null;
+  span: Span;
+  label: string;
+  title: ReactNode;
+  href: (line?: number) => string;
+  absent?: string;
+}) {
+  if (!lane)
+    return absent ? <LeadGap span={span} label={label} title={title} reason={absent} /> : null;
+  const trace = <Trace href={href(lane.line)} name={label} />;
+  if (lane.state === "gap")
+    return <LeadGap span={span} label={label} title={title} reason={lane.reason} trace={trace} />;
+  return (
+    <LeadFigure
+      span={span}
+      label={label}
+      title={title}
+      trace={trace}
+      figure={<DatedList label={label} events={lane.events} notDrawn={lane.notDrawn} href={href} />}
+    />
+  );
+}
+
+/**
+ * One of the module's node maps as a tile: its stated edges with any gap rows marked, the map's
+ * stated gap, or, when the handoff has no such map, `absent` in words.
+ */
+export function MapTile({
+  map,
+  span,
+  label,
+  kicker,
+  title,
+  href,
+  absent,
+}: {
+  map: MapRead;
+  span: Span;
+  label: string;
+  kicker?: ReactNode;
+  title: ReactNode;
+  href: (line?: number) => string;
+  absent: string;
+}) {
+  if (map.state === "absent")
+    return <LeadGap span={span} label={label} kicker={kicker} title={title} reason={absent} />;
+  if (map.state === "gap")
+    return (
+      <LeadGap
+        span={span}
+        label={label}
+        kicker={kicker}
+        title={title}
+        reason={map.reason}
+        trace={map.line === undefined ? undefined : <Trace href={href(map.line)} name={label} />}
+      />
+    );
+  return (
+    <LeadFigure
+      span={span}
+      label={label}
+      kicker={kicker}
+      title={title}
+      trace={<Trace href={href(map.line)} name={label} />}
+      figure={<NodeList label={label} edges={map.edges} gaps={map.gaps} href={href} />}
+      table={edgeTable(map.edges, href)}
+    />
   );
 }

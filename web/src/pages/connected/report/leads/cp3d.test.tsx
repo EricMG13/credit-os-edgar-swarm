@@ -109,10 +109,8 @@ it("lists an unquoted instrument under the figure with its reason and draws no c
   expect(
     within(tile).getByText("Synthetic term loan 2030: Not supplied: no loan quote in the files"),
   ).toBeVisible();
-  expect(
-    within(tile).getByText("No curve is drawn: the handoff states observed points only."),
-  ).toBeVisible();
-  expect(within(tile).getByText(/methodology change/)).toBeVisible();
+  // Ruling vii: no method notes on the reader's page.
+  expect(tile.textContent).not.toMatch(/No curve is drawn|methodology/);
 });
 
 it("gives spread and quote date in the table view, as written", () => {
@@ -141,17 +139,17 @@ it("draws the market-implied default as written with its model and horizon", () 
   expect(within(tile).queryByText("F-7")).toBeNull();
 });
 
-it("states the gaps when the module wrote neither table, and draws a blocked module", () => {
+it("states the gaps when the module wrote neither table, and draws nothing when blocked", () => {
   render(<MarketLead {...leadProps(handoff("## Findings\n\n### Bottom line\n\nThin.\n"))} />);
   const figure = screen.getByRole("region", { name: "Yield against maturity" });
   expect(
     within(figure).getByText("The module wrote no yield against maturity table."),
   ).toBeVisible();
-  expect(within(figure).getByText("Needs market data supplied at run start.")).toBeVisible();
   const implied = screen.getByRole("region", { name: "Market-implied default" });
-  expect(within(implied).getByText("Needs market data supplied at run start.")).toBeVisible();
+  expect(within(implied).getByText("The module wrote no implied risk register.")).toBeVisible();
+  expect(document.body.textContent).not.toMatch(/supplied at run start/);
   cleanup();
-  render(
+  const { container } = render(
     <MarketLead
       {...leadProps(
         handoff(
@@ -160,9 +158,7 @@ it("states the gaps when the module wrote neither table, and draws a blocked mod
       )}
     />,
   );
-  const tile = screen.getByRole("region", { name: "Yield against maturity" });
-  expect(within(tile).getByText("Not assessable")).toBeVisible();
-  expect(within(tile).getByText("No market quotes were supplied.")).toBeVisible();
+  expect(container).toBeEmptyDOMElement();
 });
 
 it("labels the earliest and latest maturity dates when the points fall within one year", () => {

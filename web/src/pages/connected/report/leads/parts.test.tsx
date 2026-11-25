@@ -1,7 +1,21 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import { Bento } from "../overview/Tile";
-import { DatedList, edgeTable, LeadBlocked, LeadFigure, LeadGap, NodeList, Prose } from "./parts";
+import {
+  CompactGap,
+  DatedList,
+  Disclosure,
+  edgeTable,
+  GapCell,
+  KeyValues,
+  LeadFigure,
+  LeadGap,
+  mapLayout,
+  NodeList,
+  Prose,
+  statedGap,
+  TableRegion,
+} from "./parts";
 
 afterEach(cleanup);
 
@@ -31,51 +45,23 @@ it("draws the figure first and its table behind a pressed Figure / Table switch"
   expect(within(tile).getByRole("cell", { name: "900" })).toBeVisible();
 });
 
-it("draws a gap in place of the figure with the reason and what would unlock it", () => {
+it("draws a gap in place of the figure with the reason only, compact", () => {
   render(
     <LeadGap
       span={4}
       label="Revenue mix"
       title="Revenue mix"
       reason="The handoff states the mix only in words."
-      needs="Needs a typed mix table in the module's handoff."
     />,
   );
   const tile = screen.getByRole("region", { name: "Revenue mix" });
-  expect(within(tile).getByText("The handoff states the mix only in words.")).toBeVisible();
-  expect(within(tile).getByText("Needs a typed mix table in the module's handoff.")).toBeVisible();
+  const reason = within(tile).getByText("The handoff states the mix only in words.");
+  expect(reason).toBeVisible();
+  expect(reason).not.toHaveClass("min-h-24");
+  expect(reason).not.toHaveClass("gap-hatch");
+  expect(tile).toHaveClass("self-start");
+  expect(tile.textContent).not.toMatch(/Needs|methodology|contract/);
   expect(within(tile).queryByText("0")).toBeNull();
-});
-
-it("draws a blocked module as Not assessable with its reason and what unlocks it", () => {
-  render(
-    <LeadBlocked
-      span={12}
-      label="Covenant headroom"
-      title="Covenant headroom"
-      reason="No executed governing document available."
-      unlock="Headroom needs the executed credit agreement at run start."
-    />,
-  );
-  const tile = screen.getByRole("region", { name: "Covenant headroom" });
-  expect(within(tile).getByText("Not assessable")).toBeVisible();
-  expect(within(tile).getByText("No executed governing document available.")).toBeVisible();
-  expect(within(tile).getByText(/executed credit agreement/)).toBeVisible();
-  expect(tile).toHaveClass("border-dashed");
-});
-
-it("does not repeat Not assessable when the module's reason starts with it", () => {
-  render(
-    <LeadBlocked
-      span={12}
-      label="Covenant headroom"
-      title="Covenant headroom"
-      reason="not assessable, no executed governing document available"
-    />,
-  );
-  const tile = screen.getByRole("region", { name: "Covenant headroom" });
-  expect(within(tile).getByText("No executed governing document available")).toBeVisible();
-  expect(within(tile).getAllByText(/not assessable/i)).toHaveLength(1);
 });
 
 it("draws a node map as lists: each node once, its edges under it", () => {
@@ -198,19 +184,6 @@ it("names each paragraph's trace by its place in the passage", () => {
   ).toHaveAttribute("href", "#evidence/run/4");
 });
 
-it("sets a short blocked reason as a lead and a long one as body text", () => {
-  const long = `The source set holds ${"no executed credit agreement and no indenture, ".repeat(4)}so no test can be read.`;
-  render(
-    <Bento>
-      <LeadBlocked span={12} label="Short" title="Short" reason="No filings were supplied." />
-      <LeadBlocked span={12} label="Long" title="Long" reason={long} />
-    </Bento>,
-  );
-  expect(screen.getByText("No filings were supplied.")).toHaveClass("text-lead");
-  expect(screen.getByText(long)).toHaveClass("text-body");
-  expect(screen.getByText(long)).not.toHaveClass("text-lead");
-});
-
 it("shows an empty edge cell in the table view as missing, not as a crash", () => {
   render(
     <Bento>
@@ -260,4 +233,142 @@ it("keeps two nodes apart when both read In Evidence on the page", () => {
     .filter((item) => item.parentElement === map);
   expect(nodes).toHaveLength(2);
   expect(within(map).queryByText(/p\.3|p\.9/)).toBeNull();
+});
+
+it("puts the Figure / Table switch in the tile head and the table in a named, focusable region", () => {
+  render(
+    <Bento>
+      <LeadFigure
+        span={8}
+        label="Liquidity bridge"
+        title="Liquidity bridge"
+        trace={<a href="#evidence/run/3">Source for Liquidity bridge</a>}
+        figure={<p>figure</p>}
+        table={{ head: ["Step", "Amount"], rows: [{ label: "Opening", cells: ["900"] }] }}
+      />
+    </Bento>,
+  );
+  const tile = screen.getByRole("region", { name: "Liquidity bridge" });
+  const heading = within(tile).getByRole("heading", { level: 3 });
+  const head = heading.parentElement?.parentElement;
+  expect(head).toContainElement(within(tile).getByRole("button", { name: "Table" }));
+  expect(head).toContainElement(within(tile).getByRole("link", { name: /Source for/ }));
+  fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
+  const region = within(tile).getByRole("region", { name: "Liquidity bridge table" });
+  expect(region).toHaveAttribute("tabindex", "0");
+  expect(region).toHaveClass("relative", "overflow-x-auto");
+  expect(within(region).getByRole("table")).toBeVisible();
+});
+
+it("keeps a disclosed table closed until asked, in the same named region", () => {
+  const { container } = render(
+    <Disclosure
+      label="Hedge terms"
+      table={{ head: ["Hedge", "Notional"], rows: [{ label: "Swap", cells: ["USD 300m"] }] }}
+    />,
+  );
+  const details = container.querySelector("details");
+  expect(details).not.toHaveAttribute("open");
+  expect(details?.querySelector("summary")).toHaveTextContent("Hedge terms");
+  expect(screen.getByRole("region", { name: "Hedge terms table", hidden: true })).toBeTruthy();
+});
+
+it("draws one gap chip with the reason, never a double colon", () => {
+  expect(statedGap("Not supplied: no current")).toEqual({
+    word: "Not supplied",
+    reason: "No current",
+  });
+  expect(statedGap("4.2")).toBeNull();
+  const gap = statedGap("Not calculable: no base");
+  render(<GapCell word={gap?.word} reason={gap?.reason} />);
+  expect(screen.getByText("Not calculable")).toHaveClass("border-dashed");
+  expect(screen.getByText("No base")).toBeVisible();
+  expect(document.body.textContent).not.toMatch(/: /);
+});
+
+it("lists named values as a two-column list", () => {
+  render(<KeyValues items={[{ key: "Feasibility", value: "High" }]} />);
+  const list = screen.getByRole("term").closest("dl");
+  expect(list).toHaveClass("grid-cols-[auto_minmax(0,1fr)]");
+  expect(screen.getByRole("definition")).toHaveTextContent("High");
+});
+
+it("lays a map's nodes in columns by depth, a loop edge not moving them", () => {
+  const edge = (from: string, to: string, line: number) => ({
+    from,
+    relationship: "r",
+    type: "t",
+    to,
+    line,
+  });
+  const columns = mapLayout([
+    edge("Parent", "Issuer", 1),
+    edge("Issuer", "Notes", 2),
+    edge("Parent", "Notes", 3),
+    edge("Notes", "Parent", 4),
+  ]);
+  expect(columns.map((nodes) => nodes.map((node) => node.name))).toEqual([
+    ["Parent"],
+    ["Issuer"],
+    ["Notes"],
+  ]);
+  expect(mapLayout([edge("A", "B", 1)])).toHaveLength(2);
+});
+
+it("lists a map's gap rows after its edges, each with its reason and trace", () => {
+  render(
+    <NodeList
+      label="Ownership"
+      edges={[{ from: "Parent", relationship: "Owns", type: "Ownership", to: "Issuer", line: 4 }]}
+      gaps={[{ line: 5, reason: "Guarantor exhibit absent" }]}
+      href={(line) => `#evidence/run/${String(line)}`}
+    />,
+  );
+  const gaps = screen.getByRole("list", { name: "Ownership: rows not drawn" });
+  expect(within(gaps).getByText("Row not drawn: Guarantor exhibit absent")).toBeVisible();
+  expect(within(gaps).getByRole("link")).toHaveAttribute("href", "#evidence/run/5");
+  expect(within(screen.getByRole("list", { name: "Ownership" })).getByText("Issuer")).toBeVisible();
+});
+
+it("shows each event's publication date and credit relevance, and the rows it could not place", () => {
+  render(
+    <DatedList
+      label="Funding dates"
+      notDrawn={3}
+      events={[
+        {
+          date: "2026",
+          precision: "year",
+          published: "2024-11-07",
+          event: "Maturity",
+          status: "Scheduled — maturity",
+          relevance: "Refinancing wall",
+          line: 4,
+        },
+      ]}
+    />,
+  );
+  const list = screen.getByRole("list", { name: "Funding dates" });
+  expect(within(list).getByText(/Published 2024-11-07/)).toBeVisible();
+  expect(within(list).getByText("Refinancing wall")).toBeVisible();
+  expect(screen.getByText("This page could not place 3 of the 4 dated rows.")).toBeVisible();
+});
+
+it("puts a table in a named, focusable region whose long cells wrap", () => {
+  render(
+    <TableRegion
+      label="Hedge terms"
+      table={{ head: ["Hedge", "Terms"], rows: [{ label: "Swap", cells: ["Long words"] }] }}
+    />,
+  );
+  const region = screen.getByRole("region", { name: "Hedge terms table" });
+  expect(region).toHaveAttribute("tabindex", "0");
+  expect(region.className).toMatch(/\[&_td\]:max-w-\[28ch\]/);
+});
+
+it("draws a compact gap: dashed, sized to its words, no hatch", () => {
+  render(<CompactGap>The handoff states no runway figure.</CompactGap>);
+  const gap = screen.getByText("The handoff states no runway figure.");
+  expect(gap).toHaveClass("border-dashed", "w-fit");
+  expect(gap).not.toHaveClass("gap-hatch");
 });

@@ -139,9 +139,7 @@ it("draws the relative value and portfolio fit passages and the peer gap", () =>
   expect(
     within(peers).getByText("This handoff has no peer levels to compare the instruments against."),
   ).toBeVisible();
-  expect(
-    within(peers).getByText("Needs market quotes and peer levels supplied at run start."),
-  ).toBeVisible();
+  expect(peers.textContent).not.toMatch(/supplied at run start/);
 });
 
 it("states each gap when the module wrote neither table nor passage", () => {
@@ -155,8 +153,8 @@ it("states each gap when the module wrote neither table nor passage", () => {
   ).toBeVisible();
 });
 
-it("draws a blocked module as Not assessable with its reason", () => {
-  render(
+it("draws nothing for a blocked module", () => {
+  const { container } = render(
     <SecurityLead
       {...props(
         handoff(
@@ -165,8 +163,5 @@ it("draws a blocked module as Not assessable with its reason", () => {
       )}
     />,
   );
-  const tile = screen.getByRole("region", { name: "Instrument decisions" });
-  expect(within(tile).getByText("Not assessable")).toBeVisible();
-  expect(within(tile).getByText("No market quotes were supplied. More.")).toBeVisible();
-  expect(screen.queryByRole("region", { name: "Relative value" })).toBeNull();
+  expect(container).toBeEmptyDOMElement();
 });

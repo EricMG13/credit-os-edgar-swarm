@@ -1,24 +1,37 @@
+import type { ReactNode } from "react";
 import { withUnit } from "../../publishedReport";
 import type { SourceTable } from "../../visuals/visualData";
+import { columnAt } from "../overview/figureData";
 import { BULLET, bulletGeometry, headroomTests, type HeadroomTest } from "../overview/stressData";
 import { Figure } from "../overview/Tile";
-import { Trace, type LeadTable } from "./parts";
-import { readerCell, readerCellOf } from "./read";
+import { BarRow, GapCell, statedGap, Trace, type LeadTable } from "./parts";
+import { IN_EVIDENCE, readerCell, readerCellOf } from "./read";
+
+/** A test as a lead draws it: `headroomGap` is the reason the module gives for no headroom. */
+export type LeadTest = HeadroomTest & { headroomGap?: string | null };
 
 /**
  * The tests of a value-against-limit table (`headroomTests`), every drawn text as a working page
  * shows it: no source reference, module codes as names. Values are read from the cells as written.
  */
-export function leadTests(table: SourceTable, descriptor: Record<string, unknown>) {
+export function leadTests(
+  table: SourceTable,
+  descriptor: Record<string, unknown>,
+): LeadTest[] | null {
+  const column = columnAt(table, descriptor.headroom);
   return (
-    headroomTests(table, descriptor)?.map((test): HeadroomTest => ({
-      ...test,
-      label: readerCell(test.label),
-      threshold: readerCellOf(test.threshold),
-      current: readerCellOf(test.current),
-      headroom: test.headroom === null ? null : readerCell(test.headroom) || null,
-      direction: readerCell(test.direction),
-    })) ?? null
+    headroomTests(table, descriptor)?.map((test, at): LeadTest => {
+      const gap = column === null ? null : statedGap(table.rows[at]?.[column] ?? "");
+      return {
+        ...test,
+        label: readerCell(test.label),
+        threshold: readerCellOf(test.threshold),
+        current: readerCellOf(test.current),
+        headroom: test.headroom === null ? null : readerCell(test.headroom) || null,
+        headroomGap: gap ? readerCell(gap.reason) : null,
+        direction: readerCell(test.direction),
+      };
+    }) ?? null
   );
 }
 
@@ -26,17 +39,8 @@ export function leadTests(table: SourceTable, descriptor: Record<string, unknown
 const shown = (test: HeadroomTest, cell: HeadroomTest["current"]) =>
   cell.value === null ? cell.text : withUnit(cell.text, test.unit);
 
-const capital = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
-
 /** A position on the bullet's scale as a share of its track. */
-const share = (x: number) => ((x - BULLET.left) / (BULLET.right - BULLET.left)) * 100;
-
-/** Why a test has no bar, in the module's words where it gave a reason. */
-function gapWords(test: HeadroomTest) {
-  const reason = test.current.reason ?? test.threshold.reason;
-  if (reason) return capital(reason);
-  return "The stated values cannot be placed on a scale from zero.";
-}
+const share = (x: number) => (x - BULLET.left) / (BULLET.right - BULLET.left);
 
 function reading(test: HeadroomTest) {
   const headroom = test.headroom ? `, headroom ${test.headroom}` : "";
@@ -44,46 +48,70 @@ function reading(test: HeadroomTest) {
   return `${test.label}: ${shown(test, test.current)} against a threshold of ${shown(test, test.threshold)}${headroom}.${direction}`;
 }
 
-function BulletRow({ test, href }: { test: HeadroomTest; href?: string }) {
+/** One stated cell as written, or the gap in its place with the module's reason. */
+function Stated({ test, cell }: { test: HeadroomTest; cell: HeadroomTest["current"] }) {
+  const gap = cell.value === null ? statedGap(cell.text) : null;
+  if (gap) return <GapCell word={gap.word} reason={gap.reason} />;
+  if (!cell.text.trim()) return <GapCell word="Not stated" />;
+  if (cell.text === IN_EVIDENCE)
+    return <span className="text-caption text-gap-text">{IN_EVIDENCE}</span>;
+  return <Figure className="text-small">{shown(test, cell)}</Figure>;
+}
+
+const capital = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
+function Term({ name, children }: { name: string; children: ReactNode }) {
+  return (
+    <span className="inline-flex min-w-0 flex-wrap items-baseline gap-x-1.5">
+      <span className="text-caption text-text-tertiary">{name}</span>
+      {children}
+    </span>
+  );
+}
+
+function BulletRow({ test, href }: { test: LeadTest; href?: string }) {
   const geometry = bulletGeometry(test);
   const ends = geometry ? [geometry.ticks[0], geometry.ticks.at(-1)] : [];
-  // Both figures stated as numbers: shown as written even where they cannot be placed from zero.
-  const stated = test.current.value !== null && test.threshold.value !== null;
-  const headroom = stated ? test.headroom : null;
+  const numbers = test.current.value !== null && test.threshold.value !== null;
   return (
     <li className="flex min-w-0 flex-col gap-2 border-t border-border-hairline pt-3 first:border-t-0 first:pt-0">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+      <span className="flex items-start justify-between gap-3">
         <span className="min-w-0 text-small font-medium wrap-anywhere text-text-primary">
           {test.label}
         </span>
-        <span className="flex items-center gap-2">
-          {stated ? (
-            <Figure className="text-small">
-              <span>{shown(test, test.current)}</span>{" "}
-              <span className="text-text-tertiary">/ {shown(test, test.threshold)}</span>
-            </Figure>
-          ) : (
-            <span className="rounded-ds-xs border border-dashed border-border-gap px-1.5 text-caption text-gap-text">
-              Not supplied
-            </span>
-          )}
-          {href && <Trace href={href} name={test.label} />}
-        </span>
-      </div>
+        {href && <Trace href={href} name={test.label} />}
+      </span>
+      <span className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
+        <Term name="Current">
+          <Stated test={test} cell={test.current} />
+        </Term>
+        <Term name="Threshold">
+          <Stated test={test} cell={test.threshold} />
+        </Term>
+        {test.headroom !== null ? (
+          <Term name="Headroom">
+            <Figure className="text-small">{test.headroom}</Figure>
+          </Term>
+        ) : (
+          test.headroomGap && (
+            <Term name="Headroom">
+              <GapCell reason={capital(test.headroomGap)} />
+            </Term>
+          )
+        )}
+        {test.direction && (
+          <span className="text-caption text-text-tertiary">{test.direction}</span>
+        )}
+      </span>
       {geometry ? (
         <div role="img" aria-label={reading(test)} className="flex flex-col gap-1">
-          <span aria-hidden="true" className="relative block h-3 rounded-ds-full bg-surface-subtle">
-            <span
-              data-current
-              className="absolute inset-y-0 left-0 rounded-ds-full bg-chart-1"
-              style={{ width: `${String(share(geometry.current))}%` }}
-            />
+          <BarRow end={share(geometry.current)}>
             <span
               data-threshold
               className="absolute -inset-y-1 w-0.5 -translate-x-1/2 bg-text-primary"
-              style={{ left: `${String(share(geometry.threshold))}%` }}
+              style={{ left: `${String(share(geometry.threshold) * 100)}%` }}
             />
-          </span>
+          </BarRow>
           <span
             aria-hidden="true"
             className="flex justify-between font-mono text-caption text-text-tertiary"
@@ -94,22 +122,20 @@ function BulletRow({ test, href }: { test: HeadroomTest; href?: string }) {
           </span>
         </div>
       ) : (
-        <span className="text-caption text-text-secondary">{gapWords(test)}</span>
-      )}
-      {(headroom !== null || test.direction !== "") && (
-        <span className="flex flex-wrap gap-x-3 text-caption text-text-secondary">
-          {headroom !== null && <span>Headroom {headroom}</span>}
-          {test.direction && <span className="text-text-tertiary">{test.direction}</span>}
-        </span>
+        numbers && (
+          <span className="text-caption text-text-secondary">
+            The stated values cannot be placed on a scale from zero.
+          </span>
+        )
       )}
     </li>
   );
 }
 
 /**
- * Value against limit, one row a test, each on its own scale from zero: the current bar, the
- * threshold tick, both figures as written, the stated headroom and the direction words. A test with
- * a gap shows Not supplied and the reason, no bar. `href(index)` is the trace of `tests[index]`.
+ * Value against limit, one row a test, each on its own scale from zero: every stated cell as written
+ * (current, threshold, headroom, direction), the missing one as a gap with its reason, and a bar only
+ * when current and threshold are both plain numbers. `href(index)` is the trace of `tests[index]`.
  */
 export function Bullets({
   label,
@@ -117,7 +143,7 @@ export function Bullets({
   href,
 }: {
   label: string;
-  tests: readonly HeadroomTest[];
+  tests: readonly LeadTest[];
   href?: (index: number) => string;
 }) {
   return (

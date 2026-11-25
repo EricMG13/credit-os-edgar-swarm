@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import { entry } from "../overview/rows.fixture";
 import { LEADS as credit } from "./credit";
@@ -9,32 +9,32 @@ afterEach(cleanup);
 
 const LEADS = Object.entries({ ...credit, ...structure });
 
-it.each(LEADS)("%s draws a reason without a full stop as blocked, in its words", (module, Lead) => {
-  const made = entry(module, [], [...bottomLine("Not assessable: no filings were supplied")]);
-  render(<Lead {...leadProps(made)} />);
-  expect(screen.getByText("Not assessable")).toBeVisible();
-  expect(screen.getByText("No filings were supplied")).toBeVisible();
+it("covers all thirteen leads", () => {
+  expect(LEADS).toHaveLength(13);
 });
 
-it.each(LEADS)("%s keeps a blocked reason that names a file in Evidence", (module, Lead) => {
-  const made = entry(
-    module,
-    [],
-    [...bottomLine("Not assessable: annual_report_2024.pdf was not supplied.")],
-  );
-  render(<Lead {...leadProps(made)} />);
-  expect(screen.getByText("Not assessable")).toBeVisible();
-  // The badge says Not assessable; the text does not repeat it.
-  expect(screen.getByText("The reason is recorded in Evidence.")).toBeVisible();
-  expect(screen.queryByText(/annual_report/)).toBeNull();
+// Ruling v: the frame draws a blocked module's state; the lead draws nothing.
+it.each(LEADS)("%s draws nothing for a blocked handoff", (module, Lead) => {
+  for (const reason of [
+    "Not assessable: no filings were supplied",
+    "Not assessable: annual_report_2024.pdf was not supplied.",
+    "Not assessable: covenant-lite, no maintenance test.",
+  ]) {
+    const { container } = render(
+      <Lead {...leadProps(entry(module, [], [...bottomLine(reason)]))} />,
+    );
+    expect(container).toBeEmptyDOMElement();
+    cleanup();
+  }
 });
 
-it.each(LEADS)("%s draws the whole reason, not up to an abbreviation", (module, Lead) => {
-  const made = entry(
-    module,
-    [],
-    [...bottomLine("Not assessable: Acme Holdings Inc. did not publish its 2024 accounts.")],
-  );
-  render(<Lead {...leadProps(made)} />);
-  expect(screen.getByText("Acme Holdings Inc. did not publish its 2024 accounts.")).toBeVisible();
-});
+it.each(LEADS)(
+  "%s still draws a handoff marked not established whose bottom line is not Not assessable",
+  (module, Lead) => {
+    const made = entry(module, [], [...bottomLine("Leverage is high.")]);
+    made.output.state = { established: false, declared: null };
+    const { container } = render(<Lead {...leadProps(made)} />);
+    expect(container).not.toBeEmptyDOMElement();
+    expect(container.textContent).not.toMatch(/Not assessable/);
+  },
+);

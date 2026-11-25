@@ -1,5 +1,5 @@
 import type { OutputEntry, Table } from "../../publishedReport";
-import { unitLabel } from "../../publishedReport";
+import { blocked, unitLabel } from "../../publishedReport";
 import { ticks } from "../../visuals/visualData";
 import { Ladder } from "../BreakPoints";
 import { share, writtenTable } from "../Downside";
@@ -13,30 +13,15 @@ import {
 } from "../MacroSensitivity";
 import { Key } from "../overview/figureParts";
 import { Bento } from "../overview/Tile";
-import { DatedList, LeadBlocked, LeadFigure, LeadGap, NEEDS, Trace } from "./parts";
-import {
-  blockedState,
-  columnOf,
-  eventsOf,
-  leadHref,
-  leadingMillions,
-  readerCell,
-  registerTable,
-} from "./read";
+import { withDraws } from "./draws";
+import { LaneTile, LeadFigure, LeadGap, Trace } from "./parts";
+import { columnOf, eventsOf, leadHref, leadingMillions, readerCell, registerTable } from "./read";
 import type { LeadProps } from "./types";
 
 type Href = (line: number) => string;
 
 const LADDER = "Rate sensitivity";
 const STEP = /(?:^|[\s(])\+\s?(\d+(?:\.\d+)?)\s?bp\b/;
-const LEADING = /^[+−-]?[A-Z]{3} ?(?:\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?) ?million\b/;
-
-/** The amount a cell opens with, as written, with its value; null when it does not open with one. */
-function leadingAmount(text: string) {
-  const money = leadingMillions(text);
-  const written = LEADING.exec(text.trim())?.[0];
-  return money && written ? { ...money, written } : null;
-}
 
 const SECOND_AMOUNT = /\b[A-Z]{3} ?[+−-]?\d|\d(?:[\d,]*\d)?(?:\.\d+)? ?(?:million|billion|bn)\b/;
 const RANGE_ON = /^\s*(?:to|or|and|[–—-])\s*[+−-]?\d/i;
@@ -48,7 +33,7 @@ const QUALIFIED =
  * and no qualifier ("approximately", "about") anywhere; words after the amount are kept as written.
  */
 function singleAmount(text: string) {
-  const amount = leadingAmount(text);
+  const amount = leadingMillions(text);
   if (!amount) return null;
   const rest = text.trim().slice(amount.written.length);
   return SECOND_AMOUNT.test(rest) || RANGE_ON.test(rest) || QUALIFIED.test(text) ? null : amount;
@@ -56,7 +41,7 @@ function singleAmount(text: string) {
 
 /** A cell that is exactly one stated amount ("USD 3,400 million"), nothing after it. */
 function soleAmount(text: string) {
-  const amount = leadingAmount(text);
+  const amount = leadingMillions(text);
   return amount && amount.written === text.trim() ? amount : null;
 }
 
@@ -90,7 +75,6 @@ function SensitivityTile({ entry, href }: { entry: OutputEntry; href: Href }) {
         kicker="Sensitivity ladder"
         title="Cash cost per rate shock step"
         reason="The handoff has no sensitivity table with a cash impact per shock step."
-        needs={NEEDS.method}
       />
     );
   const { drawn, words, currency } = sensitivityRows(table);
@@ -103,7 +87,6 @@ function SensitivityTile({ entry, href }: { entry: OutputEntry; href: Href }) {
         kicker="Sensitivity ladder"
         title="Cash cost per rate shock step"
         reason="The sensitivity table states no shock step with an amount the figure can place."
-        needs={NEEDS.method}
       >
         <ul className="flex flex-col gap-1.5 text-small text-text-secondary">
           {listed.map((text) => (
@@ -145,14 +128,7 @@ function SensitivityTile({ entry, href }: { entry: OutputEntry; href: Href }) {
         />
       }
       table={writtenTable(table, href)}
-      notes={[
-        ...(drawn.length === 1
-          ? [
-              "The module states one shock step; a ladder of more steps needs a step grid in its handoff.",
-            ]
-          : []),
-        ...listed,
-      ]}
+      notes={listed}
     />
   );
 }
@@ -195,7 +171,6 @@ function HedgedTile({ entry, href }: { entry: OutputEntry; href: Href }) {
             ? "The handoff does not state hedged and unhedged floating-rate debt as two amounts in one currency."
             : "The handoff has no floating-rate exposure table."
         }
-        needs={table ? undefined : NEEDS.method}
       />
     );
   const total = hedged.value.value + unhedged.value.value;
@@ -268,44 +243,39 @@ function HedgedTile({ entry, href }: { entry: OutputEntry; href: Href }) {
 }
 
 /** CP-2E: what a rate shock costs, how much of the floating debt is hedged, and the hedge terms. */
-export function MacroLead(props: LeadProps) {
-  const { entry } = props;
-  const evidence = leadHref(props);
-  const href: Href = (line) => evidence(line);
-  const stopped = blockedState(entry);
-  if (stopped)
+export const MacroLead = withDraws(
+  function MacroLead(props: LeadProps) {
+    const { entry } = props;
+    if (blocked(entry)) return null;
+    const evidence = leadHref(props);
+    const href: Href = (line) => evidence(line);
+    const data = macroView(entry);
+    const hedges = data?.hedges ?? registerTable(entry, "T2F.3", ["Hedge Type", "Notional"]);
     return (
       <Bento>
-        <LeadBlocked span={12} label={LADDER} title={LADDER} reason={stopped.reason} />
-      </Bento>
-    );
-  const data = macroView(entry);
-  const hedges = data?.hedges ?? registerTable(entry, "T2F.3", ["Hedge Type", "Notional"]);
-  const events = eventsOf(entry, "Hedges") ?? [];
-  return (
-    <Bento>
-      {data?.rate?.rows.length ? (
-        <RateLadderTile table={data.rate} currency={data.currency} href={href} span={8} />
-      ) : (
-        <SensitivityTile entry={entry} href={href} />
-      )}
-      <div className="flex min-w-0 flex-col gap-4 lg:col-span-4">
-        <HedgedTile entry={entry} href={href} />
-        <ForeignShareTile fxGap={data?.fxGap} href={href} span={12} />
-      </div>
-      {data?.retained && <RetainedCoverTile retained={data.retained} href={href} span={12} />}
-      {data?.fx?.rows.length ? (
-        <FxShocksTile table={data.fx} currency={data.currency} href={href} span={12} />
-      ) : null}
-      <HedgeTermsTile hedges={hedges} exposures={data?.fxExposure} href={href} />
-      {events.length > 0 && (
-        <LeadFigure
+        {data?.rate?.rows.length ? (
+          <RateLadderTile table={data.rate} currency={data.currency} href={href} span={8} />
+        ) : (
+          <SensitivityTile entry={entry} href={href} />
+        )}
+        <div className="flex min-w-0 flex-col gap-4 lg:col-span-4">
+          <HedgedTile entry={entry} href={href} />
+          <ForeignShareTile fxGap={data?.fxGap} href={href} span={12} />
+        </div>
+        {data?.retained && <RetainedCoverTile retained={data.retained} href={href} span={12} />}
+        {data?.fx?.rows.length ? (
+          <FxShocksTile table={data.fx} currency={data.currency} href={href} span={12} />
+        ) : null}
+        <HedgeTermsTile hedges={hedges} exposures={data?.fxExposure} href={href} />
+        <LaneTile
+          lane={eventsOf(entry, "Hedges")}
           span={12}
           label="Hedge dates"
           title="Hedge dates as the module states them"
-          figure={<DatedList label="Hedge dates" events={events} href={href} />}
+          href={evidence}
         />
-      )}
-    </Bento>
-  );
-}
+      </Bento>
+    );
+  },
+  ["figures", "events"],
+);

@@ -6,8 +6,10 @@ import { forecastInput } from "../ForecastRecord";
 import { GapPattern } from "../overview/figureParts";
 import { forwardPath } from "../overview/stressData";
 import { Bento, Tile } from "../overview/Tile";
-import { LeadBlocked, LeadFigure, LeadGap, NEEDS, Trace } from "./parts";
-import { blockedState, leadHref, readerCell } from "./read";
+import { blocked } from "../../publishedReport";
+import { withDraws } from "./draws";
+import { LeadFigure, LeadGap, Trace } from "./parts";
+import { leadHref, readerCell } from "./read";
 import type { LeadProps } from "./types";
 
 const PATH_LABEL = "Net leverage path";
@@ -295,14 +297,7 @@ function ForwardPathTile({ view, href }: { view: LeadProps["view"]; href: string
           }),
         })),
       }}
-      notes={[
-        <span key="limit" className="flex flex-col gap-0.5">
-          <span>No limit is published with the model.</span>
-          <span className="text-text-tertiary">{NEEDS.method}</span>
-        </span>,
-        ...gaps,
-        ...path.limits,
-      ]}
+      notes={[...gaps, ...path.limits]}
     />
   );
 }
@@ -372,7 +367,7 @@ function DriversTile({
         span={12}
         label={DRIVERS}
         title="Forecast drivers by case"
-        reason="The handoff has no machine-readable forecast inputs block."
+        reason="This handoff has no forecast inputs."
       />
     );
   const document = input.value;
@@ -444,20 +439,14 @@ function DriversTile({
 }
 
 /** CP-2G: where net leverage goes in each case of the published model, and the drivers behind it. */
-export function ForwardLead(props: LeadProps) {
+export const ForwardLead = withDraws(function ForwardLead(props: LeadProps) {
   const { entry, view } = props;
+  if (blocked(entry)) return null;
   const href = leadHref(props);
-  const stopped = blockedState(entry);
-  if (stopped)
-    return (
-      <Bento>
-        <LeadBlocked span={12} label={PATH_LABEL} title={PATH_LABEL} reason={stopped.reason} />
-      </Bento>
-    );
   return (
     <Bento>
       <ForwardPathTile view={view} href={href()} />
       <DriversTile entry={entry} href={href} />
     </Bento>
   );
-}
+}, []);

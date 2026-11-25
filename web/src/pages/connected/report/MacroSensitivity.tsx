@@ -14,7 +14,7 @@ import { Ladder } from "./BreakPoints";
 import { SmallMultiples, writtenTable, type MultiplePanel } from "./Downside";
 import { Key } from "./overview/figureParts";
 import { Bento, Tile } from "./overview/Tile";
-import { LeadFigure, LeadGap, NEEDS, Trace } from "./leads/parts";
+import { LeadFigure, LeadGap, Trace } from "./leads/parts";
 import { readerCell } from "./leads/read";
 
 const RATE = [
@@ -515,13 +515,7 @@ export function ForeignShareTile({
     ? readerCell(fxGap.cells[3])
     : "The handoff states no currency shares.";
   return (
-    <LeadGap
-      span={span}
-      label="Foreign share"
-      title="Foreign-currency share"
-      reason={reason}
-      needs={NEEDS.input("currency exposure by currency")}
-    >
+    <LeadGap span={span} label="Foreign share" title="Foreign-currency share" reason={reason}>
       {fxGap && <Trace href={href(fxGap.line)} name="Currency exposure limitation" />}
     </LeadGap>
   );

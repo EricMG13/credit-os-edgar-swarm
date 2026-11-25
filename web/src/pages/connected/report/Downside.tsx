@@ -15,7 +15,7 @@ import { Segmented } from "@/components/kit/Segmented";
 import { Key } from "./overview/figureParts";
 import { Bento } from "./overview/Tile";
 import { LeadFigure, Trace, type LeadTable } from "./leads/parts";
-import { readerCell } from "./leads/read";
+import { IN_EVIDENCE, readerCell } from "./leads/read";
 const SCENARIOS = [
   "Scenario ID",
   "Name",
@@ -100,8 +100,12 @@ function position(measure: string, cell: string) {
 }
 
 function readerDetail(value: string) {
-  return containsReference(value) ? "See the scenario evidence." : value;
+  const cell = readerCell(value);
+  return cell === IN_EVIDENCE ? "See the scenario evidence." : cell;
 }
+
+/** A case's name as a working page draws it: a name carrying a code or a register id is in Evidence. */
+const caseName = ({ name }: { name: string }) => readerCell(name) || "Not stated";
 
 /**
  * The same recorded share in percent, moving its decimal point without rounding its digits; a
@@ -277,20 +281,20 @@ function casePanels(matrix: Table, cases: readonly Case[]) {
     const values = texts.map((text) => position(measure, text));
     if (values.every((value) => value !== null)) {
       placed.push({
-        measure: measureName(measure),
+        measure: measureName(readerCell(measure)),
         bars: texts.map((text, at) => ({ text, value: values[at] ?? 0 })),
       });
       continue;
     }
     const stated = texts.flatMap((text, at) =>
       values[at] === null && NOT_STATED.test(text)
-        ? [`${cases[at]?.name ?? ""}: ${readerCell(text)}`]
+        ? [`${cases[at] ? caseName(cases[at]) : ""}: ${readerCell(text)}`]
         : [],
     );
     unplaced.push(
       stated.length
-        ? `${measure} is not drawn: ${stated.join("; ")}.`
-        : `${measure} is not drawn: its cells are not on one stated basis; the table has them as written.`,
+        ? `${readerCell(measure)} is not drawn: ${stated.join("; ")}.`
+        : `${readerCell(measure)} is not drawn: its cells are not on one stated basis; the table has them as written.`,
     );
   }
   return { placed, unplaced };
@@ -322,7 +326,7 @@ function CaseDetails({ selected }: { selected: Case }) {
 function resultsTable(matrix: Table, cases: readonly Case[], href: (line: number) => string) {
   const columns = cases.map(({ id }) => matrix.headers.indexOf(id));
   return {
-    head: ["Measure", ...cases.map(({ name }) => name)],
+    head: ["Measure", ...cases.map(caseName)],
     rows: matrix.rows.map(({ cells, line }) => {
       const label = readerCell(cells[0] ?? "");
       return {
@@ -371,9 +375,10 @@ export function DownsideTile({
       />
     );
   const { placed, unplaced } = casePanels(matrix, cases);
-  const roles = cases.map(({ id, name }) => {
-    const role: CaseRole = id === control.id ? "control" : id === selected.id ? "chosen" : "other";
-    return { name, role };
+  const roles = cases.map((item) => {
+    const role: CaseRole =
+      item.id === control.id ? "control" : item.id === selected.id ? "chosen" : "other";
+    return { name: caseName(item), role };
   });
   const notes: ReactNode[] = [<CaseDetails key="details" selected={selected} />, ...unplaced];
   return (
@@ -381,18 +386,18 @@ export function DownsideTile({
       span={span}
       label={TITLE}
       kicker="Scenario comparison"
-      title={`Every case against the ${control.name}, each measure on its own scale`}
+      title={`Every case against the ${caseName(control)}, each measure on its own scale`}
       basis={readerDetail(control.anchor)}
       legend={
         <>
           <Segmented
             label="Stress case to compare with the unstressed control"
-            segments={alternatives.map(({ id, name }) => ({ key: id, label: name }))}
+            segments={alternatives.map((item) => ({ key: item.id, label: caseName(item) }))}
             current={selected.id}
             onSelect={setChosen}
           />
           <Key tone="prior">Control</Key>
-          <Key tone="primary">{selected.name}</Key>
+          <Key tone="primary">{caseName(selected)}</Key>
           {alternatives.length > 1 && <Key tone="secondary">Other cases</Key>}
         </>
       }

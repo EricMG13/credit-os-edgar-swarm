@@ -189,7 +189,7 @@ it("falls back to the materiality filter by direction, keeping None supported in
   expect(within(weaknesses).getByText(/Dividends first/)).toBeVisible();
 });
 
-it("falls back to the written passage with the caption when no ledger table exists", () => {
+it("falls back to the written passage when no ledger table exists, with no build note", () => {
   const made = credit([
     {
       heading: "Strengths and weaknesses",
@@ -202,9 +202,7 @@ it("falls back to the written passage with the caption when no ledger table exis
   ]);
   render(<CreditLead {...leadProps(made)} />);
   expect(screen.getByText("The weaknesses are financial policy.")).toBeVisible();
-  expect(
-    screen.getByText("A ranked ledger needs the typed strengths and weaknesses table."),
-  ).toBeVisible();
+  expect(screen.queryByText(/A ranked ledger needs/)).toBeNull();
   expect(screen.queryByRole("list", { name: "Strengths" })).toBeNull();
 });
 
@@ -226,27 +224,25 @@ it("states in words that leverage and headroom did not run, never zero", () => {
   expect(within(tile).queryByText("0")).toBeNull();
 });
 
-it("draws the transmission map with its note, or its gap, and a blocked module as Not assessable", () => {
+it("draws the transmission map, or its gap, and nothing for a blocked module", () => {
   render(<CreditLead {...leadProps(credit([]))} />);
   const tile = screen.getByRole("region", { name: "Credit-risk transmission" });
-  expect(within(tile).getByText("Synthetic A")).toBeVisible();
-  expect(
-    within(tile).getByText(
-      "The map does not mark which links add risk and which support the credit.",
-    ),
-  ).toBeVisible();
+  expect(within(tile).getByRole("list", { name: "Credit-risk transmission" })).toHaveTextContent(
+    "Synthetic A",
+  );
+  expect(tile.textContent).not.toMatch(/The map does not mark/);
   cleanup();
   render(<CreditLead {...leadProps(credit([], false))} />);
   expect(screen.getByText("This handoff has no credit-risk transmission map.")).toBeVisible();
   cleanup();
-  render(
+  const { container } = render(
     <CreditLead
       {...leadProps(
         entry("CP-2", [], bottomLine("Not assessable: the issuer files were not supplied.")),
       )}
     />,
   );
-  expect(screen.getByText("Not assessable")).toBeVisible();
+  expect(container).toBeEmptyDOMElement();
 });
 
 it("says a missing ledger label is not stated and lists a row it cannot place", () => {

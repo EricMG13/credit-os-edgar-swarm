@@ -23,7 +23,7 @@ const source = (line: number, headers: string[], rows: string[][]) => ({
 const ROLES = { kind: "bullet", label: [0], threshold: 1, current: 2, headroom: 3, direction: 4 };
 
 // The synthetic proof handoff's covenant table (proof/handoffs/CP-4.md); no real CP-4 drew one.
-const TESTS = headroomTests(
+const TESTS = leadTests(
   source(40, HEAD, [
     ["Net leverage", "5.0", "4.2", "0.8x", "Passes at or below", "x", "Synthetic."],
     ["Interest cover", "2.0", "2.6", "0.6x", "Passes at or above", "x", "Synthetic."],
@@ -52,8 +52,10 @@ it("draws each test on its own scale from zero, current against threshold, as wr
     "Net leverage: 4.2x against a threshold of 5.0x, headroom 0.8x. Passes at or below.",
   );
   expect(within(leverage).getByText("4.2x")).toBeVisible();
-  expect(within(leverage).getByText("/ 5.0x")).toBeVisible();
-  expect(within(leverage).getByText("Headroom 0.8x")).toBeVisible();
+  expect(within(leverage).getByText("5.0x")).toBeVisible();
+  expect(within(leverage).getByText("0.8x")).toBeVisible();
+  for (const term of ["Current", "Threshold", "Headroom"])
+    expect(within(leverage).getByText(term)).toBeVisible();
   expect(within(leverage).getByText("Passes at or below")).toBeVisible();
   expect(within(cover).getByRole("img")).toHaveAccessibleName(/2\.6x against a threshold of 2\.0x/);
   // Each row's scale is its own: the top tick of 4.2 against 5 is 5, of 2.6 against 2 is 3.
@@ -65,17 +67,39 @@ it("draws each test on its own scale from zero, current against threshold, as wr
   );
 });
 
-it("draws a gap row as Not supplied with its reason, no bar and never zero", () => {
+it("draws a gap row's stated threshold, and only its missing cells as gaps with their reasons", () => {
   render(
     <Bullets label="Covenant tests" tests={TESTS} href={(at) => `#evidence/run/${String(at)}`} />,
   );
   const liquidity = screen.getAllByRole("listitem")[2];
   if (!liquidity) throw new Error("gap row");
-  expect(within(liquidity).getByText("Not supplied")).toBeVisible();
+  // proof/handoffs/CP-4.md: threshold 100 stated; current and headroom not supplied.
+  expect(within(liquidity).getByText("US$100m")).toBeVisible();
+  expect(within(liquidity).getAllByText("Not supplied")).toHaveLength(2);
   expect(within(liquidity).getByText("Not stated")).toBeVisible();
+  expect(within(liquidity).getByText("No current")).toBeVisible();
+  expect(within(liquidity).getByText("Passes at or above")).toBeVisible();
+  expect(liquidity.textContent).not.toMatch(/Not supplied:/);
   expect(within(liquidity).queryByRole("img")).toBeNull();
   expect(within(liquidity).queryByText(/^0/)).toBeNull();
-  expect(within(liquidity).queryByText(/Headroom/)).toBeNull();
+});
+
+it("draws a stated current that is not one number as written, with its stated headroom", () => {
+  const [test] =
+    headroomTests(
+      source(40, HEAD, [
+        ["Net leverage", "5.0", "4.0–4.2", "0.8x", "Passes at or below", "x", "Synthetic."],
+      ]),
+      ROLES,
+    ) ?? [];
+  if (!test) throw new Error("one test");
+  render(<Bullets label="Covenant tests" tests={[test]} />);
+  const item = screen.getByRole("listitem");
+  expect(within(item).getByText("4.0–4.2")).toBeVisible();
+  expect(within(item).getByText("5.0x")).toBeVisible();
+  expect(within(item).getByText("0.8x")).toBeVisible();
+  expect(within(item).queryByText("Not supplied")).toBeNull();
+  expect(within(item).queryByRole("img")).toBeNull();
 });
 
 it("gives the table view every cell as written, a gap as written, and one trace per row", () => {
@@ -98,12 +122,21 @@ it("shows stated figures that cannot be placed from zero as written, with no bar
       ROLES,
     ) ?? [];
   if (!test) throw new Error("one test");
-  render(<Bullets label="Covenant tests" tests={[test]} />);
+  const [read] =
+    leadTests(
+      source(40, HEAD, [
+        ["Net worth", "100", "-20", "Not supplied: negative", "Passes above", "US$m", "Synthetic."],
+      ]),
+      ROLES,
+    ) ?? [];
+  render(<Bullets label="Covenant tests" tests={[read ?? test]} />);
   const item = screen.getByRole("listitem");
   expect(within(item).getByText("-US$20m")).toBeVisible();
-  expect(within(item).getByText("/ US$100m")).toBeVisible();
+  expect(within(item).getByText("US$100m")).toBeVisible();
   expect(within(item).queryByRole("img")).toBeNull();
-  expect(within(item).queryByText("Not supplied")).toBeNull();
+  // Only the headroom is not supplied; the stated current and threshold are never marked so.
+  expect(within(item).getAllByText("Not supplied")).toHaveLength(1);
+  expect(within(item).getByText("Negative")).toBeVisible();
   expect(
     within(item).getByText("The stated values cannot be placed on a scale from zero."),
   ).toBeVisible();

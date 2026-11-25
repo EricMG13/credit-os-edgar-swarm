@@ -1,5 +1,4 @@
 import {
-  blocked,
   containsReference,
   evidencePath,
   methodNote,
@@ -22,6 +21,14 @@ export const leadHref =
     evidencePath(run.folder, entry, line);
 
 const capital = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
+/** What a cell that names a source shows; the cell itself is in the trace. */
+export const IN_EVIDENCE = "In Evidence";
+
+// A method register's id as the skills number them: "T2F.2", "T2DS.6", "TDR.3", "T4C.5".
+const REGISTER_ID = /(?<![\w.-])T[0-9A-Z]{1,6}\.\d+(?![\w])/;
+// A module code left after `readerText`: one the page has no name for.
+const RAW_CODE = /(?<![\w-])CP-[A-Z0-9]+(?![\w-])/i;
 
 const escaped = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -52,10 +59,15 @@ export function columnOf(table: Pick<Table, "headers">, name: string) {
   return at.length === 1 ? (at[0] ?? -1) : -1;
 }
 
-/** A cell for a working page: as written, with module codes as names; one naming a source stays in Evidence. */
+/**
+ * A cell for a working page: as written, with module codes as names. One naming a source, a
+ * register id ("T2F.2") or a module code the page has no name for stays in Evidence.
+ */
 export function readerCell(text: string) {
   const plain = text.replaceAll("**", "").replaceAll("`", "").trim();
-  return containsReference(plain) ? "In Evidence" : readerText(plain);
+  if (containsReference(plain) || REGISTER_ID.test(plain)) return IN_EVIDENCE;
+  const read = readerText(plain);
+  return RAW_CODE.test(read) ? IN_EVIDENCE : read;
 }
 
 export type Paragraph = { line: number; text: string | null };
@@ -73,36 +85,6 @@ export function sectionParagraphs(entry: OutputEntry, heading: string): Paragrap
     .filter((paragraph) => paragraph.text !== "");
 }
 
-const NOT_ASSESSABLE = /^Not assessable:\s*/;
-
-/**
- * Why a blocked module could not run, in its own words: the whole first paragraph of its bottom line
- * after "Not assessable:". Null when that paragraph names a source; the reason is then in Evidence.
- */
-export function blockedReason(entry: OutputEntry) {
-  if (!blocked(entry)) return null;
-  const first = entry.sections
-    .find((section) => section.heading === "Bottom line")
-    ?.blocks.find((block) => block.type === "text");
-  const body = first?.type === "text" ? readParagraph(first.text).body : "";
-  const reason = body
-    .replace(NOT_ASSESSABLE, "")
-    .replaceAll("**", "")
-    .replaceAll("`", "")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (!reason || containsReference(reason)) return null;
-  return capital(readerText(reason));
-}
-
-const IN_EVIDENCE = "Not assessable; the reason is recorded in Evidence.";
-
-/** A module that could not run or is marked not established: its reason, or where the reason is. */
-export function blockedState(entry: OutputEntry): { reason: string } | null {
-  if (!blocked(entry) && entry.output.state?.established !== false) return null;
-  return { reason: blockedReason(entry) ?? IN_EVIDENCE };
-}
-
 /** A register row's name for the reader: its own words, or its place when it has none. */
 export const rowName = (text: string, index: number) => text || `Row ${String(index + 1)}`;
 
@@ -115,12 +97,52 @@ export function readerCellOf(cell: Cell): Cell {
   };
 }
 
+/** The handoff's own table as a source table: cells as written, each row's line. */
+function sourceOf(table: Table): SourceTable {
+  return {
+    line: table.line,
+    headers: table.headers,
+    rows: table.rows.map(({ cells }) => cells),
+    rowLines: table.rows.map(({ line }) => line),
+  };
+}
+
+/** The handoff's headings that start with `prefix`, each with the rest as the store names it. */
+function headed(entry: OutputEntry, prefix: string, raise: boolean) {
+  return entry.sections.flatMap((section) => {
+    const heading = section.heading.trim();
+    if (!heading.startsWith(prefix)) return [];
+    const rest = heading.slice(prefix.length);
+    const tables = section.blocks.filter((block): block is Table => block.type === "table");
+    return [{ name: raise ? capital(rest) : rest, tables }];
+  });
+}
+
+/**
+ * The one table the handoff writes under `<prefix><name>`, read as written: what the page draws
+ * when the store publishes no descriptor for it. A chart's title has its first letter raised.
+ */
+function handoffTable(entry: OutputEntry, prefix: string, name: string, raise = false) {
+  const tables = headed(entry, prefix, raise)
+    .filter((item) => item.name === name)
+    .flatMap((item) => item.tables);
+  const [only] = tables;
+  return tables.length === 1 && only ? sourceOf(only) : undefined;
+}
+
 export type Chart =
   | { state: "ready"; descriptor: Descriptor; table: SourceTable }
   | { state: "gap"; reason: string }
+  /** The handoff has the table under its `Chart data:` heading; the store published no figure for it. */
+  | { state: "withheld"; table: SourceTable; line: number }
   | { state: "absent" };
 
-/** One of the module's published chart tables, the reason the module gives for not filling it, or neither. */
+const CHART = "Chart data: ";
+
+/**
+ * One of the module's chart tables: published with its descriptor, the reason the module gives for
+ * not filling it, the table as the handoff writes it when the store withheld the figure, or none.
+ */
 export function chartOf(entry: OutputEntry, title: string): Chart {
   const descriptor = items(entry.output.charts)
     .map(record)
@@ -135,17 +157,20 @@ export function chartOf(entry: OutputEntry, title: string): Chart {
     .find((chart) => chart.title === title);
   const reason = word(gap?.gap).trim();
   if (gap && reason) return { state: "gap", reason: readerCell(capital(reason)) };
+  const written = descriptor || gap ? undefined : handoffTable(entry, CHART, title, true);
+  if (written) return { state: "withheld", table: written, line: written.line };
   return { state: "absent" };
 }
 
-/** Every published chart whose title starts with `prefix`, in the handoff's order. */
+/** Every chart whose title starts with `prefix`, drawn, stated as a gap or withheld, in the handoff's order. */
 export function chartsStartingWith(entry: OutputEntry, prefix: string) {
-  return items(entry.output.charts)
-    .map(record)
-    .flatMap((chart) => {
-      const title = word(chart.title);
-      return title.startsWith(prefix) ? [{ title, chart: chartOf(entry, title) }] : [];
-    });
+  const titles = [
+    ...headed(entry, CHART, true).map((item) => item.name),
+    ...[...items(entry.output.charts), ...items(entry.output.chartGaps)].map((chart) =>
+      word(record(chart).title),
+    ),
+  ].filter((title) => title.startsWith(prefix));
+  return [...new Set(titles)].map((title) => ({ title, chart: chartOf(entry, title) }));
 }
 
 export type Edge = {
@@ -157,76 +182,138 @@ export type Edge = {
   to: string;
   line: number;
 };
+/** A map row the page does not draw as an edge, and why. */
+export type MapGap = { line: number; reason: string };
 export type MapRead =
-  | { state: "ready"; edges: Edge[]; line: number }
+  | { state: "ready"; edges: Edge[]; gaps: MapGap[]; line: number }
   | { state: "gap"; reason: string; line?: number }
   | { state: "absent" };
 
 const MAP = ["From", "Relationship", "Edge type", "To", "Evidence"];
-const stated = (text: string) => text.trim() !== "" && !text.startsWith("Not supplied:");
+const NOT_SUPPLIED = /^Not supplied:\s*(\S.*)$/;
+const stated = (text: string) => text.trim() !== "" && !NOT_SUPPLIED.test(text.trim());
 
-/** A published `Map: <name>` edge table, every row an edge; or the reason it has none. */
+/** Why the page could not read a table the handoff has; it names only what the page checked. */
+const UNREAD = "This page could not read the table the handoff has.";
+/** Why the page draws no figure for a chart table the handoff has but the store did not publish. */
+export const WITHHELD = "This page could not draw the table the handoff has.";
+const ROW_UNREAD = "this page could not read every cell of the row";
+
+/** A row's stated gap reasons, once each, in the order written. */
+const rowReasons = (cells: readonly string[]) => [
+  ...new Set(cells.flatMap((cell) => NOT_SUPPLIED.exec(cell.trim())?.[1] ?? [])),
+];
+
+/**
+ * A `Map: <name>` edge table: every fully stated row an edge, every other row a gap with its stated
+ * reason. Read from the published descriptor, or from the handoff's own table when the store
+ * withheld the map; the descriptor's stated gap when it gives one.
+ */
 export function mapOf(entry: OutputEntry, name: string): MapRead {
   const descriptor = items(entry.output.maps)
     .map(record)
     .find((map) => map.name === name);
-  if (!descriptor) return { state: "absent" };
-  const at = typeof descriptor.table === "number" ? descriptor.table : undefined;
-  const reason = word(descriptor.gap).trim();
+  const at = typeof descriptor?.table === "number" ? descriptor.table : undefined;
+  const reason = word(descriptor?.gap).trim();
   if (reason) return { state: "gap", reason: readerCell(capital(reason)), line: at };
-  const table = at === undefined ? undefined : publishedTables(entry.sections).get(at);
-  if (!table || table.headers.join("\0") !== MAP.join("\0")) return { state: "absent" };
-  const edges = table.rows.flatMap(([from = "", relationship = "", type = "", to = ""], index) =>
-    [from, relationship, type, to].every(stated)
-      ? [
-          {
-            key: from,
-            from: readerCell(from),
-            relationship: readerCell(relationship),
-            type: readerCell(type),
-            to: readerCell(to),
-            line: table.rowLines?.[index] ?? table.line,
-          },
-        ]
-      : [],
-  );
-  if (edges.length !== table.rows.length || !edges.length) {
-    const why = table.rows.flatMap((row) =>
-      row.slice(0, 4).flatMap((cell) => /^Not supplied:\s*(\S.*)$/.exec(cell)?.[1] ?? []),
-    )[0];
-    return why ? { state: "gap", reason: readerCell(capital(why)), line: at } : { state: "absent" };
+  const table = descriptor
+    ? at === undefined
+      ? undefined
+      : publishedTables(entry.sections).get(at)
+    : handoffTable(entry, "Map: ", name);
+  if (!table) return { state: "absent" };
+  if (table.headers.join("\0") !== MAP.join("\0") || !table.rows.length)
+    return { state: "gap", reason: UNREAD, line: table.line };
+  const edges: Edge[] = [];
+  const gaps: MapGap[] = [];
+  table.rows.forEach((row, index) => {
+    const [from = "", relationship = "", type = "", to = ""] = row;
+    const line = table.rowLines?.[index] ?? table.line;
+    if ([from, relationship, type, to].every(stated))
+      edges.push({
+        key: from,
+        from: readerCell(from),
+        relationship: readerCell(relationship),
+        type: readerCell(type),
+        to: readerCell(to),
+        line,
+      });
+    else
+      gaps.push({
+        line,
+        reason: readerCell(capital(rowReasons(row.slice(0, 4)).join("; ") || ROW_UNREAD)),
+      });
+  });
+  if (!edges.length) {
+    const reasons = [...new Set(gaps.map((gap) => gap.reason))];
+    return { state: "gap", reason: reasons.join("; "), line: table.line };
   }
-  return { state: "ready", edges, line: table.line };
+  return { state: "ready", edges, gaps, line: table.line };
 }
 
-/** The module's dated events of one lane, earliest first; precision as the module states it. */
-export function eventsOf(entry: OutputEntry, lane: string) {
+/** One dated row of a lane as the page shows it; precision and publication as the module states them. */
+export type LaneEvent = {
+  date: string;
+  precision: string;
+  published: string;
+  event: string;
+  status: string;
+  relevance: string;
+  line: number;
+};
+export type Lane =
+  | { state: "gap"; reason: string; line?: number }
+  /** `notDrawn`: rows of the lane's table the page could not place by date. */
+  | { state: "ready"; events: LaneEvent[]; notDrawn: number; line: number };
+
+/**
+ * The module's dated events of one lane, earliest first (then by end, then as written): from the
+ * published descriptor, or from the handoff's `Events: <lane>` table when the store withheld the
+ * lane. The descriptor's stated gap when it gives one; null when the handoff has no such lane.
+ */
+export function eventsOf(entry: OutputEntry, lane: string): Lane | null {
   const descriptor = items(entry.output.events)
     .map(record)
     .find((events) => events.lane === lane);
-  if (!descriptor || typeof descriptor.table !== "number") return null;
-  const table = publishedTables(entry.sections).get(descriptor.table);
+  const at = typeof descriptor?.table === "number" ? descriptor.table : undefined;
+  const reason = word(descriptor?.gap).trim();
+  if (reason) return { state: "gap", reason: readerCell(capital(reason)), line: at };
+  const table = descriptor
+    ? at === undefined
+      ? undefined
+      : publishedTables(entry.sections).get(at)
+    : handoffTable(entry, "Events: ", lane);
   if (!table) return null;
-  return eventRecords(table)
+  const records = eventRecords(table);
+  const events = records
+    .sort((a, b) => a.from - b.from || a.to - b.to || a.index - b.index)
     .map((event) => ({
-      ...event,
+      date: event.date,
+      precision: event.precision,
+      published: readerCell(event.published),
       event: readerCell(event.event) || "Not stated",
       status: readerCell(event.status),
+      relevance: readerCell(event.relevance),
       line: table.rowLines?.[event.index] ?? table.line,
-    }))
-    .sort((a, b) => a.from - b.from || a.index - b.index);
+    }));
+  return { state: "ready", events, notDrawn: table.rows.length - records.length, line: table.line };
 }
 
-const MONEY_LEAD = /^([+−-]?)([A-Z]{3}) ?(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?) ?million\b/;
+const MONEY_LEAD =
+  /^([+−-]?)([A-Z]{3}) ?([+−-]?)(\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?) ?(?:million|m)\b/;
 
 /**
- * The amount a cell states first, in millions of `currency`, when it opens "[+]USD 57.89 million…".
- * Null for any other form, another currency or a cell that states two amounts before a word.
+ * The amount a cell states first, in millions of `currency`, when it opens "[+]USD 57.89 million…",
+ * "USD +57.89 million…" or "USD 300m…"; `written` is that amount as the cell writes it. Null for any
+ * other form, a second sign, another currency or a cell that states two amounts before a word.
  */
 export function leadingMillions(text: string, currency?: string) {
   const match = MONEY_LEAD.exec(text.trim());
   if (!match || (currency && match[2] !== currency)) return null;
-  const value = Number((match[3] ?? "").replaceAll(",", ""));
+  const [written, before = "", code = "", after = "", digits = ""] = match;
+  if (before && after) return null;
+  const value = Number(digits.replaceAll(",", ""));
   if (!Number.isFinite(value)) return null;
-  return { currency: match[2] ?? "", value: match[1] === "-" || match[1] === "−" ? -value : value };
+  const sign = before || after;
+  return { currency: code, value: sign === "-" || sign === "−" ? -value : value, written };
 }

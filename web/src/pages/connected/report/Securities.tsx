@@ -12,7 +12,7 @@ import {
 } from "../publishedReport";
 import { namedTable } from "../reportView";
 import { amount, distinct } from "../visuals/visualData";
-import { Trace } from "./leads/parts";
+import { Notes, Trace } from "./leads/parts";
 import { readerCell } from "./leads/read";
 import { PublishedSource } from "./PublishedTrace";
 import { Bento, Tile } from "./overview/Tile";
@@ -339,16 +339,7 @@ export function InstrumentTable({ data, href }: { data: Instruments; href: Evide
           </tbody>
         </table>
       </div>
-      <ul className="flex flex-col gap-1.5 border-t border-border-hairline pt-3 text-caption text-text-secondary">
-        <li>
-          A yield bar is drawn only where the market level states a comparable last-trade yield,
-          against the largest of them.
-        </li>
-        <li>
-          No spread column in the module&apos;s table. A spread needs market quotes supplied at run
-          start and a spread column in the module&apos;s table.
-        </li>
-      </ul>
+      <Notes notes={["No spread column in the module's table."]} />
     </Tile>
   );
 }

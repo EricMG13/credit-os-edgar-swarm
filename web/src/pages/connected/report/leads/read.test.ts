@@ -1,15 +1,16 @@
+import path from "node:path";
 import { expect, it } from "vitest";
 import type { OutputEntry } from "../../publishedReport";
 import { entry, section, table } from "../overview/rows.fixture";
-import { bottomLine, EVENT_HEADERS } from "./lead.fixture";
+import { EVENT_HEADERS } from "./lead.fixture";
 import { fixtureEntry, retained } from "./markdown.fixture";
 import {
-  blockedReason,
-  blockedState,
   chartOf,
+  chartsStartingWith,
   eventsOf,
   leadingMillions,
   mapOf,
+  readerCell,
   registerTable,
   sectionParagraphs,
 } from "./read";
@@ -111,51 +112,29 @@ it("orders dated events by date and keeps each one's stated precision", () => {
     ],
   );
   made.output.events = [{ lane: "Financing", table: 3, gap: null }];
-  expect(eventsOf(made, "Financing")?.map(({ event, precision }) => [event, precision])).toEqual([
+  const lane = eventsOf(made, "Financing");
+  expect(
+    lane?.state === "ready" && lane.events.map(({ event, precision }) => [event, precision]),
+  ).toEqual([
     ["Early", "day"],
     ["Late", "year"],
   ]);
   expect(eventsOf(made, "Hedges")).toBeNull();
 });
 
-it("gives the blocked module's first paragraph after its prefix, and nothing naming a source", () => {
-  const blockedEntry = (text: string) =>
-    entry(
-      "CP-4",
-      [],
-      [
-        { heading: "Findings", level: 2, line: 1, blocks: [] },
-        {
-          heading: "Bottom line",
-          level: 3,
-          line: 2,
-          blocks: [{ type: "text", line: 3, end: 3, text }],
-        },
-      ],
-    );
-  expect(
-    blockedReason(
-      blockedEntry(
-        "Not assessable: no executed governing document available. The source set holds no credit agreement.",
-      ),
-    ),
-  ).toBe("No executed governing document available. The source set holds no credit agreement.");
-  expect(
-    blockedReason(blockedEntry("Not assessable: Acme Holdings Inc. did not publish its accounts.")),
-  ).toBe("Acme Holdings Inc. did not publish its accounts.");
-  expect(blockedReason(blockedEntry("Not assessable: no filings were supplied"))).toBe(
-    "No filings were supplied",
-  );
-  expect(blockedReason(blockedEntry("Not assessable: see TDG_10-K.htm, page 3."))).toBeNull();
-  expect(blockedReason(blockedEntry("Leverage is high."))).toBeNull();
-});
-
 it("reads a stated leading amount exactly and nothing else", () => {
   expect(leadingMillions("+USD 57.89 million annual cash interest")).toEqual({
     currency: "USD",
     value: 57.89,
+    written: "+USD 57.89 million",
   });
-  expect(leadingMillions("USD 5,789 million", "USD")).toEqual({ currency: "USD", value: 5789 });
+  expect(leadingMillions("USD 5,789 million", "USD")).toMatchObject({
+    currency: "USD",
+    value: 5789,
+  });
+  expect(leadingMillions("USD -57.89 million")).toMatchObject({ value: -57.89 });
+  expect(leadingMillions("+USD -5 million")).toBeNull();
+  expect(leadingMillions("USD 300–500 million")).toBeNull();
   expect(leadingMillions("Approximately +USD 30 million annual interest costs")).toBeNull();
   expect(leadingMillions("EUR 5 million", "USD")).toBeNull();
   expect(leadingMillions("Not calculable: no base")).toBeNull();
@@ -178,19 +157,6 @@ it("draws a passage's paragraphs and keeps one that names a source in Evidence",
     { line: 2, text: "The downside path starts with a traffic shock." },
     { line: 4, text: null },
   ]);
-});
-
-it("states a blocked module's reason, or the Evidence fallback, whenever it is blocked", () => {
-  const made = (text: string) => entry("CP-2", [], [...bottomLine(text)]);
-  const fallback = { reason: "Not assessable; the reason is recorded in Evidence." };
-  expect(blockedState(made("Not assessable: no filings were supplied"))).toEqual({
-    reason: "No filings were supplied",
-  });
-  expect(blockedState(made("Not assessable: see TDG_10-K.htm, page 3."))).toEqual(fallback);
-  expect(blockedState(made("Leverage is high."))).toBeNull();
-  const unestablished = made("Leverage is high.");
-  unestablished.output.state = { established: false, declared: null };
-  expect(blockedState(unestablished)).toEqual(fallback);
 });
 
 it("draws a map's edges and dated events without their source references or module codes", () => {
@@ -222,8 +188,128 @@ it("draws a map's edges and dated events without their source references or modu
     ),
   );
   made.output.events = [{ lane: "Issuer history", table: 21 }];
-  expect(eventsOf(made, "Issuer history")?.[0]).toMatchObject({
+  const lane = eventsOf(made, "Issuer history");
+  expect(lane?.state === "ready" && lane.events[0]).toMatchObject({
     event: "In Evidence",
     status: "Historical — Liquidity",
   });
+});
+
+const PROOF_2E = path.resolve(import.meta.dirname, "../../../../../../proof/handoffs/CP-2E.md");
+
+it("reads the amounts the repo's handoffs write: USD 300m and USD +57.89 million", () => {
+  // proof/handoffs/CP-2E.md T2F.4 (synthetic) and tests/fixtures/esg/CP-2E-h4.md T2F.5 (TransDigm FY2024, outdated).
+  const proof = fixtureEntry("CP-2E", PROOF_2E);
+  const exposure = registerTable(proof, "T2F.4", ["Metric", "Amount"]);
+  const hedged = exposure?.rows.find(({ cells }) => cells[0] === "Hedged floating-rate debt");
+  expect(leadingMillions(hedged?.cells[1] ?? "")).toEqual({
+    currency: "USD",
+    value: 300,
+    written: "USD 300m",
+  });
+  const h4 = fixtureEntry("CP-2E", H4);
+  const shocks = registerTable(h4, "T2F.5", ["Sensitivity", "Estimated Cash Impact"]);
+  const impact = shocks?.rows[0]?.cells[3] ?? "";
+  expect(impact).toMatch(/^USD \+57\.89 million annual/);
+  expect(leadingMillions(impact)).toEqual({
+    currency: "USD",
+    value: 57.89,
+    written: "USD +57.89 million",
+  });
+});
+
+it("keeps a register id or a module code the page cannot name in Evidence", () => {
+  // tests/fixtures/esg/CP-2E-h4.md T2F.3: "Individual coupons in T2F.2".
+  const h4 = fixtureEntry("CP-2E", H4);
+  const hedges = registerTable(h4, "T2F.3", ["Hedge Type"]);
+  const coupons = hedges?.rows.flatMap(({ cells }) => cells).find((cell) => cell.includes("T2F.2"));
+  expect(coupons).toBe("Individual coupons in T2F.2");
+  expect(readerCell(coupons ?? "")).toBe("In Evidence");
+  for (const id of ["T2DS.6", "T4C.5", "TDR.3", "T2R.1", "T3E.5", "T2B.7"])
+    expect(readerCell(`See ${id} for the terms`)).toBe("In Evidence");
+  expect(readerCell("Stress CP-2G")).not.toMatch(/CP-2G/);
+  expect(readerCell("Stress CP-ZZ9")).toBe("In Evidence");
+  expect(readerCell("Tranche I")).toBe("Tranche I");
+  expect(readerCell("Term SOFR +2.75%")).toBe("Term SOFR +2.75%");
+});
+
+const PROOF_2D = path.resolve(import.meta.dirname, "../../../../../../proof/handoffs/CP-2D.md");
+
+it("reads a chart table the store withheld from the handoff, and tells it from none", () => {
+  const made = fixtureEntry("CP-2D", PROOF_2D);
+  expect(chartOf(made, "Liquidity bridge")).toMatchObject({ state: "withheld", line: 22 });
+  const chart = chartOf(made, "Liquidity bridge");
+  expect(chart.state === "withheld" && chart.table.rows[0]).toEqual([
+    "Opening accessible liquidity",
+    "900",
+    "US$m",
+    "Synthetic.",
+  ]);
+  expect(chart.state === "withheld" && chart.table.rowLines?.[3]).toBe(27);
+  expect(chartOf(made, "Refinancing need")).toEqual({ state: "absent" });
+  made.output.chartGaps = [{ title: "Liquidity bridge", table: 22, gap: "no cash flow stated" }];
+  expect(chartOf(made, "Liquidity bridge")).toEqual({
+    state: "gap",
+    reason: "No cash flow stated",
+  });
+  expect(chartsStartingWith(made, "Liquidity").map(({ title }) => title)).toEqual([
+    "Liquidity bridge",
+  ]);
+});
+
+it("draws a map's stated edges and marks each gap row with its reason", () => {
+  const made = edges([
+    ["Parent", "Owns", "Ownership", "Issuer", "Filing p.1"],
+    ["Not supplied: guarantor exhibit absent", "Guarantees", "Guarantee", "Notes", "—"],
+    ["Issuer", "", "Other stated", "Notes", "Filing p.2"],
+  ]);
+  const read = mapOf(made, "ownership and control");
+  expect(read.state === "ready" && read.edges.map(({ from, to }) => [from, to])).toEqual([
+    ["Parent", "Issuer"],
+  ]);
+  expect(read.state === "ready" && read.gaps).toEqual([
+    { line: 6, reason: "Guarantor exhibit absent" },
+    { line: 7, reason: "This page could not read every cell of the row" },
+  ]);
+});
+
+it("reads a map and a lane the store withheld from the handoff's own table", () => {
+  const made = edges([["Parent", "Owns", "Ownership", "Issuer", "—"]]);
+  made.output.maps = [];
+  made.sections.push(
+    section(
+      "Events: Financing",
+      20,
+      table(21, EVENT_HEADERS, [
+        ["2026", "year", "—", "Late", "Scheduled — maturity", "Filing", "Wall"],
+        ["2026", "year", "—", "Notes", "Scheduled — x", "Filing", "Wall"],
+        ["sometime", "year", "—", "Unplaced", "Scheduled — maturity", "Filing", "Wall"],
+        ["2025-03-31", "day", "2024-11-07", "Early", "Historical — paid", "Filing", "Cost"],
+      ]),
+    ),
+  );
+  const map = mapOf(made, "ownership and control");
+  expect(map.state === "ready" && map.edges).toHaveLength(1);
+  const lane = eventsOf(made, "Financing");
+  expect(lane).toMatchObject({ state: "ready", notDrawn: 1, line: 21 });
+  expect(lane?.state === "ready" && lane.events.map((event) => event.event)).toEqual([
+    "Early",
+    "Late",
+    "Notes",
+  ]);
+  expect(lane?.state === "ready" && lane.events[0]).toMatchObject({
+    published: "2024-11-07",
+    relevance: "Cost",
+  });
+});
+
+it("prints a lane's stated gap", () => {
+  const made = entry("CP-2D", [], []);
+  made.output.events = [{ lane: "Financing", table: 3, gap: "no financing calendar supplied" }];
+  expect(eventsOf(made, "Financing")).toEqual({
+    state: "gap",
+    reason: "No financing calendar supplied",
+    line: 3,
+  });
+  expect(eventsOf(made, "Hedges")).toBeNull();
 });

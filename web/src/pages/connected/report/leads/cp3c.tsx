@@ -1,13 +1,13 @@
 import { Fragment } from "react";
 import { cx } from "@/utils/cx";
-import { unitLabel, type Row } from "../../publishedReport";
+import { blocked, unitLabel, type Row } from "../../publishedReport";
 import { ticks, type SourceTable } from "../../visuals/visualData";
 import { Key } from "../overview/figureParts";
 import { basisNotes, readCell, type Cell } from "../overview/figureData";
 import { Bento, GapNote, Tile } from "../overview/Tile";
-import { DatedList, LeadBlocked, LeadFigure, LeadGap, NEEDS, Trace } from "./parts";
+import { withDraws } from "./draws";
+import { LaneTile, LeadFigure, LeadGap, Trace } from "./parts";
 import {
-  blockedState,
   chartOf,
   columnOf,
   eventsOf,
@@ -16,6 +16,7 @@ import {
   readerCellOf,
   registerTable,
   rowName,
+  WITHHELD,
 } from "./read";
 import type { LeadProps } from "./types";
 
@@ -105,9 +106,17 @@ function NeedFigure({
         label={TITLE}
         title={TITLE}
         reason={
-          chart.state === "gap" ? chart.reason : "The module wrote no refinancing need table."
+          chart.state === "gap"
+            ? chart.reason
+            : chart.state === "absent"
+              ? "The module wrote no refinancing need table."
+              : WITHHELD
         }
-        needs={chart.state === "gap" ? undefined : NEEDS.proof}
+        trace={
+          chart.state === "gap" || chart.state === "absent" ? undefined : (
+            <Trace href={href(chart.table.line)} name={TITLE} />
+          )
+        }
       />
     );
   const units = new Set(chart.table.rows.map((row) => row.at(-2) ?? ""));
@@ -216,12 +225,11 @@ function Paths({ entry, href }: { entry: LeadProps["entry"]; href: (line?: numbe
         label={label}
         title={label}
         reason="The module wrote no liability-management path register."
-        needs={NEEDS.proof}
       />
     );
   const columns = ["Path Type", ...PATH_FIELDS].map((name) => columnOf(table, name));
   return (
-    <Tile span={12} label={label} title={label}>
+    <Tile span={12} label={label} title={label} className="w-full self-start">
       <ul aria-label={label} className="flex flex-col">
         {table.rows.map((row, index) => (
           <li
@@ -243,28 +251,26 @@ function Paths({ entry, href }: { entry: LeadProps["entry"]; href: (line?: numbe
 }
 
 /** CP-3C: what falls due, against what is committed to meet it. */
-export function RefinancingLead(props: LeadProps) {
-  const { entry } = props;
-  const href = leadHref(props);
-  const stopped = blockedState(entry);
-  if (stopped)
+export const RefinancingLead = withDraws(
+  function RefinancingLead(props: LeadProps) {
+    const { entry } = props;
+    if (blocked(entry)) return null;
+    const href = leadHref(props);
     return (
       <Bento>
-        <LeadBlocked span={12} label={TITLE} title={TITLE} reason={stopped.reason} />
+        <NeedFigure entry={entry} href={href} />
+        <div className="flex min-w-0 flex-col gap-4 self-start lg:col-span-4">
+          <Paths entry={entry} href={href} />
+          <LaneTile
+            lane={eventsOf(entry, "Refinancing")}
+            span={12}
+            label="Refinancing dates"
+            title="Refinancing dates"
+            href={href}
+          />
+        </div>
       </Bento>
     );
-  const events = eventsOf(entry, "Refinancing") ?? [];
-  return (
-    <Bento>
-      <NeedFigure entry={entry} href={href} />
-      <div className="flex min-w-0 flex-col gap-4 lg:col-span-4">
-        <Paths entry={entry} href={href} />
-        {events.length > 0 && (
-          <Tile span={12} label="Refinancing dates" title="Refinancing dates">
-            <DatedList label="Refinancing dates" events={events} href={href} />
-          </Tile>
-        )}
-      </div>
-    </Bento>
-  );
-}
+  },
+  ["figures", "events"],
+);

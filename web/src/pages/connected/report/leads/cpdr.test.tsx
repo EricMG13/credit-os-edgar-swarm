@@ -71,7 +71,8 @@ it("states why the question list is a gap, points to the executive answer and ne
   expect(
     within(tile).getByText("The answers are written in the executive answer passage."),
   ).toBeVisible();
-  expect(within(tile).getByText("Coverage has no fixed place in the handoff.")).toBeVisible();
+  // Ruling vii: no note on where the method puts coverage.
+  expect(tile.textContent).not.toMatch(/no fixed place|methodology/);
   expect(within(tile).queryByText("Answered")).toBeNull();
   expect(within(tile).queryByText("0")).toBeNull();
 });
@@ -102,14 +103,13 @@ it("says what is missing when the handoff has no scenarios, catalysts or executi
   expect(screen.queryByText(/executive answer passage/)).toBeNull();
 });
 
-it("draws a blocked module as Not assessable", () => {
-  render(
+it("draws nothing for a blocked module", () => {
+  const { container } = render(
     <ResearchLead
       {...leadProps(
         entry("CP-DR", [], bottomLine("Not assessable: no research brief was approved.")),
       )}
     />,
   );
-  expect(screen.getByText("Not assessable")).toBeVisible();
-  expect(screen.getByText("No research brief was approved.")).toBeVisible();
+  expect(container).toBeEmptyDOMElement();
 });

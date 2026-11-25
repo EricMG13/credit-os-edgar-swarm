@@ -1,19 +1,12 @@
-import { withUnit } from "../../publishedReport";
+import { blocked, withUnit } from "../../publishedReport";
 import { Key } from "../overview/figureParts";
 import { basisNotes } from "../overview/figureData";
 import type { HeadroomTest } from "../overview/stressData";
 import { Bullets, leadTests } from "./bullet";
 import { Bento, Figure } from "../overview/Tile";
-import { LeadBlocked, LeadFigure, LeadGap, NEEDS, Trace } from "./parts";
-import {
-  blockedState,
-  chartOf,
-  columnOf,
-  leadHref,
-  readerCell,
-  registerTable,
-  rowName,
-} from "./read";
+import { withDraws } from "./draws";
+import { LeadFigure, LeadGap, Trace } from "./parts";
+import { chartOf, columnOf, leadHref, readerCell, registerTable, rowName, WITHHELD } from "./read";
 import type { LeadProps } from "./types";
 
 const TRIGGERS = "Rating triggers";
@@ -39,9 +32,13 @@ function Triggers({ entry, href }: { entry: LeadProps["entry"]; href: (line?: nu
             ? chart.reason
             : chart.state === "ready"
               ? "The trigger table has no trigger, threshold or current column."
-              : "This handoff has no rating trigger table."
+              : chart.state === "withheld"
+                ? WITHHELD
+                : "This handoff has no rating trigger table."
         }
-        needs={chart.state === "absent" ? NEEDS.proof : undefined}
+        trace={
+          chart.state === "withheld" ? <Trace href={href(chart.line)} name={TRIGGERS} /> : undefined
+        }
       />
     );
   const { table } = chart;
@@ -114,7 +111,6 @@ function Register({ entry, href }: { entry: LeadProps["entry"]; href: (line?: nu
         label={REGISTER}
         title={REGISTER}
         reason="This handoff has no rating register."
-        needs={NEEDS.proof}
       />
     );
   const at = {
@@ -165,25 +161,17 @@ function Register({ entry, href }: { entry: LeadProps["entry"]; href: (line?: nu
 }
 
 /** CP-2H: where each agency's triggers stand, and the ratings now in force. */
-export function RatingsLead(props: LeadProps) {
-  const { entry } = props;
-  const href = leadHref(props);
-  const stopped = blockedState(entry);
-  if (stopped)
+export const RatingsLead = withDraws(
+  function RatingsLead(props: LeadProps) {
+    const { entry } = props;
+    if (blocked(entry)) return null;
+    const href = leadHref(props);
     return (
       <Bento>
-        <LeadBlocked
-          span={12}
-          label="Ratings migration"
-          title="Ratings migration"
-          reason={stopped.reason}
-        />
+        <Triggers entry={entry} href={href} />
+        <Register entry={entry} href={href} />
       </Bento>
     );
-  return (
-    <Bento>
-      <Triggers entry={entry} href={href} />
-      <Register entry={entry} href={href} />
-    </Bento>
-  );
-}
+  },
+  ["figures"],
+);

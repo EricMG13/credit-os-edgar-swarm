@@ -66,7 +66,8 @@ it("draws net leverage by case as the model displays it, the peak, the gap perio
   expect(
     within(tile).getByText("Base case, FY2026E: the inputs do not state this period."),
   ).toBeVisible();
-  expect(within(tile).getByText("No limit is published with the model.")).toBeVisible();
+  // The covenant module owns limits: this page says nothing about them, and no build note.
+  expect(tile.textContent).not.toMatch(/No limit is published|methodology/);
   expect(within(tile).getByRole("link", { name: "Open the forecast" })).toHaveAttribute(
     "href",
     "#forecast",
@@ -137,17 +138,14 @@ it("states a declined forecast block with the drivers' own reasons, never zeros"
   ).toBeVisible();
 });
 
-it("draws a blocked module as Not assessable", () => {
+it("draws nothing for a blocked module", () => {
   const stopped = entry(
     "CP-2G",
     [],
     bottomLine("Not assessable: the downside module was blocked."),
   );
-  render(<ForwardLead {...leadProps(stopped, [], [model])} />);
-  const tile = screen.getByRole("region", { name: "Net leverage path" });
-  expect(within(tile).getByText("Not assessable")).toBeVisible();
-  expect(within(tile).getByText("The downside module was blocked.")).toBeVisible();
-  expect(screen.queryByRole("region", { name: "Drivers by case" })).toBeNull();
+  const { container } = render(<ForwardLead {...leadProps(stopped, [], [model])} />);
+  expect(container).toBeEmptyDOMElement();
 });
 
 it("says the path peaks only when every period of every case has a figure", () => {

@@ -1,15 +1,15 @@
 import { Fragment, useState } from "react";
 import { Segmented } from "@/components/kit/Segmented";
-import { unitLabel, withUnit } from "../../publishedReport";
-import { items, record, ticks, word, type SourceTable } from "../../visuals/visualData";
+import { blocked, unitLabel, withUnit } from "../../publishedReport";
+import { ticks, word, type SourceTable } from "../../visuals/visualData";
 import { basisNotes, readCell, type Cell } from "../overview/figureData";
 import { Key } from "../overview/figureParts";
 import { Bento, GapNote, Tile } from "../overview/Tile";
-import { Bridge, bridgeSteps } from "./bridge";
+import { Bridge, bridgeOf, stepTable } from "./bridge";
 import { BarLine, spoken } from "./cp3c";
-import { LeadBlocked, LeadFigure, LeadGap, NEEDS, Trace } from "./parts";
+import { withDraws } from "./draws";
+import { LeadFigure, LeadGap, Trace } from "./parts";
 import {
-  blockedState,
   chartOf,
   readerCellOf,
   chartsStartingWith,
@@ -18,6 +18,7 @@ import {
   readerCell,
   registerTable,
   rowName,
+  WITHHELD,
   type Chart,
 } from "./read";
 import type { LeadProps } from "./types";
@@ -28,16 +29,6 @@ type Entry = LeadProps["entry"];
 const TITLE = "Value allocation";
 const RECOVERY = "Recovery by class";
 
-/** Every value allocation the module published, and those it states as gaps, in its order. */
-function allocations(entry: Entry) {
-  const drawn = chartsStartingWith(entry, TITLE);
-  const gaps = items(entry.output.chartGaps)
-    .map((gap) => word(record(gap).title))
-    .filter((title) => title.startsWith(TITLE) && !drawn.some((item) => item.title === title))
-    .map((title) => ({ title, chart: chartOf(entry, title) }));
-  return [...drawn, ...gaps];
-}
-
 /** "Value allocation — scenario 1" → "Scenario 1"; the title itself when it names no scenario. */
 function scenarioName(title: string) {
   const rest = title.slice(TITLE.length).replace(/^\s*[—–:-]\s*/, "");
@@ -45,13 +36,14 @@ function scenarioName(title: string) {
 }
 
 function AllocationFigure({ title, chart }: { title: string; chart: Chart }) {
-  if (chart.state !== "ready")
+  const read = bridgeOf(chart);
+  if (!read)
     return (
       <GapNote>
         {chart.state === "gap" ? chart.reason : "The module wrote no value allocation table."}
       </GapNote>
     );
-  const { steps, unit, why } = bridgeSteps(chart.table);
+  const { steps, unit, why } = read;
   if (why)
     return (
       <p role="note" className="text-small text-text-secondary">
@@ -67,22 +59,8 @@ function AllocationFigure({ title, chart }: { title: string; chart: Chart }) {
   );
 }
 
-function stepTable(chart: Chart, href: Href) {
-  if (chart.state !== "ready") return undefined;
-  const { steps } = bridgeSteps(chart.table);
-  return {
-    head: ["Step", "Amount"],
-    rows: steps.map((step) => ({
-      label: step.label,
-      cells: [step.cell.text || null],
-      end: <Trace href={href(step.line)} name={step.label} />,
-    })),
-    endHeading: "Source",
-  };
-}
-
 function ValueAllocation({ entry, href }: { entry: Entry; href: Href }) {
-  const scenarios = allocations(entry);
+  const scenarios = chartsStartingWith(entry, TITLE);
   const [chosen, choose] = useState(scenarios[0]?.title ?? "");
   const current = scenarios.find((item) => item.title === chosen) ?? scenarios[0];
   if (!current)
@@ -92,18 +70,17 @@ function ValueAllocation({ entry, href }: { entry: Entry; href: Href }) {
         label={TITLE}
         title={TITLE}
         reason="The module wrote no value allocation table."
-        needs={NEEDS.proof}
       />
     );
   const { chart } = current;
-  const read = chart.state === "ready" ? bridgeSteps(chart.table) : null;
+  const read = bridgeOf(chart);
   const first = read?.steps[0];
   const last = read?.steps.at(-1);
   const reading =
     read && !read.why && first && last
       ? `${first.label} ${first.cell.text} to ${last.label.toLowerCase()} ${last.cell.text}`
       : TITLE;
-  const table = stepTable(chart, href);
+  const table = read ? stepTable(read.steps, href) : undefined;
   return (
     <LeadFigure
       span={8}
@@ -132,17 +109,12 @@ function ValueAllocation({ entry, href }: { entry: Entry; href: Href }) {
           )}
         </>
       }
-      trace={
-        chart.state === "ready" ? (
-          <Trace href={href(chart.table.line)} name={current.title} />
-        ) : undefined
-      }
+      trace={read ? <Trace href={href(read.table.line)} name={current.title} /> : undefined}
       figure={<AllocationFigure title={current.title} chart={chart} />}
       table={table}
       notes={[
         "The handoff does not state the fulcrum class.",
-        NEEDS.method,
-        ...(chart.state === "ready" ? basisNotes(chart.table) : []),
+        ...(read ? basisNotes(read.table) : []),
       ]}
     />
   );
@@ -186,9 +158,17 @@ function RecoveryByClass({ entry, href }: { entry: Entry; href: Href }) {
         label={RECOVERY}
         title={RECOVERY}
         reason={
-          chart.state === "gap" ? chart.reason : "The module wrote no recovery by class table."
+          chart.state === "gap"
+            ? chart.reason
+            : chart.state === "absent"
+              ? "The module wrote no recovery by class table."
+              : WITHHELD
         }
-        needs={chart.state === "gap" ? undefined : NEEDS.proof}
+        trace={
+          chart.state === "gap" || chart.state === "absent" ? undefined : (
+            <Trace href={href(chart.table.line)} name={RECOVERY} />
+          )
+        }
       />
     );
   const unit = word(chart.descriptor.unit);
@@ -278,7 +258,6 @@ function PlanTreatment({ entry, href }: { entry: Entry; href: Href }) {
         label={label}
         title={label}
         reason="The module wrote no plan treatment register."
-        needs={NEEDS.proof}
       />
     );
   const path = columnOf(table, "path");
@@ -286,7 +265,7 @@ function PlanTreatment({ entry, href }: { entry: Entry; href: Href }) {
     ({ at }) => at >= 0,
   );
   return (
-    <Tile span={12} label={label} title={label}>
+    <Tile span={12} label={label} title={label} className="w-full self-start">
       <ul aria-label={label} className="flex flex-col">
         {table.rows.map(({ line, cells }, index) => {
           const name = rowName(readerCell(cells[path] ?? ""), index);
@@ -322,21 +301,18 @@ function PlanTreatment({ entry, href }: { entry: Entry; href: Href }) {
 }
 
 /** CP-4C: who is paid from the value in a restructuring, class by class. */
-export function RestructuringLead(props: LeadProps) {
-  const { entry } = props;
-  const href = leadHref(props);
-  const stopped = blockedState(entry);
-  if (stopped)
+export const RestructuringLead = withDraws(
+  function RestructuringLead(props: LeadProps) {
+    const { entry } = props;
+    if (blocked(entry)) return null;
+    const href = leadHref(props);
     return (
       <Bento>
-        <LeadBlocked span={12} label={TITLE} title={TITLE} reason={stopped.reason} />
+        <ValueAllocation entry={entry} href={href} />
+        <RecoveryByClass entry={entry} href={href} />
+        <PlanTreatment entry={entry} href={href} />
       </Bento>
     );
-  return (
-    <Bento>
-      <ValueAllocation entry={entry} href={href} />
-      <RecoveryByClass entry={entry} href={href} />
-      <PlanTreatment entry={entry} href={href} />
-    </Bento>
-  );
-}
+  },
+  ["figures"],
+);

@@ -115,7 +115,7 @@ it("draws the value allocation of the first scenario as a waterfall, steps as wr
   for (const text of ["1,000", "-50", "-700", "-250"])
     expect(within(figure).getAllByText(text).length).toBeGreaterThan(0);
   expect(within(tile).getByText("The handoff does not state the fulcrum class.")).toBeVisible();
-  expect(within(tile).getByText(/methodology change/)).toBeVisible();
+  expect(tile.textContent).not.toMatch(/methodology|Needs/);
   expect(within(tile).queryByText(/fulcrum is|fulcrum:/i)).toBeNull();
 });
 
@@ -139,7 +139,8 @@ it("switches scenarios with a pressed button group, the table following", () => 
   ).toHaveAttribute("href", expect.stringContaining("#evidence/"));
 });
 
-it("keeps a value allocation that does not reconcile out of the figure, with the reason", () => {
+it("reads a value allocation the store withheld from the handoff, and says it does not reconcile", () => {
+  // The store publishes no descriptor for a bridge that does not reconcile; scenario 2 keeps its own.
   const broken = RESTRUCTURING.replace(
     step("Senior unsecured notes", "-250"),
     step("Senior unsecured notes", "-200"),
@@ -148,15 +149,24 @@ it("keeps a value allocation that does not reconcile out of the figure, with the
     <RestructuringLead
       {...leadProps(
         restructuring(broken, [
-          { ...allocation(1), table: lineOf(broken, "Chart data: value allocation — scenario 1") },
+          { ...allocation(2), table: lineOf(broken, "Chart data: value allocation — scenario 2") },
         ]),
       )}
     />,
   );
   const tile = screen.getByRole("region", { name: "Value allocation" });
+  expect(within(tile).getByRole("button", { name: "Scenario 1" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
   expect(within(tile).queryByRole("img")).toBeNull();
   expect(within(tile).getByText(/does not reconcile/)).toBeVisible();
-  expect(within(tile).queryByRole("button", { name: "Scenario 1" })).toBeNull();
+  expect(within(tile).getByRole("link", { name: /Source for/ })).toHaveAttribute(
+    "href",
+    expect.stringContaining("#evidence/"),
+  );
+  fireEvent.click(within(tile).getByRole("button", { name: "Scenario 2" }));
+  expect(within(tile).getByRole("img")).toHaveAccessibleName(/Enterprise value 800/);
 });
 
 it("draws claim against recovery per class and scenario, the stated recovery % and gaps", () => {
@@ -192,13 +202,12 @@ it("draws the plan treatment as written, and the gaps when the module wrote none
     ["Plan treatment", "The module wrote no plan treatment register."],
   ] as const)
     expect(within(screen.getByRole("region", { name })).getByText(text)).toBeVisible();
-  expect(
-    screen.getAllByText("Built from the module's contract; to be proven on a real run."),
-  ).toHaveLength(3);
+  // Ruling vii: no build note on the reader's page.
+  expect(screen.queryByText(/Built from the module's contract/)).toBeNull();
 });
 
-it("draws a blocked module as Not assessable with its reason", () => {
-  render(
+it("draws nothing for a blocked module", () => {
+  const { container } = render(
     <RestructuringLead
       {...leadProps(
         handoff(
@@ -207,9 +216,7 @@ it("draws a blocked module as Not assessable with its reason", () => {
       )}
     />,
   );
-  const tile = screen.getByRole("region", { name: "Value allocation" });
-  expect(within(tile).getByText("Not assessable")).toBeVisible();
-  expect(within(tile).getByText("The distress gate is not met.")).toBeVisible();
+  expect(container).toBeEmptyDOMElement();
 });
 
 it("puts claims in more than one unit in the table view with the reason, not on one scale", () => {

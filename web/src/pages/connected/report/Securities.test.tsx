@@ -159,7 +159,9 @@ it("says what was checked about the spread column", () => {
   if (!view) throw new Error("missing security review");
   render(<Securities data={view} href={(line) => `#evidence/5-${String(line)}`} />);
   expect(screen.getByText(/^No spread column in the module's table\./)).toBeVisible();
-  expect(screen.getByText(/A spread needs market quotes supplied at run start/)).toBeVisible();
+  // Ruling vii: no note on what the method would need.
+  expect(screen.queryByText(/A spread needs/)).toBeNull();
+  expect(screen.queryByText(/A yield bar is drawn only/)).toBeNull();
 });
 
 // docs/rulings/2026-11-16-reporting-currency-from-sources.md: the quotes stay US market quotes.

@@ -2,7 +2,8 @@ import { unitLabel } from "../../publishedReport";
 import { ticks, type SourceTable } from "../../visuals/visualData";
 import { readCell, type Cell } from "../overview/figureData";
 import { gapReason } from "../overview/read";
-import { readerCell, readerCellOf } from "./read";
+import { BarRow, Trace, type LeadTable } from "./parts";
+import { readerCell, readerCellOf, WITHHELD, type Chart } from "./read";
 
 export type Step = { label: string; cell: Cell; line: number };
 
@@ -11,7 +12,7 @@ export type Step = { label: string; cell: Cell; line: number };
  * the closing, as written. `drawable` only when every amount is a number, the rows share one unit and
  * the opening plus the changes equal the closing; otherwise `why` says what stops the figure.
  */
-export function bridgeSteps(table: SourceTable, amountColumn = 1) {
+function bridgeSteps(table: SourceTable, amountColumn = 1) {
   const texts = table.rows.map((row) => row[amountColumn] ?? "");
   const units = new Set(table.rows.map((row) => row.at(-2) ?? ""));
   const unit = units.size === 1 ? ([...units][0] ?? "") : "";
@@ -43,14 +44,42 @@ export function bridgeSteps(table: SourceTable, amountColumn = 1) {
   return { steps, unit, why };
 }
 
-/** Signed text for a change exactly as written, with a plus where the module wrote none. */
-const signed = (text: string) => (/^[+\-−(]/.test(text.trim()) ? text.trim() : `+${text.trim()}`);
+/**
+ * A step chart as the page can draw it: the steps and unit, and `why` no figure is drawn. A table
+ * the store withheld is read from the handoff as written, so its own reason (it does not reconcile,
+ * a step is not supplied) is the one given; any other withheld table says only that the page could
+ * not draw it. Null for a stated gap or no table.
+ */
+export function bridgeOf(chart: Chart) {
+  if (chart.state !== "ready" && chart.state !== "withheld") return null;
+  const read = bridgeSteps(chart.table);
+  const why = read.why ?? (chart.state === "withheld" ? WITHHELD : null);
+  return { ...read, why, table: chart.table };
+}
 
-const pct = (value: number) => `${String(value * 100)}%`;
+/** A bridge's table view: each step's amount as written, one trace per row. */
+export function stepTable(
+  steps: readonly Step[],
+  href: (line?: number) => string,
+): LeadTable | undefined {
+  if (!steps.length) return undefined;
+  return {
+    head: ["Step", "Amount"],
+    rows: steps.map((step) => ({
+      label: step.label,
+      cells: [step.cell.text || null],
+      end: <Trace href={href(step.line)} name={step.label} />,
+    })),
+    endHeading: "Source",
+  };
+}
+
+const share = (value: number) => `${String(value * 100)}%`;
 
 /**
  * A horizontal bridge: the opening and closing from zero, each change floating from where the one
- * before ended. Every label is the module's figure; the running positions place bars only.
+ * before ended. Every figure is the module's, as written, in its own column; the running positions
+ * place bars only.
  */
 export function Bridge({ steps, unit, label }: { steps: Step[]; unit: string; label: string }) {
   const values = steps.map((step) => step.cell.value ?? 0);
@@ -63,89 +92,59 @@ export function Bridge({ steps, unit, label }: { steps: Step[]; unit: string; la
   const lo = scale[0]?.value ?? 0;
   const hi = scale.at(-1)?.value ?? 1;
   const at = (value: number) => (value - lo) / (hi - lo || 1);
-  const track = "relative h-7 min-w-0";
+  const marks = scale.map((tick) => at(tick.value)).filter((mark) => mark !== at(0));
+  const row =
+    "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 sm:grid-cols-[12rem_minmax(0,1fr)_auto]";
   return (
     <div role="img" aria-label={label} className="flex min-w-0 flex-col gap-1">
-      <ol aria-hidden="true" className="flex flex-col gap-1">
+      <ol aria-hidden="true" className="flex flex-col gap-2">
         {steps.map((step, index) => {
           const total = index === 0 || index === last;
           const from = total ? 0 : (ends[index - 1] ?? 0);
-          const to = ends[index] ?? 0;
-          const left = at(Math.min(from, to));
-          const width = Math.abs(at(to) - at(from));
-          // The figure after the bar; before it when the bar ends near the right; inside it when
-          // the bar spans most of the track.
-          const place = left + width <= 0.8 ? "after" : left >= 0.2 ? "before" : "inside";
           return (
-            <li
-              key={step.line}
-              className="grid grid-cols-1 items-center gap-x-4 sm:grid-cols-[12rem_minmax(0,1fr)]"
-            >
+            <li key={step.line} className={row}>
               <span
-                className={
-                  total
-                    ? "text-small font-medium text-text-primary"
-                    : "text-small text-text-secondary"
-                }
+                className={`col-span-2 text-small sm:col-span-1 ${total ? "font-medium text-text-primary" : "text-text-secondary"}`}
               >
                 {step.label}
               </span>
-              <span className={track}>
-                {scale.map((tick) => (
-                  <span
-                    key={tick.value}
-                    className={`absolute inset-y-0 w-px ${tick.value === 0 ? "bg-connector" : "bg-border-hairline"}`}
-                    style={{ left: pct(at(tick.value)) }}
-                  />
-                ))}
-                <span
-                  className={`absolute top-1.5 h-4 min-w-0.5 rounded-[2px] ${total ? "bg-chart-1" : "bg-chart-2"}`}
-                  style={{ left: pct(left), width: pct(width) }}
-                />
-                <span
-                  data-label={place}
-                  className={`absolute font-mono whitespace-nowrap tabular-nums ${
-                    place === "inside"
-                      ? "top-1.5 text-caption leading-4 text-text-on-action"
-                      : "top-1 text-small text-text-primary"
-                  }`}
-                  style={
-                    place === "after"
-                      ? { left: pct(left + width), paddingLeft: "0.375rem" }
-                      : place === "before"
-                        ? { right: pct(1 - left), paddingRight: "0.375rem" }
-                        : { right: pct(1 - left - width), paddingRight: "0.375rem" }
-                  }
-                >
-                  {total ? step.cell.text : signed(step.cell.text)}
-                </span>
+              <BarRow
+                start={at(from)}
+                end={at(ends[index] ?? 0)}
+                tone={total ? "primary" : "secondary"}
+                ticks={marks}
+                zero={at(0)}
+              />
+              <span
+                data-figure
+                className="text-right font-mono text-small text-text-primary tabular-nums"
+              >
+                {step.cell.text}
               </span>
             </li>
           );
         })}
       </ol>
-      <div
-        aria-hidden="true"
-        className="grid grid-cols-1 gap-x-4 sm:grid-cols-[12rem_minmax(0,1fr)]"
-      >
+      <div aria-hidden="true" className={row}>
         <span className="hidden sm:block" />
         <span className="relative h-4">
           {scale.map((tick, index) => (
             <span
               key={tick.value}
-              className={`absolute font-mono text-[11px] text-text-tertiary tabular-nums ${
+              className={`absolute font-mono text-caption text-text-tertiary tabular-nums ${
                 index === 0
                   ? ""
                   : index === scale.length - 1
                     ? "-translate-x-full"
                     : "-translate-x-1/2"
               }`}
-              style={{ left: pct(at(tick.value)) }}
+              style={{ left: share(at(tick.value)) }}
             >
               {tick.label}
             </span>
           ))}
         </span>
+        <span />
       </div>
       <p className="sr-only">{`Amounts in ${unitLabel(unit)}.`}</p>
     </div>

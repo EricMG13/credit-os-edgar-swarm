@@ -1,29 +1,13 @@
 import type { ReactNode } from "react";
-import { evidencePath, withUnit } from "../../publishedReport";
+import { blocked, evidencePath, withUnit } from "../../publishedReport";
 import { figureSource, moduleSource } from "../overview/figureData";
 import { gapReason, lastTwo, periodSeries } from "../overview/read";
 import { bulletGeometry } from "../overview/stressData";
 import { Bento, Figure, Tile } from "../overview/Tile";
 import { leadTests } from "./bullet";
-import {
-  edgeTable,
-  LeadBlocked,
-  LeadFigure,
-  LeadGap,
-  NEEDS,
-  NodeList,
-  Prose,
-  Trace,
-} from "./parts";
-import {
-  blockedState,
-  columnOf,
-  leadHref,
-  mapOf,
-  readerCell,
-  registerTable,
-  sectionParagraphs,
-} from "./read";
+import { withDraws } from "./draws";
+import { LeadGap, MapTile, Prose, Trace } from "./parts";
+import { columnOf, leadHref, mapOf, readerCell, registerTable, sectionParagraphs } from "./read";
 import type { LeadProps } from "./types";
 
 const LEDGER_HEADER = [
@@ -168,7 +152,12 @@ function LedgerTile({
   const ledger = typedLedger(entry) ?? filterLedger(entry);
   if (ledger)
     return (
-      <Tile span={8} label="Strengths and weaknesses" title="Strengths against weaknesses">
+      <Tile
+        span={8}
+        label="Strengths and weaknesses"
+        title="Strengths against weaknesses"
+        className="w-full self-start"
+      >
         <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2">
           <Column title="Strengths" items={ledger.strengths} href={href} />
           <Column title="Weaknesses" items={ledger.weaknesses} href={href} />
@@ -192,15 +181,16 @@ function LedgerTile({
         label="Strengths and weaknesses"
         title="Strengths and weaknesses"
         reason="The handoff states no strengths and weaknesses."
-        needs={NEEDS.method}
       />
     );
   return (
-    <Tile span={8} label="Strengths and weaknesses" title="Strengths and weaknesses">
+    <Tile
+      span={8}
+      label="Strengths and weaknesses"
+      title="Strengths and weaknesses"
+      className="w-full self-start"
+    >
       <Prose label="Strengths and weaknesses" paragraphs={paragraphs} href={href} />
-      <p className="text-caption text-text-secondary">
-        A ranked ledger needs the typed strengths and weaknesses table.
-      </p>
     </Tile>
   );
 }
@@ -305,62 +295,46 @@ function HeadroomStat({ props }: { props: LeadProps }) {
 }
 
 /** CP-2: the credit view in one place: what supports it, what weakens it, and how risk travels. */
-export function CreditLead(props: LeadProps) {
-  const { entry } = props;
-  const href = leadHref(props);
-  const stopped = blockedState(entry);
-  if (stopped)
+export const CreditLead = withDraws(
+  function CreditLead(props: LeadProps) {
+    const { entry } = props;
+    if (blocked(entry)) return null;
+    const href = leadHref(props);
     return (
       <Bento>
-        <LeadBlocked
+        <LedgerTile entry={entry} href={href} />
+        <Tile
+          span={4}
+          label="Leverage, cover and headroom"
+          title="Leverage, cover and headroom"
+          className="w-full self-start"
+        >
+          <dl className="flex flex-col gap-3">
+            <SeriesStat
+              props={props}
+              name="Total debt / EBITDA"
+              chart="leverage"
+              heading={/^Total debt \/ EBITDA$/}
+            />
+            <SeriesStat
+              props={props}
+              name="EBITDA / cash interest"
+              chart="interest cover"
+              heading={/^EBITDA \/ cash interest$/}
+            />
+            <HeadroomStat props={props} />
+          </dl>
+        </Tile>
+        <MapTile
+          map={mapOf(entry, "credit-risk transmission")}
+          href={href}
           span={12}
-          label="Fundamental credit"
-          title="Fundamental credit"
-          reason={stopped.reason}
+          label="Credit-risk transmission"
+          title="How risk reaches the credit"
+          absent="This handoff has no credit-risk transmission map."
         />
       </Bento>
     );
-  const map = mapOf(entry, "credit-risk transmission");
-  return (
-    <Bento>
-      <LedgerTile entry={entry} href={href} />
-      <Tile span={4} label="Leverage, cover and headroom" title="Leverage, cover and headroom">
-        <dl className="flex flex-col gap-3">
-          <SeriesStat
-            props={props}
-            name="Total debt / EBITDA"
-            chart="leverage"
-            heading={/^Total debt \/ EBITDA$/}
-          />
-          <SeriesStat
-            props={props}
-            name="EBITDA / cash interest"
-            chart="interest cover"
-            heading={/^EBITDA \/ cash interest$/}
-          />
-          <HeadroomStat props={props} />
-        </dl>
-      </Tile>
-      {map.state === "ready" ? (
-        <LeadFigure
-          span={12}
-          label="Credit-risk transmission"
-          title="How risk reaches the credit"
-          trace={<Trace href={href(map.line)} name="Credit-risk transmission" />}
-          figure={<NodeList label="Credit-risk transmission" edges={map.edges} href={href} />}
-          table={edgeTable(map.edges, href)}
-          notes={["The map does not mark which links add risk and which support the credit."]}
-        />
-      ) : (
-        <LeadGap
-          span={12}
-          label="Credit-risk transmission"
-          title="How risk reaches the credit"
-          reason={
-            map.state === "gap" ? map.reason : "This handoff has no credit-risk transmission map."
-          }
-        />
-      )}
-    </Bento>
-  );
-}
+  },
+  ["maps"],
+);

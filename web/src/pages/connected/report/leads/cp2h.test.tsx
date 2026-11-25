@@ -150,11 +150,9 @@ it("says why when the triggers are a stated gap or the tables are absent", () =>
       "No agency trigger stated",
     ),
   ).toBeVisible();
-  expect(
-    within(screen.getByRole("region", { name: "Rating register" })).getByText(
-      "Built from the module's contract; to be proven on a real run.",
-    ),
-  ).toBeVisible();
+  const register = screen.getByRole("region", { name: "Rating register" });
+  expect(within(register).getByText("This handoff has no rating register.")).toBeVisible();
+  expect(register.textContent).not.toMatch(/Built from the module's contract/);
   cleanup();
   render(<RatingsLead {...leadProps(ratings())} />);
   expect(
@@ -164,16 +162,15 @@ it("says why when the triggers are a stated gap or the tables are absent", () =>
   ).toBeVisible();
 });
 
-it("draws a blocked module as Not assessable", () => {
-  render(
+it("draws nothing for a blocked module", () => {
+  const { container } = render(
     <RatingsLead
       {...leadProps(
         entry("CP-2H", [], bottomLine("Not assessable: no agency rating was supplied.")),
       )}
     />,
   );
-  expect(screen.getByText("Not assessable")).toBeVisible();
-  expect(screen.getByText("No agency rating was supplied.")).toBeVisible();
+  expect(container).toBeEmptyDOMElement();
 });
 
 it("shows an empty trigger cell as missing in the table view, not a crash", () => {
