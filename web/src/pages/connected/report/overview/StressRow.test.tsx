@@ -340,9 +340,12 @@ it("prints a stress cell whole and draws its gap reasons through the reader rule
   render(<StressRow {...rowProps([stressed])} />);
   const tile = screen.getByRole("region", { name: "Downside scenarios" });
   expect(within(tile).getByText("5.1 (covenant breached)")).toBeInTheDocument();
-  expect(within(tile).getByRole("img").getAttribute("aria-label")).toContain(
-    "Net leverage (x) 5.1 (covenant breached)",
-  );
+  // A long value widens its panel, so the panels may sit on separate rows, one figure each.
+  const readings = within(tile)
+    .getAllByRole("img")
+    .map((figure) => figure.getAttribute("aria-label") ?? "")
+    .join(" ");
+  expect(readings).toContain("Net leverage (x) 5.1 (covenant breached)");
   expect(tile).not.toHaveTextContent(/notes_2024|page 88|CP-1C/);
   expect(
     within(tile).getByText(

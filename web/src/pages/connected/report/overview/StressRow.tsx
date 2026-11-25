@@ -285,6 +285,20 @@ const DOWNSIDE = {
 
 type Downside = NonNullable<ReturnType<typeof downsidePanels>>;
 
+/** Room right of the bars for the panel's longest value as written (11 px mono, about 6.8 px a
+ * character), so a value such as "-5.1250 (-USD 5.13 million)" is never cut or run into the next panel. */
+const labelRoom = (panel: DownsidePanel) =>
+  Math.max(
+    DOWNSIDE.labelRoom,
+    ...panel.cells.map((cell) =>
+      cell.value === null ? 0 : figureText(cell.text).length * 6.8 + 10,
+    ),
+  );
+
+/** The least width a panel takes: the bars' least room plus its value labels. */
+const panelWidth = (panels: readonly DownsidePanel[]) =>
+  DOWNSIDE.panel - DOWNSIDE.labelRoom + Math.max(...panels.map(labelRoom));
+
 const cellReading = (cell: DownsidePanel["cells"][number] | undefined) =>
   !cell ? "" : cell.value === null ? gapReading(cell.text) : figureText(cell.text);
 
@@ -360,20 +374,15 @@ function PanelBars({
   rows: number;
   first: boolean;
 }) {
-  const { zero, at, ticks: axis } = panelAxis(panel, room - DOWNSIDE.labelRoom);
+  const labels = labelRoom(panel);
+  const { zero, at, ticks: axis } = panelAxis(panel, room - labels);
   const bottom = DOWNSIDE.head + rows * DOWNSIDE.row;
   return (
     <g data-panel={panel.measure}>
       <text x={x} y="12" fontSize="11" className="fill-text-tertiary font-body">
         {panel.measure}
       </text>
-      <line
-        x1={x}
-        y1={bottom}
-        x2={x + room - DOWNSIDE.labelRoom}
-        y2={bottom}
-        className="stroke-connector"
-      />
+      <line x1={x} y1={bottom} x2={x + room - labels} y2={bottom} className="stroke-connector" />
       {axis.map((tick, at_) => (
         <text
           key={at_}
@@ -423,10 +432,10 @@ function PanelBars({
   );
 }
 
-/** How many panels sit side by side in a frame `width` pixels wide: at least one. */
-function perRow(width: number) {
+/** How many panels of `least` pixels sit side by side in a frame `width` pixels wide: at least one. */
+function perRow(width: number, least: number) {
   const room = width - DOWNSIDE.names;
-  return Math.max(1, Math.floor((room + DOWNSIDE.gutter) / (DOWNSIDE.panel + DOWNSIDE.gutter)));
+  return Math.max(1, Math.floor((room + DOWNSIDE.gutter) / (least + DOWNSIDE.gutter)));
 }
 
 /** One row of panels, drawn at the frame's own width so it fits and never scrolls. */
@@ -491,7 +500,7 @@ function Downside({
   if (!data)
     return <FigureGap reason="The downside handoff states no stressed metric that can be drawn." />;
   const width = measured === null || measured <= 0 ? DOWNSIDE.width : Math.round(measured);
-  const step = perRow(width);
+  const step = perRow(width, panelWidth(data.panels));
   const rows = Array.from({ length: Math.ceil(data.panels.length / step) }, (_, at) =>
     data.panels.slice(at * step, at * step + step),
   );
