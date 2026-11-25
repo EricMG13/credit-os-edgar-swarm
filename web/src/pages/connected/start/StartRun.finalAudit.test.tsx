@@ -309,6 +309,8 @@ describe("final audit: connected intake", () => {
       chooseControl("Run form level", "advanced");
       fireEvent.click(screen.getByRole("button", { name: "Continue to context" }));
       const picker = await screen.findByLabelText("Model");
+      // The model picker is in the closed "Model and modules" section of More context.
+      fireEvent.click(screen.getByRole("heading", { level: 3, name: "Model and modules" }));
       const luna = within(picker).queryByRole("option", { name: "GPT-6 Luna" });
       if (!efforts.includes("xhigh")) {
         expect(luna).toBeNull();

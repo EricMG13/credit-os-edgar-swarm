@@ -266,18 +266,24 @@ async function approveRunInputs(page, paidPreview) {
   await page.getByRole("radio", { name: "Full credit assessment", exact: true }).waitFor();
   await page.getByRole("button", { name: "Continue to context", exact: true }).click();
   assert.match(await current.innerText(), /More context/u);
+  // More context is an accordion of closed sections, one open at a time: open each before its fields.
+  const openSection = (name) => page.getByRole("heading", { level: 3, name, exact: true }).click();
+  await openSection("For the research");
   await page
     .getByLabel(/Anything the analysis should know/u)
     .fill("Check the 2028 maturities.\nInclude refinancing risk.");
+  await openSection("Files with a role");
   await page
     .getByRole("combobox", { name: "Portfolio workbook", exact: true })
     .selectOption({ label: "northbridge-portfolio.xlsx" });
+  await openSection("Legal documents");
   await page
     .getByRole("combobox", { name: "Legal documents", exact: true })
     .selectOption("executed");
   await page
     .getByRole("combobox", { name: "The agreement", exact: true })
     .selectOption({ label: "northbridge-credit-agreement.txt" });
+  await openSection("Ratings, quotes and facilities");
   const ratings = page.getByRole("region", { name: "Ratings", exact: true });
   await ratings.getByRole("button", { name: "Add rating", exact: true }).click();
   await ratings.getByLabel("Agency", { exact: true }).selectOption("Moody's");
