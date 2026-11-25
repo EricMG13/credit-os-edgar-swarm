@@ -47,38 +47,44 @@ async function documents({ issuer = "Northbridge" } = {}) {
 }
 
 describe("a control the browser finds invalid", () => {
-  it("says on the field, in the page's words, that a required field is blank, and focuses it", async () => {
+  it("says on each blank field, in the page's words, what it needs, and focuses the first", async () => {
     const fetchMock = await documents({ issuer: "" });
     fireEvent.click(screen.getByRole("button", { name: "Continue to purpose" }));
     const name = screen.getByLabelText("Issuer name");
-    expect(await screen.findByRole("alert")).toHaveTextContent("Enter the issuer's name.");
-    expect(name).toHaveAttribute("aria-invalid", "true");
-    expect(name).toHaveAccessibleDescription("Enter the issuer's name.");
+    const id = screen.getByLabelText("Issuer ID");
     await waitFor(() => {
       expect(name).toHaveFocus();
     });
+    expect(screen.getAllByRole("alert").map((alert) => alert.textContent)).toEqual([
+      "Enter the issuer's name.",
+      "Enter an Issuer ID.",
+    ]);
+    expect(name).toHaveAttribute("aria-invalid", "true");
+    expect(name).toHaveAccessibleDescription("Enter the issuer's name.");
+    expect(id).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByRole("button", { name: /^2 problems to fix: / })).toBeInTheDocument();
     // Nothing was sent: the step stays where it is.
     expect(screen.getByRole("heading", { name: "Documents" })).toBeInTheDocument();
     expect(fetchMock.mock.calls.map(([path]) => path)).toEqual(["/connected/context"]);
+    // The Issuer ID follows the name, so typing the name clears both.
     fireEvent.change(name, { target: { value: "Northbridge" } });
     expect(name).not.toHaveAttribute("aria-invalid");
+    expect(id).not.toHaveAttribute("aria-invalid");
   });
 
-  it("marks only the first invalid field when several are, even with microtasks between events", async () => {
+  it("marks every invalid field and focuses the first, with microtasks between the events", async () => {
     await documents({ issuer: "" });
-    fireEvent.change(screen.getByLabelText("Issuer ID"), { target: { value: "" } });
     // A browser runs microtasks between the invalid events of one check; jsdom does not, so the
     // events are dispatched one by one here, each in its own turn of the microtask queue.
-    const form = screen.getByLabelText("Issuer name").closest("form") as HTMLFormElement;
     for (const label of ["Issuer name", "Issuer ID"]) {
-      const control = screen.getByLabelText(label);
-      control.dispatchEvent(new Event("invalid", { cancelable: true }));
+      screen.getByLabelText(label).dispatchEvent(new Event("invalid", { cancelable: true }));
       await Promise.resolve();
     }
-    expect(form).toBeInTheDocument();
-    expect(await screen.findByRole("alert")).toHaveTextContent("Enter the issuer's name.");
+    await waitFor(() => {
+      expect(screen.getByLabelText("Issuer name")).toHaveFocus();
+    });
     expect(screen.getByLabelText("Issuer name")).toHaveAttribute("aria-invalid", "true");
-    expect(screen.getByLabelText("Issuer ID")).not.toHaveAttribute("aria-invalid");
+    expect(screen.getByLabelText("Issuer ID")).toHaveAttribute("aria-invalid", "true");
   });
 
   it("says the Issuer ID's rule when the ID breaks it", async () => {
@@ -103,10 +109,45 @@ describe("a control the browser finds invalid", () => {
     const holder = turns.closest("details");
     if (holder) holder.open = false;
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
-    expect(turns.closest("details")).toHaveAttribute("open");
+    await waitFor(() => {
+      expect(turns.closest("details")).toHaveAttribute("open");
+    });
     const message = await within(turns.closest("details") as HTMLElement).findByRole("alert");
     expect(message).toHaveTextContent("Enter a whole number from 1 to 64.");
     expect(turns).toHaveAttribute("aria-invalid", "true");
+    expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/summary"))).toBe(false);
+  });
+
+  it("with invalid fields in two closed sections opens only the first's, marks both and focuses the first", async () => {
+    const fetchMock = await documents();
+    fireEvent.click(screen.getByRole("button", { name: "Continue to purpose" }));
+    await screen.findByRole("heading", { name: "Purpose" });
+    chooseControl("Run form level", "advanced");
+    fireEvent.click(screen.getByRole("button", { name: "Continue to context" }));
+    await screen.findByRole("heading", { name: "More context" });
+    const cutoff = screen.getByLabelText("Research cutoff");
+    const turns = screen.getByLabelText("Turns per module");
+    fireEvent.change(cutoff, { target: { value: "2026-12-31" } });
+    fireEvent.change(turns, { target: { value: "0" } });
+    for (const section of document.querySelectorAll("details")) section.open = false;
+    // As Chromium does: one invalid event per failing control, in document order, with
+    // microtasks run between them.
+    for (const control of [cutoff, turns]) {
+      control.dispatchEvent(new Event("invalid", { cancelable: true }));
+      await Promise.resolve();
+    }
+    await waitFor(() => {
+      expect(cutoff).toHaveFocus();
+    });
+    expect(cutoff.closest("details")).toHaveAttribute("open");
+    expect(turns.closest("details")).not.toHaveAttribute("open");
+    expect(cutoff).toHaveAccessibleDescription(/Enter a date on or before 2026-10-31\./);
+    expect(turns).toHaveAttribute("aria-invalid", "true");
+    expect(turns).toHaveAccessibleDescription("Enter a whole number from 1 to 64.");
+    // A double click's second click, landing on the opened section's heading, leaves it open.
+    const heading = cutoff.closest("details")?.querySelector("summary") as HTMLElement;
+    fireEvent.click(heading, { detail: 2 });
+    expect(cutoff.closest("details")).toHaveAttribute("open");
     expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/summary"))).toBe(false);
   });
 });

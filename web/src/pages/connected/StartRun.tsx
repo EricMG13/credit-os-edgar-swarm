@@ -491,9 +491,7 @@ function IntakeForm({
   const issuerNotice = useIssuerNotice(issuerId, identity.issuer_name);
 
   function clearProblem(...fields: FieldKey[]) {
-    setFieldError((previous) =>
-      previous && fields.includes(previous.field) ? undefined : previous,
-    );
+    setFieldError((previous) => previous?.without(fields));
   }
 
   function changeRun(key: keyof Context["run"], value: string) {
@@ -1322,8 +1320,10 @@ function IntakeForm({
       clearProblem("issuer_id");
       setCustomSlug(id);
     },
-    markInvalid: (field, message) => {
-      setFieldError(new FieldProblem(field, message));
+    markInvalid: (marks) => {
+      const [first, ...rest] = marks;
+      if (first)
+        setFieldError(new FieldProblem(first[0], first[1], undefined, undefined, new Map(rest)));
     },
     focusProblem: () => {
       if (fieldError) focusField(fieldError.field);

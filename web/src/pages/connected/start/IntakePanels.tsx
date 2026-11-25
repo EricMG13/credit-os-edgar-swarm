@@ -1,4 +1,10 @@
-import { useRef, type RefObject, type SubmitEvent, type SyntheticEvent } from "react";
+import {
+  useRef,
+  type MouseEvent,
+  type RefObject,
+  type SubmitEvent,
+  type SyntheticEvent,
+} from "react";
 import { Button } from "@/components/base/buttons/button";
 import { Stepper } from "../../run/start/Stepper";
 import { Bento, Tile } from "../report/overview/Tile";
@@ -234,11 +240,12 @@ function InputStepForm({
   onPrevious: () => void;
 }) {
   const blocked = view.step === "documents" && !view.canRead;
-  const onInvalid = useInvalidControls(view.markInvalid);
+  const invalid = useInvalidControls(view.markInvalid);
   return (
     <Tile span={12} label={`${title} step`}>
       <form
-        onInvalidCapture={onInvalid}
+        onInvalidCapture={invalid.onInvalid}
+        onClickCapture={invalid.onClick}
         onSubmit={(event) => {
           onAdvance(event);
         }}
@@ -279,7 +286,7 @@ function InputStepForm({
               className="max-w-full text-left whitespace-normal"
               onPress={view.focusProblem}
             >
-              {`1 problem to fix: ${view.problem.message}`}
+              {`${String(1 + view.problem.also.size)} ${view.problem.also.size ? "problems" : "problem"} to fix: ${view.problem.message}`}
             </Button>
           )}
           <div className="ml-auto flex flex-wrap items-center justify-end gap-3">
@@ -302,15 +309,26 @@ function InputStepForm({
   );
 }
 
+type Control = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+type Check = { first: Control; marks: [FieldKey, string][]; worded: boolean };
+
 /**
  * The browser checks the step's controls when it is sent and fires `invalid` on each one that
- * fails, in order. A control in a closed section is opened so it can be seen and focused. For a
- * control the page has words for, the browser's bubble is replaced by the page's own message on
- * the field (the first such control only; it takes the focus); the step is still not sent.
+ * fails, in document order, within one task (running microtasks between them). One check is
+ * gathered until that task ends. When its first failing control is one the page has words for,
+ * every failing control's bubble is cancelled and each one the page has words for is marked
+ * with them; the first takes the focus, which opens its section (only its section: the sections
+ * share one name, so opening another would close it). When the first is one the page has no
+ * words for, its section is opened so the browser's own bubble can show there. The step is not
+ * sent either way. A double click's second click, landing on a section's heading as the page
+ * moves, is ignored for a moment after a check.
  */
-function useInvalidControls(markInvalid: (field: FieldKey, message: string) => void) {
-  const marked = useRef(false);
-  return (event: SyntheticEvent<HTMLFormElement>) => {
+function useInvalidControls(
+  markInvalid: (marks: readonly (readonly [FieldKey, string])[]) => void,
+) {
+  const check = useRef<Check | undefined>(undefined);
+  const checkedAt = useRef(0);
+  const onInvalid = (event: SyntheticEvent<HTMLFormElement>) => {
     const control = event.target;
     if (!(
       control instanceof HTMLInputElement ||
@@ -318,19 +336,30 @@ function useInvalidControls(markInvalid: (field: FieldKey, message: string) => v
       control instanceof HTMLTextAreaElement
     ))
       return;
-    const section = control.closest("details");
-    if (section && !section.open) section.open = true;
     const field = control.dataset.field as FieldKey | undefined;
     const message = field && invalidMessage(field, control);
-    if (!field || !message) return;
+    if (!check.current) {
+      const worded = Boolean(field && message);
+      check.current = { first: control, marks: [], worded };
+      checkedAt.current = Date.now();
+      if (!worded) {
+        const section = control.closest("details");
+        if (section && !section.open) section.open = true;
+      }
+      setTimeout(() => {
+        const done = check.current;
+        check.current = undefined;
+        if (done?.worded) markInvalid(done.marks);
+      }, 0);
+    }
+    if (!check.current.worded) return;
     event.preventDefault();
-    if (marked.current) return;
-    // The browser fires every invalid event of one check in a single task, running microtasks
-    // between them; the flag is cleared in a later task, so only the first field is marked.
-    marked.current = true;
-    setTimeout(() => {
-      marked.current = false;
-    }, 0);
-    markInvalid(field, message);
+    if (field && message) check.current.marks.push([field, message]);
   };
+  const onClick = (event: MouseEvent<HTMLFormElement>) => {
+    const recent = Date.now() - checkedAt.current < 600;
+    if (recent && event.detail > 1 && (event.target as Element).closest("summary"))
+      event.preventDefault();
+  };
+  return { onInvalid, onClick };
 }

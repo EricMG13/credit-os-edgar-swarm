@@ -244,8 +244,8 @@ export type IntakeView = {
   idNote: string;
   useIssuerId: (id: string) => void;
   focusProblem: () => void;
-  /** A control the browser found invalid when the step was sent, with the page's words for it. */
-  markInvalid: (field: FieldKey, message: string) => void;
+  /** The controls the browser found invalid when the step was sent, in order, with their words. */
+  markInvalid: (marks: readonly (readonly [FieldKey, string])[]) => void;
   changeModel: (value: string) => void;
   changeEffort: (value: string) => void;
   changeTurns: (value: string) => void;

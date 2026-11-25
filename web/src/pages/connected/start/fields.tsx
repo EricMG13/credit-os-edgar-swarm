@@ -36,9 +36,34 @@ export class FieldProblem extends Error {
     readonly others?: readonly string[],
     /** For `issuer_id`: the free Issuer ID the page offers in its place. */
     readonly offer?: string,
+    /** Further fields the browser found invalid in the same check, each with its words. */
+    readonly also: ReadonlyMap<FieldKey, string> = new Map(),
+    /** Whether the field takes the focus: a new problem does, what is left after a fix does not. */
+    readonly focus = true,
   ) {
     super(message);
   }
+
+  /** What is left once `fields` are edited: their marks go; the rest stay, without the focus. */
+  without(fields: readonly FieldKey[]): FieldProblem | undefined {
+    const also = [...this.also].filter(([field]) => !fields.includes(field));
+    if (!fields.includes(this.field))
+      return also.length === this.also.size
+        ? this
+        : new FieldProblem(this.field, this.message, this.others, this.offer, new Map(also), false);
+    const [next, ...rest] = also;
+    return next && new FieldProblem(next[0], next[1], undefined, undefined, new Map(rest), false);
+  }
+}
+
+/** What a field needs of a problem to show it: its field, its words, and any others it marks. */
+export type ShownProblem = Pick<FieldProblem, "field" | "message" | "name"> & {
+  readonly also?: ReadonlyMap<FieldKey, string>;
+};
+
+/** The words a problem puts on `field`, if it marks it. */
+export function problemOn(problem: ShownProblem | undefined, field: FieldKey) {
+  return problem?.field === field ? problem.message : problem?.also?.get(field);
 }
 
 /**
@@ -73,17 +98,18 @@ export function stepOfField(field: FieldKey): FormStep {
     : "context";
 }
 
-export function problemAttrs(problem: FieldProblem | undefined, field: FieldKey) {
-  return problem?.field === field
+export function problemAttrs(problem: ShownProblem | undefined, field: FieldKey) {
+  return problemOn(problem, field) !== undefined
     ? { "data-field": field, "aria-invalid": "true" as const, "aria-describedby": `error-${field}` }
     : { "data-field": field };
 }
 
-export function FieldMessage({ problem, field }: { problem?: FieldProblem; field: FieldKey }) {
-  if (problem?.field !== field) return null;
+export function FieldMessage({ problem, field }: { problem?: ShownProblem; field: FieldKey }) {
+  const message = problemOn(problem, field);
+  if (message === undefined) return null;
   return (
     <p id={`error-${field}`} role="alert" className="text-small text-error-primary">
-      {problem.message}
+      {message}
     </p>
   );
 }
@@ -112,12 +138,12 @@ export function SelectField({
   choices: Readonly<Record<string, string>>;
   onChange: (value: string) => void;
   disabled?: boolean;
-  problem?: FieldProblem;
+  problem?: ShownProblem;
   problemField?: FieldKey;
   help?: string;
 }) {
   const helpId = useId();
-  const failing = problemField !== undefined && problem?.field === problemField;
+  const failing = problemField !== undefined && problemOn(problem, problemField) !== undefined;
   const describedBy =
     [help ? helpId : "", failing ? `error-${problemField}` : ""].filter(Boolean).join(" ") ||
     undefined;

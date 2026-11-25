@@ -95,7 +95,7 @@ export function useIntakeFocus(
   focusedBeforeRef: RefObject<{ node: HTMLElement; text: string } | null>,
 ) {
   useEffect(() => {
-    if (fieldError && busy === undefined) focusField(fieldError.field);
+    if (fieldError?.focus && busy === undefined) focusField(fieldError.field);
   }, [fieldError, busy]);
 
   useEffect(() => {

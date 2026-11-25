@@ -18,7 +18,7 @@ import {
   documentsRead,
   carriedIntro,
 } from "./intake";
-import { FieldMessage, problemAttrs, SelectField } from "./fields";
+import { FieldMessage, problemAttrs, problemOn, SelectField } from "./fields";
 
 /** At least 32 px tall everywhere, 44 px at phone width. */
 const TARGET = "min-h-8 max-[480px]:min-h-11";
@@ -431,7 +431,7 @@ export function DocumentFields({
               placeholder="Eric G"
               {...problemAttrs(view.problem, "submitted_by")}
               aria-describedby={
-                view.problem?.field === "submitted_by"
+                problemOn(view.problem, "submitted_by") !== undefined
                   ? "error-submitted_by run-analyst-name"
                   : "run-analyst-name"
               }
