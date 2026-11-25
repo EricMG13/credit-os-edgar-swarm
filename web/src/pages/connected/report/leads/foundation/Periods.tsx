@@ -256,7 +256,7 @@ function Strip({ strip, width }: { strip: PeriodStrip; width: number }) {
       <>
         <StripRows strip={strip} width={width} />
         {showsMatrix(strip) && (
-          <p className="text-small text-text-secondary">
+          <p className="mt-2 text-small text-text-secondary">
             Which figure states which period is in the table view.
           </p>
         )}
@@ -266,7 +266,7 @@ function Strip({ strip, width }: { strip: PeriodStrip; width: number }) {
     <>
       <StripAxis strip={strip} width={width} />
       {showsMatrix(strip) && (
-        <p className="text-small text-text-secondary">
+        <p className="mt-2 text-small text-text-secondary">
           A dash: the figure&apos;s table does not state the period.
         </p>
       )}

@@ -241,22 +241,27 @@ describe("cash ladder: other real handoffs and mutations", () => {
     expectNoDerived(tile);
   });
 
-  it("distressed: its tax label as written; the after-distributions row it lacks is a gap with the reason", () => {
+  it("distressed: its tax label as written; the after-distributions level read from its KPI dashboard", () => {
     const { tile, all } = draw(distressedCp1Entry());
     expect(spans(all("rect[data-bar]")).slice(0, 3)).toEqual([
       ["EBITDA (Adjusted)", 0, 4173],
       ["Cash Interest Paid", 4173, 3015],
       ["Cash taxes paid, net of refunds", 3015, 2476],
     ]);
-    // The data layer reads the after-distributions level from the cash flow statement; the
-    // distressed draft states it only in its KPI dashboard (−158), so the row is drawn as a gap.
-    expect(parts(tile, "reason")).toEqual([
-      "Not supplied: source dash (FY2023 and FY2024)",
-      "Cash flow after distributions is not in the handoff.",
+    // The distressed draft states the after-distributions level only in its KPI dashboard (−158):
+    // the data layer reads it from there, so it is drawn as a level, not a gap.
+    expect(spans(all("rect[data-bar]")).slice(3)).toEqual([
+      ["Net Cash from Operating Activities", 0, 2045],
+      ["Capital expenditures", 2045, 1880],
+      ["Levered free cash flow", 0, 1880],
+      ["Dividends and dividend equivalent payments", 1880, -158],
+      ["DCF after cash dividends and equivalents", 0, -158],
+      // Acquisitions hang from the stated level above (−158); the bar's end is a drawing position.
+      ["Acquisition of businesses, net of cash acquired", -158, -2505],
     ]);
-    // Acquisitions follow a level that is not drawn: written, not placed, not dropped.
-    expect(parts(tile, "unplaced")).toEqual(["−2,347 · not placed: an earlier step is not stated"]);
-    expect(tile.querySelector('[data-step^="Acquisition"]')).toBeNull();
+    // Only the repurchase line is a stated gap; nothing is unplaced.
+    expect(parts(tile, "reason")).toEqual(["Not supplied: source dash (FY2023 and FY2024)"]);
+    expect(parts(tile, "unplaced")).toEqual([]);
     expectNoDerived(tile);
   });
 
