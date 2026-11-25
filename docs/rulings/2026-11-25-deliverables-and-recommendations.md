@@ -87,6 +87,26 @@ caps and the presets as open items for the owner (its section 6).
 The methodology an analyst can audit, with the rubric's level text, is
 `docs/methodology/portfolio-recommendation.md`.
 
+## Owner's answers on the open items (2026-11-25)
+
+Owner's words: "1. later 2. is fine 3. fix 4. fine 5. fine 6. update it". The numbering and the
+description of each item are the coordinating session's.
+
+1. A Claude Opus Full run is estimated above Full's USD 30 cap
+   (`2026-11-25-layer-1-in-all-assessment-pathways.md`): "later". Open and deferred; nothing
+   changes.
+2. The Coverage page at seventeen columns (same ruling): "is fine". Accepted as built.
+3. The two rubric gaps: "fix". Leverage level 4 now reads "High leverage (5–6x), limited covenant
+   cushion"; Market share level 2 "Top 3 competitor, or 10–30% share" and level 3 "Mid-tier, 5–10%
+   share". The wording is the coordinating session's, not the owner's. Changed identically in the
+   spec's section 9 and the methodology's section 3.
+4. An add-back CP-1D marks Insufficient Information is shown unclassified, not assumed realised:
+   "fine". Accepted.
+5. The methodology's four readings (the four items outside the 17 do not enter the Credit Score; no
+   Credit Score means no proposed recommendation; wider than the bucket median is more attractive;
+   a limit breach leaves a 4 or 5 unchanged): "fine". Confirmed.
+6. `PRODUCT.md`: "update it". Its Excel line now matches `AGENTS.md`.
+
 ## Amends
 
 - `AGENTS.md`, the Excel bullet: Excel stays an input format for analysis; exactly one generated
@@ -111,9 +131,8 @@ The methodology an analyst can audit, with the rubric's level text, is
   (Lite USD 20, Full 30, Deep 50). The two caps above are recorded here only. By those rulings a
   cap enters `PATHWAY_CAP_USD` and `RULED_CAPS_USD` by deliberate edits, which belong to the
   pathway PRs (6 and 7).
-- Follow-up, not edited here: `PRODUCT.md` still says "No workbook is a deliverable". That is true
-  of the build until the workbook lands (PR 4), and another open PR edits that file; the line is
-  to be brought into step with this ruling then.
+- `PRODUCT.md`, its Excel line: brought into step with the `AGENTS.md` Excel bullet (owner,
+  2026-11-25: "update it").
 - Not amended: the deactivation of the short credit snapshot (`short_snapshot`). Credit Screening
   (R12) is a new pathway; how it relates to that id is PR 6's to settle.
 
@@ -133,9 +152,6 @@ The methodology an analyst can audit, with the rubric's level text, is
 - Nothing here is built. The plan is one PR each (spec section 5): 1 scorecard, 2 recommendation
   code, 3 reference portfolios, 4 and 4b workbook and Model sheet, 5 Deliverables page, 6 Credit
   Screening, 7 custom routing.
-- Two gaps in the rubric as written, for the owner: Leverage has no level for 5–6x between level 4
-  (">5x") and level 5 (">6x"), read by the spec as 4; Market share has no level for a 10–30% share
-  outside the top three.
 - The valuation bands do not say which band a difference of exactly +40 bp or −40 bp falls in
   ("within ±40" against "+40 to +100"). PR 2 needs this settled before it codes the bands.
 - The spec names only the ends of the Valuation scale (1 Very attractive, 5 Very unattractive).

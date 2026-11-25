@@ -13,7 +13,8 @@ proposed recommendation is the one ruled exception to "Delivery adds no analysis
 proposed until the analyst confirms; whether that exception's wording also covers the valuation
 score and limit caps, which no module writes, is open in the ruling. The add-back split behind
 House EBITDA is read from CP-1D, not re-derived. Scope: documentation only; CP-2's instruction is
-unchanged. Two rubric gaps and the valuation band edges are open in that document.
+unchanged. The owner closed the two rubric gaps on 2026-11-25 ("fix"); the valuation band
+edges stay open in that document.
 Not verified: any of it in code or in a run; the rubric text against the owner's image.
 
 **Presentation selection, 2026-11-11 (owner; `docs/rulings/2026-11-11-reader-and-issuer-report.md`):**

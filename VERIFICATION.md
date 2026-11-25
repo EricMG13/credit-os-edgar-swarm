@@ -22,6 +22,10 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
 - Review: one fresh reviewer, pass with fixes (6 Medium, 11 Low; no transcription error). Wording
   fixed; open points are in the ruling's Left open. Pre-merge review: 1 Medium (quote
   attribution), 6 Low, all applied, including four mock-up cells corrected to the table (3 MW).
+- Owner's answers (2026-11-25, "1. later 2. is fine 3. fix 4. fine 5. fine 6. update it"): three
+  rubric cells amended in the spec and the methodology (Leverage 4, Market share 2 and 3, wording
+  the coordinating session's); the four readings confirmed; `PRODUCT.md`'s Excel line amended.
+  Probe: the two changed rows, written by hand from the coordinator's message, match both files.
 - Not verified: anything the documents describe, none of which is built; the rubric text against
   the owner's image (not in the repository; taken from the spec's transcription); the SSGA file
   columns; the full suite.
