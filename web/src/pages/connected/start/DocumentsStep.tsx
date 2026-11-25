@@ -237,7 +237,7 @@ export function DocumentFields({
           hint={`Add ${SOURCE_TYPE_HINT}. Up to 50 MB per file.`}
           isDisabled={view.busy !== undefined}
           onDropFiles={view.addFiles}
-          className="min-h-40 justify-center border border-dashed border-border-container bg-surface-subtle py-10 ring-0 [&_button]:min-h-8 max-[480px]:[&_button]:min-h-11"
+          className="min-h-40 justify-center border border-dashed border-border-container bg-surface-subtle py-10 ring-0 [&_button]:min-h-8 max-[480px]:[&_button]:min-h-11 [&_div:has(>button)]:items-center"
         />
         {view.selectionProblem && (
           <p
