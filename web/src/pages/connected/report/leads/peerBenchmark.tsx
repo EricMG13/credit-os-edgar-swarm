@@ -5,13 +5,19 @@ import {
   Measured,
   SIZE,
   fittingTicks,
+  gapSlotHeight,
   niceAxis,
   textWidth,
+  type LegendEntry,
   type NiceAxis,
 } from "./kit/marks";
+import { UnreadFigures } from "./kit/UnreadFigures";
 import { safeText } from "./kit/reader";
 import {
+  bandGapText,
+  chartTitleOf,
   readPeerBenchmark,
+  shown,
   withUnit,
   type PeerGroup,
   type PeerRow,
@@ -64,7 +70,7 @@ function reading(row: PeerRow) {
   if (drawing.kind === "conflict")
     return `${row.metric}: ${drawing.message}, so no range is drawn. ${count}.`;
   const stated = (label: string, value: PeerRow["low"]) =>
-    `${label} ${value.kind === "number" ? withUnit(value.text, unit) : "not supplied"}`;
+    `${label} ${value.kind === "number" ? withUnit(shown(value), unit) : `${shown(value)}`}`;
   const parts = [
     stated("peer low", row.low),
     stated("median", row.median),
@@ -74,55 +80,38 @@ function reading(row: PeerRow) {
   return `${row.metric}: ${parts.join(", ")}. ${count}.`;
 }
 
-/** The hatched slot with its words on a solid chip, so the words stay readable over the hatch. */
-function NotStated({ x, y, width, text }: { x: number; y: number; width: number; text: string }) {
-  const chip = textWidth(text, SIZE.label) + 10;
-  return (
-    <g>
-      <GapSlot x={x} y={y} width={width} height={20} reason={text} />
-      <rect
-        x={x + Math.max(width, 8) / 2 - chip / 2}
-        y={y + 2}
-        width={chip}
-        height={16}
-        rx="3"
-        className="fill-surface-card"
-      />
-      <text
-        x={x + Math.max(width, 8) / 2}
-        y={y + 15}
-        textAnchor="middle"
-        fontSize={SIZE.label}
-        className="fill-gap-text font-body"
-      >
-        {text}
-      </text>
-    </g>
-  );
+/** The hatched slot with the module's words on its solid chip, as tall as the words need. */
+function Slot({ x, y, width, text }: { x: number; y: number; width: number; text: string }) {
+  return <GapSlot x={x} y={y} width={width} height={20} reason={text} text={text} />;
 }
+
+/** The words a not-numeric issuer is drawn with: the module's own, never a page statement. */
+const issuerWords = (row: PeerRow) =>
+  row.issuer.kind === "gap" ? `issuer: ${row.issuer.reason}` : `issuer ${shown(row.issuer)}`;
 
 function Strip({ row, axis, width }: { row: PeerRow; axis: NiceAxis; width: number }) {
   const { drawing, unit } = row;
   if (drawing.kind !== "strip") {
-    const text = drawing.kind === "conflict" ? "Stated values conflict" : "Peer range not supplied";
+    const text = drawing.kind === "conflict" ? drawing.message : bandGapText(row);
+    const room = width - 2 * PAD;
     return (
       <svg
-        viewBox={`0 0 ${String(width)} 28`}
+        viewBox={`0 0 ${String(width)} ${String(gapSlotHeight(room, 20, text) + 8)}`}
         width="100%"
         role="img"
         aria-label={reading(row)}
         data-row={row.metric}
         className="block"
       >
-        <NotStated x={PAD} y={4} width={width - 2 * PAD} text={text} />
+        <Slot x={PAD} y={4} width={room} text={text} />
       </svg>
     );
   }
   const x = (value: number) => axis.place(value, PAD, width - PAD);
   const top: Label[] = [
-    { text: `low ${withUnit(row.low.text, unit)}`, x: x(drawing.low), anchor: "end", kind: "low" },
+    { text: `low ${withUnit(shown(row.low), unit)}`, x: x(drawing.low), anchor: "end", kind: "low" },
     {
-      text: `high ${withUnit(row.high.text, unit)}`,
+      text: `high ${withUnit(shown(row.high), unit)}`,
       x: x(drawing.high),
       anchor: "start",
       kind: "high",
@@ -131,7 +120,7 @@ function Strip({ row, axis, width }: { row: PeerRow; axis: NiceAxis; width: numb
       ? []
       : [
           {
-            text: `median ${withUnit(row.median.text, unit)}`,
+            text: `median ${withUnit(shown(row.median), unit)}`,
             x: x(drawing.median),
             anchor: "middle" as const,
             kind: "median",

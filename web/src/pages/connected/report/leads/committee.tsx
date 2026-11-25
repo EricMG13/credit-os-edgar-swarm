@@ -489,10 +489,14 @@ function WatchTile(props: LeadProps) {
         ]),
       }}
     >
-      <ul className="flex min-w-0 flex-col gap-3">{visible.map(item)}</ul>
+      <ul className="grid min-w-0 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+        {visible.map(item)}
+      </ul>
       {rest.length > 0 && (
         <More label={`Show ${String(rest.length)} more`}>
-          <ul className="mt-3 flex min-w-0 flex-col gap-3">{rest.map(item)}</ul>
+          <ul className="mt-3 grid min-w-0 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+            {rest.map(item)}
+          </ul>
         </More>
       )}
     </FigureTile>

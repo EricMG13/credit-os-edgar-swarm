@@ -1,5 +1,5 @@
 import type { OutputEntry } from "../../publishedReport";
-import { safeText as safe } from "./kit/reader";
+import { reasonText, safeText as safe } from "./kit/reader";
 import { difference, readCell, signOf } from "./kit/numbers";
 import { allTables } from "./kit/tables";
 
@@ -29,22 +29,30 @@ const REQUIRED = [
   "Reporting unit",
 ] as const;
 
-/** One stated value: a plain number, the handoff's own reason for not stating it, or words where a number belongs. */
+/**
+ * One stated value: a plain number (an accounting negative `(2.0)` is a number; `written` is the
+ * cell as the module wrote it), the module's own reason for not stating it, or the module's words
+ * where a number belongs (`n.m.`), drawn as written.
+ */
 export type Value =
-  | { kind: "number"; text: string; value: number }
+  | { kind: "number"; text: string; value: number; written?: string }
   | { kind: "gap"; text: string; reason: string }
-  | { kind: "unreadable"; text: string; reason: string };
+  | { kind: "words"; text: string };
 
 export function valueOf(cell: string): Value {
   const reading = readCell(cell);
   if (reading.kind === "number") return reading;
-  if (reading.kind === "gap") return { ...reading, reason: safe(reading.reason) };
-  return {
-    kind: "unreadable",
-    text: reading.text,
-    reason: `This page could not read “${safe(reading.text)}” as a number`,
-  };
+  if (reading.kind === "gap") return { ...reading, reason: reasonText(reading.reason) };
+  return { kind: "words", text: safe(reading.text) };
 }
+
+/** A stated number as the module wrote it, a gap's reason, or the module's words: what the page draws for it. */
+export const shown = (value: Value) =>
+  value.kind === "number"
+    ? (value.written ?? value.text)
+    : value.kind === "gap"
+      ? value.reason
+      : value.text;
 
 type Count =
   { kind: "number"; value: number; text: string } | { kind: "gap"; reason: string; text: string };
@@ -93,13 +101,6 @@ export type PeerRow = {
   notes: string[];
 };
 
-const LABELS = {
-  issuer: "Issuer",
-  low: "Peer low",
-  median: "Peer median",
-  high: "Peer high",
-} as const;
-
 /** `a <= b`, exact over the stated texts. */
 const atMost = (a: string, b: string) => (signOf(difference(b, a)) ?? -1) >= 0;
 
@@ -128,24 +129,45 @@ function drawingOf(row: Omit<PeerRow, "drawing" | "notes">): Drawing {
   };
 }
 
+/**
+ * What the figure leaves unsaid, once each: a missing median and a missing peer count, each with
+ * the module's reason. A missing issuer or band is written in its own slot on the strip, and values
+ * that contradict each other are said on the row.
+ */
 function notesOf(row: Omit<PeerRow, "drawing" | "notes">, drawing: Drawing) {
-  const reasons = (["issuer", "low", "median", "high"] as const).flatMap((key) => {
-    const value = row[key];
-    return value.kind === "number"
-      ? []
-      : [`${row.metric}, ${LABELS[key].toLowerCase()}: ${value.reason}.`];
-  });
-  if (row.count.kind === "gap") reasons.push(`${row.metric}, peer count: ${row.count.reason}.`);
-  if (drawing.kind === "conflict")
-    reasons.push(
-      `${row.metric}: the stated values conflict, so no range is drawn. ${drawing.message}.`,
-    );
-  return reasons;
+  const notes: string[] = [];
+  if (drawing.kind === "strip" && row.median.kind !== "number")
+    notes.push(`${row.metric}, peer median: ${shown(row.median)}.`);
+  if (row.count.kind === "gap") notes.push(`${row.metric}, peer count: ${row.count.reason}.`);
+  return notes;
+}
+
+/**
+ * The words in a row's gap slot, each distinct reason once: "Peer range: only two peers reported it"
+ * when low, median and high give one reason, else each reason with the values it covers.
+ */
+export function bandGapText(row: PeerRow) {
+  const named = (
+    [
+      ["Peer low", row.low],
+      ["Peer median", row.median],
+      ["Peer high", row.high],
+    ] as const
+  ).filter(([, value]) => value.kind !== "number");
+  const groups = new Map<string, string[]>();
+  for (const [label, value] of named)
+    groups.set(shown(value), [...(groups.get(shown(value)) ?? []), label]);
+  const all = named.length === 3 && groups.size === 1;
+  return [...groups.entries()]
+    .map(([reason, labels]) => `${all ? "Peer range" : labels.join(", ")}: ${reason}`)
+    .join("; ");
 }
 
 export type PeerGroup = { unit: string; rows: PeerRow[] };
 export type PeerTable = {
   kind: PeerKind;
+  /** The section heading the table is under, which the store publishes as the chart's title. */
+  heading: string;
   line: number;
   groups: PeerGroup[];
   rows: PeerRow[];
@@ -214,9 +236,7 @@ export function readPeerBenchmark(entry: OutputEntry): PeerRead {
       );
     } else if (!one) {
       absent += 1;
-      read.gaps.push(
-        `This page could not read the peer range for ${names[kind]}.`,
-      );
+      read.gaps.push(`This page could not read the peer range for ${names[kind]}.`);
     } else {
       const missing = REQUIRED.filter((name) => !one.table.headers.includes(name));
       if (missing.length)
@@ -224,12 +244,16 @@ export function readPeerBenchmark(entry: OutputEntry): PeerRead {
           `This page could not read the peer range for ${names[kind]} because the table is not in a shape this page reads.`,
         );
       else if (!one.table.rows.length)
-        read.gaps.push(
-          `This page could not read a row of the peer range for ${names[kind]}.`,
-        );
+        read.gaps.push(`This page could not read a row of the peer range for ${names[kind]}.`);
       else {
         const rows = readRows(one.table.headers, one.table.rows);
-        read.tables.push({ kind, line: one.table.line, groups: groupByUnit(rows), rows });
+        read.tables.push({
+          kind,
+          heading: one.heading,
+          line: one.table.line,
+          groups: groupByUnit(rows),
+          rows,
+        });
       }
     }
   }
@@ -244,4 +268,11 @@ export function withUnit(text: string, unit: string) {
   const tidy = text.replace(/^-/, "−");
   if (!unit) return tidy;
   return /^[%x]$/i.test(unit) ? `${tidy}${unit}` : `${tidy} ${safe(unit)}`;
+}
+
+/** The chart title the store publishes for a `Chart data:` heading ("Peer range — multiples"), or null. */
+export function chartTitleOf(heading: string) {
+  if (!heading.startsWith("Chart data: ")) return null;
+  const name = heading.slice("Chart data: ".length).trim();
+  return name.charAt(0).toUpperCase() + name.slice(1);
 }

@@ -247,7 +247,7 @@ function PairTile({
     >
       {figure.groups.map((one, at) => (
         <GroupRows
-          key={`${one.unit}-${String(one.band?.lo ?? "")}-${one.drawn[0]?.line ?? at}`}
+          key={`${one.unit}-${String(one.band?.lo ?? "")}-${String(one.drawn[0]?.line ?? at)}`}
           group={one}
           several={several}
           legend={at === 0}

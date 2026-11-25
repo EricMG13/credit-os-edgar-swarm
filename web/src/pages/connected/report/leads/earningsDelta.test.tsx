@@ -793,8 +793,10 @@ describe("EarningsDeltaLead on the retained handoff", () => {
   });
   it("sets a ring and a dot that coincide apart, so both are seen", () => {
     const { container } = lead(cp1bEntry());
-    const row = rowMark(container, "Total D&A");
-    expect(row.querySelector("[data-offset]")).not.toBeNull();
+    // 139 to 161 on a scale to 1,000 is closer than the marks are wide.
+    expect(
+      rowMark(container, "Intangible amortization").querySelector("[data-offset]"),
+    ).not.toBeNull();
   });
   it("writes the two split rows as one compact line, the module's reason once on a chip", () => {
     const { container } = lead(cp1bEntry());
@@ -804,7 +806,9 @@ describe("EarningsDeltaLead on the retained handoff", () => {
     expect(line?.querySelectorAll("[data-gap]")).toHaveLength(1);
     // Not drawn in the dumbbell, not drawn twice.
     expect(container.querySelector('g[data-row="Maintenance capex"]')).toBeNull();
-    expect(container.textContent?.match(/Not supplied: no split/g)).toHaveLength(1);
+    expect(
+      screen.getByRole("list", { name: "Not stated" }).textContent.match(/Not supplied: no split/g),
+    ).toHaveLength(1);
   });
   it("sets prior as a ring and current as a dot at their values", () => {
     const { container } = lead(cp1bEntry());
@@ -874,7 +878,7 @@ describe("EarningsDeltaLead on the retained handoff", () => {
     const gross = rowMark(container, "Gross margin");
     expect(gross.textContent).toContain("58.3%");
     expect(gross.textContent).toContain("58.8%");
-    expect(gross.textContent?.replace(/\s/g, "")).toContain("+0.5percentagepoints");
+    expect(gross.textContent.replace(/\s/g, "")).toContain("+0.5percentagepoints");
     expect(tile.textContent).toMatch(/Axis starts at 40, not at zero/);
     expect(within(tile).getByRole("img").getAttribute("aria-label")).toContain(
       "Gross margin 58.3% in FY2023 and 58.8% in FY2024, +0.5 percentage points, up",
@@ -987,7 +991,7 @@ describe("EarningsDeltaLead on chart tables", () => {
       ),
     );
     const tile = screen.getByRole("region", { name: RESULTS_NAME });
-    expect(within(tile).getAllByRole("img")).toHaveLength(2);
+    expect(within(tile).getAllByRole("img")).toHaveLength(3);
     const coverage = rowMark(container, "Interest coverage");
     expect(coverage.textContent).toContain("2.71x");
     expect(coverage.textContent).toContain("+0.58x");
@@ -1057,7 +1061,7 @@ describe("EarningsDeltaLead on chart tables", () => {
     const tile = screen.getByRole("region", { name: "Margins and KPIs" });
     expect(within(tile).getByText("This page could not read a figure for any pair.")).toBeVisible();
     expect(
-      within(within(tile).getByRole("list", { name: "Not supplied" })).getByText(
+      within(within(tile).getByRole("list", { name: "Not stated" })).getByText(
         "Not supplied: no split",
       ),
     ).toBeVisible();
@@ -1089,7 +1093,6 @@ describe("EarningsDeltaLead on chart tables", () => {
       delta(results([["Revenue", "FY2024", "7940", "LTM Dec-2024", "8100", "US$m", "x"]])),
     );
     const tile = screen.getByRole("region", { name: RESULTS_NAME });
-    expect(within(tile).getByText(/different kinds of period has no change figure/)).toBeVisible();
     const row = rowMark(container, "Revenue");
     expect(row.textContent).toContain("7,940");
     expect(row.textContent).toContain("8,100");
@@ -1156,7 +1159,7 @@ describe("EarningsDeltaLead with a variance bridge", () => {
     expect(within(own).queryByRole("img")).toBeNull();
     const movers = screen.getByRole("region", { name: RESULTS_NAME });
     expect(within(movers).queryByText(/add up/)).toBeNull();
-    expect(within(movers).getByRole("img")).toBeInTheDocument();
+    expect(within(movers).getAllByRole("img").length).toBeGreaterThan(0);
   });
   it("says a missing step is not supplied, never that the steps do not add up", () => {
     lead(
@@ -1248,9 +1251,7 @@ describe("rows with no stated unit and screened text", () => {
     expect(rowsOf(tile).find((row) => row[0] === "Revenue")?.[3]).toBe("Detail is in Evidence.");
     // The note is not drawn at all, not repeated as a sentence of its own.
     const notes = [...tile.querySelectorAll("ul li")].map((item) => item.textContent);
-    expect(notes).toEqual([
-      "Pairs that state words instead of a figure are in the table view only.",
-    ]);
+    expect(notes).toEqual([]);
   });
   it("titles every tile plainly, however the two largest moves compare", () => {
     lead(
@@ -1267,16 +1268,37 @@ describe("rows with no stated unit and screened text", () => {
 });
 
 describe("EarningsDeltaLead gaps", () => {
-  it("draws the three gap tiles, in the one gap pattern, for a handoff with no tables", () => {
+  it("draws ONE gap tile for a handoff with no table at all", () => {
     const { container } = lead(entry("CP-1B", [], []));
-    expect(
-      screen.getByText(/This page could not read the prior and current results\./),
-    ).toBeVisible();
-    expect(screen.getByText(/This page could not read the margin and KPI changes\./)).toBeVisible();
-    expect(screen.getByText(/This page could not read the variance bridge\./)).toBeVisible();
+    expect(screen.getByText(/This page could not read the earnings figures\./)).toBeVisible();
     expect(screen.queryByRole("img")).toBeNull();
     expect(container.querySelector("section.gap-hatch")).toBeNull();
-    expect(screen.getAllByRole("region")).toHaveLength(3);
+    expect(screen.getAllByRole("region")).toHaveLength(1);
+    expect(container.textContent).not.toMatch(/handoff|the module/i);
+  });
+  it("puts the bridge's gap tile before the results, and says no gap sentence 'from the handoff'", () => {
+    const { container } = lead(cp1bEntry());
+    const names = screen.getAllByRole("region").map((one) => one.getAttribute("aria-label"));
+    expect(names).toEqual(["Variance bridge", RESULTS_NAME, "Margins and KPIs"]);
+    expect(container.textContent).not.toMatch(/from the handoff|in this handoff/i);
+  });
+  it("draws a chart table it does not draw itself as stated, so no published figure is lost", () => {
+    lead(
+      delta(
+        results(MONEY),
+        section(
+          "Chart data: add-back share",
+          60,
+          table(
+            62,
+            ["Add-back", "Share", "Reporting unit", "Basis and limitation"],
+            [["Stock compensation", "5.1", "%", "x"]],
+          ),
+        ),
+      ),
+    );
+    const tile = screen.getByRole("region", { name: "Add-back share" });
+    expect(within(tile).getAllByText("Stock compensation").length).toBeGreaterThan(0);
   });
   it("says fewer than two annual periods in words, not that the table is missing", () => {
     lead(delta(earningsTable(["Line Item", "FY2024"], [["Revenue", "7940"]])));
