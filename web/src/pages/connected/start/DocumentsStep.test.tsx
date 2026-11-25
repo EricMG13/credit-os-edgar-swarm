@@ -1,5 +1,5 @@
 import { createRef } from "react";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ReadinessItem } from "../api";
 import type { DocumentRow, IntakeView } from "./intake";
@@ -134,20 +134,108 @@ describe("Documents step: the upload list", () => {
     expect(li).toHaveTextContent("Not a supported type.");
   });
 
-  it("says so when there are no documents, and names what each file unlocks as a gap", () => {
+  it("says so when there are no documents, and draws no gap note", () => {
     renderStep(makeView());
     expect(screen.getByText("No documents yet.")).toBeVisible();
-    expect(
-      screen.getByText(/Which modules each file serves is not reported before review/),
-    ).toBeVisible();
+    expect(screen.queryByText(/not reported before review/)).toBeNull();
+  });
+
+  it("says once that the modules are checked at review, only while files are listed", () => {
+    renderStep(makeView({ documentRows: [row("a.pdf")] }));
+    expect(screen.getAllByText(/checks the files against each module/)).toHaveLength(1);
+    expect(screen.queryByText("Checked when you review the run.")).toBeNull();
+  });
+
+  it("draws no gap note after a review answered it", () => {
+    renderStep(makeView({ documentRows: [row("a.pdf")], missing: [] }));
+    expect(screen.queryByText(/not reported before review/)).toBeNull();
+  });
+
+  it("shows Uploading while a selected file has no stored name yet", () => {
+    const file = new File(["x"], "new.pdf");
+    renderStep(
+      makeView({
+        busy: "documents",
+        documentRows: [row("new.pdf", { stored: undefined, file })],
+      }),
+    );
+    expect(screen.getByRole("listitem")).toHaveTextContent("Uploading");
+    expect(screen.getByRole("listitem")).not.toHaveTextContent("Selected");
+  });
+
+  it("has no second primary button: the zone offers a link-style upload", () => {
+    renderStep(makeView());
+    expect(screen.queryByRole("button", { name: "Choose files" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Click to upload" })).toBeVisible();
+    expect(screen.getByLabelText("Documents")).toBeInTheDocument();
+  });
+
+  it("draws the wrong-type notice as an alert at the drop zone", () => {
+    renderStep(makeView({ selectionProblem: "notes.exe is not a supported type." }));
+    expect(screen.getByRole("alert")).toHaveTextContent("notes.exe is not a supported type.");
+  });
+
+  it("moves focus to the next file's Remove, else the previous, else the drop zone", () => {
+    const rows = [row("a.pdf"), row("b.pdf"), row("c.pdf")];
+    let view = makeView({ documentRows: rows });
+    const folder = createRef<HTMLInputElement>();
+    const { rerender } = render(<DocumentFields view={view} folderInput={folder} />);
+    const press = (name: string) => {
+      screen.getByRole("button", { name }).focus();
+      fireEvent.click(screen.getByRole("button", { name }));
+    };
+    const show = (names: string[]) => {
+      view = makeView({ documentRows: names.map((n) => row(n)) });
+      rerender(<DocumentFields view={view} folderInput={folder} />);
+    };
+    press("Remove b.pdf");
+    show(["a.pdf", "c.pdf"]);
+    expect(screen.getByRole("button", { name: "Remove c.pdf" })).toHaveFocus();
+    press("Remove c.pdf");
+    show(["a.pdf"]);
+    expect(screen.getByRole("button", { name: "Remove a.pdf" })).toHaveFocus();
+    press("Remove a.pdf");
+    show([]);
+    expect(screen.getByRole("button", { name: "Click to upload" })).toHaveFocus();
+  });
+});
+
+describe("Documents step: the labelled fields", () => {
+  it("says Required in words and keeps the exact label names", () => {
+    renderStep(makeView());
+    for (const name of ["Issuer name", "Issuer ID", "As-of date", "Your name"]) {
+      expect(screen.getByLabelText(name)).toBeRequired();
+    }
+    expect(screen.getAllByText("Required")).toHaveLength(4);
+    expect(screen.queryByText("*")).toBeNull();
   });
 });
 
 describe("Documents step: missing for the modules", () => {
-  it("waits for a review when none has been made", () => {
+  it("draws nothing when no review has been made", () => {
     renderStep(makeView({ missing: undefined }));
-    expect(screen.getByRole("heading", { name: "Missing for the modules" })).toBeVisible();
-    expect(screen.getByText("Checked when you review the run.")).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Missing for the modules" })).toBeNull();
+  });
+
+  it("heads checks as things to check, never as missing", () => {
+    renderStep(
+      makeView({
+        missing: [
+          group({ key: "a", outcome: "gap", causes: [item({ id: "a", reason: "No filing." })] }),
+          group({
+            key: "b",
+            outcome: "check",
+            kind: "check",
+            causes: [item({ id: "b", outcome: "check", reason: "Confirm the date." })],
+          }),
+        ],
+      }),
+    );
+    const missing = screen.getByRole("list", { name: "Missing for the modules" });
+    expect(missing).toHaveTextContent("No filing.");
+    expect(missing).not.toHaveTextContent("Confirm the date.");
+    expect(screen.getByRole("heading", { name: "To check" })).toBeVisible();
+    expect(screen.getByRole("list", { name: "To check" })).toHaveTextContent("Confirm the date.");
   });
 
   it("says nothing was missing after a clean review", () => {
