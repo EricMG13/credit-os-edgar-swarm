@@ -2,12 +2,7 @@ import { ArrowRight } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { cx } from "@/utils/cx";
 import { FindingParagraph } from "../ReportContent";
-import {
-  evidencePath,
-  readParagraph,
-  readerText,
-  type OutputEntry,
-} from "../publishedReport";
+import { evidencePath, readParagraph, readerText, type OutputEntry } from "../publishedReport";
 import { traceKey } from "../reportView";
 import { richParts } from "../richText";
 import { typedModuleTable } from "./ModuleTable";
@@ -20,25 +15,37 @@ import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 /** A section this long reads in two columns on a wide screen; a shorter one shares its row. */
 const LONG = 180;
 
-type Placed = { prose: ProseSection; span: 6 | 12 };
+type Placed = { prose: ProseSection; span: 6 | 8 | 12 };
 
-/** Short sections pair up side by side; a long one, or a short one left alone, takes the row. */
+const isShort = (item: ProseSection) => item.words <= LONG && !item.typed.length;
+/** Two short sections share a row only when their lengths are alike, so neither tile is mostly empty. */
+const alike = (a: ProseSection, b: ProseSection) =>
+  Math.max(a.words, b.words) <= 1.6 * Math.max(1, Math.min(a.words, b.words));
+
+/**
+ * Short sections of similar length pair up side by side; a long one takes the row; a short one
+ * left alone takes eight columns, so its lines keep a reading measure without an empty tile.
+ */
 export function placeProse(prose: readonly ProseSection[]): Placed[] {
   const placed: Placed[] = [];
   let open: Placed | null = null;
   for (const item of prose) {
-    const short = item.words <= LONG && !item.typed.length;
-    if (!short) {
-      if (open) open.span = 12;
+    if (!isShort(item)) {
+      if (open) open.span = 8;
       open = null;
       placed.push({ prose: item, span: 12 });
       continue;
     }
-    const next: Placed = { prose: item, span: 6 };
-    placed.push(next);
-    open = open ? null : next;
+    if (open && alike(open.prose, item)) {
+      open.span = 6;
+      placed.push({ prose: item, span: 6 });
+      open = null;
+      continue;
+    }
+    if (open) open.span = 8;
+    open = { prose: item, span: 8 };
+    placed.push(open);
   }
-  if (open) open.span = 12;
   return placed;
 }
 
@@ -67,7 +74,7 @@ function ProseTile({
   // tile has no title and takes another name where theirs would repeat it.
   if (!prose.paragraphs.length)
     return (
-      <Tile span={12} label={`${prose.title} table`}>
+      <Tile span={12} label={`${prose.title} table`} className="self-start">
         <div id={id} tabIndex={-1} className="grid min-w-0 gap-4 outline-none">
           <TypedTables prose={prose} entry={entry} />
         </div>
@@ -77,6 +84,7 @@ function ProseTile({
   return (
     <Tile
       span={span}
+      className="self-start"
       label={prose.title}
       title={
         <Anchor id={id}>
@@ -84,7 +92,7 @@ function ProseTile({
         </Anchor>
       }
     >
-      <div className={cx("min-w-0", columns ? "gap-x-10 lg:columns-2 [&>*]:mb-4" : "grid gap-4")}>
+      <div className={cx("min-w-0", columns ? "gap-x-10 xl:columns-2 [&>*]:mb-4" : "grid gap-4")}>
         {prose.paragraphs.map((block) => (
           <div key={block.line} className="break-inside-avoid [&_.reading-copy]:max-w-none">
             <FindingParagraph
@@ -130,6 +138,7 @@ export function DrawingGapTile({
   return (
     <Tile
       span={span}
+      className="self-start"
       label={gap.title}
       title={<span className="first-letter:uppercase">{gap.title}</span>}
     >

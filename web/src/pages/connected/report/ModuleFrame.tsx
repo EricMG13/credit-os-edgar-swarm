@@ -1,5 +1,5 @@
 import { ArrowRight } from "@untitledui/icons";
-import { Fragment, useContext, type ReactNode } from "react";
+import { Fragment, useContext, useEffect, useState, type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { STATUS_SETS } from "@/components/status/sets";
@@ -119,19 +119,68 @@ function BottomLineText({
         </div>
         <HeldTrace trace={traceKey(entry, line)} label="Show sources for the bottom line" />
       </div>
-      {source.kind === "passage"
-        ? source.rest.map((block) => (
-            <FindingParagraph
-              key={block.line}
-              block={block}
-              trace={traceKey(entry, block.line)}
-              href={evidencePath(folder, entry, block.line)}
-            />
-          ))
-        : source.rest && (
-            <p className="reading-copy text-body text-text-secondary">{readerText(source.rest)}</p>
-          )}
     </div>
+  );
+}
+
+/** Whether the viewport is at least `width` wide; wide where the browser cannot say (tests). */
+function useWideScreen(width: number) {
+  const query = `(min-width: ${String(width)}px)`;
+  const read = () =>
+    typeof window.matchMedia === "function" ? window.matchMedia(query).matches : true;
+  const [wide, setWide] = useState(read);
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const list = window.matchMedia(query);
+    const sync = () => {
+      setWide(list.matches);
+    };
+    list.addEventListener("change", sync);
+    return () => {
+      list.removeEventListener("change", sync);
+    };
+  }, [query]);
+  return wide;
+}
+
+/**
+ * The bottom line's further paragraphs: in full from md; on a phone behind "Read on", so the
+ * meter follows the bottom line's first paragraph directly.
+ */
+function Continuation({
+  source,
+  entry,
+  folder,
+}: {
+  source: NonNullable<BottomLineSource>;
+  entry: OutputEntry;
+  folder: string;
+}) {
+  const wide = useWideScreen(768);
+  const paragraphs =
+    source.kind === "passage" ? (
+      source.rest.map((block) => (
+        <FindingParagraph
+          key={block.line}
+          block={block}
+          trace={traceKey(entry, block.line)}
+          href={evidencePath(folder, entry, block.line)}
+        />
+      ))
+    ) : source.rest ? (
+      <p className="reading-copy text-body text-text-secondary">{readerText(source.rest)}</p>
+    ) : null;
+  const some = source.kind === "passage" ? source.rest.length > 0 : Boolean(source.rest);
+  if (!some) return null;
+  const place = "order-4 flex min-w-0 flex-col gap-3 lg:col-span-2 lg:row-start-3";
+  if (wide) return <div className={place}>{paragraphs}</div>;
+  return (
+    <details className={cx(place, "group/readon")}>
+      <summary className="flex min-h-11 cursor-pointer items-center gap-1 text-small font-medium text-text-link">
+        Read on
+      </summary>
+      <div className="flex flex-col gap-3 pt-2">{paragraphs}</div>
+    </details>
   );
 }
 
@@ -184,7 +233,9 @@ function BasisLine({
 /** Below the title, across the tile, under a hairline. */
 function Bottom({ children }: { children: ReactNode }) {
   return (
-    <div className="min-w-0 border-t border-border-hairline pt-5 lg:col-span-2">{children}</div>
+    <div className="order-2 min-w-0 border-t border-border-hairline pt-5 lg:col-span-2 lg:row-start-2">
+      {children}
+    </div>
   );
 }
 
@@ -300,16 +351,14 @@ export function ModuleHeader({
       className={cx("gap-0 sm:p-7", blocked && "border-dashed border-warning-mark")}
     >
       <div className="grid min-w-0 gap-x-8 gap-y-4 lg:grid-cols-[minmax(0,1fr)_auto]">
-        <div className="flex min-w-0 flex-col gap-1.5">
+        <div className="order-1 flex min-w-0 flex-col gap-1.5 lg:col-start-1 lg:row-start-1">
           <TitleRow module={module} />
           {stage && <p className="text-small text-text-tertiary">{stage}</p>}
           {entry && basis && <BasisLine basis={basis} entry={entry} folder={folder} />}
           {about}
         </div>
         {confidence && (
-          <div className="order-last min-w-0 lg:order-none lg:row-start-1 lg:col-start-2">
-            {confidence}
-          </div>
+          <div className="order-3 min-w-0 lg:col-start-2 lg:row-start-1">{confidence}</div>
         )}
         <HeaderBottom
           entry={entry}
@@ -318,6 +367,9 @@ export function ModuleHeader({
           owed={owed || blocked}
           folder={folder}
         />
+        {entry && bottomLine && !entry.output.parseError && (
+          <Continuation source={bottomLine} entry={entry} folder={folder} />
+        )}
       </div>
     </Tile>
   );
@@ -504,6 +556,7 @@ export function ModuleFindings({
       {left && (
         <Tile
           span={leftSpan}
+          className="self-start"
           label={KEY_FINDINGS}
           title={<Anchor id={ANCHOR.findings}>{KEY_FINDINGS}</Anchor>}
         >
@@ -517,6 +570,7 @@ export function ModuleFindings({
       {right && (
         <Tile
           span={rightSpan}
+          className="self-start"
           label={CONTRARY}
           title={<Anchor id={ANCHOR.contrary}>{CONTRARY}</Anchor>}
           tone={contrary ? "counter" : "plain"}
@@ -637,7 +691,12 @@ export function ModuleLimitations({
   if (!paragraphs.length && !tables.length && !owed && !gaps.length && !hollow) return null;
   const title = "Limitations of this module";
   return (
-    <Tile span={span} label={title} title={<Anchor id={ANCHOR.limitations}>{title}</Anchor>}>
+    <Tile
+      span={span}
+      className="self-start"
+      label={title}
+      title={<Anchor id={ANCHOR.limitations}>{title}</Anchor>}
+    >
       <p className="-mt-2 text-caption text-text-tertiary">As the module reports them</p>
       {hollow ? (
         <HollowPassage section={hollow} title={title} entry={entry} folder={folder} />
@@ -692,34 +751,32 @@ export function NextModule({
   const place = stage.number
     ? `${stage.name} · stage ${String(stage.number)} of ${String(stage.of)}`
     : stage.name;
+  // A compact tile that takes its content's height: beside the limitations it is the last
+  // row's right third, aligned to its top; without them it closes the page across the row.
   return (
     <a
       href={href(next.id)}
       aria-label={`Next module: ${next.name}`}
       className={cx(
-        "group flex min-w-0 gap-5 rounded-ds-lg border border-border-subtle bg-surface-card p-5 outline-focus-ring hover:border-border-container focus-visible:outline-2 focus-visible:outline-offset-2 sm:p-6",
-        wide
-          ? "flex-row items-center justify-between lg:col-span-12"
-          : "flex-col justify-between lg:col-span-4",
+        "group flex min-w-0 items-center justify-between gap-4 self-start rounded-ds-lg border border-border-subtle bg-surface-card p-5 outline-focus-ring hover:border-border-container focus-visible:outline-2 focus-visible:outline-offset-2",
+        wide ? "lg:col-span-12" : "lg:col-span-4",
       )}
     >
-      <span className="text-caption font-medium text-text-secondary">Next module</span>
-      <span className={cx("flex items-end justify-between gap-4", wide && "flex-1 items-center")}>
-        <span className="flex min-w-0 flex-col gap-1.5">
-          <span className="font-display text-h3 font-medium text-text-primary">
-            {next.name}{" "}
-            <span className="font-mono text-caption font-normal text-text-tertiary">{next.id}</span>
-          </span>
-          <span className="text-caption text-text-secondary">
-            {place} · {next.state}
-          </span>
+      <span className="flex min-w-0 flex-col gap-1">
+        <span className="text-caption font-medium text-text-secondary">Next module</span>
+        <span className="font-display text-h4 font-medium text-text-primary">
+          {next.name}{" "}
+          <span className="font-mono text-caption font-normal text-text-tertiary">{next.id}</span>
         </span>
-        <span
-          aria-hidden="true"
-          className="grid size-10 flex-none place-items-center rounded-ds-sm border border-action-subtle-hover bg-surface-selected text-action"
-        >
-          <ArrowRight className="size-4" />
+        <span className="text-caption text-text-secondary">
+          {place} · {next.state}
         </span>
+      </span>
+      <span
+        aria-hidden="true"
+        className="grid size-10 flex-none place-items-center rounded-ds-sm border border-action-subtle-hover bg-surface-selected text-action"
+      >
+        <ArrowRight className="size-4" />
       </span>
     </a>
   );

@@ -37,7 +37,7 @@ export function moduleFigures(entry: OutputEntry, run: PublishedRun) {
   return { downside, breaks, macro, securities, tableLines };
 }
 
-type Cell = { key: string; node: (span: 6 | 12) => ReactNode };
+type Cell = { key: string; node: (span: 6 | 12) => ReactNode; short?: boolean };
 
 /** Whether the handoff holds the table a drawing is drawn from; without it nothing is drawn. */
 const hasTable = (entry: OutputEntry, line: number) =>
@@ -72,7 +72,7 @@ function drawingCell(
   return {
     key: `${slot}-${String(descriptor.table)}`,
     node: (span) => (
-      <Tile span={span} label={title}>
+      <Tile span={span} label={title} className="self-start">
         <LegacyVisuals
           output={output}
           sections={entry.sections}
@@ -89,7 +89,9 @@ function figureCell(key: string, figure: ReactNode): Cell {
   return {
     key,
     node: (span) => (
-      <div className={cx("grid min-w-0", span === 6 ? "lg:col-span-6" : "lg:col-span-12")}>
+      <div
+        className={cx("grid min-w-0 self-start", span === 6 ? "lg:col-span-6" : "lg:col-span-12")}
+      >
         {figure}
       </div>
     ),
@@ -158,15 +160,25 @@ export function ModuleFigures({
       .filter(({ kind }) => kinds.has(kind))
       .map((gap) => ({
         key: `gap-${String(gap.line)}`,
+        short: true,
         node: (span: 6 | 12) => (
           <DrawingGapTile gap={gap} entry={entry} folder={run.folder} span={span} />
         ),
       })),
   ];
-  const span = cells.length > 1 ? 6 : 12;
-  return cells.map((cell, at) => {
-    // A cell left alone in the last row takes the row.
-    const own = span === 6 && at === cells.length - 1 && cells.length % 2 === 1 ? 12 : span;
-    return <Fragment key={cell.key}>{cell.node(own)}</Fragment>;
-  });
+  return cells.map((cell, at) => (
+    <Fragment key={cell.key}>{cell.node(spanOf(cells, at))}</Fragment>
+  ));
+}
+
+/**
+ * A figure takes the row: its own small multiples stay side by side and no tile is stretched to
+ * a neighbour's height. Only short stated-gap tiles pair, two to a row.
+ */
+function spanOf(cells: readonly Cell[], at: number): 6 | 12 {
+  if (!cells[at]?.short) return 12;
+  let run = 0;
+  for (let index = at; index >= 0 && cells[index]?.short; index -= 1) run += 1;
+  const paired = run % 2 === 0 || Boolean(cells[at + 1]?.short);
+  return paired ? 6 : 12;
 }

@@ -225,3 +225,45 @@ it("closes the disclosure when a section is pressed on a narrow screen", () => {
     delete window.matchMedia;
   }
 });
+
+it("draws the legend's This page swatch with the same teal edge as the current link", () => {
+  renderNav();
+  const swatch = within(screen.getByRole("list", { name: "Legend" }))
+    .getByText("This page")
+    .querySelector("span") as HTMLElement;
+  expect(swatch).toHaveClass("border", "border-action", "bg-surface-selected");
+  expect(screen.getByRole("link", { name: /Financial statements/ })).toHaveClass(
+    "border-action",
+    "bg-surface-selected",
+  );
+});
+
+it("hides the panel's repeated title and count below lg but keeps one Modules heading", () => {
+  renderNav();
+  const headings = screen.getAllByRole("heading", { level: 2, name: "Modules" });
+  expect(headings).toHaveLength(1);
+  expect(headings[0]).toHaveClass("max-lg:hidden");
+  expect(screen.getByText("4 of 6 delivered", { selector: "p" })).toHaveClass("max-lg:hidden");
+});
+
+it("keeps the not-assessable chip visible below lg", () => {
+  renderNav();
+  const chip = screen.getByText("1 not assessable");
+  expect(chip.closest("header")).not.toHaveClass("max-lg:hidden");
+  expect(chip.closest("p")).not.toHaveClass("max-lg:hidden");
+});
+
+it("uses ramp type sizes, not arbitrary ones, in stage links and sections", () => {
+  render(
+    <StageNav
+      modules={modules}
+      current="CP-1"
+      hrefFor={hrefFor}
+      sections={[{ id: "s1", label: "Overview" }]}
+    />,
+  );
+  const link = screen.getByRole("link", { name: /Financial statements/ });
+  expect(link.className).not.toMatch(/text-\[/);
+  expect(link).toHaveClass("text-caption");
+  expect(screen.getByRole("button", { name: "Overview" })).toHaveClass("text-caption");
+});

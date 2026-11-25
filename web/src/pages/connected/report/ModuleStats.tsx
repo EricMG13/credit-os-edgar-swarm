@@ -1,5 +1,4 @@
 import { StatsStrip, type Stat } from "@/components/kit/StatsStrip";
-import { TraceControl } from "@/pages/library/parts/TraceControl";
 import {
   blocked,
   containsReference,
@@ -42,20 +41,80 @@ function basisLine(figure: Figure) {
   return [figure.period, shown].filter(Boolean).join(" · ");
 }
 
+/** The figure's one trace to its handoff row; none where no row is known (no dead stop). */
 function trace(name: string, source: HeadlineSource | undefined) {
   return source ? (
     <PublishedSource href={source.href} name={name}>
       Source
     </PublishedSource>
-  ) : (
-    <TraceControl trace={null} label={`Show sources for ${name}`} />
-  );
+  ) : undefined;
 }
 
-/** A figure the catalogue does not state: the module's own words only where its row says so. */
+/** A figure the strip does not draw: the module's own words only where its row says so. */
 function gapWords(source: HeadlineSource | undefined) {
   if (source?.reason === undefined) return "Not shown here";
   return containsReference(source.reason) ? "Not supplied" : readerText(source.reason);
+}
+
+const plainNumber = (value: string | number) => {
+  const text = String(value).replace(/,/g, "").trim();
+  return /^-?\d+(?:\.\d+)?$/.test(text) ? Number(text) : null;
+};
+
+/**
+ * The mockup's two-point mark: the prior and current figures as written, from a zero baseline, the
+ * current point in the signal colour where the change is worse. Nothing for a figure that is not a
+ * plain non-negative number on both sides.
+ */
+function TwoPoint({
+  name,
+  prior,
+  current,
+  worse,
+}: {
+  name: string;
+  prior: { value: string; period: string };
+  current: { value: string | number; period?: string | null };
+  worse: boolean;
+}) {
+  const before = plainNumber(prior.value);
+  const after = plainNumber(current.value);
+  if (before === null || after === null || before < 0 || after < 0) return null;
+  const top = Math.max(before, after) || 1;
+  const y = (value: number) => 28 - (24 * value) / top;
+  return (
+    <svg
+      viewBox="0 0 56 32"
+      width="56"
+      height="32"
+      role="img"
+      aria-label={`${name} ${prior.value} in ${prior.period} and ${String(current.value)}${current.period ? ` in ${current.period}` : ""}`}
+      className="flex-none"
+    >
+      <line x1="2" y1="28" x2="54" y2="28" className="stroke-border-hairline" />
+      <line
+        x1="6"
+        y1={y(before)}
+        x2="50"
+        y2={y(after)}
+        strokeWidth="1.5"
+        className="stroke-chart-3"
+      />
+      <circle
+        cx="6"
+        cy={y(before)}
+        r="2.5"
+        strokeWidth="1.5"
+        className="fill-surface-card stroke-chart-3"
+      />
+      <circle
+        cx="50"
+        cy={y(after)}
+        r="3"
+        className={worse ? "fill-warning-mark" : "fill-chart-1"}
+      />
+    </svg>
+  );
 }
 
 function stat(
@@ -65,7 +124,9 @@ function stat(
   source?: HeadlineSource,
 ): Stat {
   const name = nameOf(key, label, figure);
-  if (!stated(figure))
+  // A figure is drawn only where the handoff's own row states it: the strip never disagrees with
+  // the handoff on the page (headlineSources gives a row only when its cell equals the figure).
+  if (!stated(figure) || !source || source.reason !== undefined)
     return { label: name, value: null, gap: gapWords(source), trace: trace(name, source) };
   const direction = figure.change == null ? "none" : tone(key, figure.change);
   const basis = basisLine(figure);
@@ -77,7 +138,19 @@ function stat(
     }),
     ...(figure.prior && figure.change != null && { delta: changeText(figure.change, figure.unit) }),
     ...((direction === "better" || direction === "worse") && { tone: direction }),
-    ...(basis && { mark: <span className="text-caption text-text-tertiary">{basis}</span> }),
+    mark: (
+      <span className="flex items-end justify-between gap-2">
+        {basis && <span className="text-caption text-text-tertiary">{basis}</span>}
+        {figure.prior && (
+          <TwoPoint
+            name={name}
+            prior={figure.prior}
+            current={figure}
+            worse={direction === "worse"}
+          />
+        )}
+      </span>
+    ),
     trace: trace(name, source),
   };
 }

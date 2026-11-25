@@ -334,8 +334,9 @@ export function ModuleNav({
 }
 
 const STAGE_LINK =
-  "flex min-h-8 w-full items-center gap-2 rounded-ds-md px-2 py-1 text-[13px] leading-[18px] text-text-secondary outline-hidden hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-brand max-[480px]:min-h-11";
-const STAGE_LINK_CURRENT = "bg-surface-selected text-text-link hover:bg-surface-selected";
+  "flex min-h-8 w-full items-center gap-2 rounded-ds-md border border-transparent px-2 py-1 text-caption text-text-secondary outline-hidden hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-brand max-[480px]:min-h-11";
+const STAGE_LINK_CURRENT =
+  "border-action bg-surface-selected text-text-link hover:bg-surface-selected";
 const DESKTOP = "(min-width: 1024px)";
 
 function SlashCircle({ className }: { className?: string }) {
@@ -421,7 +422,7 @@ function SectionList({
               onPressed();
             }}
             className={cx(
-              "flex min-h-8 w-full cursor-pointer items-center rounded-ds-md px-2 text-left text-[13px] leading-[18px] text-text-secondary outline-hidden hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-brand max-[480px]:min-h-11",
+              "flex min-h-8 w-full cursor-pointer items-center rounded-ds-md px-2 text-left text-caption text-text-secondary outline-hidden hover:bg-surface-subtle focus-visible:ring-2 focus-visible:ring-brand max-[480px]:min-h-11",
               section.id === active && "font-medium text-text-link",
             )}
           >
@@ -501,7 +502,7 @@ function Legend() {
       <li className={item}>
         <span
           aria-hidden="true"
-          className="h-2.5 w-3 rounded-ds-xs border border-border-subtle bg-surface-selected"
+          className="h-2.5 w-3 rounded-ds-xs border border-action bg-surface-selected"
         />
         This page
       </li>
@@ -571,8 +572,8 @@ export function StageNav({
         </summary>
         <div className="mt-3 flex flex-col gap-3 lg:mt-0">
           <header className="flex flex-col gap-0.5 px-2">
-            <h2 className="text-small font-medium text-text-primary">Modules</h2>
-            <p className="text-caption text-text-tertiary">{count}</p>
+            <h2 className="text-small font-medium text-text-primary max-lg:hidden">Modules</h2>
+            <p className="text-caption text-text-tertiary max-lg:hidden">{count}</p>
             {blocked > 0 ? (
               <p>
                 <span className="inline-flex h-5 items-center gap-1 rounded-ds-xs border border-warning-edge bg-warning-fill px-1.5 text-caption font-medium text-warning-text">

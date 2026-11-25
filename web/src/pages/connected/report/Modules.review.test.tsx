@@ -248,10 +248,13 @@ it("10: reads a long section in two columns and pairs short ones side by side", 
     typed: [],
     words,
   });
-  const spans = placeProse([prose(1, 400), prose(2, 50), prose(3, 50), prose(4, 50)]).map(
-    ({ span }) => span,
-  );
-  expect(spans).toEqual([12, 6, 6, 12]);
+  const spans = (...words: number[]) =>
+    placeProse(words.map((count, at) => prose(at + 1, count))).map(({ span }) => span);
+  // V5: a long section takes the row; short ones of like length pair; a lone short one takes 8.
+  expect(spans(400, 50, 50, 50)).toEqual([12, 6, 6, 8]);
+  // Two short sections of unlike length do not pair: the shorter tile would be mostly empty.
+  expect(spans(170, 40)).toEqual([8, 8]);
+  expect(spans(60)).toEqual([8]);
 });
 
 const metrics = {
@@ -266,8 +269,15 @@ const metrics = {
   cash: { value: "6261", unit: "US$m", period: "FY2024", basis: "Reported" },
 };
 
+const chartRows = [
+  section("Chart data: leverage", 3, 40, [
+    table(41, ["Period", "Total debt / EBITDA", "Net debt / EBITDA"], [["FY2024", "6.53", "4.88"]]),
+  ]),
+  section("Chart data: liquidity", 3, 50, [table(51, ["Period", "Cash"], [["FY2024", "6261"]])]),
+];
+
 it("11: draws the CP-1 strip from the catalogue, each figure with its period, basis and prior", () => {
-  page([findings, bottom], {
+  page([findings, bottom, ...chartRows], {
     module: "CP-1",
     name: "Financial foundation",
     catalogue: { id: "r", metrics } as unknown as CatalogueRun,
@@ -281,6 +291,28 @@ it("11: draws the CP-1 strip from the catalogue, each figure with its period, ba
   expect(strip.getByText("FY2024 · Reported")).toBeVisible();
   expect(strip.getAllByText("Not shown here").length).toBeGreaterThan(0);
   expect(strip.queryByText("0")).toBeNull();
+  // V4: the mockup's two-point mark, prior to current, drawn from the figures as written.
+  expect(
+    strip.getByRole("img", { name: "Gross leverage 6.27 in FY2023 and 6.53 in FY2024" }),
+  ).toBeInTheDocument();
+  // A figure the strip does not draw has no control: no dead tab stop.
+  const gap = strip.getByText("Adjusted EBITDA").closest("div") as HTMLElement;
+  expect(within(gap).queryByRole("button")).toBeNull();
+});
+
+it("V4: draws no figure the handoff's own row does not state", () => {
+  const disagreeing = {
+    ...metrics,
+    leverage: { ...metrics.leverage, value: "2.80" },
+  };
+  page([findings, bottom, ...chartRows], {
+    module: "CP-1",
+    name: "Financial foundation",
+    catalogue: { id: "r", metrics: disagreeing } as unknown as CatalogueRun,
+  });
+  const strip = within(screen.getByLabelText("Headline figures"));
+  expect(strip.queryByText("2.80x")).toBeNull();
+  expect(strip.getByText("Gross leverage").closest("div")).toHaveTextContent("Not shown here");
 });
 
 it("11: draws no strip for another module or a catalogue that states no headline figure", () => {
