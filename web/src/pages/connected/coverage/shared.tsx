@@ -50,7 +50,10 @@ export function RunLine({ run }: { run: CoverageRun }) {
 /** A text link's hit area: 32 px, 44 px on a phone; the text stays small. */
 export const HIT = "inline-flex min-h-8 items-center max-[480px]:min-h-11";
 
-/** A run's pathway and as-of date as one line of plain text, for a tooltip. */
+/** A run's pathway and as-of date, and how many other runs share the date, as plain text for a tooltip. */
 export function runText(run: CoverageRun): string {
-  return `${run.pathwayTitle ?? "Pathway not recorded"}, as of ${run.asOf ? asOfDate(run.asOf) : "a date not recorded"}`;
+  const shared = run.sharedWith
+    ? `; ${String(run.sharedWith)} other ${run.sharedWith === 1 ? "run shares" : "runs share"} this date`
+    : "";
+  return `${run.pathwayTitle ?? "Pathway not recorded"}, as of ${run.asOf ? asOfDate(run.asOf) : "a date not recorded"}${shared}`;
 }

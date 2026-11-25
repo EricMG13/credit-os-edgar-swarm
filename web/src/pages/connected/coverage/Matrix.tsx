@@ -148,6 +148,8 @@ function ShapeCells({
 function IssuerName({
   issuer,
   run,
+  say,
+  wrap = false,
   chosen,
   toggle,
   open,
@@ -155,6 +157,10 @@ function IssuerName({
 }: {
   issuer: Issuer;
   run: CoverageRun;
+  /** Read the issuer aloud in the status line, so a cut name is reachable on focus. */
+  say?: (text: string) => void;
+  /** Wrap a long name rather than cut it (a phone card). */
+  wrap?: boolean;
   chosen: ReadonlySet<string>;
   toggle: (key: string) => void;
   open: string | null;
@@ -175,8 +181,17 @@ function IssuerName({
       </label>
       <button
         type="button"
-        title={runText(run)}
-        className="min-h-8 min-w-0 cursor-pointer truncate text-left font-semibold underline-offset-2 hover:underline max-[480px]:min-h-11"
+        title={`${issuer.name}: ${runText(run)}`}
+        onFocus={() => {
+          say?.(`${issuer.name} (${runText(run)})`);
+        }}
+        onMouseEnter={() => {
+          say?.(`${issuer.name} (${runText(run)})`);
+        }}
+        className={cx(
+          "min-h-8 min-w-0 cursor-pointer text-left font-semibold underline-offset-2 hover:underline max-[480px]:min-h-11",
+          wrap ? "wrap-anywhere" : "truncate",
+        )}
         aria-expanded={open === issuer.key}
         onClick={() => {
           setOpen(open === issuer.key ? null : issuer.key);
@@ -223,7 +238,7 @@ export function Matrix({
               className="grid gap-3 rounded-ds-lg border border-border-subtle bg-surface-card p-4"
             >
               <div className="grid gap-0.5">
-                <IssuerName issuer={issuer} run={run} {...name} />
+                <IssuerName issuer={issuer} run={run} wrap {...name} />
                 <RunLine run={run} />
               </div>
               <RunStates data={data} run={run} />
@@ -251,7 +266,7 @@ export function Matrix({
               return (
                 <tr key={issuer.key} className="border-b border-border-hairline last:border-0">
                   <th scope="row" className={cx(STICKY, "p-1 text-left font-semibold")}>
-                    <IssuerName issuer={issuer} run={run} {...name} />
+                    <IssuerName issuer={issuer} run={run} say={setReading} {...name} />
                   </th>
                   <ShapeCells data={data} run={run} issuer={issuer.name} say={setReading} />
                 </tr>
@@ -261,7 +276,7 @@ export function Matrix({
         </table>
       </Scroller>
       <p role="status" className="min-h-5 text-small text-text-secondary">
-        {reading || "Point at, focus or press a shape to read the issuer, module and state."}
+        {reading || "Point at or focus a shape to read its state; a shape with a handoff opens the module."}
       </p>
     </div>
   );

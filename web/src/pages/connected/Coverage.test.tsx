@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { Coverage } from "./Coverage";
 import type { Coverage as Data } from "./coverageData";
 
@@ -313,24 +313,117 @@ test("an unreadable bound shows as an error chip and a marked summary with the d
   expect(screen.queryByText(/a bound is not a number/)).toBeNull();
 });
 
-test("a bound compares one reporting unit, named in its chip, and the unit can be chosen", async () => {
-  const [alphaFigure, betaGap, finding] = data.facts;
-  if (!alphaFigure || !betaGap || !finding) throw new Error("fixture");
-  answer({
-    ...data,
-    facts: [alphaFigure, { ...betaGap, text: "610", at: 610, gap: false, unit: "%" }, finding],
+function unitsData(
+  units: Record<string, string | undefined>,
+  values: Record<string, number>,
+): Data {
+  const keys = Object.keys(units);
+  return {
+    columns: data.columns,
+    issuers: keys.map((key) => ({
+      key,
+      name: key.toUpperCase(),
+      sector: null,
+      runs: [
+        {
+          key: `${key}1`,
+          folder: `${key}-run`,
+          asOf: "2026-03-31",
+          pathway: null,
+          pathwayTitle: null,
+          cells: {},
+          other: [],
+        },
+      ],
+    })),
+    fields: [
+      {
+        id: "lev",
+        module: "CP-1",
+        group: "Leverage",
+        label: "Net debt / EBITDA",
+        kind: "number",
+        series: "period",
+      },
+    ],
+    facts: keys.map((key) => ({
+      field: "lev",
+      issuer: key,
+      run: `${key}1`,
+      period: "FY2025",
+      row: null,
+      text: String(values[key]),
+      at: values[key] ?? null,
+      ...(units[key] === undefined ? {} : { unit: units[key] }),
+      basis: "Reported.",
+      line: 1,
+      output: `${key}-run/CP-1.md`,
+      sha256: SHA,
+    })),
+  };
+}
+
+test("a bound never removes an issuer stated in another unit: it stays, listed as not compared", async () => {
+  const keys = ["a", "b", "c", "d", "e", "f", "g", "h"];
+  const units: Record<string, string> = Object.fromEntries(keys.map((key) => [key, "US$m"]));
+  units.i = "EURm";
+  const values: Record<string, number> = Object.fromEntries(keys.map((key, at) => [key, at]));
+  values.i = 9;
+  answer(unitsData(units, values));
+  render(<Coverage />);
+  fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
+    target: { value: "1" },
   });
+  // A is 0 (below 1) and drops; B–H pass; I is in EURm, was not compared, and stays.
+  expect(
+    screen.getByText("8 of 9 issuers shown · 7 compared, 1 not compared (another unit)"),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(/Not compared, stated in another unit: I \(EURm\)\./),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /Remove filter .*≥ 1 US\$m · FY2025/ })).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Rank" }));
+  expect(screen.getByRole("list", { name: /reporting unit EURm/ })).toBeVisible();
+  expect(
+    screen.getByText(/Bound not applied: this list is in EURm, and the bound compares US\$m\./),
+  ).toBeVisible();
+  // A bound below the other unit's figure does not remove it either.
+  fireEvent.change(screen.getByRole("textbox", { name: /At least/ }), { target: { value: "-5" } });
+  expect(screen.getByRole("list", { name: /reporting unit EURm/ })).toBeVisible();
+});
+
+test("two units that tie leave the bound open and ask the reader to choose; no unit stated never wins a tie", async () => {
+  answer(unitsData({ a: "x", b: "%" }, { a: 4.6, b: 610 }));
   render(<Coverage />);
   fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
     target: { value: "5" },
   });
-  // Opens on the unit most issuers state; a tie keeps the first (%): Beta's 610% passes.
-  expect(screen.getByRole("button", { name: /Remove filter .*≥ 5% · FY2025/ })).toBeVisible();
-  expect(screen.getByText("1 of 2 issuers shown")).toBeInTheDocument();
-  fireEvent.click(
-    within(screen.getByRole("group", { name: "Bound unit" })).getByRole("button", { name: "x" }),
-  );
-  // In x, Alpha's 4.6x is below 5x and Beta's figure is in another unit, so it passes none.
+  expect(screen.getByText("Choose a unit for the bound: % or x")).toBeVisible();
+  expect(screen.getByText("2 of 2 issuers shown")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Remove filter .*≥/ })).toBeNull();
+  const chips = within(screen.getByRole("group", { name: "Bound unit" }));
+  expect(chips.getByRole("button", { name: "%" })).toHaveAttribute("aria-pressed", "false");
+  expect(chips.getByRole("button", { name: "x" })).toHaveAttribute("aria-pressed", "false");
+  fireEvent.click(chips.getByRole("button", { name: "x" }));
+  expect(screen.queryByText(/Choose a unit for the bound/)).toBeNull();
   expect(screen.getByRole("button", { name: /Remove filter .*≥ 5x · FY2025/ })).toBeVisible();
-  expect(screen.getByText("0 of 2 issuers shown")).toBeInTheDocument();
+  cleanup();
+  answer(unitsData({ a: "x", b: "" }, { a: 1, b: 2 }));
+  render(<Coverage />);
+  fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
+    target: { value: "0" },
+  });
+  expect(screen.queryByText(/Choose a unit/)).toBeNull();
+  expect(screen.getByRole("button", { name: /Remove filter .*≥ 0x · FY2025/ })).toBeVisible();
+});
+
+test("the bound chip names 'no unit stated' when that is the unit compared", async () => {
+  answer(unitsData({ a: "", b: "" }, { a: 1, b: 2 }));
+  render(<Coverage />);
+  fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
+    target: { value: "0" },
+  });
+  expect(
+    screen.getByRole("button", { name: /Remove filter .*≥ 0 \(no unit stated\) · FY2025/ }),
+  ).toBeVisible();
 });

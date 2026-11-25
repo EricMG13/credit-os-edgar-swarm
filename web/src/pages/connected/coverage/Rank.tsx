@@ -9,6 +9,7 @@ import {
   type Issuer,
 } from "../coverageData";
 import { card } from "../layout";
+import { unitName } from "./boundUnit";
 import { prose, RunLine } from "./shared";
 import { ZeroAxisBar } from "./ZeroAxisBar";
 
@@ -39,6 +40,7 @@ export function RankView({
   period,
   order,
   by,
+  boundUnit,
 }: {
   data: Data;
   issuers: Issuer[];
@@ -46,6 +48,8 @@ export function RankView({
   period: string | null;
   order: "high" | "low";
   by: string;
+  /** The unit a numeric bound compares, when one is applied; lists in another unit are not compared. */
+  boundUnit: string | null;
 }) {
   if (!field || period === null)
     return (
@@ -66,10 +70,16 @@ export function RankView({
               const signed = values.some((value) => value < 0);
               const largest = Math.max(...values);
               const lowest = Math.min(...values);
-              const name = `${field.label}, ${period}${unit ? `, reporting unit ${unit}` : ""}${order === "high" ? ", highest first" : ", lowest first"}`;
+              const name = `${field.label}, ${period}${`, ${unit === "" ? unitName(unit) : `reporting unit ${unit}`}`}${order === "high" ? ", highest first" : ", lowest first"}`;
               return (
                 <div key={unit} className="grid gap-2">
                   <p className="text-small text-text-secondary">{name}</p>
+                  {boundUnit !== null && unit !== boundUnit && (
+                    <p className="text-caption text-gap-text">
+                      Bound not applied: this list is in {unitName(unit)}, and the bound compares{" "}
+                      {unitName(boundUnit)}.
+                    </p>
+                  )}
                   {signed && (
                     <p className="text-caption text-text-secondary">
                       Bars run from the zero line: figures below zero to its left, above zero to its
@@ -132,7 +142,7 @@ export function RankView({
                         <span className="font-medium text-text-primary">{issuer.name}</span>
                         {": "}
                         {repeated.length > 0
-                          ? `its run states this period more than once (${repeated.map(figure).join("; ")}), so none is ranked`
+                          ? `its run states this period more than once (${repeated.map((row) => `${figure(row)}${row.heading ? `, stated as ${row.heading}` : ""}`).join("; ")}), so none is ranked`
                           : fact
                             ? (prose(fact.text) ?? "the module's reason is in Evidence")
                             : stated.length > 0

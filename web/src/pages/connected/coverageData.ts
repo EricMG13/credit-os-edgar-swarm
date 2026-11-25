@@ -190,8 +190,9 @@ function within(fact: Fact | undefined, filters: Filters, unit: string | null): 
   if (min === null && max === null) return true;
   // A missing figure is not zero: it passes no numeric bound.
   if (fact?.at === null || fact?.at === undefined) return false;
-  // A bound compares figures in one reporting unit; a figure in another unit passes none.
-  if (unit !== null && (fact.unit ?? "") !== unit) return false;
+  // A bound compares figures in one reporting unit. A figure in another unit was not compared, so
+  // the bound does not remove it (the page lists it as not compared).
+  if (unit !== null && (fact.unit ?? "") !== unit) return true;
   return (min === null || fact.at >= min) && (max === null || fact.at <= max);
 }
 

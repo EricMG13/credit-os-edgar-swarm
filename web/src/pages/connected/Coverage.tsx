@@ -9,8 +9,6 @@ import { PageHeader } from "../../shell/PageHeader";
 import {
   commonPeriod,
   factAt,
-  factsOf,
-  fieldUnits,
   getCoverage,
   latestRun,
   matchIssuers,
@@ -26,6 +24,7 @@ import {
 } from "./coverageData";
 import { card, field as control, label } from "./layout";
 import { Chip, ChipGroup, RemovableChip } from "@/components/kit/Chip";
+import { boundUnit, unitName } from "./coverage/boundUnit";
 import { Choice, FieldOptions } from "./coverage/Controls";
 import { FindView } from "./coverage/Find";
 import { IssuerDetail } from "./coverage/IssuerDetail";
@@ -116,31 +115,22 @@ function Dashboard({ data }: { data: Data }) {
   const period =
     stated.find((item) => item === periodPick) ??
     (field ? commonPeriod(data, data.issuers, field.id) : null);
-  // The bounds read one figure at one period; Trend draws every period, so it applies none.
-  // A bound compares one reporting unit: the one most issuers state at the period, unless chosen.
-  const units = field ? fieldUnits(data, data.issuers, field.id) : [];
-  const stating = (unit: string) =>
-    data.issuers.filter((issuer) => {
-      const run = latestRun(issuer);
-      return (
-        run &&
-        field &&
-        factsOf(data, run.key, field.id).some(
-          (fact) => fact.period === period && fact.at !== null && (fact.unit ?? "") === unit,
-        )
-      );
-    }).length;
-  const commonUnit = units.reduce<string | null>(
-    (best, unit) => (best === null || stating(unit) > stating(best) ? unit : best),
-    null,
-  );
-  const boundUnit = unitPick !== null && units.includes(unitPick) ? unitPick : commonUnit;
+  // The bounds read one figure at one period in one reporting unit; Trend draws every period, so
+  // it applies none. An issuer stated in another unit is not compared, so a bound never removes it.
+  const [low, high] = [readBound(filters.min), readBound(filters.max)];
+  const boundSet = view !== "trend" && (low.value !== null || high.value !== null);
+  const bound =
+    field && period !== null
+      ? boundUnit(data, data.issuers, field.id, period, unitPick)
+      : { units: [], unit: null, tied: [] };
+  // Two units tie: the page does not choose, so the bound stays open until the reader does.
+  const waiting = boundSet && bound.unit === null && bound.tied.length > 0;
   const matched = matchIssuers(
     data,
-    filters,
+    waiting ? { ...filters, min: "", max: "" } : filters,
     field?.id ?? null,
     view === "trend" ? null : period,
-    boundUnit,
+    bound.unit,
   );
   // A bound passes no issuer without a figure, but Rank lists those apart as not ranked, with the
   // module's reason, so they stay in its list whatever the bounds are.
@@ -155,6 +145,19 @@ function Dashboard({ data }: { data: Data }) {
         )
       : matched;
   const shown = onlyChosen ? counted.filter((issuer) => chosen.has(issuer.key)) : counted;
+  const statedUnit = (issuer: Issuer) => {
+    const run = latestRun(issuer);
+    const fact =
+      run && field && period !== null ? factAt(data, run.key, field.id, period) : undefined;
+    return fact?.at != null ? (fact.unit ?? "") : null;
+  };
+  const notCompared =
+    boundSet && bound.unit !== null
+      ? shown.filter((issuer) => {
+          const unit = statedUnit(issuer);
+          return unit !== null && unit !== bound.unit;
+        })
+      : [];
   const toggle = (key: string) => {
     setChosen((previous) => {
       const next = new Set(previous);
@@ -214,12 +217,12 @@ function Dashboard({ data }: { data: Data }) {
       <FieldOptions fields={numbers} titles={titles} />
     </Choice>
   );
-  // A bound reads one figure at one period, shown as a chip on every view that applies it.
-  const [low, high] = [readBound(filters.min), readBound(filters.max)];
-  const unitMark = (unit: string) => (unit === "x" || unit === "%" ? unit : unit ? ` ${unit}` : "");
+  // A bound reads one figure at one period in one unit, shown as a chip on every view that applies it.
+  const unitMark = (unit: string) =>
+    unit === "x" || unit === "%" ? unit : unit === "" ? " (no unit stated)" : ` ${unit}`;
   const boundText =
-    field && period !== null && view !== "trend" && (low.value !== null || high.value !== null)
-      ? `${field.label} ${[low.value !== null && `≥ ${filters.min.trim()}${unitMark(boundUnit ?? "")}`, high.value !== null && `≤ ${filters.max.trim()}${unitMark(boundUnit ?? "")}`].filter(Boolean).join(", ")} · ${period}`
+    field && period !== null && boundSet && bound.unit !== null
+      ? `${field.label} ${[low.value !== null && `≥ ${filters.min.trim()}${unitMark(bound.unit)}`, high.value !== null && `≤ ${filters.max.trim()}${unitMark(bound.unit)}`].filter(Boolean).join(", ")} · ${period}`
       : null;
   const badBounds = (["min", "max"] as const).filter((side) => readBound(filters[side]).invalid);
   const heading =
@@ -266,6 +269,8 @@ function Dashboard({ data }: { data: Data }) {
         </label>
         <p role="status" className="text-small text-text-secondary sm:ml-auto">
           {String(shown.length)} of {String(data.issuers.length)} issuers shown
+          {notCompared.length > 0 &&
+            ` · ${String(shown.length - notCompared.length)} compared, ${String(notCompared.length)} not compared (another unit)`}
         </p>
       </div>
 
@@ -329,6 +334,16 @@ function Dashboard({ data }: { data: Data }) {
               {`${side === "min" ? "At least" : "At most"}: not a number`}
             </RemovableChip>
           ))}
+          {waiting && (
+            <span
+              role="status"
+              className="gap-hatch inline-flex max-w-full rounded-ds-xs border border-dashed border-border-gap"
+            >
+              <span className="m-px rounded-ds-xs bg-surface-card px-3 py-1 text-small text-gap-text">
+                Choose a unit for the bound: {bound.tied.map(unitName).join(" or ")}
+              </span>
+            </span>
+          )}
           {boundText && (
             <RemovableChip
               onRemove={() => {
@@ -441,7 +456,7 @@ function Dashboard({ data }: { data: Data }) {
                     )}
                   </label>
                 ))}
-                {units.length > 1 && (
+                {bound.units.length > 1 && (
                   <div
                     role="group"
                     aria-label="Bound unit"
@@ -450,10 +465,10 @@ function Dashboard({ data }: { data: Data }) {
                     <span aria-hidden="true" className="text-caption text-text-tertiary">
                       Bound unit
                     </span>
-                    {units.map((unit) => (
+                    {bound.units.map((unit) => (
                       <Chip
                         key={unit}
-                        pressed={unit === boundUnit}
+                        pressed={unit === bound.unit}
                         onPress={() => {
                           setUnitPick(unit);
                         }}
@@ -529,6 +544,15 @@ function Dashboard({ data }: { data: Data }) {
         </section>
       )}
 
+      {notCompared.length > 0 && (
+        <p className="text-small text-gap-text">
+          Not compared, stated in another unit:{" "}
+          {notCompared
+            .map((issuer) => `${issuer.name} (${unitName(statedUnit(issuer) ?? "")})`)
+            .join("; ")}
+          .
+        </p>
+      )}
       <h2 className="font-display text-h3 text-text-primary">{heading}</h2>
       {shown.length === 0 ? (
         <p className={card}>No issuers match these filters.</p>
@@ -545,7 +569,15 @@ function Dashboard({ data }: { data: Data }) {
           {detail && <IssuerDetail data={data} issuer={detail} />}
         </>
       ) : view === "rank" ? (
-        <RankView data={data} issuers={shown} field={field} period={period} order={order} by={by} />
+        <RankView
+          data={data}
+          issuers={shown}
+          field={field}
+          period={period}
+          order={order}
+          by={by}
+          boundUnit={boundSet ? bound.unit : null}
+        />
       ) : view === "find" ? (
         <FindView data={data} issuers={shown} query={filters.query} titles={titles} />
       ) : (

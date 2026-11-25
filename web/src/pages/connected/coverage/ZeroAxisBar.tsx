@@ -4,7 +4,7 @@ import { cx } from "@/utils/cx";
  * A bar from a zero axis: figures above zero to the right of the line, figures below it to the
  * left, all to the one scale of the list (`low` and `high` are the list's own lowest and highest
  * figures; zero is always inside the scale). A stated figure that is not zero always draws, at
- * least two pixels wide on its side of the line, so a small figure is never mistaken for zero; a
+ * least three pixels wide on its side of the line, so a small figure is never mistaken for zero; a
  * zero figure draws the line alone. `text` is the figure as written; the bar adds no number, and
  * the sign is in the text, not only in the fill.
  */

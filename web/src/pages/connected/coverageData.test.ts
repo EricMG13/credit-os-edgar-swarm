@@ -257,7 +257,7 @@ test("a comma that is not a thousands group is invalid, never read as a differen
   expect(readBound("1,234,567.5")).toEqual({ value: 1234567.5, invalid: false });
 });
 
-test("a bound compares one reporting unit: a figure in another unit passes none", () => {
+test("a bound compares one reporting unit and never removes an issuer it did not compare", () => {
   const mixed: Coverage = {
     ...data,
     facts: [
@@ -266,11 +266,9 @@ test("a bound compares one reporting unit: a figure in another unit passes none"
     ],
   };
   const bound = { ...NO_FILTERS, min: "5" };
-  expect(names(matchIssuers(mixed, bound, LEVERAGE, "FY2025"))).toEqual(
-    ["Beta", "Gamma"].slice(0, 1),
-  );
-  expect(names(matchIssuers(mixed, bound, LEVERAGE, "FY2025", "x"))).toEqual([]);
-  expect(names(matchIssuers(mixed, bound, LEVERAGE, "FY2025", "%"))).toEqual(["Beta"]);
+  // Gamma states nothing for the period, so it passes no bound (a missing figure is not zero).
+  expect(names(matchIssuers(mixed, bound, LEVERAGE, "FY2025", "x"))).toEqual(["Beta"]);
+  expect(names(matchIssuers(mixed, bound, LEVERAGE, "FY2025", "%"))).toEqual(["Alpha", "Beta"]);
 });
 
 test("a bound may carry thousands separators; any other text is invalid, not ignored silently", () => {

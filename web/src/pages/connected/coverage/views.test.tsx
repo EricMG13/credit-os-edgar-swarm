@@ -3,6 +3,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import type { Coverage, CoverageRun, Fact, Issuer } from "../coverageData";
 import { FindView } from "./Find";
 import { Matrix } from "./Matrix";
+import { IssuerDetail } from "./IssuerDetail";
 import { RunStates } from "./RunStates";
 import { RankView } from "./Rank";
 
@@ -118,6 +119,7 @@ const rankOf = (facts: Fact[], order: "high" | "low" = "high") =>
       period="FY2025"
       order={order}
       by="none"
+      boundUnit={null}
     />,
   );
 
@@ -293,7 +295,9 @@ it("gives every cell focus and reads the issuer, module and state aloud under th
     />,
   );
   const status = screen.getByRole("status");
-  expect(status).toHaveTextContent(/Point at, focus or press a shape/);
+  expect(status).toHaveTextContent(
+    "Point at or focus a shape to read its state; a shape with a handoff opens the module.",
+  );
   // A module with no handoff is a button, not an unfocusable mark.
   const none = screen.getByRole("button", { name: /Committee decision for Alpha plc: No handoff published/ });
   fireEvent.focus(none);
@@ -309,4 +313,112 @@ it("draws a module with a handoff as a link in the link colour and one without a
   expect(linked).not.toHaveClass("text-text-tertiary", "text-text-secondary");
   expect(screen.queryByRole("link", { name: "Committee decision" })).toBeNull();
   expect(screen.getByText("Committee decision")).toHaveClass("text-text-secondary");
+});
+
+it("names the empty unit in a Rank list, and marks a list in a unit the bound does not compare", () => {
+  rankOf([fact("a", { unit: "x", text: "4", at: 4 }), fact("b", { unit: "", text: "2", at: 2 })]);
+  expect(screen.getByRole("list", { name: /FY2025, no unit stated, highest first/ })).toBeVisible();
+  expect(screen.getByRole("list", { name: /FY2025, reporting unit x, highest first/ })).toBeVisible();
+  cleanup();
+  render(
+    <RankView
+      data={{ ...data, facts: [fact("a", { unit: "x", text: "4", at: 4 }), fact("b", { unit: "", text: "2", at: 2 })] }}
+      issuers={[...data.issuers]}
+      field={data.fields[0]}
+      period="FY2025"
+      order="high"
+      by="none"
+      boundUnit="x"
+    />,
+  );
+  expect(screen.getByText(/Bound not applied: this list is in no unit stated, and the bound compares x\./)).toBeVisible();
+  expect(screen.getAllByText(/Bound not applied/)).toHaveLength(1);
+});
+
+const longName: Issuer = {
+  key: "long",
+  name: "Meridian Aerospace & Defence Holdings International plc",
+  sector: null,
+  runs: [{ ...run("l1", {}), sharedWith: 1 }],
+};
+
+it("reaches a cut issuer name on focus, and tells two runs of one date apart", () => {
+  render(
+    <Matrix
+      data={data}
+      issuers={[longName]}
+      chosen={new Set()}
+      toggle={() => undefined}
+      open={null}
+      setOpen={() => undefined}
+    />,
+  );
+  const name = screen.getByRole("button", { name: longName.name });
+  expect(name).toHaveClass("truncate");
+  expect(name).toHaveAttribute("title", expect.stringContaining(longName.name));
+  expect(name).toHaveAttribute("title", expect.stringContaining("1 other run shares this date"));
+  fireEvent.focus(name);
+  expect(screen.getByRole("status")).toHaveTextContent(
+    `${longName.name} (Full credit assessment, as of 31 March 2026; 1 other run shares this date)`,
+  );
+});
+
+it("wraps a long issuer name in a phone card rather than cutting it", () => {
+  vi.stubGlobal("matchMedia", () => ({
+    matches: true,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  }));
+  render(
+    <Matrix
+      data={data}
+      issuers={[longName]}
+      chosen={new Set()}
+      toggle={() => undefined}
+      open={null}
+      setOpen={() => undefined}
+    />,
+  );
+  expect(screen.getByRole("button", { name: longName.name })).not.toHaveClass("truncate");
+  vi.unstubAllGlobals();
+});
+
+it("reads an assessed module with gaps as delivered with gaps in the issuer detail, and the detail takes focus", () => {
+  const issuer: Issuer = {
+    ...(data.issuers[0] as Issuer),
+    runs: [
+      {
+        ...run("d1", {}),
+        other: [{ code: "CP-L10", title: "Short snapshot", state: "assessed", gaps: 2 }],
+      },
+    ],
+  };
+  render(<IssuerDetail data={data} issuer={issuer} />);
+  expect(screen.getByText(/Other modules: .*\(delivered with gaps\)/)).toBeVisible();
+  expect(screen.getByRole("heading", { name: issuer.name })).toHaveFocus();
+});
+
+it("keeps each figure's qualifying heading beside it when a period is stated twice", () => {
+  render(
+    <RankView
+      data={{
+        ...data,
+        facts: [
+          fact("a", { text: "3.3", at: 3.3, heading: "Net debt / adjusted EBITDA" }),
+          fact("a", { text: "3.7", at: 3.7, line: 6 }),
+        ],
+      }}
+      issuers={[data.issuers[0] as Issuer]}
+      field={data.fields[0]}
+      period="FY2025"
+      order="high"
+      by="none"
+      boundUnit={null}
+    />,
+  );
+  expect(
+    screen.getByText(
+      /states this period more than once \(3\.3x, stated as Net debt \/ adjusted EBITDA; 3\.7x\), so none is ranked/,
+    ),
+  ).toBeVisible();
 });
