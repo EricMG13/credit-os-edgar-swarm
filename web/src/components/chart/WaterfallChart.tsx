@@ -44,36 +44,50 @@ const RANGE = "range";
 
 function check({ steps, table }: Pick<WaterfallChartProps, "steps" | "table">) {
   if (steps.length === 0) throw new Error("a waterfall needs at least one step");
-  const repeated = steps.find((s, i) => steps.findIndex((o) => o.label === s.label) !== i);
-  if (repeated !== undefined) {
-    throw new Error(`step labels must be distinct: "${repeated.label}" repeats`);
-  }
-  for (const s of steps) {
-    if (s.kind === "missing") continue;
-    if (!(s.from >= 0) || !(s.to >= 0)) {
-      throw new Error(
-        `step "${s.label}": positions sit on one zero baseline, so they must be zero or more`,
-      );
-    }
-    if (s.kind === "total" && s.from !== 0) {
-      throw new Error(`step "${s.label}": a total starts at the baseline (from 0)`);
-    }
-    if (s.kind === "up" && s.to < s.from) {
-      throw new Error(`step "${s.label}": an up step must not fall (to is below from)`);
-    }
-    if (s.kind === "down" && s.to > s.from) {
-      throw new Error(`step "${s.label}": a down step must not rise (to is above from)`);
-    }
-  }
+  checkSteps(steps);
   if (table.rows.length !== steps.length) {
     throw new Error(`the table must have one row per step (${String(steps.length)} steps)`);
   }
-  const short = table.rows.find((r) => r.cells.length !== table.head.length - 1);
-  if (short !== undefined) {
+  checkTableRows(table);
+}
+
+function checkSteps(steps: WaterfallStep[]) {
+  checkDistinctSteps(steps);
+  steps.forEach(checkStep);
+}
+
+function checkDistinctSteps(steps: WaterfallStep[]) {
+  const labels = new Set<string>();
+  const repeated = steps.find((step) => {
+    if (labels.has(step.label)) return true;
+    labels.add(step.label);
+    return false;
+  });
+  if (repeated) throw new Error(`step labels must be distinct: "${repeated.label}" repeats`);
+}
+
+function checkStep(step: WaterfallStep) {
+  if (step.kind === "missing") return;
+  if (!(step.from >= 0) || !(step.to >= 0)) {
     throw new Error(
-      `table row "${short.label}" must have ${String(table.head.length - 1)} cells, one per column after the label`,
+      `step "${step.label}": positions sit on one zero baseline, so they must be zero or more`,
     );
   }
+  if (step.kind === "total" && step.from !== 0)
+    throw new Error(`step "${step.label}": a total starts at the baseline (from 0)`);
+  if (step.kind === "up" && step.to < step.from)
+    throw new Error(`step "${step.label}": an up step must not fall (to is below from)`);
+  if (step.kind === "down" && step.to > step.from)
+    throw new Error(`step "${step.label}": a down step must not rise (to is above from)`);
+}
+
+function checkTableRows(table: WaterfallChartProps["table"]) {
+  const width = table.head.length - 1;
+  const short = table.rows.find((row) => row.cells.length !== width);
+  if (short)
+    throw new Error(
+      `table row "${short.label}" must have ${String(width)} cells, one per column after the label`,
+    );
 }
 
 /** One present step: a floating column (a hairline when it is zero) and its label above it. */

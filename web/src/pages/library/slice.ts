@@ -241,7 +241,7 @@ export type Change = {
  * The Changes page of a run: the first run on an issuer has nothing to compare with (`none`); a
  * later run that has not been compared yet is `pending`.
  */
-export type Changes =
+export type LibraryChangesData =
   | { kind: "none"; title: string; text: string }
   | { kind: "pending"; title: string; text: string }
   | {
@@ -665,7 +665,7 @@ type RunBase = { id: string; head: RunHead; traces: Record<string, Trace> };
 export type LoadedRun = RunBase & {
   loading: false;
   overview: Overview;
-  changes: Changes;
+  changes: LibraryChangesData;
   modules: readonly Module[];
   evidence: Evidence;
 };

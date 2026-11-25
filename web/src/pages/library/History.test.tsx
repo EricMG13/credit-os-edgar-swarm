@@ -4,7 +4,7 @@ import { render, screen, within } from "@testing-library/react";
 import type { LibraryData } from "@/data";
 import { STATUS_SETS } from "@/components/status/sets";
 import { SourceContext } from "../source";
-import { routes } from "./routes";
+import { libraryRoutes as routes } from "./routes";
 
 type Json = Record<string, unknown>;
 type Slice = { home: Json; issuers: (Json & { history: Json & { entries: Json[] } })[] };

@@ -99,7 +99,7 @@ export type Summary = Reading & {
 export type RunStatus =
   "queued" | "running" | "finished" | "failed" | "capped" | "rejected" | "interrupted";
 /** A module's (or the Report's) state; "stopped": the run stopped while it ran. */
-export type ModuleState = "waiting" | "running" | "done" | "stopped";
+export type ConnectedModuleState = "waiting" | "running" | "done" | "stopped";
 export type RunEvent = {
   at: string;
   kind:
@@ -113,14 +113,14 @@ export type RunEvent = {
     | "model_not_published";
   module?: string;
 };
-export type Run = {
+export type ConnectedRun = {
   id: string;
   status: RunStatus;
   reason: string;
   issuer_name: string;
   as_of: string;
   pathway: string;
-  modules: [string, ModuleState][];
+  modules: [string, ConnectedModuleState][];
   stalled?: boolean;
   started_at?: string;
   ended_at?: string;
@@ -154,7 +154,10 @@ export type Run = {
   events: RunEvent[] | null;
 };
 
-export type LiveRun = Pick<Run, "id" | "issuer_name" | "pathway" | "reason" | "modules"> & {
+export type LiveRun = Pick<
+  ConnectedRun,
+  "id" | "issuer_name" | "pathway" | "reason" | "modules"
+> & {
   status: "running" | "queued";
   submitted_by: string;
   started_at: string;
@@ -164,7 +167,7 @@ export type LiveRun = Pick<Run, "id" | "issuer_name" | "pathway" | "reason" | "m
   files: number;
 };
 /** A run that stopped without a report; its spend, folder and file names are not sent. */
-export type EndedRun = Pick<Run, "id" | "issuer_name" | "pathway" | "reason"> & {
+export type EndedRun = Pick<ConnectedRun, "id" | "issuer_name" | "pathway" | "reason"> & {
   status: "failed" | "capped" | "rejected" | "interrupted";
   ended_at: string;
   submitted_by: string;
@@ -286,7 +289,7 @@ export const submit = (id: string, answers: Answers, digest: string, shownCap: s
 export const getActivity = (signal: AbortSignal) =>
   request<Activity>("/connected/activity", { signal });
 export const getRun = (id: string, signal: AbortSignal) =>
-  request<Run>(`/connected/activity/${encodeURIComponent(id)}`, { signal });
+  request<ConnectedRun>(`/connected/activity/${encodeURIComponent(id)}`, { signal });
 export const getReport = (id: string, signal: AbortSignal) =>
   request<ReportEntry>(`/connected/report/${encodeURIComponent(id)}`, { signal });
 
@@ -304,7 +307,9 @@ export function issuerSlug(name: string) {
 export const PATHWAYS: Readonly<Record<string, { label: string; modules: string[] }>> = {
   lite_credit_assessment: {
     label: "Lite credit assessment",
-    modules: ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-2A"],
+    // Owner, 2026-11-25: every credit assessment runs all of layer 1 (CP-1, 1A, 1B, 1C, 1D), and
+    // Lite runs CP-DR too, so CP-1C has its public peers.
+    modules: ["CP-0", "CP-1", "CP-1A", "CP-1B", "CP-DR", "CP-1C", "CP-1D", "CP-2", "CP-2A"],
   },
   credit_snapshot: {
     label: "Full credit assessment",
@@ -313,7 +318,10 @@ export const PATHWAYS: Readonly<Record<string, { label: string; modules: string[
       "CP-1",
       "CP-MODEL",
       "CP-1A",
+      "CP-1B",
       "CP-DR",
+      "CP-1C",
+      "CP-1D",
       "CP-2",
       "CP-2A",
       "CP-2D",

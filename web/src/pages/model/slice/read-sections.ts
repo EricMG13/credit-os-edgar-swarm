@@ -24,10 +24,10 @@ import type {
   CaseCard,
   ColumnsData,
   Comparison,
-  ComparisonPanel,
+  ModelComparisonPanel,
   Published,
   Stack,
-  StackPart,
+  ModelStackPart,
   StatementsPage,
   Tick,
 } from "./types";
@@ -49,7 +49,7 @@ export const bridge = object<Bridge>({
   head: arrayOf(text),
   rows: arrayOf(object({ label: text, cells: arrayOf(textOrNull), trace: addressOrNull })),
 });
-const panel = object<ComparisonPanel>({
+const panel = object<ModelComparisonPanel>({
   measure: text,
   tableLabel: text,
   max: num,
@@ -63,7 +63,13 @@ const comparison = object<Comparison>({
   tableHead: text,
   panels: arrayOf(panel),
 });
-const part = object<StackPart>({ name: text, value: num, text, share: text, trace: addressOrNull });
+const part = object<ModelStackPart>({
+  name: text,
+  value: num,
+  text,
+  share: text,
+  trace: addressOrNull,
+});
 const stack = object<Stack>({ ...chartInfo, head: arrayOf(text), parts: arrayOf(part) });
 const columns = object<ColumnsData>({
   ...chartInfo,

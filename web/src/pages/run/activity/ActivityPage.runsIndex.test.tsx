@@ -3,7 +3,7 @@
 // derived from the page's own grouping.
 import { cleanup, fireEvent, screen, within } from "@testing-library/react";
 import { matchRoute } from "../../route-table";
-import { routes } from "../routes";
+import { runRoutes as routes } from "../routes";
 import { fixture, show, showFixture } from "../test-helpers";
 
 afterEach(() => {

@@ -59,6 +59,8 @@ from deploy_workflow.changes import (
 )
 from deploy_workflow.changes_check import cp8_issues
 from deploy_workflow.context import CONTEXT_SOURCE_ID, RunContext, load_context
+from deploy_workflow.cp2_scorecard import PLACEMENT as SCORECARD_PLACEMENT
+from deploy_workflow.cp2_scorecard import scorecard_faults
 from deploy_workflow.credit_os_chips import MODULE_NAMES
 from deploy_workflow.docx_text import docx_text
 from deploy_workflow.handoff_delivery import (
@@ -111,6 +113,8 @@ from deploy_workflow.model.turn import MODEL_EFFORTS, dump_json
 from deploy_workflow.owners import cpos_forecast
 from deploy_workflow.owners.cpos import (
     _require_live_route,
+    MAX_MODULE_WIDTH,
+    MODULE_WIDTH,
     WEB_SEARCH_GRANT,
     HandoffPlan,
     HandoffTask,
@@ -126,6 +130,7 @@ from deploy_workflow.owners.cpos_launch_methods import (
     _APPENDIX,
     _SCORE,
     METHODS,
+    NOT_ANALYTICAL,
     REGISTER_SCOPE,
     REGISTER_SCOPE_MODULES,
 )
@@ -164,6 +169,7 @@ from deploy_workflow.owners.cpos_launch_prompts import (
     _and_list,
     _none_rule,
     _selector,
+    cp2_scorecard_block,
 )
 from deploy_workflow.owners.cpos_launch_review import _charge_notes, _print_review, _review_lines
 from deploy_workflow.owners.cpos_launch_tables import (
@@ -280,6 +286,7 @@ __all__ = [
     "_review_lines",
     "_selector",
     "chart_issues",
+    "cp2_scorecard_block",
 ]
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -290,7 +297,6 @@ PAGE_CHARS = 3000  # cp-os's page for an HTML filing: eight pages per read is at
 SOURCE_SUFFIXES = frozenset(
     {".pdf", ".htm", ".html", ".docx", ".txt", ".md", ".xlsx", ".csv", ".json", ".jsonl"}
 )
-NOT_ANALYTICAL = frozenset({"CP-MODEL", "CP-8"})  # In the presets; each has its own route.
 FIRST_PAGES = 3  # Pages of each source kept for the offline document guess (page 1 is the cover).
 Cover = tuple[str, tuple[str, ...]]  # A source's file name and its first pages.
 MAX_OUTPUT_TOKENS = 32000  # What the retained live campaigns ran with.
@@ -762,6 +768,18 @@ def posture_issues(module: str, text: str) -> tuple[str, ...]:
     return ()
 
 
+def scorecard_issues(module: str, text: str) -> tuple[str, ...]:
+    """CP-2's credit scorecard (`cp2_scorecard_block`): one issue listing every fault of its
+    T2.13 and T2.14 registers, a missing register included, and how to head them. None for any
+    other module or a blocked CP-2."""
+    if module != "CP-2" or _blocked_at_gate(text):
+        return ()
+    faults = scorecard_faults(text)
+    if not faults:
+        return ()
+    return (f"Credit scorecard registers: {' '.join(faults)} {SCORECARD_PLACEMENT}",)
+
+
 def upstream_scope_note(ordered: Sequence[str]) -> str:
     """What CP-5 is told about the handoffs it audits: the registers each module of the run planned
     before it was told not to write. Empty when the run has no CP-5 or none of them has a scope
@@ -844,9 +862,10 @@ def _for_host(text: bytes) -> bytes:
 
 def pathway_modules(settings: RunContext) -> tuple[str, ...]:
     """A pathway's analytical modules: its preset less the modules that have their own route.
-    Owner, 2026-11-11: CP-DR and CP-2E are in every preset except ``short_snapshot`` and
-    ``lite_credit_assessment``, which have neither (CP-1C needs CP-DR's peers), so the
-    context's peer source no longer adds a module. Explicit --modules are run as given."""
+    Owner, 2026-11-11: CP-DR and CP-2E are in every preset except ``short_snapshot``, which has
+    neither, and ``lite_credit_assessment``, which has CP-DR (owner, 2026-11-25: "lite runs cp-dr
+    too") and no CP-2E, so the context's peer source no longer adds a module. Explicit --modules
+    are run as given."""
     return tuple(m for m in PATHWAY_MODULES[settings.run.pathway] if m not in NOT_ANALYTICAL)
 
 
@@ -1184,6 +1203,7 @@ def _prepare(  # noqa: PLR0913, PLR0915 - `prepare`'s body: one keyword per sett
             else "",
             bool(options.cp3_mode),
         ),
+        ("CP-2", cp2_scorecard_block() if "CP-2" in texts else "", "CP-2" in texts),
         ("CP-6", CP6A_BLOCK, True),
         ("CP-6", DEEP_DEBATE_BLOCK, options.cp6_deep_debate),
         *((m, note, True) for m, note in method_scripts.NOTES.items()),
@@ -1231,6 +1251,9 @@ def _prepare(  # noqa: PLR0913, PLR0915 - `prepare`'s body: one keyword per sett
         prior=prior,
         changes_note=note,
         selection=selection,
+        preset_requested_modules=pathway_modules(settings)
+        if held is None
+        else held.preset_requested_modules,
         execution="host-session" if host else "live-provider",
         max_attempts=HOST_ATTEMPTS if host else 1,
         provider_cap_usd=Decimal(0) if host else Decimal(cap),
@@ -1412,6 +1435,7 @@ def checker(layout: MarkdownLayout) -> Check:
         issues += _owned_issues(task.module_id, routes, text, task.handoffs.get("CP-1"))
         issues += register_issues(task.module_id, text)
         issues += posture_issues(task.module_id, text)
+        issues += scorecard_issues(task.module_id, text)
         upstream = method_scripts.upstream_texts(task.handoffs)  # a copied figure is compared
         issues += method_scripts.issues(task.module_id, text, upstream)
         issues += method_scripts.shared_issues(task.module_id, text)  # `completeness_check.py`
@@ -1632,7 +1656,8 @@ def run_cap(pathway: PathwayId, asked: Decimal | None) -> Decimal:
     if asked > ceiling:
         raise LaunchRefused(
             f"--cap {asked}: above the {pathway} cap of USD {ceiling} "
-            "(docs/rulings/2026-11-15-pathway-tiers-and-caps.md); a lower cap is allowed"
+            "(docs/rulings/2026-11-25-layer-1-in-all-assessment-pathways.md); "
+            "a lower cap is allowed"
         )
     return asked
 
@@ -2042,11 +2067,55 @@ def _parser() -> argparse.ArgumentParser:
         help="send high effort to the balanced effort map's modules in this run",
     )
     parser.add_argument(
+        "--parallel-modules",
+        type=int,
+        choices=range(1, MAX_MODULE_WIDTH + 1),
+        help="independent modules in flight at once, each one provider session: default "
+        f"{MODULE_WIDTH} (one at a time), or {PARALLEL_VARIABLE} when set; above 1 has not "
+        "been run against a live provider",
+    )
+    parser.add_argument(
         "--no-library",
         action="store_true",
         help="do not rebuild the library; the run start service does",
     )
     return parser
+
+
+# The launching environment's setting for --parallel-modules, so the run start service, which
+# passes no such flag, can be given a width above one without a code change. Unset, a run keeps
+# one module at a time.
+PARALLEL_VARIABLE = "CREDIT_OS_PARALLEL_MODULES"
+
+
+def module_width(asked: int | None, environ: Mapping[str, str]) -> int:
+    """How many modules the run keeps in flight: the flag, else the environment's setting, else
+    the default. A setting outside 1 to the maximum is refused, never rounded."""
+    if asked is not None:
+        return asked
+    text = environ.get(PARALLEL_VARIABLE, "").strip()
+    if not text:
+        return MODULE_WIDTH
+    if not text.isascii() or not text.isdigit() or not 1 <= int(text) <= MAX_MODULE_WIDTH:
+        raise LaunchRefused(
+            f"{PARALLEL_VARIABLE} must be a whole number from 1 to {MAX_MODULE_WIDTH}, not {text!r}"
+        )
+    return int(text)
+
+
+def parallel_line(width: int, retained: bool) -> str:
+    """What the launcher says of a width above one: the width the run uses. A plan with retained
+    handoffs is run one module at a time whatever is asked (``cpos.run_handoffs``)."""
+    asked = f"--parallel-modules or {PARALLEL_VARIABLE}"
+    if retained:
+        return (
+            f"Parallel: one module at a time, not the {width} asked ({asked}): "
+            "the plan has retained handoffs"
+        )
+    return (
+        f"Parallel: up to {width} independent modules at once, as asked ({asked}); "
+        "the default is one at a time"
+    )
 
 
 def update_library_at(workspace: Path) -> Any:
@@ -2136,6 +2205,7 @@ def main(argv: Sequence[str] | None = None, *, allow_live: bool = True) -> int:
     host = args.config == HOST
     try:
         _check_gates(args, allow_live=allow_live)
+        width = module_width(args.parallel_modules, os.environ)
         if args.balanced and args.high_modules:
             raise LaunchRefused("--balanced and --high-modules cannot be combined")
         if args.balanced or args.high_modules:
@@ -2190,6 +2260,8 @@ def main(argv: Sequence[str] | None = None, *, allow_live: bool = True) -> int:
     if not args.live:
         print("No provider was called. Add --live --ruling <file> to start the paid run.")
         return 0
+    if width > 1:
+        print(parallel_line(width, bool(prepared.plan.retained_handoffs)), flush=True)
     try:
         receipt = run_live_handoffs(
             prepared.manifest,
@@ -2205,6 +2277,7 @@ def main(argv: Sequence[str] | None = None, *, allow_live: bool = True) -> int:
             web_lookup=lookup,
             web_hosts=tuple(args.web_host),
             lookup_cutoff=effective_cutoff(prepared.plan.run.as_of, context.run.cutoff),
+            module_width=width,
         )
     except (ValueError, RuntimeError) as error:
         print(

@@ -173,3 +173,4 @@ METHODS: dict[str, tuple[str, ...]] = {
     )
     for module, paths in _SELECTED.items()
 }
+NOT_ANALYTICAL = frozenset({"CP-MODEL", "CP-8"})  # In the presets; each has its own route.

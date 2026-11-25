@@ -1,9 +1,9 @@
 import type { ReactElement } from "react";
 import { SLICE_KEYS, type LibraryData, type SliceKey } from "../data";
-import { readSlice as readLibrary, routes as libraryRoutes } from "./library/routes";
-import { readSlice as readModel, routes as modelRoutes } from "./model/routes";
-import { readSlice as readRun, routes as runRoutes } from "./run/routes";
-import { readSlice as readSignal, routes as signalRoutes } from "./signal/routes";
+import { libraryRoutes, readSlice as readLibrary } from "./library/routes";
+import { modelRoutes, readSlice as readModel } from "./model/routes";
+import { readSlice as readRun, runRoutes } from "./run/routes";
+import { readSlice as readSignal, signalRoutes } from "./signal/routes";
 
 /**
  * `path` is a pattern with `:name` segments, for example `/library/:issuer/:run/overview`.

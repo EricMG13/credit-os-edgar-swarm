@@ -7,6 +7,7 @@ import { ScatterPlot } from "@/components/chart/ScatterPlot";
 import { StackChart } from "@/components/chart/StackChart";
 import { TrendChart } from "@/components/chart/TrendChart";
 import { WaterfallChart, type WaterfallStep } from "@/components/chart/WaterfallChart";
+import { atPositions, periodPositions } from "@/components/chart/seriesData";
 import {
   amount,
   bounds,
@@ -84,7 +85,19 @@ function unitsMatch(table: SourceTable, unit: string, columns: number[]) {
   );
 }
 
-function periods(table: SourceTable, descriptor: Descriptor, frame: Frame) {
+/** A period table's rows in the one period order, each row whole: its cells and its source line.
+ * A Period cell that order cannot place stays last, as authored; the chart names it. */
+function inPeriodOrder(table: SourceTable): SourceTable {
+  const { order } = periodPositions(table.rows.map((row) => row[0] ?? ""));
+  return {
+    ...table,
+    rows: atPositions(table.rows, order),
+    rowLines: table.rowLines && atPositions(table.rowLines, order),
+  };
+}
+
+function periods(authored: SourceTable, descriptor: Descriptor, frame: Frame) {
+  const table = inPeriodOrder(authored);
   const columns = indices(table, items(descriptor.columns));
   if (
     table.headers[0] !== "Period" ||
@@ -125,40 +138,69 @@ function periods(table: SourceTable, descriptor: Descriptor, frame: Frame) {
   );
 }
 
-function waterfall(table: SourceTable, descriptor: Descriptor, frame: Frame) {
-  const column = indices(table, [descriptor.amount])?.[0];
-  if (
-    column === undefined ||
-    table.headers[0] !== "Step" ||
-    table.rows.length < 2 ||
-    !unitsMatch(table, word(descriptor.unit), [column])
-  )
-    return null;
+function waterfallSteps(table: SourceTable, column: number): WaterfallStep[] | null {
   const labels = table.rows.map((row) => row[0] ?? "");
   if (!distinct(labels)) return null;
-  const steps: WaterfallStep[] = [];
   const amounts = columnAmounts(table, column);
   let running = 0;
+  const steps: WaterfallStep[] = [];
   for (const [index, row] of table.rows.entries()) {
-    const text = row[column] ?? "";
-    const value = amounts[index] ?? null;
-    const label = labels[index] ?? "";
-    if (value === null) return null;
-    const last = index === table.rows.length - 1;
-    const total = index === 0 || last;
-    const from = total ? 0 : running;
-    const to = total ? value : running + value;
-    if (
-      !Number.isFinite(to) ||
-      to < 0 ||
-      (last &&
-        Math.abs(running - value) >
-          Number.EPSILON * Math.max(Math.abs(value), Math.abs(running), 1) * table.rows.length)
-    )
-      return null;
-    steps.push({ label, kind: total ? "total" : value < 0 ? "down" : "up", from, to, text });
-    running = to;
+    const result = waterfallStep(
+      row,
+      column,
+      amounts[index],
+      labels[index],
+      index,
+      running,
+      table.rows.length,
+    );
+    if (!result) return null;
+    steps.push(result.step);
+    running = result.running;
   }
+  return steps;
+}
+
+function waterfallStep(
+  row: string[],
+  column: number,
+  amount: number | null | undefined,
+  label: string | undefined,
+  index: number,
+  running: number,
+  count: number,
+) {
+  if (amount == null) return null;
+  const last = index === count - 1;
+  const total = index === 0 || last;
+  const from = total ? 0 : running;
+  const to = total ? amount : running + amount;
+  if (!Number.isFinite(to) || to < 0 || !validWaterfallTotal(last, running, amount, count))
+    return null;
+  return {
+    step: {
+      label: label ?? "",
+      kind: total ? "total" : amount < 0 ? "down" : "up",
+      from,
+      to,
+      text: row[column] ?? "",
+    } as WaterfallStep,
+    running: to,
+  };
+}
+
+function validWaterfallTotal(last: boolean, running: number, value: number, count: number) {
+  if (!last) return true;
+  const tolerance = Number.EPSILON * Math.max(Math.abs(value), Math.abs(running), 1) * count;
+  return Math.abs(running - value) <= tolerance;
+}
+
+function waterfall(table: SourceTable, descriptor: Descriptor, frame: Frame) {
+  const column = indices(table, [descriptor.amount])?.[0];
+  if (column === undefined || table.headers[0] !== "Step" || table.rows.length < 2) return null;
+  if (!unitsMatch(table, word(descriptor.unit), [column])) return null;
+  const steps = waterfallSteps(table, column);
+  if (!steps) return null;
   return (
     <WaterfallChart
       {...frame}
@@ -169,6 +211,82 @@ function waterfall(table: SourceTable, descriptor: Descriptor, frame: Frame) {
       )}
       legend={{ total: "Total", up: "Increase", down: "Decrease" }}
       table={chartTable(table)}
+    />
+  );
+}
+
+function sharedPeriods(table: SourceTable, priorPeriod: number, currentPeriod: number) {
+  const earlier = table.rows[0]?.[priorPeriod] ?? "";
+  const later = table.rows[0]?.[currentPeriod] ?? "";
+  const valid =
+    earlier !== later &&
+    [earlier, later].every((item) => item && !item.startsWith("Not supplied:")) &&
+    table.rows.every((row) => row[priorPeriod] === earlier && row[currentPeriod] === later);
+  return { names: valid ? ([earlier, later] as [string, string]) : null, labels: [earlier, later] };
+}
+
+function pairedDumbbell(
+  table: SourceTable,
+  frame: Frame,
+  names: [string, string],
+  labels: string[],
+  pairs: (number | null)[][],
+  values: (number | null)[],
+  prior: number,
+  current: number,
+  priorPeriod: number,
+  currentPeriod: number,
+) {
+  return (
+    <DumbbellChart
+      {...frame}
+      names={names}
+      axis={bounds(values)}
+      rows={table.rows.map((row, i) => ({
+        label: labels[i] ?? "",
+        from: pairs[i]?.[0] ?? null,
+        to: pairs[i]?.[1] ?? null,
+        text: `${row[priorPeriod] ?? ""} ${row[prior] ?? ""} → ${row[currentPeriod] ?? ""} ${row[current] ?? ""}`,
+      }))}
+      table={chartTable(table)}
+    />
+  );
+}
+
+function pairedColumns(
+  table: SourceTable,
+  frame: Frame,
+  names: [string, string],
+  labels: string[],
+  pairs: (number | null)[][],
+  labelColumn: number,
+  columns: [number, number],
+  values: (number | null)[],
+) {
+  const [prior, current] = columns;
+  const series = columns.map((column, at) => {
+    const cells = table.rows.map((row) => row[column] ?? "");
+    const positions = pairs.map((pair) => pair[at] ?? null);
+    return {
+      name: names[at] ?? "",
+      values: positions,
+      labels: cells.map((text, index) => (positions[index] === null ? null : text)),
+    };
+  });
+  return (
+    <ColumnsChart
+      {...frame}
+      groups={labels}
+      series={series}
+      yTicks={ticks(values, true)}
+      table={{
+        head: [table.headers[labelColumn] ?? "", ...names],
+        rows: table.rows.map((row, at) => ({
+          label: labels[at] ?? "",
+          cells: [row[prior] || null, row[current] || null],
+        })),
+      }}
+      detailTable={chartTable(table)}
     />
   );
 }
@@ -185,14 +303,9 @@ function paired(table: SourceTable, descriptor: Descriptor, frame: Frame) {
   if (!chartCells(table, [prior, current])) return null;
   const labels = table.rows.map((row) => row[label] ?? "");
   if (!distinct(labels)) return null;
-  const earlier = table.rows[0]?.[priorPeriod] ?? "";
-  const later = table.rows[0]?.[currentPeriod] ?? "";
-  const samePeriods =
-    earlier !== later &&
-    [earlier, later].every((item) => item && !item.startsWith("Not supplied:")) &&
-    table.rows.every((row) => row[priorPeriod] === earlier && row[currentPeriod] === later);
-  const names: [string, string] = samePeriods
-    ? [earlier, later]
+  const same = sharedPeriods(table, priorPeriod, currentPeriod);
+  const names: [string, string] = same.names
+    ? [same.names[0], same.names[1]]
     : [table.headers[prior] ?? "", table.headers[current] ?? ""];
   if (!distinct(names)) return null;
   const pairs = table.rows.map((row) => rowAmounts(row, [prior, current]));
@@ -206,48 +319,22 @@ function paired(table: SourceTable, descriptor: Descriptor, frame: Frame) {
       (row) => amount(row[prior] ?? "") !== null || amount(row[current] ?? "") !== null,
     )
   ) {
-    return (
-      <DumbbellChart
-        {...frame}
-        names={names}
-        axis={bounds(values)}
-        rows={table.rows.map((row, i) => ({
-          label: labels[i] ?? "",
-          from: pairs[i]?.[0] ?? null,
-          to: pairs[i]?.[1] ?? null,
-          text: `${row[priorPeriod] ?? ""} ${row[prior] ?? ""} → ${row[currentPeriod] ?? ""} ${row[current] ?? ""}`,
-        }))}
-        table={chartTable(table)}
-      />
+    return pairedDumbbell(
+      table,
+      frame,
+      names,
+      labels,
+      pairs,
+      values,
+      prior,
+      current,
+      priorPeriod,
+      currentPeriod,
     );
   }
-  if (!sharedUnit || !samePeriods || values.some((value) => value !== null && value < 0))
+  if (!sharedUnit || !same.names || values.some((value) => value !== null && value < 0))
     return null;
-  const series = [prior, current].map((column, at) => {
-    const cells = table.rows.map((row) => row[column] ?? "");
-    const positions = pairs.map((pair) => pair[at] ?? null);
-    return {
-      name: names[at] ?? "",
-      values: positions,
-      labels: cells.map((text, index) => (positions[index] === null ? null : text)),
-    };
-  });
-  return (
-    <ColumnsChart
-      {...frame}
-      groups={labels}
-      series={series}
-      yTicks={ticks(values, true)}
-      table={{
-        head: [table.headers[label] ?? "", ...names],
-        rows: table.rows.map((row, at) => ({
-          label: labels[at] ?? "",
-          cells: [row[prior] || null, row[current] || null],
-        })),
-      }}
-      detailTable={chartTable(table)}
-    />
-  );
+  return pairedColumns(table, frame, names, labels, pairs, label, [prior, current], values);
 }
 
 function range(table: SourceTable, descriptor: Descriptor, frame: Frame) {

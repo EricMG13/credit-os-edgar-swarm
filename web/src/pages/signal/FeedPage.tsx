@@ -2,7 +2,7 @@
 // pill for new stories, then the entries on one card with hairlines between them, then Show older.
 // An entry is a story or a digest card. Order, filter, search, the pill and Show older all act on
 // in-memory state over the entries the slice supplied; nothing is fetched or stored.
-import { useEffect, useRef, useState, type Ref } from "react";
+import { useEffect, useRef, useState, type ReactNode, type Ref } from "react";
 import { Star01 } from "@untitledui/icons";
 import { Alert } from "@/components/alert/Alert";
 import { Button } from "@/components/base/buttons/button";
@@ -133,24 +133,23 @@ function EntryList({
 }
 
 /** The stories that pass the filter; when none does, the words for why: the search, the kind, or an empty view. */
-function ShownOrNone({
-  shown,
+function FeedResult({
+  hasEntries,
   kind,
   needle,
   empty,
-  ...list
+  loading,
+  children,
 }: {
-  shown: FeedEntry[];
+  hasEntries: boolean;
   kind: FeedKind;
   needle: string;
   empty: EmptyContext;
-  scene: SignalScene;
-  writer: boolean;
-  save: SignalSave;
-  onShared: () => void;
-  listRef: Ref<HTMLDivElement>;
+  loading: boolean;
+  children: ReactNode;
 }) {
-  if (shown.length > 0) return <EntryList entries={shown} {...list} />;
+  if (loading) return <FeedSkeleton />;
+  if (hasEntries) return children;
   if (needle !== "") {
     return (
       <EmptyNote
@@ -163,6 +162,138 @@ function ShownOrNone({
     return <EmptyNote title="No stories of this kind here" hint="Choose All to see every kind." />;
   }
   return <FeedEmpty context={empty} />;
+}
+
+function FeedNotices({
+  waiting,
+  waitingVisible,
+  onReveal,
+  error,
+  shared,
+}: {
+  waiting: FeedEntries["waiting"];
+  waitingVisible: boolean;
+  onReveal: () => void;
+  error: "unreachable" | "request" | "unreadable" | null;
+  shared: number;
+}) {
+  return (
+    <>
+      {waiting === null || waitingVisible ? null : (
+        <div className="mt-4 flex justify-center">
+          <Pill label={waiting.label} action="Show" onAction={onReveal} />
+        </div>
+      )}
+      {error === null ? null : <FeedAlert error={error} />}
+      <div aria-live="polite">
+        {shared === 0 ? null : (
+          <div key={shared} className="mt-4">
+            <Alert tone="success" title="Sample data: the story was not shared." />
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+function OlderStories({
+  loading,
+  older,
+  onShow,
+}: {
+  loading: boolean;
+  older: FeedEntry[];
+  onShow: () => void;
+}) {
+  if (loading || older.length === 0) return null;
+  return (
+    <div className="mt-4 flex justify-center">
+      <Button color="secondary" size="sm" onPress={onShow}>
+        Show older
+      </Button>
+    </div>
+  );
+}
+
+function entriesOnScreen(
+  entries: FeedEntries,
+  order: FeedOrder,
+  revealed: boolean,
+  olderShown: boolean,
+): FeedEntry[] {
+  return [
+    ...(revealed && entries.waiting !== null ? entries.waiting.entries : []),
+    ...entries[order],
+    ...(olderShown ? entries.older : []),
+  ];
+}
+
+function focusIndex(
+  entries: FeedEntry[],
+  kind: FeedKind,
+  needle: string,
+  fallback: number | "title",
+) {
+  return visible(entries, kind, needle).length > 0 ? fallback : "title";
+}
+
+function restoreFeedFocus(
+  focusAt: number | "title" | null,
+  title: HTMLHeadingElement | null,
+  list: HTMLDivElement | null,
+): void {
+  if (focusAt === null) return;
+  if (focusAt === "title") title?.focus();
+  else list?.querySelectorAll("article")[focusAt]?.querySelector("h2")?.focus();
+}
+
+function useFeedFocus(revealed: boolean, olderShown: boolean) {
+  const list = useRef<HTMLDivElement>(null);
+  const title = useRef<HTMLHeadingElement>(null);
+  const lastFocused = useRef(0);
+  const [focusRequest, setFocusRequest] = useState<{
+    version: number;
+    target: number | "title";
+  } | null>(null);
+  useEffect(() => {
+    if (focusRequest === null || focusRequest.version === lastFocused.current) return;
+    lastFocused.current = focusRequest.version;
+    restoreFeedFocus(focusRequest.target, title.current, list.current);
+  }, [focusRequest, revealed, olderShown]);
+  const setFocusAt = (target: number | "title") => {
+    setFocusRequest((request) => ({ version: (request?.version ?? 0) + 1, target }));
+  };
+  return { list, title, setFocusAt };
+}
+
+function useFeedView(entries: FeedEntries, startOn: FeedOrder) {
+  const [order, setOrder] = useState<FeedOrder>(startOn);
+  const [kind, setKind] = useState<FeedKind>("all");
+  const [query, setQuery] = useState("");
+  const [revealed, setRevealed] = useState(false);
+  const [olderShown, setOlderShown] = useState(false);
+  const { list, title, setFocusAt } = useFeedFocus(revealed, olderShown);
+  const { waiting, older } = entries;
+  const needle = query.trim();
+  const drawn = entriesOnScreen(entries, order, revealed, olderShown);
+  const shown = visible(drawn, kind, needle);
+
+  const reveal = () => {
+    setFocusAt(focusIndex(waiting?.entries ?? [], kind, needle, 0));
+    setRevealed(true);
+  };
+  const showOlder = () => {
+    setFocusAt(focusIndex(older, kind, needle, shown.length));
+    setOlderShown(true);
+  };
+
+  return {
+    header: { order, setOrder },
+    filter: { kind, setKind, query, setQuery, needle },
+    listing: { waiting, shown, older, revealed, olderShown },
+    actions: { reveal, showOlder },
+    refs: { list, title },
+  };
 }
 
 export function FeedPage({
@@ -196,106 +327,60 @@ export function FeedPage({
   /** Set on a topic's view only. */
   topic: FeedTopic | null;
 }) {
-  const [order, setOrder] = useState<FeedOrder>(startOn);
-  const [kind, setKind] = useState<FeedKind>("all");
-  const [query, setQuery] = useState("");
-  const [revealed, setRevealed] = useState(false);
-  const [olderShown, setOlderShown] = useState(false);
   // Share to group writes nothing: this sentence is the in-memory stand-in for the service's reply.
   // It counts the shares: the live wrapper below stays on the page and each share puts a fresh
   // status node inside it, so each one is announced again.
   const [shared, setShared] = useState(0);
-  // After the list grows, focus goes to the first story the change brought in (its headline); when
-  // the kind or search hides every one of them, it goes to the page title instead.
-  const list = useRef<HTMLDivElement>(null);
-  const title = useRef<HTMLHeadingElement>(null);
-  const focusAt = useRef<number | "title" | null>(null);
-  useEffect(() => {
-    const at = focusAt.current;
-    focusAt.current = null;
-    if (at === null) return;
-    if (at === "title") title.current?.focus();
-    else list.current?.querySelectorAll("article")[at]?.querySelector("h2")?.focus();
-  }, [revealed, olderShown]);
-  const { waiting, older } = entries;
-  const needle = query.trim();
-  const drawn = [
-    ...(revealed && waiting !== null ? waiting.entries : []),
-    ...entries[order],
-    ...(olderShown ? older : []),
-  ];
-  const shown = visible(drawn, kind, needle);
+  const feed = useFeedView(entries, startOn);
   return (
     <>
       <FeedHeader
         title={heading}
-        titleRef={title}
+        titleRef={feed.refs.title}
         topic={topic}
         freshness={freshness}
-        order={order}
-        onOrder={switchable ? setOrder : null}
+        order={feed.header.order}
+        onOrder={switchable ? feed.header.setOrder : null}
       />
       <FeedControls
-        kind={kind}
-        onKind={setKind}
-        query={query}
-        onQuery={setQuery}
+        kind={feed.filter.kind}
+        onKind={feed.filter.setKind}
+        query={feed.filter.query}
+        onQuery={feed.filter.setQuery}
         above={
-          <>
-            {loading || waiting === null || revealed ? null : (
-              <div className="mt-4 flex justify-center">
-                <Pill
-                  label={waiting.label}
-                  action="Show"
-                  onAction={() => {
-                    focusAt.current =
-                      visible(waiting.entries, kind, needle).length > 0 ? 0 : "title";
-                    setRevealed(true);
-                  }}
-                />
-              </div>
-            )}
-            {error === null ? null : <FeedAlert error={error} />}
-            <div aria-live="polite">
-              {shared > 0 ? (
-                <div key={shared} className="mt-4">
-                  <Alert tone="success" title="Sample data: the story was not shared." />
-                </div>
-              ) : null}
-            </div>
-          </>
+          <FeedNotices
+            waiting={feed.listing.waiting}
+            waitingVisible={loading || feed.listing.revealed}
+            onReveal={feed.actions.reveal}
+            error={error}
+            shared={shared}
+          />
         }
       >
-        {loading ? (
-          <FeedSkeleton />
-        ) : (
-          <ShownOrNone
-            shown={shown}
-            kind={kind}
-            needle={needle}
-            empty={empty}
+        <FeedResult
+          loading={loading}
+          hasEntries={feed.listing.shown.length > 0}
+          kind={feed.filter.kind}
+          needle={feed.filter.needle}
+          empty={empty}
+        >
+          <EntryList
+            entries={feed.listing.shown}
             scene={scene}
             writer={writer}
             save={save}
             onShared={() => {
               setShared(shared + 1);
             }}
-            listRef={list}
+            listRef={feed.refs.list}
           />
-        )}
-        {loading || older.length === 0 || olderShown ? null : (
-          <div className="mt-4 flex justify-center">
-            <Button
-              color="secondary"
-              size="sm"
-              onPress={() => {
-                focusAt.current = visible(older, kind, needle).length > 0 ? shown.length : "title";
-                setOlderShown(true);
-              }}
-            >
-              Show older
-            </Button>
-          </div>
+        </FeedResult>
+        {feed.listing.olderShown ? null : (
+          <OlderStories
+            loading={loading}
+            older={feed.listing.older}
+            onShow={feed.actions.showOlder}
+          />
         )}
       </FeedControls>
     </>

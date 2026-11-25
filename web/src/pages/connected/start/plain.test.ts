@@ -446,6 +446,8 @@ describe("refusalProblems: each problem with the control that sets its path", ()
   it.each([
     ["identity.issuer_name: is required.", "issuer_name"],
     ["run.cutoff: must not be after the as-of date.", "cutoff"],
+    ["run.current_period: is required.", "current_period"],
+    ["run.prior_period: must be before the current period.", "prior_period"],
     ["attachments.legal_documents: is required.", "legal_documents"],
     ["deal_terms[0].size_m: is required.", "deal_terms"],
     ["quotes[1].price: must be a number.", "quotes"],
@@ -468,7 +470,7 @@ describe("refusalProblems: each problem with the control that sets its path", ()
   });
 
   it("gives no control to a problem whose control the pathway does not draw", () => {
-    const lite = ["CP-0", "CP-1", "CP-1A", "CP-2", "CP-2A"];
+    const lite = ["CP-0", "CP-1", "CP-1A", "CP-1B", "CP-DR", "CP-1C", "CP-1D", "CP-2", "CP-2A"];
     expect(
       refusalProblems("module_options.cp3_mode: is required.", lite)[0]?.field,
     ).toBeUndefined();

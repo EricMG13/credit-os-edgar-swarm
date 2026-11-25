@@ -1,21 +1,88 @@
 // The route paths a page group declares, read from its routes.tsx without importing it (a node
-// script cannot load TSX). Convention: every route object is written in routes.tsx with a
-// literal `path: "/…"` property; src/pages/route-table.test.ts compares them with the real arrays.
+// script cannot load TSX). Exported arrays are named `routes` in snippets and tests or end in
+// `Routes` in page modules. Every route object has a literal `path: "/…"` property.
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import ts from "typescript";
 
-// Whole-line and block comments only: a comment that quotes `path: "/…"` is not a route.
-function withoutComments(source) {
-  return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, "");
+function sourceFile(source) {
+  return ts.createSourceFile("routes.tsx", source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+}
+
+function isRouteArrayName(name) {
+  return name === "routes" || name.endsWith("Routes");
+}
+
+function exportedRouteArrays(file) {
+  const arrays = [];
+  for (const statement of file.statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    if (!statement.modifiers?.some(({ kind }) => kind === ts.SyntaxKind.ExportKeyword)) continue;
+    for (const declaration of statement.declarationList.declarations) {
+      if (
+        ts.isIdentifier(declaration.name) &&
+        isRouteArrayName(declaration.name.text) &&
+        declaration.initializer &&
+        ts.isArrayLiteralExpression(declaration.initializer)
+      ) {
+        arrays.push(declaration.initializer);
+      }
+    }
+  }
+  return arrays;
+}
+
+function routeArrays(source) {
+  const file = sourceFile(source);
+  const exported = exportedRouteArrays(file);
+  if (exported.length) return { file, arrays: exported };
+
+  // Helpers also accept focused object/array snippets used by unit tests.
+  const snippet = sourceFile(`const __routes = [${source}];`);
+  const initializer = snippet.statements[0]?.declarationList?.declarations[0]?.initializer;
+  return {
+    file: snippet,
+    arrays: initializer && ts.isArrayLiteralExpression(initializer) ? [initializer] : [],
+  };
+}
+
+function literalPropertyValue(property, file, key) {
+  if (
+    !ts.isPropertyAssignment(property) ||
+    !ts.isIdentifier(property.name) ||
+    property.name.text !== key ||
+    !ts.isStringLiteral(property.initializer) ||
+    !property.initializer.getText(file).startsWith('"')
+  ) {
+    return undefined;
+  }
+  return property.initializer.text;
+}
+
+function valuesInArray(array, file, key) {
+  const values = [];
+  for (const element of array.elements) {
+    if (!ts.isObjectLiteralExpression(element)) continue;
+    for (const property of element.properties) {
+      const value = literalPropertyValue(property, file, key);
+      if (value?.startsWith("/")) values.push(value);
+    }
+  }
+  return values;
+}
+
+function properties(source, key) {
+  const { file, arrays } = routeArrays(source);
+  return arrays.flatMap((array) => valuesInArray(array, file, key));
 }
 
 export function pathsIn(source) {
-  return [...withoutComments(source).matchAll(/\bpath:\s*"(\/[^"]*)"/g)].map((match) => match[1]);
+  return properties(source, "path");
 }
 
-/** The `home: "/…"` literals in the source, in order. A home written any other way is not seen. */
+/** The double-quoted literal homes in the source, in order. A home written any other way is unseen. */
 export function homesIn(source) {
-  return [...withoutComments(source).matchAll(/\bhome:\s*"(\/[^"]*)"/g)].map((match) => match[1]);
+  return properties(source, "home");
 }
 
 /** True when a route object in the source declares `home: "/…"`; the group then has a bare address. */

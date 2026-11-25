@@ -24,6 +24,23 @@ type Draft = { causes: ReadinessItem[]; consequences: ReadinessItem[]; first: nu
 
 const isCause = (item: ReadinessItem) => (item.inherited_from ?? []).length === 0;
 
+function commonFix(item: ReadinessItem): string | null {
+  const fix = item.fix ?? "";
+  if (!fix.trim()) return null;
+  const kind = item.outcome === "check" ? "check" : "limit";
+  return `${kind}\u0000${fix}`;
+}
+
+function strongestCause(decisions: readonly ReadinessItem[], module: string) {
+  const causes = decisions.filter(
+    (c) => isCause(c) && c.scope === module && ["will_refuse", "limited"].includes(c.outcome),
+  );
+  return causes.reduce<ReadinessItem | undefined>(
+    (top, c) => (top === undefined || severity(c) < severity(top) ? c : top),
+    undefined,
+  );
+}
+
 export function groupLimits(items: readonly ReadinessItem[]): {
   groups: LimitGroup[];
   passive: ReadinessItem[];
@@ -48,24 +65,14 @@ export function groupLimits(items: readonly ReadinessItem[]): {
     return draft;
   };
 
-  for (const item of decisions.filter(isCause)) {
-    const fix = item.fix ?? "";
-    const kind = item.outcome === "check" ? "check" : "limit";
-    open(item, fix.trim() ? `${kind}\u0000${fix}` : null);
-  }
+  for (const item of decisions.filter(isCause)) open(item, commonFix(item));
 
   // Draft of a producer module: its most severe will_refuse/limited cause, else
   // through the producer's own inherited items, never visiting a module twice.
   const resolve = (module: string, visited: Set<string>): Draft | undefined => {
     if (visited.has(module)) return undefined;
     visited.add(module);
-    const causes = decisions.filter(
-      (c) => isCause(c) && c.scope === module && ["will_refuse", "limited"].includes(c.outcome),
-    );
-    const best = causes.reduce<ReadinessItem | undefined>(
-      (top, c) => (top === undefined || severity(c) < severity(top) ? c : top),
-      undefined,
-    );
+    const best = strongestCause(decisions, module);
     if (best) return draftOf.get(best);
     for (const via of decisions.filter((c) => !isCause(c) && c.scope === module)) {
       for (const next of via.inherited_from ?? []) {

@@ -10,6 +10,34 @@ import { PublishedTraceProvider } from "./PublishedTrace";
 import { forecastTraceContext, RecordedForecastAssumptions } from "./ForecastRecord";
 
 type View = ReturnType<typeof buildReportView>;
+const caseButton = (name: string | RegExp) =>
+  within(screen.getByRole("group", { name: "Case" })).getByRole("button", { name });
+/** The selected case's cash proxy figure, drawn in the header under the case switch. */
+const caseFigure = () => screen.getByLabelText("Selected case cash proxy");
+/** The read-only figure of one case, with its description, reason and trace: the case is
+ * selected with the switch, and the figure names it. */
+const caseItem = (name: string) => {
+  const button = within(screen.getByRole("group", { name: "Case" }))
+    .getAllByRole("button")
+    .find((node) => node.textContent === name);
+  if (!button) throw new Error(`No case named ${name}`);
+  fireEvent.click(button);
+  const figure = caseFigure();
+  if (!figure.textContent.startsWith(`Cash proxy, ${name} · `))
+    throw new Error(`The case figure does not name ${name}`);
+  return figure.parentElement as HTMLElement;
+};
+/** The Revenue row of the forecast grid, with its cells and its trace. */
+const revenueRow = () =>
+  within(screen.getByRole("table", { name: "Forecast grid" }))
+    .getByRole("rowheader", { name: "Revenue" })
+    .closest("tr") as HTMLElement;
+const traceRevenue = () =>
+  fireEvent.click(
+    within(screen.getByRole("region", { name: "Forecast grid table" })).getByRole("button", {
+      name: "Show sources for Revenue",
+    }),
+  );
 const digest = "a".repeat(64);
 const missing = "Not calculable: cash is negative before funding";
 const ledger = "Receivables: the forecast inputs do not name the row and period of this line.";
@@ -155,9 +183,14 @@ it("keeps the full model qualification ledger once on Evidence Record, not on Fo
   const { view, model } = fixture();
   const drawn = render(<Forecast view={view} run={run} />);
   expect(document.body.textContent).not.toContain(ledger);
+  // The tile says once, as a count, where the line-level entries are.
+  const scope = within(screen.getByRole("region", { name: "Scope and limits" }));
+  expect(
+    scope.getByRole("link", { name: "1 line-level entry is in the Evidence record" }),
+  ).toHaveAttribute("href", "#evidence/record/notes");
   expect(screen.getByRole("link", { name: "Model notes and limitations" })).toHaveAttribute(
     "href",
-    "#evidence/record",
+    "#evidence/record/notes",
   );
   drawn.unmount();
   vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("not available")));
@@ -177,25 +210,23 @@ it("keeps the full model qualification ledger once on Evidence Record, not on Fo
 it("states missing or ambiguous forecast trace loss while preserving published figures", () => {
   const { view } = fixture();
   view.entries = [];
-  render(<Forecast view={view} run={run} />);
+  render(
+    <PublishedTraceProvider
+      snapshot={snapshot}
+      folder="run"
+      entries={view.entries}
+      route="forecast"
+    >
+      <Forecast view={view} run={run} />
+    </PublishedTraceProvider>,
+  );
   expect(
     screen.getByText(/The model could not be matched to a single readable record of its inputs/),
   ).toBeInTheDocument();
-  expect(screen.getByRole("figure", { name: "Revenue" })).toBeInTheDocument();
+  // The published figures stay: the Revenue line in the grid, with the selected case's values.
+  for (const figure of ["1050", "1092"])
+    expect(within(revenueRow()).getByRole("cell", { name: figure })).toBeInTheDocument();
   expect(screen.queryByRole("option", { name: "Assumptions" })).toBeNull();
-});
-
-it("describes missing inputs without claiming figures for an unreadable calculation record", () => {
-  const { view, model } = fixture();
-  view.entries = [];
-  view.models = [{ ...model, cashflow: null }];
-  render(<Forecast view={view} run={run} />);
-
-  expect(screen.getByText(/This model has no readable calculation record/)).toBeVisible();
-  expect(
-    screen.getByText(/The model could not be matched to a single readable record/),
-  ).toBeVisible();
-  expect(screen.queryByText(/Forecast figures are available/)).toBeNull();
 });
 
 it("ties promoted excerpts to the full recorded input and sends generated notes to Evidence Record", () => {
@@ -215,11 +246,11 @@ it("ties promoted excerpts to the full recorded input and sends generated notes 
   const note = screen.getByText("Base case is a conditional illustration.", { selector: "p" });
   const group = note.parentElement;
   if (!group) throw new Error("Missing base case qualification");
-  expect(within(group).getByRole("link")).toHaveAttribute("href", "#evidence/record");
+  expect(within(group).getByRole("link")).toHaveAttribute("href", "#evidence/record/notes");
 
-  const scope = screen.getByRole("region", { name: "Model scope and basis" });
-  fireEvent.click(within(scope).getByText("Model scope and basis"));
-  const excerpt = within(scope).getByText("Standalone perimeter applies.").parentElement;
+  const scope = screen.getByRole("region", { name: "Scope and limits" });
+  // The limit whole, as recorded, with the trace to the recorded input.
+  const excerpt = within(scope).getByText(recorded).parentElement;
   if (!excerpt) throw new Error("Missing scope qualification");
   expect(within(excerpt).getByRole("link")).toHaveAttribute("href", expect.stringContaining("-72"));
   expect(
@@ -296,10 +327,11 @@ it("refuses a filename companion whose hash conflicts with retained model source
   source.output.sha256 = "b".repeat(64);
   render(<Forecast view={view} run={run} />);
   expect(
-    screen.getByText(/The model could not be matched to a single readable record of its inputs/),
+    screen.getByText(/could not be matched to a single readable record of its inputs/i),
   ).toBeInTheDocument();
   expect(screen.queryByText("Recorded growth.")).toBeNull();
-  expect(screen.getByRole("figure", { name: "Revenue" })).toBeInTheDocument();
+  for (const figure of ["1050", "1092"])
+    expect(within(revenueRow()).getByRole("cell", { name: figure })).toBeInTheDocument();
   expect(document.querySelector(`a[href*="${"b".repeat(64)}-72"]`)).toBeNull();
 });
 
@@ -309,9 +341,7 @@ it("keeps the exact legacy filename companion when no source identity was retain
   model.download = "/saved/run/annual.md";
   source.output.href = "/saved/run/CP-2G.md";
   render(<Forecast view={view} run={run} />);
-  expect(
-    screen.queryByText(/The model could not be matched to a single readable record of its inputs/),
-  ).toBeNull();
+  expect(screen.queryByText(/Forecast source details are not available/)).toBeNull();
   expect(screen.getByText("Recorded growth.")).toBeInTheDocument();
 });
 
@@ -367,11 +397,7 @@ it("traces a trend to the actual figure and selected case instead of generic JSO
       <Forecast view={view} run={run} />
     </PublishedTraceProvider>,
   );
-  fireEvent.click(
-    within(screen.getByRole("figure", { name: "Revenue" })).getByRole("button", {
-      name: /Show sources/,
-    }),
-  );
+  traceRevenue();
   let drawer = within(screen.getByRole("dialog"));
   expect(drawer.getByText(/Revenue.*Base case.*FY2026E.*1050/)).toBeInTheDocument();
   expect(drawer.getByRole("link", { name: "Open in Evidence" })).toHaveAttribute(
@@ -381,12 +407,8 @@ it("traces a trend to the actual figure and selected case instead of generic JSO
   const close = drawer.getAllByRole("button", { name: "Close" })[0];
   if (!close) throw new Error("Missing drawer Close control");
   fireEvent.click(close);
-  fireEvent.click(screen.getByRole("radio", { name: /^Downside shock/ }));
-  fireEvent.click(
-    within(screen.getByRole("figure", { name: "Revenue" })).getByRole("button", {
-      name: /Show sources/,
-    }),
-  );
+  fireEvent.click(caseButton(/^Downside shock/));
+  traceRevenue();
   drawer = within(screen.getByRole("dialog"));
   expect(drawer.getByText(/Revenue.*Downside shock.*FY2026E.*840/)).toBeInTheDocument();
   expect(drawer.queryByText(/Revenue.*Base case.*FY2026E.*1050/)).toBeNull();
@@ -411,17 +433,19 @@ it("binds a selected additional scenario row to its own case", () => {
       <Forecast view={view} run={run} />
     </PublishedTraceProvider>,
   );
-  fireEvent.click(screen.getByRole("radio", { name: /^Downside drivers/ }));
+  fireEvent.click(caseButton(/^Downside drivers/));
   fireEvent.click(
-    within(screen.getByRole("region", { name: "Cash flow model" })).getByRole("button", {
+    within(screen.getByRole("region", { name: "Forecast grid table" })).getByRole("button", {
       name: "Show sources for Revenue",
     }),
   );
   const drawer = within(screen.getByRole("dialog"));
+  // The selected view shows every period of the case, so its trace names no single date span.
+  const heading = drawer.getByRole("heading", { level: 2, name: /Revenue · Downside drivers/ });
+  expect(heading).not.toHaveTextContent("2026-04-01 to 2027-03-31");
   expect(
-    drawer.getByRole("heading", { level: 2, name: "Revenue · Downside drivers" }),
+    drawer.getByText(/Revenue.*Downside drivers.*FY2026E.*1050.*Downside drivers.*FY2027E.*1092/),
   ).toBeInTheDocument();
-  expect(drawer.getByText(/Revenue.*Downside drivers.*FY2026E.*1050/)).toBeInTheDocument();
   expect(drawer.queryByText(/Revenue.*Base case/)).toBeNull();
 });
 
@@ -447,22 +471,218 @@ it("compares one period across cases and keeps accounts, ratios and growth rates
     },
   );
   render(<Forecast view={view} run={run} />);
-  const statement = () => within(screen.getByRole("table", { name: "Cash flow model" }));
-  const lines = within(screen.getByRole("radiogroup", { name: "Statement lines" }));
-  fireEvent.change(screen.getByLabelText("Statement columns"), { target: { value: "compare" } });
-  fireEvent.change(screen.getByLabelText("Comparison period"), { target: { value: "FY2026E" } });
+  const statement = () => within(screen.getByRole("table", { name: "Forecast grid" }));
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Grid columns" })).getByRole("button", {
+      name: "Compare one year",
+    }),
+  );
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Year" })).getByRole("button", { name: "FY2026E" }),
+  );
   expect(statement().getByRole("cell", { name: "1050" })).toBeInTheDocument();
   expect(statement().getByRole("cell", { name: "840" })).toBeInTheDocument();
   expect(statement().queryByRole("columnheader", { name: "FY2027E" })).toBeNull();
-  fireEvent.click(lines.getByRole("radio", { name: "Ratios" }));
+  // Accounts, ratios and growth rates are one table; each band heading names its kind.
   expect(statement().getByRole("cell", { name: "4.19x" })).toBeInTheDocument();
   expect(statement().getByRole("cell", { name: "n.a." })).toBeInTheDocument();
   expect(statement().getByRole("columnheader", { name: "Downside shock" })).toBeInTheDocument();
-  expect(statement().queryByRole("rowheader", { name: "Revenue" })).toBeNull();
-  fireEvent.click(lines.getByRole("radio", { name: "Growth rates" }));
+  expect(statement().getByRole("rowheader", { name: "Revenue" })).toBeInTheDocument();
   expect(statement().getByRole("cell", { name: "0.0%" })).toBeInTheDocument();
-  expect(statement().queryByRole("rowheader", { name: "Interest coverage" })).toBeNull();
+  expect(statement().getByRole("rowheader", { name: "Interest coverage" })).toBeInTheDocument();
+  expect(statement().getByRole("rowheader", { name: /^Credit metrics/ })).toHaveTextContent(
+    "Ratios",
+  );
+  expect(statement().getByRole("rowheader", { name: "Revenue Accounts" })).toBeInTheDocument();
+  expect(statement().getByRole("rowheader", { name: "Revenue Growth rates" })).toBeInTheDocument();
 });
+
+it("keeps differently dated partial years out of comparisons while retaining each case", () => {
+  const { view, model } = fixture();
+  const downsideYear = model.cashflow.columns[3];
+  if (!downsideYear) throw new Error("Fixture is missing its downside year");
+  model.cashflow.columns[3] = {
+    ...downsideYear,
+    start: "2026-10-01",
+  };
+  render(<Forecast view={view} run={run} />);
+  // The notice names the one period left out and why; FY2026E is still compared.
+  expect(screen.getAllByRole("status").map((status) => status.textContent)).toContain(
+    "Periods left out of the scenario comparison: FY2027E (recorded start and end dates do not match between cases, or are incomplete or invalid).",
+  );
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Grid columns" })).getByRole("button", {
+      name: "Compare one year",
+    }),
+  );
+  const periods = within(screen.getByRole("group", { name: "Year" }));
+  expect(periods.getByRole("button", { name: "FY2026E" })).toBeInTheDocument();
+  expect(periods.queryByRole("button", { name: "FY2027E" })).toBeNull();
+  expect(caseItem("Base case").textContent).toContain("FY2027E · 2026-04-01 to 2027-03-31");
+  expect(caseItem("Downside shock").textContent).toContain("FY2027E · 2026-10-01 to 2027-03-31");
+});
+
+it("shows the retained unavailable downside in the normal forecast case picker", () => {
+  const { view, model } = fixture();
+  model.cashflow.columns.splice(2, 2);
+  for (const row of model.cashflow.rows) row.cells.splice(2, 2);
+  model.cashflow.columns.push({ label: "Downside", group: "Downside case", start: "", end: "" });
+  for (const row of model.cashflow.rows) {
+    row.cells.push({
+      status: "na",
+      exact: null,
+      display: "n.a.",
+      reason: "No downside scenario was computed.",
+    });
+  }
+  render(
+    <PublishedTraceProvider
+      snapshot={snapshot}
+      folder="run"
+      entries={view.entries}
+      route="forecast"
+    >
+      <Forecast view={view} run={run} />
+    </PublishedTraceProvider>,
+  );
+  fireEvent.click(caseButton(/^Downside shock/));
+  expect(caseButton(/^Downside shock/)).toHaveAttribute("aria-pressed", "true");
+  const downsideLabel = caseItem("Downside shock");
+  expect(downsideLabel.textContent).toContain("No downside scenario was computed.");
+  expect(screen.getByRole("table", { name: "Forecast grid" })).toHaveTextContent("n.a.");
+  expect(screen.queryByRole("group", { name: "Year" })).toBeNull();
+  fireEvent.click(
+    within(downsideLabel).getByRole("button", { name: "Show sources for Downside shock" }),
+  );
+  expect(
+    within(screen.getByRole("dialog")).getByText(
+      /Downside shock · Downside: n\.a\..*No downside scenario was computed\./,
+    ),
+  ).toBeInTheDocument();
+});
+
+it("withholds duplicated comparison periods and traces every retained date for the ambiguous case card", () => {
+  const { view, model } = fixture();
+  const downsideYear = model.cashflow.columns[3];
+  if (!downsideYear) throw new Error("Fixture is missing its downside year");
+  const duplicated = { ...downsideYear, start: "2026-10-01" };
+  model.cashflow.columns.push(duplicated);
+  for (const row of model.cashflow.rows) {
+    const cell = row.cells[3];
+    if (cell) row.cells.push({ ...cell });
+  }
+  render(
+    <PublishedTraceProvider
+      snapshot={snapshot}
+      folder="run"
+      entries={view.entries}
+      route="forecast"
+    >
+      <Forecast view={view} run={run} />
+    </PublishedTraceProvider>,
+  );
+  expect(screen.getAllByRole("status").map((status) => status.textContent)).toContain(
+    "Periods left out of the scenario comparison: FY2027E (published more than once by a case).",
+  );
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Grid columns" })).getByRole("button", {
+      name: "Compare one year",
+    }),
+  );
+  const periods = within(screen.getByRole("group", { name: "Year" }));
+  expect(periods.getByRole("button", { name: "FY2026E" })).toBeInTheDocument();
+  expect(periods.queryByRole("button", { name: "FY2027E" })).toBeNull();
+  // The line item traced in the selected case's own years.
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Grid columns" })).getByRole("button", {
+      name: "Selected case",
+    }),
+  );
+  traceRevenue();
+  const trendDrawer = within(screen.getByRole("dialog"));
+  expect(trendDrawer.getByText(/Base case.*FY2027E.*1092/)).toBeInTheDocument();
+  const close = trendDrawer.getAllByRole("button", { name: "Close" })[0];
+  if (!close) throw new Error("Missing trend drawer close control");
+  fireEvent.click(close);
+  const downsideCard = caseItem("Downside shock");
+  expect(downsideCard.textContent).toContain("n.a.");
+  expect(downsideCard.textContent).toContain("More than one published observation uses FY2027E");
+  expect(downsideCard.textContent).not.toContain("2026-04-01 to 2027-03-31");
+  const caseTrace = within(downsideCard).getByRole("button", {
+    name: "Show sources for Downside shock",
+  });
+  fireEvent.click(caseTrace);
+  const drawer = within(screen.getByRole("dialog"));
+  expect(drawer.getByText(/FY2027E \(2026-04-01 to 2027-03-31\)/)).toBeInTheDocument();
+  expect(drawer.getByText(/FY2027E \(2026-10-01 to 2027-03-31\)/)).toBeInTheDocument();
+});
+
+it("sorts forecast labels before choosing the default latest case period", () => {
+  const { view, model } = fixture();
+  const original = model.cashflow.columns.slice(0, 2);
+  const first = original[0];
+  const second = original[1];
+  if (!first || !second) throw new Error("Fixture is missing forecast periods");
+  model.cashflow.columns.splice(0, 2, second, first);
+  for (const row of model.cashflow.rows) {
+    const cells = row.cells.slice(0, 2);
+    const firstCell = cells[0];
+    const secondCell = cells[1];
+    if (firstCell && secondCell) row.cells.splice(0, 2, secondCell, firstCell);
+  }
+  render(<Forecast view={view} run={run} />);
+  expect(caseButton(/^Base case/)).toHaveAttribute("aria-pressed", "true");
+  expect(caseItem("Base case").textContent).toContain("FY2027E");
+});
+
+it.each(["separate grids", "one grid"])(
+  "keeps canonicalized upside labels distinct in %s",
+  (layout) => {
+    const { view, model } = fixture();
+    const downsideColumns = model.cashflow.columns.slice(2, 4);
+    for (const column of downsideColumns) column.group = "Upside";
+    const secondCase = {
+      columns: model.cashflow.columns
+        .slice(0, 2)
+        .map((column) => ({ ...column, group: "Upside case" })),
+      rows: model.cashflow.rows.map((row) => ({
+        ...row,
+        cells: row.cells.slice(0, 2).map(() => ({ status: "value", exact: "20", display: "20" })),
+      })),
+    };
+    if (layout === "one grid") {
+      model.cashflow.columns.push(...secondCase.columns);
+      model.cashflow.rows.forEach((row, index) => {
+        row.cells.push(...(secondCase.rows[index]?.cells ?? []));
+      });
+    } else {
+      model.cashflow.other = secondCase;
+    }
+    render(
+      <PublishedTraceProvider
+        snapshot={snapshot}
+        folder="run"
+        entries={view.entries}
+        route="forecast"
+      >
+        <Forecast view={view} run={run} />
+      </PublishedTraceProvider>,
+    );
+    const first = caseButton("Upside case · Upside");
+    // "Upside case" would only repeat the label, so the case takes its place by raw-group order;
+    // the trace drawer below still identifies the column by its recorded raw group.
+    const second = caseButton("Upside case · second case");
+    expect(caseItem("Upside case · Upside").textContent).toContain("6");
+    expect(caseItem("Upside case · second case").textContent).toContain("20");
+    fireEvent.click(second);
+    expect(second).toHaveAttribute("aria-pressed", "true");
+    expect(first).toHaveAttribute("aria-pressed", "false");
+    traceRevenue();
+    const drawer = within(screen.getByRole("dialog"));
+    expect(drawer.getByText(/Upside case · Upside case.*FY2027E.*20/)).toBeInTheDocument();
+    expect(drawer.queryByText(/Upside case · Upside.*FY2027E.*90/)).toBeNull();
+  },
+);
 
 it.each([true, false])(
   "selects retained own-downside driver paths for the main downside (shock: %s)",
@@ -582,13 +802,40 @@ it("shows repayment drivers in the interest trace", () => {
   ).toContain('"20"');
 });
 
+it("ties same-labeled comparison trace values to the recorded period dates", () => {
+  const { model } = fixture();
+  const trace = forecastTraceContext(model, input, "Revenue comparison", {
+    row: "Revenue",
+    groups: ["Base case", "Downside shock"],
+    periods: ["FY2026E"],
+    periodStart: "2025-04-01",
+    periodEnd: "2026-03-31",
+  });
+  expect(trace.statement).toContain("Base case · FY2026E (2025-04-01 to 2026-03-31): 1050");
+  expect(trace.statement).toContain("Downside shock · FY2026E (2025-04-01 to 2026-03-31): 840");
+  expect(trace.statement).not.toContain("1092");
+  expect(trace.statement).not.toContain("873.6");
+});
+
 it("shows recorded drivers and the downside shock with a separate facilities notice", () => {
   const { view } = fixture();
   render(<Forecast view={view} run={run} />);
-  expect(screen.getByText("Forecast assumptions")).toBeInTheDocument();
+  expect(screen.getByRole("region", { name: "Assumptions by case" })).toBeInTheDocument();
+  // The recorded drivers sit closed under the assumptions table, one press away.
+  const recorded = screen
+    .getByText("Recorded drivers, rationale and limitations")
+    .closest("details");
+  expect(recorded).not.toHaveAttribute("open");
+  if (recorded) recorded.open = true;
   expect(screen.getByRole("table", { name: "Recorded forecast drivers" })).toBeInTheDocument();
   expect(screen.getByText("Recorded growth.")).toBeInTheDocument();
-  expect(screen.getByText("20.00%")).toBeInTheDocument();
+  // The table shows the shock as recorded, the fraction 0.20; the recorded shock reads it as 20.00%.
+  expect(
+    within(screen.getByRole("region", { name: "Assumptions by case table" })).getByText("0.20"),
+  ).toBeInTheDocument();
+  expect(
+    within(screen.getByRole("region", { name: "Recorded downside shock" })).getByText("20.00%"),
+  ).toBeInTheDocument();
   const facilities = screen.getByRole("region", { name: "Recorded facilities" });
   expect(
     within(facilities).getByText(/No facility-level assumptions were recorded/),
@@ -610,7 +857,7 @@ it("retains a cell qualification even when its calculation grid cannot be drawn"
   const forecast = render(<Forecast view={view} run={run} />);
   expect(screen.getByRole("link", { name: "Model notes and limitations" })).toHaveAttribute(
     "href",
-    "#evidence/record",
+    "#evidence/record/notes",
   );
   forecast.unmount();
   vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("not available")));
@@ -640,13 +887,13 @@ it("keeps the missing cash-proxy reason on its case card and explains its precis
     reason: missing,
   };
   render(<Forecast view={view} run={run} />);
-  const cases = within(screen.getByRole("radiogroup", { name: "Forecast case" }));
+  const cases = within(caseItem("Downside shock"));
   expect(cases.getByText(missing)).toBeInTheDocument();
-  expect(cases.getByText("n.a.")).toBeInTheDocument();
-  expect(screen.getByRole("radiogroup", { name: "Forecast case" })).toHaveAccessibleDescription(
-    /Cash proxy.*2 decimals/,
-  );
-  expect(cases.queryByText(/2 decimals/)).toBeNull();
+  expect(within(caseFigure()).getByText("n.a.")).toBeInTheDocument();
+  // The figure is the model's own display, so the page claims no rounding of it; its
+  // description names the measure.
+  expect(caseFigure()).toHaveAccessibleDescription(/^Cash proxy, Downside shock/);
+  expect(screen.queryByText(/rounded/)).toBeNull();
 });
 
 it("uses stored case names for descriptions and reader names for all column groups", () => {
@@ -660,15 +907,16 @@ it("uses stored case names for descriptions and reader names for all column grou
   };
   model.cashflow.notes.push("Upside is the optimistic case recorded by the module.");
   render(<Forecast view={view} run={run} />);
+  fireEvent.click(caseButton(/^Upside/));
   expect(
-    within(screen.getByRole("radiogroup", { name: "Forecast case" })).getByText(
+    within(caseFigure().parentElement as HTMLElement).getByText(
       "Upside is the optimistic case recorded by the module.",
     ),
   ).toBeInTheDocument();
-  fireEvent.click(screen.getByRole("radio", { name: /^Downside shock/ }));
+  fireEvent.click(caseButton(/^Downside shock/));
   expect(
-    within(screen.getByRole("region", { name: "Cash flow model" })).getByRole("columnheader", {
-      name: "Downside shock",
+    within(screen.getByRole("region", { name: "Forecast grid table" })).getByRole("columnheader", {
+      name: "Forecast · Downside shock",
     }),
   ).toBeInTheDocument();
 });
@@ -689,8 +937,20 @@ it("names model choices by recorded cases and date, without builder mode jargon"
 it("wraps recorded descriptions, model notes and qualifications at desktop widths", () => {
   const { view } = fixture();
   render(<Forecast view={view} run={run} />);
-  expect(screen.getByRole("region", { name: "Model scope and basis" }).className).toMatch(
-    /wrap-anywhere/,
-  );
-  expect(screen.getByRole("radiogroup", { name: "Forecast case" }).className).toMatch(/min-w-0/);
+  expect(
+    within(screen.getByRole("region", { name: "Scope and limits" })).getByRole("list").className,
+  ).toMatch(/wrap-anywhere/);
+  const figure = caseFigure().closest("#forecast-cases");
+  expect(figure?.className).toMatch(/min-w-0/);
+  expect(figure?.className).toMatch(/wrap-anywhere/);
+});
+
+it("lists a model-level limit that starts with a word and a colon which is no row of the statement", () => {
+  const { view, model } = fixture();
+  const scope = "Perimeter: the forecast covers the restricted group only.";
+  model.cashflow.limits = [ledger, scope];
+  render(<Forecast view={view} run={run} />);
+  const tile = within(screen.getByRole("region", { name: "Scope and limits" }));
+  expect(tile.getByText(scope)).toBeInTheDocument();
+  expect(document.body.textContent).not.toContain(ledger);
 });

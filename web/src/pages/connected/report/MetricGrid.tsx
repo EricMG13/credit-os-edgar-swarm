@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MetricTile } from "@/pages/library/parts/MetricTile";
+import { LibraryMetricTile } from "@/pages/library/parts/MetricTile";
 import { RunContext } from "@/pages/library/parts/RunContext";
 import { TraceDrawer } from "@/pages/library/parts/TraceDrawer";
 import type { Metric, Trace } from "@/pages/library/slice";
@@ -37,7 +37,7 @@ export function MetricGrid({
     <RunContext.Provider value={{ traces, open: setOpen }}>
       <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(12rem,1fr))]">
         {metrics.map((metric) => (
-          <MetricTile key={metric.label} metric={metric} />
+          <LibraryMetricTile key={metric.label} metric={metric} />
         ))}
       </ul>
       {active && (

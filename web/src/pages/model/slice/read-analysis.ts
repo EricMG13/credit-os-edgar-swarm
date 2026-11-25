@@ -9,6 +9,7 @@ import {
   child,
   chartInfo as info,
   distinct,
+  distinctTraceControlNames,
   fail,
   needCells,
   num,
@@ -191,9 +192,5 @@ function checkTraceNames(page: AnalysisPage, path: string): void {
       where: `${at(child(path, "limitations.items"), i)}.title`,
     })),
   ];
-  named.forEach((item, i) => {
-    if (named.findIndex((other) => other.name === item.name) !== i) {
-      fail(item.where, "expected a name no other trace control on the page has");
-    }
-  });
+  distinctTraceControlNames(named);
 }

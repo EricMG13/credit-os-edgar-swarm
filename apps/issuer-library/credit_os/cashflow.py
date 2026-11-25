@@ -5,6 +5,7 @@ Part of the library's store (`credit_os.store`, which re-exports every name here
 
 import datetime
 import decimal
+import hashlib
 import json
 import re
 from collections.abc import Callable
@@ -18,6 +19,7 @@ from credit_os.source import (
     text_or_none,
     valid_date,
 )
+from deploy_workflow.derived import derived
 
 CASHFLOW_FILES = ("forecast_exact.json", "calculation.json", "annual.md", "quarter.md")
 # The CP-1 handoff table labels the cash flow reader matches, exactly as the handoffs print them
@@ -1625,6 +1627,7 @@ def cashflow_of(
             "start": c["start"],
             "end": c["end"],
             "ytd": c["ytd"],
+            "forecast": c["kind"] == "fc",
         }
         for c in columns
     ]
@@ -1729,7 +1732,20 @@ def cashflow_or_issues(
         issues.append(f"{folder}: {name} {what}")
     if len(present) != len(CASHFLOW_FILES):
         return None
-    cashflow, problem = read_cashflow(present, ask.handoff, ask.budget)
+    # The grid is laid out from these bytes, the handoff text and the cells left, and nothing else.
+    key = (
+        "cashflow",
+        tuple(hashlib.sha256(present[name]).hexdigest() for name in CASHFLOW_FILES),
+        None if ask.handoff is None else hashlib.sha256(ask.handoff.encode()).hexdigest(),
+        CASHFLOW_CELL_BUDGET if ask.budget is None else ask.budget,
+    )
+    # Only a grid is reused: a problem can be the moment's (no memory to lay the grid out), so
+    # the same bytes are tried again at the next publication.
+    cashflow, problem = derived(
+        key,
+        lambda: read_cashflow(present, ask.handoff, ask.budget),
+        current=lambda kept: kept[1] is None,
+    )
     if problem is not None:
         kind, text = problem
         issues.append(

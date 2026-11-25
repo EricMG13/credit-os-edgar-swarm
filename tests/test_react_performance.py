@@ -11,7 +11,7 @@ import threading
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 import pytest
 
@@ -19,9 +19,11 @@ from deploy_workflow import http_base
 from deploy_workflow.inbox import runs
 from deploy_workflow.inbox.layout import Layout
 from react_frontend import (
+    _connected_reply,
     _gzip_quality,
     _library_index,
     _scope_query,
+    admission,
     make_server,
     sources,
 )
@@ -224,15 +226,126 @@ def test_compact_library_index_omits_report_content_and_activity(
     snapshot["workspace"]["handoffs"] = {"secret": ["X" * 100_000]}
     snapshot["chips"] = {"output:1": ["Y" * 100_000]}
     snapshot["activity"] = {"private-data": "Z" * 100_000}
+    snapshot["catalogue"]["real"][0]["files"] = [
+        {"name": f"run-file-{n}", "href": f"../runs/current/run-file-{n}"} for n in range(200)
+    ]
     library = layout.engine / "library"
     library.mkdir(parents=True)
     (library / "data.js").write_text(f"window.CREDIT_OS_DATA={json.dumps(snapshot)};")
     reply = _library_index(layout)
     encoded = json.dumps(reply.body)
     assert "secret" not in encoded and "private-data" not in encoded
+    assert "run-file" not in encoded
+    assert reply.body["catalogue"]["real"] == [
+        {"id": FOLDER, "name": "Issuer", "date": "2026-11-16"}
+    ]
     assert len(encoded) < 2000
     assert set(reply.body["workspace"]) == {"runs"}
-    assert set(reply.body["workspace"]["runs"]["current-key"]) == {"folder", "issuerKey", "pathway"}
+    # The index carries each run's identity and its verified-publication facts, and nothing else.
+    assert set(reply.body["workspace"]["runs"]["current-key"]) == {
+        "folder",
+        "issuerKey",
+        "pathway",
+        "publicationVerified",
+        "lead",
+        "assessmentScope",
+        "publishedAt",
+    }
+
+
+def _publish(layout: Layout, snapshot: dict[str, Any]) -> None:
+    """Replace the library folder as the publisher does: built beside it, then swapped in."""
+    library = layout.engine / "library"
+    staging = layout.engine / ".library-new"
+    staging.mkdir(parents=True)
+    (staging / "data.js").write_text(f"window.CREDIT_OS_DATA={json.dumps(snapshot)};")
+    if library.exists():
+        shutil.rmtree(library)
+    staging.rename(library)
+
+
+def test_a_publication_is_parsed_once_for_the_same_bytes_and_a_new_one_is_read(
+    publication: tuple[Layout, dict[str, Any]], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    layout, snapshot = publication
+    parses: list[int] = []
+    decode = admission._decoded
+
+    def counted(raw: bytes) -> dict[str, Any]:
+        parses.append(len(raw))
+        return decode(raw)
+
+    monkeypatch.setattr(admission, "_decoded", counted)
+    monkeypatch.setattr(admission, "_kept", None)
+    _publish(layout, snapshot)
+    for _ in range(3):
+        assert _library_index(layout).body["catalogue"]["real"][0]["name"] == "Issuer"
+    assert len(parses) == 1
+    snapshot["catalogue"]["real"][0]["name"] = "Renamed"
+    _publish(layout, snapshot)
+    assert _library_index(layout).body["catalogue"]["real"][0]["name"] == "Renamed"
+    assert _library_index(layout).body["catalogue"]["real"][0]["name"] == "Renamed"
+    assert len(parses) == 2
+    shutil.rmtree(layout.engine / "library")
+    assert _library_index(layout).body is None and admission.published(layout) is None
+
+
+def test_a_file_rewritten_in_place_under_the_same_times_is_read_again(
+    publication: tuple[Layout, dict[str, Any]], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    layout, snapshot = publication
+    monkeypatch.setattr(admission, "_kept", None)
+    _publish(layout, snapshot)
+    path = layout.engine / "library" / "data.js"
+    times = path.stat()
+    for name in ("Issuer", "Second", "Third!"):  # the same size and the same file times
+        snapshot["catalogue"]["real"][0]["name"] = name
+        path.write_text(f"window.CREDIT_OS_DATA={json.dumps(snapshot)};")
+        os.utime(path, ns=(times.st_atime_ns, times.st_mtime_ns))
+        assert _library_index(layout).body["catalogue"]["real"][0]["name"] == name
+    path.write_text("window.CREDIT_OS_DATA={invalid};")
+    with pytest.raises(ValueError):
+        admission.published(layout)
+    path.write_text(f"window.CREDIT_OS_DATA={json.dumps(snapshot)};")
+    size = path.stat().st_size
+    assert admission.published(layout, limit=size) is not None
+    with pytest.raises(ValueError, match="size limit"):
+        admission.published(layout, limit=size - 1)
+
+
+def test_no_reply_changes_the_publication_the_requests_share(
+    publication: tuple[Layout, dict[str, Any]], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    layout, snapshot = publication
+    monkeypatch.setattr(admission, "_kept", None)
+    _publish(layout, snapshot)
+    kept = admission.published(layout)
+    assert kept is admission.published(layout) and kept == snapshot
+    link = f"/connected/sources/{FOLDER}/{SHA}/{quote(NAME, safe='')}"
+    replies = {}
+    for path in (
+        "/connected/library",
+        "/connected/reports",
+        f"/connected/report/{FOLDER}",
+        "/connected/snapshot",
+        f"/connected/snapshot?run={FOLDER}",
+        link,
+        f"{link}?page=1",
+        f"/connected/artifacts/{FOLDER}",
+        f"/connected/portfolio/{FOLDER}",
+    ):
+        try:
+            reply = _connected_reply(layout, urlsplit(path), {}, {})
+        except http_base.Reply as refused:
+            reply = refused
+        assert reply is not None and reply.status == 200, path
+        replies[path] = reply.body
+    # The scoped report carries the verified source link; the shared object never gains it.
+    scoped = json.loads(replies[f"/connected/snapshot?run={FOLDER}"])
+    assert scoped["workspace"]["runs"]["current-key"]["evidence"]["sources"][0]["href"] == link
+    assert replies[link] == RAW
+    assert admission.published(layout) is kept and kept == snapshot
+    assert json.loads(json.dumps(kept)) == json.loads(json.dumps(snapshot))
 
 
 def _verify_static_compression(server: Any, chunk: bytes) -> None:
@@ -250,6 +363,20 @@ def _verify_static_compression(server: Any, chunk: bytes) -> None:
     )
     assert status == 200 and identity == chunk and "Content-Encoding" not in headers
     assert headers["Vary"] == "Accept-Encoding"
+    # Stable names (not content-hashed): cached for a day, never immutable. Only a font under
+    # /fonts/ is: a page or a licence text there, data.js and the notices get no lifetime.
+    for plain in ("/fonts/", "/fonts/licence.txt", "/data.js", "/THIRD-PARTY-NOTICES.md"):
+        status, body, headers = frontend.request(server, plain)
+        assert status == 200 and body == b"stable", plain
+        assert "max-age" not in headers.get("Cache-Control", ""), plain
+    for stable in ("/fonts/text-regular.woff2", "/symbol.svg"):
+        status, body, headers = frontend.request(server, stable)
+        assert status == 200 and body == b"stable", stable
+        assert headers["Cache-Control"] == "public, max-age=86400", stable
+    status, body, headers = frontend.request(server, "/connected-assets/plain.js")
+    assert status == 200 and body == b"stable" and "Cache-Control" not in headers
+    status, _, headers = frontend.request(server, "/fonts/absent.woff2")
+    assert status == 404 and "max-age" not in headers.get("Cache-Control", "")
     status, html, _ = frontend.request(server, "/")
     assert status == 200 and b"connected</body>" in html
 
@@ -281,6 +408,12 @@ def test_http_source_download_only_checks_requested_file_and_rechecks_hash(
     (web / "connected-assets").mkdir()
     chunk = b"const report = 'content';\n" * 100
     (web / "connected-assets" / "app-a1b2c3d4.js").write_bytes(chunk)
+    (web / "connected-assets" / "plain.js").write_bytes(b"stable")
+    (web / "fonts").mkdir()
+    (web / "fonts" / "text-regular.woff2").write_bytes(b"stable")
+    (web / "symbol.svg").write_bytes(b"stable")
+    for plain in ("fonts/index.html", "fonts/licence.txt", "data.js", "THIRD-PARTY-NOTICES.md"):
+        (web / plain).write_bytes(b"stable")
     read_calls: list[tuple[str, bool]] = []
     load = sources._source
 

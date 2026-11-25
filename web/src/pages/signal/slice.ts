@@ -268,7 +268,7 @@ export type SignalAi = {
   spend: { title: string; label: string; note: string | null; position: number } | null;
   parts: SignalAiPart[];
 };
-export type SignalSettings = {
+type SignalSettings = {
   topics: SignalSettingsTopic[];
   digestForm: SignalDigestForm;
   ai: SignalAi;

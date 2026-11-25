@@ -29,7 +29,9 @@ def engine_case(tmp_path_factory: pytest.TempPathFactory) -> Path:
 
     with pytest.MonkeyPatch.context() as patch:
         patch.setattr(test_launcher, "assert_exported_report", retain)
-        test_launcher.test_real_scheduler_exports_the_submitted_run(patch, "executed")
+        test_launcher.test_real_scheduler_exports_the_submitted_run(
+            patch, "executed", "gpt", "balanced", "copilot-sol-medium"
+        )
     return retained
 
 
@@ -48,7 +50,7 @@ def test_completed_engine_responses_supply_their_exact_verified_metadata(
     layout, record, directory = actual_run
     workflow = json.loads((directory / "workflow.json").read_bytes())
     assert workflow["run"]["run_id"] != record.id
-    assert workflow["run"]["run_id"] == "example-2025-04-30-credit_snapshot-sol-medium"
+    assert workflow["run"]["run_id"] == "example-2025-04-30-credit_snapshot-copilot-sol-medium"
     body = reply(layout, record.id).body
     assert body["module_outputs"] is not None
     outputs = {row["module"]: row for row in body["module_outputs"]}
@@ -70,7 +72,7 @@ def test_actual_synthetic_adapter_is_classified_at_the_settled_record_api(
     workflow = json.loads((directory / "workflow.json").read_bytes())
     assert workflow["execution"] == "live-provider"  # The prepared engine route, not its adapter.
     calls = [json.loads(line) for line in (directory / "live/calls.jsonl").read_text().splitlines()]
-    assert len(calls) == 14
+    assert len(calls) == 17  # Full: seventeen model calls (2026-11-25)
     assert {call["reported_model"] for call in calls} == {"synthetic"}
     assert {call["request_id"] for call in calls} == {"synthetic"}
     body = reply(layout, record.id).body
@@ -105,7 +107,7 @@ def test_actual_adapter_classification_reaches_the_connected_http_record(
             assert response.getheader("Cache-Control") == "no-store"
             assert body["execution"] == "synthetic"
             assert body["status"] == "finished"
-            assert len(body["module_outputs"]) == 14
+            assert len(body["module_outputs"]) == 17
         finally:
             connection.close()
             server.shutdown()

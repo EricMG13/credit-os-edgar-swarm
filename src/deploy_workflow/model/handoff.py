@@ -14,8 +14,11 @@ import io
 import json
 import logging
 import re
+import threading
 import time
-from collections.abc import Callable, Mapping, Sequence
+from collections import OrderedDict
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass, replace
 from datetime import UTC, date, datetime
 from decimal import Decimal, DecimalException, Inexact, localcontext
@@ -42,14 +45,15 @@ from deploy_vii.model.metrics import _ratio
 from deploy_vii.preparation import pdf_page_text, xlsx_content
 from deploy_vii.registry import modules
 from deploy_workflow.model.adapter import AdapterReply, ModelAdapter
-from deploy_workflow.model.budget import Budget, OverrunStop, exact_sum
+from deploy_workflow.model.budget import Budget, BudgetError, OverrunStop, exact_multiply, exact_sum
 from deploy_workflow.model.configs import CONFIGS
 from deploy_workflow.model.copilot import COMPACTION_SHARE, near_limit, prompt_tokens_estimate
 from deploy_workflow.model.handoff_transport import compact_index, read_handoff
-from deploy_workflow.model.loop import _caught, redacted_request, redacted_turn
+from deploy_workflow.model.loop_helpers import _caught, redacted_request, redacted_turn
 from deploy_workflow.model.pricing import (
     Priced,
     handoff_reservation_usd,
+    price_of,
     price_usage,
     web_search_usd,
 )
@@ -98,6 +102,8 @@ from deploy_workflow.workflow import _put
 log = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
+    from contextlib import AbstractContextManager
+
     from deploy_workflow.owners.cpos import HandoffTask
 
 Check = Callable[["HandoffTask", bytes], tuple[str, ...]]
@@ -472,7 +478,35 @@ def _workbook_pages(raw: bytes) -> list[str]:
     ]
 
 
+# The page text of sources already read in this process, by the sha256 of their bytes and whether
+# the name makes them page records (.jsonl): the same bytes give the same pages. A run read each
+# source once to prepare and once more for every module, and the connected reader once for every
+# report opened (about 9.6 s for a 250-page PDF each time; VERIFICATION.md 2026-11-18). The least
+# recently read go once the kept text passes the limit. Kept in memory only: text kept on disk
+# would be read back unchecked.
+_PAGE_TEXT: OrderedDict[tuple[str, bool], tuple[str, ...]] = OrderedDict()
+_PAGE_TEXT_LOCK = threading.Lock()
+_PAGE_TEXT_CHARS = 50_000_000
+
+
 def _pages(name: str, raw: bytes) -> list[str]:
+    """The pages of a source, read once for the same bytes; a failure to read is not kept."""
+    key = (hashlib.sha256(raw).hexdigest(), name.endswith(".jsonl"))
+    with _PAGE_TEXT_LOCK:
+        kept = _PAGE_TEXT.get(key)
+        if kept is not None:
+            _PAGE_TEXT.move_to_end(key)
+            return list(kept)
+    pages = tuple(_read_pages(name, raw))  # outside the lock: one long file holds up no other
+    with _PAGE_TEXT_LOCK:
+        _PAGE_TEXT[key] = pages
+        chars = sum(len(page) for texts in _PAGE_TEXT.values() for page in texts)
+        while chars > _PAGE_TEXT_CHARS and len(_PAGE_TEXT) > 1:
+            chars -= sum(map(len, _PAGE_TEXT.popitem(last=False)[1]))
+    return list(pages)
+
+
+def _read_pages(name: str, raw: bytes) -> list[str]:
     if raw.startswith(b"%PDF"):
         from pypdf import PdfReader
 
@@ -1143,6 +1177,34 @@ def _searched_queries(turn: Turn) -> list[str]:
     return queries
 
 
+class _PerModule[T]:
+    """An executor attribute kept per thread. CP-OS may run independent modules at once, each on
+    its own thread through the one executor; what a module run has seen (its digest, its session's
+    compactions, its search check) is that thread's alone and is never read from another."""
+
+    def __init__(self, default: Callable[[], T]) -> None:
+        self._default = default
+
+    def __set_name__(self, owner: type, name: str) -> None:
+        self._name = name
+
+    def __get__(self, executor: HandoffExecutor, owner: type | None = None) -> T:
+        held: dict[str, T] = executor._module.__dict__
+        if self._name not in held:
+            held[self._name] = self._default()
+        return held[self._name]
+
+    def __set__(self, executor: HandoffExecutor, value: T) -> None:
+        executor._module.__dict__[self._name] = value
+
+
+def _noted[E: BaseException](error: E, notes: tuple[str, ...]) -> E:
+    """``error`` with ``notes`` added to it."""
+    for note in notes:
+        error.add_note(note)
+    return error
+
+
 def _handoff_transport(directory: Path, copilot: bool) -> str | None:
     path = directory / "loop.json"
     if not path.exists():
@@ -1158,7 +1220,24 @@ def _handoff_transport(directory: Path, copilot: bool) -> str | None:
 
 
 class HandoffExecutor:
-    """One bounded module at a time; no routing, delivery, or automatic provider retry."""
+    """One bounded module per call; no routing, delivery, or automatic provider retry.
+
+    Calls may overlap, one per thread, when CP-OS runs independent modules at once. They share the
+    folder's writer lock, the one ``Budget`` (so the cap holds across them), the call log, the
+    redactor and the adapter. The Copilot adapter serves every call from its one loop thread and
+    keeps a separate runtime client and session for each module's digest. Everything a module run
+    has seen is per thread (``_PerModule``)."""
+
+    # The first completed compaction of the module this thread ran last: the GitHub Copilot
+    # runtime summarised the session's context, so the handoff it wrote may rest on a summary.
+    written_after_compaction = _PerModule[Compaction | None](lambda: None)
+    # what the module run in progress on this thread has seen of the runtime's compactions
+    _digest = _PerModule[str | None](lambda: None)
+    _last_call = _PerModule[int](lambda: 0)
+    _starts = _PerModule[dict[str, tuple[int, int | None]]](dict)  # attempt -> (call, tokens)
+    _ended = _PerModule[set[str]](set)  # attempts that reported a completion (charged or not)
+    _reported = _PerModule[set[str]](set)  # starts already disclosed as uncharged
+    _query_check = _PerModule[tuple[Mapping[str, str], str] | None](lambda: None)
 
     def __init__(  # noqa: PLR0913 -- keyword-only run limits, one of them the optional event folder
         self,
@@ -1196,7 +1275,8 @@ class HandoffExecutor:
         # investor-relations hosts, ``lookup_cutoff`` the run's research cutoff (the as-of date
         # of the first task when the caller gives none) and ``lookup_runtime`` the injected network
         # for tests. The run keeps ONE WebLookup: its sec.gov pacing is per instance, and it has no
-        # lock, which holds because the tool loop makes one call at a time.
+        # lock, which holds because the tool loop makes one call at a time and one module alone
+        # (``WEB_LOOKUP_MODULES``) is offered it, so two modules in flight never share it.
         if web_lookup not in ("on", "off"):
             raise ValueError("web_lookup must be on or off: the caller resolves default first")
         if bad := [h for h in web_hosts if bare_host_problem(h)]:
@@ -1213,7 +1293,10 @@ class HandoffExecutor:
         ):
             raise ValueError(f"effort_by_module refused for {self.config.model}: {bad}")
         self.effort_by_module: Mapping[str, str] = MappingProxyType(efforts)
-        self._query_check: tuple[Mapping[str, str], str] | None = None
+        self._module = threading.local()  # the ``_PerModule`` attributes of each thread
+        self._gate = threading.Lock()  # guards the two below
+        self._in_flight = 0  # references to the shared writer lock and ledger
+        self._writer: AbstractContextManager[None] | None = None  # the folder lock they share
         self.directory, self.adapter, self.check = directory, adapter, check
         self.events = events
         self.notice = (
@@ -1224,15 +1307,6 @@ class HandoffExecutor:
         self.budget = Budget(cap_usd, directory)
         self.log = CallLog(directory, self.redactor)
         self.handoff_transport = _handoff_transport(directory, self.config.provider == "copilot")
-        # The first completed compaction of the module run last: the GitHub Copilot runtime
-        # summarised the session's context, so the handoff it wrote may rest on a summary.
-        self.written_after_compaction: Compaction | None = None
-        # what the module run in progress has seen of the runtime's compactions
-        self._digest: str | None = None
-        self._last_call = 0
-        self._starts: dict[str, tuple[int, int | None]] = {}  # attempt -> (call, tokens at start)
-        self._ended: set[str] = set()  # attempts that reported a completion (charged or not)
-        self._reported: set[str] = set()  # starts already disclosed as uncharged
         # the settled module runs whose session the adapter keeps until it is closed
         self._sessions: list[_Session] = []
         _put(
@@ -1390,19 +1464,92 @@ class HandoffExecutor:
         return (WEB_PAGES_UNREADABLE,) if unreadable and issues else issues
 
     def __call__(self, task: HandoffTask) -> bytes:
-        with _single_writer(self.directory):
-            # Reload only after acquiring the writer lock: a second executor may
-            # have been constructed before the preceding module settled its spend.
-            self.budget = Budget(self.budget.cap_usd, self.directory)
+        with self.shared_budget():
             return self._run(task)
+
+    @contextmanager
+    def shared_budget(self) -> Iterator[None]:
+        """Keep the locked ledger current for the scheduler's admissions and its workers."""
+        self._enter()
+        try:
+            yield
+        finally:
+            self._leave()
+
+    def can_overlap(self, modules: Sequence[str], case_kind: str, max_attempts: int) -> bool:
+        """Whether settled spend leaves room for every turn of every listed module.
+        Call under shared_budget, with unfinished modules and the proposed start included."""
+        config = self.adapter.config_id
+        if price_of(config).reservation_context_tokens is None:
+            return False
+        # Every supported request on this route holds the whole context, including its framing.
+        # Count full module bounds even for workers that have already settled some turns.
+        turns = self.max_turns * max_attempts
+        searching = sum(
+            web_search_offered(self.web_search, module, case_kind) for module in modules
+        )
+        try:
+            with localcontext() as context:
+                context.traps[Inexact] = True
+                hold = handoff_reservation_usd(config, 0, self.max_output_tokens)
+                searches = web_search_usd(searching * turns * WEB_SEARCH_CALLS_PER_TURN)
+            tokens = exact_multiply(hold, Decimal(turns * len(modules)))
+            return exact_sum((self.budget.spent, tokens, searches)) <= self.budget.cap_usd
+        except (BudgetError, DecimalException):
+            # No exact combined bound. Each serial reservation still decides on its own merits.
+            return False
+
+    def _enter(self) -> None:
+        """Acquire the writer lock and reload on first entry. Overlapping users share both."""
+        with self._gate:
+            if self._in_flight == 0:
+                writer = _single_writer(self.directory)
+                writer.__enter__()
+                try:
+                    # Reload only after acquiring the writer lock: a second executor may
+                    # have been constructed before the preceding module settled its spend.
+                    self.budget = Budget(self.budget.cap_usd, self.directory)
+                except BaseException:
+                    writer.__exit__(None, None, None)
+                    raise
+                self._writer = writer
+            self._in_flight += 1
+
+    def _leave(self) -> None:
+        """The last user of the budget lets the writer lock go."""
+        with self._gate:
+            self._in_flight -= 1
+            writer = self._writer
+            if self._in_flight == 0 and writer is not None:
+                self._writer = None
+                writer.__exit__(None, None, None)
 
     def _run(self, task: HandoffTask) -> bytes:
         self._digest, self._last_call = None, 0
         self._starts, self._ended, self._reported = {}, set(), set()
         try:
             return self._run_module(task)
+        except Exception as error:
+            # Told now, before the session is drained below (the drain may take seconds): CP-OS
+            # starts no module and lets no other module send a call on a failure it has not heard.
+            task.failed(error)
+            raise
         finally:
-            self._finish_module(task)
+            try:
+                self._finish_module(task)
+            finally:
+                # A hold this module left unsettled is an unknown charge: no other module in
+                # flight waits for it, and the run stops, as a relaunch reading the markers would.
+                self.budget.abandon()
+
+    def _hold(self, task: HandoffTask, call_id: str, usd: Decimal) -> None:
+        """Reserve one exchange's hold. Not for a module the run can no longer accept
+        (``HandoffTask.proceed`` raises): asked before the hold, and again after it, since the
+        reserve may have waited for another module's settlement; that hold is then released, the
+        call it was for not sent."""
+        task.proceed()
+        self.budget.reserve(call_id, usd, config_id=self.adapter.config_id)
+        self._last_look(task, call_id)
 
     def _run_module(self, task: HandoffTask) -> bytes:
         if task.draft is not None and self.redactor.bytes_(task.draft) != task.draft:
@@ -1770,6 +1917,74 @@ class HandoffExecutor:
                     reason=reason,
                 )
 
+    def _last_look(self, task: HandoffTask, call_id: str) -> None:
+        """Recheck the shared ledger, then the module, after reserving and just before dispatch.
+        The ledger's check takes its lock, which another module may hold across a marker write
+        and its fsyncs; the module's (``HandoffTask.proceed``) takes none, so it comes last and a
+        halt CP-OS takes while the ledger check waits still refuses the call.
+        A refused call releases its hold. A call already authorized settles when it returns.
+        A release that fails is noted on the refusal and never replaces it: the hold stays open,
+        left as a crash leaves one when the module ends (``_run``)."""
+        try:
+            self.budget.check_running()
+            task.proceed()
+        except BaseException as refusal:
+            try:
+                self.budget.release(call_id)
+            except Exception as failed:  # noqa: BLE001 -- the refusal is what the module raises
+                refusal.add_note(f"its hold was not released: {type(failed).__name__}: {failed}")
+            raise
+
+    def _dispatch_look(self, task: HandoffTask, call_id: str, turn: int) -> None:
+        """The last look, after the ``turn`` event (whose write may take time) and immediately
+        before the call is handed to the adapter. A call it refuses was logged as a turn, so a
+        ``turn_not_sent`` event follows (``_not_sent``), and the refusal is what the module
+        raises."""
+        try:
+            self._last_look(task, call_id)
+        except BaseException as refusal:
+            _noted(refusal, self._not_sent(task, turn))
+            raise
+
+    def _not_sent(self, task: HandoffTask, turn: int) -> tuple[str, ...]:
+        """Follow the ``turn`` event of a call that was not sent with ``turn_not_sent``; return
+        what to note on the error the module raises. ``append_event`` is fail-open: a write the
+        disk refuses (an OSError) is skipped with a RuntimeWarning, the event is missing and
+        nothing is noted. It raises only when a warnings filter makes that warning an error
+        (``-W error``); that failure is returned as a note, never raised in the error's place."""
+        if self.events is None:
+            return ()
+        try:
+            append_event(self.events, "turn_not_sent", module=task.module_id, turn=turn)
+        except Exception as failed:  # noqa: BLE001 -- the module's own error is raised
+            return (f"its turn_not_sent event was not written: {type(failed).__name__}: {failed}",)
+        return ()
+
+    def _close_hold(
+        self,
+        task: HandoffTask,
+        call_id: str,
+        turn: int,
+        reply: AdapterReply,
+        actual: Decimal | None,
+    ) -> tuple[str, ...]:
+        """Settle the exchange's hold at ``actual``; ``OverrunStop`` when that passes it. A reply
+        the adapter did not send releases the hold instead, and its ``turn`` event is followed by
+        ``turn_not_sent``; returns what to note on the error ``_turn`` then raises."""
+        if reply.kind != "not_sent":
+            self.budget.settle(call_id, actual)
+            return ()
+        self.budget.release(call_id)
+        return self._not_sent(task, turn)
+
+    @staticmethod
+    def _known_failed(task: HandoffTask, known: bool, what: str) -> None:
+        """An exchange is known to end the module's run (``_turn`` raises at its end). CP-OS is
+        told at once, before the reply is priced, settled and logged, so that no other module
+        starts or begins a call meanwhile; the failure CP-OS raises is the one ``_turn`` raises."""
+        if known:
+            task.failed(RuntimeError(f"cpos_live_stopped: {what}"))
+
     def _turn(
         self, task: HandoffTask, folder: Path, digest: str, index: int, request: TurnRequest
     ) -> Turn:
@@ -1783,7 +1998,7 @@ class HandoffExecutor:
             self.adapter.config_id, len(raw_request), request.max_output_tokens
         )
         call_id = f"call-{uuid4().hex}"
-        self.budget.reserve(call_id, reserved, config_id=self.adapter.config_id)
+        self._hold(task, call_id, reserved)
         if self.events is not None:
             append_event(
                 self.events,
@@ -1795,6 +2010,8 @@ class HandoffExecutor:
                 held_usd=str(reserved),
                 cap_usd=str(self.budget.cap_usd),
             )
+        # the module's lock-free check is the last step before the adapter has the call
+        self._dispatch_look(task, call_id, index + 1)
         started = time.time()
         self._last_call = index
         try:
@@ -1813,6 +2030,7 @@ class HandoffExecutor:
                 time.time(),
                 message=self._fault_text(exc),
             )
+        self._known_failed(task, reply.kind != "ok", reply.kind)
         reply = self._fresh(reply)
         received, failure = _caught(partial(self._receive, reply))
         fault: str | None = None  # one line, for the stop message
@@ -1828,14 +2046,15 @@ class HandoffExecutor:
             turn, usage, priced = received
         actual = _charge(reply, priced, turn, search_hold)
         fault_class = reply.error_class if reply.kind != "ok" else "BadTurn"  # as loop.py
+        # an ``ok`` reply that cannot be used ends the run too
+        self._known_failed(task, turn is None or actual is None, f"{reply.kind}; charge={actual}")
         overrun = False
+        noted: tuple[str, ...] = ()  # on the error raised below
         try:
-            if reply.kind == "not_sent":
-                self.budget.release(call_id)
-            else:
-                self.budget.settle(call_id, actual)
+            noted = self._close_hold(task, call_id, index + 1, reply, actual)
         except OverrunStop:
             overrun = True
+            self._known_failed(task, overrun, f"{reply.kind}; overrun=True")
         self.log.append(
             CallRecord.build(
                 self.redactor,
@@ -1926,8 +2145,11 @@ class HandoffExecutor:
         if turn is not None and self._query_check is not None:
             self._record_flagged_queries(task, folder, index, turn)
         if reply.kind != "ok" or turn is None or actual is None or overrun:
-            raise RuntimeError(
-                f"cpos_live_stopped: {reply.kind}; charge={actual}; overrun={overrun}"
-                + ("" if fault is None else f"; unusable reply: {fault}")
+            raise _noted(
+                RuntimeError(
+                    f"cpos_live_stopped: {reply.kind}; charge={actual}; overrun={overrun}"
+                    + ("" if fault is None else f"; unusable reply: {fault}")
+                ),
+                noted,
             )
         return turn

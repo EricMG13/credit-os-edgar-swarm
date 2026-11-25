@@ -14,7 +14,7 @@ function page(kind: SignalPageKind) {
   );
 }
 
-export const routes: readonly Route[] = [
+export const signalRoutes: readonly Route[] = [
   {
     path: "/signal/:scene/feed/:view",
     home: "/signal/main/feed/for-you",

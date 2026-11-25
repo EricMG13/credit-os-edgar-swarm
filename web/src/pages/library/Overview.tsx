@@ -7,7 +7,7 @@ import { ChangeViewNote } from "./parts/ChangeViewNote";
 import { CellValue } from "./parts/CellValue";
 import { Findings } from "./parts/Findings";
 import { Limitations } from "./parts/Limitations";
-import { MetricTile } from "./parts/MetricTile";
+import { LibraryMetricTile } from "./parts/MetricTile";
 import { ModuleItems } from "./parts/ModuleItems";
 import { RunFrame } from "./parts/RunFrame";
 import { Section } from "./parts/Section";
@@ -87,7 +87,7 @@ export function Overview({ issuer, run }: { issuer: string | undefined; run: str
             <section aria-label={overview.metricsLabel}>
               <ul className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
                 {overview.metrics.map((metric) => (
-                  <MetricTile key={metric.label} metric={metric} />
+                  <LibraryMetricTile key={metric.label} metric={metric} />
                 ))}
               </ul>
             </section>

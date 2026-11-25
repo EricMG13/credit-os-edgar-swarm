@@ -8,6 +8,7 @@ import shutil
 from pathlib import Path
 
 import pytest
+import test_cpos_launch as launch_tests
 from library_fixtures import (
     make_run,
     method,
@@ -22,6 +23,7 @@ from deploy_workflow import library_index
 from deploy_workflow.library_index import build_library, current_method
 
 ROOT = Path(__file__).resolve().parents[1]
+provider = launch_tests.provider
 
 
 def listed(workspace: Path, version: str = "") -> library_index.Library:
@@ -414,14 +416,11 @@ def test_latest_is_per_issuer_by_evidence_date_and_ties_are_shown(tmp_path):
     assert order == ["a-new-1", "a-new-2", "a-old", "b-only"]
 
 
-def test_a_run_cpos_completed_with_a_fake_provider_is_listed(tmp_path, monkeypatch):
+def test_a_run_cpos_completed_with_a_fake_provider_is_listed(tmp_path, monkeypatch, provider):
     """CP-OS really prepares, runs (fake provider) and delivers; the library must accept its
     files. Synthetic answers: this proves the file contract, not any analysis."""
-    import test_cpos_launch as launch_tests
-
     from deploy_workflow.owners import cpos_launch
 
-    provider = launch_tests.provider.__wrapped__(monkeypatch)
     out = tmp_path / "ws/runs/fake-run"
     argv = launch_tests.launch(tmp_path, "--live", "--ruling", str(launch_tests.RULING))
     argv[argv.index("--out") + 1] = str(out)
@@ -438,6 +437,7 @@ def test_a_run_cpos_completed_with_a_fake_provider_is_listed(tmp_path, monkeypat
     )
     provider.answer = lambda context: launch_tests.answer(context, routes)
     assert cpos_launch.main(argv) == 0
+    assert launch_tests.launched_widths(tmp_path) == [1]
     library = build_library(tmp_path / "ws", tmp_path / "ws/library", current_method())
     assert library.excluded == []
     (run,) = library.runs

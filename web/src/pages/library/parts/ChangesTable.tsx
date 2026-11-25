@@ -1,4 +1,4 @@
-import type { Changes } from "../slice";
+import type { LibraryChangesData } from "../slice";
 import { TableCard } from "./TableCard";
 import { TraceControl } from "./TraceControl";
 import { toTableCell } from "./chartCell";
@@ -19,7 +19,11 @@ const word = (text: string | null) => (text === null || text.trim() === "" ? nul
  * or Table. Each row keeps what its card shows: the kind, the delivered direction words (missing where
  * the change has none) and the cause then the effect, as the card draws them.
  */
-export function ChangesTable({ data }: { data: Extract<Changes, { kind: "compared" }> }) {
+export function ChangesTable({
+  data,
+}: {
+  data: Extract<LibraryChangesData, { kind: "compared" }>;
+}) {
   return (
     <TableCard
       title="Earlier against current"
