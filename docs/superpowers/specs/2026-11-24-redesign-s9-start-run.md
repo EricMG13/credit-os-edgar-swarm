@@ -212,6 +212,11 @@ one commit):
 - More context's fields sit in closed sections: `connected-proof.mjs` and
   `docs/design/preview/drive-synthetic-run.cjs` open "For the research", "Files with a role",
   "Legal documents" and "Ratings, quotes and facilities" before filling them (commit 995cf5f).
+  In 995cf5f the preview driver's helper was named `open`, which its later "Open report" link
+  declares again, so the file did not parse; it was never run from the repository in rounds 2
+  and 3 (the real drive in § 9 is a separate capture driver kept outside it, which did the same
+  steps). The helper is `openSection` since the round-4 fix, and the committed file was run
+  against the synthetic service on a fresh root to the run's report.
 - The Purpose step's Market view, Case kind and Run form level are segmented groups of buttons,
   named by the same labels; tests choose them through `start/testControls.ts`.
 - On Review, region "What will run" is inside the closed disclosure "Everything Submit sends";
