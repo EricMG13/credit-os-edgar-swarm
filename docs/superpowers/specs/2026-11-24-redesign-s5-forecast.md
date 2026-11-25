@@ -340,3 +340,24 @@ radio-card queries → the `Case` buttons and the `Forecast cases` list in `Fore
 tests in `Forecast.test.tsx` → tile presence and the run-charts deep link; the Forecast marker in
 `ReportLibrary.design.test.tsx` ("Forecast assumptions" → "Assumptions by case"; outside S5's
 files, a one-word marker the old label pinned).
+
+### Round 2 (coordinator review of fb11c05, 21 items)
+
+Fixed on this branch, tests first; report sent to the coordinator item by item. Renders looked
+at, at 390, 1024, 1280 and 1440, on the synthetic run and on transformed snapshots (Playwright
+route; synthetic, not a real run): the real run; three cases + a mid-path highest year + an n.a.
+cell + two net-leverage rows + a case year excluded from the comparison + a liquidity funding gap;
+a missing year + no covenant or maturity tables; no model. No horizontal page scroll at any width
+(main scrollWidth = clientWidth), no console errors.
+
+Design changes from section 2: no covenant levels on the path (item 4) and no single "maturity
+wall" (item 2); "What breaks" shows the funding gap, the liquidity path, the maturity schedule,
+the covenant tests and the stress each as stated; the grid is one flat table (ForecastGrid.tsx)
+with Selected case / All cases / Compare one year / History; the case list and the cash proxy
+chart are removed (the selected case's cash proxy is under the case switch and a grid row); the
+run charts are a list of chart tables; the grid spans 12 columns with scope and model under it.
+
+Checks: tsc, eslint --max-warnings=0, prettier on every changed file; vitest on
+src/pages/connected, components/kit, styles: 2,067 tests, one timing failure under load in
+report.auditFollowups (passes alone); npm run build; npm run unused: only LeadProps (frozen).
+Not run: npm run gates, the Python tests that read the web build.
