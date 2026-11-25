@@ -273,6 +273,30 @@ links, states and gaps are kept.
 
 ## 7. Verification
 
+### Round 3 (coordinator review part 2, V1–V12, with H1–H10), on `8105a53`
+
+Merged `claude/exciting-albattani-v1zoug` (d097d0d) first; one conflict
+(`ReportLibrary.wayfinding.test.tsx`: kept the press-only navigator tests, took the Calendar
+rename). check-render (docs/design/preview, five widths) on CP-1, CP-2E, CP-2A, CP-1A, CP-3, CP-6,
+CP-0, CP-4: plain, `--stress`, `--fixture` (retained TDG CP-1 accepted draft and CP-2E h4 swapped
+in), fixture + stress; and on the `react_frontend.preview` snapshots (TDG CP-1 accepted draft, TDG
+CP-1 relative value, blocked CP-4), plain and stress. Records opened and measured at 1440/1280/1024
+and 390 on the TDG CP-1 tables.
+
+| Check | Result |
+|---|---|
+| `npx tsc --noEmit`; eslint on changed files; prettier | Pass (eslint's one finding is `stages.ts`, not on this branch) |
+| vitest `src/pages`, `src/components`, `src/styles` (batched, 2 workers) | 353 files, 6010 tests pass (merged tree, before the 16rem bar change; records tests 56/56 after it) |
+| `npm run unused`; `npm run build` | One unused export, `RunIssuerLink` (`runActivityParts.tsx`, from the merge); build passes |
+| check-render, blocked CP-4 | No failures |
+| check-render, TDG CP-1 (both) | One: the 28px `TraceControl` at 390 (`FindingParagraph`; coordinator's at integration) |
+| check-render, synthetic / fixture | 132 / 109, all outside S2 files: `TraceControl` size, `EventLane` rows and buttons, Downside / PortfolioLimits scroller and summary, shell `<ul>` |
+| No page-level horizontal scroll at 390 | Holds on every page |
+| Records at 1440 | Only Net debt data (three bar columns, long prose) and Calculations scroll, inside their named region |
+
+V6 not applied: `TraceReadable.test.tsx` pins the paragraph control beside the text ("not
+justify-between"); left for the coordinator to rule, the test unchanged.
+
 ### Round 2 (coordinator review of 664baae, 21 items), on `4b07aac`
 
 Rendered with the retained TransDigm CP-1 handoffs swapped into the synthetic run through
