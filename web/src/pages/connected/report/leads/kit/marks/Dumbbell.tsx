@@ -161,12 +161,16 @@ function reasons(row: DumbbellRow, periods: DumbbellProps["periods"]) {
 }
 
 /** The change slot: wide, the change and its note on two lines; narrow, one line. */
-function changeLines(row: DumbbellRow, narrow: boolean): SideLine[] {
+function changeLines(row: DumbbellRow, narrow: boolean, room: number): SideLine[] {
   if (!row.change && !row.note) return [];
-  if (narrow) return [{ kind: "change", text: row.change ?? "", note: row.note }];
+  const one: SideLine = { kind: "change", text: row.change ?? "", note: row.note };
+  if (narrow && lineWidth(one) <= room) return [one];
+  // A change or note longer than its slot wraps inside it: the slot never spills past the figure.
+  const wrapped = (kind: "change" | "note", text: string): SideLine[] =>
+    wrap(text, room).map((line) => ({ kind, text: line }));
   return [
-    ...(row.change ? [{ kind: "change" as const, text: row.change }] : []),
-    ...(row.note ? [{ kind: "note" as const, text: row.note }] : []),
+    ...(row.change ? wrapped("change", row.change) : []),
+    ...(row.note ? wrapped("note", row.note) : []),
   ];
 }
 
@@ -182,7 +186,7 @@ function lay(
   let y = top;
   return rows.map((row): Laid => {
     const labelLines = wrap(row.label, f.labelWidth - (f.narrow ? 0 : 12));
-    const changes = changeLines(row, f.narrow);
+    const changes = changeLines(row, f.narrow, f.changeWidth);
     const [first] = changes;
     const inline =
       f.narrow &&
