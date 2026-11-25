@@ -1,5 +1,12 @@
 import { cx } from "@/utils/cx";
-import { endOf, isPeriod, Mark, SPAN_STYLE, type EventRecord } from "./EventLane";
+import {
+  endOf,
+  isPeriod,
+  Mark,
+  SPAN_STYLE,
+  type EventRecord,
+  type recordedRange,
+} from "./EventLane";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const BRACKET_PX = 10;
@@ -12,34 +19,65 @@ type Item =
   | { kind: "asOf"; key: string; asOf: AsOf }
   | { kind: "event"; key: string; event: EventRecord };
 
-const monthKey = (time: number) => {
-  const date = new Date(time);
-  return `${String(date.getUTCFullYear())}-${String(date.getUTCMonth()).padStart(2, "0")}`;
-};
-const monthLabel = (time: number) => {
-  const date = new Date(time);
-  return `${MONTHS[date.getUTCMonth()] ?? ""} ${String(date.getUTCFullYear())}`;
-};
+type Group = { key: string; label: string; start: number; rank: number };
 
-type Stop = { time: number } & (
+/**
+ * The heading an event sits under, from its own recorded precision: a day or month event under
+ * its month, a quarter under its own quarter and a year under its own year. A heading is never
+ * a month the handoff does not state.
+ */
+function monthGroup(time: number): Group {
+  const at = new Date(time);
+  const month = new Date(Date.UTC(at.getUTCFullYear(), at.getUTCMonth(), 1));
+  return {
+    key: `month-${String(month.getUTCFullYear())}-${String(month.getUTCMonth()).padStart(2, "0")}`,
+    label: `${MONTHS[month.getUTCMonth()] ?? ""} ${String(month.getUTCFullYear())}`,
+    start: month.getTime(),
+    rank: 2,
+  };
+}
+
+function groupOf(event: EventRecord): Group {
+  const { precision, date, from } = event;
+  if (precision === "year") return { key: `year-${date}`, label: date, start: from, rank: 0 };
+  if (precision === "quarter") {
+    return { key: `quarter-${date}`, label: date.replace("-Q", " Q"), start: from, rank: 1 };
+  }
+  return monthGroup(from);
+}
+
+type Stop = { time: number; group: Group } & (
   { kind: "event"; event: EventRecord } | { kind: "asOf"; asOf: AsOf }
 );
 
-/** Events in date order, a month label wherever the month changes and the as-of rule in its place. */
+/** Events grouped under their period's heading, headings in time order of the period start. */
 function sequence(events: EventRecord[], asOf: AsOf | null): Item[] {
-  const stops: Stop[] = [...events]
-    .sort((a, b) => a.from - b.from || a.to - b.to || a.index - b.index)
-    .map((event) => ({ time: event.from, kind: "event", event }));
+  const stops: Stop[] = events
+    .map((event) => ({ time: event.from, group: groupOf(event), kind: "event" as const, event }))
+    .sort(
+      (a, b) =>
+        a.group.start - b.group.start ||
+        a.group.rank - b.group.rank ||
+        a.group.key.localeCompare(b.group.key) ||
+        a.event.from - b.event.from ||
+        a.event.to - b.event.to ||
+        a.event.index - b.event.index,
+    );
   if (asOf) {
     const at = stops.findIndex(({ time }) => time >= asOf.time);
-    stops.splice(at === -1 ? stops.length : at, 0, { time: asOf.time, kind: "asOf", asOf });
+    stops.splice(at === -1 ? stops.length : at, 0, {
+      time: asOf.time,
+      group: monthGroup(asOf.time),
+      kind: "asOf",
+      asOf,
+    });
   }
   const items: Item[] = [];
-  let month = "";
+  let heading = "";
   for (const stop of stops) {
-    if (monthKey(stop.time) !== month) {
-      month = monthKey(stop.time);
-      items.push({ kind: "month", key: `month-${month}`, label: monthLabel(stop.time) });
+    if (stop.group.key !== heading) {
+      heading = stop.group.key;
+      items.push({ kind: "month", key: `month-${heading}`, label: stop.group.label });
     }
     items.push(
       stop.kind === "event"
@@ -143,16 +181,14 @@ export function VerticalAxis({
   events,
   asOf,
   label,
-  firstDay,
-  lastDay,
+  words,
   rowId,
   onSelect,
 }: {
   events: EventRecord[];
   asOf: AsOf | null;
   label: string;
-  firstDay: string;
-  lastDay: string;
+  words: ReturnType<typeof recordedRange>;
   rowId: (index: number) => string;
   onSelect: (index: number) => void;
 }) {
@@ -218,14 +254,16 @@ export function VerticalAxis({
           ))}
         </ol>
       </div>
-      <div className="flex items-center justify-between gap-2 border-t border-border-hairline pt-1.5 text-caption text-text-secondary">
-        <span>Axis range</span>
-        <span className="flex gap-1 font-mono tabular-nums">
-          <span data-axis-end="start">{firstDay}</span>
-          <span aria-hidden="true">to</span>
-          <span data-axis-end="end">{lastDay}</span>
-        </span>
-      </div>
+      {words ? (
+        <div className="flex items-center justify-between gap-2 border-t border-border-hairline pt-1.5 text-caption text-text-secondary">
+          <span>Axis range</span>
+          <span className="flex gap-1 font-mono tabular-nums">
+            <span data-axis-end="start">{words.first}</span>
+            <span aria-hidden="true">to</span>
+            <span data-axis-end="end">{words.last}</span>
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 }

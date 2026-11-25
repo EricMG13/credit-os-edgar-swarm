@@ -49,7 +49,7 @@ export type MeasureChange = {
   href: string | undefined;
 };
 
-export type MeasureGroups = {
+type MeasureGroups = {
   moved: MeasureChange[];
   revised: MeasureChange[];
   unmoved: MeasureChange[];

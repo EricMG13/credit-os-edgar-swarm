@@ -290,7 +290,7 @@ it("phone: month labels sit on the rail where the month changes", () => {
   const months = Array.from(document.querySelectorAll("[data-rail-month]")).map(
     (element) => element.textContent,
   );
-  expect(months).toEqual(["Jan 2026", "Sep 2026", "Oct 2026", "Nov 2026"]);
+  expect(months).toEqual(["Jan 2026", "Sep 2026", "2026 Q4", "Oct 2026", "Nov 2026"]);
 });
 
 it("phone: a period draws a bracket on the rail; a day does not", () => {
@@ -325,7 +325,7 @@ it("phone: legend toggles still hide a lane and its events", () => {
   fireEvent.click(screen.getByRole("button", { name: "User reminder, 1 event" }));
   expect(axis.queryByRole("button", { name: /Review/ })).toBeNull();
   expect(axis.getAllByRole("button")).toHaveLength(4);
-  expect(document.querySelectorAll("[data-rail-month]")).toHaveLength(3);
+  expect(document.querySelectorAll("[data-rail-month]")).toHaveLength(4);
 });
 
 it("phone: a row opens its table row, and the axis range is still dated", () => {
@@ -337,5 +337,5 @@ it("phone: a row opens its table row, and the axis range is still dated", () => 
     table.getByRole("rowheader", { name: "Review" }).closest("tr"),
   );
   expect(document.querySelector("[data-axis-end='start']")).toHaveTextContent("2026-01-20");
-  expect(document.querySelector("[data-axis-end='end']")).toHaveTextContent("2026-12-31");
+  expect(document.querySelector("[data-axis-end='end']")).toHaveTextContent("2026-Q4");
 });

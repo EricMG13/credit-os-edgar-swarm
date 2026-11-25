@@ -7,6 +7,7 @@ import {
   isPeriod,
   Legend,
   Mark,
+  recordedRange,
   SPAN_STYLE,
   type EventRecord,
 } from "./EventLane";
@@ -45,8 +46,6 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 const MONTH_TICK_RANGE = 2 * 366 * DAY;
 
 type Category = EventRecord["category"];
-
-const isoDate = (time: number) => new Date(time).toISOString().slice(0, 10);
 
 type Side = "right" | "left" | "inside";
 
@@ -508,7 +507,7 @@ function EventButton({
   );
 }
 
-/** Both ends of the range, with a zero-width range padded so a lone event still has an axis. */
+/** Both ends of the drawn range; a zero-width range is padded for geometry only, never printed. */
 function axisRange(events: EventRecord[], asOf: number | null) {
   const times = [
     ...events.flatMap((event) => [event.from, endOf(event)]),
@@ -519,14 +518,7 @@ function axisRange(events: EventRecord[], asOf: number | null) {
   const padded = high === low;
   const min = padded ? low - PAD_DAYS * DAY : low;
   const max = padded ? high + PAD_DAYS * DAY : high;
-  const periodEnd = events.some((event) => isPeriod(event) && endOf(event) === max);
-  return {
-    min,
-    max,
-    range: max - min,
-    firstDay: isoDate(min),
-    lastDay: isoDate(periodEnd ? max - DAY : max),
-  };
+  return { min, max, range: max - min };
 }
 
 type AsOf = { time: number; text: string };
@@ -574,7 +566,8 @@ function HorizontalAxis({
   asOf,
   hidden,
   label,
-  range: { min, max, range, firstDay, lastDay },
+  range: { min, max, range },
+  words,
   rowId,
   onSelect,
 }: {
@@ -583,6 +576,7 @@ function HorizontalAxis({
   hidden: ReadonlySet<Category>;
   label: string;
   range: Range;
+  words: ReturnType<typeof recordedRange>;
   rowId: (index: number) => string;
   onSelect: (index: number) => void;
 }) {
@@ -706,11 +700,13 @@ function HorizontalAxis({
             </div>
           ))}
           <div className="relative flex h-7 items-center border-t border-border-hairline text-caption text-text-secondary">
-            <span className="w-28 flex-none">Axis range</span>
-            <div className="mx-4 flex flex-1 justify-between font-mono tabular-nums">
-              <span data-axis-end="start">{firstDay}</span>
-              <span data-axis-end="end">{lastDay}</span>
-            </div>
+            <span className="w-28 flex-none">{words ? "Axis range" : null}</span>
+            {words ? (
+              <div className="mx-4 flex flex-1 justify-between font-mono tabular-nums">
+                <span data-axis-end="start">{words.first}</span>
+                <span data-axis-end="end">{words.last}</span>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
@@ -747,7 +743,8 @@ export function EventAxis({
   };
   const range = axisRange(events, asOf?.time ?? null);
   const count = events.length === 1 ? "1 event" : `${String(events.length)} events`;
-  const label = `Events on a time axis: ${count}, ${range.firstDay} to ${range.lastDay}`;
+  const words = recordedRange(events);
+  const label = `Events on a time axis: ${count}${words ? `, ${words.first} to ${words.last}` : ""}`;
   const shown = events.filter((event) => !hidden.has(event.category));
   return (
     <div ref={frame} className="grid min-w-0 gap-3">
@@ -762,8 +759,7 @@ export function EventAxis({
           events={shown}
           asOf={asOf}
           label={label}
-          firstDay={range.firstDay}
-          lastDay={range.lastDay}
+          words={words}
           rowId={rowId}
           onSelect={onSelect}
         />
@@ -774,6 +770,7 @@ export function EventAxis({
           hidden={hidden}
           label={label}
           range={range}
+          words={words}
           rowId={rowId}
           onSelect={onSelect}
         />

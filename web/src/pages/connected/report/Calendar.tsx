@@ -14,7 +14,7 @@ import {
   type Table,
 } from "../publishedReport";
 import { EventAxis } from "../visuals/EventAxis";
-import { EVENT_HEADERS, eventRecords } from "../visuals/EventLane";
+import { EVENT_HEADERS, eventRecords, recordedRange, type EventRecord } from "../visuals/EventLane";
 import { publishedTables, word } from "../visuals/visualData";
 import { Bento, GapNote, Tile, Well } from "./overview/Tile";
 import { PublishedSource } from "./PublishedTrace";
@@ -341,11 +341,10 @@ function eventName(cells: string[]) {
   return cells[3] ?? "event";
 }
 
-function axisReading(events: { date: string }[], total: number) {
-  const first = events.at(0)?.date;
-  const last = events.at(-1)?.date;
+function axisReading(events: EventRecord[], total: number) {
+  const words = recordedRange(events);
   const count = total === 1 ? "1 dated event" : `${String(total)} dated events`;
-  return first && last && first !== last ? `${count}, ${first} to ${last}` : count;
+  return words ? `${count}, ${words.first} to ${words.last}` : count;
 }
 
 /** From this viewport width up the table behind the axis starts open; on a phone it starts closed. */

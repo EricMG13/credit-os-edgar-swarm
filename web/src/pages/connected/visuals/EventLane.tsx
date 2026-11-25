@@ -24,6 +24,28 @@ export const isPeriod = (event: { from: number; to: number }) => event.to > even
 export const endOf = (event: { from: number; to: number }) =>
   isPeriod(event) ? event.to + DAY : event.from;
 
+/**
+ * The range the events cover, in the events' own recorded date text: the first event's date and
+ * the date of the event that reaches furthest. Null when they read the same, so a lone event
+ * prints no range. No computed or padded date is ever returned.
+ */
+export function recordedRange(events: { date: string; from: number; to: number }[]) {
+  const first = events.reduce<(typeof events)[number] | null>(
+    (best, event) => (!best || event.from < best.from ? event : best),
+    null,
+  );
+  const last = events.reduce<(typeof events)[number] | null>(
+    (best, event) =>
+      !best ||
+      endOf(event) > endOf(best) ||
+      (endOf(event) === endOf(best) && event.from >= best.from)
+        ? event
+        : best,
+    null,
+  );
+  return first && last && first.date !== last.date ? { first: first.date, last: last.date } : null;
+}
+
 /** How a span is drawn, by recorded status category. */
 export const SPAN_STYLE: Record<(typeof EVENT_LANES)[number], string> = {
   Historical: "border-text-tertiary bg-surface-subtle",

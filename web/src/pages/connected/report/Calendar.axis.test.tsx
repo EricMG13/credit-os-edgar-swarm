@@ -204,12 +204,11 @@ it("ticks years once the range passes two years", () => {
   expect(ticks).toEqual(["2027", "2028"]);
 });
 
-it("pads a single event so the axis renders with both ends dated", () => {
+it("pads a single event for geometry only and prints no padded end", () => {
   const axis = draw(undefined, [row("2026-06-30", "day", "Lone event", "Scheduled")]);
   const lone = axis.getByRole("button", { name: /Lone event/ });
   expect(Number.parseFloat(lone.style.left)).toBeCloseTo(50, 5);
-  expect(document.querySelector("[data-axis-end='start']")).toHaveTextContent("2026-05-31");
-  expect(document.querySelector("[data-axis-end='end']")).toHaveTextContent("2026-07-30");
+  expect(document.querySelector("[data-axis-end]")).toBeNull();
   expect(document.querySelector("[data-axis-tick]")).not.toBeNull();
 });
 
@@ -250,9 +249,10 @@ it("draws the calendar the same way with and without an as-of date", () => {
   expect(document.querySelector("[data-axis-end='start']")).toHaveTextContent("2026-01-15");
 });
 
-it("widens the axis to an as-of date outside the events", () => {
+it("widens the axis to an as-of date outside the events but prints only the events' words", () => {
   draw("2027-03-01", oneYear);
-  expect(document.querySelector("[data-axis-end='end']")).toHaveTextContent("2027-03-01");
+  expect(document.querySelector("[data-axis-end='end']")).toHaveTextContent("2026-10-01");
+  expect(document.body.textContent).not.toContain("Axis range2027-03-01");
 });
 
 // Rewritten: the six-column table needs about 690px plus the tile's padding, so it stacks up to 800px
