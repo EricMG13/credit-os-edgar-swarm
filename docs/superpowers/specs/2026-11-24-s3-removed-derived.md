@@ -55,3 +55,10 @@ Removed from the data layer's outputs under ruling (i); each is a figure the mod
 | A liquidity sum (cash plus undrawn facilities) | `Chart data: liquidity` (Cash, Undrawn committed facilities) | Already written where it exists: `Financials and credit metrics` "Cash plus available revolver" is read as stated (`liquidityTotal`); with no such row, no total. |
 
 Kept, as the one allowed computed figure: `change`, the exact difference of one stated measure between the two comparison periods (the latest two of one kind, annual first), on one unit, only when both cells are stated numbers; leverage tone from `signal.ts`. Never computed across measures (debt against EBITDA) or across kinds of period (FY against LTM).
+
+### CP-1B, round 3
+
+- The word "derived" is gone from the page, the aria-labels and the table view (the "Change is" column is removed).
+- A computed change is made only by the kit's `changeBetween`: the same kind of period exactly one year apart, on one unit. "FY2022 to FY2024 +3.02 percentage points", FY2024 to LTM, and Q1 to FY changes are no longer printed; each figure is drawn with its period and no change, and no better or worse word.
+- The "stated change disagreed in direction" correction is removed: a stated change cell is printed as written.
+- The method notes "Pairs that state words instead of a figure are in the table view only." and "A pair whose two periods are different kinds of period has no change figure..." are removed.

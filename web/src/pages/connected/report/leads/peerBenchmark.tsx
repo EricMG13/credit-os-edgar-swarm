@@ -131,11 +131,14 @@ function Strip({ row, axis, width }: { row: PeerRow; axis: NiceAxis; width: numb
   const laneCount = Math.max(...placed.map((label) => label.lane)) + 1;
   const bandY = laneCount * LANE + 8;
   const centre = bandY + 8;
-  const height = bandY + 16 + 34;
+  const issuerSlot = issuerWords(row);
+  const slotWidth = Math.min(width - 2 * PAD, Math.max(150, textWidth(issuerSlot, SIZE.label) + 24));
+  const height =
+    bandY + 16 + (drawing.issuer === null ? 12 + gapSlotHeight(slotWidth, 20, issuerSlot) + 6 : 34);
   const bandFrom = x(drawing.low);
   const bandTo = x(drawing.high);
   const issuerX = drawing.issuer === null ? null : x(drawing.issuer);
-  const issuerText = `issuer ${withUnit(row.issuer.text, unit)}`;
+  const issuerText = `issuer ${withUnit(shown(row.issuer), unit)}`;
   const kept = fittingTicks(axis, PAD, width - PAD, (text) => textWidth(text, SIZE.tick));
   return (
     <svg
@@ -158,8 +161,8 @@ function Strip({ row, axis, width }: { row: PeerRow; axis: NiceAxis; width: numb
       ))}
       <rect
         data-band
-        data-low={row.low.text}
-        data-high={row.high.text}
+        data-low={row.low.kind === "number" ? row.low.text : ""}
+        data-high={row.high.kind === "number" ? row.high.text : ""}
         x={bandFrom}
         y={bandY}
         width={Math.max(3, bandTo - bandFrom)}
@@ -169,7 +172,7 @@ function Strip({ row, axis, width }: { row: PeerRow; axis: NiceAxis; width: numb
       />
       {drawing.median !== null && (
         <line
-          data-median={row.median.text}
+          data-median={row.median.kind === "number" ? row.median.text : ""}
           x1={x(drawing.median)}
           x2={x(drawing.median)}
           y1={bandY - 4}
@@ -193,7 +196,7 @@ function Strip({ row, axis, width }: { row: PeerRow; axis: NiceAxis; width: numb
       {issuerX !== null && (
         <>
           <circle
-            data-issuer={row.issuer.text}
+            data-issuer={row.issuer.kind === "number" ? row.issuer.text : ""}
             cx={issuerX}
             cy={centre}
             r="7"
@@ -210,9 +213,7 @@ function Strip({ row, axis, width }: { row: PeerRow; axis: NiceAxis; width: numb
           </text>
         </>
       )}
-      {issuerX === null && (
-        <NotStated x={PAD} y={centre + 12} width={150} text="Issuer not supplied" />
-      )}
+      {issuerX === null && <Slot x={PAD} y={centre + 12} width={slotWidth} text={issuerSlot} />}
     </svg>
   );
 }
