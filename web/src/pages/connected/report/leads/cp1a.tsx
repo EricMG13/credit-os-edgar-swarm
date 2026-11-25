@@ -1,10 +1,10 @@
 import { blocked, type Table } from "../../publishedReport";
-import { writtenTable } from "../Downside";
 import { Bento, Tile } from "../overview/Tile";
 import { withDraws } from "./draws";
 import { LaneTile, LeadGap, MapTile, Prose, TableRegion, Trace } from "./parts";
 import { eventsOf, leadHref, mapOf, sectionParagraphs } from "./read";
 import type { LeadProps } from "./types";
+import { sourceOf, writtenTable } from "./written";
 
 type Href = (line?: number) => string;
 
@@ -41,7 +41,7 @@ function mixTable(entry: LeadProps["entry"]) {
 /** The revenue mix as the module's register writes it, cell by cell, in a small table tile. */
 function RevenueMix({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
   const register = mixTable(entry);
-  const table = register ? writtenTable(register, (line) => href(line)) : undefined;
+  const table = register ? writtenTable(sourceOf(register), href) : undefined;
   if (!register || !table)
     return (
       <LeadGap

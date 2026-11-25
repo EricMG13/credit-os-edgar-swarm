@@ -3,17 +3,11 @@ import { Segmented } from "@/components/kit/Segmented";
 import { containsReference, type OutputEntry, type Table } from "../publishedReport";
 import { namedTable } from "../reportView";
 import { distinct, sharePosition } from "../visuals/visualData";
-import {
-  canReadDownside,
-  ControlRow,
-  registerOrTitled,
-  scenarioShareLabel,
-  share,
-  writtenTable,
-} from "./Downside";
+import { canReadDownside, registerOrTitled, scenarioShareLabel, share } from "./Downside";
+import { sourceOf, writtenTable } from "./leads/written";
 import { Key } from "./overview/figureParts";
 import { Bento } from "./overview/Tile";
-import { BarRow, CompactGap, LeadFigure, TableRegion, Trace, type LeadTable } from "./leads/parts";
+import { BarRow, CompactGap, LeadFigure, Trace, type LeadTable } from "./leads/parts";
 
 const RETAINED = "T2DS.6 Break points";
 const RANKINGS = ["T2B.7 First-break ranking", "First-break ranking"];
@@ -220,7 +214,6 @@ export function BreakPointsTile({
   span: 4 | 6 | 8 | 12;
 }) {
   const [index, setIndex] = useState(0);
-  const [view, setView] = useState("figure");
   const basis = data.bases[index];
   const rows = basis ? breakRows(data.table, basis, data.test, data.ranked, data.status) : [];
   const chart = Boolean(
@@ -253,7 +246,7 @@ export function BreakPointsTile({
         })),
         endHeading: "Source",
       }
-    : writtenTable(data.table, href);
+    : writtenTable(sourceOf(data.table), href);
   const figure = chart ? (
     <Ladder
       label={`${TITLE}${basis ? `, ${basis.name.toLowerCase()}` : ""}: ${reading}.`}
@@ -275,31 +268,15 @@ export function BreakPointsTile({
     </CompactGap>
   );
   const trace = <Trace href={href(data.table.line)} name={TITLE} />;
-  // With a basis to choose, the choice and the Figure / Table switch share one row under the title.
-  if (choice)
-    return (
-      <LeadFigure
-        span={span}
-        label={TITLE}
-        title={TITLE}
-        legend={
-          <>
-            <ControlRow label={TITLE} choice={choice} view={view} onView={setView} />
-            {chart && <Key tone="primary">Fall in EBITDA at the break</Key>}
-          </>
-        }
-        trace={trace}
-        figure={view === "table" && table ? <TableRegion label={TITLE} table={table} /> : figure}
-      />
-    );
   return (
     <LeadFigure
       span={span}
       label={TITLE}
       title={TITLE}
-      basis={basis?.name}
+      basis={choice ? undefined : basis?.name}
       legend={chart && <Key tone="primary">Fall in EBITDA at the break</Key>}
       trace={trace}
+      controls={choice}
       figure={figure}
       table={table}
     />

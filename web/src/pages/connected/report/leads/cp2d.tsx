@@ -3,7 +3,7 @@ import { Key } from "../overview/figureParts";
 import { Bento } from "../overview/Tile";
 import { Bridge, bridgeOf, stepTable, type Step } from "./bridge";
 import { withDraws } from "./draws";
-import { OtherCharts, rowBasis } from "./moduleCharts";
+import { OtherCharts, rowBasis } from "./written";
 import { CompactGap, LaneTile, LeadFigure, LeadGap, Trace, type LeadTable } from "./parts";
 import { chartOf, eventsOf, leadHref } from "./read";
 import type { LeadProps } from "./types";

@@ -14,7 +14,7 @@ import { namedTable } from "../reportView";
 import { amount, distinct } from "../visuals/visualData";
 import { GapCell, KeyValues, LeadFigure, statedGap, TableRegion, Trace } from "./leads/parts";
 import { readerCell, rowName } from "./leads/read";
-import { writtenTable } from "./leads/written";
+import { sourceOf, writtenTable } from "./leads/written";
 import { Bento, Tile } from "./overview/Tile";
 
 const TITLE = "Security decision summary";
@@ -444,15 +444,7 @@ export function InstrumentTable({ data, href }: { data: Instruments; href: Evide
 /** The T3.6 fundamental value matrix, as written in the shared table, one trace per row. */
 export function ValueMatrix({ table, href }: { table: Table; href: EvidenceHref }) {
   const label = "Credit and recovery rationale";
-  const written = writtenTable(
-    {
-      line: table.line,
-      headers: table.headers,
-      rows: table.rows.map(({ cells }) => cells),
-      rowLines: table.rows.map(({ line }) => line),
-    },
-    (line) => href(line ?? table.line),
-  );
+  const written = writtenTable(sourceOf(table), href);
   return (
     <Tile
       span={12}

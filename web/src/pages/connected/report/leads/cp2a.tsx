@@ -3,7 +3,7 @@ import { downsideView, DownsideTile } from "../Downside";
 import { blocked, type OutputEntry } from "../../publishedReport";
 import { Bento } from "../overview/Tile";
 import { withDraws } from "./draws";
-import { OtherCharts } from "./moduleCharts";
+import { OtherCharts } from "./written";
 import { LeadGap, Trace } from "./parts";
 import { IN_EVIDENCE, leadHref, readerCell } from "./read";
 import type { LeadProps } from "./types";

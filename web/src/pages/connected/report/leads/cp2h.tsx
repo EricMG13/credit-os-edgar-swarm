@@ -4,7 +4,7 @@ import type { HeadroomTest } from "../overview/stressData";
 import { Bullets, leadTests } from "./bullet";
 import { Bento, Figure } from "../overview/Tile";
 import { withDraws } from "./draws";
-import { OtherCharts, rowBasis } from "./moduleCharts";
+import { OtherCharts, rowBasis } from "./written";
 import { LeadFigure, LeadGap, Trace } from "./parts";
 import { chartOf, columnOf, leadHref, readerCell, registerTable, rowName, WITHHELD } from "./read";
 import type { LeadProps } from "./types";

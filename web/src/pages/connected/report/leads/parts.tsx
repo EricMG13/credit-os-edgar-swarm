@@ -242,6 +242,7 @@ export function LeadFigure({
   basis,
   legend,
   trace,
+  controls,
   figure,
   table,
   notes,
@@ -255,6 +256,8 @@ export function LeadFigure({
   basis?: string;
   legend?: ReactNode;
   trace?: ReactNode;
+  /** The module's own choice (a case, a basis), in the head's control row before the Figure / Table switch. */
+  controls?: ReactNode;
   figure: ReactNode;
   table?: LeadTable;
   /** The module's own words on the figure's basis or its gaps, under the figure. */
@@ -263,9 +266,10 @@ export function LeadFigure({
 }) {
   const [view, setView] = useState<string>("figure");
   const showing = table && view === "table" ? "table" : "figure";
-  const controls =
-    table || trace ? (
+  const head =
+    table || trace || controls ? (
       <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
+        {controls}
         {table && (
           <Segmented
             label={`${label}: figure or table`}
@@ -285,7 +289,7 @@ export function LeadFigure({
           {kicker != null && <p className="text-caption text-text-tertiary">{kicker}</p>}
           <h3 className="text-h4 font-medium text-balance text-text-primary">{title}</h3>
         </div>
-        {controls}
+        {head}
       </div>
       {(basis || legend) && (
         <div className="-mt-2 flex min-w-0 flex-col gap-2">

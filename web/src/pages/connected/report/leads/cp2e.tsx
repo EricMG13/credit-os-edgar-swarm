@@ -2,7 +2,7 @@ import type { OutputEntry, Table } from "../../publishedReport";
 import { blocked, unitLabel } from "../../publishedReport";
 import { ticks } from "../../visuals/visualData";
 import { Ladder } from "../BreakPoints";
-import { share, writtenTable } from "../Downside";
+import { share } from "../Downside";
 import {
   ForeignShareTile,
   FxShocksTile,
@@ -14,7 +14,7 @@ import {
 import { Key } from "../overview/figureParts";
 import { Bento, Figure } from "../overview/Tile";
 import { withDraws } from "./draws";
-import { OtherCharts } from "./moduleCharts";
+import { OtherCharts, sourceOf, writtenTable } from "./written";
 import { LaneTile, LeadFigure, LeadGap, Trace } from "./parts";
 import { columnOf, eventsOf, leadHref, leadingMillions, readerCell, registerTable } from "./read";
 import type { LeadProps } from "./types";
@@ -151,7 +151,7 @@ function SensitivityTile({ entry, href }: { entry: OutputEntry; href: Href }) {
           <StatedSteps rows={drawn} />
         )
       }
-      table={writtenTable(table, href)}
+      table={writtenTable(sourceOf(table), href)}
       notes={listed}
     />
   );

@@ -2,7 +2,6 @@ import { useState, type ReactNode } from "react";
 import {
   blocked,
   containsReference,
-  displayColumns,
   type OutputEntry,
   type Row,
   type Table,
@@ -20,11 +19,10 @@ import {
   KeyValues,
   LeadFigure,
   statedGap,
-  TableRegion,
   Trace,
-  type LeadTable,
 } from "./leads/parts";
 import { IN_EVIDENCE, readerCell } from "./leads/read";
+import { sourceOf, writtenTable } from "./leads/written";
 
 const SCENARIOS = [
   "Scenario ID",
@@ -152,62 +150,6 @@ export function scenarioShareLabel(text: string) {
 
 /** A share of an axis as a CSS length, rounded only past the sixth decimal of a percent. */
 export const share = (at: number) => `${String(Number((at * 100).toFixed(6)))}%`;
-
-/**
- * A module table as written for a table view: its reader columns only (source and inter-module
- * columns go to the trace), each cell as a working page shows it, one trace per row.
- */
-export function writtenTable(table: Table, href: (line: number) => string): LeadTable | undefined {
-  const columns = displayColumns(table.headers, false, table.rows);
-  const [first, ...rest] = columns;
-  if (first === undefined || !table.rows.length) return undefined;
-  const cell = (text: string | undefined) => readerCell(text ?? "") || null;
-  return {
-    head: columns.map((at) => readerCell(table.headers[at] ?? "")),
-    rows: table.rows.map(({ line, cells }) => {
-      const label = cell(cells[first]) ?? "Not stated";
-      return {
-        label,
-        cells: rest.map((at) => cell(cells[at])),
-        end: <Trace href={href(line)} name={label} />,
-      };
-    }),
-    endHeading: "Source",
-  };
-}
-
-const VIEWS = [
-  { key: "figure", label: "Figure" },
-  { key: "table", label: "Table" },
-] as const;
-
-/**
- * A tile's one control row: the module's own choice (a case, a basis) and the Figure / Table
- * switch, side by side under the title, wrapping inside the tile on a narrow screen.
- */
-export function ControlRow({
-  label,
-  choice,
-  view,
-  onView,
-}: {
-  label: string;
-  choice: ReactNode;
-  view: string;
-  onView: (view: string) => void;
-}) {
-  return (
-    <div className="flex min-w-0 basis-full flex-wrap items-center gap-2">
-      {choice}
-      <Segmented
-        label={`${label}: figure or table`}
-        segments={VIEWS}
-        current={view}
-        onSelect={onView}
-      />
-    </div>
-  );
-}
 
 type CaseRole = "control" | "chosen" | "other";
 type MultiplePanel = { measure: string; bars: { text: string; value: number }[] };
@@ -420,7 +362,6 @@ export function DownsideTile({
   const { matrix, control, cases } = data;
   const alternatives = cases.filter(({ id }) => id !== control?.id);
   const [chosen, setChosen] = useState(alternatives[0]?.id);
-  const [view, setView] = useState("figure");
   const selected = alternatives.find(({ id }) => id === chosen) ?? alternatives[0];
   const trace = <Trace href={href(matrix.line)} name={RESULTS_NAME} />;
   if (!control || !selected)
@@ -437,7 +378,7 @@ export function DownsideTile({
             handoff.
           </CompactGap>
         }
-        table={writtenTable(matrix, href)}
+        table={writtenTable(sourceOf(matrix), href)}
       />
     );
   const { placed, unplaced } = casePanels(matrix, cases);
@@ -462,18 +403,16 @@ export function DownsideTile({
       basis={readerDetail(control.anchor)}
       legend={
         <>
-          <ControlRow label={TITLE} choice={choice} view={view} onView={setView} />
           <Key tone="prior">Control</Key>
           <Key tone="primary">{caseName(selected)}</Key>
           {alternatives.length > 1 && <Key tone="secondary">Other cases</Key>}
         </>
       }
       trace={trace}
+      controls={choice}
       className="wrap-anywhere"
       figure={
-        view === "table" ? (
-          <TableRegion label={TITLE} table={resultsTable(matrix, cases, href)} />
-        ) : placed.length > 0 ? (
+        placed.length > 0 ? (
           <SmallMultiples label={RESULTS_NAME} cases={roles} panels={placed} />
         ) : (
           <CompactGap>
@@ -481,6 +420,7 @@ export function DownsideTile({
           </CompactGap>
         )
       }
+      table={resultsTable(matrix, cases, href)}
       notes={[<CaseDetails key="details" selected={selected} href={href} />, ...unplaced]}
     />
   );

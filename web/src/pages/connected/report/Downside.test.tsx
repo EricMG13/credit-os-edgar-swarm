@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { type OutputEntry, type Table } from "../publishedReport";
-import { Downside, downsideView, scenarioShareLabel, writtenTable } from "./Downside";
+import { Downside, downsideView, scenarioShareLabel } from "./Downside";
+import { sourceOf, writtenTable } from "./leads/written";
 
 function table(line: number, headers: string[], rows: string[][]): Table {
   return {
@@ -250,7 +251,7 @@ it("names a case's stated gap with its word and reason, never a double colon", (
 
 it("gives a written table cell that reads as nothing as missing, not an empty string", () => {
   const written = writtenTable(
-    table(3, ["Measure", "Value"], [["Leverage", "**"]]),
+    sourceOf(table(3, ["Measure", "Value"], [["Leverage", "**"]])),
     (line) => `#evidence/${String(line)}`,
   );
   expect(written?.rows[0]?.cells).toEqual([null]);

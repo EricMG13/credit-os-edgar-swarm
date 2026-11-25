@@ -9,7 +9,7 @@ import {
 import { namedRow, namedTable } from "../reportView";
 import { amount, distinct, sharePosition, ticks } from "../visuals/visualData";
 import { Ladder } from "./BreakPoints";
-import { writtenTable } from "./Downside";
+import { sourceOf, writtenTable } from "./leads/written";
 import { Key } from "./overview/figureParts";
 import { Bento, Figure, Tile } from "./overview/Tile";
 import {
@@ -340,7 +340,7 @@ export function RateLadderTile({
           </CompactGap>
         )
       }
-      table={writtenTable(table, href)}
+      table={writtenTable(sourceOf(table), href)}
       notes={placed ? left : []}
     />
   );
@@ -453,7 +453,7 @@ export function FxShocksTile({
           </CompactGap>
         )
       }
-      table={writtenTable(table, href)}
+      table={writtenTable(sourceOf(table), href)}
     />
   );
 }
@@ -561,8 +561,8 @@ export function HedgeTermsTile({
   exposures?: Table | undefined;
   href: Href;
 }) {
-  const terms: LeadTable | undefined = hedges ? writtenTable(hedges, href) : undefined;
-  const currency = exposures ? writtenTable(exposures, href) : undefined;
+  const terms: LeadTable | undefined = hedges ? writtenTable(sourceOf(hedges), href) : undefined;
+  const currency = exposures ? writtenTable(sourceOf(exposures), href) : undefined;
   if (!terms && !currency) return null;
   return (
     <Tile

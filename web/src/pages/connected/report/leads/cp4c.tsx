@@ -86,16 +86,8 @@ function ValueAllocation({ entry, href }: { entry: Entry; href: Href }) {
           </>
         )
       }
-      // The scenario switch sits in the tile's one control row, beside Figure / Table; the row
-      // wraps on a phone.
-      trace={
-        (scenario || trace) && (
-          <>
-            {scenario}
-            {trace}
-          </>
-        )
-      }
+      trace={trace}
+      controls={scenario}
       figure={
         <div className="flex min-w-0 flex-col gap-3">
           {!read ? (
