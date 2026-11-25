@@ -19,7 +19,7 @@ read as a **class** and an optional **end**:
 | ytd | `YTD`, `PYTD`, or `3M`/`6M`/`9M` |
 | ltm | `LTM`, `TTM` |
 | pf | `PF`, `PRO FORMA`, `PRO-FORMA`, `PROFORMA` |
-| forecast | a year directly followed by `E` or `F` (`FY2025E`, `26E`), or the word `FORECAST`, `PROJECTED` or `BUDGET` |
+| forecast | a year directly followed by `E` or `F` (`FY2025E`, `26E`), or the word `FORECAST`, `PROJECTED`, `BUDGET`, `GUIDANCE`, `OUTLOOK`, `ESTIMATE` or `ESTIMATED` |
 
 The highest class present wins (`PF FY2025E` is a forecast, `Pro forma LTM Jun 2025` is PF).
 

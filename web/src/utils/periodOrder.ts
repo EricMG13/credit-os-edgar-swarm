@@ -25,7 +25,7 @@ const COUNT = /(?<![0-9A-Z])([369])M(?![A-Z])/;
 const CLASS_MARKERS: readonly (readonly [PeriodClass, RegExp])[] = [
   [
     "forecast",
-    /(?<![0-9])(?:[0-9]{4}|[0-9]{2})[EF](?![0-9A-Z])|(?<![A-Z])(?:FORECAST|PROJECTED|BUDGET)(?![A-Z])/,
+    /(?<![0-9])(?:[0-9]{4}|[0-9]{2})[EF](?![0-9A-Z])|(?<![A-Z])(?:FORECAST|PROJECTED|BUDGET|GUIDANCE|OUTLOOK|ESTIMATED?)(?![A-Z])/,
   ],
   ["pf", /(?<![A-Z])(?:PF|PRO[ -]?FORMA)(?![A-Z])/],
   ["ltm", /(?<![A-Z])(?:LTM|TTM)(?![A-Z])/],

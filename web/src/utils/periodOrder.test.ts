@@ -23,7 +23,7 @@ const cases = JSON.parse(
 const self = (label: string) => label;
 
 it("reads every kind of case from the shared table", () => {
-  expect(cases.labels).toHaveLength(47);
+  expect(cases.labels).toHaveLength(51);
   expect(cases.unparseable).toHaveLength(10);
   expect(cases.orders).toHaveLength(10);
 });

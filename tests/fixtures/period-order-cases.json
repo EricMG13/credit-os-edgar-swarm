@@ -47,7 +47,11 @@
     {"label": "Q1 2026E", "class": "forecast", "end": [2026, 3, 31], "span": "quarter"},
     {"label": "1H26E", "class": "forecast", "end": [2026, 6, 31], "span": "half"},
     {"label": "PF FY2025E", "class": "forecast", "end": [2025, 12, 31], "span": "year"},
-    {"label": "FY2026 forecast", "class": "forecast", "end": [2026, 12, 31], "span": "year"}
+    {"label": "FY2026 forecast", "class": "forecast", "end": [2026, 12, 31], "span": "year"},
+    {"label": "FY2025 guidance", "class": "forecast", "end": [2025, 12, 31], "span": "year"},
+    {"label": "FY2026 outlook", "class": "forecast", "end": [2026, 12, 31], "span": "year"},
+    {"label": "2026 estimate", "class": "forecast", "end": [2026, 12, 31], "span": "year"},
+    {"label": "FY2026 Estimated", "class": "forecast", "end": [2026, 12, 31], "span": "year"}
   ],
   "unparseable": [
     "",

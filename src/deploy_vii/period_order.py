@@ -48,7 +48,7 @@ _CLASS_MARKERS: tuple[tuple[PeriodClass, re.Pattern[str]], ...] = (
         PeriodClass.FORECAST,
         re.compile(
             r"(?<![0-9])(?:[0-9]{4}|[0-9]{2})[EF](?![0-9A-Z])"
-            r"|(?<![A-Z])(?:FORECAST|PROJECTED|BUDGET)(?![A-Z])"
+            r"|(?<![A-Z])(?:FORECAST|PROJECTED|BUDGET|GUIDANCE|OUTLOOK|ESTIMATED?)(?![A-Z])"
         ),
     ),
     (PeriodClass.PF, re.compile(r"(?<![A-Z])(?:PF|PRO[ -]?FORMA)(?![A-Z])")),

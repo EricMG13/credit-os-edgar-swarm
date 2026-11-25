@@ -88,7 +88,23 @@ def test_an_unreadable_category_in_the_middle_is_drawn_last_and_stated():
     ]
     assert markdown_delivery._undated_note(written) == (
         " Drawn last, in the order written, because no period could be read from the label: "
-        "Run-rate, Thereafter."
+        "Run-rate."
+    )
+
+
+def test_a_maturity_ladder_thereafter_bucket_is_last_and_not_a_stated_gap():
+    written = points(" thereafter ", "2027", "2026", "Thereafter", "2028")
+    assert drawn(markdown_delivery._chronological(written)) == [
+        "2026",
+        "2027",
+        "2028",
+        " thereafter ",
+        "Thereafter",
+    ]
+    assert markdown_delivery._undated_note(written) == ""
+    later = points("2026", "2027 and thereafter", "Thereafter", "Beyond")
+    assert markdown_delivery._undated_note(later) == (
+        " Drawn last, in the order written, because no period could be read from the label: Beyond."
     )
 
 

@@ -543,8 +543,9 @@ def _chronological(points: tuple[_ChartPoint, ...]) -> tuple[_ChartPoint, ...]:
 
 def _undated_note(points: tuple[_ChartPoint, ...]) -> str:
     """The sentence a figure's summary owes for categories drawn outside the period order; empty
-    when every category was placed."""
-    unplaced = _categories_in_order(points)[1]
+    when every category was placed. A maturity ladder's `Thereafter` bucket is rightly last and
+    is not such a gap."""
+    unplaced = [c for c in _categories_in_order(points)[1] if c.strip().casefold() != "thereafter"]
     if not unplaced:
         return ""
     return (

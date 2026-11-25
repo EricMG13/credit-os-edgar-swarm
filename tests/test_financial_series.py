@@ -7,9 +7,11 @@ T4.14 / T4.10 / T4.18 facts; expected categories, fact ids and basis digests are
 from __future__ import annotations
 
 import hashlib
+import math
 import xml.etree.ElementTree as ET
 from datetime import date
 from decimal import Decimal
+from itertools import pairwise
 from typing import get_args
 
 import pytest
@@ -612,10 +614,44 @@ def drawn_x_labels(view: ModuleView, fig_id: str) -> list[str]:
     axis = [
         (float(node.attrib["x"]), node.text or "")
         for node in svg.iter("{http://www.w3.org/2000/svg}text")
-        if node.attrib.get("class") == "ax" and node.attrib.get("text-anchor") == "middle"
+        if node.attrib.get("class") == "ax" and node.attrib.get("text-anchor") != "end"
     ]
     assert [x for x, _ in axis] == sorted({x for x, _ in axis})
     return [text for _, text in axis]
+
+
+def drawn(view: ModuleView, fig_id: str) -> report_view.Figure:
+    refs = {(view.module_id, fact.fact_id): ("K1",) for fact in view.facts}
+    refs |= {
+        (view.module_id, fact.fact_id): ("G1",) for fact in view.facts if fact.status != "known"
+    }
+    supplied = report_view._cp1_supplied(view)
+    (item,) = report_view._cp1_figures("strip", view, refs, supplied, frozenset({fig_id}))
+    return item
+
+
+def test_drawn_strip_figure_states_a_series_gap_in_reader_words() -> None:
+    drop = frozenset(
+        {("net_leverage_reported", "FY:fy-2023"), ("net_leverage_reported", "LTM:ltm-2025")}
+    )
+    item = drawn(module(PERIODS, COLUMNS, drop=drop), "S.1")
+    stated = "No reported value: Net leverage (reported) at FY2023 and LTM 2025-06-30."
+    assert item.chart.table_twin.note == stated
+    assert item.chart.reason is None
+    assert len(item.chart.marks) == 14
+
+
+def test_drawn_strip_figure_states_a_period_no_column_carries() -> None:
+    columns = {c: p for c, p in COLUMNS.items() if c != "PF:pf-2025"}
+    item = drawn(module(PERIODS, columns), "S.2")
+    stated = "No reported value: Interest cover (reported) at PF 2025-06-30."
+    assert item.chart.table_twin.note == stated
+    assert item.chart.reason is None
+
+
+def test_drawn_strip_figure_without_a_gap_states_none() -> None:
+    item = drawn(module(PERIODS, COLUMNS), "S.1")
+    assert item.chart.table_twin.note is None
 
 
 def test_rendered_maturity_wall_x_axis_is_in_date_order() -> None:
@@ -626,3 +662,122 @@ def test_rendered_maturity_wall_x_axis_is_in_date_order() -> None:
 def test_rendered_strip_chart_x_axis_keeps_rule_order_across_a_gap() -> None:
     view = module(PERIODS, COLUMNS, drop=frozenset({("total_leverage_reported", "FY:fy-2024")}))
     assert drawn_x_labels(view, "S.1") == ALL_CATEGORIES
+
+
+# 3 fiscal years, 4 quarters, PYTD, YTD, LTM and PF: the widest strip the ruling asks for.
+ELEVEN_PERIODS = {
+    "fy-2022": ("FY", "2022", None, "2022-01-01", "2022-12-31"),
+    "fy-2023": ("FY", "2023", None, "2023-01-01", "2023-12-31"),
+    "fy-2024": ("FY", "2024", None, "2024-01-01", "2024-12-31"),
+    "q3-2024": ("QUARTER", "2024", "3", "2024-07-01", "2024-09-30"),
+    "q4-2024": ("QUARTER", "2024", "4", "2024-10-01", "2024-12-31"),
+    "q1-2025": ("QUARTER", "2025", "1", "2025-01-01", "2025-03-31"),
+    "q2-2025": ("QUARTER", "2025", "2", "2025-04-01", "2025-06-30"),
+    "ytd-2024": ("YTD", "2024", None, "2024-01-01", "2024-06-30"),
+    "ytd-2025": ("YTD", "2025", None, "2025-01-01", "2025-06-30"),
+    "ltm-2025": ("LTM", "2025", None, "2024-07-01", "2025-06-30"),
+    "pf-2025": ("PF", "2025", None, "2024-07-01", "2025-06-30"),
+}
+ELEVEN_COLUMNS = {
+    "FY:fy-2022": "fy-2022",
+    "FY:fy-2023": "fy-2023",
+    "FY:fy-2024": "fy-2024",
+    "Q:q3-2024": "q3-2024",
+    "Q:q4-2024": "q4-2024",
+    "Q:q1-2025": "q1-2025",
+    "Q:q2-2025": "q2-2025",
+    "PYTD:ytd-2024": "ytd-2024",
+    "YTD:ytd-2025": "ytd-2025",
+    "LTM:ltm-2025": "ltm-2025",
+    "PF:pf-2025": "pf-2025",
+}
+ELEVEN_CATEGORIES = [
+    "FY2022",
+    "FY2023",
+    "Q3 2024",
+    "Q4 2024",
+    "FY2024",  # same end date as Q4 2024: the shorter period comes first
+    "Q1 2025",
+    "Q2 2025",
+    "PYTD 2024-06-30",
+    "YTD 2025-06-30",
+    "LTM 2025-06-30",
+    "PF 2025-06-30",
+]
+AXIS_FONT_PX = 11.0  # `.chart text` in app.css
+CHAR_PX = 6.6  # estimated advance of one character: 0.6 em of the axis font
+
+
+def x_axis(svg_text: str) -> tuple[float, float, list[tuple[float, float, float, str]]]:
+    """(width, height, [(x, y, degrees turned clockwise, text)]) of the X labels, left to right."""
+    svg = ET.fromstring(svg_text)
+    _, _, width, height = (float(part) for part in svg.attrib["viewBox"].split())
+    labels = []
+    for node in svg.iter("{http://www.w3.org/2000/svg}text"):
+        if node.attrib.get("class") != "ax" or node.attrib.get("text-anchor") == "end":
+            continue
+        x, y = float(node.attrib["x"]), float(node.attrib["y"])
+        turn = node.attrib.get("transform")
+        if turn is None:
+            assert node.attrib["text-anchor"] == "middle"
+            labels.append((x, y, 0.0, node.text or ""))
+            continue
+        degrees, about_x, about_y = (float(part) for part in turn[len("rotate(") : -1].split())
+        assert turn.startswith("rotate(") and node.attrib["text-anchor"] == "start"
+        assert (about_x, about_y) == (x, y)
+        labels.append((x, y, degrees, node.text or ""))
+    return width, height, sorted(labels)
+
+
+def assert_x_labels_clear(svg_text: str) -> None:
+    """No two neighbouring X labels' estimated extents overlap, and each stays in the frame."""
+    width, height, labels = x_axis(svg_text)
+    for (x, y, degrees, text), (next_x, _, next_degrees, next_text) in pairwise(labels):
+        assert degrees == next_degrees
+        if degrees == 0:
+            assert x + len(text) * CHAR_PX / 2 <= next_x - len(next_text) * CHAR_PX / 2
+        else:
+            # Parallel turned lines of text: their baselines are a full text height apart.
+            assert (next_x - x) * math.sin(math.radians(degrees)) >= AXIS_FONT_PX
+    for x, y, degrees, text in labels:
+        length = len(text) * CHAR_PX
+        if degrees == 0:
+            assert x - length / 2 >= 0 and x + length / 2 <= width and y <= height
+        else:
+            assert 0 < degrees <= 90
+            assert x + length * math.cos(math.radians(degrees)) <= width
+            assert y + length * math.sin(math.radians(degrees)) <= height
+
+
+@pytest.mark.parametrize("fig_id", ["S.1", "S.2", "S.3", "S.5"])
+def test_eleven_period_strip_labels_every_period_without_overlap(fig_id: str) -> None:
+    item = drawn(module(ELEVEN_PERIODS, ELEVEN_COLUMNS), fig_id)
+    svg = render_svg(item.chart, chart_id="c1", title=item.title)
+    assert [text for _, _, _, text in x_axis(svg)[2]] == ELEVEN_CATEGORIES
+    assert_x_labels_clear(svg)
+
+
+def test_four_period_line_chart_keeps_its_flat_labels_and_size() -> None:
+    periods = {pid: ELEVEN_PERIODS[pid] for pid in ("fy-2022", "fy-2023", "fy-2024", "q1-2025")}
+    columns = {c: p for c, p in ELEVEN_COLUMNS.items() if p in periods}
+    item = drawn(module(periods, columns), "S.1")
+    svg = render_svg(item.chart, chart_id="c1", title=item.title)
+    assert x_axis(svg) == (
+        320.0,
+        160.0,
+        [
+            (54.0, 152.0, 0.0, "FY2022"),
+            (122.0, 152.0, 0.0, "FY2023"),
+            (190.0, 152.0, 0.0, "FY2024"),
+            (258.0, 152.0, 0.0, "Q1 2025"),
+        ],
+    )
+    assert_x_labels_clear(svg)
+
+
+def test_long_maturity_dates_on_the_wall_do_not_overlap() -> None:
+    view = module(QUARTERS, QUARTER_COLUMNS, extra=facility_facts("q2-2025"))
+    item = drawn(view, "S.4")
+    svg = render_svg(item.chart, chart_id="c1", title=item.title)
+    assert [text for _, _, _, text in x_axis(svg)[2]] == ["2026-09-30", "2027-03-01", "2030-06-15"]
+    assert_x_labels_clear(svg)
