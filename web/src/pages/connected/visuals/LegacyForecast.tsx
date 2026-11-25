@@ -224,7 +224,7 @@ function singleForecastRow(grid: Grid, label: string) {
   return matches.length === 1 ? matches[0] : undefined;
 }
 
-export function ForecastTrends({
+function ForecastTrends({
   grid,
   units,
   source,
