@@ -248,7 +248,8 @@ describe("the headline figures on Overview", () => {
     async () => {
       await opened();
       const gap = tile("Adjusted EBITDA");
-      expect(gap).toHaveTextContent("n.a.");
+      expect(within(gap).getByText("Not supplied", { selector: "span" })).toBeVisible();
+      expect(gap).not.toHaveTextContent("n.a.");
       expect(gap).toHaveTextContent("FY2024: the measure is not stated");
       expect(gap).not.toHaveTextContent(/\$0m|\b0\b/);
       const control = within(gap).getByRole("button", { name: "Show sources for Adjusted EBITDA" });
@@ -285,7 +286,8 @@ describe("the headline figures on Overview", () => {
   it("do not say the module did not supply a figure it wrote in words", READER, async () => {
     await opened({ adjusted: "approximately 410", omit: ["adjusted_ebitda"] });
     const gap = tile("Adjusted EBITDA");
-    expect(gap).toHaveTextContent("n.a.");
+    expect(within(gap).getByText("No figure", { selector: "span" })).toBeVisible();
+    expect(gap).not.toHaveTextContent("n.a.");
     expect(gap).toHaveTextContent("FY2024: not shown here, the cell is not one figure");
     expect(gap).not.toHaveTextContent(/not supplied/i);
     fireEvent.click(within(gap).getByRole("button", { name: "Show sources for Adjusted EBITDA" }));

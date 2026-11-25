@@ -232,24 +232,22 @@ it("gives the structure tiles a trace record when the foundation is blocked", ()
 
 // Round 2, part 2: D2, D6, D9, D10.
 
-it("draws each downside panel on an axis with ticks, and says the limit is not tested only when the legal module is blocked", () => {
+// Round 3, X1: the "Limit not tested" note is withdrawn; the tile says nothing about a limit.
+it("draws each downside panel on an axis with ticks, and says nothing about a limit when the legal module is blocked", () => {
   render(<StressRow {...rowProps([downside, covenants("Net leverage")])} />);
   const tile = screen.getByRole("region", { name: "Downside scenarios" });
   const panel = tile.querySelector('[data-panel="All-in cover (x)"]');
   expect(within(panel as HTMLElement).getByText("0")).toBeInTheDocument();
   expect(within(panel as HTMLElement).getByText("3")).toBeInTheDocument();
-  expect(within(tile).queryByText("Limit not tested")).toBeNull();
   cleanup();
   render(
     <StressRow
       {...rowProps([downside, bottomLine("CP-4", "Not assessable: no executed document.")])}
     />,
   );
-  expect(
-    within(screen.getByRole("region", { name: "Downside scenarios" })).getByText(
-      "Limit not tested",
-    ),
-  ).toBeVisible();
+  expect(screen.getByRole("region", { name: "Downside scenarios" })).not.toHaveTextContent(
+    /limit/i,
+  );
 });
 
 it("sets every headline figure at the metric size, and no tile stretches past its content", () => {

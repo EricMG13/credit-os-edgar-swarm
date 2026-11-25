@@ -2,8 +2,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
 import type { OutputEntry, Section } from "../../publishedReport";
 import { FigureNotes } from "./figureParts";
-import { DeltaBar, MiniSlope, type Mark } from "./marks";
-import { lastTwo, passageParagraphs, periodSeries } from "./read";
+import { DeltaBar, DotStrip, MiniSlope, Slope, type Mark } from "./marks";
+import { bottomLine, gapReason, lastTwo, passageParagraphs, periodSeries } from "./read";
 
 afterEach(cleanup);
 
@@ -55,12 +55,15 @@ it("reads a period series with the earlier three arguments, and nothing without 
   expect(periodSeries(entry([]), "leverage", /^Total debt/)).toBeNull();
 });
 
-it("gives the latest by period, and a prior only a year earlier by the period table", () => {
+it("gives the last two rows without an entry, as before, and the stricter rule with one", () => {
   const series = periodSeries(entry([LEVERAGE]), "leverage", /^Total debt/);
   if (!series) throw new Error("fixture");
-  expect(lastTwo(series).latest?.period).toBe("FY2024");
-  expect(lastTwo(series).prior).toBeUndefined();
-  expect(lastTwo(series, entry([PERIODS, LEVERAGE])).prior?.period).toBe("FY2023");
+  expect(lastTwo(series).latest?.period).toBe("FY2023");
+  expect(lastTwo(series).prior?.period).toBe("FY2024");
+  const strict = lastTwo(series, entry([PERIODS, LEVERAGE]));
+  expect(strict.latest?.period).toBe("FY2024");
+  expect(strict.prior?.period).toBe("FY2023");
+  expect(lastTwo(series, entry([LEVERAGE])).prior).toBeUndefined();
 });
 
 it("reads a passage's paragraphs with the earlier arguments", () => {
@@ -91,4 +94,45 @@ it("draws figure notes and the earlier marks with their earlier props", () => {
   render(<DeltaBar from={marks[0] as Mark} to={marks[1] as Mark} tone="better" label="Delta" />);
   expect(screen.getByRole("img", { name: "Mini" })).toBeVisible();
   expect(screen.getByRole("img", { name: "Delta" })).toBeVisible();
+});
+
+it("draws the series marks from the earlier Mark[] with the same points and labels", () => {
+  const marks: Mark[] = [
+    { label: "FY2023", value: 5, text: "5.00x" },
+    { label: "FY2024", value: 4, text: "4.00x" },
+  ];
+  const texts = (name: string) =>
+    [...screen.getByRole("img", { name }).querySelectorAll("text:not([data-tick])")].map(
+      (text) => text.textContent,
+    );
+  const dots = (name: string) => screen.getByRole("img", { name }).querySelectorAll("circle");
+  render(<Slope marks={marks} tone="better" suffix="x" label="Slope" />);
+  expect(dots("Slope")).toHaveLength(2);
+  expect(texts("Slope").sort()).toEqual(["4.00x", "5.00x", "FY2023", "FY2024"]);
+  expect(
+    screen.getByRole("img", { name: "Slope" }).querySelectorAll("[data-segment]"),
+  ).toHaveLength(1);
+  render(<DotStrip marks={marks} tone="better" suffix="x" label="Strip" />);
+  expect(dots("Strip")).toHaveLength(2);
+  expect(texts("Strip").sort()).toEqual(["4.00x", "5.00x", "FY2023", "FY2024"]);
+  render(<MiniSlope marks={marks} tone="better" label="Mini slope" />);
+  expect(dots("Mini slope")).toHaveLength(2);
+  expect(screen.getByRole("img", { name: "Mini slope" }).querySelectorAll("polyline")).toHaveLength(
+    1,
+  );
+});
+
+it("reads a bottom line and a gap's reason with the earlier arguments", () => {
+  const written = entry([
+    { heading: "Findings", level: 2, line: 1, blocks: [] },
+    {
+      heading: "Bottom line",
+      level: 3,
+      line: 2,
+      blocks: [{ type: "text", line: 3, end: 3, text: "Credit is stable." }],
+    },
+  ]);
+  expect(bottomLine(written)).toEqual([{ line: 3, text: "Credit is stable." }]);
+  expect(gapReason("Not supplied: restated")).toBe("restated");
+  expect(gapReason("4.00")).toBeNull();
 });

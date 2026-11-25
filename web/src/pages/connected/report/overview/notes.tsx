@@ -56,6 +56,28 @@ export function readerCell(text: string): string | null {
   return readerReason(rest);
 }
 
+const TRAILING_LINK = /\s+(?:per|see|from|in|at|on|of|for|and|by|-|–|—)$/i;
+
+/**
+ * The readable words of a name that cites a source: the longest leading run of its words the
+ * reader rule draws, without a dangling "per" or "see". Null when no word can be drawn.
+ */
+export function readableWords(text: string): string | null {
+  const whole = readerCell(text);
+  if (whole !== null) return whole;
+  const words = text.trim().split(/\s+/);
+  for (let count = words.length - 1; count > 0; count -= 1) {
+    const lead = words
+      .slice(0, count)
+      .join(" ")
+      .replace(TRAILING_LINK, "")
+      .replace(/[\s,;:(]+$/, "");
+    const drawn = lead && readerCell(lead);
+    if (drawn) return drawn;
+  }
+  return null;
+}
+
 /** A stated figure's cell as drawn: through the reader rule, else its leading figure alone. */
 export const figureText = (text: string) => readerCell(text) ?? text.trim().split(/\s+/)[0] ?? "";
 

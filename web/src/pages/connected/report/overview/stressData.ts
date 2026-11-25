@@ -13,7 +13,7 @@ import {
 import { namedTable } from "../../reportView";
 import { downsideView, scenarioShareLabel } from "../Downside";
 import { columnAt, readCell, type Cell } from "./figureData";
-import { labelText, readerCell } from "./notes";
+import { labelText, readableWords, readerCell } from "./notes";
 import { readerReason } from "./reason";
 
 type Descriptor = Record<string, unknown>;
@@ -102,18 +102,21 @@ function stressCell(text: string, unit: string): Cell {
 }
 
 const SCENARIOS = "T2DS.1 Scenarios";
-const REGISTER = ["Scenario ID", "Name", "EBITDA decline s", "Cash-interest increase k"];
+const SHOCKS = ["EBITDA decline s", "Cash-interest increase k"] as const;
 
-/** The module's scenario register by id: each case's name and its two shocks, as written. */
+/** The module's scenario register by id: each case's name (from the column whose header holds
+ * "name", its readable words only) and its two shocks, as written. */
 function register(entry: OutputEntry) {
-  const table = namedTable(entry, SCENARIOS, REGISTER);
-  const at = (name: string) => table?.headers.indexOf(name) ?? -1;
-  const [id, name, decline, interest] = REGISTER.map(at);
+  const table = namedTable(entry, SCENARIOS, ["Scenario ID"]);
+  const headers = table?.headers ?? [];
+  const id = headers.indexOf("Scenario ID");
+  const name = headers.findIndex((header) => /name/i.test(header));
+  const [decline, interest] = SHOCKS.map((header) => headers.indexOf(header));
   return new Map(
     (table?.rows ?? []).map(({ cells }) => [
-      cells[id ?? -1] ?? "",
+      cells[id] ?? "",
       {
-        name: readerCell(cells[name ?? -1] ?? ""),
+        name: name < 0 ? null : readableWords(cells[name] ?? ""),
         decline: cells[decline ?? -1] ?? "",
         interest: cells[interest ?? -1] ?? "",
       },
@@ -139,9 +142,11 @@ function downsideCaseList(entry: OutputEntry, ids: string[]) {
   const named = ids.filter((id) => scenarios.get(id)?.name).length;
   const numbering =
     named === 0
-      ? ["The module names none of these cases; they are numbered here in the handoff's order."]
+      ? ["This page could not read case names; cases are numbered in the handoff's order."]
       : named < ids.length
-        ? ["Cases the module does not name are numbered here in the handoff's order."]
+        ? [
+            "This page could not read some case names; those cases are numbered in the handoff's order.",
+          ]
         : [];
   const assumptions = cases.flatMap(({ id, name, control }) => {
     const item = scenarios.get(id);
@@ -243,10 +248,10 @@ export function forwardPath(model: unknown) {
     }))
     .filter((item) => item.points.some((point) => point.value !== null));
   if (!cases.length) return null;
-  // The model's own first statements of what it is that can be drawn here; the full list, with
-  // those that cite a source, is on the Forecast page.
+  // The model's own first statements of what it is, in reader words (codes named, Basis lines and
+  // markers set aside); those that cite a source, and the full list, are on the Forecast page.
   const limits = stringsIn(raw.limits)
-    .filter((line) => readerReason(line) !== null)
+    .flatMap((line) => readerReason(line) ?? [])
     .slice(0, MOST_LIMITS);
   const based = cases[0]?.group === BASE;
   return { measure: row.label, cases, based, unbased: based ? null : unbased(groups), limits };

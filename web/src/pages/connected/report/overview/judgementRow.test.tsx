@@ -163,3 +163,28 @@ it("lets the counter tile take its content height, the findings tile carrying th
   expect(counter).toHaveClass("self-start");
   expect(counter).not.toHaveClass("flex-1");
 });
+
+it("draws findings, counter paragraphs and table cells without inline markers or unnamed ids", () => {
+  draw(
+    lead(
+      [
+        words(4, "Leverage is 6.5x [E3]."),
+        words(5, "The case holds per T4.18."),
+        grid(6, ["Measure", "Note"], ["Gross leverage", "Per T4.18"], ["Cover", "Thin [E12, E14]"]),
+      ],
+      [words(41, "Cash generation improved [E3].")],
+    ),
+  );
+  const findings = screen.getByRole("region", { name: "Key findings" });
+  expect(within(findings).getByText("Leverage is 6.5x.")).toBeVisible();
+  expect(
+    within(findings).getByRole("link", { name: "Read this passage in Evidence" }),
+  ).toBeVisible();
+  const shown = within(findings).getByRole("table");
+  expect(within(shown).getByRole("cell", { name: "Thin" })).toBeVisible();
+  expect(within(shown).getByRole("link", { name: "Read this cell in Evidence" })).toBeVisible();
+  expect(document.body).not.toHaveTextContent(/\[E\d|T4\.18/);
+  expect(
+    within(screen.getByRole("region", { name: CONTRARY })).getByText("Cash generation improved."),
+  ).toBeVisible();
+});

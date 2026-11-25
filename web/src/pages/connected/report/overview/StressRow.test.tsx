@@ -555,7 +555,8 @@ it("names no control when two cases state no shock, and calls the one unshocked 
   expect(downsideTile()).not.toHaveTextContent(/control/i);
 });
 
-it("never draws a scenario id as a case name, and says the module named none", () => {
+// Round 3, X6: the note says only what the page checked, not that the module named none.
+it("never draws a scenario id as a case name, and says the page could not read the names", () => {
   const unnamed = entry(
     "CP-2A",
     [],
@@ -574,7 +575,7 @@ it("never draws a scenario id as a case name, and says the module named none", (
   expect(within(tile).getByText("Case 2")).toBeInTheDocument();
   expect(
     within(tile).getByText(
-      "The module names none of these cases; they are numbered here in the handoff's order.",
+      "This page could not read case names; cases are numbered in the handoff's order.",
     ),
   ).toBeVisible();
 });
@@ -648,4 +649,150 @@ it("keeps downsideCases for other pages: the first stated leverage and cover mea
   expect(
     downsideCases(downsideWith([["Stressed FCF (USD millions)", "1", "2", "3", "F"]])),
   ).toBeNull();
+});
+
+// Round 3: X1, X3, X5, X6.
+
+it("says nothing about a limit on the downside tile, in any state", () => {
+  const blockedLegal = entry(
+    "CP-4",
+    [],
+    [
+      { heading: "Findings", level: 2, line: 1, blocks: [] },
+      {
+        heading: "Bottom line",
+        level: 3,
+        line: 3,
+        blocks: [{ type: "text", line: 4, end: 4, text: "Not assessable: no document." }],
+      },
+    ],
+  );
+  for (const entries of [[downside], [downside, blockedLegal], [downside, covenants]]) {
+    render(<StressRow {...rowProps(entries)} />);
+    expect(downsideTile()).not.toHaveTextContent(/limit/i);
+    cleanup();
+  }
+});
+
+function registerOf(headers: string[], rows: string[][]) {
+  return entry(
+    "CP-2A",
+    [],
+    [
+      section("T2DS.1 Scenarios", 95, table(96, headers, rows)),
+      section(
+        "T2DS.4 Stressed flows and metrics",
+        105,
+        table(
+          106,
+          ["Metric", "s00", "s01", "s02", "Source"],
+          [["Net leverage (x)", "1.2", "1.4", "1.9", "F"]],
+        ),
+      ),
+    ],
+  );
+}
+
+const SHOCKS = ["EBITDA decline s", "Cash-interest increase k"];
+
+it("reads case names from a column headed with 'name', keeps a cited name's words, and numbers an id", () => {
+  render(
+    <StressRow
+      {...rowProps([
+        registerOf(
+          ["Scenario ID", "Scenario name", ...SHOCKS],
+          [
+            ["s00", "As reported", "0", "0"],
+            ["s01", "Cost shock (notes_2024.pdf page 3)", "0.1 (10%)", "0"],
+            ["s02", "T4.18 case", "0.2 (20%)", "0.05 (5%)"],
+          ],
+        ),
+      ])}
+    />,
+  );
+  const tile = downsideTile();
+  expect(within(tile).getByText("As reported")).toBeInTheDocument();
+  expect(within(tile).getByText("Cost shock")).toBeInTheDocument();
+  expect(within(tile).getByText("Case 3")).toBeInTheDocument();
+  expect(tile).not.toHaveTextContent(/T4\.18|notes_2024|module names none/);
+  expect(
+    within(tile).getByText(
+      "This page could not read some case names; those cases are numbered in the handoff's order.",
+    ),
+  ).toBeVisible();
+});
+
+it("says only that the page could not read the names when it finds no name column", () => {
+  render(
+    <StressRow
+      {...rowProps([
+        registerOf(
+          ["Scenario ID", ...SHOCKS],
+          [
+            ["s00", "0", "0"],
+            ["s01", "0.1 (10%)", "0"],
+            ["s02", "0.2 (20%)", "0"],
+          ],
+        ),
+      ])}
+    />,
+  );
+  const tile = downsideTile();
+  expect(within(tile).getByText("Case 1")).toBeInTheDocument();
+  expect(
+    within(tile).getByText(
+      "This page could not read case names; cases are numbered in the handoff's order.",
+    ),
+  ).toBeVisible();
+  expect(tile).not.toHaveTextContent(/module names/);
+});
+
+it("draws forward-path case names and the measure through the reader rule", () => {
+  const coded = structuredClone(model);
+  for (const column of coded.cashflow.columns)
+    if (column.group === "Base case") column.group = "Management case [E3]";
+  coded.cashflow.rows[0] = { ...coded.cashflow.rows[0], label: "Net leverage per T4.18" } as never;
+  render(<StressRow {...rowProps([], [coded])} />);
+  const tile = screen.getByRole("region", { name: "Forward path" });
+  expect(tile).not.toHaveTextContent(/\[E3\]|T4\.18/);
+  expect(within(tile).getByText("Management case")).toBeVisible();
+});
+
+it("gives other pages forward-path limits already in reader words", async () => {
+  const { forwardPath } = await import("./stressData");
+  const coded = structuredClone(model);
+  coded.cashflow.limits = [
+    "Not reviewed by CP-1C.\nBasis: model notes",
+    "See notes_2024.pdf page 4.",
+    "Base period is FY2024.",
+  ];
+  expect(forwardPath(coded)?.limits).toEqual([
+    "Not reviewed by Peer benchmark.",
+    "Base period is FY2024.",
+  ]);
+});
+
+it("gives other pages the base fixture's panels, cases and notes in this shape", async () => {
+  const { downsidePanels } = await import("./stressData");
+  const data = downsidePanels(downside);
+  expect(data?.cases).toEqual([
+    { id: "s00", name: "Control", control: true },
+    { id: "s01", name: "Cost shock", control: false },
+    { id: "s02", name: "Cost and rate shock", control: false },
+  ]);
+  expect(data?.panels.map(({ measure, min, max, line }) => [measure, min, max, line])).toEqual([
+    ["All-in cover (x)", 0, 3.1, 108],
+    ["Net leverage (x)", 0, 1.3, 109],
+  ]);
+  expect(data?.panels[1]?.cells[2]).toEqual({
+    text: "Not calculated: net debt is missing",
+    value: null,
+    reason: "net debt is missing",
+  });
+  expect(data?.assumptions).toEqual([
+    "Control: the case with no shock applied.",
+    "Cost shock: EBITDA decline 10%, cash interest increase 0%.",
+    "Cost and rate shock: EBITDA decline 20%, cash interest increase 5%.",
+  ]);
+  expect(data?.line).toBe(106);
 });

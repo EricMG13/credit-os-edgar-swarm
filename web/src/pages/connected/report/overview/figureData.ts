@@ -93,12 +93,16 @@ export function readCell(text: string, scope: readonly string[], unit: string): 
   };
 }
 
-/**
- * The table's own notes on its basis, each once, as the module wrote them (trimmed). A note that
- * cites a source is kept: whoever draws the notes draws each through `Reason`, which makes that
- * one a link to Evidence (`FigureNotes`, `ReasonNotes`); none is drawn raw.
- */
+/** The table's own notes on its basis, each once, in the reader's words; one that cites a source stays in Evidence. */
 export function basisNotes(table: SourceTable) {
+  return [...new Set(basisNotesRaw(table).flatMap((note) => readerReason(note) ?? []))];
+}
+
+/**
+ * The table's own notes on its basis, each once, as the module wrote them (trimmed), a note that
+ * cites a source included: for a drawer that draws each through `Reason` (`FigureNotes`).
+ */
+export function basisNotesRaw(table: SourceTable) {
   const column = table.headers.findIndex((header) => /^Basis and limitation$/i.test(header));
   if (column < 0) return [];
   const notes = table.rows.map((row) => (row[column] ?? "").trim()).filter(Boolean);

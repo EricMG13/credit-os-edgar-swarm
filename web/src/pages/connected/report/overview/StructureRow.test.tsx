@@ -3,7 +3,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { evidencePath } from "../../publishedReport";
 import { StructureRow } from "./StructureRow";
 import { entry, rowProps, section, table } from "./rows.fixture";
-import { WALL, wallGeometry, wallWidth } from "./structureData";
+import { wallGeometry, wallWidth } from "./structureData";
 
 afterEach(cleanup);
 
@@ -168,12 +168,13 @@ it("draws the gap when no period states an amount", () => {
 });
 
 it("draws the wall at the frame's own width, widened to keep each period's room only on a narrow screen", () => {
-  expect(wallWidth(null)).toBe(WALL.width);
+  expect(wallWidth(null)).toBe(872);
   // Above the narrow threshold the wall fits its frame: drawn at the frame's own width.
   expect(wallWidth(600)).toBe(600);
   expect(wallWidth(342.4)).toBe(342);
   expect(wallWidth(200)).toBe(300);
-  expect(wallWidth(342, 11)).toBe(2 * WALL.left + 56 * 11);
+  // Eleven periods of 56 px each, plus a 16 px margin either side: 648 px.
+  expect(wallWidth(342, 11)).toBe(648);
   expect(wallWidth(342, 3)).toBe(342);
   expect(wallWidth(700, 11)).toBe(700);
   const slots = [
@@ -182,7 +183,7 @@ it("draws the wall at the frame's own width, widened to keep each period's room 
   ];
   const narrow = wallGeometry(slots, [], 342);
   expect(narrow.marks.at(-1)?.centre).toBeLessThan(342);
-  expect(wallGeometry(slots as never, [], WALL.width).marks.at(-1)?.centre).toBeGreaterThan(600);
+  expect(wallGeometry(slots as never, [], 872).marks.at(-1)?.centre).toBeGreaterThan(600);
 });
 
 const wallOf = (rows: string[][], stack: string[][] = STACK) => {

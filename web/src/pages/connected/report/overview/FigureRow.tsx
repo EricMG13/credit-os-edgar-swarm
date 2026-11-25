@@ -1,14 +1,15 @@
 import { ArrowDown, ArrowUp } from "@untitledui/icons";
 import type { ReactNode } from "react";
 import { cx } from "@/utils/cx";
-import { blocked, evidencePath, withUnit, type OutputEntry } from "../../publishedReport";
+import { blocked, evidencePath, type OutputEntry } from "../../publishedReport";
 import { changeSign, changeText, exactDifference, tone } from "../../signal";
 import { PublishedSource } from "../PublishedTrace";
+import { Key } from "./figureParts";
 import { DeltaBar, DotStrip, GapBar, MiniSlope, Ruler, Slope, SplitBar } from "./marks";
 import type { Mark, MarkTone, Slot } from "./marks";
 import {
   entryOf,
-  gapReason,
+  figureShown,
   readSeries,
   timeline,
   type Point,
@@ -16,6 +17,7 @@ import {
   type Series,
   type Timeline,
 } from "./read";
+import { gapReading, gapWord, readerCell } from "./notes";
 import { Reason, readerReason } from "./reason";
 import { Figure, GapNote, Tile } from "./Tile";
 
@@ -79,12 +81,12 @@ function timeAt(order: string | undefined) {
 
 const slotOf =
   (unit: string) =>
-  ({ period, figure, value, basis, order }: Point): Slot => ({
-    label: period,
-    value,
-    text: figure === null ? "n.a." : withUnit(figure, unit),
-    at: timeAt(order),
-    basis: (basis ?? "").trim(),
+  (point: Point): Slot => ({
+    label: point.period,
+    value: point.value,
+    text: figureShown(point, unit) ?? gapWord(point.cell),
+    at: timeAt(point.order),
+    basis: (point.basis ?? "").trim(),
   });
 
 function read(entry: OutputEntry, key: FigureKey): Reading {
@@ -93,12 +95,13 @@ function read(entry: OutputEntry, key: FigureKey): Reading {
   if ("reason" in found) return { state: "absent", title: fallback, ...found };
   const { series } = found;
   const line = timeline(series, entry);
-  if (!line) return { state: "unordered", title: series.name, series };
+  const title = readerCell(series.name) ?? fallback;
+  if (!line) return { state: "unordered", title, series };
   const { change, why } = compare(line);
   const toned = change === null ? "none" : tone(toneKey, change);
   return {
     state: "ready",
-    title: series.name,
+    title,
     series,
     timeline: line,
     slots: line.points.map(slotOf(series.unit)),
@@ -138,23 +141,31 @@ function ToneChip({ reading, large }: { reading: Ready; large: boolean }) {
 
 type Href = (line?: number) => string;
 
+const STATED = /^Not (?:supplied|calculated):\s*(\S.*)$/;
+
+/** What a period with no figure is said to be: the module's word, or that its words are not one. */
+function gapSaid(cell: string, words: string | null, stated: boolean) {
+  if (stated) return words ?? gapReading(cell);
+  if (!cell.trim()) return "no value in the handoff";
+  return gapWord(cell) === "No figure"
+    ? "not shown here, the cell is not one figure"
+    : gapReading(cell);
+}
+
 /**
- * One period whose cell is not a figure: the module's own reason, in the reader's words; "not
- * supplied" and a link to Evidence when that reason cites a source; and for any other words the
- * module wrote, that they are not one figure, never that the module did not supply it.
+ * One period whose cell is not a figure: the module's own reason ("Not supplied: …", "Not
+ * calculated: …") in the reader's words, its gap word and a link to Evidence when that reason
+ * cites a source; its own short word ("n.m.", "—") as written; and for any other words, that they
+ * are not one figure, never that the module did not supply it.
  */
 function GapLine({ point, href }: { point: Point; href: Href }) {
-  const reason = gapReason(point.cell);
+  const reason = STATED.exec(point.cell.trim())?.[1] ?? null;
   const words = reason === null ? null : readerReason(reason);
-  const said =
-    reason !== null
-      ? (words ?? "not supplied")
-      : point.cell.trim()
-        ? "not shown here, the cell is not one figure"
-        : "no value in the handoff";
   return (
     <div className="flex flex-wrap items-center gap-x-2">
-      <p className="text-caption text-gap-text">{`${point.period}: ${said}`}</p>
+      <p className="text-caption text-gap-text">
+        {`${point.period}: ${gapSaid(point.cell, words, reason !== null)}`}
+      </p>
       {reason !== null && words === null && <Reason text={reason} href={href(point.line)} />}
     </div>
   );
@@ -167,7 +178,7 @@ function Movement({ reading }: { reading: Ready }) {
   const note = "text-caption text-text-tertiary";
   if (reading.why) return <p className={note}>{reading.why}</p>;
   if (prior?.figure == null) return null;
-  const earlier = `${withUnit(prior.figure, unit)} in ${prior.period}`;
+  const earlier = `${figureShown(prior, unit) ?? ""} in ${prior.period}`;
   if (latest.figure === null || reading.change === null) return <p className={note}>{earlier}</p>;
   return (
     <p className={note}>
@@ -191,7 +202,7 @@ function AsWritten({ series, href }: { series: Series; href: Href }) {
             </li>
           ) : (
             <li key={point.line} className="font-mono tabular-nums">
-              {`${withUnit(point.figure, series.unit)} in ${point.period}`}
+              {`${figureShown(point, series.unit) ?? ""} in ${point.period}`}
             </li>
           ),
         )}
@@ -229,7 +240,7 @@ function Level({ reading, large, href }: { reading: Reading; large: boolean; hre
         )}
       >
         <Figure className={cx(size, !stated && "text-text-tertiary")}>
-          {latest.figure === null ? "n.a." : withUnit(latest.figure, reading.series.unit)}
+          {figureShown(latest, reading.series.unit) ?? gapWord(latest.cell)}
         </Figure>
         <ToneChip reading={reading} large={large} />
       </div>
@@ -345,11 +356,21 @@ function CashMark({ cash, undrawn }: { cash: Reading; undrawn: Reading }) {
   const second = latestMark(undrawn);
   if (first && second && first.label === second.label)
     return (
-      <SplitBar
-        first={first}
-        second={second}
-        label={`${cash.title} ${first.text} beside ${undrawn.title} ${second.text} in ${first.label}.`}
-      />
+      <div className="flex flex-col gap-1.5">
+        <SplitBar
+          first={first}
+          second={second}
+          label={`${cash.title} ${first.text} beside ${undrawn.title} ${second.text} in ${first.label}.`}
+        />
+        <ul aria-label="Parts of the bar" className="flex flex-col gap-0.5">
+          <li>
+            <Key tone="primary">{`${cash.title} ${first.text}`}</Key>
+          </li>
+          <li>
+            <Key tone="secondary">{`${undrawn.title} ${second.text}`}</Key>
+          </li>
+        </ul>
+      </div>
     );
   const pair = ends(cash);
   return (

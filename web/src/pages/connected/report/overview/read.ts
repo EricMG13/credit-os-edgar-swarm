@@ -1,17 +1,18 @@
 import {
-  containsReference,
   displayColumns,
   methodNote,
   passages,
   readParagraph,
-  readerText,
   type OutputEntry,
   type PublishedRun,
   type Row,
   type Snapshot,
   type Table,
 } from "../../publishedReport";
+import { withUnit } from "../../moneyUnits";
 import { namedTable, periodOrder, type ReportView } from "../../reportView";
+import { readerCell } from "./notes";
+import { readerReason } from "./reason";
 
 /** What every Overview row is given: the published snapshot, this run and its report view. */
 export type RowProps = { snapshot: Snapshot; run: PublishedRun; view: ReportView };
@@ -33,24 +34,23 @@ export type PassageTable = {
 
 const plain = (text: string) => text.replaceAll("**", "").replaceAll("`", "").trim();
 
+/** A paragraph through the reader rule (`readerReason`); "" for one with no words at all. */
 function paragraphOf(line: number, text: string): Passage {
-  const body = plain(readParagraph(text).body);
-  return { line, text: containsReference(body) ? null : readerText(body) };
+  return { line, text: plain(readParagraph(text).body) ? readerReason(text) : "" };
 }
 
 /** A table as the Overview may draw it; a passage link where no column can be drawn here. */
 function tableOf(table: Table): PassageTable | Passage {
   const columns = displayColumns(table.headers, false, table.rows);
   if (!columns.length) return { line: table.line, text: null };
-  const cell = (text: string) => (containsReference(text) ? null : readerText(plain(text)));
-  const held = table.headers.flatMap((header, at) =>
-    columns.includes(at) ? [] : [readerText(plain(header))],
-  );
+  const cell = (text: string) => (text.trim() ? readerCell(text) : "");
+  const header = (text: string) => readerCell(text) ?? "A column named in Evidence";
+  const held = table.headers.flatMap((name, at) => (columns.includes(at) ? [] : [header(name)]));
   return {
     line: table.line,
     held,
     table: {
-      headers: columns.map((at) => readerText(plain(table.headers[at] ?? ""))),
+      headers: columns.map((at) => header(table.headers[at] ?? "")),
       rows: table.rows.map(({ line, cells }) => ({
         line,
         cells: columns.map((at) => cell(cells[at] ?? "")),
@@ -85,6 +85,7 @@ export function passageParagraphs(entry: OutputEntry, heading: string): Passage[
 }
 
 const NUMBER = /^-?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/;
+const ACCOUNTING = /^\(((?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?)\)$/;
 
 /**
  * A cell's figure as plain decimal text, exactly as stated: trimmed, a Unicode minus read as "-",
@@ -94,7 +95,17 @@ const NUMBER = /^-?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/;
 function figureText(cell: string, unit: string) {
   const text = cell.trim().replace(/^\u2212/, "-");
   const bare = unit && text.endsWith(unit) ? text.slice(0, -unit.length).trim() : text;
-  return NUMBER.test(bare) ? bare : null;
+  const negative = ACCOUNTING.exec(bare)?.[1];
+  if (negative) return { figure: `-${negative}`, accounting: true };
+  return NUMBER.test(bare) ? { figure: bare, accounting: false } : null;
+}
+
+/** A stated figure with its unit as the module wrote it: an accounting negative in brackets. */
+export function figureShown(point: Point, unit: string) {
+  if (point.figure === null) return null;
+  return point.accounting
+    ? `(${withUnit(point.figure.slice(1), unit)})`
+    : withUnit(point.figure, unit);
 }
 
 export type Point = {
@@ -103,6 +114,8 @@ export type Point = {
   cell: string;
   /** The cell's figure as plain decimal text (`figureText`); null when it is not one figure. */
   figure: string | null;
+  /** The module wrote the figure as an accounting negative, "(12.3)". */
+  accounting: boolean;
   value: number | null;
   /** The row's "Basis and limitation" (or "Basis") cell as written; null without that column. */
   basis: string | null;
@@ -179,11 +192,13 @@ function points(table: Table, column: number, unit: string): Point[] {
   const basis = table.headers.findIndex((name) => BASIS.test(name.trim()));
   return table.rows.map(({ cells, line }) => {
     const name = (cells[period] ?? "").trim();
-    const figure = figureText(cells[column] ?? "", unit);
+    const read = figureText(cells[column] ?? "", unit);
+    const figure = read?.figure ?? null;
     return {
       period: name,
       cell: cells[column] ?? "",
       figure,
+      accounting: read?.accounting ?? false,
       value: figure === null ? null : Number(figure.replaceAll(",", "")),
       basis: basis < 0 ? null : (cells[basis] ?? ""),
       order: cells.length === table.headers.length ? periodOrder(name) : undefined,
@@ -299,16 +314,29 @@ export function timeline(series: Series, entry: OutputEntry): Timeline | null {
 }
 
 /**
- * The latest row by period and, given the entry, the row a year before it (earlier this took the
- * last two rows by position). No prior without the entry's period table: none is guessed.
+ * Without the entry, as it always was: the last row and the one before it, in the table's order.
+ * Given the entry, the stricter rule: the latest by period and the row exactly a year before it
+ * by the handoff's period table (none where the periods cannot be ordered or no year is stated).
  */
 export function lastTwo(series: Series, entry?: OutputEntry) {
-  const line = entry ? timeline(series, entry) : null;
-  return { latest: line?.latest ?? inPeriodOrder(series)?.at(-1), prior: line?.prior };
+  if (!entry) return { latest: series.points.at(-1), prior: series.points.at(-2) };
+  const line = timeline(series, entry);
+  return { latest: line?.latest, prior: line?.prior };
 }
 
 /** A `Not supplied: reason` cell's reason, in the module's words; null for any other cell. */
 export const gapReason = (cell: string) => /^Not supplied:\s*(\S.*)$/.exec(cell)?.[1] ?? null;
+
+/**
+ * A module's bottom line as written: its paragraphs and tables in order (`passageBlocks`), or the
+ * summary paragraph an earlier-format handoff carries when the passage has no blocks.
+ */
+export function bottomLineBlocks(entry: OutputEntry): (Passage | PassageTable)[] {
+  const written = passageBlocks(entry, "Bottom line");
+  const summary = entry.output.summary;
+  if (written.length || !summary) return written;
+  return [paragraphOf(summary.line, summary.bottomLine)];
+}
 
 /** A module's bottom line: its passage, or the summary an earlier-format handoff carries instead. */
 export function bottomLine(entry: OutputEntry): Passage[] {

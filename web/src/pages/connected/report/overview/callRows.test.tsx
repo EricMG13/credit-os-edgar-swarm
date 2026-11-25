@@ -236,7 +236,8 @@ it("draws the headline figures from the foundation's chart tables, each with its
 it("draws a figure the module did not supply as a gap in its own words, never as a number", () => {
   render(<FigureRow snapshot={snapshot} run={run} view={view([foundation()])} />);
   const ebitda = screen.getByRole("region", { name: "Adjusted EBITDA" });
-  expect(within(ebitda).getByText("n.a.")).toBeVisible();
+  expect(within(ebitda).getByText("Not supplied", { selector: "span" })).toBeVisible();
+  expect(within(ebitda).queryByText("n.a.")).toBeNull();
   expect(within(ebitda).getByText("FY2024: the measure is not stated")).toBeVisible();
   expect(within(ebitda).getByText("US$410m in FY2023")).toBeVisible();
   expect(within(ebitda).queryByRole("img")).toBeNull();
@@ -461,7 +462,8 @@ it("never prints a gap reason that cites a source, and never calls words the mod
   (block.rows[1] as { cells: string[] }).cells[2] = "approximately 410";
   render(<FigureRow snapshot={snapshot} run={run} view={view([cp1])} />);
   const words = screen.getByRole("region", { name: "Adjusted EBITDA" });
-  expect(within(words).getByText("n.a.")).toBeVisible();
+  expect(within(words).getByText("No figure", { selector: "span" })).toBeVisible();
+  expect(within(words).queryByText("n.a.")).toBeNull();
   expect(
     within(words).getByText("FY2024: not shown here, the cell is not one figure"),
   ).toBeVisible();

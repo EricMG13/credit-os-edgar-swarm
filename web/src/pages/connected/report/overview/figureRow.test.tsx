@@ -623,3 +623,94 @@ describe("the figure rows' layout", () => {
     }
   });
 });
+
+describe("cells drawn as the module wrote them", () => {
+  it("reads an accounting negative as a figure, drawn as written, with its exact change", () => {
+    draw(
+      foundation(
+        chart(
+          "leverage",
+          LEVERAGE,
+          ["FY2023", "5.00", "4.50", "x", "Stated."],
+          ["FY2024", "4.00", "(1.50)", "x", "Stated."],
+        ),
+      ),
+    );
+    const net = screen.getByRole("region", { name: "Net debt / EBITDA" });
+    expect(within(net).getByText("(1.50x)", { selector: "span" })).toBeVisible();
+    expect(within(net).getByText(wholeLine("from 4.50x in FY2023 (-6.00x)"))).toBeVisible();
+    expect(within(net).getByText("Better")).toBeVisible();
+    expect(net).not.toHaveTextContent(/n\.a\.|not one figure/);
+  });
+
+  it.each(["n.m.", "—"])("draws the module's own word %s as written, not n.a.", (word) => {
+    draw(
+      foundation(
+        chart(
+          "leverage",
+          LEVERAGE,
+          ["FY2023", "5.00", "4.50", "x", "Stated."],
+          ["FY2024", word, "3.50", "x", "Stated."],
+        ),
+      ),
+    );
+    const tile = gross();
+    expect(within(tile).getByText(word, { selector: "span" })).toBeVisible();
+    expect(within(tile).getByText(`FY2024: ${word}`)).toBeVisible();
+    expect(tile).not.toHaveTextContent(/n\.a\.|not one figure|Better|Worse/);
+  });
+});
+
+describe("labels, bases and reasons through the reader rule", () => {
+  it("names a figure without the citation after its heading", () => {
+    draw(
+      foundation(
+        chart(
+          "leverage",
+          [
+            "Period",
+            "Total debt / EBITDA (CP-1-CALC-02)",
+            "Net debt / EBITDA",
+            "Reporting unit",
+            "Basis",
+          ],
+          ["FY2024", "4.00", "3.50", "x", "Stated [E3]."],
+        ),
+      ),
+    );
+    const tile = gross();
+    expect(within(tile).getByRole("heading", { name: "Total debt / EBITDA" })).toBeVisible();
+    expect(within(tile).getByText("Stated.")).toBeVisible();
+    expect(document.body).not.toHaveTextContent(/CP-1-CALC|\[E3\]/);
+  });
+
+  it("links a gap reason that carries an id the page cannot name", () => {
+    draw(
+      foundation(
+        chart(
+          "leverage",
+          LEVERAGE,
+          ["FY2023", "5.00", "4.50", "x", "Stated."],
+          ["FY2024", "Not supplied: per T4.18", "3.50", "x", "Stated."],
+        ),
+      ),
+    );
+    const tile = gross();
+    expect(within(tile).getByText("FY2024: not supplied")).toBeVisible();
+    expect(within(tile).getByRole("link", { name: "Read the reason in Evidence" })).toBeVisible();
+    expect(tile).not.toHaveTextContent("T4.18");
+  });
+});
+
+describe("the cash tile", () => {
+  it("names the second part of its split bar beside its figure, not only to assistive technology", () => {
+    draw(foundation(chart("leverage", LEVERAGE, ["FY2024", "4.00", "3.50", "x", "Stated."])));
+    const cash = screen.getByRole("region", { name: "Cash" });
+    const legend = within(cash).getByRole("list", { name: "Parts of the bar" });
+    const items = within(legend).getAllByRole("listitem");
+    expect(items.map((item) => item.textContent)).toEqual([
+      "Cash US$275m",
+      "Undrawn committed facilities US$400m",
+    ]);
+  });
+});

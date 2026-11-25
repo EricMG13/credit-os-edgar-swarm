@@ -1,7 +1,6 @@
 import { Fragment } from "react";
 import {
   FORECAST_INPUTS,
-  blocked,
   evidencePath,
   withUnit,
   type OutputEntry,
@@ -20,6 +19,7 @@ import {
   gapReading,
   gapText,
   gapWord,
+  labelText,
   plainNotes,
   readerCell,
   type Note,
@@ -531,15 +531,7 @@ function PanelRow({
   );
 }
 
-function Downside({
-  data,
-  untested,
-  href,
-}: {
-  data: Downside | null;
-  untested: boolean;
-  href: NoteHref;
-}) {
+function Downside({ data, href }: { data: Downside | null; href: NoteHref }) {
   const { frame, measured } = useFrameWidth();
   if (!data)
     return <FigureGap reason="The downside handoff states no stressed metric that can be drawn." />;
@@ -550,7 +542,6 @@ function Downside({
   );
   return (
     <>
-      {untested && <Key tone="gap">Limit not tested</Key>}
       <div ref={frame} className="flex min-w-0 flex-col gap-4">
         {rows.map((panels, at) => (
           <PanelRow key={at} cases={data.cases} panels={panels} width={width} first={at * step} />
@@ -755,11 +746,20 @@ function ForwardPath({ path, href }: { path: Path; href: NoteHref }) {
   );
 }
 
+/** The path as the tile draws it: the measure and each case's name through the reader rule. */
+const readerPath = (path: Path): Path => ({
+  ...path,
+  measure: labelText(path.measure, "A measure"),
+  cases: path.cases.map((item) => ({ ...item, group: labelText(item.group, "A case") })),
+});
+
 function forwardSource(view: ReportView) {
   const model = view.models[0];
   if (!model) return { reason: "No forecast model was published for this run." };
   const path = forwardPath(model);
-  return path ? { path } : { reason: "The published model states no net leverage by period." };
+  return path
+    ? { path: readerPath(path) }
+    : { reason: "The published model states no net leverage by period." };
 }
 
 /** Where a tile's reasons are read in Evidence: the handoff line, or the tile's own; none when
@@ -769,14 +769,11 @@ const hrefOf =
   (line) =>
     entry && evidencePath(folder, entry, line ?? fallback);
 
-/** The downside tile's data, and whether the covenant limit could not be tested: the legal
- * module is blocked. */
+/** The downside tile's data. The tile draws no covenant limit and says nothing about one. */
 function downsideSource(view: ReportView) {
   const source = moduleSource(view, "CP-2A", "Downside");
   const data = source.entry && !source.reason ? downsidePanels(source.entry) : null;
-  const legal = moduleSource(view, "CP-4", "Legal & covenants").entry;
-  const untested = legal !== undefined && blocked(legal);
-  return { ...source, data, untested, line: data?.line ?? entryLine(source.entry) };
+  return { ...source, data, line: data?.line ?? entryLine(source.entry) };
 }
 
 /** Row 5, stress: room to the covenant levels, the downside cases, and where leverage goes. */
@@ -821,11 +818,7 @@ export function StressRow({ run, view }: RowProps) {
         }
       >
         {downside.entry && !downside.reason ? (
-          <Downside
-            data={downside.data}
-            untested={downside.untested}
-            href={hrefOf(run.folder, downside.entry, downside.line)}
-          />
+          <Downside data={downside.data} href={hrefOf(run.folder, downside.entry, downside.line)} />
         ) : (
           <FigureGap reason={downside.reason ?? ""} />
         )}
