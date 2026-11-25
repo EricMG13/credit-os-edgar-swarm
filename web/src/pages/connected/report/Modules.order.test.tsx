@@ -155,7 +155,9 @@ it("draws only the header and the records when only the bottom line is owed", ()
 it("still draws the header and the way to Evidence when the handoff has no sections", () => {
   renderModule([]);
   expect(screen.getByRole("region", { name: "Credit analysis" })).toBeInTheDocument();
-  expect(screen.getByText(/This module wrote no findings in this report format/)).toBeInTheDocument();
+  expect(
+    screen.getByText(/This module wrote no findings in this report format/),
+  ).toBeInTheDocument();
   expect(screen.getByRole("link", { name: "Open Evidence" })).toBeInTheDocument();
   expect(screen.queryByRole("region", { name: "Statements and records" })).toBeNull();
 });

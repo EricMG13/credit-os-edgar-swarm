@@ -1,8 +1,6 @@
-import { StatusBadge } from "@/components/status/StatusBadge";
 import { MatrixBlock } from "@/pages/library/parts/MatrixBlock";
 import { QuestionsBlock } from "@/pages/library/parts/QuestionsBlock";
 import { StatementBlock } from "@/pages/library/parts/StatementBlock";
-import { StatusGroups } from "@/pages/library/parts/StatusBlock";
 import { WatchBlock } from "@/pages/library/parts/WatchBlock";
 import type { AnswerState, Cell } from "@/pages/library/slice";
 import { TRACE_HOST, TraceControl } from "@/pages/library/parts/TraceControl";
@@ -29,47 +27,8 @@ function visible(table: Table) {
   };
 }
 
-const READINESS = {
-  READY: "Ready",
-  READY_WITH_LIMITATIONS: "Ready with limitations",
-  CONDITIONAL: "Conditional",
-  NOT_READY: "Not ready",
-} as const;
-
 function cellText(text: string | undefined) {
   return text && containsReference(text) ? "In Evidence" : readerText(text ?? "");
-}
-
-function readiness(data: ReturnType<typeof visible>, traceAt: (line: number) => string) {
-  if (data.headers.join("|") !== "Area|Readiness|Key limitation") return null;
-  const groups = new Map<
-    (typeof READINESS)[keyof typeof READINESS],
-    { text: string; note: string | null; value: null; trace: string }[]
-  >();
-  for (const { cells, line } of data.rows) {
-    const state = cells[1]?.trim().toUpperCase().replace(/\s+/g, "_") ?? "";
-    if (!Object.hasOwn(READINESS, state)) return null;
-    const label = READINESS[state as keyof typeof READINESS];
-    const items = groups.get(label) ?? [];
-    items.push({
-      text: cellText(cells[0]),
-      note: cellText(cells[2]) || null,
-      value: null,
-      trace: traceAt(line),
-    });
-    groups.set(label, items);
-  }
-  return (
-    <StatusGroups
-      title="Readiness by area"
-      groups={[...groups].map(([label, items]) => ({
-        label,
-        badge: <StatusBadge set="Source readiness" state={label} />,
-        items,
-        hideEmptyValue: true,
-      }))}
-    />
-  );
 }
 
 const LEDGER_ORDER = ["Closed", "Remaining", "New", "No longer stated"];
@@ -270,7 +229,8 @@ export function typedModuleTable(
 ) {
   const data = visible(table);
   if (!data.rows.length) return null;
-  if (module === "CP-0" && title === "Source-readiness summary") return readiness(data, traceAt);
+  // Source readiness is drawn by its lead (leads/sourceReadiness); the table itself is in records.
+  if (module === "CP-0" && title === "Source-readiness summary") return null;
   const watchTitle = monitoringTitle(module, title, data);
   if (watchTitle) return monitoring(watchTitle, data, traceAt);
   const signature = data.headers.join("|");
