@@ -440,9 +440,9 @@ describe("final audit: connected intake", () => {
     await filledDocuments();
     await purpose();
     for (const [title, cap] of [
-      ["Lite credit assessment", "15.00"],
-      ["Full credit assessment", "25.00"],
-      ["Deep credit assessment", "40.00"],
+      ["Lite credit assessment", "20.00"],
+      ["Full credit assessment", "30.00"],
+      ["Deep credit assessment", "50.00"],
     ] as const) {
       const choice = screen.getByRole("radio", { name: title });
       expect(

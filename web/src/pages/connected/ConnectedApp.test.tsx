@@ -230,7 +230,7 @@ describe("connected run start", () => {
     });
   });
 
-  it("offers Deep in Lite/Full/Deep order and binds its 20 analytical modules to USD 40", async () => {
+  it("offers Deep in Lite/Full/Deep order and binds its 20 analytical modules to USD 50", async () => {
     const fetchMock = testingFetch({ ...plan, cap: "50" });
     render(<ConnectedApp path="/start" mode="live" />);
     await fillInputs();
@@ -1160,7 +1160,7 @@ describe("connected run start", () => {
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     await screen.findByRole("button", { name: "Submit run" });
     expect(panel.getByText("Decisions made").closest("li")).toHaveTextContent("0 of 1");
-    expect(screen.getByText(/of 4 ready · Cap USD 25\.00/)).toBeInTheDocument();
+    expect(screen.getByText(/of 4 ready · Cap USD 30\.00/)).toBeInTheDocument();
   });
 
   it("keeps a section edited at Advanced drawn at Basic: Valuation and the assumptions groups", async () => {

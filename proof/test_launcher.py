@@ -106,11 +106,11 @@ def test_real_scheduler_exports_the_submitted_run(monkeypatch, legal, model, eff
                 time.sleep(0.05)
             log = (layout.logs / f"{submitted.id}.log").read_text()
             assert record.status == "finished", (record.reason, log)
-            assert record.cap == "25"
+            assert record.cap == "30"  # Full's cap (owner, 2026-11-25)
             assert (record.config, record.effort) == (config, effort)
             loop_record = layout.runs / record.id / "live" / "loop.json"
             assert json.loads(loop_record.read_text())["config"] == config
-            assert cap_of(record) == Decimal(25)
+            assert cap_of(record) == Decimal(30)
             assert "Charged:  USD 0" in log
             assert_exported_report(layout, submitted.id, legal)
         finally:

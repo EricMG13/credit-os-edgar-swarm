@@ -311,7 +311,7 @@ async function checkRunConfirmation(page, channel, paidPreview, consent, submitB
   });
   await dialog.waitFor();
   if (paidPreview) {
-    await dialog.getByText(/spend up to USD 25\.00/u).waitFor();
+    await dialog.getByText(/spend up to USD 30\.00/u).waitFor();
     await dialog.getByRole("button", { name: "Start run, up to USD 30.00" }).waitFor();
     await page.screenshot({
       path: path.join(artifacts, `${channel}-paid-confirmation.png`),

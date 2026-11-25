@@ -232,7 +232,13 @@ Full and Deep runs are still expected on GPT Sol; Opus against Full's cap stays 
 
 ## Instruction size
 
-Instruction size: <controller fills in>
+Head plus method, CP-8 left out, on `tests/test_cpos_launch.py`'s synthetic input, measured at
+`main` (`4aaec9d`) and after this change. Lite: 416,093 to 669,952 characters (+253,859: CP-1B
+66,907, CP-DR 73,449, CP-1C 68,192, CP-1D 45,311). Full: 1,468,993 to 1,650,316 (+181,323: CP-1B
+66,900, CP-1C 68,185, CP-1D 45,304, and 934 on CP-DR for the peer pack). Each ceiling rises by its
+pathway's measured increase, as for earlier additions to an existing pathway: Lite 421,292 to
+675,151, Full 1,485,996 to 1,667,319. The seven other pathways' instructions are byte-identical
+before and after; no other ceiling moved.
 
 ## Left open
 

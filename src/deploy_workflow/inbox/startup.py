@@ -97,10 +97,10 @@ def check_launchable(ruling: Path) -> None:
         if ruled is None or not cap.is_finite() or cap > ruled:
             raise StartupRefused(
                 f"the {pathway} cap USD {cap} is above the ruled USD {ruled} of "
-                "docs/rulings/2026-11-15-pathway-tiers-and-caps.md"
+                "docs/rulings/2026-11-25-layer-1-in-all-assessment-pathways.md"
                 if ruled is not None
                 else f"the {pathway} cap USD {cap} has no ruled figure in "
-                "docs/rulings/2026-11-15-pathway-tiers-and-caps.md"
+                "docs/rulings/2026-11-25-layer-1-in-all-assessment-pathways.md"
             )
     if ruling.resolve() != STANDING_RULING.resolve():
         raise StartupRefused(

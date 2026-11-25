@@ -1585,7 +1585,7 @@ def run_cap(pathway: PathwayId, asked: Decimal | None) -> Decimal:
     if asked > ceiling:
         raise LaunchRefused(
             f"--cap {asked}: above the {pathway} cap of USD {ceiling} "
-            "(docs/rulings/2026-11-15-pathway-tiers-and-caps.md); a lower cap is allowed"
+            "(docs/rulings/2026-11-25-layer-1-in-all-assessment-pathways.md); a lower cap is allowed"
         )
     return asked
 

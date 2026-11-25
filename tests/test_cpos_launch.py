@@ -3738,9 +3738,10 @@ def test_cp1c_in_lite_and_full_reads_the_peer_pack_and_comparables_are_optional(
     benchmark = texts["CP-1C"].partition(cpos_launch.METHOD_MARK)[0]
     asked = peer_source == "cp_dr_public"
     assert ("this run requests the peer pack" in research) is asked
-    assert ("take the peer set and its figures from the CP-DR handoff's TDR.4" in benchmark) is asked
-    gap = any(i["id"] == "CP-1C:cp1c-no-peer-source" for i in prepared.expectations)
-    assert gap is (peer_source == "none")  # the offline forecast names a run with no peer set
+    assert ("the peer set and its figures from the CP-DR handoff's TDR.4" in benchmark) is asked
+    gaps = [i["id"] for i in prepared.expectations if i["id"].startswith("CP-1C:")]
+    # The offline forecast names a run with no peer set.
+    assert ("CP-1C:cp1c-no-peer-source" in gaps) is (peer_source == "none")
 
 
 def test_explicit_modules_are_run_as_given(tmp_path):
