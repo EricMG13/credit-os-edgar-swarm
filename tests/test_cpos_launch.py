@@ -627,9 +627,43 @@ CP3_WATERFALL = [
     f"| Enterprise value | — | {NO_EV} | {NO_EV} | {NO_EV} | USD | m |",
     "",
 ]
+# CP-2's credit scorecard registers (owner ruling R9, 2026-11-25), synthetic. The 17 factors and
+# the four assessments are typed by hand from the ruling, not read from the code under test.
+CP2_FACTORS = (
+    *("Scale", "Market position", "Regulatory exposure", "Technology", "Barriers to entry"),
+    *("Leverage", "Free cash flow", "Liquidity", "Rating trend", "Geographic diversification"),
+    *("Product diversification", "Market share", "Customer concentration", "Market access"),
+    *("Maturity profile", "Interest cover", "Financial policy"),
+)
+CP2_SCORECARD = [
+    "### T2.13 - Credit scorecard",
+    "",
+    "| Factor | Level | Basis |",
+    "| --- | --- | --- |",
+    *(f"| {factor} | 3 | annual.txt, page 2 |" for factor in CP2_FACTORS[:-1]),
+    "| Financial policy | Not scored | No stated policy in the synthetic evidence |",
+    "",
+    "### T2.14 - Credit assessment",
+    "",
+    "| Assessment | View | Basis |",
+    "| --- | --- | --- |",
+    "| Management | Neutral | annual.txt, page 2 |",
+    "| Sector Outlook | Positive | annual.txt, page 2 |",
+    "| Sponsor Quality | Not assessed | No sponsor in the synthetic evidence |",
+    "| Credit Direction | Stable | annual.txt, page 2 |",
+    "",
+]
+# The Risk Rubric's Scale row, typed by hand from § 9 of the 2026-11-25 deliverables spec.
+RUBRIC_SCALE_ROW = (
+    "| Scale | EBITDA > $1bn — large, diversified issuer with global reach | $500m–$1bn — "
+    "strong mid-cap with solid market presence | $200m–$500m — medium-sized, regionally "
+    "focused | $100m–$200m — small-scale, limited diversification | < $100m — niche or "
+    "subscale, vulnerable to shocks |"
+)
 OWNED_SECTIONS = {
     "CP-6": ["### Portfolio posture", "", CP6A_POSTURE, ""],
     "CP-3": CP3_WATERFALL,
+    "CP-2": CP2_SCORECARD,
 }
 
 
@@ -1641,9 +1675,14 @@ def test_the_lite_pathway_runs_end_to_end_to_a_verified_delivery_with_a_syntheti
 # 651,532 to 652,944 (+1,412); lite_credit_assessment 414,801 to 416,093 (+1,292);
 # portfolio_decision 942,102 to 943,549 (+1,447); relative_value 1,061,779 to 1,063,824 (+2,045);
 # short_snapshot 156,212 to 157,415 (+1,203).
+# 2026-11-25 (owner ruling R9, "CP-2 writes a scorecard table using the owner's Risk Rubric";
+# docs/superpowers/specs/2026-11-25-deliverables-credit-snapshot.md): CP-2's credit scorecard block
+# with the rubric's 17 rows adds 6,424 characters to CP-2's instructions in every pathway that runs
+# it. Only lite_credit_assessment passes its ceiling: 416,093 before, 422,517 after (+6,424), so its
+# ceiling rises by that growth, 421,292 to 427,716. The other ceilings hold and are unchanged.
 INSTRUCTION_BUDGET = {
     "deep_credit_assessment": 1_903_059,
-    "lite_credit_assessment": 421_292,
+    "lite_credit_assessment": 427_716,
     "credit_snapshot": 1_485_996,
     "covenant_refinancing": 1_157_279,
     "distressed_restructuring": 1_188_321,
@@ -3295,6 +3334,10 @@ def test_no_text_sent_to_a_model_gives_usd_as_its_only_example(tmp_path):
     found = {name: usd_only_examples(text) for name, text in sent.items()}
     quoted = {name for name, f in found.items() if f and set(f) == {CP4_QUOTED_PROVISION}}
     assert quoted == {"instructions CP-4", "method CP-4"}, "the known quote moved or went"
+    # Known and kept, for the owner to rule on: the Risk Rubric's Scale row is the owner's own
+    # text, sent byte for byte (ruling R9, 2026-11-25), and states its EBITDA thresholds in
+    # dollars only. Nothing here converts them or adds another currency beside them.
+    assert found.pop("instructions CP-2") == [RUBRIC_SCALE_ROW]
     assert {name: f for name, f in found.items() if f and name not in quoted} == {}
 
 
@@ -10158,3 +10201,150 @@ def test_an_adapter_refusal_that_is_only_a_prefix_of_a_listed_fault_is_still_nam
     named = "boundary pipes: line "
     assert sum(i.endswith(f"{named}{bad_a}") for i in review) == 1, review
     assert sum(i.endswith(f"{named}{bad_b}") for i in review) == 1, review
+
+
+# --- CP-2's credit scorecard (owner ruling R9, 2026-11-25) ---------------------------------------
+# Scope: synthetic handoffs and the instructions as built offline; no model wrote or read them.
+
+
+@pytest.mark.parametrize("pathway", sorted(PATHWAY_MODULES))
+def test_cp2_is_asked_for_the_credit_scorecard_in_every_pathway_that_runs_it(tmp_path, pathway):
+    _, texts = all_instructions(tmp_path, pathway)
+    opening = "Credit scorecard: also write the registers T2.13 and T2.14."
+    for module, text in texts.items():
+        if module != "CP-2":
+            assert opening not in text, module
+    assert ("CP-2" in texts) == ("CP-2" in PATHWAY_MODULES[pathway])
+    if "CP-2" not in texts:
+        return
+    head, _, method = texts["CP-2"].partition(cpos_launch.METHOD_MARK)
+    assert head.count(opening) == 1 and opening not in method
+    block = cpos_launch.cp2_scorecard_block()
+    assert block.startswith(opening) and head.count(block) == 1
+    # Everything but the rubric table stays short.
+    rubric = block[block.index("| Factor | 1 |") : block.index("Score a factor only")]
+    assert len(block) - len(rubric) < 2_400
+    assert_rubric(rubric)
+    assert "`### T2.13 - Credit scorecard` (columns `Factor | Level | Basis`" in block
+    assert "`### T2.14 - Credit assessment` (columns `Assessment | View | Basis`" in block
+    assert "each a `###` section of `## Findings` after `### Limitations`" in block
+    assert f"exactly these 17 rows, named exactly: {', '.join(CP2_FACTORS)}." in block
+    assert "1 (strongest) to 5 (weakest)" in block
+    assert "1 Excellent, 2 Strong, 3 Satisfactory, 4 Weak, 5 Poor" in block
+    assert "write `Not scored` as its Level, list the factor in `## Gaps` and never guess" in block
+    assert "Management, Sector Outlook and Sponsor Quality, each Positive, Neutral or Negative" in (
+        block
+    )
+    assert "Credit Direction, Improving, Stable or Deteriorating" in block
+    assert "the only cell of these tables that may hold a source reference" in block
+    assert "Do not write an overall credit score, a total or an average." in block
+    assert "not the method's T2.7 Financial Profile Scorecard, which stays unwritten" in block
+    assert "is refused unless the module is blocked" in block
+    assert "house Risk Rubric (to be kept in `docs/methodology/portfolio-recommendation.md`)" in (
+        block
+    )
+    # The scope section CP-2 is sent still cuts T2.7, and names neither new register.
+    scope = method.rpartition("Register scope in this transport:")[2]
+    assert "T2.7 Financial Profile Scorecard" in scope
+    assert "T2.13" not in method and "T2.14" not in method
+
+
+def assert_rubric(rubric: str) -> None:
+    """The Risk Rubric table as CP-2 is sent it. Cells typed by hand from the table in § 9 of
+    docs/superpowers/specs/2026-11-25-deliverables-credit-snapshot.md, never read through the
+    loader; the paragraph under that table (the rubric's two gaps) is not sent or resolved."""
+    lines = rubric.rstrip("\n").split("\n")
+    assert lines[0] == "| Factor | 1 | 2 | 3 | 4 | 5 |"
+    assert [line.split(" | ")[0] for line in lines[1:]] == [f"| {f}" for f in CP2_FACTORS]
+    assert all(line.count(" | ") == 5 and line.endswith(" |") for line in lines[1:])
+    assert lines[1] == RUBRIC_SCALE_ROW
+    assert lines[6] == (
+        "| Leverage | Low leverage (<3x), conservative structure | Moderate leverage (3–4x), "
+        "ample headroom | Elevated leverage (4–5x), stable but stretched | High leverage (>5x), "
+        "limited covenant cushion | Very high leverage (>6x), fragile structure or covenant "
+        "breach risk |"
+    )
+    assert lines[12] == (
+        "| Market share | Dominant market leader (>30%) | Top 3 competitor | Mid-tier, <10% "
+        "share | Small player, <5% share | Marginal presence or niche operator |"
+    )
+    assert lines[16] == (
+        "| Interest cover | EBITDA/Interest >4.0x | 3.0–4.0x | 2.0–3.0x | 1.0–2.0x | <1.0x "
+        "(interest not covered) |"
+    )
+    assert lines[17].split(" | ")[3] == (
+        "Neutral or balanced policy. Leverage 3.5–4.5x; some shareholder bias."
+    )
+    for unsent in ("Gaps in the rubric", "5–6x", "10–30%", "read here as", "Probability of"):
+        assert unsent not in rubric, unsent
+
+
+def test_the_rubrics_gaps_paragraph_is_in_no_modules_instructions(tmp_path):
+    _, texts = all_instructions(tmp_path, "deep_credit_assessment")
+    for module, text in texts.items():
+        for unsent in ("Gaps in the rubric as written", "read here as 4 for 5–6x"):
+            assert unsent not in text, (module, unsent)
+    assert "Very high leverage (>6x)" in texts["CP-2"]
+
+
+def test_sponsor_quality_names_registers_cp1a_writes_in_this_transport():
+    """Hand-read from REF_CP-2C_STEPS.md (T2D.4 Behavior Flag Register, T2D.5 Capital Allocation
+    Risk Table, T2D.9 Sponsor Risk Assessment Table) and CP-1A's SKILL.md (`ownership_register`).
+    T2D.2 and T2D.8 are cut by CP-1A's scope section, so the block must not send CP-2 to them."""
+    block = cpos_launch.cp2_scorecard_block()
+    written = cpos_launch.required_registers("CP-1A")
+    for ident in ("ownership_register", "T2D.4", "T2D.5", "T2D.9"):
+        assert ident in block and ident in written, ident
+    for cut in ("T2D.2", "T2D.8"):
+        assert cut not in block and cut not in written, cut
+    assert "T2D.4 Behavior Flag Register" in block
+    assert "T2D.5 Capital Allocation Risk Table" in block
+    assert "T2D.9 Sponsor Risk Assessment Table" in block
+
+
+def cp2_checked(tmp_path: Path, edit=lambda raw: raw) -> tuple[str, ...]:
+    prepared, task, context = good_task(tmp_path, "CP-2")
+    raw = answer(context, list(prepared.plan.layout.routes))
+    assert "### T2.13 - Credit scorecard" in raw and "### T2.12 - Register" in raw
+    return _checked_handoff(task, edit(raw).encode(), checker(prepared.layout))
+
+
+def test_a_complete_cp2_handoff_with_the_scorecard_passes_every_check(tmp_path):
+    """Every check a handoff meets, the method's own included, accepts the two registers the
+    method does not list; unscored and unassessed rows are accepted as written."""
+    assert cp2_checked(tmp_path) == ()
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "complaint"),
+    [
+        # Written to the old contract: neither register.
+        ("### T2.13 - Credit scorecard", "### Scorecard", "The handoff has no T2.13 register."),
+        ("### T2.14 - Credit assessment", "### Views", "The handoff has no T2.14 register."),
+        # A level with its name, a missing factor, a view from the other vocabulary.
+        ("| Leverage | 3 |", "| Leverage | 3 (Satisfactory) |", "T2.13 row `Leverage`: Level"),
+        ("| Liquidity | 3 | annual.txt, page 2 |\n", "", "T2.13 is missing the row Liquidity"),
+        ("| Management | Neutral |", "| Management | Stable |", "T2.14 row `Management`: View"),
+        ("| Credit Direction | Stable |", "| Credit Direction | Positive |", "`Credit Direction`"),
+        # A scored row with no evidence.
+        ("| Scale | 3 | annual.txt, page 2 |", "| Scale | 3 | n/a |", "`Scale`: Basis is empty"),
+    ],
+)
+def test_a_cp2_handoff_with_a_faulty_scorecard_gets_a_targeted_repair(
+    tmp_path, old, new, complaint
+):
+    issues = cp2_checked(tmp_path, lambda raw: raw.replace(old, new, 1))
+    mine = [i for i in issues if i.startswith("Credit scorecard registers: ")]
+    assert len(mine) == 1, issues
+    assert complaint in mine[0]
+    assert "Head them exactly `### T2.13 - Credit scorecard`" in mine[0]
+    assert "`### T2.14 - Credit assessment`" in mine[0]
+
+
+def test_a_blocked_cp2_and_other_modules_owe_no_scorecard():
+    blocked = "---\nmodule_status: Blocked\n---\n# CP-2\n\n## Findings\n\n### Bottom line\n"
+    assert cpos_launch.scorecard_issues("CP-2", blocked) == ()
+    assert cpos_launch.scorecard_issues("CP-2", blocked.replace("Blocked", "Complete")) != ()
+    for module in METHODS:
+        if module != "CP-2":
+            assert cpos_launch.scorecard_issues(module, "## Findings\n") == (), module

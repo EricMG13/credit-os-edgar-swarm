@@ -30,6 +30,7 @@ SOURCE_PATHS = (
     "docs/react-workflow.md",
     "docs/reuse/selected-methods",
     "docs/rulings",
+    "docs/superpowers/specs/2026-11-25-deliverables-credit-snapshot.md",  # CP-2's Risk Rubric table
     "docs/templates",
     "docs/visualisations",
     "prompts",
