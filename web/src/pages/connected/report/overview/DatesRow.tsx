@@ -244,15 +244,15 @@ function Watch({ rows }: { rows: readonly WatchRow[] | null }) {
 }
 
 /**
- * The recorded events that have no date the axis can place ("TBD", "unknown"), counted beside
- * the dated ones and sent to the Calendar, which lists them; never left unmentioned.
+ * The recorded events the axis could not place (no date, "TBD", a half year), counted beside the
+ * dated ones and sent to the Calendar, which lists them; never left unmentioned.
  */
 function Undated({ gaps }: { gaps: ReturnType<typeof buildCalendar>["gaps"] }) {
   if (gaps.length === 0) return null;
   const count = gaps.reduce((sum, gap) => sum + (gap.unplaced?.length ?? 0), 0);
   const words =
     count > 0
-      ? `${String(count)} ${count === 1 ? "event has" : "events have"} no date; see the Calendar`
+      ? `${String(count)} recorded ${count === 1 ? "event" : "events"} could not be placed on the axis; see the Calendar`
       : "Some recorded events could not be placed; see the Calendar";
   return (
     <TextLink

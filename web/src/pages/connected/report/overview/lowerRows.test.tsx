@@ -402,7 +402,7 @@ it("draws the limitations as one list when every module recorded one, after the 
   );
 });
 
-it("always says how many recorded events have no date, beside the dated ones", () => {
+it("says how many recorded events could not be placed on the axis, beside the dated ones, and no more", () => {
   const rows = [event("2025-07-01", "Coupon")];
   mocks.calendar = rows;
   mocks.upcoming = rows;
@@ -419,8 +419,27 @@ it("always says how many recorded events have no date, beside the dated ones", (
   render(<DatesRow {...props} />);
   const tile = screen.getByRole("region", { name: "Dates to watch" });
   expect(
-    within(tile).getByRole("link", { name: "2 events have no date; see the Calendar" }),
+    within(tile).getByRole("link", {
+      name: "2 recorded events could not be placed on the axis; see the Calendar",
+    }),
   ).toHaveAttribute("href", "#calendar");
+  expect(tile).not.toHaveTextContent(/no date/);
+  cleanup();
+  // An event dated "H2 2025" has a date the axis cannot place, not no date.
+  mocks.gaps = [
+    {
+      owner: "Liquidity",
+      reason: "Half-year date.",
+      unplaced: [{ href: "a", cells: ["H2 2025"] }],
+    },
+  ];
+  render(<DatesRow {...props} />);
+  expect(
+    screen.getByRole("link", {
+      name: "1 recorded event could not be placed on the axis; see the Calendar",
+    }),
+  ).toBeVisible();
+  expect(screen.getByRole("region", { name: "Dates to watch" })).not.toHaveTextContent(/no date/);
 });
 
 it("draws event cells through the reader rule: markers removed, a cell carrying an unnamed id not drawn", () => {
