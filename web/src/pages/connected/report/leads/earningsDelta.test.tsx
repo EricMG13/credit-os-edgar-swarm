@@ -153,7 +153,7 @@ describe("the prior and current results from the retained earnings table", () =>
     });
     expect(of("Cash interest paid, net")).toMatchObject({ text: "\u22122", basis: "stated" });
     expect(of("Working-capital cash movement")).toMatchObject({ text: "+129", basis: "stated" });
-    // "22 reported" is the module's own figure: printed as stated, never as derived.
+    // "22 reported" is the module's own figure: printed as stated.
     expect(of("Intangible amortization")).toMatchObject({
       text: "+22 reported",
       basis: "stated",
@@ -264,7 +264,7 @@ describe("periods of the earnings table", () => {
     const [revenue] = movers.groups[0]?.rows ?? [];
     expect(revenue).toMatchObject({ priorPeriod: "FY2023", currentPeriod: "FY2024" });
     // The stated column cannot be tied to one pair of three periods: the exact difference 7940 - 6585.
-    expect(revenue?.change).toMatchObject({ text: "+1,355", basis: "derived" });
+    expect(revenue?.change).toMatchObject({ text: "+1,355", basis: "computed" });
     expect(revenue?.others).toEqual([{ period: "FY2022", text: "6000" }]);
   });
   it("orders by year, not by column position", () => {
@@ -370,7 +370,7 @@ describe("pairs from the chart tables", () => {
     expect(mixed?.current.value).toBe(8100);
     expect(plain?.change).toMatchObject({ text: "+200", basis: "computed" });
     // A row without a change simply shows none: no method note says why.
-    expect(movers.notes).toEqual([]);
+    expect(movers.notes).toEqual(["x"]);
   });
   it("says a repeated chart table is repeated, not absent", () => {
     expect(earningsDelta(delta(results(MONEY), results(MONEY))).movers).toMatchObject({
@@ -457,7 +457,7 @@ describe("pairs from the chart tables", () => {
     expect(movers.groups[0]?.drawn.map((pair) => pair.label)).toEqual(["Cash interest", "Revenue"]);
     // A pair stating no figure on either side is listed in its place with its words, not left out.
     expect(movers.unstated.map((one) => one.pair.label)).toEqual(["Cash taxes"]);
-    expect(movers.notes).toEqual([]);
+    expect(movers.notes).toEqual(["x"]);
   });
   it("sets no change between two years apart, nor across kinds of period (the L2 inputs)", () => {
     const change = (
@@ -609,7 +609,7 @@ describe("the variance bridge", () => {
     expect(result).toMatchObject({
       kind: "unreconciled",
       message:
-        "This page could not read the variance bridge from the handoff because Disposals is not supplied (not split).",
+        "This page could not draw the variance bridge because Disposals is not supplied (not split).",
     });
   });
   it("screens a gap reason that names a register", () => {
@@ -624,7 +624,7 @@ describe("the variance bridge", () => {
     );
     expect(result).toMatchObject({
       message:
-        "This page could not read the variance bridge from the handoff because Disposals is not supplied (Detail is in Evidence.).",
+        "This page could not draw the variance bridge because Disposals is not supplied (Detail is in Evidence.).",
     });
   });
   it("is not a bridge with a gap amount, with two units, with no changes, or when two tables compete", () => {
@@ -712,17 +712,36 @@ describe("EarningsDeltaLead on the retained handoff", () => {
   it("draws the bridge's absence as the one gap tile, not a caption", () => {
     const { container } = lead(cp1bEntry());
     const gap = screen.getByRole("region", { name: "Variance bridge" });
-    expect(
-      within(gap).getByText(/This page could not read the variance bridge from the handoff\./),
-    ).toBeVisible();
+    expect(within(gap).getByText(/This page could not read the variance bridge\./)).toBeVisible();
     expect(within(gap).queryByRole("img")).toBeNull();
     expect(container.querySelector("section.gap-hatch")).toBeNull();
     expect(
       within(screen.getByRole("region", { name: RESULTS_NAME })).queryByText(/No variance bridge/),
     ).toBeNull();
   });
-  it("draws the results and the margins side by side, 8 and 4, when both exist", () => {
+  it("stacks the margins under the results when they are much shorter: no hole beside the results", () => {
     lead(cp1bEntry());
+    const results = screen.getByRole("region", { name: RESULTS_NAME });
+    const margins = screen.getByRole("region", { name: "Margins and KPIs" });
+    expect(results.className).toContain("lg:col-span-12");
+    expect(margins.className).toContain("lg:col-span-12");
+    expect(margins.parentElement?.className).not.toContain("self-start");
+  });
+  it("draws the results and the margins side by side, 8 and 4, when they are about as tall", () => {
+    lead(
+      delta(
+        results([
+          ["Revenue", "FY2023", "6,585", "FY2024", "7,940", "US$m", "x"],
+          ["Costs", "FY2023", "5,000", "FY2024", "6,000", "US$m", "x"],
+          ["Net income", "FY2023", "1,299", "FY2024", "1,715", "US$m", "x"],
+        ]),
+        kpis([
+          ["Gross margin", "FY2023", "58.3", "FY2024", "58.8", "%", "x"],
+          ["EBITDA margin", "FY2023", "47.8", "FY2024", "48.0", "%", "x"],
+          ["Net margin", "FY2023", "19.7", "FY2024", "21.6", "%", "x"],
+        ]),
+      ),
+    );
     expect(screen.getByRole("region", { name: RESULTS_NAME }).className).toContain("lg:col-span-8");
     expect(screen.getByRole("region", { name: "Margins and KPIs" }).className).toContain(
       "lg:col-span-4",
@@ -741,21 +760,51 @@ describe("EarningsDeltaLead on the retained handoff", () => {
       "lg:col-span-12",
     );
   });
-  it("draws all 17 pairs on one shared scale, in the handoff's order, equal changes equal widths", () => {
+  it("draws the 17 pairs as two small multiples, each on its own scale, in the handoff's order", () => {
     const { container } = lead(cp1bEntry());
     const tile = screen.getByRole("region", { name: RESULTS_NAME });
-    // One drawing for the unit; the two split rows are in it as gap rows, in place.
-    expect(within(tile).getAllByRole("img")).toHaveLength(1);
-    const labels = [...tile.querySelectorAll("g[data-row]")].map((row) =>
-      row.getAttribute("data-row"),
-    );
-    expect(labels).toEqual(WITH_GAPS);
+    const drawings = within(tile).getAllByRole("img");
+    expect(drawings).toHaveLength(2);
+    // Each group states its own scale in its head.
+    expect(drawings.map((one) => textOf(one as unknown as Element, "caption").join(""))).toEqual([
+      "US$m, larger figure 1,000 to under 10,000",
+      "US$m, larger figure 100 to under 1,000",
+    ]);
+    expect(
+      drawings.map((one) =>
+        [...one.querySelectorAll("g[data-row]")].map((row) => row.getAttribute("data-row")),
+      ),
+    ).toEqual([THOUSANDS, HUNDREDS]);
+    // Within a group equal changes are equal widths: 1355 up, 1356 down, 665 up.
     const revenue = spanOf(rowMark(container, "Revenue"));
     const cash = spanOf(rowMark(container, "Discretionary cash flow"));
     const ebitda = spanOf(rowMark(container, "Reported EBITDA"));
-    // 1355 up, 1356 down, 665 up: one scale means pixels follow amounts, sign included.
     expect(revenue / ebitda).toBeCloseTo(1355 / 665, 2);
     expect(cash / revenue).toBeCloseTo(-1356 / 1355, 2);
+    // The plot has at least half the drawing's width.
+    for (const drawing of drawings) {
+      const plot = [...drawing.querySelectorAll("[data-prior],[data-current]")].map((one) =>
+        cx(one),
+      );
+      const width = Number(drawing.getAttribute("viewBox")?.split(" ")[2]);
+      expect(Math.max(...plot) - Math.min(...plot)).toBeGreaterThan(0);
+      expect(Math.max(...plot)).toBeLessThanOrEqual(width);
+    }
+  });
+  it("sets a ring and a dot that coincide apart, so both are seen", () => {
+    const { container } = lead(cp1bEntry());
+    const row = rowMark(container, "Total D&A");
+    expect(row.querySelector("[data-offset]")).not.toBeNull();
+  });
+  it("writes the two split rows as one compact line, the module's reason once on a chip", () => {
+    const { container } = lead(cp1bEntry());
+    const line = container.querySelector('[data-gap-line="Maintenance capex, Growth capex"]');
+    expect(line).not.toBeNull();
+    expect(line?.textContent).toBe("Maintenance capex, Growth capexNot supplied: no split");
+    expect(line?.querySelectorAll("[data-gap]")).toHaveLength(1);
+    // Not drawn in the dumbbell, not drawn twice.
+    expect(container.querySelector('g[data-row="Maintenance capex"]')).toBeNull();
+    expect(container.textContent?.match(/Not supplied: no split/g)).toHaveLength(1);
   });
   it("sets prior as a ring and current as a dot at their values", () => {
     const { container } = lead(cp1bEntry());
@@ -786,27 +835,21 @@ describe("EarningsDeltaLead on the retained handoff", () => {
     expect(cash.textContent).toMatch(/down/);
     expect(cash.textContent).not.toMatch(/better|worse/);
     expect(rowMark(container, "Gross profit").textContent).not.toMatch(/better|worse/);
-    // A figure the module states as reported is printed as stated, not tagged derived.
+    // A figure the module states as reported is printed as stated.
     expect(rowMark(container, "Intangible amortization").textContent).toContain("+22 reported");
     expect(container.textContent).not.toMatch(/derived/);
   });
   it("describes the drawing with every figure in its aria-label", () => {
     lead(cp1bEntry());
     const label = within(screen.getByRole("region", { name: RESULTS_NAME }))
-      .getByRole("img")
-      .getAttribute("aria-label");
+      .getAllByRole("img")
+      .map((one) => one.getAttribute("aria-label"))
+      .join(" | ");
     expect(label).toContain("US$m, FY2023 to FY2024:");
     expect(label).toContain("Revenue 6,585 in FY2023 and 7,940 in FY2024, +1,355, up, better");
     expect(label).toContain(
       "Discretionary cash flow 1,198 in FY2023 and −158 in FY2024, −1,356, down",
     );
-  });
-  it("draws the pairs with a gap in place, hatched, with the handoff's reason", () => {
-    const { container } = lead(cp1bEntry());
-    const gap = rowMark(container, "Maintenance capex");
-    expect(gap.querySelectorAll("[data-gap]").length).toBeGreaterThan(0);
-    expect(textOf(gap, "reason").join(" ")).toContain("Not supplied: no split");
-    expect(gap.querySelector("[data-prior]")).toBeNull();
   });
   it("carries every pair in the table view, in the handoff's order", () => {
     lead(cp1bEntry());
@@ -822,7 +865,6 @@ describe("EarningsDeltaLead on the retained handoff", () => {
       "FY2024",
       "161",
       "+22 reported",
-      "stated",
     ]);
     expect(rows.find((row) => row[0] === "Maintenance capex")?.[3]).toBe("Not supplied: no split");
   });
@@ -832,7 +874,7 @@ describe("EarningsDeltaLead on the retained handoff", () => {
     const gross = rowMark(container, "Gross margin");
     expect(gross.textContent).toContain("58.3%");
     expect(gross.textContent).toContain("58.8%");
-    expect(gross.textContent).toContain("+0.5 percentage points");
+    expect(gross.textContent?.replace(/\s/g, "")).toContain("+0.5percentagepoints");
     expect(tile.textContent).toMatch(/Axis starts at 40, not at zero/);
     expect(within(tile).getByRole("img").getAttribute("aria-label")).toContain(
       "Gross margin 58.3% in FY2023 and 58.8% in FY2024, +0.5 percentage points, up",
@@ -853,9 +895,7 @@ describe("EarningsDeltaLead on the retained handoff", () => {
     );
     const gap = screen.getByRole("region", { name: RESULTS_NAME });
     expect(
-      within(gap).getByText(
-        /This page could not read the unit of the earnings table from the handoff\./,
-      ),
+      within(gap).getByText(/This page could not read the unit of the earnings table\./),
     ).toBeVisible();
     expect(within(gap).queryByRole("img")).toBeNull();
     expect(
@@ -878,7 +918,7 @@ describe("EarningsDeltaLead at the measured width", () => {
     measuredAt(1128);
     const { container } = lead(cp1bEntry());
     const svgs = [...container.querySelectorAll("svg[role='img']")];
-    expect(svgs.length).toBe(2);
+    expect(svgs.length).toBe(3);
     for (const svg of svgs) {
       expect(svg.getAttribute("viewBox")?.split(" ")[2]).toBe("1128");
       expect(svg.getAttribute("data-layout")).toBe("wide");
@@ -951,7 +991,7 @@ describe("EarningsDeltaLead on chart tables", () => {
     const coverage = rowMark(container, "Interest coverage");
     expect(coverage.textContent).toContain("2.71x");
     expect(coverage.textContent).toContain("+0.58x");
-    expect(coverage.textContent).toMatch(/up, better, derived/);
+    expect(coverage.textContent).toMatch(/up, better/);
     // The 3.29x current is not on the money scale: it would sit at the very start of a scale to 8000.
     const money = rowMark(container, "Revenue");
     expect(cx(coverage.querySelector("[data-current]"))).toBeGreaterThan(
@@ -966,7 +1006,7 @@ describe("EarningsDeltaLead on chart tables", () => {
     );
     const row = rowMark(container, "Total debt / EBITDA");
     expect(row.textContent).toContain("+0.26x");
-    expect(row.textContent).toMatch(/up, worse, derived/);
+    expect(row.textContent).toMatch(/up, worse/);
     // The current dot is in the signal colour, with the word beside it.
     expect(row.querySelector("[data-current]")?.getAttribute("class")).toContain("warning-mark");
   });
@@ -982,9 +1022,7 @@ describe("EarningsDeltaLead on chart tables", () => {
     expect(row.textContent).toContain("1,299");
     expect(textOf(row, "reason").join(" ")).toContain("FY2024: Not supplied: not yet reported");
     expect(row.querySelector("[data-current]")).toBeNull();
-    expect(
-      screen.getByText(/This page could not read the variance bridge from the handoff\./),
-    ).toBeVisible();
+    expect(screen.getByText(/This page could not read the variance bridge\./)).toBeVisible();
   });
   it("puts a stated zero at the axis start, not off the chart", () => {
     const { container } = lead(
@@ -999,11 +1037,7 @@ describe("EarningsDeltaLead on chart tables", () => {
   });
   it("reads the states of the margin table: absent, with a gap, all gaps", () => {
     lead(delta(results(MONEY)));
-    expect(
-      screen.getByText(
-        /This page could not read the table of margin and KPI changes from the handoff\./,
-      ),
-    ).toBeVisible();
+    expect(screen.getByText(/This page could not read the margin and KPI changes\./)).toBeVisible();
     cleanup();
     lead(
       delta(
@@ -1021,9 +1055,7 @@ describe("EarningsDeltaLead on chart tables", () => {
       ),
     );
     const tile = screen.getByRole("region", { name: "Margins and KPIs" });
-    expect(
-      within(tile).getByText("This page could not read a pair with both figures from the handoff."),
-    ).toBeVisible();
+    expect(within(tile).getByText("This page could not read a figure for any pair.")).toBeVisible();
     expect(
       within(within(tile).getByRole("list", { name: "Not supplied" })).getByText(
         "Not supplied: no split",
@@ -1140,7 +1172,7 @@ describe("EarningsDeltaLead with a variance bridge", () => {
     const own = screen.getByRole("region", { name: "Variance bridge" });
     expect(
       within(own).getByText(
-        /This page could not read the variance bridge from the handoff because Disposals is not supplied \(not split\)\./,
+        /This page could not draw the variance bridge because Disposals is not supplied \(not split\)\./,
       ),
     ).toBeVisible();
     expect(screen.queryByText(/add up/)).toBeNull();
@@ -1238,18 +1270,10 @@ describe("EarningsDeltaLead gaps", () => {
   it("draws the three gap tiles, in the one gap pattern, for a handoff with no tables", () => {
     const { container } = lead(entry("CP-1B", [], []));
     expect(
-      screen.getByText(
-        /This page could not read the table of prior and current results from the handoff\./,
-      ),
+      screen.getByText(/This page could not read the prior and current results\./),
     ).toBeVisible();
-    expect(
-      screen.getByText(
-        /This page could not read the table of margin and KPI changes from the handoff\./,
-      ),
-    ).toBeVisible();
-    expect(
-      screen.getByText(/This page could not read the variance bridge from the handoff\./),
-    ).toBeVisible();
+    expect(screen.getByText(/This page could not read the margin and KPI changes\./)).toBeVisible();
+    expect(screen.getByText(/This page could not read the variance bridge\./)).toBeVisible();
     expect(screen.queryByRole("img")).toBeNull();
     expect(container.querySelector("section.gap-hatch")).toBeNull();
     expect(screen.getAllByRole("region")).toHaveLength(3);

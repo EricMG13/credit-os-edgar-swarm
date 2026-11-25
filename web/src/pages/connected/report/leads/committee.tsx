@@ -2,7 +2,6 @@ import { ChevronDown } from "@untitledui/icons";
 import { useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { cx } from "@/utils/cx";
 import { GapPattern } from "../overview/figureParts";
-import { GapNote } from "../overview/Tile";
 import { FigureTile, GapTile, LeadFrame } from "./kit/LeadFrame";
 import { Bullet, GapChip, Measured, textWidth, type BulletSide } from "./kit/marks";
 import {
