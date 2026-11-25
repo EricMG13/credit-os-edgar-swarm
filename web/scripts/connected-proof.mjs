@@ -109,7 +109,7 @@ async function checkRunDocuments(page, channel, paidPreview) {
   await page.locator("main footer").getByRole("link", { name: "Start a run", exact: true }).click();
   const stepper = page.getByRole("list", { name: "Steps in this run" });
   await checkDesktopIntake(page, stepper);
-  await stepper.getByText(paidPreview ? "Paid step" : "No-cost test", { exact: true }).waitFor();
+  await stepper.getByText(paidPreview ? "Paid run" : "No-cost test", { exact: true }).waitFor();
   await page
     .getByRole("complementary", { name: "Readiness", exact: true })
     .getByText("USD 25.00", { exact: true })

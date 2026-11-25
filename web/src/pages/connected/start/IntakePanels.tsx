@@ -6,6 +6,7 @@ import {
   type SyntheticEvent,
 } from "react";
 import { Button } from "@/components/base/buttons/button";
+import { cx } from "@/utils/cx";
 import { Stepper } from "../../run/start/Stepper";
 import { Bento, Tile } from "../report/overview/Tile";
 import { pathwayName } from "../api";
@@ -46,6 +47,9 @@ function StepFields({
       return <ContextFields view={view} />;
   }
 }
+
+/** At least 32 px tall everywhere, 44 px at phone width. */
+const TARGET = "min-h-8 max-[480px]:min-h-11";
 
 type IntakePanelsProps = {
   step: FormStep;
@@ -275,7 +279,12 @@ function InputStepForm({
         <p className="text-caption text-text-tertiary tabular-nums xl:hidden">{ready}</p>
         <div className="flex flex-wrap items-center gap-3">
           {previous && (
-            <Button color="secondary" isDisabled={view.busy !== undefined} onPress={onPrevious}>
+            <Button
+              color="secondary"
+              className={TARGET}
+              isDisabled={view.busy !== undefined}
+              onPress={onPrevious}
+            >
               Previous
             </Button>
           )}
@@ -283,7 +292,7 @@ function InputStepForm({
             <Button
               color="link-destructive"
               size="sm"
-              className="max-w-full text-left whitespace-normal"
+              className={cx("max-w-full text-left whitespace-normal", TARGET)}
               onPress={view.focusProblem}
             >
               {`${String(1 + view.problem.also.size)} ${view.problem.also.size ? "problems" : "problem"} to fix: ${view.problem.message}`}
@@ -297,6 +306,7 @@ function InputStepForm({
             )}
             <Button
               type="submit"
+              className={TARGET}
               aria-describedby={blocked ? "run-step-blocker" : undefined}
               isDisabled={view.busy !== undefined || blocked}
             >

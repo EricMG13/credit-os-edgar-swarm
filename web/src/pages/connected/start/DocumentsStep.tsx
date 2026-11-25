@@ -23,9 +23,14 @@ import { FieldMessage, problemAttrs, problemOn, SelectField } from "./fields";
 /** At least 32 px tall everywhere, 44 px at phone width. */
 const TARGET = "min-h-8 max-[480px]:min-h-11";
 const FIELD = cx(field, "text-body", TARGET);
-/** The kit chip's resting look as a static label: the kit Chip is a toggle button. */
-const TYPE_CHIP =
-  "inline-flex max-w-full items-center rounded-ds-xs border border-border-hairline bg-surface-card px-3 py-1 text-left text-small font-medium break-words text-text-secondary";
+/** The service's kind for a file: a quiet label, not a control, in sentence case. */
+const KIND_LABEL =
+  "inline-flex max-w-full items-center rounded-ds-xs bg-surface-subtle px-1.5 py-0.5 text-caption break-words text-text-secondary";
+
+const kindWords = (kind: string) => {
+  const words = kind.replaceAll("_", " ");
+  return words.charAt(0).toUpperCase() + words.slice(1);
+};
 
 function documentBadge({
   repeat,
@@ -77,7 +82,7 @@ function IntakeDocumentRow({
       <div className="grid min-w-0 flex-1 gap-1">
         <p className="font-medium wrap-anywhere text-text-primary">{name}</p>
         <div className="flex flex-wrap items-center gap-2">
-          {record?.kind && <span className={TYPE_CHIP}>{record.kind.replaceAll("_", " ")}</span>}
+          {record?.kind && <span className={KIND_LABEL}>{kindWords(record.kind)}</span>}
           {uploading ? (
             <StatusBadge set="File state" state="Uploading" />
           ) : (

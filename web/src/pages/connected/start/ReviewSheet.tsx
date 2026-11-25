@@ -52,9 +52,22 @@ type EditStep = "documents" | "purpose" | "context";
 const TARGET = "min-h-8 max-[480px]:min-h-11";
 const CHECK_TARGET = "min-h-8 max-[480px]:min-h-11";
 const SUMMARY = cx(
-  "flex w-fit cursor-pointer items-center rounded-ds-xs text-small font-medium text-text-secondary outline-focus-ring hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2",
+  "flex w-fit cursor-pointer list-none items-center gap-1 rounded-ds-xs text-small font-medium text-text-link outline-focus-ring hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 [&::-webkit-details-marker]:hidden",
   TARGET,
 );
+
+/** A disclosure's summary drawn as the control it is: link colour and a chevron that turns. */
+function Opener({ children }: { children: ReactNode }) {
+  return (
+    <summary className={SUMMARY}>
+      <ChevronDown
+        aria-hidden="true"
+        className="size-4 shrink-0 transition-transform group-open/opener:rotate-180"
+      />
+      {children}
+    </summary>
+  );
+}
 
 /** Each term and its value; a fact whose value is `undefined` is left out. */
 function Facts({ rows }: { rows: readonly (readonly [string, string | number | undefined])[] }) {
@@ -251,7 +264,7 @@ function LeaveOut({
       <Button
         color="secondary"
         size="sm"
-        className="max-w-full text-left whitespace-normal"
+        className={cx("max-w-full text-left whitespace-normal", TARGET)}
         isDisabled={disabled}
         onPress={() => {
           choice.onModules(kept);
@@ -284,8 +297,8 @@ function HowToLift({
   const canLeaveOut = leaveOut(group, choice.requested, choice.modules) !== null;
   if (!fixes.length && !canLeaveOut) return null;
   return (
-    <details className="min-w-0">
-      <summary className={SUMMARY}>How to lift it</summary>
+    <details className="group/opener min-w-0">
+      <Opener>How to lift it</Opener>
       <div className="mt-2 grid gap-2">
         {fixes.map((fix) => (
           <p key={fix}>{serviceText(fix)}</p>
@@ -330,7 +343,12 @@ function LimitRow({
   return (
     <li className="grid gap-x-6 gap-y-1 py-2 text-small text-text-secondary first:pt-0 last:pb-0 md:grid-cols-[minmax(0,1fr)_auto]">
       <div className="flex min-w-0 flex-wrap items-start gap-x-3 gap-y-1">
-        <StatusBadge set="Run limits" state={OUTCOME_STATE[group.outcome]} className="shrink-0" />
+        <StatusBadge
+          set="Run limits"
+          state={OUTCOME_STATE[group.outcome]}
+          // One size for the four: the gap badge's own colour set draws it smaller.
+          className="shrink-0 text-small"
+        />
         <div className="grid min-w-0 flex-1 gap-0.5">
           {group.causes.map((cause, index) => (
             <p key={cause.id}>
@@ -397,8 +415,8 @@ function LimitsToDecide({
         </div>
         {/* What needs no decision sits beside the heading; opened, it takes the full width. */}
         {passive.length > 0 && (
-          <details className="text-small text-text-secondary open:basis-full">
-            <summary className={SUMMARY}>{`No action needed (${String(passive.length)})`}</summary>
+          <details className="group/opener text-small text-text-secondary open:basis-full">
+            <Opener>{`No action needed (${String(passive.length)})`}</Opener>
             <ul className="mt-1 mb-2 list-disc space-y-1 pl-5">
               {passive.map((item) => (
                 <li key={item.id}>

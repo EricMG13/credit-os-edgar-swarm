@@ -138,7 +138,7 @@ export function StagePipeline({
                   <StatusBadge
                     set="Run limits"
                     state={OUTCOME_STATE[row.mark]}
-                    className="bg-transparent px-0 ring-0"
+                    className="bg-transparent px-0 text-small ring-0"
                   />
                 )}
               </li>

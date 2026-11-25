@@ -40,7 +40,7 @@ export const STEPPER_STEPS = [
   { key: "documents", title: "Documents", note: "Add files" },
   { key: "purpose", title: PURPOSE_STEP, note: "Choose one" },
   { key: "context", title: "More context", note: "Optional" },
-  { key: "start", title: "Review and start", note: "Paid step" },
+  { key: "start", title: "Review and start", note: "Paid run" },
 ] as const;
 
 export const STEP_TOTAL = STEPPER_STEPS.length;

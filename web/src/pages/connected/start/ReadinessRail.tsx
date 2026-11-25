@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { StatusBadge } from "@/components/status/StatusBadge";
+import { StatusShape } from "@/components/status/shapes";
 import { cx } from "@/utils/cx";
 import { Figure, Tile } from "../report/overview/Tile";
 import type { ReadinessRow } from "./intake";
@@ -9,14 +9,32 @@ import { StagePipeline } from "./StagePipeline";
 /** Where the module marks come from: none yet, the review on screen, or the last one left. */
 export type ReadinessSource = "unchecked" | "review" | "last";
 
-// Status, not pills, where the rail is a column beside the form.
-const AS_STATUS = "xl:bg-transparent xl:px-0 xl:ring-0";
-
 const SOURCE_NOTE: Record<ReadinessSource, string> = {
   unchecked: "Each module is checked against your documents when you review the run.",
   review: "As the service checked them for this review.",
   last: "From your last review. Review the run again to check changes.",
 };
+
+/**
+ * Met or not met, in words with a mark. Not the "Met or not met" set's triangle: in this rail the
+ * orange triangle is a module's "Limited", so a step still to do is a neutral hollow square.
+ */
+function MetMark({ met }: { met: boolean }) {
+  return (
+    <span className="inline-flex min-w-19 items-center gap-1.5 text-small font-medium text-text-secondary">
+      <span
+        aria-hidden="true"
+        className={cx(
+          "flex size-2.5 [&>svg]:size-full",
+          met ? "text-success-mark" : "text-text-tertiary",
+        )}
+      >
+        <StatusShape shape={met ? "filled circle" : "hollow square"} />
+      </span>
+      {met ? "Met" : "Not met"}
+    </span>
+  );
+}
 
 /** Whether the element is taller than the room it has, so it scrolls and needs a tab stop. */
 function useScrolls<T extends HTMLElement>() {
@@ -97,11 +115,7 @@ export function ReadinessRail({
           <ul aria-labelledby={needsId} className="flex flex-col divide-y divide-border-hairline">
             {rows.map((row) => (
               <li key={row.label} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
-                <StatusBadge
-                  set="Met or not met"
-                  state={row.met ? "Met" : "Not met"}
-                  className={cx("xl:min-w-19", AS_STATUS)}
-                />
+                <MetMark met={row.met} />
                 <span className="text-small font-medium text-text-primary">{row.label}</span>
                 {row.detail ? (
                   <span className="ml-auto font-mono text-small text-text-secondary tabular-nums">

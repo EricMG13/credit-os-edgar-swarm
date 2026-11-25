@@ -150,7 +150,7 @@ export function SubmitConfirmation({
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <CancelButton onPress={close} />
                   <Button
-                    className="sm:flex-1"
+                    className="max-[480px]:min-h-11 sm:flex-1"
                     onPress={() => {
                       close();
                       onConfirm();
@@ -178,7 +178,13 @@ function CancelButton({ onPress }: { onPress: () => void }) {
     ref.current?.focus();
   }, []);
   return (
-    <Button ref={ref} className="sm:flex-1" color="secondary" onPress={onPress}>
+    <Button
+      ref={ref}
+      // Focused on opening, whatever opened the dialog: the ring shows for a mouse too.
+      className="data-focused:outline-2 data-focused:outline-offset-2 max-[480px]:min-h-11 sm:flex-1"
+      color="secondary"
+      onPress={onPress}
+    >
       Cancel
     </Button>
   );

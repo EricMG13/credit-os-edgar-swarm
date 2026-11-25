@@ -92,7 +92,7 @@ function group(over: Partial<LimitGroup>): LimitGroup {
 }
 
 describe("Documents step: the upload list", () => {
-  it("shows the service's kind as a chip and the facts without repeating it", () => {
+  it("shows the service's kind as a quiet label, in sentence case, and the facts without repeating it", () => {
     renderStep(
       makeView({
         documentRows: [row("credit-agreement.txt")],
@@ -100,16 +100,16 @@ describe("Documents step: the upload list", () => {
       }),
     );
     const li = screen.getByRole("listitem");
-    expect(within(li).getByText("credit agreement")).toBeVisible();
+    expect(within(li).getByText("Credit agreement")).toBeVisible();
     expect(li).toHaveTextContent("Inspected");
     expect(li).toHaveTextContent("period ends 2025-12-31 · executed · found 'Credit Agreement'");
-    expect(li.textContent).not.toMatch(/credit agreement · period/);
+    expect(li.textContent).not.toMatch(/credit agreement · period/i);
   });
 
-  it("draws an unrecognised kind as the chip and no empty facts line", () => {
+  it("draws an unrecognised kind as the label and no empty facts line", () => {
     renderStep(makeView({ documentRows: [row("notes.md")], shownDocs: [OTHER] }));
     const li = screen.getByRole("listitem");
-    expect(within(li).getByText("unrecognised")).toBeVisible();
+    expect(within(li).getByText("Unrecognised")).toBeVisible();
     expect(li.querySelectorAll("p")).toHaveLength(1);
   });
 
@@ -117,7 +117,7 @@ describe("Documents step: the upload list", () => {
     renderStep(makeView({ documentRows: [row("new.pdf", { stored: undefined })] }));
     const li = screen.getByRole("listitem");
     expect(li).toHaveTextContent("Selected");
-    expect(li).not.toHaveTextContent("unrecognised");
+    expect(li).not.toHaveTextContent(/unrecognised/i);
     expect(li.querySelectorAll("span.rounded-ds-xs")).toHaveLength(0);
     expect(screen.getByRole("button", { name: "Remove new.pdf" })).toBeVisible();
   });

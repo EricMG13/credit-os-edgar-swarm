@@ -251,7 +251,8 @@ export function StartRun({
       <Breadcrumb>Start a run</Breadcrumb>
       <PageHeader
         title="Start a run"
-        badges={mode === "synthetic" ? <Badge color="brand">Synthetic test</Badge> : undefined}
+        // The same name for the mode as the stepper and the review: "No-cost test".
+        badges={mode === "synthetic" ? <Badge color="brand">No-cost test</Badge> : undefined}
       />
       {value ? (
         <IntakeForm mode={mode} navigate={navigate} {...value} />

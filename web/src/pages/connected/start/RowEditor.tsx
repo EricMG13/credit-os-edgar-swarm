@@ -199,9 +199,9 @@ function RowItem({
   const groups = [...new Set(fields.map((item) => item.group ?? ""))];
   return (
     <details open={open || undefined} className="min-w-0">
-      <summary className="cursor-pointer pr-24 text-small">
+      <summary className="flex min-h-8 cursor-pointer flex-wrap items-center gap-x-2 pr-24 text-small max-[480px]:min-h-11">
         <span className="font-medium">{title}</span>
-        <span className="ml-2 text-text-secondary">{summary}</span>
+        <span className="text-text-secondary">{summary}</span>
       </summary>
       <div className="mt-3 grid gap-4">
         {groups.map((group) => (
