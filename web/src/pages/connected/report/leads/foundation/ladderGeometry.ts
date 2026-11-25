@@ -160,7 +160,7 @@ export const allGaps = (rows: readonly WaterfallRow[]) =>
  * that follows a stated level or step (a gap row, or a step with nothing stated above it, breaks
  * the walk), in the drawn period or in the earlier one beneath it.
  */
-export function placesBar(rows: readonly WaterfallRow[]) {
+function placesBar(rows: readonly WaterfallRow[]) {
   let running: boolean = true;
   let earlier: boolean = true;
   for (const row of rows) {
