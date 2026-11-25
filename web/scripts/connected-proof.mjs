@@ -112,7 +112,7 @@ async function checkRunDocuments(page, channel, paidPreview) {
   await stepper.getByText(paidPreview ? "Paid step" : "No-cost test", { exact: true }).waitFor();
   await page
     .getByRole("complementary", { name: "Readiness", exact: true })
-    .getByText("USD 0.00 of USD 25.00", { exact: true })
+    .getByText("USD 25.00", { exact: true })
     .waitFor();
   if (!paidPreview)
     await page.screenshot({ path: path.join(artifacts, `${channel}-run-documents.png`) });

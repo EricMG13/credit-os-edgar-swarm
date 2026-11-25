@@ -117,15 +117,15 @@ export function IntakePanels(props: IntakePanelsProps) {
     onAdvance,
     onPrevious,
   } = props;
-  const capBar = cap && capText ? { value: 0, max: cap, label: `USD 0.00 of ${capText}` } : null;
-  const ready = `${String(readiness.filter((row) => row.met).length)} of ${String(readiness.length)} ready · ${capBar ? capBar.label : "Cap unavailable"}`;
+  const shownCap = cap && capText ? capText : null;
+  const ready = `${String(readiness.filter((row) => row.met).length)} of ${String(readiness.length)} ready · ${shownCap ? `Cap ${shownCap}` : "Cap unavailable"}`;
   const planned = view.modules.length ? view.modules : view.requested;
   const checked = review?.summary ?? view.checked;
   const source: ReadinessSource = review ? "review" : view.checked ? "last" : "unchecked";
   return (
     <div className="mt-6">
       <Bento>
-        <div className="flex min-w-0 flex-col gap-4 lg:col-span-8">
+        <div className="flex min-w-0 flex-col gap-4 lg:col-span-12 xl:col-span-8">
           <div className="@container flex flex-col gap-3 rounded-ds-lg border border-border-subtle bg-surface-card px-5 py-4">
             <Stepper
               step={review ? "start" : step}
@@ -200,7 +200,7 @@ export function IntakePanels(props: IntakePanelsProps) {
         </div>
         <ReadinessRail
           rows={readiness}
-          cap={capBar}
+          cap={shownCap}
           capTitle={synthetic ? "Configured cap for paid runs" : "Spending cap for this run"}
           pathway={pathwayName(view.run.pathway)}
           modules={moduleReadiness(planned, checked)}

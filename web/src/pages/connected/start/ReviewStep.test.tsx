@@ -62,7 +62,7 @@ function show({
       capText="USD 25.00"
       capAvailable
       synthetic={synthetic}
-      ready="2 of 4 ready · USD 0.00 of USD 25.00"
+      ready="2 of 4 ready · Cap USD 25.00"
       onAccept={vi.fn()}
       onApprove={onApprove}
       onEdit={vi.fn()}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ReadinessItem } from "../api";
-import { moduleReadiness } from "./moduleReadiness";
+import { limitedRows, moduleReadiness } from "./moduleReadiness";
 
 const item = (
   scope: string,
@@ -22,99 +22,57 @@ describe("moduleReadiness", () => {
       "CP-5",
       "CP-6",
     ]);
+    expect(shown.checked).toBe(false);
     expect(shown.count).toBe(8);
     expect(shown.run).toBeUndefined();
-    expect(shown.groups).toEqual([
-      {
-        number: "01",
-        name: "Sources",
-        rows: [{ id: "CP-0", name: "Source readiness", state: "unchecked", reasons: [] }],
-      },
-      {
-        number: "02",
-        name: "Financials",
-        rows: [{ id: "CP-1", name: "Financial foundation", state: "unchecked", reasons: [] }],
-      },
-      {
-        number: "03",
-        name: "Credit",
-        rows: [
-          { id: "CP-1A", name: "Business & governance", state: "unchecked", reasons: [] },
-          { id: "CP-2", name: "Fundamental credit", state: "unchecked", reasons: [] },
-        ],
-      },
-      {
-        number: "04",
-        name: "Structure and market",
-        rows: [
-          { id: "CP-4", name: "Legal & covenants", state: "unchecked", reasons: [] },
-          { id: "CP-3", name: "Security selection", state: "unchecked", reasons: [] },
-        ],
-      },
-      {
-        number: "05",
-        name: "Validation and decision",
-        rows: [
-          { id: "CP-5", name: "Evidence validation", state: "unchecked", reasons: [] },
-          { id: "CP-6", name: "Committee decision", state: "unchecked", reasons: [] },
-        ],
-      },
+    expect(shown.other).toEqual([]);
+    expect(
+      shown.groups.map((group) => [group.number, group.name, group.rows.map((row) => row.name)]),
+    ).toEqual([
+      ["01", "Sources", ["Source readiness"]],
+      ["02", "Financials", ["Financial foundation"]],
+      ["03", "Credit", ["Business & governance", "Fundamental credit"]],
+      ["04", "Structure and market", ["Legal & covenants", "Security selection"]],
+      ["05", "Validation and decision", ["Evidence validation", "Committee decision"]],
     ]);
+    expect(shown.groups.flatMap((group) => group.rows.map((row) => row.mark))).toEqual(
+      Array(8).fill("unchecked"),
+    );
+    expect(limitedRows(shown)).toEqual([]);
   });
 
-  it("after a review takes the modules and states from the summary alone", () => {
+  it("after a review marks each module by its most severe limit, from the summary alone", () => {
     const shown = moduleReadiness(["CP-0", "CP-1", "CP-4"], {
       modules: ["CP-0", "CP-1", "CP-MODEL", "CP-3", "CP-4", "CP-4C", "CP-8"],
       items: [
         item("CP-1", "check", "No file is recognised as a financial report."),
         item("CP-3", "gap", "No quotes and no price talk were entered."),
-        item("CP-4", "will_refuse", "No executed agreement is among the files."),
         item("CP-4", "limited", "The agreement has no schedules."),
+        item("CP-4", "will_refuse", "No executed agreement is among the files."),
         item("CP-4C", "will_refuse", "Expected to refuse because it reads CP-4.", ["CP-4"]),
         item("CP-0", "information", "This is the first run of this pathway."),
         item("CP-0", "ready", "Every file was read."),
       ],
     });
-    const rows = Object.fromEntries(
-      shown.groups.flatMap((group) => group.rows).map((row) => [row.id, row]),
+    const marks = Object.fromEntries(
+      shown.groups.flatMap((group) => group.rows).map((row) => [row.id, row.mark]),
     );
+    expect(shown.checked).toBe(true);
     expect(shown.count).toBe(6);
-    expect(Object.keys(rows)).toEqual(["CP-0", "CP-1", "CP-3", "CP-4", "CP-4C", "CP-8"]);
-    // Ready only where the service says so; a module it says nothing about is not called ready.
-    expect(rows["CP-0"]).toMatchObject({ state: "ready", reasons: [] });
-    expect(rows["CP-8"]).toMatchObject({ state: "unstated", reasons: [] });
-    expect(rows["CP-1"]).toMatchObject({
-      state: "conditional",
-      reasons: ["No file is recognised as a financial report."],
+    // A module the summary names no limit for, or calls ready, is "none": the page never says ready.
+    expect(marks).toEqual({
+      "CP-0": "none",
+      "CP-1": "check",
+      "CP-3": "gap",
+      "CP-4": "will_refuse",
+      "CP-4C": "will_refuse",
+      "CP-8": "none",
     });
-    expect(rows["CP-3"]).toMatchObject({ state: "conditional" });
-    expect(rows["CP-4"]).toMatchObject({
-      state: "blocked",
-      reasons: ["No executed agreement is among the files.", "The agreement has no schedules."],
-    });
-    // A module code in the service's sentence is drawn by its name.
-    expect(rows["CP-4C"]).toMatchObject({
-      name: "Recovery & fulcrum",
-      state: "blocked",
-      reasons: ["Expected to refuse because it reads Legal & covenants."],
-    });
-    // A module the service adds (the comparison with an earlier run) is drawn in its stage.
-    expect(shown.groups.at(-1)).toMatchObject({
-      number: "05",
-      name: "Validation and decision",
-      rows: [{ id: "CP-8", name: "Changes since the last run", state: "unstated" }],
-    });
-  });
-
-  it("never calls a module ready because the whole run, not the module, carries the limit", () => {
-    const shown = moduleReadiness(["CP-0", "CP-1"], {
-      modules: ["CP-0", "CP-1"],
-      items: [item("run", "will_refuse", "No document could be read.")],
-    });
-    expect(shown.run).toMatchObject({ state: "blocked" });
-    expect(shown.groups.flatMap((group) => group.rows.map((row) => row.state))).toEqual([
-      "unstated",
-      "unstated",
+    expect(limitedRows(shown).map((row) => [row.name, row.mark])).toEqual([
+      ["Financial foundation", "check"],
+      ["Security selection", "gap"],
+      ["Legal & covenants", "will_refuse"],
+      ["Recovery & fulcrum", "will_refuse"],
     ]);
   });
 
@@ -126,13 +84,24 @@ describe("moduleReadiness", () => {
         item("run", "information", "Lookups are off for a synthetic case."),
       ],
     });
-    expect(shown.run).toEqual({
-      id: "run",
-      name: "Whole run",
-      state: "conditional",
-      reasons: ["Financials are management claims, not filed statements."],
-    });
+    expect(shown.run).toEqual({ id: "run", name: "Whole run", mark: "check" });
     expect(moduleReadiness(["CP-0"], { modules: ["CP-0"], items: [] }).run).toBeUndefined();
+  });
+
+  it("keeps a limit on something not drawn as a module under Other limits (Q1)", () => {
+    const shown = moduleReadiness(["CP-0", "CP-1"], {
+      modules: ["CP-0", "CP-1", "CP-MODEL"],
+      items: [item("CP-MODEL", "limited", "The model has no interim period.")],
+    });
+    expect(shown.other).toEqual([{ id: "CP-MODEL", name: "Cash flow model", mark: "limited" }]);
+    expect(shown.groups.flatMap((group) => group.rows.map((row) => row.mark))).toEqual([
+      "none",
+      "none",
+    ]);
+    // So the overview never reads "no limit" for everything while a limit exists.
+    expect(limitedRows(shown)).toEqual([
+      { id: "CP-MODEL", name: "Cash flow model", mark: "limited" },
+    ]);
   });
 
   it("puts a module no stage names under Other, unnumbered, last", () => {
@@ -141,6 +110,5 @@ describe("moduleReadiness", () => {
       ["01", "Sources"],
       [undefined, "Other"],
     ]);
-    expect(shown.groups[1]?.rows[0]?.name).toBe("CP-9Z");
   });
 });

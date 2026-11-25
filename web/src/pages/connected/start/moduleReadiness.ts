@@ -1,32 +1,33 @@
-import { drawnModules, serviceText, type ReadinessItem } from "../api";
+import { drawnModules, type ReadinessItem } from "../api";
 import { byStage } from "../report/stages";
 import { needsCheck } from "./limits";
 import { scopeText } from "./limitWords";
 
+/** The outcomes a limit can have, most severe first: the "Run limits" status set's own order. */
+const LIMITS = ["will_refuse", "gap", "limited", "check"] as const;
+export type LimitOutcome = (typeof LIMITS)[number];
+
 /**
- * A module's readiness as the rail draws it. `unchecked`: before any review the page does not
- * know it (the service judges readiness only when it makes the summary). After a review, from the
- * summary's own items only: a refusal is `blocked`; a gap, limit or check is `conditional`; an
- * item the service itself marks ready is `ready`; a module the summary says nothing about is
- * `unstated`, never called ready by the page.
+ * A module's mark. `unchecked`: before any review the page does not know it (the service judges
+ * readiness only when it makes the summary). After a review, from the summary's own items only:
+ * the most severe limit on the module, or `none` when the summary names no limit for it. The
+ * page never calls a module ready on its own.
  */
-type ModuleState = "unchecked" | "unstated" | "ready" | "conditional" | "blocked";
+export type ModuleMark = "unchecked" | "none" | LimitOutcome;
 
-export type ModuleRow = {
-  id: string;
-  name: string;
-  state: ModuleState;
-  /** The service's reasons for a conditional or blocked state, most severe first, each once. */
-  reasons: string[];
-};
+export type ModuleRow = { id: string; name: string; mark: ModuleMark };
 
-type StageGroup = { number?: string; name: string; rows: ModuleRow[] };
+export type StageGroup = { number?: string; name: string; rows: ModuleRow[] };
 
 export type ModuleReadiness = {
+  /** Whether the marks come from a summary. */
+  checked: boolean;
   /** Limits on the whole run, not on one module; undefined when the summary has none. */
   run?: ModuleRow;
+  /** Limits on something the run does not draw as a module (the cash-flow model, say). */
+  other: ModuleRow[];
   groups: StageGroup[];
-  /** Modules drawn: the forecast is sent with the run but is not a module. */
+  /** Modules drawn: the forecast is sent with the run but is not drawn as a module. */
   count: number;
 };
 
@@ -39,44 +40,35 @@ const STAGE_NUMBER: Readonly<Record<string, string>> = {
   "Validation and decision": "05",
 };
 
-const SEVERITY = ["will_refuse", "gap", "limited", "check"];
-
-function rowOf(id: string, name: string, items: readonly ReadinessItem[]): ModuleRow {
-  const limits = items
-    .filter(needsCheck)
-    .sort((a, b) => SEVERITY.indexOf(a.outcome) - SEVERITY.indexOf(b.outcome));
-  const state: ModuleState = limits.some((item) => item.outcome === "will_refuse")
-    ? "blocked"
-    : limits.length
-      ? "conditional"
-      : items.some((item) => item.outcome === "ready")
-        ? "ready"
-        : "unstated";
-  return { id, name, state, reasons: [...new Set(limits.map((item) => serviceText(item.reason)))] };
+function worst(items: readonly ReadinessItem[]): LimitOutcome | undefined {
+  return LIMITS.find((outcome) => items.some((item) => item.outcome === outcome));
 }
 
 /**
- * The run's modules by stage, with each one's readiness. `planned` is what the form will ask for
- * (in the pathway's order); `checked`, once a summary exists, is the service's module list and
- * items, and then it alone decides which modules are drawn and in what state.
+ * The run's modules by stage, with each one's mark. `planned` is what the form will ask for (in
+ * the pathway's order); `checked`, once a summary exists, is the service's module list and items,
+ * and then it alone decides which modules are drawn and how they are marked.
  */
 export function moduleReadiness(
   planned: readonly string[],
   checked?: { modules: readonly string[]; items: readonly ReadinessItem[] },
 ): ModuleReadiness {
   const modules = drawnModules(checked ? checked.modules : planned);
-  const rows = modules.map((id) =>
-    checked
-      ? rowOf(
-          id,
-          scopeText(id),
-          checked.items.filter((item) => item.scope === id),
-        )
-      : { id, name: scopeText(id), state: "unchecked" as const, reasons: [] },
+  const limits = checked?.items.filter(needsCheck) ?? [];
+  const markOf = (scope: string): ModuleMark =>
+    checked ? (worst(limits.filter((item) => item.scope === scope)) ?? "none") : "unchecked";
+  const rows = modules.map((id) => ({ id, name: scopeText(id), mark: markOf(id) }));
+  const drawn = new Set(modules);
+  const others = [...new Set(limits.map((item) => item.scope))].filter(
+    (scope) => scope !== "run" && !drawn.has(scope),
   );
-  const runItems = checked?.items.filter((item) => item.scope === "run" && needsCheck(item)) ?? [];
+  const run = markOf("run");
   return {
-    ...(runItems.length ? { run: rowOf("run", scopeText("run"), runItems) } : {}),
+    checked: checked !== undefined,
+    ...(run !== "none" && run !== "unchecked"
+      ? { run: { id: "run", name: scopeText("run"), mark: run } }
+      : {}),
+    other: others.map((scope) => ({ id: scope, name: scopeText(scope), mark: markOf(scope) })),
     groups: byStage(rows).map((group) => ({
       ...(Object.hasOwn(STAGE_NUMBER, group.name) ? { number: STAGE_NUMBER[group.name] } : {}),
       name: group.name,
@@ -84,4 +76,14 @@ export function moduleReadiness(
     })),
     count: modules.length,
   };
+}
+
+/** The rows that carry a limit, in stage order: the whole run first, then modules, then others. */
+export function limitedRows(readiness: ModuleReadiness): ModuleRow[] {
+  const marked = (row: ModuleRow) => row.mark !== "none" && row.mark !== "unchecked";
+  return [
+    ...(readiness.run ? [readiness.run] : []),
+    ...readiness.groups.flatMap((group) => group.rows.filter(marked)),
+    ...readiness.other.filter(marked),
+  ];
 }

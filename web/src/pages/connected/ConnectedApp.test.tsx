@@ -183,10 +183,11 @@ describe("connected run start", () => {
     typeName();
     const action = screen.getByRole("button", { name: "Continue to purpose" });
     expect(action).toBeDisabled();
-    expect(screen.getByRole("progressbar", { name: "USD 0.00 of USD 25.00" })).toHaveAttribute(
-      "aria-valuenow",
-      "0",
-    );
+    expect(
+      within(screen.getByRole("complementary", { name: "Readiness" })).getByText("USD 25.00", {
+        exact: true,
+      }),
+    ).toBeVisible();
     const dropZone = container.querySelector("[data-dropzone]");
     if (!dropZone) throw new Error("Missing intake drop zone");
     fireEvent.drop(dropZone, { dataTransfer: { files: [file] } });
@@ -250,7 +251,11 @@ describe("connected run start", () => {
       "portfolio_decision",
     ]);
     fireEvent.click(within(pathways).getByRole("radio", { name: "Deep credit assessment" }));
-    expect(screen.getByRole("progressbar", { name: "USD 0.00 of USD 40.00" })).toBeVisible();
+    expect(
+      within(screen.getByRole("complementary", { name: "Readiness" })).getByText("USD 40.00", {
+        exact: true,
+      }),
+    ).toBeVisible();
     expect(screen.getByText("20 base modules", { exact: true })).toBeVisible();
     chooseControl("Run form level", "advanced");
     advanceToContext();
@@ -1077,17 +1082,17 @@ describe("connected run start", () => {
     expect(screen.getByLabelText("Turns per module")).toHaveValue(24);
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     const limit = await screen.findByRole("checkbox", { name: "I accept this limit" });
-    // The limit is decided on the review; the readiness rail repeats its reason beside the run.
+    // The limit and its reason are decided on the review; the readiness rail names it, not why.
     expect(
       within(screen.getByRole("region", { name: "Limits to decide" })).getByText(
         /before your newest document/,
       ),
     ).toBeInTheDocument();
+    const rail = screen.getByRole("complementary", { name: "Readiness" });
     expect(
-      within(screen.getByRole("complementary", { name: "Readiness" })).getByText(
-        /before your newest document/,
-      ),
-    ).toBeInTheDocument();
+      within(within(rail).getByRole("list", { name: "Carrying a limit" })).getByRole("listitem"),
+    ).toHaveTextContent("Whole runLimited");
+    expect(rail).not.toHaveTextContent(/before your newest document/);
     expect(screen.getByRole("checkbox", { name: /Approve:/ })).toBeDisabled();
     fireEvent.click(limit);
     expect(screen.getByRole("checkbox", { name: /Approve:/ })).toBeEnabled();
@@ -1153,7 +1158,7 @@ describe("connected run start", () => {
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
     await screen.findByRole("button", { name: "Submit run" });
     expect(panel.getByText("Decisions made").closest("li")).toHaveTextContent("0 of 1");
-    expect(screen.getByText(/of 4 ready · USD 0\.00 of USD 25\.00/)).toBeInTheDocument();
+    expect(screen.getByText(/of 4 ready · Cap USD 25\.00/)).toBeInTheDocument();
   });
 
   it("keeps a section edited at Advanced drawn at Basic: Valuation and the assumptions groups", async () => {
