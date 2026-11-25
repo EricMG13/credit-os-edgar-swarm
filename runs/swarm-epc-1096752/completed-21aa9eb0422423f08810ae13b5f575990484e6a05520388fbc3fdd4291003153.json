@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for EDGEWELL PERSONAL CARE Co as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/deeb4edc5cc5abb4dd33f01f79ed4d31c6d2b6a83079f16cde78b7561acf4a52/1.response.md",
+    "CP-1": "requests/CP-1/21fd45497843320ff176fe15a88a3ed0ae4d5e8c5ab61b4f4e190f5d2d145420/1.response.md",
+    "CP-1A": "requests/CP-1A/f8d2bc8eff663355e56f9dadf5202db5489e93724eade860d001a006d7f7436a/1.response.md",
+    "CP-2": "requests/CP-2/ead2de13d10312ca94c55e32d5864f1562706b8a1333f3c6867708d4235a12d7/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "8a2fd7ad1c2b631687b90fd602f93e78a69bb1a01dc962ae470efe938f8a4cd1",
+  "delivery_sha256": "7d1b28b294b320668245cb0f94a818ceacfaf556b060fd5974130ce463c1c06c"
+}

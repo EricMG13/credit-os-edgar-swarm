@@ -1,0 +1,252 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "epc-1096752-2026-11-18-credit_snapshot-host",
+    "issuer_id": "epc-1096752",
+    "issuer_name": "EDGEWELL PERSONAL CARE Co",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-09-30_epc.htm.jsonl": {
+      "path": "source-text/10-K_2024-09-30_epc.htm.jsonl",
+      "sha256": "6c6907d15014c719eacc57387963f7d072961217d8ead425a4850159ed957c43"
+    },
+    "10-K_2025-09-30_epc.htm.jsonl": {
+      "path": "source-text/10-K_2025-09-30_epc.htm.jsonl",
+      "sha256": "2cb38dfd08dfbb354e37fc8c54da4204552090a4f8f8beb803db8e54b232c41a"
+    },
+    "10-Q_2025-12-31_epc.htm.jsonl": {
+      "path": "source-text/10-Q_2025-12-31_epc.htm.jsonl",
+      "sha256": "9b6b2fe3b712131137f58b709743d8cba47f5409c34d41927cf4bbd2a6eeb3b2"
+    },
+    "10-Q_2026-03-31_epc.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_epc.htm.jsonl",
+      "sha256": "a41bf3ca852f5f4d8844f4c29e0818b6e6aecf62ae75e537d976be5a6805037a"
+    },
+    "10-Q_2026-06-30_epc.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_epc.htm.jsonl",
+      "sha256": "721a3b2ec42edbd3f62169b238aaa34002ecdcfb5b4cf5a9d618febebda44351"
+    },
+    "EX99.1_2025-12-31_epc_epcexhibit99112312025-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2025-12-31_epc_epcexhibit99112312025-htm.htm.jsonl",
+      "sha256": "2a83b052fb8d5bfcf1baf6a25689fdc6b362436d51f5961f8373cda15ad9b8b3"
+    },
+    "EX99.1_2025-12-31_epc_ex991femdivestpressrelease-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2025-12-31_epc_ex991femdivestpressrelease-htm.htm.jsonl",
+      "sha256": "b106964af2ecca26ce0447c7350a71415de82147b6c3c0e58887e9949f9652d1"
+    },
+    "EX99.1_2026-03-31_epc_epcexhibit99103312026-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_epc_epcexhibit99103312026-htm.htm.jsonl",
+      "sha256": "eb5506eb3287433a915af94ae99309e67e39464f2af6e63514775052f35acc16"
+    },
+    "EX99.1_2026-06-30_epc_q3fy26-epcexhibit991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_epc_q3fy26-epcexhibit991-htm.htm.jsonl",
+      "sha256": "b532aa8a8c22f5d9691d7c4a0db0359589303a21615009722ab069e5547d5d17"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1096752-edgewell-personal-care-co.json",
+      "sha256": "6bc29277eb17aacbfc74fbcc752cdb5eaa66539cd92fa31f11e84b07ca954e4a"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "17ca06a20b648e4daab5bde6fe520f5c28d4eefdea6c8c61e148314ec4e7a214"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "38104e22eba41cc191cf85683d4217a91ce22db942b10b096daa8ff2e0bb3fa9"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "c4422a7e191658e52d7017491c4522b48d92983637a1af38d210a505916cc3ef"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "f2ac8f9430cda92756c89b76639eecc535ceee5c9a18dc95edc61d16331af71b"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for EDGEWELL PERSONAL CARE Co as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "EDGEWELL PERSONAL CARE Co — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

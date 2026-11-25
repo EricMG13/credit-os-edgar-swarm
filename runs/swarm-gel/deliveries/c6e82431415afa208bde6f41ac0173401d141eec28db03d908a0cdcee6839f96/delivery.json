@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for GENESIS ENERGY LP as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "0cec93cd51f25e659237603d1a0cde0e7644125a72d3dd17f2e2dcf35f1c9f9f",
+    "CP-1.md": "99a7e254c571772cd99385dc6ef197db736aab54e3725ca543cd1fb5ae27cf56",
+    "CP-1A.md": "42b4e370829352ea3bc51a2b1c37c0acd77fc13f4fa4af84449bba378a2e97fb",
+    "CP-2.md": "4203df6d804e1f75f90321075f7601cb33a47c83ec81562188cfd470421a11b4",
+    "coverage.json": "41594795acd797d52c3f64e16eccd269d082a28aadb692d48e0577b2dfe49136",
+    "view.json": "da705371ce328324b7e0dd2e6056ee7e9c36c6b30854c5f9c0bc199603ff76df",
+    "report-view.json": "b02cbcfa8c088cff4e0f0e758463f459b467704b500f30d17a263f34483d1126"
+  }
+}

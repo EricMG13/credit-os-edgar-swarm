@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Hertz Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "e05e98ae430a554bfb12340ffbf4b03227e7c454d2cc64c001d7be506a5680ca",
+    "CP-1.md": "d42ceb343b34d85d0b7a21795e811c1677fa8ea5da6b7542eb61836b06fbc7a8",
+    "CP-1A.md": "22d2a9f73c2d190a172f3621575596c72c6e3e296a3ddb62fa4f241a49658b36",
+    "CP-2.md": "a0e9d9b53d1bd8519b8cabcc88215c412ee087fb1d77ab56748fc89e4b1393ca",
+    "coverage.json": "ce84c36b626d85d0afc753e407cd839fda8504f63537341df61d63079aad3125",
+    "view.json": "b706717f80e211b1cbd66c20a416ed0b4a108c025c0ad9a6bd7252757e527fce",
+    "report-view.json": "be0eecef2802716e19942674d9b37f16d2d86ddb98ddffd39498c1133b5dac69"
+  }
+}

@@ -1,0 +1,244 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "dva-2026-11-05-credit_snapshot-host",
+    "issuer_id": "dva",
+    "issuer_name": "DAVITA INC.",
+    "as_of": "2026-11-05",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2025-12-31_dva-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_dva-20251231.htm.jsonl",
+      "sha256": "e8c363b79225d32d92e8856c1234363883b84595e0f356cf12128301c572a94b"
+    },
+    "10-Q_2026-03-31_dva-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_dva-20260331.htm.jsonl",
+      "sha256": "7063ac673c62a3a12d361c8ab9f216c83e6406eb95937f85ad2f6c47a221fe01"
+    },
+    "10-Q_2026-06-30_dva-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_dva-20260630.htm.jsonl",
+      "sha256": "5aed5931f3b50f8efc4d5398264cb7a317623aeb269a49968c33246ed0273365"
+    },
+    "10-Q_2026-09-30_dva-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_dva-20260930.htm.jsonl",
+      "sha256": "99b4bb0c8f87c03db2290c95cfd812d4622509e8fdbcdce46d84afcedef79236"
+    },
+    "EX-99.1_2026-05-05_dva33126ex991.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-05-05_dva33126ex991.htm.jsonl",
+      "sha256": "c5727d9383becddd69bf1cd80efadc8ee72012f8313405a8b1414b2f74143fa7"
+    },
+    "EX-99.1_2026-08-04_dva63026ex991.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-08-04_dva63026ex991.htm.jsonl",
+      "sha256": "e55a9fe053fe9f69274156863d81212ffe989a931913bc64dfc65b70fd8151a2"
+    },
+    "EX-99.1_2026-10-29_dva93026ex991.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-10-29_dva93026ex991.htm.jsonl",
+      "sha256": "b062a4dfa0aa9b3cce4ee385c1a8aad8546180810a3acbc585a968f93eadfc64"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/927066-davita-inc-dva.json",
+      "sha256": "888318ae2603a71d9f443112e6d0298861b2ea95d8c8a8118da68f80c88bfe70"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "ad6914ac8d2450d3aeb8d5dba0d5a588810ff3726b4f4adf95d22b87c146c330"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "efc7db1695e9fc790a144008eff15c2f47b7fb53e45e11fdf53a0d872f88a412"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "ce881b39d36e5fa76af1d79fd77a8e7cf523f702effca31f6b5bcee51f03cba2"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "efb9beb8530b315cb17a4a0d348598d564ce722783f0109de838fa4d4f6b45a5"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for DAVITA INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "DAVITA INC. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

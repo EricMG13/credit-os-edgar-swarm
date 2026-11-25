@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for DAVITA INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/7dea3e1a85d09ae298c578ff703f84cb10047c82d452cf2ba433e52b6e122ac7/1.response.md",
+    "CP-1": "requests/CP-1/05ff8e8cb8e56baa4c792124ee2bfdfa3d657d5e789fad2d31b38a5f9a97e895/1.response.md",
+    "CP-1A": "requests/CP-1A/04e80062aefb413f2bcadd1d01156a4758b2032d46a2d8b65b45c0bf26162ba9/1.response.md",
+    "CP-2": "requests/CP-2/b76fe2c2989821bff9da3ca9f07d7b65d26c30c1f79d26e82f24fc663cadd1fe/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "3b18e6a2b4e46d1716894eacf0be158202ba3e9c1d33ccb911fc624d89ed286a",
+  "delivery_sha256": "0dff2363cbdcd01547447115d3f2b381b7dc44d3a0444a72606ddda04a6ae43b"
+}

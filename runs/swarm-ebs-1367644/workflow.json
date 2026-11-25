@@ -1,0 +1,256 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "ebs-1367644-2026-11-18-credit_snapshot-host",
+    "issuer_id": "ebs-1367644",
+    "issuer_name": "Emergent BioSolutions Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_ebs.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_ebs.htm.jsonl",
+      "sha256": "bad1485d17d7eb3db86337d7d85e56d41c811b82be42106a29103d5d2391f525"
+    },
+    "10-K_2025-12-31_ebs.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_ebs.htm.jsonl",
+      "sha256": "eff2250700744afdee2c8d7bfb25928695c175c2395da8d8a98993e822a24c31"
+    },
+    "10-Q_2026-03-31_ebs.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_ebs.htm.jsonl",
+      "sha256": "57be5b3d945d820e225f7168a843e5001696476abd884a7f70c46fd1a6ef8766"
+    },
+    "10-Q_2026-06-30_ebs.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_ebs.htm.jsonl",
+      "sha256": "e1d7f33adee6da487379ec484e39cd01879d59c33bea725a268be3b61dad4992"
+    },
+    "10-Q_2026-09-30_ebs.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_ebs.htm.jsonl",
+      "sha256": "8342e6ec72e66d7b25de79bc0c816f2faf1b7e693ea8b7f37af308c4ca547a7a"
+    },
+    "EX99.1_2026-03-31_ebs_a04162026refinancingpr-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_ebs_a04162026refinancingpr-htm.htm.jsonl",
+      "sha256": "f09a6d45db49d1f1e63fcd4115d76840ac741908c330b525a47c6b8e05e9bc2f"
+    },
+    "EX99.1_2026-03-31_ebs_ebs20260331ex99er-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_ebs_ebs20260331ex99er-htm.htm.jsonl",
+      "sha256": "6e2ec858fed598a51b7f406499a211e05beeb3f356e8cb65a66c4cfc6ca508e7"
+    },
+    "EX99.1_2026-06-30_ebs_ebs202606-30ex99er-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_ebs_ebs202606-30ex99er-htm.htm.jsonl",
+      "sha256": "581973aff4ffee4d0b14ec2cf22f00ca7f1add497a4e4ea40810bf5bb6c8f1ab"
+    },
+    "EX99.1_2026-09-30_ebs_a1142026biothraxmodpr-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-09-30_ebs_a1142026biothraxmodpr-htm.htm.jsonl",
+      "sha256": "bd0d5839b9ba8a18f1355ab67a0f68050815d7523343b358c5534bd72059cbb3"
+    },
+    "EX99.1_2026-09-30_ebs_ebs202609-30ex99er-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-09-30_ebs_ebs202609-30ex99er-htm.htm.jsonl",
+      "sha256": "a6c7f031a1f05c446b41a59fea2a066ca1081e1a420c45720f959233ef02d8a8"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1367644-emergent-biosolutions-inc.json",
+      "sha256": "f059dc63742bf631f0188946c4e173dc9e9f33072b6604cb903818a60025645a"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "d806db4db366098ea3296345c7794c203c25d1a9afc507ec14a6ef5fd70334a0"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "047fda0341a447e924e31153ef65735dafaf418c1561f9192dc354af33c53e88"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "1561e72071ac3dac4b3ad7f4b828c251d5be94e455b22d7758cc84279884bcc7"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "8c7fe9580946e539f5c19e9bfb1a7a4b7bdac877305d9ea80adb8e7a7bf277f6"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Emergent BioSolutions Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Emergent BioSolutions Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}
