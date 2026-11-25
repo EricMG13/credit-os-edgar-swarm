@@ -990,6 +990,21 @@ of its own. The forecast leaves a facility in another currency out of its facili
 where T4.18 holds any such row, a facility must be named exactly as a block-currency row. CP-2A's stress copy and CP-8's method drop their USD-only examples and default.
 Selected source revision: the ruling above. Limit: offline proof only; no model has read this text.
 
+**Layer 1 in the Lite, Full and Deep credit assessments (owner, 2026-11-25: "all credit assessment
+pathways (lite, full and deep) should include all layer 1 modules"; ruling
+`docs/rulings/2026-11-25-layer-1-in-all-assessment-pathways.md`).** No method text is newly selected
+and no method file changed. Layer 1 is CP-1, CP-1A, CP-1B, CP-1C and CP-1D, by the layer marks in
+`docs/reuse/selected-methods/skills/` (`Layer L1` in the CP-1A, CP-1B, CP-1C and CP-1D skill files;
+`layer`, `L1` in CP-1's system reference). CP-L10 carries the mark and stays deactivated; CP-MODEL
+is not a module. Lite (`lite_credit_assessment`) and Full (`credit_snapshot`) gain CP-1B, CP-1C and
+CP-1D, each on its own selected method as in Deep and the purpose pathways; Deep is unchanged and
+now differs from Full by CP-2H, CP-3D and CP-4C. Order is the registry's plan. Documented scope
+reduction: Lite does not gain CP-DR (coordinator's ruling in that record), so its CP-1C runs on the
+analyst's comparables only and states the limitation in its handoff when there are none; Full and
+Deep keep CP-DR's public peers. Caps unchanged (Lite USD 15, Full 25, Deep 40). Selected source
+revision: those layer marks and the ruling above. Limit: offline proof only; no model has run Lite
+at all, or Full with the three modules.
+
 ## Appendix: selected method files
 
 One row per file CP-OS sends as a module's method (`METHODS` in
