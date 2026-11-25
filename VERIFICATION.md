@@ -4,6 +4,31 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-25 — Deliverables, Credit Snapshot workbook and recommendations: rulings and methodology
+
+- Scope: documentation only; no code, test, instruction or presentation changed, no provider
+  called. PR 0 of `docs/superpowers/specs/2026-11-25-deliverables-credit-snapshot.md` (owner,
+  2026-11-25: "Approve, start"). Added `docs/rulings/2026-11-25-deliverables-and-recommendations.md`
+  and `docs/methodology/portfolio-recommendation.md`; amended four bullets of `AGENTS.md` (one
+  permitted workbook, the proposed-recommendation exception, the Deliverables page in the reader
+  and completion bullets; cap sentence untouched); one `METHODOLOGY-REVIEW.md` paragraph. Trimmed
+  here: the oldest entries, all 2026-11-16 (the last three at the merge with `f6cebbd`).
+- Checked: the rubric's 85 level cells against the spec by script; `tools/quality_gate.py` exit 0
+  (no Python in scope); `check_live_gate` refuses the new ruling for all four configurations, run
+  directly (the test that sweeps `docs/rulings` and one other in `tests/model/test_gate.py` are in
+  `tests/known-failures.txt` and fail the same way without this change);
+  `tests/test_methodology_selection.py` and `tests/test_package_react_windows.py` pass. No test
+  pins the changed `AGENTS.md` text.
+- Review: one fresh reviewer, pass with fixes (6 Medium, 11 Low; no transcription error). Wording
+  fixed; open points are in the ruling's Left open. Pre-merge review: 1 Medium (quote
+  attribution), 6 Low, all applied, including four mock-up cells corrected to the table (3 MW).
+- Owner's answers (2026-11-25, "1. later 2. is fine 3. fix 4. fine 5. fine 6. update it"): three
+  rubric cells amended in the spec and the methodology (Leverage 4, Market share 2 and 3, wording
+  the coordinating session's); the four readings confirmed; `PRODUCT.md`'s Excel line amended.
+  Probe: the two changed rows, written by hand from the coordinator's message, match both files.
+- Not verified: anything the documents describe, none of which is built; the rubric text against
+  the owner's image (not in the repository; taken from the spec's transcription); the SSGA file
+  columns; the full suite.
 ## 2026-11-25 — Layer 1 modules in Lite, Full and Deep; CP-DR in Lite; caps 20/30/50 (branch `claude/busy-shannon-x4bwy3`, base `main` at `4aaec9d`)
 
 - Scope: the `lite_credit_assessment` and `credit_snapshot` presets (`contracts.py`, web `api.ts`),
@@ -966,34 +991,3 @@ Scope: the run-start summary and review: `src/deploy_workflow/owners/cpos_launch
 - Rulings / Known: from `docs/rulings/2026-11-11-run-start-submit.md`, amendment 2026-11-12 (for a private case the page states this before Submit; no such text existed under `web/src`). Ruling by the PR-manager session, for the owner to confirm or reverse: the statement shows whenever search will run (public and private), not only for private cases.
 - For the owner: confirm or reverse that ruling. The Start plan's unstarted PRs C and D will edit `ReviewSheet.tsx` and `ConnectedApp.test.tsx` and must branch after this merge.
 - Not verified: a live or paid launch (no provider called); a browser render; the three web tests were not seen failing before the component existed (covered by the mutants); a ruling file or pause changing between summary and launch; Windows; the gates and CI ran on the branch head, not re-run on the merged tree.
-
-## 2026-11-16 — Issuer calendar: one shape per category, category word visible in each row (PR #16, merged to `main` as `8bbb74ab`)
-
-Scope: presentation only: `web/src/pages/connected/visuals/EventLane.tsx` and `EventLane.test.tsx`. `EventLane.fixture.ts` unchanged.
-- Changed: the four event categories differ by shape, the same in the year strip, the list rows and the legend toggles: Historical filled circle, Scheduled half-filled circle, User reminder ring (all from `StatusShape`), Scenario an outlined diamond drawn inline. The category word is visible text in each row; its screen-reader-only copy is gone. Reason: #10 left Historical and Scheduled differing by colour alone and Scenario on the dashed ring, against `docs/design/design-system.md` (every state carries a shape and a word, each state in a set has its own shape, the dashed ring means a gap and nothing else).
-- Answer key: the design-system rule above; tests written first (29 of 41 failed before the change).
-- Gates at `7f070cc8`, from `web/`, exit 0: lint, format:check, typecheck, unused, duplication, vitest on `EventLane.test.tsx`, `report/Calendar.test.tsx`, `visuals/LegacyVisuals.test.tsx` (71 tests).
-- Reviews: task review (`mx-precise`): approved, no High or Medium; nine hand mutants, all killed. One Low (status-only-in-panel is not asserted directly for rows with a quoted status) and one Info (Scenario handled outside the shape lookup), both parked for the end-of-phase batch.
-- Rulings / Known: one existing assertion was removed and one replaced, because fixture rows whose status equals their category word would now match twice; the reviewer confirmed no check weakened. No other open PR or in-flight session edits `EventLane.tsx`.
-- Not verified: the layout at 375px and 44px targets (read from classes only); the look in a browser or grayscale; a screen reader; the full suite; `proof:connected`; the gates and CI ran on the branch head, not re-run on the merged tree.
-
-## 2026-11-16 — Reader: plain module names, CP-1's own lead and labels, confidence score (PR #13, merged to `main` as `7fcff960`)
-
-Scope: the connected issuer report reader only, under `web/src/pages/connected/` (`reportView.ts`, `publishedReport.ts`, `api.ts`, `ReportContent.tsx`, `ReportLibrary.tsx`, `report/{Modules,Calendar,Changes,Confidence,Evidence,calculations}`, `start/{plain,ReviewSheet}`) with their tests, plus the plan `docs/superpowers/plans/2026-11-16-connected-reader-high-gaps.md` (PR 1 of 3). No Python, handoff, provider or model change. Gated code head `550bb2dc`; the merged head `b85899f5` adds only plan text.
-- Changed: `moduleName` returns the plain name and `plainModuleNames` drops " (CP-x)" from handoff text wherever drawn (prose, tables, bottom lines, trace drawers and control names, Evidence Gaps, calculation steps, Changes cards); a stored file name such as `Deck (CP-1) Q3.pdf` is shown as stored. CP-1 leads with its own bottom line (the app-written "Lease-adjusted gross leverage is …" sentence is gone) and its tiles carry the handoff's own row label, column header or calculation text, selected by a typed `MetricKey`. The published `confidence` field is drawn as one tile on the module page (value and band as published, or the publisher's sentence when there is none); its trace opens the Confidence inputs rows, and that table leaves the reading path for Evidence. `moduleTitle` is folded into `moduleName`.
-- Rulings applied: `docs/rulings/2026-11-11-reader-and-issuer-report.md` amendment 2026-11-12 (no module code on screen); `docs/rulings/2026-11-12-module-output-review-changes.md` item 9 (confidence score on the module page); AGENTS.md (delivery adds no analysis).
-- Gates on `550bb2dc`, from `web/`, exit 0: test (159 files, 3,319 tests), lint, format:check, typecheck, unused, duplication. CI's two checks passed on the merged head `b85899f5`. The build, `test:scripts` and `test:file:gates` are not recorded as run.
-- Reviews: task reviews by `mx-precise` (Task 1 one fix round; Tasks 2 and 3 clean); whole-branch `adversarial-reviewer` by `mx-architect`: 0 High, 3 Medium, all fixed in `550bb2dc` and re-reviewed clean. Not run: `/sweep refactoring discover`, `confidence-review`, `rewrite-tournament`.
-- Known, Low, parked for the batch: a " (CP-x)" is kept only when a known file extension follows before the next `;`, `,`, `|` or newline, so an unlisted extension (`Scan (CP-1).png`), a comma inside a file name, and a calculation note whose source part names a file still show the code; forecast model strings are not filtered; four small test gaps; two leftover uses of the literal "Confidence inputs".
-- For the owner: 856 changed lines of code and tests against the 800-line cap (lift unconfirmed past 09:00 GMT 2026-11-16), plus the 650-line plan; the plan's PR 2 and PR 3 were refreshed only for PR 2 (split into 2a and 2b) and PR 3 needs the same before it starts.
-- Not verified: the reader in a browser (no fidelity check of the plain names, CP-1 lead or confidence tile on a retained run); `proof:connected`; a screen reader; Windows; Python gates (no Python changed); a mutation run. No paid execution.
-
-## 2026-11-16 — Start a run: limits as grouped decisions (PRs #11 and #12, merged to `main` as `8868f96d` and `915b0f79`)
-
-Scope: the connected Start a run review only, under `web/` (`start/limits.ts`, `start/ReviewSheet.tsx`, `StartRun.tsx`, `components/status/sets.ts`, `scripts/connected-proof.mjs`) plus the design-system and plan docs. The Python service, the submit request and the Submit gate (`checksComplete`, `capForPathway`, `requireSummaryCap`, `invalidateReview`, `makeReview`, `submitReviewed`) are byte-identical to `main`. No provider called.
-- Changed: "Readiness checks" becomes "Limits to decide": one card per decision (status badge Will refuse / Gap / Limited / Check, cause and fix in plain words, `Will also refuse:` and `Also affects:` lines, one acceptance per group); items needing no decision fold under "No action needed (n)"; no module code is drawn. A line above the approval says how many decisions remain. An acceptance carries across a stepper or Edit return only for the same limit id and reason, issuer ID and pathway; the approval is never carried; "Carry over from latest run" and "This is a different issuer" drop it.
-- Answer key: the 180 cases built from the service's own readiness rows in the whole-branch review, and the reviewer's 13-case probe with 400 generated summaries (#11): no item needing a decision falls outside a group, no code is drawn, and ticking every card hands over exactly the required ids.
-- Gates at `fb1fb3ba` (branch cut from `8c4abeb7`), exit 0: `npm --prefix web run gates`, Chrome 157 `connected-proof.mjs`, `uv run python tools/quality_gate.py`. CI's `changed code passes…` and `fast tests and page logic` passed on #11 and on #12 at its final head (`aaa33fbe` plus three later commits) before each merge; #12 was retargeted to `main` after #11 merged and CI was not re-run on the merged tree.
-- Reviews: task review (one Low, fixed); paid-submit path by `mx-adversary` (one Medium, an acceptance carried to a different typed issuer, fixed test-first in `2056ece7`, re-review approved); sweep `refactoring discover changed-update` (no defect, one Info); whole-branch `adversarial-reviewer` (one Medium, a following module that will refuse listed only under "Also affects", fixed test-first in `6805f268`, re-review approved); `confidence-review`, `ponytail-review`, `rewrite-tournament` (no defect).
-- Rulings: the issuer ID is the carry identity (renaming under the same ID still carries); changing pathway and back before the next review carries; limit acceptance is enforced by the page only, as on `main`. Parked for the plan's last PR: a following module whose refusal has a different root cause can sit in a card whose cause is only "limited".
-- Not verified: the gates and Chrome proof on the merged tree and on the last two fixes (`2056ece7`, `6805f268`); the review in Chrome after those two fixes (viewed at desktop and mobile widths before them); Edge and Windows; keyboard and screen-reader behaviour in a real browser (jsdom only); paid mode against the live service (mock fetch); behaviour against the live service for #11's grouping. No paid execution.
