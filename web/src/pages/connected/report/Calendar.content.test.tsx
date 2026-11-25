@@ -190,19 +190,40 @@ const dense = [
   row("2026-12-31", "day", "Year end"),
 ];
 
-it("C12: a label cut on the wide axis is whole in the open table beneath", () => {
+it("C12: the labels whose text overflows are cut, and the open table carries each full name", () => {
   mockViewport(1440);
-  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(1200);
+  const isLabel = (el: HTMLElement) => el.matches("[data-event-label] .truncate");
+  // jsdom lays nothing out: the three long names overflow their label box, the short ones fit it.
+  vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    return isLabel(this) ? 200 : 1200;
+  });
+  vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    if (!isLabel(this)) return 0;
+    return LONG.includes(this.textContent) ? 400 : 60;
+  });
   draw(dense);
   const table = screen.getByRole("table", { name: "Published events" });
   expect(table.closest("details")).toHaveAttribute("open");
-  const axis = within(screen.getByRole("group", { name: /^Events on a time axis/ }));
+  const labels = Array.from(
+    screen
+      .getByRole("group", { name: /^Events on a time axis/ })
+      .querySelectorAll<HTMLElement>("[data-event-label] .truncate"),
+  );
+  expect(labels).toHaveLength(dense.length);
+  const cut = labels.filter((label) => label.scrollWidth > label.clientWidth);
+  expect(cut.map((label) => label.textContent)).toEqual(LONG);
   for (const name of LONG) {
-    const cut = axis
-      .getByRole("button", { name: new RegExp(`^${name},`) })
-      .querySelector("[data-event-label] .truncate");
-    expect(cut).not.toBeNull();
-    expect(within(table).getByRole("rowheader", { name })).toBeInTheDocument();
+    expect(within(table).getByRole("rowheader", { name })).toHaveTextContent(name);
+  }
+  const whole = labels.filter((label) => label.scrollWidth <= label.clientWidth);
+  expect(whole.map((label) => label.textContent)).toEqual(["Rating action", "AGM", "Year end"]);
+  for (const label of whole) {
+    const name = label.textContent ?? "";
+    expect(within(table).getByRole("rowheader", { name })).toHaveTextContent(name);
   }
 });
 
@@ -219,4 +240,48 @@ it("C12: on the phone every list row carries the full event name, uncut", () => 
   expect(names).toEqual([...LONG, "Rating action", "AGM", "Year end"]);
   expect(list.querySelector(".truncate")).toBeNull();
   expect(list.textContent).not.toContain("…");
+});
+
+// E3: the as-of rule sits inside the heading of the period it falls in; one heading per period.
+function asOfList(asOf: string, data: string[][]) {
+  mockViewport(390);
+  const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+  render(<Calendar calendar={buildCalendar([handoff(data)], "current")} asOf={asOf} />);
+  const list = screen.getByRole("list", { name: "Events in date order" });
+  const rows = Array.from(list.children).map((li) => {
+    const heading = li.querySelector("h4")?.textContent;
+    return heading ?? (li.textContent?.startsWith("As of") ? "As of" : "event");
+  });
+  return { rows, error };
+}
+
+it("E3: an as-of on the first day of a quarter with day events heads Q3 once and July once", () => {
+  const { rows, error } = asOfList("2025-07-01", [
+    row("2025-Q3", "quarter", "Refinancing window"),
+    row("2025-07-01", "day", "Coupon"),
+    row("2025-07-20", "day", "Call date"),
+  ]);
+  expect(rows).toEqual(["2025 Q3", "event", "Jul 2025", "As of", "event", "event"]);
+  expect(error).not.toHaveBeenCalled();
+});
+
+it("E3: an as-of on the first day of a quarter with no month group sits inside the quarter group", () => {
+  const { rows, error } = asOfList("2025-07-01", [row("2025-Q3", "quarter", "Refinancing window")]);
+  expect(rows).toEqual(["2025 Q3", "event", "As of"]);
+  expect(error).not.toHaveBeenCalled();
+});
+
+it("E3: an as-of on 1 January with a year event and a month event heads 2025 once and Jan 2025 once", () => {
+  const { rows, error } = asOfList("2025-01-01", [
+    row("2025", "year", "Plan year"),
+    row("2025-01", "month", "Rating review"),
+  ]);
+  expect(rows).toEqual(["2025", "event", "Jan 2025", "event", "As of"]);
+  expect(error).not.toHaveBeenCalled();
+});
+
+it("E3: an as-of on 1 January with only a year event sits inside the year group", () => {
+  const { rows, error } = asOfList("2025-01-01", [row("2025", "year", "Plan year")]);
+  expect(rows).toEqual(["2025", "event", "As of"]);
+  expect(error).not.toHaveBeenCalled();
 });

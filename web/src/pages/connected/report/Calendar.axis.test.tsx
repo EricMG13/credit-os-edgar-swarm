@@ -249,10 +249,29 @@ it("draws the calendar the same way with and without an as-of date", () => {
   expect(document.querySelector("[data-axis-end='start']")).toHaveTextContent("2026-01-15");
 });
 
-it("widens the axis to an as-of date outside the events but prints only the events' words", () => {
+// Rewritten (E4): the old test expected the events' first and last dates under "Axis range" at the
+// two ends of an axis drawn out to the as-of date, which mislabels the ends. Outside the events the
+// ends are no longer printed; the events' own words go in a caption line and the rule keeps its label.
+it("outside the events, the axis prints no range ends but a line of the events' own words", () => {
   draw("2027-03-01", oneYear);
+  expect(document.body.textContent).not.toContain("Axis range");
+  expect(document.querySelector("[data-axis-end]")).toBeNull();
+  expect(screen.getByText("Events from 2026-01-15 to 2026-10-01")).toBeInTheDocument();
+  expect(screen.getByText("As of 2027-03-01")).toBeInTheDocument();
+});
+
+it("an as-of date before the events gets the same caption and no range ends", () => {
+  draw("2025-11-01", oneYear);
+  expect(document.body.textContent).not.toContain("Axis range");
+  expect(document.querySelector("[data-axis-end]")).toBeNull();
+  expect(screen.getByText("Events from 2026-01-15 to 2026-10-01")).toBeInTheDocument();
+});
+
+it("an as-of date inside the events keeps the range ends and prints no caption", () => {
+  draw("2026-08-01", oneYear);
+  expect(screen.getByText("Axis range")).toBeInTheDocument();
   expect(document.querySelector("[data-axis-end='end']")).toHaveTextContent("2026-10-01");
-  expect(document.body.textContent).not.toContain("Axis range2027-03-01");
+  expect(document.body.textContent).not.toContain("Events from");
 });
 
 // Rewritten: the six-column table needs about 690px plus the tile's padding, so it stacks up to 800px

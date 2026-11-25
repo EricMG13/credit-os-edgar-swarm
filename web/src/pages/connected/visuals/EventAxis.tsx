@@ -744,6 +744,13 @@ export function EventAxis({
   const range = axisRange(events, asOf?.time ?? null);
   const count = events.length === 1 ? "1 event" : `${String(events.length)} events`;
   const words = recordedRange(events);
+  // An as-of date outside the events draws the axis past them, so their ends are not the axis ends.
+  const outside =
+    asOf !== null &&
+    events.length > 0 &&
+    (asOf.time < Math.min(...events.map((event) => event.from)) ||
+      asOf.time > Math.max(...events.map(endOf)));
+  const ends = outside ? null : words;
   const label = `Events on a time axis: ${count}${words ? `, ${words.first} to ${words.last}` : ""}`;
   const shown = events.filter((event) => !hidden.has(event.category));
   return (
@@ -759,7 +766,7 @@ export function EventAxis({
           events={shown}
           asOf={asOf}
           label={label}
-          words={words}
+          words={ends}
           rowId={rowId}
           onSelect={onSelect}
         />
@@ -770,11 +777,16 @@ export function EventAxis({
           hidden={hidden}
           label={label}
           range={range}
-          words={words}
+          words={ends}
           rowId={rowId}
           onSelect={onSelect}
         />
       )}
+      {words && !ends ? (
+        <p data-events-span="" className="text-caption text-text-secondary">
+          {`Events from ${words.first} to ${words.last}`}
+        </p>
+      ) : null}
     </div>
   );
 }

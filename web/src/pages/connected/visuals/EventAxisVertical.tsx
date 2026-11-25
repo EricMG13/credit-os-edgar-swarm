@@ -50,28 +50,50 @@ type Stop = { time: number; group: Group } & (
   { kind: "event"; event: EventRecord } | { kind: "asOf"; asOf: AsOf }
 );
 
+/**
+ * The heading the as-of rule sits under: its month when an event already heads that month,
+ * otherwise the narrowest quarter or year event period it falls in, otherwise its own month.
+ */
+function asOfGroup(stops: Stop[], asOf: AsOf): Group {
+  const month = monthGroup(asOf.time);
+  if (stops.some(({ group }) => group.key === month.key)) return month;
+  const containing = stops
+    .flatMap((stop) => (stop.kind === "event" ? [stop] : []))
+    .filter(({ event }) => event.from <= asOf.time && asOf.time < endOf(event))
+    .map(({ group }) => group)
+    .filter(({ rank }) => rank < 2)
+    .sort((a, b) => b.rank - a.rank);
+  return containing[0] ?? month;
+}
+
+const byGroup = (a: Group, b: Group) =>
+  a.start - b.start || a.rank - b.rank || a.key.localeCompare(b.key);
+
+/** Within one heading: by date; the rule follows a period dated the same day and precedes a day. */
+function inGroup(a: Stop, b: Stop) {
+  if (a.kind === "event" && b.kind === "event") {
+    return a.event.from - b.event.from || a.event.to - b.event.to || a.event.index - b.event.index;
+  }
+  const rule = a.kind === "asOf" ? a : b;
+  const event = a.kind === "asOf" ? b : a;
+  if (rule.kind !== "asOf" || event.kind !== "event") return 0;
+  const apart = rule.asOf.time - event.event.from;
+  const before = apart < 0 || (apart === 0 && !isPeriod(event.event));
+  return (a.kind === "asOf") === before ? -1 : 1;
+}
+
 /** Events grouped under their period's heading, headings in time order of the period start. */
 function sequence(events: EventRecord[], asOf: AsOf | null): Item[] {
-  const stops: Stop[] = events
-    .map((event) => ({ time: event.from, group: groupOf(event), kind: "event" as const, event }))
-    .sort(
-      (a, b) =>
-        a.group.start - b.group.start ||
-        a.group.rank - b.group.rank ||
-        a.group.key.localeCompare(b.group.key) ||
-        a.event.from - b.event.from ||
-        a.event.to - b.event.to ||
-        a.event.index - b.event.index,
-    );
+  const stops: Stop[] = events.map((event) => ({
+    time: event.from,
+    group: groupOf(event),
+    kind: "event" as const,
+    event,
+  }));
   if (asOf) {
-    const at = stops.findIndex(({ time }) => time >= asOf.time);
-    stops.splice(at === -1 ? stops.length : at, 0, {
-      time: asOf.time,
-      group: monthGroup(asOf.time),
-      kind: "asOf",
-      asOf,
-    });
+    stops.push({ time: asOf.time, group: asOfGroup(stops, asOf), kind: "asOf", asOf });
   }
+  stops.sort((a, b) => byGroup(a.group, b.group) || inGroup(a, b));
   const items: Item[] = [];
   let heading = "";
   for (const stop of stops) {
