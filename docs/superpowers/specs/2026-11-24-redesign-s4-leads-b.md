@@ -119,6 +119,31 @@ components `Downside`, `BreakPoints`, `MacroSensitivity`, `Securities` keep thei
 `Modules.tsx` still compiles; they render the new tiles. Once S2 draws `leadFor(module)`,
 `Modules.tsx` should stop drawing them a second time (request below).
 
+### 2.5 Changes from the coordinator's first review (2026-11-25)
+
+These override §2.1–2.4 where they differ.
+
+- **Blocked**: a lead draws nothing when the module is blocked; the frame's header draws the
+  state. `LeadBlocked` and every unlock line are gone.
+- **`draws`**: each lead is exported through `withDraws` (`leads/draws.ts`) with the kinds it
+  draws; the frame keeps the rest. CP-1A maps+events; CP-DR events; CP-2 maps; CP-2A figures;
+  CP-2D figures+events; CP-2E figures+events; CP-2G none; CP-2H figures; CP-3 figures; CP-3C
+  figures+events; CP-3D figures; CP-4 figures+maps; CP-4C figures. A lead that draws figures
+  also draws their gaps (`OtherCharts` in `leads/written.tsx`).
+- **Gap wording**: "This page could not read <thing>." or the module's stated reason; no "from the
+  handoff", no "the module", no methodology or build note on the page. A table the store withheld
+  is read from the handoff and drawn, or said to be present and not drawable, with its trace.
+- **Titles** are subject names; no reading is assembled by the page.
+- **One system**: `BarRow`, `KeyValues`, `Notes`, `GapCell`, `CompactGap`, `TableRegion` (named,
+  focusable), `Disclosure`, the node map by depth, the figure head with its `controls` slot, one
+  `writtenTable`; Overview's `DeltaBar` for two periods in CP-2.
+- **Forms changed**: CP-2E one or two stated steps are figures, the ladder from three; currency
+  shocks one table. CP-3C need and resources as columns on a true year axis. CP-3D points from
+  three quotes, else a list; labels HTML at 12px. CP-3 a card per instrument below lg, every
+  module column drawn, price and yield comparison when two comparable trades are stated. CP-2G
+  "Net leverage by case" with "Highest published forecast year" per case and no picked peak.
+  CP-1A draws the revenue-mix register as written. The CP-2D runway tile is removed.
+
 ## 3. Files
 
 Add: `leads/parts.tsx`, `leads/read.ts`, `leads/cp1a.tsx`, `cpdr.tsx`, `cp2.tsx`, `cp2d.tsx`,
@@ -182,6 +207,11 @@ register reads.
    (`overview/StressRow.tsx` `TestRow` / `BulletChart`); `LeadFigure`'s notes list repeats
    `FigureNotes`; `cp3c.tsx` `BarLine` is close to the kit `BarCell` but needs a hatched gap mark
    and a signed track. A kit bullet row and a `BarCell` gap mark would let both pages share one.
+7. **types.ts**: type the static `draws` on `Leads` (today `DrawingLead` in `leads/draws.ts`
+   satisfies `FC<LeadProps>`; the frame reads `.draws`).
+8. **Shared parts outside S4's files** the render check flags: the 28px (36px at 390) trace button
+   (`PublishedSource`); the shell nav scroller (unnamed `ul`); 20px text links in the module
+   navigator; the old page's native selects and generic charts still drawn by `Modules.tsx`.
 6. **Reader titles**: the methodology plan should fix headings and headers for T2DS.4 / T2DS.6
    (CP-2A) and T2F.3–T2F.6 (CP-2E), or the existing exact-title readers keep missing real output
    (§4, last paragraph).
