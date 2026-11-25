@@ -64,6 +64,23 @@ describe("a control the browser finds invalid", () => {
     expect(name).not.toHaveAttribute("aria-invalid");
   });
 
+  it("marks only the first invalid field when several are, even with microtasks between events", async () => {
+    await documents({ issuer: "" });
+    fireEvent.change(screen.getByLabelText("Issuer ID"), { target: { value: "" } });
+    // A browser runs microtasks between the invalid events of one check; jsdom does not, so the
+    // events are dispatched one by one here, each in its own turn of the microtask queue.
+    const form = screen.getByLabelText("Issuer name").closest("form") as HTMLFormElement;
+    for (const label of ["Issuer name", "Issuer ID"]) {
+      const control = screen.getByLabelText(label);
+      control.dispatchEvent(new Event("invalid", { cancelable: true }));
+      await Promise.resolve();
+    }
+    expect(form).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent("Enter the issuer's name.");
+    expect(screen.getByLabelText("Issuer name")).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByLabelText("Issuer ID")).not.toHaveAttribute("aria-invalid");
+  });
+
   it("says the Issuer ID's rule when the ID breaks it", async () => {
     await documents();
     fireEvent.change(screen.getByLabelText("Issuer ID"), { target: { value: "North Bridge" } });

@@ -325,10 +325,12 @@ function useInvalidControls(markInvalid: (field: FieldKey, message: string) => v
     if (!field || !message) return;
     event.preventDefault();
     if (marked.current) return;
+    // The browser fires every invalid event of one check in a single task, running microtasks
+    // between them; the flag is cleared in a later task, so only the first field is marked.
     marked.current = true;
-    queueMicrotask(() => {
+    setTimeout(() => {
       marked.current = false;
-    });
+    }, 0);
     markInvalid(field, message);
   };
 }
