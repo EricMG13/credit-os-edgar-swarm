@@ -82,7 +82,7 @@ export function ScopeTile({
   limitations?: Limitation[];
   limitationHref?: (line: number) => string;
 }) {
-  const { base, limits } = scopeQualifications(model);
+  const { base, limits, lineLevel } = scopeQualifications(model);
   const [allLimits, setAllLimits] = useState(false);
   // Every limit, in the model's order; beyond eight, the rest one press away.
   const shownLimits = allLimits ? limits : limits.slice(0, MOST_LIMITS);
@@ -111,6 +111,18 @@ export function ScopeTile({
         </ul>
       ) : (
         <GapNote>No qualifications are available in this summary.</GapNote>
+      )}
+      {lineLevel > 0 && (
+        <Button
+          href="#evidence/record/notes"
+          color="link-gray"
+          size="sm"
+          className={`w-fit ${TARGET}`}
+        >
+          {lineLevel === 1
+            ? "1 line-level entry is in the Evidence record"
+            : `${String(lineLevel)} line-level entries are in the Evidence record`}
+        </Button>
       )}
       {limits.length > MOST_LIMITS && (
         <Button

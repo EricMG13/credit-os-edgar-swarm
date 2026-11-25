@@ -179,14 +179,15 @@ function fixture() {
 
 afterEach(() => vi.unstubAllGlobals());
 
-it("lists each model limit once on Forecast, under Scope and limits, and once on Evidence Record", () => {
+it("keeps the full model qualification ledger once on Evidence Record, not on Forecast", () => {
   const { view, model } = fixture();
   const drawn = render(<Forecast view={view} run={run} />);
-  // Every limit the model records is listed once, in reader words, in Scope and limits only.
+  expect(document.body.textContent).not.toContain(ledger);
+  // The tile says once, as a count, where the line-level entries are.
+  const scope = within(screen.getByRole("region", { name: "Scope and limits" }));
   expect(
-    within(screen.getByRole("region", { name: "Scope and limits" })).getByText(ledger),
-  ).toBeInTheDocument();
-  expect(document.body.textContent.split(ledger)).toHaveLength(2);
+    scope.getByRole("link", { name: "1 line-level entry is in the Evidence record" }),
+  ).toHaveAttribute("href", "#evidence/record/notes");
   expect(screen.getByRole("link", { name: "Model notes and limitations" })).toHaveAttribute(
     "href",
     "#evidence/record/notes",
@@ -942,4 +943,14 @@ it("wraps recorded descriptions, model notes and qualifications at desktop width
   const figure = caseFigure().closest("#forecast-cases");
   expect(figure?.className).toMatch(/min-w-0/);
   expect(figure?.className).toMatch(/wrap-anywhere/);
+});
+
+it("lists a model-level limit that starts with a word and a colon which is no row of the statement", () => {
+  const { view, model } = fixture();
+  const scope = "Perimeter: the forecast covers the restricted group only.";
+  model.cashflow.limits = [ledger, scope];
+  render(<Forecast view={view} run={run} />);
+  const tile = within(screen.getByRole("region", { name: "Scope and limits" }));
+  expect(tile.getByText(scope)).toBeInTheDocument();
+  expect(document.body.textContent).not.toContain(ledger);
 });

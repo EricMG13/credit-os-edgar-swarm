@@ -547,12 +547,25 @@ function limitPassages(cashflow: Record<string, unknown>) {
  */
 export function scopeQualifications(model: unknown) {
   const cashflow = record(record(model).cashflow);
+  // A limit is a line-level ledger entry when it is tied to a statement line: the record carries no
+  // line id, so an entry whose text starts with a row label of the model's own statement, exactly,
+  // then a colon. Those are drawn only in the Evidence record; no word decides it.
+  const rowLabels = new Set(
+    [gridOf(cashflow), gridOf(cashflow.other)].flatMap((grid) =>
+      grid ? grid.rows.map(({ label }) => label) : [],
+    ),
+  );
+  const lineLevel = (limit: string) => {
+    const at = limit.indexOf(":");
+    return at > 0 && rowLabels.has(limit.slice(0, at).trim());
+  };
+  const recorded = [...new Set(stringsIn(cashflow.limits))];
   return {
     base: basePassages(cashflow),
-    limits: [...new Set(stringsIn(cashflow.limits))].map((recorded) => ({
-      recorded,
-      text: readerReason(recorded),
-    })),
+    limits: recorded
+      .filter((limit) => !lineLevel(limit))
+      .map((limit) => ({ recorded: limit, text: readerReason(limit) })),
+    lineLevel: recorded.filter(lineLevel).length,
   };
 }
 
