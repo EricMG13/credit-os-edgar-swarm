@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Snap Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "0ec4b3eadb948f28ab590b5c85a951538464881ad885c9d349507c3c5c667fa3",
+    "CP-1.md": "b21912250176ec9fa6775a128fcc02935ebbcc91a2ab7931b7bedd90bdeb0be7",
+    "CP-1A.md": "12b0b65971b6695cacd42a3646ea8dfa4509bce5b95f2e888cbfbe4aa5dcac41",
+    "CP-2.md": "4e2d8bab1273ad9b2ba54fe8a82f502528e69cf91e922e3aa848fd574d07315a",
+    "coverage.json": "bca10bbd4746f735bd4b40b5d1402181ad7a42a6438469e53cc72bae07ce510f",
+    "view.json": "fd3a1b7cc41e89fc4762c11eecf44170242e7ddee9527a1837ca44410f288f76",
+    "report-view.json": "3362321d7c5c1974cba3b8305dd2c349c7619127027cb9f0361bbe5d2c2c82e3"
+  }
+}

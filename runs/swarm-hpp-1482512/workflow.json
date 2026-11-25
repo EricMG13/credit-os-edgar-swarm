@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "hpp-1482512-2026-11-18-credit_snapshot-host",
+    "issuer_id": "hpp-1482512",
+    "issuer_name": "Hudson Pacific Properties, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_hpp-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_hpp-20241231.htm.jsonl",
+      "sha256": "e417207573fc1cebee4080d302e5fb27f8eb878e212bcb5cbb3f203bb75125b8"
+    },
+    "10-K_2025-12-31_hpp-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_hpp-20251231.htm.jsonl",
+      "sha256": "72983a1ff159b80b34efd23f404d112a3a14364c437b7becbe73a31ab809e840"
+    },
+    "10-Q_2026-03-31_hpp-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_hpp-20260331.htm.jsonl",
+      "sha256": "efe375f8220311e4ce14f0fdca8791171f4cef1aa730bc8d912e50ca77584328"
+    },
+    "10-Q_2026-06-30_hpp-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_hpp-20260630.htm.jsonl",
+      "sha256": "e4de09d9a2554ab5444fe35ded738ddb199d379d6f719551ce172a453f781850"
+    },
+    "10-Q_2026-09-30_hpp-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_hpp-20260930.htm.jsonl",
+      "sha256": "48cee3357fb8f1fb8f4194d9a502474d555f9579c7a821df3d085608f9cabc10"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1482512-hudson-pacific-properties-inc-hpp.json",
+      "sha256": "fd9cd37d8af97a758de6adc715115b5f7f8dd6498b06ab4c51cf8e4bce2d36f4"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "e984b03877daba5b2d7a39bdbb044a395ddf45cbeaf8d54ad8e63bf8ae222ee4"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "c2eb25dcfaa6caa5b73ac8838c7c6a599c93398d464969bbd9faf4351300477c"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "20d2c7c9a5bdae0d958036427ba803c34b7a1db85447b52762a52a52046fb2aa"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "3fd308bbf515cc96ecf5c066ce30cb5b196ef845b3b92f81f5492a578d1c62c0"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Hudson Pacific Properties, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Hudson Pacific Properties, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for HERC HOLDINGS INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/513a44837d7096ab4cc8f01eb2c24e93da3330f5f2c4aa1a1eed94991752ee2c/1.response.md",
+    "CP-1": "requests/CP-1/c9cfc7048d1b3ccb2326e5d600da56150960c81ff7aae2fa6162b8243068229e/1.response.md",
+    "CP-1A": "requests/CP-1A/00a00acc00c2e013c6a177ac4b3d8b77d5d39a548c495c084e4888848788bcf2/1.response.md",
+    "CP-2": "requests/CP-2/6c24d6ee42760f5ba83072c3b192ec587633ee8e58d433eb0d6eda73182a0608/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "be0ed5893c099f68ac56d9e8153809e548934ce94d30cdd73e21cd6804b1e556",
+  "delivery_sha256": "445346ba63ebd27f734bb53abda2ef9bba30abbc15f5548f8b8256fccd35eded"
+}

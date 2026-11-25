@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for CVR ENERGY INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/34a420c31df4b31d2e9f3d82d597cb557493a878b5b451c4efef6049ec8738b1/1.response.md",
+    "CP-1": "requests/CP-1/ac807b5a9b876eb2d238d05a54aaf94128348b1d390ca92226eab6d148683e6f/1.response.md",
+    "CP-1A": "requests/CP-1A/8a844ddb81b0c6943060e616dbd8db3bbdfacb27f5af28e810eeba3388352b91/1.response.md",
+    "CP-2": "requests/CP-2/5d662223c7ed64a472409ffca2c75f506ff6b2c175d23bc28c4cba21be9cefb1/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "05d08147d4d582fb440e6de87def90bf04d62b66d765ec0e7dccba351cffff7a",
+  "delivery_sha256": "2ab6080fc3b08596a585923d36c16446870cbd472184987b8208c676d1dbb161"
+}

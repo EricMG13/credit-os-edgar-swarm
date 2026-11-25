@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for MAXLINEAR, INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/c5b996ced735c6f99a398e4bf827f15ee4bd1eaa3c26b932c0bfb5a9e66335d1/1.response.md",
+    "CP-1": "requests/CP-1/5561ade1bddba20a8024b00792155bb8d5f9700b56a9d60f6f25a01ea448cc38/1.response.md",
+    "CP-1A": "requests/CP-1A/006dbb282383a49ae7aa500dadcc679a83a81c7e06617f6926d1968446d85284/1.response.md",
+    "CP-2": "requests/CP-2/a5c3418a6b678e534697c5e84d902fc334278ac8b71dc3ca283cfe1946f324f0/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "b2e12d94087061473480f5aff191f758129ae8c6dc3e19bfbab3707a8bb4940b",
+  "delivery_sha256": "6bebf7643b4ab17e4288959b3869befa7ab6abcf9a0bc6acdae2b58351783155"
+}

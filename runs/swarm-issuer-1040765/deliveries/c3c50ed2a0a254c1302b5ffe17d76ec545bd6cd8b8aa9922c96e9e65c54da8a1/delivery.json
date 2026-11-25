@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Vornado Realty Lp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "8a149f3cc3784477f6f9b978e7acf147daa97d0bdc355800d687477693126868",
+    "CP-1.md": "a80f8fb4e363ccd4079d68585c16af074bf6d397d71c756512e600b34c3cafdc",
+    "CP-1A.md": "465f8d2adf4636897830f614ee6eaf3d614ad850ce64d4479cf4aa4b9145ec59",
+    "CP-2.md": "28471eb432106a4418ce57d6524c6d988ef7ba3c1ef619e488ef30497c7a74dc",
+    "coverage.json": "e5e2d9b0042bfd1575eb61c4015902251ac6aa77c8d1cde749a8f91a79e5cc8c",
+    "view.json": "000f825e3e572134a13b369ef2cb831f1f05454f9d394458e877d471c6695e32",
+    "report-view.json": "846fc3aa12742363e83e2bee439eee574962b296739d36f0220a0a4727abe9bf"
+  }
+}

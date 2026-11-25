@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "merc-1333274-2026-11-18-credit_snapshot-host",
+    "issuer_id": "merc-1333274",
+    "issuer_name": "Mercer International Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_2024-Annual-Report-on-Form-10-K.pdf": {
+      "path": "../../../inputs/packs/1333274-mercer-international-inc/10-K_2024-12-31_2024-Annual-Report-on-Form-10-K.pdf",
+      "sha256": "88b4839b0b8a452362d7cff044282992c5143af25bd1b04f9ab0b061fe9ec2ed"
+    },
+    "10-K_2025-12-31_2025-Annual-Report-on-Form-10-K.pdf": {
+      "path": "../../../inputs/packs/1333274-mercer-international-inc/10-K_2025-12-31_2025-Annual-Report-on-Form-10-K.pdf",
+      "sha256": "199063140ae13b197f6ac203e058096e1c9a39565b47a3652ddaf790464073b5"
+    },
+    "10-Q_2026-03-31_Q1-2026-Quarterly-Report.pdf": {
+      "path": "../../../inputs/packs/1333274-mercer-international-inc/10-Q_2026-03-31_Q1-2026-Quarterly-Report.pdf",
+      "sha256": "2d73b72683a9b1535ef6e937171f26c36611490ca4c198a9a3a288ab05ddfeb7"
+    },
+    "10-Q_2026-06-30_Q2-2026-Quarterly-Report.pdf": {
+      "path": "../../../inputs/packs/1333274-mercer-international-inc/10-Q_2026-06-30_Q2-2026-Quarterly-Report.pdf",
+      "sha256": "55509591a63880a7858fcf239929ae13166825b73c593451aef10ab98bb5ca7b"
+    },
+    "10-Q_2026-09-30_Q3-2026-Quarterly-Report.pdf": {
+      "path": "../../../inputs/packs/1333274-mercer-international-inc/10-Q_2026-09-30_Q3-2026-Quarterly-Report.pdf",
+      "sha256": "5ce09d329f1dbf04b338f9bc00e9e2a825037ac1d41b1926d900e739b496b5c9"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1333274-mercer-international-inc.json",
+      "sha256": "117860a5f3ebb500813a115e71567c453690926b1ca4d431c6a8cda3d84a47e4"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "c10ac9ad749b8458df5dbbccd530c24e27477a3791e223a297ac7898f5228070"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "e95ef0e15217a280fcb4ddbb032e33d282a69950245cb7eb9b6efdd974de5833"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "2ca00a3f979c68330f1df29b0bb9c86e4076a09d1144967ae05d36023ee22fa3"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "8321e2d57f88bc72e79ba97be8f53690b3419eabdbbb686f05ef0162b06e1ad3"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Mercer International Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Mercer International Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

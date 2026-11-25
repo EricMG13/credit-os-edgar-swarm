@@ -1,0 +1,248 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "nxst-1142417-2026-11-18-credit_snapshot-host",
+    "issuer_id": "nxst-1142417",
+    "issuer_name": "Nexstar Media Group, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_nxst-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_nxst-20241231.htm.jsonl",
+      "sha256": "acb4cca6d026cbbf8e00c0cc3b30a36e70ca1a0e6e54322d064c4c2ea33a9e4f"
+    },
+    "10-K_2025-12-31_nxst-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_nxst-20251231.htm.jsonl",
+      "sha256": "15c23adc91659586e1de118e8fa5a681e03fd060740ba126f529b554f92119e4"
+    },
+    "10-Q_2026-03-31_nxst-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_nxst-20260331.htm.jsonl",
+      "sha256": "c399e89f355fffbbae893da6fb416ea431e994477b3abaf453bd3e139b073d75"
+    },
+    "10-Q_2026-06-30_nxst-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_nxst-20260630.htm.jsonl",
+      "sha256": "568aa8cd49ec2e6c8179ddceaab40fb9441c5fe3e156daf70d344b10b4003ad6"
+    },
+    "10-Q_2026-09-30_nxst-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_nxst-20260930.htm.jsonl",
+      "sha256": "0f916cde390a4f7e9590fe4e1caa979f945662ffe9776e6a4f5e28e698c1f848"
+    },
+    "EX-99.1_2026-05-07_nxst-ex99_1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-05-07_nxst-ex99_1.htm.jsonl",
+      "sha256": "5ea5febc4a329af445017444ffd4527bec6dfdecc4134cdae075b3b045fb7cee"
+    },
+    "EX-99.1_2026-08-06_nxst-ex99_1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-08-06_nxst-ex99_1.htm.jsonl",
+      "sha256": "c2a3391659e0efbd2efa89eaf120e9062707d27c1e03dd9d4d38c11f02a8b52d"
+    },
+    "EX-99.1_2026-11-05_nxst-ex99_1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-11-05_nxst-ex99_1.htm.jsonl",
+      "sha256": "427cafb9c7bb3cad4f7acdaee61e23bba96cbaaa5a0b6c9cbdb388cc9012aea4"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1142417-nexstar-media-group-inc.json",
+      "sha256": "d7d3171dc2eb6cc37b4cd0bf6c61c752d901857de9df833c95bbf8407b57dc99"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "7a2d62d3ecb9f5959cb3bc6dab4f0d492ffbe622c4759cdbe6db6efaa5e9c8de"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "267a83215173dac5ad14e1ffda3500abd66f6c293f6356ca4db64be052a822e2"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "c5782b28c69f299952b7db3195fd48a648e535a05f6b2e450b6b7d028f3ba989"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "3edef59ab32e5ef51c6b75e2ef1afa377eb8deff318f9f103dcecd6e373ca1ea"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Nexstar Media Group, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Nexstar Media Group, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

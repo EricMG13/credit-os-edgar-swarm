@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Mercer International Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/fbbbcd4ca159f66628ea91f7f29566c97bff0cfe9fb0ef8d0870fd1ca168b278/1.response.md",
+    "CP-1": "requests/CP-1/c4cb9b96f019d734d18ac82b945e9f415be7cfa94b1e9af15ddc65bb41834b5b/1.response.md",
+    "CP-1A": "requests/CP-1A/7954de25718d9e8185e20d03131fb3d78193a68fa38006b0fbcbd96a6afda624/1.response.md",
+    "CP-2": "requests/CP-2/dbb03b019ddf24919e965b21da1f3ce3cb8cf8799d8de416b712f4456a630f81/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "fd60af9d9be6f9e9165f39b8b20a338f70fcbd1c6307d73010df984ce2ce7050",
+  "delivery_sha256": "cf10037aff477fb898f73bb88b2de53cf43a6101422ba6b321a4b012d2c204c0"
+}

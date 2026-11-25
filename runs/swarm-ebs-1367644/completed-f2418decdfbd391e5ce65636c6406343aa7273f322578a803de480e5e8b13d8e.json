@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Emergent BioSolutions Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/8b54b3d4b565c7cf81102f46c5054216f6aaa87db0e5b8f783ecd7a304af957d/1.response.md",
+    "CP-1": "requests/CP-1/4f755aace63caf2123bc3599c4102c383c2e5cf5fb823ab870feaaf6e50fbbcc/1.response.md",
+    "CP-1A": "requests/CP-1A/36ff44794684ad0d72a49abb4939ea23a8c1b6762f4673cd2a36ed65b71adc9e/1.response.md",
+    "CP-2": "requests/CP-2/cdcb8751c3728957bf37d93171902b103b20c2f6c650c670ae8276084b21978b/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "a55d42e550bd7bde712ed44b4d764ae1fb461b13469be511461625f24d1d2fa0",
+  "delivery_sha256": "7bbd20cd61561cb9c70974c320ff5ebe93b3185fa7efd51edb471a830b15083a"
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for COLUMBUS MCKINNON CORP as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "18f5a23d0364acbddee8909cd277605783124cc2d2128e2975b3e072ab6b8d97",
+    "CP-1.md": "1ca988871cad390028c40506fb4999176f884575d9904ca1d5e210d8ec920e39",
+    "CP-1A.md": "5ba0a580f33651ad071031a95d9dbc9d798b19233d2296cdeeb17f4bb3ec82b5",
+    "CP-2.md": "8b35103a62481631463385f5526e3b1d749bca61e8deb0f7089fa01673a95218",
+    "coverage.json": "92110d86b3e0399e3ee93bf5cc67654383531fd63b02914d2c1f67856e438a41",
+    "view.json": "61278ce58fc4633467b4ee2dfe0cf535c768e3a2b5327f532d68243e34803e9f",
+    "report-view.json": "f023b340f305ddd794a9fafa0e2f5ea260792bc8af999a93c2b38fedaaf74ffc"
+  }
+}

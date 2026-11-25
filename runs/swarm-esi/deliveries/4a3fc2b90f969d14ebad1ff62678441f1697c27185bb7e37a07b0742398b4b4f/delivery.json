@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Element Solutions Inc as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "726e999a66f18b2ca5b18872e841ef560671f56788a1cba673297f6aff9398f2",
+    "CP-1.md": "700fd9290cf4e5bf634d52d75108e9b7521e5896e3cab8e97de395defc4806a8",
+    "CP-1A.md": "2b9090c840089955b64a53827f63af7141ab74dbf10facbeb5e1321582751657",
+    "CP-2.md": "55d71dde56d4adf06872004ff6c00c11c0f249bd0e060d02f9c1c90e9165e7ca",
+    "coverage.json": "5d8ee29c77a11262fa70471bf3fe6a71e1f9689525efc5ed5247216162fbae72",
+    "view.json": "18b7552b8b0922fe289df3b2db9bfabd13d5d504718c701762f37e3718b21c10",
+    "report-view.json": "09f8c63ef324088a0435292432749d7fb4266841606c22954220785485d9c20c"
+  }
+}

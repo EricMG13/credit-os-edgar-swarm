@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for XPO, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "f7b88b9231b28b9f131459d1de2604b9cf48667f67ba5fd6bcc5a70ca0278e65",
+    "CP-1.md": "8942c34d68a100246d1d5d05465579db13a0eb41614b607c2a5fe111532c2460",
+    "CP-1A.md": "04b60c2bbc17d690cbac6cd151711e8b11ea89ef3029a4e41706f0229feb3ccc",
+    "CP-2.md": "f57b1825d691fd0abc9394ac98a56f5972480523e9c4d7ce97a66978130fc2e3",
+    "coverage.json": "bdb0504b6d4a54043ea7666c145f515adb077cef8cb2f18e87d15d64436033b6",
+    "view.json": "a7a248bf856b48a47f1d9da0233cb1903f717359379dd029eebe11d2f9422279",
+    "report-view.json": "389735c4737bc500c7185f685f06f83bf37275c266405c82663b38d09a110d86"
+  }
+}

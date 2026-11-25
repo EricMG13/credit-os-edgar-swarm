@@ -1,0 +1,94 @@
+{
+  "checks": [
+    {
+      "figure": "columns",
+      "module": "CP-2",
+      "reason": "every declared column is present",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.1",
+      "row": "columns",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "agreed",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "columns",
+      "module": "CP-2",
+      "reason": "every declared column is present",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.10",
+      "row": "columns",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "agreed",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "all",
+      "module": "CP-2",
+      "reason": "not required in this transport (register scope or routing rule)",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.11",
+      "row": "all",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "columns",
+      "module": "CP-2",
+      "reason": "every declared column is present",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.12",
+      "row": "columns",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "agreed",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "placeholders",
+      "module": "CP-2",
+      "reason": "not a full analytical run by the method's blocklist (an explicit gap is this transport's answer, so recorded only): row 1 `Threshold / Signal`: `Quantitative threshold not available in provided materials; signal is revenue growth turning negative from 25.0% in the nine months of 2026, or a distributor order pause`; row 2 `Threshold / Signal`: `Quantitative threshold not available in provided materials; signal is gross margin falling from 71.7% through warranty cost or a tariff change`; row 3 `Threshold / Signal`: `Quantitative threshold not available in provided materials; signal is free cash flow below USD 211.7 million for the nine months of 2026 or repurchases above free cash flow`; row 4 `Threshold / Signal`: `Quantitative threshold not available in provided materials; signal is cash falling from USD 584.4 million or revolver borrowings approaching the level at which the filings say the leverage covenant applies, which is not supplied`; row 5 `Threshold / Signal`: `Quantitative threshold not available in provided materials; signal is total debt over reported EBITDA rising from 1.38x or new debt raised for repurchases`; row 6 `Threshold / Signal`: `Quantitative threshold not available in provided materials; signal is the revolver due 2030 or the term loan due 2031 becoming current without an extension` and 2 more",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.12",
+      "row": "placeholders",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "noted",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "all",
+      "module": "CP-2",
+      "reason": "not required in this transport (register scope or routing rule)",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.7",
+      "row": "all",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    }
+  ],
+  "kind": "method-script-checks/1",
+  "module": "CP-2",
+  "response_sha256": "432984fe7d050f4dc59cf2c3570500d58c35de83bb2efdd55f044b15ab3d8bb6",
+  "scripts": {
+    "docs/reuse/selected-methods/scripts/completeness_check.py": "a9841a74e4f851fd565c5f3cabc831835c4bc305ea40c28446790f8165d56056"
+  }
+}

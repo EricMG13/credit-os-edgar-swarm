@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Caesars Entertainment, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "41a439bc8a5d2710703ed2fbb53d7212650697e2be4bec0b83c2d4805ebb7638",
+    "CP-1.md": "12771a04e103f67057dc827a27c421840f19f801eaa6da5acd596b526909d07c",
+    "CP-1A.md": "a70d97dad1f5af96740ece1ed9a1485df32373a2bd755d2a8b53a90e998f69e7",
+    "CP-2.md": "fc0270eb4afbd9e7b04d805188751190cd3185176276305cf69605db3ec3b1e5",
+    "coverage.json": "4a3d969935d411a7c4d6fc344879da131efffde98a1cc18ca8962af232060dec",
+    "view.json": "78a19b194afca6d19f2c7c6510d6b368661a10ff07a6468b036041a5397fbf19",
+    "report-view.json": "c10afec28d64d8c8a096d531b1d5a7f3c9cf098de52a1425c9500f38d798c093"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Ttm Technologies Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "ebe57e6955cc48b23838644a54d0f9c04687bccb43bc45da3c752a3a217dbc17",
+    "CP-1.md": "2f93b865761cfc9ce24d7afa14f9ff844290959abecb198b00a6bdc763c04e93",
+    "CP-1A.md": "d9d4f775f8aec5ea9a759d755ac98bc827eb4db2feb1e78c63de9243e8e51898",
+    "CP-2.md": "7957f63bd34517a2d40f259a8dfb927ded0088ed6c5a25ce7012910781b4523f",
+    "coverage.json": "320c7e387268783682fd73c098ced3777e3eef3dfdacec047884ecabbb78b699",
+    "view.json": "dc534b1a7580e94dead5b84e663673eddf3006ada66fafba1d9094db45371f7c",
+    "report-view.json": "edf2e30dccf75199f0452ea14a91283e1279710e761982f7b9b30ec717641feb"
+  }
+}

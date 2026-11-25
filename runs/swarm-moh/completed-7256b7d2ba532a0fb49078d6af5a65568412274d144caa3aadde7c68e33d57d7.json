@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for MOLINA HEALTHCARE, INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/1559e1b03d98774d9099e380a7a72f8e58c57e237a80e3f91fe5b39154e01634/1.response.md",
+    "CP-1": "requests/CP-1/b7449f3dcbe75e54cc10e6615fc5f4d7243c9f435364a7e84ecc6aa5509dc620/1.response.md",
+    "CP-1A": "requests/CP-1A/e3fea26868355c95e48982f6b4544ece5e486940b3e03f51e709128a399f699f/1.response.md",
+    "CP-2": "requests/CP-2/2061802703cfbbbf83d863cb3ed759faac85184868ac9a3c5810fd89cc0de531/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "89edf3fbaa852ec2378d52ca63767838ff52934c341ad1837776a67566dfe7d3",
+  "delivery_sha256": "7f070c13ff180f25db5973efa1ac32b5a5ab12e30123d14dfcf084fcff32d6ef"
+}

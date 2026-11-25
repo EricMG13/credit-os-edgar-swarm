@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Axon Enterprise, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "0ed204b3de7a5f6214b4aab597aaeda3d6b208ee592d9c71a491f3a063a02280",
+    "CP-1.md": "4df063b016d7dfdc0701696197eb3b1e33b8c6cd8e3a8c1c1743ebb98482ace7",
+    "CP-1A.md": "f55baee26bcc1db600a0cc2343f2c180f21c5fbb8019975fa758a3530f38900c",
+    "CP-2.md": "7d5ea39f6429ab0c2488cbeb90324c327f7e06ecf00850e9d58e5227eb84a1f4",
+    "coverage.json": "3cd4e76d9256acbc470df05d01e8f42d375e2b3801ae8641fdb4587a0139de4f",
+    "view.json": "afb09d84ec003f49e83200855ca3108fbf086e9f5cb097e038efe4cf352eecbe",
+    "report-view.json": "3756d1505a4a7e7dc507bfe227e45ce91cf2241cfba14a1f6f262000dcb6faf2"
+  }
+}

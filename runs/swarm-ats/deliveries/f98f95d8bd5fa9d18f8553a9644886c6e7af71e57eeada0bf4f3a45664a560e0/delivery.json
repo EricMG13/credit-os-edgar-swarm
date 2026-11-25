@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for ATS Corp /ATS as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "d2a15aca679e64d0f4bcbfe3f414acad02e0df4529931bc745af2c3a8ad3f234",
+    "CP-1.md": "35e2707d5b7e1f0ca3030f5c88203478d7f91a7f2602eb21c80d87b4240f8a77",
+    "CP-1A.md": "4f4335754688e5ad5ea230a5ab73dc3caec783480f4eed6c1435b3d6f1215263",
+    "CP-2.md": "27cc402ba6257f90478b263f0978d4282101e42d5bd80d7a6b2a0c279e0cbfdd",
+    "coverage.json": "b753e10eeb1a4b3038972f7a01469dacbfcb3f419f05f95d8c531845fe8ba1f8",
+    "view.json": "bdcc64bc462aba46bfda6a9356ddabaaa0912851039a9dbd86fc2d0de693a724",
+    "report-view.json": "e7f04482f2c64ea69ac37f1f83cd0e91466eeeb66e489f3f443d449605fedf46"
+  }
+}

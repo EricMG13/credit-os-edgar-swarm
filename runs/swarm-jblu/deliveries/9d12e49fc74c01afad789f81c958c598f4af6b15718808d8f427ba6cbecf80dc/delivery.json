@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for JETBLUE AIRWAYS CORP as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "0dd82f0d6328b2f45ca2c2e08518e16f6cb3b3c650982a31c9a99773ac1c8b4f",
+    "CP-1.md": "8df38937426c7c1f7015873732375cecefb64c666e3777dc2ea1225c35f89393",
+    "CP-1A.md": "4113f8432871a660724fa3751745abbed214537bd567e39d43d298aa5c89bfbd",
+    "CP-2.md": "e1b1ee26fc7a96792aa081196c5b79977e3788a9448d5b60145e5f0fa40baf58",
+    "coverage.json": "ced48c9584045bf3c40b1a6c0431a995e3ac45f77f26eedbe104d05b6d868501",
+    "view.json": "cfca91699b2f8f335feb9a1f87996b65461e244d28ddbac3d1d88dfa61240397",
+    "report-view.json": "8082dcb81202ab4641f6d07307997557f39e54e76867af30f91752ffdb8e1023"
+  }
+}

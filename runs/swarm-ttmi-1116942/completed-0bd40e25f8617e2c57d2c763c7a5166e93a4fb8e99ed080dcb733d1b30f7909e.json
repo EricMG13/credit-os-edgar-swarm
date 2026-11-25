@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Ttm Technologies Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/bb19722c6e3581398f8633fc56b4750611213c3fce37fedbe2dcdd618b662ed7/1.response.md",
+    "CP-1": "requests/CP-1/3d7562e41872bf26c5fdedd3f036decb4a60d1bb156d536f1959d72c465aa60f/1.response.md",
+    "CP-1A": "requests/CP-1A/81610e0ba15a0bc60eeced8604a5077b996bc4899ebafdcf0bf646dc8bfbe8ef/1.response.md",
+    "CP-2": "requests/CP-2/33b9f9b784e57ad2117532c0d46f041a976cccfadf23a4fa5bbd3c2429dd3fd1/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "0a98b853a26488dd4d81192978b5958d86363ca488461c217b62b1b8c3474f1c",
+  "delivery_sha256": "e8a00c01227965cb34da807cd21be7cc47bb75b73a00a3a4249aab26fb224f4b"
+}

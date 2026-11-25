@@ -1,0 +1,248 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "ens-1289308-2026-11-18-credit_snapshot-host",
+    "issuer_id": "ens-1289308",
+    "issuer_name": "EnerSys",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-03-31_ens.htm.jsonl": {
+      "path": "source-text/10-K_2024-03-31_ens.htm.jsonl",
+      "sha256": "23e875161ec6bc5f0cb0090cb08d3e5735bb3f4fb8a63ce031c587e48c5310f0"
+    },
+    "10-K_2025-03-31_ens.htm.jsonl": {
+      "path": "source-text/10-K_2025-03-31_ens.htm.jsonl",
+      "sha256": "6b41a96c642aa077a36c91e0e14d321104bd7cd1fb9355fee8c10a5593158309"
+    },
+    "10-Q_2025-12-28_ens.htm.jsonl": {
+      "path": "source-text/10-Q_2025-12-28_ens.htm.jsonl",
+      "sha256": "c530f5fc53f0d39b1b1dd76057668eaba749e067ad5cc5ae9221299cdb2077b7"
+    },
+    "10-Q_2026-07-05_ens.htm.jsonl": {
+      "path": "source-text/10-Q_2026-07-05_ens.htm.jsonl",
+      "sha256": "b830b90934ea33bf25869e78de890d4233754789a40dd1cf7d9ad3907d563467"
+    },
+    "10-Q_2026-10-04_ens.htm.jsonl": {
+      "path": "source-text/10-Q_2026-10-04_ens.htm.jsonl",
+      "sha256": "ecbff6bd0e6c076542a65ae3e0adde9d8bebc4226579cd26b6813ccb5d084e33"
+    },
+    "EX99.1_2025-12-28_ens_ex991-earningsx3qfy26-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2025-12-28_ens_ex991-earningsx3qfy26-htm.htm.jsonl",
+      "sha256": "e643e7ebb8278a1b8f37e1ff2d908aac19fc9709efea58ee7c36375bc853a9d5"
+    },
+    "EX99.1_2026-07-05_ens_ex991-earningsx1qfy27-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-07-05_ens_ex991-earningsx1qfy27-htm.htm.jsonl",
+      "sha256": "50c4cde2aca9afdb2770bba643de5c26d91874f7d392183dcc751ad20efb721f"
+    },
+    "EX99.1_2026-10-04_ens_ex991-earningsx2qfy27-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-10-04_ens_ex991-earningsx2qfy27-htm.htm.jsonl",
+      "sha256": "c8a6b270bfdfcb3ffa80b06da2daf71ab855cbc200c7f8fdc82373c25e05c0dd"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1289308-enersys.json",
+      "sha256": "cca2e1353d532d892cf90d622e5421d43b7bfabd8c797cbfb3d5ec701f43c70d"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "8c0c3e06408e48876316eadd6a684f26bfed2f50eb02c376bf8fcb70bd1fc664"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "16460ec5a53cb318869687d73f01fc6c33943212dd3c9218fa73e5b16f57661e"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "768d8a8866cf5bbd18ea666e6e05d4160b5e0341bd242f910fb2ff532189257e"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "e75d2d2cb1c751a6b840bcf716a56a5db7b12d8c641a49d60330b2378ba94804"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for EnerSys as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "EnerSys — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

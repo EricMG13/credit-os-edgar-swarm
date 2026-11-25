@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Sealed Air Corp/De as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/53920ae0efb126bc6700a71950ce13e6b3fcf36087600001bb65aa998c2570d8/1.response.md",
+    "CP-1": "requests/CP-1/e4997e80f40792b37f6daae5e6b802052cf5c81a43d7271534e7e2573c89c88e/1.response.md",
+    "CP-1A": "requests/CP-1A/eaa69b6645ae02fddfb64f3ea215cf9301aa8528f533b0b6a84317fea3e87642/1.response.md",
+    "CP-2": "requests/CP-2/4c7d6523f2b2fc7e1f11d824f15154411bde0c3fbe7e031fdcfaf6985ff411b6/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "4177fa09de9b30f7df84945eebf189ebd191da166f8050dbbb8aa96c266ebecf",
+  "delivery_sha256": "2f1ea57293a02be8415f32437fb3a3e2954e82c3959cbb60e6b96a6b6a4e12f3"
+}

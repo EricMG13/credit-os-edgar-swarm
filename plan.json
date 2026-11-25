@@ -1735,10 +1735,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1005229-columbus-mckinnon-corp-cmco",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1005229-columbus-mckinnon-corp-cmco.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-cmco",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:37:47+00:00"
     },
     {
       "issuer_id": "issuer-1012100",
@@ -1748,10 +1756,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1012100-sealed-air-corp-de",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1012100-sealed-air-corp-de.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-issuer-1012100",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:38:04+00:00"
     },
     {
       "issuer_id": "pds",
@@ -1929,10 +1945,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1031203-group-1-automotive-inc-gpi",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1031203-group-1-automotive-inc-gpi.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-gpi-1031203",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:41:36+00:00"
     },
     {
       "issuer_id": "mms",
@@ -1963,10 +1987,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1034054-sba-communications-corp",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1034054-sba-communications-corp.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-sbac-1034054",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:42:29+00:00"
     },
     {
       "issuer_id": "issuer-1040765",
@@ -1976,10 +2008,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1040765-vornado-realty-lp",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1040765-vornado-realty-lp.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-issuer-1040765",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:42:52+00:00"
     },
     {
       "issuer_id": "sah-1043509",
@@ -2010,10 +2050,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1047127-amkor-technology-inc",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1047127-amkor-technology-inc.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-amkr-1047127",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:37:53+00:00"
     },
     {
       "issuer_id": "bmrn",
@@ -2023,10 +2071,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1048477-biomarin-pharmaceutical-inc-bmrn",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1048477-biomarin-pharmaceutical-inc-bmrn.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-bmrn",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:38:09+00:00"
     },
     {
       "issuer_id": "axon-1069183",
@@ -2036,10 +2092,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1069183-axon-enterprise-inc",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1069183-axon-enterprise-inc.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-axon-1069183",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:38:20+00:00"
     },
     {
       "issuer_id": "cnx",
@@ -2112,10 +2176,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1075415-diversified-healthcare-trust",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1075415-diversified-healthcare-trust.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-dhc-1075415",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:40:08+00:00"
     },
     {
       "issuer_id": "zd-1084048",
@@ -2125,10 +2197,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1084048-ziff-davis-inc-zd",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1084048-ziff-davis-inc-zd.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-zd-1084048",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:40:32+00:00"
     },
     {
       "issuer_id": "epc-1096752",
@@ -2201,10 +2281,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1116942-ttm-technologies-inc-ttmi",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1116942-ttm-technologies-inc-ttmi.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-ttmi-1116942",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:42:01+00:00"
     },
     {
       "issuer_id": "avnt-1122976",
@@ -2214,10 +2302,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1122976-avient-corp",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1122976-avient-corp.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-avnt-1122976",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:42:34+00:00"
     },
     {
       "issuer_id": "nxst-1142417",
@@ -2227,10 +2323,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1142417-nexstar-media-group-inc",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1142417-nexstar-media-group-inc.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-nxst-1142417",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:42:58+00:00"
     },
     {
       "issuer_id": "tac",
@@ -2261,10 +2365,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1144980-asbury-automotive-group-inc",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1144980-asbury-automotive-group-inc.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-abg-1144980",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:37:58+00:00"
     },
     {
       "issuer_id": "podd-1145197",
@@ -2274,10 +2386,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1145197-insulet-corp-podd",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1145197-insulet-corp-podd.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-podd-1145197",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:38:13+00:00"
     },
     {
       "issuer_id": "aap",
@@ -2287,10 +2407,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1158449-advance-auto-parts-inc-aap",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1158449-advance-auto-parts-inc-aap.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-aap",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:38:24+00:00"
     },
     {
       "issuer_id": "jblu",
@@ -2300,10 +2428,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1158463-jetblue-airways-corp-jblu",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1158463-jetblue-airways-corp-jblu.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-jblu",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:38:37+00:00"
     },
     {
       "issuer_id": "nbr",
@@ -2313,10 +2449,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1163739-nabors-industries-ltd-nbr",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1163739-nabors-industries-ltd-nbr.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-nbr",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:38:54+00:00"
     },
     {
       "issuer_id": "xpo-1166003",
@@ -2326,10 +2470,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1166003-xpo-inc-xpo",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1166003-xpo-inc-xpo.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-xpo-1166003",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:39:37+00:00"
     },
     {
       "issuer_id": "moh",
@@ -2339,10 +2491,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1179929-molina-healthcare-inc-moh",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1179929-molina-healthcare-inc-moh.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-moh",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:40:14+00:00"
     },
     {
       "issuer_id": "sgi-1206264",
@@ -2352,10 +2512,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1206264-somnigroup-international-inc",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1206264-somnigroup-international-inc.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-sgi-1206264",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:40:39+00:00"
     },
     {
       "issuer_id": "fa-1210677",
@@ -2365,10 +2533,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1210677-first-advantage-corp-fa",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1210677-first-advantage-corp-fa.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-fa-1210677",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:40:55+00:00"
     },
     {
       "issuer_id": "cmp-1227654",
@@ -2378,10 +2554,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1227654-compass-minerals-international-inc",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1227654-compass-minerals-international-inc.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-cmp-1227654",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:41:10+00:00"
     },
     {
       "issuer_id": "qxo",
@@ -2475,10 +2659,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1279495-baytex-energy-corp-bte",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1279495-baytex-energy-corp-bte.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-bte",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:41:40+00:00"
     },
     {
       "issuer_id": "mxl",
@@ -2488,10 +2680,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1288469-maxlinear-inc-mxl",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1288469-maxlinear-inc-mxl.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-mxl",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:42:06+00:00"
     },
     {
       "issuer_id": "ens-1289308",
@@ -2501,10 +2701,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1289308-enersys",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1289308-enersys.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-ens-1289308",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:42:39+00:00"
     },
     {
       "issuer_id": "novelis-inc",
@@ -2514,10 +2722,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1304280-novelis-inc",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1304280-novelis-inc.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-novelis-inc",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:43:09+00:00"
     },
     {
       "issuer_id": "wex-1309108",
@@ -2579,10 +2795,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1322422-hudbay-minerals-inc-hbm",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1322422-hudbay-minerals-inc-hbm.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-hbm",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:38:42+00:00"
     },
     {
       "issuer_id": "merc-1333274",
@@ -2592,10 +2816,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1333274-mercer-international-inc",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1333274-mercer-international-inc.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-merc-1333274",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:39:17+00:00"
     },
     {
       "issuer_id": "crox-1334036",
@@ -2605,10 +2837,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1334036-crocs-inc",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1334036-crocs-inc.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-crox-1334036",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:39:44+00:00"
     },
     {
       "issuer_id": "cco",
@@ -2702,11 +2942,19 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1357615-kbr-inc-kbr",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1357615-kbr-inc-kbr.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-kbr",
-      "status": "running",
-      "attempts": 0,
+      "status": "published",
+      "attempts": 4,
       "claims": 2,
       "reclaimed": 1,
-      "claimed_at": "2026-11-25T11:31:45+00:00"
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:40:22+00:00"
     },
     {
       "issuer_id": "hri",
@@ -2716,11 +2964,19 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1364479-herc-holdings-inc-hri",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1364479-herc-holdings-inc-hri.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-hri",
-      "status": "running",
-      "attempts": 0,
+      "status": "published",
+      "attempts": 4,
       "claims": 2,
       "reclaimed": 1,
-      "claimed_at": "2026-11-25T11:31:45+00:00"
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:40:46+00:00"
     },
     {
       "issuer_id": "ebs-1367644",
@@ -2730,11 +2986,19 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1367644-emergent-biosolutions-inc",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1367644-emergent-biosolutions-inc.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-ebs-1367644",
-      "status": "running",
-      "attempts": 0,
+      "status": "published",
+      "attempts": 4,
       "claims": 2,
       "reclaimed": 1,
-      "claimed_at": "2026-11-25T11:31:45+00:00"
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:41:02+00:00"
     },
     {
       "issuer_id": "cvi",
@@ -2744,11 +3008,19 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1376139-cvr-energy-inc-cvi",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1376139-cvr-energy-inc-cvi.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-cvi",
-      "status": "running",
-      "attempts": 0,
+      "status": "published",
+      "attempts": 4,
       "claims": 2,
       "reclaimed": 1,
-      "claimed_at": "2026-11-25T11:31:45+00:00"
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:41:16+00:00"
     },
     {
       "issuer_id": "ats",
@@ -2758,10 +3030,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1394832-ats-corp-ats-ats",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1394832-ats-corp-ats-ats.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-ats",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:41:44+00:00"
     },
     {
       "issuer_id": "opln",
@@ -2771,10 +3051,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1395942-openlane-inc-opln",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1395942-openlane-inc-opln.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-opln",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:42:11+00:00"
     },
     {
       "issuer_id": "orn-1402829",
@@ -2784,10 +3072,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1402829-orion-group-holdings-inc",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1402829-orion-group-holdings-inc.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-orn-1402829",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:42:45+00:00"
     },
     {
       "issuer_id": "for-1406587",
@@ -2933,11 +3229,19 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1482512-hudson-pacific-properties-inc-hpp",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1482512-hudson-pacific-properties-inc-hpp.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-hpp-1482512",
-      "status": "running",
-      "attempts": 0,
+      "status": "published",
+      "attempts": 4,
       "claims": 2,
       "reclaimed": 1,
-      "claimed_at": "2026-11-25T11:31:45+00:00"
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:38:31+00:00"
     },
     {
       "issuer_id": "chrd-1486159",
@@ -2947,11 +3251,19 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1486159-chord-energy-corp",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1486159-chord-energy-corp.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-chrd-1486159",
-      "status": "running",
-      "attempts": 0,
+      "status": "published",
+      "attempts": 4,
       "claims": 2,
       "reclaimed": 1,
-      "claimed_at": "2026-11-25T11:31:45+00:00"
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:38:47+00:00"
     },
     {
       "issuer_id": "bwxt-1486957",
@@ -2961,11 +3273,19 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1486957-bwx-technologies-inc",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1486957-bwx-technologies-inc.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-bwxt-1486957",
-      "status": "running",
-      "attempts": 0,
+      "status": "published",
+      "attempts": 4,
       "claims": 2,
       "reclaimed": 1,
-      "claimed_at": "2026-11-25T11:31:45+00:00"
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:39:23+00:00"
     },
     {
       "issuer_id": "rlj-1511337",
@@ -2975,11 +3295,19 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1511337-rlj-lodging-trust",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1511337-rlj-lodging-trust.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-rlj-1511337",
-      "status": "running",
-      "attempts": 0,
+      "status": "published",
+      "attempts": 4,
       "claims": 2,
       "reclaimed": 1,
-      "claimed_at": "2026-11-25T11:31:45+00:00"
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:39:51+00:00"
     },
     {
       "issuer_id": "lind-1512499",
@@ -3028,10 +3356,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1514991-amc-global-media-inc-amcx",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1514991-amc-global-media-inc-amcx.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-amcx",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:41:22+00:00"
     },
     {
       "issuer_id": "mtdr-1520006",
@@ -3041,10 +3377,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1520006-matador-resources-co",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1520006-matador-resources-co.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-mtdr-1520006",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:41:50+00:00"
     },
     {
       "issuer_id": "alks",
@@ -3054,10 +3398,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1520262-alkermes-plc-alks",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1520262-alkermes-plc-alks.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-alks",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:42:16+00:00"
     },
     {
       "issuer_id": "achc-1520697",
@@ -3206,11 +3558,19 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1564408-snap-inc",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1564408-snap-inc.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-snap-1564408",
-      "status": "running",
-      "attempts": 0,
+      "status": "published",
+      "attempts": 4,
       "claims": 2,
       "reclaimed": 1,
-      "claimed_at": "2026-11-25T11:31:45+00:00"
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:43:04+00:00"
     },
     {
       "issuer_id": "pbf-holding-co-llc",
@@ -3286,10 +3646,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1590714-element-solutions-inc-esi",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1590714-element-solutions-inc-esi.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-esi",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:39:29+00:00"
     },
     {
       "issuer_id": "czr",
@@ -3299,10 +3667,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1590895-caesars-entertainment-inc-czr",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1590895-caesars-entertainment-inc-czr.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-czr",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:39:58+00:00"
     },
     {
       "issuer_id": "mgni",
@@ -3351,10 +3727,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1616707-wayfair-inc-w",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1616707-wayfair-inc-w.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-w",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:41:28+00:00"
     },
     {
       "issuer_id": "zip-1617553",
@@ -3364,10 +3748,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1617553-ziprecruiter-inc-zip",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1617553-ziprecruiter-inc-zip.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-zip-1617553",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:41:55+00:00"
     },
     {
       "issuer_id": "brsl",
@@ -3377,10 +3769,18 @@
       "pack": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/packs/1619762-brightstar-lottery-plc-brsl",
       "context": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/inputs/contexts/1619762-brightstar-lottery-plc-brsl.json",
       "run_folder": "/Users/ericguei/Documents/credit-os-edgar-swarm-runs/swarm-resume-2026-11-24/_engine/runs/swarm-brsl",
-      "status": "running",
-      "attempts": 0,
-      "claimed_at": "2026-11-25T11:31:45+00:00",
-      "claims": 1
+      "status": "published",
+      "attempts": 4,
+      "claims": 1,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "exit_code": 0,
+      "reason": null,
+      "finished_at": "2026-11-25T13:42:20+00:00"
     },
     {
       "issuer_id": "cc",

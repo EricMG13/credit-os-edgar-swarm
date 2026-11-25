@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Element Solutions Inc as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/c73b1104e6bf972f484ba8bd6c1b75710c7cda92e7dec12b8aca7b0fd7eb1eb0/1.response.md",
+    "CP-1": "requests/CP-1/5a97311504932c146d4f8a998c73e1f2cb01f5fa9d740aee80f38e671f67e98c/1.response.md",
+    "CP-1A": "requests/CP-1A/4232813d5abc97a595e42537d8a3dba1b79f6a7253bc8356115ae27589dd1c4c/1.response.md",
+    "CP-2": "requests/CP-2/8649930371f7bf7810e5a92aefe9982108321795e16964a290329fbaf7fc417d/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "e812e9ecd14a88431d8cacfca34222d2706ff3540703d03ca00c6bf00bd6d393",
+  "delivery_sha256": "2b8ef8dd906033ad1cc3f2bedaae3c372a0f53477897094fc4cf4be5ff7d3b00"
+}

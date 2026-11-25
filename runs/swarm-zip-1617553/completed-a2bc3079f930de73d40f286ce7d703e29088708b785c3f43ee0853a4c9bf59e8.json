@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Ziprecruiter, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/70a77fa3d8b3b9acbbbf08bdc8d63bc467a7e553bebd6b83cc6a4990889802f5/1.response.md",
+    "CP-1": "requests/CP-1/7241b7445821378bb00eccb8d305e2c7fd92c0677bf99fed4da8370984723d4e/1.response.md",
+    "CP-1A": "requests/CP-1A/9afa57b6013c2063e6d560be60524ea3009f6caa6cba09a6d5de9c8e9a7030df/1.response.md",
+    "CP-2": "requests/CP-2/d3ef42c71af477caa148ac71036fea69393a94f4eb74c4976877612eb90c2fb6/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "2b6a50ac5eb0914a1ba6217d11ceffa58a703c1b79954147f85cfbe3e270d8ef",
+  "delivery_sha256": "79891c551eec2a04340875c1c0c1623cfc4d56c400474f462d455b8a3275c7f6"
+}

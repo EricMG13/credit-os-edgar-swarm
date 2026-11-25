@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "ttmi-1116942-2026-11-18-credit_snapshot-host",
+    "issuer_id": "ttmi-1116942",
+    "issuer_name": "Ttm Technologies Inc",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-30_ttmi-20241230.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-30_ttmi-20241230.htm.jsonl",
+      "sha256": "2ecb5d437575cc6b47e9f7e360dc8708e75669d9459532de6d36a4473df6b04a"
+    },
+    "10-K_2025-12-29_ttmi-20251229.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-29_ttmi-20251229.htm.jsonl",
+      "sha256": "e0057323b507c4260b01fabc0dc2593f39572eb96a283c3aaefc23f944970470"
+    },
+    "10-Q_2026-03-30_ttmi-20260330.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-30_ttmi-20260330.htm.jsonl",
+      "sha256": "e38d01c722eba4b16a6fdc74e83853a734db204a73cf5341b4670720580e3854"
+    },
+    "10-Q_2026-06-29_ttmi-20260629.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-29_ttmi-20260629.htm.jsonl",
+      "sha256": "c322b420083f5004f0f0f68e88641c5a43510b206553314f2dde3e74b0412d70"
+    },
+    "10-Q_2026-09-28_ttmi-20260928.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-28_ttmi-20260928.htm.jsonl",
+      "sha256": "6699c987321cbc9c730e4a26348e573d1839ad98f60bb7dceb2c4f878a7721ad"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1116942-ttm-technologies-inc-ttmi.json",
+      "sha256": "74b79347f4aba85b3cbc48105d5954eb292684da05af5a8a687288de26e218fa"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "80cdd297d697d5632b529b9f52058f473a03bff918f27d9e96521fa0940d0783"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "aedba1cd89bdb2244eb554c612d29836b5cb7edcc02c30384dd58b3c05dec123"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "f2894fdec205feb3502d4f4a8dbef64733baf0c3b474c63c5b584263956d3821"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "90c9ce53d4982ec297d473d5a33c5fe775cac4bf7b667f598c416cd47178772e"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Ttm Technologies Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Ttm Technologies Inc — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

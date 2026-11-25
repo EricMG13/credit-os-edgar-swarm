@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for RLJ Lodging Trust as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/dc665515b02cbd6b63cff53740f67df97e96f1c3aca7d265ef6a5cf9467c78eb/1.response.md",
+    "CP-1": "requests/CP-1/25459d1fc6c0c0e27864fbda15f1320c07f0a8085676efbec0e88a894479e757/1.response.md",
+    "CP-1A": "requests/CP-1A/d1e3ad7dd59c72b3a118892c1ba9300daf173cb231c306af8f48771945958a44/1.response.md",
+    "CP-2": "requests/CP-2/a1f7420995508050a8fefd336e7b49d4e505603c8457fa127118602d6e3565b8/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "ce4e97f1dcd903cd36a37d2afbb57e18d0fea81b6d22c7acacaaab62a1096fbb",
+  "delivery_sha256": "03af961a384209ae5011e883646b8e9339b2abed0686f0b03720685140d5d727"
+}

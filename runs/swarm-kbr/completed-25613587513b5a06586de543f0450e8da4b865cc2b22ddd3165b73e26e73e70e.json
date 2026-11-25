@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for KBR, INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/1944caccb0391fe7f3816f5cfeff78b09002c9d9ebbb18bdaff5bf0c68c90c62/1.response.md",
+    "CP-1": "requests/CP-1/817c4468efc4285585678d4865ea9dcc5c41e8943d93ba79fd7abf949bb873c9/1.response.md",
+    "CP-1A": "requests/CP-1A/b8e030a98be1e7b1caace09dcae5c64a9f25f407a4522a69895e34f027e10673/1.response.md",
+    "CP-2": "requests/CP-2/9fee9ad0d05e8353ef2119554793dc981961be98a15332ee5c83012f37a1fce4/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "55ec9499261f43d687783194919f129bb4bf8bb43378862529909fa9fd38a3f0",
+  "delivery_sha256": "f64903a0ec555dac0d5ef44133518b0513f89e50aaf17b6c93711ee904a5c1ac"
+}

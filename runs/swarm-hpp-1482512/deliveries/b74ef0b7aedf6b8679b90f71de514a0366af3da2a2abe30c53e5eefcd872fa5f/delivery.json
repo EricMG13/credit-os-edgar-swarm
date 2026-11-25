@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Hudson Pacific Properties, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "7200c50d46886f9a3a21560150d38c7098d742e7f52992606ae1d8146c1b3bdb",
+    "CP-1.md": "20883ecc703696ead58c4817831a438177e26127d04d3dfc96796409c32f74a2",
+    "CP-1A.md": "324ce06011aca32a55dfd2d2054d5e6853f4cd32ef8cf9c2b879e28a74b794a9",
+    "CP-2.md": "ac28bde81daa36e8cad2c07863d676a97b3da240b757c5ac12f257f9f9a0a947",
+    "coverage.json": "8682534caa25707e4b23d5cb805055f08e21f43d3f618b30c6106d7a1d0bd184",
+    "view.json": "9f3263ed7664272bd8fa6203c0819a40e9290f312cc516a7be1dc92203ab22af",
+    "report-view.json": "e0fd31ae1df96d1c99d0b9cb4c285e7973bcc5d131ca4cbee326c14e16686274"
+  }
+}

@@ -1,0 +1,252 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "cmp-1227654-2026-11-18-credit_snapshot-host",
+    "issuer_id": "cmp-1227654",
+    "issuer_name": "Compass Minerals International Inc",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-09-30_cmp.htm.jsonl": {
+      "path": "source-text/10-K_2024-09-30_cmp.htm.jsonl",
+      "sha256": "cbc18c2db4b03cf6ce2103e5105076e9cd65ffbea4f8141afe3774e48d1442af"
+    },
+    "10-K_2025-09-30_cmp.htm.jsonl": {
+      "path": "source-text/10-K_2025-09-30_cmp.htm.jsonl",
+      "sha256": "f6b19b9102dab2609980d18d81cdabcf39be0756b576a6adb88911353ca49b18"
+    },
+    "10-Q_2025-12-31_cmp.htm.jsonl": {
+      "path": "source-text/10-Q_2025-12-31_cmp.htm.jsonl",
+      "sha256": "2487c7b395ba0756cf455e343182e8ab0418a81f11834a2b71cbda44138a6f7d"
+    },
+    "10-Q_2026-03-31_cmp.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_cmp.htm.jsonl",
+      "sha256": "e22ad3c122434634536d0eca9b59d745f61a858cc34f7d3ef2e904f732571199"
+    },
+    "10-Q_2026-06-30_cmp.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_cmp.htm.jsonl",
+      "sha256": "dddbcb2818ecd30d8025be3a0be4881345ca96bb421305b7c8c496fd8c5bf72b"
+    },
+    "EX99.1_2025-12-31_cmp_cmp-q12026earningsreleasee-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2025-12-31_cmp_cmp-q12026earningsreleasee-htm.htm.jsonl",
+      "sha256": "5f7ce1424fcb0fec74a0228a92314095a1e51d4d9b5fd6d9913f98bb3e87bccf"
+    },
+    "EX99.1_2026-03-31_cmp_cmp-q22026earningsreleasee-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_cmp_cmp-q22026earningsreleasee-htm.htm.jsonl",
+      "sha256": "c2cec1f2bb2aff5d2eb075c774bbec601684998fe99b8b64617b82f23359be2b"
+    },
+    "EX99.1_2026-06-30_cmp_cmp-q32026earningsreleasee-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_cmp_cmp-q32026earningsreleasee-htm.htm.jsonl",
+      "sha256": "15bc8863e31bb09a91fadab7efd3be131dec302d5ecf9aadd729ee3468a66812"
+    },
+    "EX99.1_2026-06-30_cmp_cmp-risnerex991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_cmp_cmp-risnerex991-htm.htm.jsonl",
+      "sha256": "674758d1018ff78f53a6ab7cba50da1b97511c81f638e7c6e4bc3bfb83e47b25"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1227654-compass-minerals-international-inc.json",
+      "sha256": "2fd2a6ce56dceb8598a76d96160aa3851ac9b932218045b1b561bc1e3c030035"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "0bd5aa217f7ea19a8e4e8c9d5eea61ce6760fb8d1875a0c81f2f2cd1f7c72ce5"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "1d043d9f07639e5553c147441bf302982c816c23e22392d05f6b94522816ff82"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "2f02d9bfe0c9f8ec01adb7f0ec91deca8b3620e9bc83efbd83d06aeed2c37ce6"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "4171a26d6c764d41a8795555f40847a5e8ecaaee25b9c152094ea294c0f72e5b"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Compass Minerals International Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Compass Minerals International Inc — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for BIOMARIN PHARMACEUTICAL INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "6cf4eab2083b3073e93897d638f9e04abf19087d21c67eb59b97c0b43dbc5eea",
+    "CP-1.md": "b07357d3369e42d5243b9a425299b77007ab63896b17ca21e306f0fe8f3fb54b",
+    "CP-1A.md": "ed95adb26fb4cd253801bea7349107bdccced36c178ac2027d9042af7be44960",
+    "CP-2.md": "3b56f28f169da3bfcded5f1ccfa5212bc9cc56a6b0cc0993096ff02bfe9a7760",
+    "coverage.json": "5a887be8bfe54e939f19bd65bb65988b4f991271d095b28f6388c7d606ac000a",
+    "view.json": "f9c14bc086ae6f446853a0126bf3d831a45e3168208694041b83cca6bf32d31a",
+    "report-view.json": "c6a753460216ed758ebf37c649dafb425b116d890993822422f03523050d8bef"
+  }
+}

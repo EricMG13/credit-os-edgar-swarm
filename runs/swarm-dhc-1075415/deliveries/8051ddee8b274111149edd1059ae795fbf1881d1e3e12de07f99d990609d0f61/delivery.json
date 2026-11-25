@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Diversified Healthcare Trust as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "122a12d9e7d012cb8742a680ba6625e43f2cb4e49ae5f18f9573122982a435f3",
+    "CP-1.md": "e90efd67ebfdb438e1826f2c557e069816a22628f43046544d506657832b2700",
+    "CP-1A.md": "f3d9f14fa3de322514956c6b12a1672b02d8deeb4149325c99864ff4230e703d",
+    "CP-2.md": "539006cbbca28ee52d11881f1d00ab71424a22f5e4b25a556760b357e103799e",
+    "coverage.json": "639eae4506ac29ac75b7b5841c31276df19c41992a8624ae2d5ac0d8e7de7804",
+    "view.json": "b61161d0125cfb6a21810667b025685004c72da19186a8dd05a4b61848005cd8",
+    "report-view.json": "95bb86f414e50689eb38399cd8f2d29c559692799bbb07452997673f515aca70"
+  }
+}

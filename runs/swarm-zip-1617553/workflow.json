@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "zip-1617553-2026-11-18-credit_snapshot-host",
+    "issuer_id": "zip-1617553",
+    "issuer_name": "Ziprecruiter, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_zip-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_zip-20241231.htm.jsonl",
+      "sha256": "4c6af145b03114d7fc912e17b781557c30eaf55222c72a7a1e2ec997aad65c29"
+    },
+    "10-K_2025-12-31_zip-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_zip-20251231.htm.jsonl",
+      "sha256": "6dfe6d458eadd70f776719e563c19476bcf176d4563b526b71feb00c5d33eb46"
+    },
+    "10-Q_2026-03-31_zip-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_zip-20260331.htm.jsonl",
+      "sha256": "5e50a7cc70946277b7a20b88ef836cbbcfa0d0dd3d289ffc085bf555703efc7f"
+    },
+    "10-Q_2026-06-30_zip-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_zip-20260630.htm.jsonl",
+      "sha256": "b52e8b008cdcfe329007adb1e5461c18705547e8db0ac74d8a5ed84b46d67915"
+    },
+    "10-Q_2026-09-30_zip-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_zip-20260930.htm.jsonl",
+      "sha256": "02a71bc8b05fc313332809859cd2714710e240d686bc1d6349f7b0b2e3bd1a83"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1617553-ziprecruiter-inc-zip.json",
+      "sha256": "46db81dd31dc06797629c08c4fc91041eabe206c7df2ceb5b25f87b5e09f12f2"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "28482c9df16e59dd33ffeb10acda9787d6008d5a3ff706bfe1d5a2eab616026e"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "ea1cc93d08fc24563c80e939c7c0891a0368ba9323d267d8fc4f495a247a0448"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "68bd73408b801edf1f2402d6cec03552c39a13a4bc8f8092570e91b0c2ff346a"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "8cd9bf915004dd2c1cc685d73d8987ffc01e93cbec61fb549b7ed610a3a7daa3"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Ziprecruiter, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Ziprecruiter, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

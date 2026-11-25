@@ -1,0 +1,94 @@
+{
+  "checks": [
+    {
+      "figure": "columns",
+      "module": "CP-2",
+      "reason": "every declared column is present",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.1",
+      "row": "columns",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "agreed",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "columns",
+      "module": "CP-2",
+      "reason": "every declared column is present",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.10",
+      "row": "columns",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "agreed",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "all",
+      "module": "CP-2",
+      "reason": "not required in this transport (register scope or routing rule)",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.11",
+      "row": "all",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "columns",
+      "module": "CP-2",
+      "reason": "every declared column is present",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.12",
+      "row": "columns",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "agreed",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "placeholders",
+      "module": "CP-2",
+      "reason": "not a full analytical run by the method's blocklist (an explicit gap is this transport's answer, so recorded only): row 1 `Threshold / Signal`: `Quantitative threshold not available in provided materials; reference is trailing revenue of USD 1,479.10 million and segment revenue of USD 319.92 million in Q3 2026`; row 2 `Threshold / Signal`: `Quantitative threshold not available in provided materials; reference is segment margin of 15.52% in Q3 2026; one percentage point is about USD 12.80 million of annual earnings`; row 3 `Threshold / Signal`: `Quantitative threshold not available in provided materials; reference is trailing free cash flow of negative USD 64.65 million and guided recurring capital expenditure of USD 90.00 million to USD 105.00 million for 2026`; row 4 `Threshold / Signal`: `Quantitative threshold not available in provided materials; reference is liquidity of USD 260.66 million at 2026-09-30 and any change in revolver availability`; row 5 `Threshold / Signal`: `Quantitative threshold not available in provided materials; reference is 8.20x adjusted and 8.84x reported; the issuer's target is 5.5x to 6.5x excluding incentive fees`; row 6 `Threshold / Signal`: `Quantitative threshold not available in provided materials; signal is no refinancing announced for the USD 640.61 million due in 2028 as it falls within twelve months from February 2027` and 2 more",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.12",
+      "row": "placeholders",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "noted",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "all",
+      "module": "CP-2",
+      "reason": "not required in this transport (register scope or routing rule)",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.7",
+      "row": "all",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    }
+  ],
+  "kind": "method-script-checks/1",
+  "module": "CP-2",
+  "response_sha256": "539006cbbca28ee52d11881f1d00ab71424a22f5e4b25a556760b357e103799e",
+  "scripts": {
+    "docs/reuse/selected-methods/scripts/completeness_check.py": "a9841a74e4f851fd565c5f3cabc831835c4bc305ea40c28446790f8165d56056"
+  }
+}

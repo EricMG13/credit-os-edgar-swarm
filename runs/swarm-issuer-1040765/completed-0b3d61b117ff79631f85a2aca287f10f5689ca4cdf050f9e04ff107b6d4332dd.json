@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Vornado Realty Lp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/92a3811ef9c686f5ac7012c80c5926678e42b64e1c6102736bc13373c2032618/1.response.md",
+    "CP-1": "requests/CP-1/8892b90fc57a74a9a3be082f494bbd0c9681dba7e6e2fdaa3c9adbccc830e00f/1.response.md",
+    "CP-1A": "requests/CP-1A/4b09dbe27d81f9c66e5fcc1750412f9c653b748723a5304bf41fcb7c56262914/1.response.md",
+    "CP-2": "requests/CP-2/1d670425a691a57fd18956f04988f2b27d7c85e358364c6c3549cb2cba86c78f/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "beaaf375693ca7ea48d3c9a7870b5c508f43b1336d14f08c4c17945c3c1c39ce",
+  "delivery_sha256": "355dc8734b6c3f1d99a17f3877eaddfa83958ceb38bab4006b0ce8519e955bfd"
+}

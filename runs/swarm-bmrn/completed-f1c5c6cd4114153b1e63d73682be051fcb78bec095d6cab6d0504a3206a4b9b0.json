@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for BIOMARIN PHARMACEUTICAL INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/5de96eeb47aabbd3687e8084795b5f877c9bb727a28df2848392e663e85e93d1/1.response.md",
+    "CP-1": "requests/CP-1/d20f8edf78f9bb8cbcb696fe8ef1814c6d34b486320bf572ab57308b433498f7/1.response.md",
+    "CP-1A": "requests/CP-1A/03c85a7d0e34a1a6c370045d9a2064049ee6b71d89360a0259e66322d6edc24c/1.response.md",
+    "CP-2": "requests/CP-2/d83fbce3a0fe56b84674f22dbea872ca8fe4e0197002479b88de95b34c69ef68/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "6b71f824224ae26f13cd6049c2eb31b764fb2ffae71c2bf600d7f1142d4932eb",
+  "delivery_sha256": "76e4bffadace1be134548629c37a2a93d1b6a99de4bf27fd0f3ff3754d703a89"
+}

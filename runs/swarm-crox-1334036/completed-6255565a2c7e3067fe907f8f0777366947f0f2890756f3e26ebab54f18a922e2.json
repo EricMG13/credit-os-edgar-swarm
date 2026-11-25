@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Crocs, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/39ce5c1b791c58d7284af3d45f376d40cc7a68deeba58f14e777ebf515bfb597/1.response.md",
+    "CP-1": "requests/CP-1/3224076e20aabfe47bcf5c517f62cf02e0b47b89d304e428d502c4589992ffdf/1.response.md",
+    "CP-1A": "requests/CP-1A/8929692207fb9463e10d55480391512bc2a7dc59917ed8cfa55012a660f0f7f1/1.response.md",
+    "CP-2": "requests/CP-2/8e20dfe164bcea2d11c7b565304be1b61f27448b5157f167b144411827f07cbd/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "38095999e38b6d06dc2ac79f94dbb79ea1356a42997c87fb03d9c560dac2dc07",
+  "delivery_sha256": "73e18308222b0b276282b8516086228e7e16de12406a142e077e589f60e6fcae"
+}

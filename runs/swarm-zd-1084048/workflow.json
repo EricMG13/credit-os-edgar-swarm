@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "zd-1084048-2026-11-18-credit_snapshot-host",
+    "issuer_id": "zd-1084048",
+    "issuer_name": "Ziff Davis, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_zd-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_zd-20241231.htm.jsonl",
+      "sha256": "34cc74388538f2f4a77d3b02cf577fcd1726892be88241baa84e31353599221c"
+    },
+    "10-K_2025-12-31_zd-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_zd-20251231.htm.jsonl",
+      "sha256": "d82766f93eadef9bafeb5a91423f8942ba02db7850899205e700ef59d2e7e2bb"
+    },
+    "10-Q_2026-03-31_zd-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_zd-20260331.htm.jsonl",
+      "sha256": "b4383d6b9598b810b9fb3f348d468595542218f10a6d14be016ba11e0ba584b2"
+    },
+    "10-Q_2026-06-30_zd-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_zd-20260630.htm.jsonl",
+      "sha256": "a8ccf6d5fff08048578b225759a55ccac039843bfb0a3d3876f53b269d99da05"
+    },
+    "10-Q_2026-09-30_zd-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_zd-20260930.htm.jsonl",
+      "sha256": "5f14fab2c638269b2eaa9fd9ecb64c9170e923f6af8244115b94f27168c9ce61"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1084048-ziff-davis-inc-zd.json",
+      "sha256": "3afcd25555441cab2eae26f42a60939347658690ea9787fcd292fc457a132640"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "24ff672bf30d8a93f9ed518ca030f2fe7eb4897e04d454f7bfcca707d373894e"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "8ff7586c8e1ee2e5860815c9fed4211192fe345af941e17cae14b970666a304e"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "479fbd2b769113145b134c583e99a7c64386afca2167fe3f26094e2d1e4c0fe1"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "a45f902762f59526860e2735eb59631737c23ff89f358dbe36d137bbc48cf93d"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Ziff Davis, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Ziff Davis, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for ADVANCE AUTO PARTS INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "a950aa653817301e963a67bfb80aa038e388cba0241ab5c249e515f82a16f2e2",
+    "CP-1.md": "6fb055e25b0e7b56df0eb87656bf12a44137a125e0dcf9ff3cb98e73b6d05aa3",
+    "CP-1A.md": "cf0ee8fcaae26778d95b3de012f43a7941c15e28264d37ea7ae4a430091bcf21",
+    "CP-2.md": "9beaf1d22ed568944e7684c7ff1a046ca130a3e07b3d935d5647cafd209e9909",
+    "coverage.json": "743b495054ae4cc4315375624c8bd123b6ef3648abe8c763762a6ccbde5d9bd4",
+    "view.json": "9a4d778ea749b4d01681dd1c8b405677fecb80278f0b641105c1c63ccbd71f63",
+    "report-view.json": "33786a72e3cc2c360c90b1ff8f6052b2901eed8b63adad4c114b6416995e4d2a"
+  }
+}

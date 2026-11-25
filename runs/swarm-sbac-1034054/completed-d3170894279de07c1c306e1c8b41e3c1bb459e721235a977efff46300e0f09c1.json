@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Sba Communications Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/5f60424252e27e3a5b6ed8943185e9409ce567e2cbf24542eb2ddc113ec7df19/1.response.md",
+    "CP-1": "requests/CP-1/276e764c0666e8eb3743c8ed373b607e32559e4103cc9f5f2f72b84856d0d19d/1.response.md",
+    "CP-1A": "requests/CP-1A/26dfd246e73f46b84688307ca9f647b3960d3190fc9c4735faf63bc6f029a094/1.response.md",
+    "CP-2": "requests/CP-2/b9fda82bb051dfaa64c8e5fde19f527ff39b12564ed81318d22f3b9bc88b9d24/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "cf6e3d3df0f0f8ccf9e8ec9c311d3a4fa637bb5a55aace510a9bf92fa104378f",
+  "delivery_sha256": "1222100361c6f221ed67a7b28e5c19454768fcc2bd116a23776c4a48a5cc2f8a"
+}

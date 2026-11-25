@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for HERC HOLDINGS INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "5ffa2044667134554428209f656769c7cd6d6158d400792d2b3c95f449cf111e",
+    "CP-1.md": "28717a882fbb2932de5a5507fee504775efdd6712c4c7c6338ecb262f88d9f72",
+    "CP-1A.md": "ffc83719b4f866776568070b43c148459195adc464edc8cdedd0a36c8df14848",
+    "CP-2.md": "62961606981362634ff96c3a4ac4835690cde7fc4837e8728b6275ddd8e11aca",
+    "coverage.json": "97a4a131020e9ebb2ff6d7d6a7377bef8751033fd81c783083c9ec8f3e052791",
+    "view.json": "aa56e371d64cac564ac675d1c6ab62f1c37949571d0be12e73039f9fd9daad41",
+    "report-view.json": "ab823e1afc9dc4b6c07a2e9e1de9feea883b704727b5056124fce2ae96c86fae"
+  }
+}

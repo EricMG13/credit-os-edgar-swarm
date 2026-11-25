@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for EnerSys as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/c56ec77d23ce9d08b3515f061ab8d020d16ec17582241b2da926245d2eebed26/1.response.md",
+    "CP-1": "requests/CP-1/213225b4dd3c8ace80a8dfba0ea88ec61da3e2fd639a3c1b60c6d925071cccda/1.response.md",
+    "CP-1A": "requests/CP-1A/5c4293426fd7a29520bff0327bbc6308731a614c1cc989e0bdb9285edb8e89de/1.response.md",
+    "CP-2": "requests/CP-2/5374033b6f3269401ab46c44733896f34fcabc762c832ae20ac13cca375ead97/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "8ddfd0fd735254231a38bfdf166ba4b180b4886158f83b5247dc8442e4904f80",
+  "delivery_sha256": "a82e28333a690a59d2f8b1cc5268aecffde546c01a61b58802941fa19daf3ade"
+}
