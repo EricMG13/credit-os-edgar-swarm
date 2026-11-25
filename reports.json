@@ -64,5 +64,27 @@
       "CP-2": 1
     },
     "notes": "The accepted Business & governance handoff (CP-1A) calls state-level revenue concentration \"not quantified\" although the 10-K (page 15) states Florida and New York each supplied about 10% or more of Medicaid premium revenues, and it could not be replaced once accepted (CP-2 uses the disclosed figure), while the sources also lack issuer EBITDA, agency ratings, executed debt documents and a proxy statement."
+  },
+  {
+    "issuer_id": "xpo-1166003",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The launcher finished with exit 0 (all four modules accepted on the first submission, delivery written to ROOT/_engine/runs/swarm-xpo-1166003/deliveries/dc94d3e3f3cfd5da197999e823ecbd9b1ff2104f6e73003049818f1503232943). Defects I saw but could not fix: the filings' own rounding leaves Net Cash Change for FY2024, FY2025 and nine months 2025 and FY2024 Total Liabilities as stated gaps, and covenant levels, credit agreements and ownership beyond 49 registered holders are not in the sources. Two process points: the first launcher call failed on uv 0.11.32, so I put /usr/local/bin (uv 0.12.5) first on PATH; the branch's xpo-1166003 folder held only an unanswered CP-0 request, so there were no accepted answers to resume. Before each submission I checked the draft in place with the repo's own text and table check functions; this was not a launcher submission and is not counted above."
+  },
+  {
+    "issuer_id": "crox-1334036",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "Defect seen and not fixable inside the allowed paths: the issuer states no EBITDA or adjusted EBITDA, so every leverage and cover figure uses EBITDA built from operating income plus depreciation and amortization, and the debt-stack and EBITDA-bridge tables had to be partial or \"Not supplied\". (Run folder note: the partial folder on the branch held only the CP-0 request and no accepted answers, so all four modules were answered fresh. The first launcher call printed a uv-version error until /usr/local/bin was put first on PATH.)"
   }
 ]
