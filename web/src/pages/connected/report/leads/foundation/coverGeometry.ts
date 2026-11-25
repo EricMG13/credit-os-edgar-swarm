@@ -22,7 +22,7 @@ import { cellText, type InterestCover } from "./foundationData";
 // joined. The one change printed is the kit's (`changeBetween`), with its better/worse from signal.ts.
 
 /** A figure as the reader sees it: the stated number grouped, with the table's unit. */
-export function coverText(text: string, unit: string) {
+function coverText(text: string, unit: string) {
   const grouped = group(text);
   return /^[x%]$/i.test(unit) ? `${grouped}${unit}` : `${grouped} ${unit}`;
 }
@@ -32,7 +32,7 @@ type Mark =
   | { kind: "gap"; reason: string }
   | { kind: "words"; text: string };
 
-export type CoverRow = {
+type CoverRow = {
   label: string;
   mark: Mark;
   /** True for the latest stated number: drawn as the dot. */

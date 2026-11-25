@@ -47,7 +47,7 @@ const AFTER = 10;
 const SHORTEST = 120;
 
 /** A facility's stated amount as the reader sees it, grouped; a gap or words as written. */
-export const amountText = (facility: StackFacility) =>
+const amountText = (facility: StackFacility) =>
   facility.amount.kind === "number" ? group(facility.amount.text) : cellText(facility.amount);
 
 function kindOf(facility: StackFacility): StackSegment["kind"] {
@@ -58,7 +58,7 @@ function kindOf(facility: StackFacility): StackSegment["kind"] {
 }
 
 /** The facility's cells beside its name: ranking, secured flag and cumulative leverage as written. */
-export function facilityDetail(facility: StackFacility) {
+function facilityDetail(facility: StackFacility) {
   return [
     `Ranking ${String(facility.ranking)}`,
     `Secured: ${safeText(facility.secured)}`,

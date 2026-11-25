@@ -383,7 +383,7 @@ function legendOf(data: EarningsAgainstDebt): LegendEntry[] {
   const compared = data.comparison && labels.length === 2 ? data.comparison : null;
   const latest = data.comparison?.to ?? labels[0] ?? "";
   // One period is bars; two compared periods a ring to a dot; any other set a line per measure.
-  const kind = labels.length === 1 ? "bar" : compared ? "dot" : "line";
+  const kind: LegendEntry["kind"] = labels.length === 1 ? "bar" : compared ? "dot" : "line";
   const named = labels.length === 1 || compared;
   const gap = data.measures.some((measure) =>
     measure.values.some((value) => value.cell?.kind !== "number"),
