@@ -2,6 +2,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { evidencePath, type OutputEntry } from "../../publishedReport";
 import { StressRow } from "./StressRow";
+import { downsideCases } from "./stressData";
 import { measuredAt } from "./resize.fixture";
 import { entry, rowProps, section, table } from "./rows.fixture";
 
@@ -624,4 +625,19 @@ it("keeps the per-measure exports callable with their earlier arguments", async 
   const { zero, at } = panelScale(panel as NonNullable<typeof panel>, 310);
   expect(zero).toBe(0);
   expect(at(3.1)).toBeCloseTo(310, 6);
+});
+
+it("keeps downsideCases for other pages: the first stated leverage and cover measures, with the cases", () => {
+  const stressed = downsideWith([
+    ["Stressed FCF (USD millions)", "10.00", "0.00", "-5.1250", "Filing"],
+    ["All-in cover (x)", "3.10", "2.00", "1.40", "Filing"],
+    ["Net leverage (x)", "1.25", "1.30", "Not calculated: net debt is missing", "Filing"],
+  ]);
+  const read = downsideCases(stressed);
+  expect(read?.leverage?.measure).toBe("Net leverage (x)");
+  expect(read?.cover?.measure).toBe("All-in cover (x)");
+  expect(read?.cases).toHaveLength(3);
+  expect(
+    downsideCases(downsideWith([["Stressed FCF (USD millions)", "1", "2", "3", "F"]])),
+  ).toBeNull();
 });

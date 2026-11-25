@@ -182,6 +182,25 @@ export function downsidePanels(entry: OutputEntry) {
   return { cases, panels, assumptions, line: view.matrix.line };
 }
 
+/**
+ * For other pages that read one leverage and one cover measure (kept for their imports; the
+ * Overview draws every measure through `downsidePanels`): the first measure named "Net leverage
+ * … (x)" and the first naming cover in x that state a figure for some case, with the cases and
+ * assumptions. Null when neither is stated.
+ */
+export function downsideCases(entry: OutputEntry) {
+  const data = downsidePanels(entry);
+  if (!data) return null;
+  const stated = (pattern: RegExp) =>
+    data.panels.find(
+      (panel) => pattern.test(panel.measure) && panel.cells.some((cell) => cell.value !== null),
+    ) ?? null;
+  const leverage = stated(/^Net leverage\b.*\(x\)$/i);
+  const cover = stated(/\bcover\b.*\(x\)$/i);
+  if (!leverage && !cover) return null;
+  return { cases: data.cases, leverage, cover, assumptions: data.assumptions, line: data.line };
+}
+
 /** Where a panel's zero and a value sit across `room` pixels. */
 export function panelScale(panel: DownsidePanel, room: number) {
   const span = panel.max - panel.min || 1;
