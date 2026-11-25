@@ -704,7 +704,7 @@ it("reads case names from a column headed with 'name', keeps a cited name's word
           [
             ["s00", "As reported", "0", "0"],
             ["s01", "Cost shock (notes_2024.pdf page 3)", "0.1 (10%)", "0"],
-            ["s02", "T4.18 case", "0.2 (20%)", "0.05 (5%)"],
+            ["s02", "T4.18", "0.2 (20%)", "0.05 (5%)"],
           ],
         ),
       ])}
@@ -720,6 +720,28 @@ it("reads case names from a column headed with 'name', keeps a cited name's word
       "This page could not read some case names; those cases are numbered in the handoff's order.",
     ),
   ).toBeVisible();
+});
+
+it("reads case names from the scenario name column, not a source file name column before it", () => {
+  render(
+    <StressRow
+      {...rowProps([
+        registerOf(
+          ["Scenario ID", "Source file name", "Scenario name", ...SHOCKS],
+          [
+            ["s00", "register_2024.xlsx", "As reported", "0", "0"],
+            ["s01", "register_2024.xlsx", "Cost shock", "0.1 (10%)", "0"],
+            ["s02", "register_2024.xlsx", "Cost and rate shock", "0.2 (20%)", "0.05 (5%)"],
+          ],
+        ),
+      ])}
+    />,
+  );
+  const tile = downsideTile();
+  // Each case is named in its assumption line (the chart may wrap a long name over two lines).
+  for (const name of ["As reported", "Cost shock", "Cost and rate shock"])
+    expect(tile).toHaveTextContent(`${name}: `);
+  expect(tile).not.toHaveTextContent(/register_2024|could not read/);
 });
 
 it("says only that the page could not read the names when it finds no name column", () => {

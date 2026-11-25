@@ -21,7 +21,7 @@ export type RowProps = { snapshot: Snapshot; run: PublishedRun; view: ReportView
 export const entryOf = (view: ReportView, module: string) =>
   view.entries.find((entry) => entry.selected && entry.output.module === module);
 
-export type Passage = { line: number; text: string | null };
+export type Passage = { line: number; text: string | null; cited?: true };
 /**
  * A table the module wrote in a passage: a cell that cites a source is null; the columns that are
  * held in Evidence (sources, ids, text for another module) are named in `held`, never drawn.
@@ -36,7 +36,9 @@ const plain = (text: string) => text.replaceAll("**", "").replaceAll("`", "").tr
 
 /** A paragraph through the reader rule (`readerReason`); "" for one with no words at all. */
 function paragraphOf(line: number, text: string): Passage {
-  return { line, text: plain(readParagraph(text).body) ? readerReason(text) : "" };
+  if (!plain(readParagraph(text).body)) return { line, text: "" };
+  const words = readerReason(text);
+  return words === null ? { line, text: null, cited: true } : { line, text: words };
 }
 
 /** A table as the Overview may draw it; a passage link where no column can be drawn here. */
@@ -100,9 +102,14 @@ function figureText(cell: string, unit: string) {
   return NUMBER.test(bare) ? { figure: bare, accounting: false } : null;
 }
 
-/** A stated figure with its unit as the module wrote it: an accounting negative in brackets. */
+/**
+ * A stated figure with its unit as the module wrote it: an accounting negative in brackets, the
+ * unit inside them unless the module wrote it after them ("(12.3)%").
+ */
 export function figureShown(point: Point, unit: string) {
   if (point.figure === null) return null;
+  const written = point.cell.trim();
+  if (point.accounting && unit && written.endsWith(unit)) return written;
   return point.accounting
     ? `(${withUnit(point.figure.slice(1), unit)})`
     : withUnit(point.figure, unit);

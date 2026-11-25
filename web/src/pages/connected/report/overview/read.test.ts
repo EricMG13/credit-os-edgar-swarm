@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import type { OutputEntry, Section } from "../../publishedReport";
-import { bottomLineBlocks } from "./read";
+import { bottomLineBlocks, figureShown, type Point } from "./read";
 
 const findings = (blocks: Section["blocks"]): Section[] => [
   { heading: "Findings", level: 2, line: 1, blocks: [] },
@@ -48,4 +48,20 @@ it("falls back to the earlier format's summary when the passage has no blocks", 
     bottomLineBlocks(entry([], { bottomLine: "Credit is stable.\nBasis: notes", line: 12 })),
   ).toEqual([{ line: 12, text: "Credit is stable." }]);
   expect(bottomLineBlocks(entry([]))).toEqual([]);
+});
+
+it("draws an accounting negative as written when the module put the unit outside the brackets", () => {
+  const point = (cell: string, figure: string): Point => ({
+    period: "FY2024",
+    cell,
+    figure,
+    accounting: true,
+    value: Number(figure),
+    basis: null,
+    order: "1-2024",
+    line: 1,
+  });
+  expect(figureShown(point("(12.3)%", "-12.3"), "%")).toBe("(12.3)%");
+  expect(figureShown(point(" (12.3)% ", "-12.3"), "%")).toBe("(12.3)%");
+  expect(figureShown(point("(1.50)", "-1.50"), "x")).toBe("(1.50x)");
 });

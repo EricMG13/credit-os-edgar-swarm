@@ -81,7 +81,17 @@ function Sentence({
       </div>
     );
   const words = passage.text === null ? null : readerReason(passage.text);
-  if (words === null) return <EvidenceLink href={href}>Read this passage in Evidence</EvidenceLink>;
+  if (words === null)
+    return (
+      <div className="flex flex-col items-start gap-1">
+        {passage.cited && (
+          <p className="text-small text-text-secondary">
+            The bottom line cites a source reference; read it in Evidence.
+          </p>
+        )}
+        <EvidenceLink href={href}>Read this passage in Evidence</EvidenceLink>
+      </div>
+    );
   return <p className={className}>{words}</p>;
 }
 

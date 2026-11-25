@@ -104,13 +104,23 @@ function stressCell(text: string, unit: string): Cell {
 const SCENARIOS = "T2DS.1 Scenarios";
 const SHOCKS = ["EBITDA decline s", "Cash-interest increase k"] as const;
 
-/** The module's scenario register by id: each case's name (from the column whose header holds
- * "name", its readable words only) and its two shocks, as written. */
+/**
+ * The column of the case names: one headed "Name", "Scenario name" or "Case name", else the first
+ * whose header holds "name" but not "file" or "source"; -1 when there is none.
+ */
+function nameColumn(headers: readonly string[]) {
+  const exact = headers.findIndex((header) => /^(?:scenario |case )?name$/i.test(header.trim()));
+  if (exact >= 0) return exact;
+  return headers.findIndex((header) => /name/i.test(header) && !/file|source/i.test(header));
+}
+
+/** The module's scenario register by id: each case's name (from `nameColumn`, its readable words
+ * only) and its two shocks, as written. */
 function register(entry: OutputEntry) {
   const table = namedTable(entry, SCENARIOS, ["Scenario ID"]);
   const headers = table?.headers ?? [];
   const id = headers.indexOf("Scenario ID");
-  const name = headers.findIndex((header) => /name/i.test(header));
+  const name = nameColumn(headers);
   const [decline, interest] = SHOCKS.map((header) => headers.indexOf(header));
   return new Map(
     (table?.rows ?? []).map(({ cells }) => [

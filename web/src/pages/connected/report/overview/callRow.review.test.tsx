@@ -525,3 +525,16 @@ it("says each side of the stance move as the page read it, and that more is in C
   expect(within(tile).queryByText("More in Changes")).toBeNull();
   expect(within(tile).queryByText("Could not be read")).toBeNull();
 });
+
+it("says why beside the link when a bottom line is sent to Evidence for a source reference", () => {
+  const lead = entry("CP-6", [text("Bottom line", "Leverage per T4.18 is 4.2x.")]);
+  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  const call = screen.getByRole("region", { name: "The call" });
+  expect(
+    within(call).getByText("The bottom line cites a source reference; read it in Evidence."),
+  ).toBeVisible();
+  expect(
+    within(call).getAllByRole("link", { name: "Read this passage in Evidence" }).length,
+  ).toBeGreaterThan(0);
+  expect(call).not.toHaveTextContent(/T4\.18/);
+});
