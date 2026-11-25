@@ -356,7 +356,7 @@ describe("records tables take the mockup's form", () => {
     const row = screen.getByRole("row", { name: /^Tranche J / });
     const bar = row.querySelector('[style*="width"]');
     expect(bar).not.toBeNull();
-    expect(bar?.closest("td")).toHaveClass("min-w-72");
+    expect(bar?.closest("td")).toHaveClass("min-w-64");
     expect(screen.getByText(/^Bars: one scale per column\./)).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "All columns" }));
     const adjustment = screen.getByRole("row", { name: /^Financing cost adjustment / });
@@ -488,7 +488,7 @@ describe("bars on records tables", () => {
     const header = within(region).getByRole("columnheader", { name: "Principal" });
     expect(header.querySelector(".text-right.w-20")).toHaveTextContent("Principal");
     const row = screen.getByRole("row", { name: /^Tranche J / });
-    expect(row.querySelector('[style*="width"]')?.closest("td")).toHaveClass("min-w-72");
+    expect(row.querySelector('[style*="width"]')?.closest("td")).toHaveClass("min-w-64");
   });
 
   it("draws a small principal as a visible bar and keeps it apart from zero", () => {

@@ -478,7 +478,7 @@ export function PublishedTable({
       : "";
   const numerals = (column: number, cell: string) =>
     form.numeric?.has(column) ? (FIGURE.test(cell.trim()) ? NUMERALS : " text-right") : "";
-  const barWidth = form.wideBars ? " min-w-72" : " min-w-40";
+  const barWidth = form.wideBars ? " min-w-64" : " min-w-40";
   const { records } = form;
   const pad = records ? "py-1.5" : "py-2.5";
   // The records form holds the first column to a minimum at every width, not only where it pins.
