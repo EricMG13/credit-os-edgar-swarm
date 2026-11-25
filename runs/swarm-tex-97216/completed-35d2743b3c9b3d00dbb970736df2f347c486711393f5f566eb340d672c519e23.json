@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Terex Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/f6cd271325b6eede8c96ab3dbfd4cfd6f6556c5ef625e4e68c2be6d4b401dd46/1.response.md",
+    "CP-1": "requests/CP-1/7c9ce17799d5f9abd67383b5d726cf3ebdd16fc9cf1daefb78bff469add33ad7/1.response.md",
+    "CP-1A": "requests/CP-1A/b9939c59e57f1d5634c12e3da662fad17ce3b7eff56f538c2a34741039cf7a81/1.response.md",
+    "CP-2": "requests/CP-2/28746d55ae18b4c8625402268e0865b3f368177619b34ddff4bae10e5cf66c1b/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "42ee4f98a46aff42d7a0c3e44a5ad154ce13fb0fc73adea8481f96167801987a",
+  "delivery_sha256": "5c9a0097e0f2a168976d7c3da015055ca2be3f9198406b9e04e612b856a6246b"
+}

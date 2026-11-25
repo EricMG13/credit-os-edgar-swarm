@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Terex Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "e6d48e9a85a18e457f801633a8f7a823bb32331460e349d563611a59d1da8326",
+    "CP-1.md": "57384b472e1c5405c7940977b75c8e1acec38372f4df7483fd3111c0bcae3609",
+    "CP-1A.md": "e2abae9e1826267fecb455f9ef5c10b7285151c4ec8679d653b544e0976c56e8",
+    "CP-2.md": "add1f2b26802c8480397bd53c378011a4936194b6fa7cb9c0555e83bbd0400cf",
+    "coverage.json": "b8a6b7ded6f81e37c7b66f9a8799dc9fd4cf4c416dd104a0b7c0472b2fee3b40",
+    "view.json": "6b1119fafb82b1bd7d8380e9abe5ef074852f2e4fbc84b0fab03a140e74ac213",
+    "report-view.json": "c43e8b6f4a7ed65e221cdcc497d1101b693a34bb50e7e2e1571010c658cbe75a"
+  }
+}

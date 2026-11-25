@@ -1,0 +1,60 @@
+{
+  "shard": "s03",
+  "reports": [
+    {
+      "issuer_id": "dlx-27996",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The source set lacks the executed credit agreement, indentures and guarantor list, the proxy statement, Celero full-period earnings and any rating or market price, so covenant headroom, ownership detail and market access stayed explicit gaps that I could not fix."
+    },
+    {
+      "issuer_id": "tex-97216",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The session scratchpad is shared between issuer agents and a build script I had saved there was overwritten by another issuer's script, so running it rewrote that other issuer's CP-0 draft from its own script (I then moved all my work to a private subfolder), and I could not undo that."
+    },
+    {
+      "issuer_id": "vsat",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "CP-0 and CP-1 were already accepted on their first submission when I started, so I only answered CP-1A and CP-2, each accepted first time; one defect I could not fix is that the accepted CP-1A omits that recurring in-flight contracts carry no minimum purchase requirement and that the U.S. Government was 18% of first-quarter fiscal 2027 revenue, so I stated both in CP-2 instead."
+    },
+    {
+      "issuer_id": "tigo",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "All four modules were accepted on the first submission, and the filings still do not supply any indenture or credit agreement, the revolving facility's availability after 2025, the issuer's pro forma leverage denominator, or an agreed Chile earn-out cap (USD 150 million in the annual report against USD 490 million in the nine-month report)."
+    },
+    {
+      "issuer_id": "pds",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The accepted Financial foundation answer (CP-1) states in its debt-instruments table that the Canadian dollar facility borrowings were repaid in full in the first quarter of 2026, but the first-quarter statements show CAD 3,000 thousand still drawn at March 31, 2026 (nil by September 30), so I could not edit it and instead corrected it in the Gaps table of the Fundamental credit answer (CP-2)."
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for VIASAT INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "588a2b72236fe196230710fa4f4bd6d4cc31717ba6d88579af85ed18207f31ea",
+    "CP-1.md": "26d8ec94217eda7c2324eac75048a1c7461f23ed0f1177d37cc7431c1e4acc83",
+    "CP-1A.md": "1f5c07ea9349e6e5492ecff2f632d600dee63ce1de1625565af656558e974f4e",
+    "CP-2.md": "eaa3ac0ebf6c7f9a525d6b3ea9945c66c2b19f6ddd7e5d4c0ebfc80535f7cf43",
+    "coverage.json": "99a4036f1394f4466ee9aa5a26a08aec74780ad70246bc71e6de32cd3375d9ac",
+    "view.json": "ae08e6f617a5a71734900110cfde40e902eeb3b50f0c54260cc943c34aa552cb",
+    "report-view.json": "3f6889a5627959f221346ee2129921eeed941c71940c27ad1291c0c45d8c4532"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Deluxe Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "dde3cf6f06d2c1c98c80521e113682bfb408d46bf030839f8f3f80bdf1429706",
+    "CP-1.md": "45e0051771cb94a8c1f2327d8fa2bfc26632fe82b7cc1b260187fc09d7694bfb",
+    "CP-1A.md": "a23524a0052f33c2f5143182ee4d961675e3fb7e792c1521e7a3a376a62fabde",
+    "CP-2.md": "7616170281a214c47f69dad029bf9d9cd389d660fdc0de19aa46b2fe2f16697b",
+    "coverage.json": "2e2956018034ed48f38c1921adfbef089945e857e925f5da5440c0d8f30c36f3",
+    "view.json": "aacee7242a244e7f5b89d25f0f5cc3681087c2b1b1aceddcb81e05afb06f1c05",
+    "report-view.json": "b00ca0fc4a9afefd10c68186a4d562090643db23a730cbef0fb578b283dab206"
+  }
+}
