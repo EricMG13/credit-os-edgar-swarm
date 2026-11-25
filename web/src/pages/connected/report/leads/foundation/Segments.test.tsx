@@ -19,7 +19,12 @@ const draw = (data: OutputEntry) => {
   return screen.getByRole("region", { name: "Segments" });
 };
 const num = (element: Element | null, name: string) => Number(element?.getAttribute(name));
-const bar = (tile: HTMLElement, name: string) => tile.querySelector(`[data-bar="${name}"]`);
+/** The element whose `data-<attr>` is exactly `value` (jsdom's selector engine mis-reads "&"). */
+const byData = (tile: HTMLElement, attr: string, value: string) =>
+  [...tile.querySelectorAll(`[data-${attr}]`)].find(
+    (el) => el.getAttribute(`data-${attr}`) === value,
+  ) ?? null;
+const bar = (tile: HTMLElement, name: string) => byData(tile, "bar", name);
 const texts = (tile: HTMLElement) => [...tile.querySelectorAll("svg text")];
 const SCHEDULE = "Segment schedule";
 
@@ -49,7 +54,7 @@ describe("SegmentsTile on the accepted handoff (two periods)", () => {
     const tile = draw(cp1Entry());
     const zero = num(bar(tile, "Power & Control sales"), "x");
     const unit = num(bar(tile, "Power & Control sales"), "width") / 3941;
-    const prior = (name: string) => tile.querySelector(`[data-prior="${name}"]`);
+    const prior = (name: string) => byData(tile, "prior", name);
     expect(prior("Power & Control sales")?.textContent).toBe("FY2023 3,316");
     expect(prior("Airframe ebitda")?.textContent).toBe("FY2023 1,547");
     expect(prior("Non-aviation ebitda")?.textContent).toBe("FY2023 71");
@@ -71,7 +76,7 @@ describe("SegmentsTile on the accepted handoff (two periods)", () => {
         "Unallocated corporate, FY2024: Net sales Not supplied: no separate revenue line; EBITDA As Defined −106 (FY2023 −89).",
       ),
     ).toBeVisible();
-    expect(tile.querySelector('[data-segment="Unallocated corporate"]')).toBeNull();
+    expect(byData(tile, "segment", "Unallocated corporate")).toBeNull();
   });
   it("says every drawn figure in the aria-label", () => {
     const tile = draw(cp1Entry());
@@ -85,11 +90,7 @@ describe("SegmentsTile on the accepted handoff (two periods)", () => {
     const grid = within(tile).getByRole("table");
     const rows = within(grid)
       .getAllByRole("row")
-      .map((row) =>
-        within(row)
-          .queryAllByRole(/cell|columnheader/)
-          .map((cell) => cell.textContent),
-      );
+      .map((row) => [...row.querySelectorAll("th, td")].map((cell) => cell.textContent));
     expect(rows).toEqual([
       [
         "Segment",
@@ -141,12 +142,12 @@ describe("SegmentsTile on the other retained handoffs", () => {
     expect(
       within(tile).getByText("Unallocated corporate, FY2024: EBITDA As Defined −106."),
     ).toBeVisible();
-    expect(within(tile).getByText("Revenue, FY2024")).toBeVisible();
+    expect(within(tile).getByText("Revenue, FY2024", { selector: "span" })).toBeVisible();
   });
   it("draws the distressed draft's rows by segment and measure with its own measure names", () => {
     const tile = draw(distressedCp1Entry());
-    expect(within(tile).getByText("Revenue, FY2024")).toBeVisible();
-    expect(tile.querySelector('[data-prior="Airframe sales"]')?.textContent).toBe("FY2023 3,094");
+    expect(within(tile).getByText("Revenue, FY2024", { selector: "span" })).toBeVisible();
+    expect(byData(tile, "prior", "Airframe sales")?.textContent).toBe("FY2023 3,094");
     expect(
       within(tile).getByText(
         "Corporate and eliminations, FY2024: Revenue Not supplied: no separate revenue row; EBITDA As Defined −106 (FY2023 −89).",
@@ -169,9 +170,7 @@ describe("SegmentsTile states (mutations of the accepted handoff; not a real han
     ]);
     const tile = draw(three);
     expect(within(tile).getByText("Segments · US$m, FY2024")).toBeVisible();
-    expect(tile.querySelector('[data-prior="Power & Control ebitda"]')?.textContent).toBe(
-      "FY2023 1,866",
-    );
+    expect(byData(tile, "prior", "Power & Control ebitda")?.textContent).toBe("FY2023 1,866");
     expect(
       within(tile).getByText(
         "Bars show FY2024; ticks show FY2023. The schedule also states FY2022; it is in the table view.",
@@ -212,14 +211,18 @@ describe("SegmentsTile states (mutations of the accepted handoff; not a real han
         "Bars show FY2024; ticks show FY2023. The schedule also states LTM Dec-2024; it is in the table view.",
       ),
     ).toBeVisible();
-    expect(tile.textContent).not.toMatch(/4,000/);
+    // The LTM figures are in the table view only: no bar, tick or label draws them.
+    const drawn = [...tile.querySelectorAll('[data-part="value"], [data-part="prior"]')];
+    expect(drawn.map((text) => text.textContent).join(" ")).not.toMatch(/4,000|2,000/);
   });
   it("draws a gap cell as the hatched slot with the module's reason, never a bar", () => {
     const gap = setCell(cp1Entry(), SCHEDULE, 1, "Net sales", "Not supplied: no line");
     const tile = draw(gap);
     expect(bar(tile, "Airframe sales")).toBeNull();
-    expect(tile.querySelector('[data-gap="Airframe sales: Not supplied: no line"]')).not.toBeNull();
-    expect(within(tile).getByText("Not supplied: no line")).toBeInTheDocument();
+    expect(byData(tile, "gap", "Airframe sales: Not supplied: no line")).not.toBeNull();
+    expect(
+      within(tile).getByText("Not supplied: no line", { selector: "tspan" }),
+    ).toBeInTheDocument();
     expect(within(tile).getByText("Not supplied", { selector: "span" })).toBeVisible();
   });
   it("keeps a reason that names a source in Evidence", () => {

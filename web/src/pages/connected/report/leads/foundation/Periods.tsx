@@ -65,9 +65,7 @@ function layoutOf(strip: PeriodStrip, width: number) {
   const slot = Math.min(SLOT_MOST, room / Math.max(1, strip.axis.length));
   const centre = (at: number) => labelWidth + slot * (at + 0.5);
   const lines = strip.axis.map((period) =>
-    period.state.kind === "gap"
-      ? wrap(stateWords(period), slot - 10, SIZE.tick).slice(0, 5)
-      : [stateWords(period)],
+    wrap(stateWords(period), slot - 10, SIZE.tick).slice(0, period.state.kind === "gap" ? 5 : 2),
   );
   const stripBottom = 52 + (Math.max(1, ...lines.map((line) => line.length)) - 1) * 13 + 8;
   const rowsTop = stripBottom + 18;
@@ -163,7 +161,120 @@ function stripReading(strip: PeriodStrip) {
   return `Periods the figures cover: ${parts.join("; ")}.${rows.length ? ` ${rows.join(". ")}.` : ""}`;
 }
 
+/** True when every period label fits its slot on the time axis; otherwise the periods are rows. */
+function fitsAxis(strip: PeriodStrip, width: number) {
+  const { slot } = layoutOf(strip, width);
+  return strip.axis.every((period) => textWidth(period.label, SIZE.label) + 6 <= slot);
+}
+
+const ROW = 22;
+
+/**
+ * The narrow fallback for a long list of periods: one period per row on a vertical time axis, its
+ * label at the left, its mark on the axis, its state beside; the per-figure matrix is in the table.
+ */
+function StripRows({ strip, width }: { strip: PeriodStrip; width: number }) {
+  const labelWidth = Math.max(...strip.axis.map((p) => textWidth(p.label, SIZE.label))) + 10;
+  const axisX = labelWidth + 8;
+  const textX = axisX + 16;
+  const lines = strip.axis.map((period) =>
+    wrap(stateWords(period), Math.max(60, width - textX), SIZE.tick).slice(0, 4),
+  );
+  const tops = lines.reduce<number[]>(
+    (all, line, at) => [...all, (all[at] ?? 4) + Math.max(ROW, line.length * 13 + 8)],
+    [4],
+  );
+  const centre = (at: number) => (tops[at] ?? 0) + 10;
+  const from = strip.axis.findIndex((period) => period.compared === "from");
+  const to = strip.axis.findIndex((period) => period.compared === "to");
+  const height = tops.at(-1) ?? ROW;
+  return (
+    <svg
+      viewBox={`0 0 ${String(width)} ${String(height)}`}
+      width="100%"
+      role="img"
+      aria-label={stripReading(strip)}
+      data-layout="rows"
+    >
+      <line
+        x1={axisX}
+        x2={axisX}
+        y1={centre(0)}
+        y2={centre(strip.axis.length - 1)}
+        className="stroke-border-hairline"
+      />
+      {from >= 0 && to >= 0 && (
+        <line
+          data-comparison
+          x1={axisX}
+          x2={axisX}
+          y1={centre(from)}
+          y2={centre(to)}
+          strokeWidth="2.5"
+          className="stroke-chart-1"
+        />
+      )}
+      {strip.axis.map((period, at) => (
+        <g key={period.label} data-period={period.label} data-state={period.state.kind}>
+          <text
+            data-part="label"
+            x={0}
+            y={centre(at) + 4}
+            fontSize={SIZE.label}
+            fontWeight={period.compared ? 600 : 400}
+            className="fill-text-primary font-mono"
+          >
+            {period.label}
+          </text>
+          <g transform={`translate(${String(axisX)} ${String(centre(at) - 30)})`}>
+            <Mark period={period} x={0} />
+          </g>
+          <text
+            data-part="state"
+            fontSize={SIZE.tick}
+            className={
+              period.state.kind === "gap"
+                ? "fill-gap-text font-body"
+                : "fill-text-secondary font-body"
+            }
+          >
+            {(lines[at] ?? []).map((line, n) => (
+              <tspan key={`${line}-${String(n)}`} x={textX} y={centre(at) + 4 + n * 13}>
+                {line}
+              </tspan>
+            ))}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
 function Strip({ strip, width }: { strip: PeriodStrip; width: number }) {
+  if (!fitsAxis(strip, width))
+    return (
+      <>
+        <StripRows strip={strip} width={width} />
+        {showsMatrix(strip) && (
+          <p className="text-small text-text-secondary">
+            Which figure states which period is in the table view.
+          </p>
+        )}
+      </>
+    );
+  return (
+    <>
+      <StripAxis strip={strip} width={width} />
+      {showsMatrix(strip) && (
+        <p className="text-small text-text-secondary">
+          A dash: the figure&apos;s table does not state the period.
+        </p>
+      )}
+    </>
+  );
+}
+
+function StripAxis({ strip, width }: { strip: PeriodStrip; width: number }) {
   const l = layoutOf(strip, width);
   const from = strip.axis.findIndex((period) => period.compared === "from");
   const to = strip.axis.findIndex((period) => period.compared === "to");
@@ -366,7 +477,6 @@ export function PeriodsTile({ lead }: { lead: LeadProps }) {
         {hatched.map((line) => (
           <p key={line}>{line}</p>
         ))}
-        {showsMatrix(strip) && <p>A dash: the figure's table does not state the period.</p>}
         {apart && <p>{apart}</p>}
       </div>
       {missing && <GapNote>{missing}</GapNote>}

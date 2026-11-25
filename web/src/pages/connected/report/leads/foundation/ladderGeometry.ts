@@ -131,8 +131,8 @@ export function ladderNotes(periods: LadderPeriods) {
 
 const KIND = {
   level: "Level",
-  paid: "Deduction, stated as an amount paid",
-  signed: "Deduction, stated with its sign",
+  paid: "Deduction, as paid",
+  signed: "Deduction, signed",
 } as const;
 
 function cellText(step: LadderStep, cell: PeriodCell | undefined) {

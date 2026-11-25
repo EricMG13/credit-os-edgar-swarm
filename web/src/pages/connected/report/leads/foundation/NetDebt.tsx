@@ -40,7 +40,8 @@ const CASH = {
   proForma: "",
 } as const;
 
-function BarRow({ bar, x }: { bar: NetBar; x: (value: number) => number }) {
+/** One period's (or the pro forma's) row; `left` is where the plot, and its reading, start. */
+function BarRow({ bar, left }: { bar: NetBar; left: number }) {
   const pro = bar.kind === "proForma";
   return (
     <g data-row={bar.label}>
@@ -119,17 +120,13 @@ function BarRow({ bar, x }: { bar: NetBar; x: (value: number) => number }) {
       )}
       <text
         data-part="reading"
-        x={x(0) < 1 ? 0 : x(0)}
+        x={left}
         y={bar.barY + 16 + 15}
         fontSize={SIZE.label}
         className={cx("font-body", bar.netGap ? "fill-gap-text" : "fill-text-secondary")}
       >
         {bar.reading.map((line, at) => (
-          <tspan
-            key={`${String(at)}-${line}`}
-            x={x(0) < 1 ? 0 : x(0)}
-            y={bar.barY + 31 + at * LINE}
-          >
+          <tspan key={`${String(at)}-${line}`} x={left} y={bar.barY + 31 + at * LINE}>
             {line}
           </tspan>
         ))}
@@ -158,7 +155,7 @@ function Bars({ view, proForma }: { view: NetDebtView; proForma: ProForma | null
           bands={layout.bars.map((bar) => [bar.barY - 3, bar.barY + 19] as const)}
         />
         {layout.bars.map((bar) => (
-          <BarRow key={bar.label} bar={bar} x={layout.x} />
+          <BarRow key={bar.label} bar={bar} left={layout.left} />
         ))}
         <TickLabels ticks={layout.ticks} x={layout.x} y={layout.plotBottom + 16} width={width} />
       </svg>

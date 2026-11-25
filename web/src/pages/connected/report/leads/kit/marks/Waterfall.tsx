@@ -1,5 +1,5 @@
 import { cx } from "@/utils/cx";
-import { fittingTicks, niceAxis, type NiceAxis } from "./axis";
+import { fittingTicks, niceAxis, type AxisTick, type NiceAxis } from "./axis";
 import { GapSlot } from "./GapSlot";
 import { LINE, NARROW, SIZE, signedText, textWidth, wrap } from "./text";
 import {
@@ -79,6 +79,8 @@ const SLOT = 12;
 /** The prior line under a row: a 5 px bar and its 11 px figure. */
 const PRIOR_LINE = 14;
 const PRIOR_BAR = 5;
+/** Below a prior line the rows sit closer: the line itself already parts them. */
+const PRIOR_GAP = 8;
 
 type Placed = {
   row: WaterfallRow;
@@ -292,6 +294,8 @@ type Laid = Placed & {
   labelLines: string[];
   noteLines: string[];
   split: SplitKey[][];
+  /** The space under the row (smaller under a prior line). */
+  gap: number;
   /** The top of the prior line, under the mark and its split key. */
   priorY: number;
   prior: PriorPlaced | null;
@@ -326,11 +330,13 @@ function lay(
     const priorText = priorLines(prior, noteWidth);
     const priorY = barY + markHeight + split.length * LINE;
     const block = markHeight + split.length * LINE + priorText.length * PRIOR_LINE;
-    const height = f.narrow ? labelHeight + 2 + block + GAP : Math.max(labelHeight, block) + GAP;
+    const gap = priorText.length ? PRIOR_GAP : GAP;
+    const height = f.narrow ? labelHeight + 2 + block + gap : Math.max(labelHeight, block) + gap;
     const laid = {
       ...one,
       top: y,
       height,
+      gap,
       barY,
       labelLines,
       noteLines,
@@ -562,7 +568,14 @@ function PriorText({
   part: string;
 }) {
   return (
-    <text data-part={part} x={x} y={y} fontSize={SIZE.tick} className="fill-gap-text font-body">
+    <text
+      data-part={part}
+      x={x}
+      y={y}
+      fontSize={SIZE.tick}
+      {...HALO}
+      className={cx("fill-gap-text font-body", HALO_CLASS)}
+    >
       {lines.map((line, at) => (
         <tspan key={`${String(at)}-${line}`} x={x} y={y + at * PRIOR_LINE}>
           {line}
@@ -605,7 +618,8 @@ function Note({ one, f }: { one: Laid; f: Frame }) {
       x={f.plotLeft}
       y={first}
       fontSize={SIZE.label}
-      className="fill-gap-text font-body"
+      {...HALO}
+      className={cx("fill-gap-text font-body", HALO_CLASS)}
     >
       {one.noteLines.map((line, at) => (
         <tspan key={`${String(at)}-${line}`} x={f.plotLeft} y={first + at * LINE}>
@@ -629,6 +643,27 @@ function connectors(laid: Laid[], f: Frame) {
       return `M${String(f.x(one.to))} ${String(one.barY + BAR)}V${String(next.barY)}`;
     })
     .join("");
+}
+
+/** A tick label's box as `TickLabels` draws it: centred, or held inside the figure at an end. */
+function tickBox(tick: AxisTick, x: (value: number) => number, width: number) {
+  const at = x(tick.value);
+  const size = textWidth(tick.label, SIZE.tick);
+  const left = Math.min(Math.max(at - size / 2, 0), width - size);
+  return [left, left + size] as const;
+}
+
+/**
+ * The kept ticks thinned (every second, third, …) until no two labels touch once the end labels
+ * are held inside the figure; `fittingTicks` measures them centred, which an end label is not.
+ */
+function clearTicks(kept: readonly AxisTick[], x: (value: number) => number, width: number) {
+  for (let every = 1; every <= kept.length; every += 1) {
+    const some = kept.filter((_, at) => at % every === 0);
+    const boxes = some.map((tick) => tickBox(tick, x, width));
+    if (boxes.every((box, at) => at === 0 || box[0] > (boxes[at - 1]?.[1] ?? 0) + 6)) return some;
+  }
+  return kept.slice(0, 1);
 }
 
 function legendItems(legend: WaterfallProps["legend"], hasGap: boolean): LegendItem[] {
@@ -706,9 +741,14 @@ export function Waterfall({ rows: given, unit, width, axisStart, label, legend }
   );
   const laid = lay(placed, priors, f, legendBlock + 8);
   const plotTop = legendBlock + 4;
-  const plotBottom = (laid.at(-1)?.top ?? plotTop) + (laid.at(-1)?.height ?? 0) - GAP + 6;
+  const last = laid.at(-1);
+  const plotBottom = last ? last.top + last.height - last.gap + 6 : plotTop + 6 - GAP;
   const base = axis.cut ? axis.start : 0;
-  const kept = fittingTicks(axis, f.plotLeft, f.plotRight, (text) => textWidth(text, SIZE.tick));
+  const kept = clearTicks(
+    fittingTicks(axis, f.plotLeft, f.plotRight, (text) => textWidth(text, SIZE.tick)),
+    f.x,
+    width,
+  );
   const note = axis.cut
     ? `Axis starts at ${axis.ticks[0]?.label ?? ""}, marked on the total bars.`
     : null;

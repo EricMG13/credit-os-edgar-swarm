@@ -183,7 +183,7 @@ describe("Waterfall prior", () => {
   });
 
   it("is unchanged without a prior: no prior marks, no prior key", () => {
-    const rows = LADDER.map(({ prior: _prior, ...row }) => row) as WaterfallRow[];
+    const rows = LADDER.map((row): WaterfallRow => ({ ...row, prior: undefined }));
     const { container } = render(
       <Waterfall rows={rows} unit="USD m" width={WIDE} legend={{ prior: "FY2023" }} />,
     );
@@ -275,5 +275,27 @@ describe("Waterfall split", () => {
   it.each([WIDE, PHONE])("at %i px: the split key wraps and sits clear of the bars", (width) => {
     const { container } = render(<Waterfall rows={SPLIT} unit="USD m" width={width} />);
     expectClear(svgOf(container), width);
+  });
+});
+
+describe("Waterfall tick labels", () => {
+  it("thins the ticks until no two labels touch with the end labels held inside", () => {
+    // CP-1's ladder range at a phone width: centred, −4,000 and −2,000 fit; held inside, they touch.
+    const rows: WaterfallRow[] = [
+      { kind: "level", label: "EBITDA", value: 4173, text: "4,173" },
+      { kind: "step", label: "Outflows", value: -6678, text: "−6,678" },
+    ];
+    const { container } = render(<Waterfall rows={rows} unit="USD m" width={348} />);
+    const boxes = [...container.querySelectorAll('[data-part="tick"]')].map((tick) => {
+      const x = num(tick, "x");
+      const size = tick.textContent.length * 11 * 0.6;
+      const anchor = tick.getAttribute("text-anchor");
+      const left = anchor === "start" ? x : anchor === "end" ? x - size : x - size / 2;
+      return [left, left + size] as const;
+    });
+    expect(boxes.length).toBeGreaterThan(1);
+    boxes.slice(1).forEach((box, at) => {
+      expect(box[0]).toBeGreaterThan((boxes[at]?.[1] ?? 0) + 6);
+    });
   });
 });

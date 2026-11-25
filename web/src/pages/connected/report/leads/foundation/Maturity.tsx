@@ -273,6 +273,12 @@ function Grid({ layout }: { layout: WallLayout }) {
   );
 }
 
+/** The marks drawn at the 2 px minimum at this width, said under the figure. */
+function leastNote(layout: WallLayout) {
+  const least = layout.marks.filter((mark) => mark.least).map((mark) => mark.label);
+  return least.length ? `${listOf(least)} drawn at a 2 px minimum.` : null;
+}
+
 function Wall({
   slots,
   unit,
@@ -284,28 +290,32 @@ function Wall({
 }) {
   const layout = wallLayout(slots.dated, slots.undated, width);
   const Labels = layout.layout === "columns" ? ColumnLabels : RowLabels;
+  const least = leastNote(layout);
   return (
-    <svg
-      viewBox={`0 0 ${String(width)} ${String(layout.height)}`}
-      width="100%"
-      role="img"
-      aria-label={wallReading(layout.marks, unit)}
-      data-layout={layout.layout}
-    >
-      <Grid layout={layout} />
-      {layout.marks.map((mark) => (
-        <Bar key={mark.label} mark={mark} layout={layout} undatedFill="fill-surface-selected" />
-      ))}
-      <Axis layout={layout} />
-      <BreakGlyph layout={layout} />
-      {layout.marks.map((mark) => (
-        <Labels key={mark.label} mark={mark} layout={layout} />
-      ))}
-    </svg>
+    <>
+      <svg
+        viewBox={`0 0 ${String(width)} ${String(layout.height)}`}
+        width="100%"
+        role="img"
+        aria-label={wallReading(layout.marks, unit)}
+        data-layout={layout.layout}
+      >
+        <Grid layout={layout} />
+        {layout.marks.map((mark) => (
+          <Bar key={mark.label} mark={mark} layout={layout} undatedFill="fill-surface-selected" />
+        ))}
+        <Axis layout={layout} />
+        <BreakGlyph layout={layout} />
+        {layout.marks.map((mark) => (
+          <Labels key={mark.label} mark={mark} layout={layout} />
+        ))}
+      </svg>
+      {least && <p className="mt-3 text-caption text-text-secondary">{least}</p>}
+    </>
   );
 }
 
-/** The marks the wall draws, independent of width: for the notes, the legend and the table. */
+/** The marks the wall draws, whose kinds do not depend on width: for the notes, legend and table. */
 function marksOf(slots: { dated: WallSlot[]; undated: WallSlot[] }) {
   return wallLayout(slots.dated, slots.undated, FALLBACK).marks;
 }
@@ -343,7 +353,6 @@ function MaturityFigure({ lead, source }: { lead: LeadProps; source: Ready }) {
   const label = (slot: WallSlot): WallSlot => ({ ...slot, label: words(slot.label) });
   const slots = { dated: raw.dated.map(label), undated: raw.undated.map(label) };
   const marks = marksOf(slots);
-  const least = marks.filter((mark) => mark.least).map((mark) => mark.label);
   const notes = [
     ...marks
       .filter((mark) => mark.kind !== "bar")
@@ -352,7 +361,6 @@ function MaturityFigure({ lead, source }: { lead: LeadProps; source: Ready }) {
           ? `${mark.label}: no row in the schedule for this year.`
           : sentence(`${mark.label}: ${reasonOf(mark)}`),
       ),
-    ...(least.length ? [`${listOf(least)} drawn at a 2 px minimum.`] : []),
     ...basisNotes(source.table).filter((note) => !citesSource(note)),
   ];
   const legend = [

@@ -12,11 +12,11 @@ export const words = (cell: Reading) =>
   cell.kind === "number" ? group(cell.text) : safeText(cell.text);
 
 /** A ratio cell: "4.88x", or the gap or words as written. */
-export const ratioWords = (cell: Reading | null) =>
+const ratioWords = (cell: Reading | null) =>
   cell === null ? "not stated" : cell.kind === "number" ? `${group(cell.text)}x` : words(cell);
 
 /** A date as written, the stated gap with its reason included; null when the cell is empty. */
-export const dateWords = (cell: Reading) => (cell.text.trim() ? safeText(cell.text) : null);
+const dateWords = (cell: Reading) => (cell.text.trim() ? safeText(cell.text) : null);
 
 /**
  * The adjustment the pro forma bar draws: only when exactly one adjustment states a pro forma net
@@ -30,7 +30,7 @@ export function proFormaOf(view: NetDebtView): ProForma | null {
 }
 
 /** "Net 16,278 · cash 3,472 · gross debt 19,750"; a stated gap as written, once when all share it. */
-export function periodReading(period: NetDebtPeriod) {
+function periodReading(period: NetDebtPeriod) {
   const cells = [period.net, period.cash, period.gross];
   const [first] = cells;
   if (first && cells.every((cell) => cell.kind !== "number" && cell.text === first.text))
@@ -43,7 +43,7 @@ export function periodReading(period: NetDebtPeriod) {
 }
 
 /** "Net 22,967 · Special dividend … · 2024-10-18 · amount 4,348": the stated facts, no equation. */
-export function proFormaReading(item: ProForma) {
+function proFormaReading(item: ProForma) {
   const date = dateWords(item.date);
   return [
     `Net ${words(item.netDebt)}`,
@@ -74,7 +74,7 @@ const BAR = 16;
 const ROW_GAP = 12;
 const LABEL_WIDTH = 76;
 /** From this measured width the period label sits beside its bar; below it, above. */
-export const BESIDE = 360;
+const BESIDE = 360;
 
 type Span = { x: number; width: number };
 
@@ -179,6 +179,7 @@ export function barsLayout(view: NetDebtView, proForma: ProForma | null, width: 
   const ticks = fittingTicks(axis, left, right, (text) => textWidth(text, SIZE.tick));
   return {
     beside,
+    left,
     bars: proBar ? [...bars, proBar] : bars,
     axis,
     x,

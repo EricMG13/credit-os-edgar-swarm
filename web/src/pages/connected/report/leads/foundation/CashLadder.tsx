@@ -31,33 +31,36 @@ export function CashLadderTile({ lead }: { lead: LeadProps }) {
     );
   const rows = ladderRows(data, periods);
   return (
-    <FigureTile
-      props={lead}
-      span={7}
-      label={LABEL}
-      kicker={ladderKicker(data, periods)}
-      title={LABEL}
-      line={data.line}
-      source="cash conversion"
-      notes={ladderNotes(periods)}
-      table={ladderTable(data)}
-    >
-      <Measured fallback={640}>
-        {(width) => (
-          <Waterfall
-            rows={rows}
-            unit={data.unit}
-            width={width}
-            label={ladderReading(rows, data, periods)}
-            legend={{
-              level: `${periods.current} level`,
-              step: "Deduction",
-              gap: "Not stated",
-              ...(periods.prior ? { prior: periods.prior } : {}),
-            }}
-          />
-        )}
-      </Measured>
-    </FigureTile>
+    // As tall as its content, not stretched to the tile beside it in the row.
+    <div className="contents lg:[&>section]:self-start">
+      <FigureTile
+        props={lead}
+        span={7}
+        label={LABEL}
+        kicker={ladderKicker(data, periods)}
+        title={LABEL}
+        line={data.line}
+        source="cash conversion"
+        notes={ladderNotes(periods)}
+        table={ladderTable(data)}
+      >
+        <Measured fallback={640}>
+          {(width) => (
+            <Waterfall
+              rows={rows}
+              unit={data.unit}
+              width={width}
+              label={ladderReading(rows, data, periods)}
+              legend={{
+                level: `${periods.current} level`,
+                step: "Deduction",
+                gap: "Not stated",
+                ...(periods.prior ? { prior: periods.prior } : {}),
+              }}
+            />
+          )}
+        </Measured>
+      </FigureTile>
+    </div>
   );
 }

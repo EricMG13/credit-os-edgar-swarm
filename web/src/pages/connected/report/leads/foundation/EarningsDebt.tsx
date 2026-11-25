@@ -227,13 +227,15 @@ function PeriodLines({ data, width }: { data: EarningsAgainstDebt; width: number
                   </text>
                 </>
               ) : (
-                <GapSlot
-                  x={point.x - 7}
-                  y={panel.top + top}
-                  width={14}
-                  height={height}
-                  reason={`${panel.label} ${point.label}`}
-                />
+                <g data-gap-point={`${panel.label} ${point.label}`}>
+                  <GapSlot
+                    x={point.x - 7}
+                    y={panel.top + top}
+                    width={14}
+                    height={height}
+                    reason={point.reason ?? ""}
+                  />
+                </g>
               )}
               <text
                 data-part="period"

@@ -1,4 +1,4 @@
-import type { Mark, MarkTone } from "../../overview/marks";
+import type { Mark } from "../../overview/marks";
 import { tone } from "../../../signal";
 import {
   LINE,
@@ -26,7 +26,7 @@ import type {
 // the one computed figure is a measure's exact change between the comparison periods (ruling i).
 
 /** What a cell the table does not state for a period is called: never zero, never blank. */
-export const NOT_IN_TABLE = "not stated in this table";
+const NOT_IN_TABLE = "not stated in this table";
 
 /** The owner's table names these measures; reported EBITDA it does not, so it gets direction only. */
 const TONE_KEY: Record<EarningsMeasure["key"], string> = {
@@ -37,7 +37,7 @@ const TONE_KEY: Record<EarningsMeasure["key"], string> = {
 };
 
 /** Debt is the second series: navy, with its own legend entry. */
-export const seriesOf = (measure: EarningsMeasure) =>
+const seriesOf = (measure: EarningsMeasure) =>
   measure.key === "grossDebt" ? ("secondary" as const) : ("primary" as const);
 
 /** A cell as the page writes it: the figure grouped, a gap or words as written, or "not stated …". */
@@ -54,7 +54,7 @@ export const at = (values: readonly PeriodCell[], label: string) =>
 export const changeText = (change: string) => signedText(group(change), Number(change));
 
 /** "up, better", "up, worse", "down", "unchanged": direction, and better or worse only from `tone()`. */
-export function changeNote(key: string, change: string) {
+function changeNote(key: string, change: string) {
   const judged = tone(key, change);
   const sign = Math.sign(Number(change));
   const way = sign > 0 ? "up" : sign < 0 ? "down" : "unchanged";
@@ -100,9 +100,6 @@ export function leverageMarks(leverage: LeverageSeries): Mark[] {
       : [],
   );
 }
-
-/** The Slope's tone: the owner's word for the move, none where it names none. */
-export const leverageTone = (leverage: LeverageSeries): MarkTone => leverage.tone;
 
 /** "worse" or "better" where the owner's table judges the move; otherwise no word. */
 export const leverageWord = (leverage: LeverageSeries) =>
@@ -211,6 +208,8 @@ export type LinePoint = {
   x: number;
   /** The stated figure's position and text; null for a period the module did not state. */
   value: { y: number; value: number; text: string } | null;
+  /** For a period not drawn: the cell as written, or "not stated in this table". */
+  reason: string | null;
 };
 
 export type LinePanel = {
@@ -260,6 +259,7 @@ export function lineLayout(data: EarningsAgainstDebt, width: number) {
           cell?.kind === "number"
             ? { y: y(cell.value), value: cell.value, text: group(cell.text) }
             : null,
+        reason: cell?.kind === "number" ? null : `${value.label}: ${cellWords(cell)}`,
       };
     });
     const segments = points.slice(1).flatMap((point, at) => {

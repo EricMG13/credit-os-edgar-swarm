@@ -183,30 +183,20 @@ describe("cash ladder: the accepted CP-1, FY2024 bars and FY2023 beneath", () =>
     expect(openTable(tile)).toEqual([
       ["Step", "FY2023", "FY2024", "Kind"],
       ["EBITDA (Adjusted)", "3,395", "4,173", "Level"],
-      ["Cash Interest Paid", "1,160", "1,158", "Deduction, stated as an amount paid"],
-      ["Cash taxes paid", "260", "539", "Deduction, stated as an amount paid"],
+      ["Cash Interest Paid", "1,160", "1,158", "Deduction, as paid"],
+      ["Cash taxes paid", "260", "539", "Deduction, as paid"],
       ["Net Cash from Operating Activities", "1,375", "2,045", "Level"],
-      ["Capital expenditures", "−139", "−165", "Deduction, stated with its sign"],
+      ["Capital expenditures", "−139", "−165", "Deduction, signed"],
       ["Levered free cash flow", "1,236", "1,880", "Level"],
-      [
-        "Dividends and dividend equivalent payments",
-        "−38",
-        "−2,038",
-        "Deduction, stated with its sign",
-      ],
+      ["Dividends and dividend equivalent payments", "−38", "−2,038", "Deduction, signed"],
       [
         "Repurchases of common stock",
         "Not supplied: source dash",
         "Not supplied: source dash",
-        "Deduction, stated with its sign",
+        "Deduction, signed",
       ],
       ["Discretionary cash flow after distributions", "1,198", "−158", "Level"],
-      [
-        "Acquisition of businesses, net of cash acquired",
-        "−762",
-        "−2,347",
-        "Deduction, stated with its sign",
-      ],
+      ["Acquisition of businesses, net of cash acquired", "−762", "−2,347", "Deduction, signed"],
     ]);
   });
 
@@ -338,6 +328,16 @@ describe("cash ladder: other real handoffs and mutations", () => {
     expect(tile.querySelector('[data-step="Cash taxes paid"]')).not.toBeNull();
     expect(parts(tile, "value")[2]).toBe("0");
     expect(tile.textContent).not.toContain("−0");
+  });
+
+  it("a negative amount paid (a net refund) is drawn as the rise it is, signed +", () => {
+    const entry = setLabelled(cp1Entry(), CASH, "Cash taxes paid", "FY2024", "-20");
+    const { tile } = draw(entry);
+    const taxes = tile.querySelector('[data-step="Cash taxes paid"]') ?? undefined;
+    // Hand: 3,015 + 20 = 3,035.
+    expect([num(taxes, "data-from"), num(taxes, "data-to")]).toEqual([3015, 3035]);
+    expect(parts(tile, "value")[2]).toBe("+20");
+    expect(openTable(tile)[3]).toEqual(["Cash taxes paid", "260", "−20", "Deduction, as paid"]);
   });
 
   it("a step the handoff does not state is a gap row with the reason, not dropped", () => {
