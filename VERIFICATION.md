@@ -31,15 +31,16 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
 - Fidelity check (presentation change): `docs/design/preview/check-render.cjs` on the final
   build over the synthetic run, every page (14 module pages, a module's records, Overview,
   Changes, Forecast, Evidence, Calendar, History, Library, Coverage, Run activity, Start run) at
-  1440, 1024, 480, 479 and 390: running when this entry was first committed (no sideways scroll, no unnamed scroll box, no cut
+  1440, 1024, 480, 479 and 390: 113 of 125 passed on `f708842`; the 12 failures were all 24 px
+  event-lane marks sitting 2 px apart, fixed in `b40da32` and rechecked on every page with a lane
+  (30 page widths) with no failures (no sideways scroll, no unnamed scroll box, no cut
   text, no target under 32 px or under 44 px below 480 px in either dimension, no text under
   12 px, no overlapping chart label). Screenshots were looked at for the pages each review names.
-- Tests: full `npm run gates` on `86471e1`: lint, format, types, 454 files and 7,711 tests with
-  coverage, audit, knip, duplication, build and 78 script tests pass; the file gates pass on their
-  own run (the combined run reached the shell's time limit inside them). On `f708842`:
-  running when this entry was first committed. Python front-end tests (15 files, 295 tests) passed on `c632e84`; the currency
-  proof (5 tests, pound and franc, reading the built pages) passes on `f708842`, and its new
-  checks fail on a wrong value. Quality gate 0 findings. Known timing-sensitive tests (pass alone,
+- Tests: full `npm run gates` on `b40da32` passes every step (lint, format, types, 454 files and
+  7,737 tests with coverage, audit, knip, duplication, build, 78 script tests, file gates). Python
+  front-end tests (15 files, 295 tests) passed on `c632e84`; the currency proof (5 tests, pound
+  and franc, reading the built pages) passes on `f708842`, and its new checks fail on a wrong
+  value. Quality gate 0 findings. Known timing-sensitive tests (pass alone,
   fail only under load): the connected app's "reads the published handoff…" (wait raised to
   10 s), `report.auditFollowups` T17, and `ReportLibrary.design` under parallel runs.
 - Not run: the confidence-review and rewrite-tournament skills are not in this session; the
