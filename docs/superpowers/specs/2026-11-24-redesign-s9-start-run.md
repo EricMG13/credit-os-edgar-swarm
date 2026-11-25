@@ -202,6 +202,10 @@ one commit):
 
 - The drop zone's "Choose files" button is now the link "Click to upload" (no test or script used
   "Choose files").
+- Round 3, one name per mode: the page header's chip on Start run reads "No-cost test" (it read
+  "Synthetic test"; other pages keep that chip) and the paid stepper note reads "Paid run" (it read
+  "Paid step"); `connected-proof.mjs` waits for "Paid run" (c8fa460). A document's kind is a label
+  in sentence case ("Credit agreement", "Unrecognised").
 - The rail's text "USD 0.00 of USD 25.00" and its progress bar are gone; the cap is the figure
   "USD 25.00". `connected-proof.mjs` now waits for "USD 25.00" in Readiness (commit 974cd49).
 - The summary line reads "n of 4 ready · Cap USD 25.00".
@@ -229,8 +233,9 @@ The steps are `start/DocumentsStep.tsx`, `PurposeStep.tsx`, `ContextStep.tsx` (w
 `contextSummary.ts`), `ReviewStep.tsx` and `ReviewSheet.tsx`; the frame is `IntakePanels.tsx`;
 the rail is `ReadinessRail.tsx`, `StagePipeline.tsx` and `moduleReadiness.ts`; helpers are in
 `intake.ts`, `fields.tsx`, `plain.ts`, `limits.ts`, `limitWords.ts`, `pathways.ts`,
-`reviewInputs.ts`. Test helpers: `goldenFixtures.ts`, `testControls.ts`. The kit `Chip` was
-copied unchanged from S8 into `components/kit/Chip.tsx` (commit 7aa59c5); no kit file was edited.
+`reviewInputs.ts`. Test helpers: `goldenFixtures.ts`, `testControls.ts`, `connectedTesting.ts`.
+The kit `Chip` copied from S8 in 7aa59c5 was unused and is removed (689bc68); `components/kit`
+is as on the base.
 
 ## 6. Drawn as a gap, and why
 
@@ -251,29 +256,28 @@ copied unchanged from S8 into `components/kit/Chip.tsx` (commit 7aa59c5); no kit
 | Purpose step (K5)                                                                                                                                          | Sonnet · medium, worktree, reviewed and cherry-picked |
 | More context accordion (K2)                                                                                                                                | Sonnet · high, worktree, reviewed and cherry-picked   |
 
-## 8. Requests to the coordinator
+## 8. Requests to the coordinator, and the coordinator's decisions (2026-11-25)
 
-1. The top bar on `/start` tints "Run activity"; the screen map has Start run as the primary
-   action (shell, frozen).
-2. `layout.tsx` (not mine): the breadcrumb link "Library" is 20 px tall (the render check flags it
-   at every width), and at 390 the top bar's nav list scrolls sideways without a name or tab stop.
-3. `ConnectedApp.tsx:166` (not mine): the read-only preview of `/start` shows only a title.
-   Proposed sentence under it: "This preview has no Credit OS service behind it, so it cannot
-   start or follow a run. Library and Coverage show the saved reports."
+1. The top bar on `/start` tints "Run activity": decided, it stays unless the owner asks otherwise.
+   The top bar at 390 is fixed on the integration branch (one row, no scroller), merged here.
+2. `layout.tsx` (not mine): the breadcrumb link "Library" is 20 px tall at every width.
+3. `ConnectedApp.tsx:166` (not mine): the read-only preview sentence ("This preview has no Credit
+   OS service behind it, so it cannot start or follow a run. Library and Coverage show the saved
+   reports.") is accepted; the coordinator adds it at integration.
 4. The service change for "what each file unlocks" (§ 6) belongs in the follow-on plan.
-5. Whether to commit the step-by-step render driver (it runs check-render's `measure` on every
-   step and state, and reports where the decision falls) and the request-capture driver under
-   `docs/design/preview/`. Not committed until you say.
+5. The step render driver and the request-capture driver: decided, not committed.
+6. "Will refuse" stays red, as the set defines it.
 
 ## 9. Verification
 
-Round 2, 2026-11-25, branch `claude/redesign-s9-start-run`, head f03e835. Synthetic mode only; no provider was called and no paid run was made (the "paid" shots
+Rounds 2 and 3, 2026-11-25, branch `claude/redesign-s9-start-run`. Round 3 is on the tree
+merged with `claude/exciting-albattani-v1zoug` (0033da3) and is recorded in § 9.1 at the end. Synthetic mode only; no provider was called and no paid run was made (the "paid" shots
 are the page in live mode against the offline synthetic service, with every Submit request
 aborted, as `connected-proof.mjs` does).
 
 ### What is sent: unchanged
 
-- **jsdom goldens**: 18 drives (`requests.golden.test.tsx`, 5, recorded before any change;
+- **jsdom goldens**: 19 transcripts from 18 drives (one drive records two) (`requests.golden.test.tsx`, 5, recorded before any change;
   `requests.golden.paths.test.tsx`, 13, recorded on round 1's head before the rebuild), 19
   transcripts in `start/requests.golden/`. Green after every commit; never rewritten. In the last
   commit the transcripts were renamed `.txt` → `.golden` (git: pure renames, content identical)
@@ -321,6 +325,9 @@ Rewritten (layout or pinned wording; the behaviour each checks is kept):
    checking visibility. `StartRun.finalAudit` Luna: opens "Model and modules".
 9. `ReviewStep.test`, `ReadinessRail.test`, `moduleReadiness.test`, `DocumentsStep.test`,
    `ContextStep.test`: this package's own round-1 tests, rewritten to the new blocks.
+10. From round 1, still in force: `run/start/Steps.test` "draws the Purpose card header as a
+    strip…" became "…an unselected Purpose card as a hairline-bordered surface"; and
+    `Purpose.focusRing.test` reads `outline-focus` for `outline-brand`.
 
 Added: `invalidControls.test.tsx` (4), `loading.test.tsx` (1), `PurposeStep.test.tsx` (1),
 `contextSummary.test.ts` (37), period-refusal cases in `plain.test.ts` (2), Q1 "Other limits"
@@ -372,3 +379,37 @@ limits and pushed the stages down a screen; the tile repeated the rail's stages 
 1440 and under it at 390; the paid Submit wrapped under its sentence (912 px); the upload link
 sat below its sentence's baseline. Found by a Playwright probe of the invalid-control handling: with several invalid fields the last one was marked, because the browser runs microtasks between invalid events (fixed in f03e835, with a test that fails on the old code). The real drive was run once more on that head: 13 requests, identical. Found by the measurement: the drop zone's upload link and the
 row editors' Add buttons were under the target size.
+
+### 9.1 Round 3 (the coordinator's second review, S1–S4)
+
+On the merged tree (head after c8fa460), synthetic mode only.
+
+- **S4**: merged `origin/claude/exciting-albattani-v1zoug` (0033da3, no conflict); `byStage` now
+  orders a stage's modules by the stage's own order, and `moduleReadiness.test` follows it (75024b6).
+- **S1**: a Purpose option already chosen does nothing when pressed again (d4a5946).
+  `segmentChoice.test.tsx` drives Relative Value after re-pressing "No market view (research)"
+  (the summary sends `"run_type":"secondary"`, as an untouched form does), re-pressing the market
+  view after approval (approval and decisions kept), and re-pressing "Basic" after a Leave out
+  (the module stays out); the three fail on the old code.
+- **S2**: "Everything Submit sends" draws the date of the newest file and the valuation parts'
+  sent defaults under "Also sent, not used by this basis" (d8c74e2). `everythingSent.test.tsx`
+  walks the recorded submit bodies of two drives (and one with the date) and finds every value,
+  as typed or by a reader name written in the test. Two values are named as not inputs: the
+  context's format tag and the cash-flow model (S8).
+- **S3**: one check's invalid events are gathered; the first control with words takes the focus
+  and only its section opens; every control with words is marked; a double click's second click
+  on a section heading is ignored (03d958f). A Chromium probe of the coordinator's case (Turns 0
+  and a cutoff after the as-of date, all sections closed; click, then double click) showed only
+  Dates and periods open, the cutoff focused with its words, Turns marked, and no request.
+- **Rendering**: c8fa460 (targets, one mode name, openers, badge size, Before Submit mark, kind
+  label, Cancel ring); d4a5946 (Market view across both columns; the two reworded lines).
+- **Goldens**: 18 drives green in CI mode (no snapshot can be written); the two ID-offer drives
+  now hold the issuer notice's 250 ms lookup until the second summary is drawn, the pace they
+  were recorded at (under CPU load it had moved ahead of it); six runs alongside a full
+  ConnectedApp run, all green. The real drive: 13 requests, identical, on the final head.
+- **Checks**: `tsc` pass; vitest 718 (ConnectedApp 221, `connected/start` and `run/start` 497);
+  `npm run lint` pass (repo-wide, now that the merged `report/stages.ts` is clean);
+  `format:check` pass; knip only `LeadProps`; duplication 2.49 %; build and `classes.mjs` pass;
+  `tools/quality_gate.py` (repo venv; `uv run` refuses the pinned uv) 0 findings.
+- **Targets**: a strict check (every control's own box, in `main`, outside sentences and the
+  breadcrumb) finds none under 44 px at 390 or 32 px at 1440 in any state.
