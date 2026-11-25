@@ -272,7 +272,7 @@ test("a bound filters Modules and Find as well as Rank, shows as a removable chi
   // Alpha states 4.6 and Beta states no figure: neither passes a bound of 5 on the Modules view.
   expect(screen.getByText("0 of 2 issuers shown")).toBeInTheDocument();
   const chip = screen.getByRole("button", {
-    name: "Remove filter Net debt / EBITDA ≥ 5 · FY2025",
+    name: "Remove filter Net debt / EBITDA ≥ 5x · FY2025",
   });
   fireEvent.click(screen.getByRole("button", { name: "Find" }));
   expect(screen.getByText("0 of 2 issuers shown")).toBeInTheDocument();
@@ -295,4 +295,42 @@ test("nothing published is said plainly", async () => {
   answer(null);
   render(<Coverage />);
   expect(await screen.findByText("No published runs yet")).toBeInTheDocument();
+});
+
+test("an unreadable bound shows as an error chip and a marked summary with the disclosure closed", async () => {
+  answer(data);
+  render(<Coverage />);
+  fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
+    target: { value: "1,0" },
+  });
+  // A comma that is not a thousands group is invalid, not read as ten.
+  expect(
+    screen.getByRole("button", { name: "Remove filter At least: not a number" }),
+  ).toBeVisible();
+  expect(screen.getByText(/a bound is not a number/)).toBeVisible();
+  expect(screen.getByText("2 of 2 issuers shown")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Remove filter At least: not a number" }));
+  expect(screen.queryByText(/a bound is not a number/)).toBeNull();
+});
+
+test("a bound compares one reporting unit, named in its chip, and the unit can be chosen", async () => {
+  const [alphaFigure, betaGap, finding] = data.facts;
+  if (!alphaFigure || !betaGap || !finding) throw new Error("fixture");
+  answer({
+    ...data,
+    facts: [alphaFigure, { ...betaGap, text: "610", at: 610, gap: false, unit: "%" }, finding],
+  });
+  render(<Coverage />);
+  fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
+    target: { value: "5" },
+  });
+  // Opens on the unit most issuers state; a tie keeps the first (%): Beta's 610% passes.
+  expect(screen.getByRole("button", { name: /Remove filter .*≥ 5% · FY2025/ })).toBeVisible();
+  expect(screen.getByText("1 of 2 issuers shown")).toBeInTheDocument();
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Bound unit" })).getByRole("button", { name: "x" }),
+  );
+  // In x, Alpha's 4.6x is below 5x and Beta's figure is in another unit, so it passes none.
+  expect(screen.getByRole("button", { name: /Remove filter .*≥ 5x · FY2025/ })).toBeVisible();
+  expect(screen.getByText("0 of 2 issuers shown")).toBeInTheDocument();
 });

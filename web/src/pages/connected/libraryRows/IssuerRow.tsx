@@ -22,7 +22,7 @@ export const ROW_COLUMNS =
 
 const CELL_LABEL = "text-caption text-text-tertiary xl:sr-only";
 const QUIET_LINK =
-  "inline-flex min-h-8 items-center text-left text-small font-normal whitespace-normal max-[480px]:min-h-11";
+  "inline-flex min-h-8 min-w-8 items-center text-left text-small font-normal whitespace-normal max-[480px]:min-h-11 max-[480px]:min-w-11";
 
 /** What is not known, in the chip's place: dashed, hatched, with the reason in words. */
 function GapChip({ children }: { children: string }) {
@@ -83,7 +83,12 @@ function NextEventDetail({
     );
   if (next.status === "failed")
     return (
-      <p className="text-small text-gap-text">Dates could not be loaded. Open the Calendar.</p>
+      <p className="text-small text-gap-text">
+        Dates could not be loaded.{" "}
+        <TextLink href={`${reportPath(linked.id)}#calendar`} className={QUIET_LINK}>
+          Open the Calendar
+        </TextLink>
+      </p>
     );
   if (next.status === "unknown")
     return (

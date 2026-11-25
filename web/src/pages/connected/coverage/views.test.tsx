@@ -1,8 +1,9 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import type { Coverage, CoverageRun, Fact, Issuer } from "../coverageData";
 import { FindView } from "./Find";
 import { Matrix } from "./Matrix";
+import { RunStates } from "./RunStates";
 import { RankView } from "./Rank";
 
 afterEach(cleanup);
@@ -99,7 +100,12 @@ it("groups the module columns under the five stages and draws each state as a sh
   expect(within(beta).getByLabelText(/for Beta SA: Not asked for in this run$/)).toBeVisible();
   // The words stand in a legend above the matrix, once each.
   const legend = within(screen.getByRole("list", { name: "What the shapes mean" }));
-  expect(legend.getAllByRole("listitem")).toHaveLength(6);
+  expect(legend.getAllByRole("listitem")).toHaveLength(7);
+  // Every state has its own shape, and the legend draws the cells' own marks.
+  const legendShapes = legend.getAllByRole("listitem").map((item) => item.querySelector("svg")?.getAttribute("data-shape"));
+  expect(new Set(legendShapes).size).toBe(7);
+  expect(legend.getByText("No handoff; run plan not recorded")).toBeVisible();
+  expect(legend.getByText("Not assessable").closest("li")?.querySelector(".border-dashed")).not.toBeNull();
   expect(legend.getByText("Delivered with gaps")).toBeVisible();
 });
 
@@ -146,10 +152,14 @@ it("ranks bars from zero in one unit, apart from another unit, and lists a state
   expect(container.textContent).not.toContain("CP-1");
 });
 
+/** Each bar as [left, width] in percent of its track, whichever side it is anchored to. */
 const fills = (container: HTMLElement) =>
-  [...container.querySelectorAll<HTMLElement>("ol [style]")]
-    .filter((node) => node.className.includes("bg-chart"))
-    .map((node) => [Number.parseFloat(node.style.left), Number.parseFloat(node.style.width)]);
+  [...container.querySelectorAll<HTMLElement>("[data-bar]")].map((node) => {
+    const width = Number.parseFloat(node.style.width);
+    return node.dataset.bar === "below"
+      ? [100 - Number.parseFloat(node.style.right) - width, width]
+      : [Number.parseFloat(node.style.left), width];
+  });
 
 it("draws a mixed list's bars either side of a marked zero line, on one scale, with the sign in the text", () => {
   const { container } = rankOf([fact("a", { text: "4.0", at: 4 }), fact("b", { text: "-2.0", at: -2 })]);
@@ -255,4 +265,48 @@ it("groups found passages by issuer, one section each, with a sources link per p
   const beta = screen.getByRole("region", { name: "Beta SA" });
   expect(within(beta).queryByText("Covenants are tight.")).toBeNull();
   expect(screen.queryByRole("region", { name: "Gamma AG" })).toBeNull();
+});
+
+it("draws every stated non-zero figure at least three pixels wide beside a huge one, and zero as the line alone", () => {
+  const { container } = rankOf([
+    fact("a", { text: "100,000", at: 100000 }),
+    fact("b", { text: "12", at: 12 }),
+    fact("c", { text: "3", at: 3 }),
+    fact("d", { text: "0", at: 0 }),
+  ]);
+  const bars = [...container.querySelectorAll<HTMLElement>("[data-bar]")];
+  expect(bars).toHaveLength(3);
+  for (const bar of bars) expect(bar.style.minWidth).toBe("3px");
+  // The zero line is labelled.
+  expect(within(screen.getAllByRole("listitem")[0] as HTMLElement).getByText("0")).toBeVisible();
+});
+
+it("gives every cell focus and reads the issuer, module and state aloud under the matrix", () => {
+  render(
+    <Matrix
+      data={data}
+      issuers={[data.issuers[0] as Issuer]}
+      chosen={new Set()}
+      toggle={() => undefined}
+      open={null}
+      setOpen={() => undefined}
+    />,
+  );
+  const status = screen.getByRole("status");
+  expect(status).toHaveTextContent(/Point at, focus or press a shape/);
+  // A module with no handoff is a button, not an unfocusable mark.
+  const none = screen.getByRole("button", { name: /Committee decision for Alpha plc: No handoff published/ });
+  fireEvent.focus(none);
+  expect(status).toHaveTextContent(/Alpha plc .*Committee decision: No handoff published/);
+  const linked = screen.getByRole("link", { name: /Legal & covenants for Alpha plc: Not assessable/ });
+  fireEvent.mouseEnter(linked);
+  expect(status).toHaveTextContent(/Legal & covenants: Not assessable/);
+});
+
+it("draws a module with a handoff as a link in the link colour and one without as plain secondary text", () => {
+  render(<RunStates data={data} run={(data.issuers[0] as Issuer).runs[0] as CoverageRun} />);
+  const linked = screen.getByRole("link", { name: "Legal & covenants" });
+  expect(linked).not.toHaveClass("text-text-tertiary", "text-text-secondary");
+  expect(screen.queryByRole("link", { name: "Committee decision" })).toBeNull();
+  expect(screen.getByText("Committee decision")).toHaveClass("text-text-secondary");
 });

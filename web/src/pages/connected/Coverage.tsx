@@ -9,6 +9,8 @@ import { PageHeader } from "../../shell/PageHeader";
 import {
   commonPeriod,
   factAt,
+  factsOf,
+  fieldUnits,
   getCoverage,
   latestRun,
   matchIssuers,
@@ -62,6 +64,7 @@ function Dashboard({ data }: { data: Data }) {
   const [filters, setFilters] = useState<Filters>(start.filters);
   const [fieldId, setFieldId] = useState(start.field);
   const [periodPick, setPeriodPick] = useState("");
+  const [unitPick, setUnitPick] = useState<string | null>(null);
   const [order, setOrder] = useState<"high" | "low">("high");
   const [by, setBy] = useState("none");
   const [chosen, setChosen] = useState<ReadonlySet<string>>(new Set());
@@ -114,7 +117,31 @@ function Dashboard({ data }: { data: Data }) {
     stated.find((item) => item === periodPick) ??
     (field ? commonPeriod(data, data.issuers, field.id) : null);
   // The bounds read one figure at one period; Trend draws every period, so it applies none.
-  const matched = matchIssuers(data, filters, field?.id ?? null, view === "trend" ? null : period);
+  // A bound compares one reporting unit: the one most issuers state at the period, unless chosen.
+  const units = field ? fieldUnits(data, data.issuers, field.id) : [];
+  const stating = (unit: string) =>
+    data.issuers.filter((issuer) => {
+      const run = latestRun(issuer);
+      return (
+        run &&
+        field &&
+        factsOf(data, run.key, field.id).some(
+          (fact) => fact.period === period && fact.at !== null && (fact.unit ?? "") === unit,
+        )
+      );
+    }).length;
+  const commonUnit = units.reduce<string | null>(
+    (best, unit) => (best === null || stating(unit) > stating(best) ? unit : best),
+    null,
+  );
+  const boundUnit = unitPick !== null && units.includes(unitPick) ? unitPick : commonUnit;
+  const matched = matchIssuers(
+    data,
+    filters,
+    field?.id ?? null,
+    view === "trend" ? null : period,
+    boundUnit,
+  );
   // A bound passes no issuer without a figure, but Rank lists those apart as not ranked, with the
   // module's reason, so they stay in its list whatever the bounds are.
   const unranked = (issuer: Issuer) => {
@@ -189,10 +216,12 @@ function Dashboard({ data }: { data: Data }) {
   );
   // A bound reads one figure at one period, shown as a chip on every view that applies it.
   const [low, high] = [readBound(filters.min), readBound(filters.max)];
+  const unitMark = (unit: string) => (unit === "x" || unit === "%" ? unit : unit ? ` ${unit}` : "");
   const boundText =
     field && period !== null && view !== "trend" && (low.value !== null || high.value !== null)
-      ? `${field.label} ${[low.value !== null && `≥ ${filters.min.trim()}`, high.value !== null && `≤ ${filters.max.trim()}`].filter(Boolean).join(", ")} · ${period}`
+      ? `${field.label} ${[low.value !== null && `≥ ${filters.min.trim()}${unitMark(boundUnit ?? "")}`, high.value !== null && `≤ ${filters.max.trim()}${unitMark(boundUnit ?? "")}`].filter(Boolean).join(", ")} · ${period}`
       : null;
+  const badBounds = (["min", "max"] as const).filter((side) => readBound(filters[side]).invalid);
   const heading =
     view === "matrix"
       ? "What each module delivered, by issuer"
@@ -290,6 +319,16 @@ function Dashboard({ data }: { data: Data }) {
               {item.text}
             </RemovableChip>
           ))}
+          {badBounds.map((side) => (
+            <RemovableChip
+              key={side}
+              onRemove={() => {
+                set({ [side]: "" });
+              }}
+            >
+              {`${side === "min" ? "At least" : "At most"}: not a number`}
+            </RemovableChip>
+          ))}
           {boundText && (
             <RemovableChip
               onRemove={() => {
@@ -316,6 +355,9 @@ function Dashboard({ data }: { data: Data }) {
             className={`flex min-h-8 cursor-pointer items-center text-small font-medium text-text-secondary ${phone}`}
           >
             Filters: figure bounds, module, module state, confidence, compare and save a group
+            {badBounds.length > 0 && (
+              <span className="ml-2 text-error-text">· a bound is not a number</span>
+            )}
           </summary>
           <div className="flex flex-wrap items-end gap-x-4 gap-y-3 py-3">
             <Choice
@@ -399,6 +441,28 @@ function Dashboard({ data }: { data: Data }) {
                     )}
                   </label>
                 ))}
+                {units.length > 1 && (
+                  <div
+                    role="group"
+                    aria-label="Bound unit"
+                    className="flex flex-wrap items-center gap-2 pb-0.5"
+                  >
+                    <span aria-hidden="true" className="text-caption text-text-tertiary">
+                      Bound unit
+                    </span>
+                    {units.map((unit) => (
+                      <Chip
+                        key={unit}
+                        pressed={unit === boundUnit}
+                        onPress={() => {
+                          setUnitPick(unit);
+                        }}
+                      >
+                        {unit || "No unit stated"}
+                      </Chip>
+                    ))}
+                  </div>
+                )}
               </>
             )}
             <label className={`flex min-h-8 items-center gap-2 text-small font-medium ${phone}`}>

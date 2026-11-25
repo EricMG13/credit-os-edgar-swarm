@@ -171,21 +171,27 @@ export function commonPeriod(
   return best ?? periodsOf(data, issuers, field).at(-1) ?? null;
 }
 
-/** A typed bound: empty is open; thousands separators are allowed; any other text is invalid. */
+/**
+ * A typed bound: empty is open; a number written with its decimal point, and optionally with
+ * comma thousands groups of three ("1,000"), is read as written; any other text, a comma used as a
+ * decimal point ("1,0") included, is invalid.
+ */
 export function readBound(text: string): { value: number | null; invalid: boolean } {
   const typed = text.trim();
   if (typed === "") return { value: null, invalid: false };
-  const plain = /^-?\d[\d,]*(?:\.\d+)?$/.test(typed);
+  const plain = /^-?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/.test(typed);
   return plain
     ? { value: Number(typed.replaceAll(",", "")), invalid: false }
     : { value: null, invalid: true };
 }
 
-function within(fact: Fact | undefined, filters: Filters): boolean {
+function within(fact: Fact | undefined, filters: Filters, unit: string | null): boolean {
   const [min, max] = [readBound(filters.min).value, readBound(filters.max).value];
   if (min === null && max === null) return true;
   // A missing figure is not zero: it passes no numeric bound.
   if (fact?.at === null || fact?.at === undefined) return false;
+  // A bound compares figures in one reporting unit; a figure in another unit passes none.
+  if (unit !== null && (fact.unit ?? "") !== unit) return false;
   return (min === null || fact.at >= min) && (max === null || fact.at <= max);
 }
 
@@ -205,6 +211,7 @@ export function matchIssuers(
   filters: Filters,
   field: string | null,
   period: string | null = null,
+  unit: string | null = null,
 ): Issuer[] {
   return data.issuers.filter((issuer) => {
     const run = latestRun(issuer);
@@ -218,7 +225,7 @@ export function matchIssuers(
       const said = factsOf(data, run.key, filters.choice).map((fact) => fact.text);
       if (!said.includes(filters.word)) return false;
     }
-    if (field && period !== null && !within(factAt(data, run.key, field, period), filters))
+    if (field && period !== null && !within(factAt(data, run.key, field, period), filters, unit))
       return false;
     return says(data, issuer, run, filters.query);
   });

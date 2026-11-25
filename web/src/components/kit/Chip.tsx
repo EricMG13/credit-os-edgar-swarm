@@ -2,7 +2,7 @@ import { XClose } from "@untitledui/icons";
 import { cx } from "@/utils/cx";
 
 const CHIP =
-  "inline-flex min-h-8 items-center rounded-ds-xs border px-3 text-small font-medium whitespace-nowrap outline-focus-ring transition duration-100 ease-linear focus-visible:outline-2 focus-visible:outline-offset-2 max-[480px]:min-h-11 max-[480px]:min-w-11 max-[480px]:justify-center cursor-pointer";
+  "inline-flex min-h-8 max-w-full items-center rounded-ds-xs border px-3 py-1 text-left text-small font-medium break-words outline-focus-ring transition duration-100 ease-linear focus-visible:outline-2 focus-visible:outline-offset-2 max-[480px]:min-h-11 max-[480px]:min-w-11 max-[480px]:justify-center cursor-pointer";
 const ON = "border-action-subtle-hover bg-surface-selected text-text-link";
 const OFF =
   "border-border-hairline bg-surface-card text-text-secondary hover:border-border-container hover:text-text-primary";
@@ -95,11 +95,12 @@ export function RemovableChip({ onRemove, children }: { onRemove: () => void; ch
     <button
       type="button"
       aria-label={`Remove filter ${children}`}
+      title={children}
       className={cx(CHIP, ON, "gap-1.5")}
       onClick={onRemove}
     >
-      {children}
-      <XClose aria-hidden className="size-3.5" />
+      <span className="min-w-0">{children}</span>
+      <XClose aria-hidden className="size-3.5 flex-none" />
     </button>
   );
 }

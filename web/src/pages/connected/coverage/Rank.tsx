@@ -1,4 +1,3 @@
-import { BarCell } from "@/components/kit/BarCell";
 import { TextLink } from "../../run/TextLink";
 import {
   evidenceLink,
@@ -95,21 +94,13 @@ export function RankView({
                             <RunLine run={run} />
                           </div>
                         </div>
-                        {signed ? (
-                          <ZeroAxisBar
-                            text={figure(fact)}
-                            value={fact.at ?? 0}
-                            low={lowest}
-                            high={largest}
-                            valueWidth={FIGURE_WIDTH}
-                          />
-                        ) : (
-                          <BarCell
-                            text={figure(fact)}
-                            share={largest === 0 ? 0 : (fact.at ?? 0) / largest}
-                            valueWidth={FIGURE_WIDTH}
-                          />
-                        )}
+                        <ZeroAxisBar
+                          text={figure(fact)}
+                          value={fact.at ?? 0}
+                          low={lowest}
+                          high={largest}
+                          valueWidth={FIGURE_WIDTH}
+                        />
                         <TextLink
                           href={evidenceLink(run, fact)}
                           grey

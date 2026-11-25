@@ -451,51 +451,120 @@ describe("TrendView scale and labels", () => {
 });
 
 type Box = { left: number; right: number; top: number; bottom: number };
-/** A label's box from the attributes drawn: 7px per character, baseline less 11 to plus 3. */
-function labelBoxes(name: string): Box[] {
-  return [...panel(name).querySelectorAll("text[data-label]")].map((item) => {
-    const lx = Number(item.getAttribute("x"));
-    const ly = Number(item.getAttribute("y"));
-    const width = item.textContent.length * 7;
-    const anchor = item.getAttribute("text-anchor");
-    const left = anchor === "end" ? lx - width : anchor === "middle" ? lx - width / 2 : lx;
-    return { left, right: left + width, top: ly - 11, bottom: ly + 3 };
-  });
+type P = { x: number; y: number };
+const num = (item: Element, name: string) => Number(item.getAttribute(name));
+/** A text's box from the attributes drawn: 7px per character, baseline less 11 to plus 3. */
+function textBox(item: Element): Box {
+  const lx = num(item, "x");
+  const ly = num(item, "y");
+  const width = item.textContent.length * 7;
+  const anchor = item.getAttribute("text-anchor");
+  const left = anchor === "end" ? lx - width : anchor === "middle" ? lx - width / 2 : lx;
+  if (item.getAttribute("dominant-baseline") === "middle")
+    return { left, right: left + width, top: ly - 7, bottom: ly + 7 };
+  return { left, right: left + width, top: ly - 11, bottom: ly + 3 };
 }
-const centres = (name: string) =>
-  dots(name).map((dot) => ({ x: Number(dot.getAttribute("cx")), y: Number(dot.getAttribute("cy")) }));
-const inside = (box: Box, p: { x: number; y: number }) =>
+const inside = (box: Box, p: P) =>
   p.x >= box.left && p.x <= box.right && p.y >= box.top && p.y <= box.bottom;
 const meet = (a: Box, b: Box) =>
   a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+/** A circle of radius r touches a box when its centre lies within r of it. */
+const touches = (box: Box, c: P, r: number) =>
+  Math.hypot(
+    Math.max(box.left - c.x, 0, c.x - box.right),
+    Math.max(box.top - c.y, 0, c.y - box.bottom),
+  ) <= r;
+const sampled = (box: Box, a: P, b: P) =>
+  Array.from({ length: 201 }, (_, i) => i / 200).some((t) =>
+    inside(box, { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }),
+  );
 
-function expectClear(name: string, count: number) {
-  const boxes = labelBoxes(name);
-  expect(boxes).toHaveLength(count);
-  const points = centres(name);
-  for (const box of boxes) {
-    expect(box.left).toBeGreaterThanOrEqual(0);
-    expect(box.right).toBeLessThanOrEqual(320);
-    expect(box.top).toBeGreaterThanOrEqual(0);
-    for (const point of points) expect(inside(box, point)).toBe(false);
-    // The drawn line, sampled, never runs through a label.
-    for (let i = 1; i < points.length; i += 1) {
-      const a = points[i - 1];
-      const b = points[i];
-      if (!a || !b) continue;
-      for (let t = 0; t <= 1; t += 0.02)
-        expect(inside(box, { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t })).toBe(false);
-    }
-  }
-  const [first, last] = boxes;
-  if (first && last) expect(meet(first, last)).toBe(false);
+/** Every drawn line of a panel's series, as pairs of points. */
+function seriesSegments(el: Element): [P, P][] {
+  return [...el.querySelectorAll("[data-segment]")].flatMap((item): [P, P][] => {
+    if (item.tagName === "line")
+      return [[{ x: num(item, "x1"), y: num(item, "y1") }, { x: num(item, "x2"), y: num(item, "y2") }]];
+    const pts = (item.getAttribute("points") ?? "").split(" ").map((pair) => {
+      const [px, py] = pair.split(",").map(Number);
+      return { x: px ?? NaN, y: py ?? NaN };
+    });
+    return pts.slice(1).map((p, i): [P, P] => [pts[i] as P, p]);
+  });
+}
+const horizontal = (item: Element | null): [P, P] => [
+  { x: item ? num(item, "x1") : NaN, y: item ? num(item, "y1") : NaN },
+  { x: item ? num(item, "x2") : NaN, y: item ? num(item, "y2") : NaN },
+];
+
+/** Every way a drawn value label collides with something else drawn, or leaves the panel. */
+function collisions(el: Element): string[] {
+  const labels = [...el.querySelectorAll("text[data-label]")];
+  const circles = [...el.querySelectorAll("circle")].map((c) => ({ x: num(c, "cx"), y: num(c, "cy") }));
+  const segments = [
+    ...seriesSegments(el),
+    horizontal(el.querySelector("[data-zero]")),
+    horizontal(el.querySelector("[data-bottom]")),
+  ];
+  const zeroLabel = el.querySelector("text[data-zero-label]");
+  const others = [
+    ...(zeroLabel ? [{ what: "zero label", box: textBox(zeroLabel) }] : []),
+    ...[...el.querySelectorAll("text[data-period-label]")].map((t) => ({
+      what: `period ${t.textContent}`,
+      box: textBox(t),
+    })),
+  ];
+  const found: string[] = [];
+  const boxes = labels.map(textBox);
+  boxes.forEach((box, i) => {
+    const name = labels[i]?.textContent ?? "";
+    if (box.left < 0 || box.right > 320 || box.top < 0 || box.bottom > 150)
+      found.push(`${name}: edge`);
+    circles.forEach((c) => {
+      if (touches(box, c, 4)) found.push(`${name}: dot`);
+    });
+    segments.forEach(([a, b]) => {
+      if (sampled(box, a, b)) found.push(`${name}: line ${String(a.y)}`);
+    });
+    others.forEach((other) => {
+      if (meet(box, other.box)) found.push(`${name}: ${other.what}`);
+    });
+    boxes.slice(i + 1).forEach((other) => {
+      if (meet(box, other)) found.push(`${name}: other label`);
+    });
+  });
+  return found;
 }
 
-const money = (who: string, period: string, text: string): Fact => ({
-  ...fact(who, period, "0", "US$m"),
+/** First and last figures of a panel that are not drawn on the plot, missing from its written line. */
+function unwritten(el: Element): string[] {
+  const name = el.getAttribute("aria-label") ?? "";
+  const label = el.querySelector("svg")?.getAttribute("aria-label") ?? "";
+  const figures = label.slice(name.length + 2).split(" across ")[0]?.split(", ") ?? [];
+  const periods = [...el.querySelectorAll("circle")].map((c) => c.getAttribute("data-period") ?? "");
+  const drawn = [...el.querySelectorAll("text[data-label]")].map((t) => t.textContent);
+  const written = el.querySelector("[data-written]")?.textContent ?? "";
+  const ends = [...new Set([0, figures.length - 1])];
+  return ends.flatMap((i) => {
+    const text = `${periods[i] ?? ""} ${figures[i] ?? ""}`;
+    return drawn.includes(figures[i] ?? "") || written.includes(text) ? [] : [text];
+  });
+}
+
+function expectClear(name: string, count?: number) {
+  const el = panel(name);
+  if (count !== undefined) expect(el.querySelectorAll("text[data-label]")).toHaveLength(count);
+  expect(collisions(el)).toEqual([]);
+  expect(unwritten(el)).toEqual([]);
+}
+
+/** A figure as written, thousands separators and all, with its value. */
+const stated = (who: string, period: string, text: string, unit: string): Fact => ({
+  ...fact(who, period, "0", unit),
   text,
   at: Number(text.replace(/,/g, "")),
 });
+const money = (who: string, period: string, text: string): Fact =>
+  stated(who, period, text, "US$m");
 
 describe("TrendView value labels never overprint", () => {
   it("keeps two long figures apart", () => {
@@ -541,6 +610,90 @@ describe("TrendView value labels never overprint", () => {
     view([money("a", "FY2025", "1,250,000.00")], one("a", "Alpha plc"));
     expectClear("Alpha plc", 1);
   });
+
+  it("keeps a small first value's label off the zero line and the axis", () => {
+    view([stated("a", "FY2024", "0.4", "x"), stated("a", "FY2025", "1,250.00", "x")], one("a", "Alpha plc"));
+    expectClear("Alpha plc");
+    view(
+      [
+        stated("b", "FY2023", "0.4", "x"),
+        stated("b", "FY2024", "600.00", "x"),
+        stated("b", "FY2025", "1,250.00", "x"),
+      ],
+      one("b", "Beta SA"),
+    );
+    expectClear("Beta SA");
+  });
+
+  it("keeps a negative long figure off the period row, or writes it under the panel", () => {
+    view(
+      [money("a", "FY2025", "-1,010.00"), money("a", "FY2026", "110.00")],
+      one("a", "Alpha plc"),
+    );
+    expectClear("Alpha plc");
+    view(
+      [
+        money("b", "FY2023", "-1,010.00"),
+        money("b", "FY2024", "-1,010.00"),
+        money("b", "FY2025", "-1,010.00"),
+        money("b", "FY2026", "110.00"),
+      ],
+      one("b", "Beta SA"),
+    );
+    expectClear("Beta SA");
+  });
+});
+
+/** A seeded pseudo-random generator (mulberry32): the same panels on every run. */
+function seeded(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const written = (value: number) =>
+  value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+function randomValue(next: () => number): number {
+  const kind = Math.floor(next() * 6);
+  const magnitude = [0.05, 1.5, 12, 1_200, 1_500_000, 0][kind] ?? 1;
+  const sign = next() < 0.35 ? -1 : 1;
+  return kind === 5 ? 0 : sign * magnitude * (0.2 + next());
+}
+
+const AXIS = ["FY2021", "FY2022", "FY2023", "FY2024", "FY2025", "FY2026"];
+
+describe("TrendView value labels across random panels", () => {
+  it("draws no label into anything over 60 seeded panels, and writes every figure it leaves off", () => {
+    const next = seeded(20261124);
+    let panels = 0;
+    for (let render_ = 0; render_ < 20; render_ += 1) {
+      const unit = next() < 0.5 ? "x" : "US$m";
+      const names = ["Alpha plc", "Beta SA", "Gamma AG"];
+      const list = names.map((name, i) => issuer(String.fromCharCode(97 + i), name));
+      const facts = list.flatMap((item) => {
+        const count = 1 + Math.floor(next() * 6);
+        const start = Math.floor(next() * (AXIS.length - count + 1));
+        return AXIS.slice(start, start + count).map((p) => {
+          return stated(item.key, p, written(randomValue(next)), unit);
+        });
+      });
+      const shown = view(facts, list);
+      for (const name of names) {
+        const el = panel(name);
+        expect({ name, render_, found: collisions(el) }).toEqual({ name, render_, found: [] });
+        expect({ name, render_, missing: unwritten(el) }).toEqual({ name, render_, missing: [] });
+        panels += 1;
+      }
+      shown.unmount();
+    }
+    expect(panels).toBe(60);
+  });
 });
 
 describe("TrendView targets", () => {
@@ -549,5 +702,24 @@ describe("TrendView targets", () => {
     const summary = screen.getByText("Table view", { selector: "summary" });
     for (const name of ["flex", "items-center", "min-h-8", "max-[480px]:min-h-11"])
       expect(summary.classList).toContain(name);
+  });
+
+  it("keeps an opened table in its own named scrolling box, and the panels' grid shrinkable", () => {
+    const five = ["FY2022", "FY2023", "FY2024", "FY2025", "FY2026"];
+    const { container } = view(
+      five.map((p) => money("a", p, "-1,010,000.00")),
+      one("a", "Alpha plc"),
+    );
+    const details = container.querySelector("details");
+    if (details) details.open = true;
+    const region = screen.getByRole("region", { name: "Net debt / EBITDA by period, table" });
+    expect(region.getAttribute("tabindex")).toBe("0");
+    expect(region.classList).toContain("overflow-x-auto");
+    expect(within(region).getByRole("table")).toBeTruthy();
+    expect(details?.contains(region)).toBe(true);
+    const grid = panel("Alpha plc").parentElement;
+    expect(grid?.classList).toContain("grid-cols-[minmax(0,1fr)]");
+    expect(panel("Alpha plc").classList).toContain("min-w-0");
+    expect((container.firstElementChild as HTMLElement).classList).toContain("min-w-0");
   });
 });

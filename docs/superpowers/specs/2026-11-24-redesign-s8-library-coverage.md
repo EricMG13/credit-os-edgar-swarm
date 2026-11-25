@@ -168,3 +168,16 @@ views that do not show them) are in the Filters disclosure. Row figures print th
 draw no bar (a bar on each row's own scale would look comparable across rows and is not); the
 two-point mark in the screen map is therefore arrow, change, direction word and the written prior.
 A rank list with any figure below zero draws bars either side of a marked zero line on one scale.
+
+## Round 4: coordinator third-round review (M1–M11)
+
+Decisions: seven states, each its own shape (plan-unknown is a filled square), the legend draws the
+cells' own marks; every matrix cell takes focus (a module with no handoff is a button) and pointing,
+focus or press reads issuer, module and state in a line under the matrix; matrix rows are one line
+(41 px) with the stage names across their groups and module names on end (header about 112 px), so
+eight issuers show at 1440×900. A bound compares one reporting unit (the one most issuers state at the
+period unless chosen) and the chip names it; a comma that is not a thousands group is invalid; an
+unreadable bound shows as an error chip and a marked summary. Every Rank list is drawn on the zero-axis
+bar (a stated non-zero figure is at least three pixels, zero is the line alone, the line is labelled 0).
+Filter chips wrap and keep their remove mark in view. `matchIssuers` gained an optional `unit`
+argument and `readBound` a stricter thousands rule (`coverageData.ts`, with tests).

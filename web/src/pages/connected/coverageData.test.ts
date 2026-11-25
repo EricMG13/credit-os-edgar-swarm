@@ -250,6 +250,29 @@ test("a period stated twice has no one figure: it is not ranked, bounded or draw
   expect(series?.points.map((point) => point?.text ?? null)).toEqual(["5.1", null]);
 });
 
+test("a comma that is not a thousands group is invalid, never read as a different number", () => {
+  for (const typed of ["1,0", "1,00", "12,34", "1,2345", ",5", "1,000,0"])
+    expect(readBound(typed)).toEqual({ value: null, invalid: true });
+  expect(readBound("1,000")).toEqual({ value: 1000, invalid: false });
+  expect(readBound("1,234,567.5")).toEqual({ value: 1234567.5, invalid: false });
+});
+
+test("a bound compares one reporting unit: a figure in another unit passes none", () => {
+  const mixed: Coverage = {
+    ...data,
+    facts: [
+      fact("a2", "alpha", LEVERAGE, { period: "FY2025", text: "4.6", at: 4.6, unit: "x" }),
+      fact("b1", "beta", LEVERAGE, { period: "FY2025", text: "610", at: 610, unit: "%" }),
+    ],
+  };
+  const bound = { ...NO_FILTERS, min: "5" };
+  expect(names(matchIssuers(mixed, bound, LEVERAGE, "FY2025"))).toEqual(
+    ["Beta", "Gamma"].slice(0, 1),
+  );
+  expect(names(matchIssuers(mixed, bound, LEVERAGE, "FY2025", "x"))).toEqual([]);
+  expect(names(matchIssuers(mixed, bound, LEVERAGE, "FY2025", "%"))).toEqual(["Beta"]);
+});
+
 test("a bound may carry thousands separators; any other text is invalid, not ignored silently", () => {
   expect(readBound("")).toEqual({ value: null, invalid: false });
   expect(readBound(" 1,250 ")).toEqual({ value: 1250, invalid: false });

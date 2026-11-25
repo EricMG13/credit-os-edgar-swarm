@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { cx } from "@/utils/cx";
 import { moduleName } from "../api";
 import { latestRun, type Coverage as Data, type CoverageRun, type Issuer } from "../coverageData";
 import { stageColumns, RunStates } from "./RunStates";
-import { named, reportPath, RunLine, tableBox, th } from "./shared";
+import { named, reportPath, RunLine, runText, tableBox, th } from "./shared";
 import { hasHandoff, LEGEND, LegendItem, StateShape, stateWord } from "./StateMark";
 import { useNarrow } from "./useNarrow";
 
@@ -37,13 +38,13 @@ function Legend() {
   );
 }
 
-/** Two header rows: the stage groups over the module names, which stand on end to keep columns narrow. */
+/** Two header rows: the stage names across their groups, over the module names on end. */
 function StageHead({ data }: { data: Data }) {
   const groups = stageColumns(data);
   return (
     <thead>
       <tr className="border-b border-border-hairline">
-        <th rowSpan={2} scope="col" className={cx(th, STICKY, "z-20 min-w-44 align-bottom")}>
+        <th rowSpan={2} scope="col" className={cx(th, STICKY, "z-20 align-bottom")}>
           Issuer
         </th>
         {groups.map((group) => (
@@ -51,15 +52,10 @@ function StageHead({ data }: { data: Data }) {
             key={group.name}
             colSpan={group.columns.length}
             scope="colgroup"
-            className="border-l border-border-hairline px-1 pt-3 pb-1 text-left align-bottom text-caption font-medium text-text-tertiary"
+            title={group.name}
+            className="max-w-0 truncate border-l border-border-hairline px-1.5 pt-2 pb-1 text-left align-bottom text-caption font-medium text-text-tertiary"
           >
-            {group.columns.length < 3 ? (
-              <span className="[writing-mode:vertical-rl] rotate-180 whitespace-nowrap">
-                {group.name}
-              </span>
-            ) : (
-              group.name
-            )}
+            {group.name}
           </th>
         ))}
       </tr>
@@ -71,7 +67,7 @@ function StageHead({ data }: { data: Data }) {
               scope="col"
               title={named(column)}
               className={cx(
-                "h-36 w-9 px-0 pb-2 text-center align-bottom text-caption font-medium text-text-secondary",
+                "h-28 px-0 pb-2 text-center align-bottom text-[11px] leading-4 font-medium text-text-secondary",
                 index === 0 && "border-l border-border-hairline",
               )}
             >
@@ -86,38 +82,60 @@ function StageHead({ data }: { data: Data }) {
   );
 }
 
-/** A run's states as shapes under each fixed column; the word is each cell's name and tooltip. */
-function ShapeCells({ data, run, issuer }: { data: Data; run: CoverageRun; issuer: string }) {
+const CELL =
+  "mx-auto flex size-8 max-w-full cursor-pointer items-center justify-center rounded-ds-xs outline-focus-ring hover:bg-surface-subtle focus-visible:outline-2 focus-visible:outline-offset-0";
+
+/**
+ * A run's states as shapes under each fixed column. Every cell takes focus, and pointing at,
+ * focusing or pressing it reads its issuer, module and state aloud in the line under the matrix;
+ * a module with a handoff also opens its page in the report.
+ */
+function ShapeCells({
+  data,
+  run,
+  issuer,
+  say,
+}: {
+  data: Data;
+  run: CoverageRun;
+  issuer: string;
+  say: (text: string) => void;
+}) {
   return (
     <>
       {stageColumns(data).flatMap((group) =>
         group.columns.map((column, index) => {
           const cell = run.cells[column.code];
-          const label = `${moduleName(column.code) === column.code ? column.title : moduleName(column.code)} for ${issuer}: ${stateWord(cell)}`;
-          const shape = <StateShape cell={cell} />;
+          const module = moduleName(column.code) === column.code ? column.title : moduleName(column.code);
+          const label = `${module} for ${issuer}: ${stateWord(cell)}`;
+          const reading = `${issuer} (${runText(run)}), ${module}: ${stateWord(cell)}`;
+          const shared = {
+            "aria-label": label,
+            title: stateWord(cell),
+            className: CELL,
+            onFocus: () => {
+              say(reading);
+            },
+            onMouseEnter: () => {
+              say(reading);
+            },
+            onClick: () => {
+              say(reading);
+            },
+          };
           return (
             <td
               key={column.code}
               className={cx("p-0 text-center", index === 0 && "border-l border-border-hairline")}
             >
               {hasHandoff(cell) ? (
-                <a
-                  href={`${reportPath(run.folder)}#modules/${column.code}`}
-                  aria-label={label}
-                  title={stateWord(cell)}
-                  className="mx-auto flex size-8 items-center justify-center rounded-ds-xs outline-focus-ring hover:bg-surface-subtle focus-visible:outline-2"
-                >
-                  {shape}
+                <a href={`${reportPath(run.folder)}#modules/${column.code}`} {...shared}>
+                  <StateShape cell={cell} />
                 </a>
               ) : (
-                <span
-                  role="img"
-                  aria-label={label}
-                  title={stateWord(cell)}
-                  className="mx-auto flex size-8 items-center justify-center"
-                >
-                  {shape}
-                </span>
+                <button type="button" {...shared}>
+                  <StateShape cell={cell} />
+                </button>
               )}
             </td>
           );
@@ -129,19 +147,21 @@ function ShapeCells({ data, run, issuer }: { data: Data; run: CoverageRun; issue
 
 function IssuerName({
   issuer,
+  run,
   chosen,
   toggle,
   open,
   setOpen,
 }: {
   issuer: Issuer;
+  run: CoverageRun;
   chosen: ReadonlySet<string>;
   toggle: (key: string) => void;
   open: string | null;
   setOpen: (key: string | null) => void;
 }) {
   return (
-    <span className="flex items-start gap-1">
+    <span className="flex min-w-0 items-center gap-1">
       <label className="-ml-1 flex size-8 flex-none items-center justify-center max-[480px]:size-11">
         <input
           type="checkbox"
@@ -155,7 +175,8 @@ function IssuerName({
       </label>
       <button
         type="button"
-        className="min-h-8 w-fit cursor-pointer text-left font-semibold underline-offset-2 hover:underline max-[480px]:min-h-11"
+        title={runText(run)}
+        className="min-h-8 min-w-0 cursor-pointer truncate text-left font-semibold underline-offset-2 hover:underline max-[480px]:min-h-11"
         aria-expanded={open === issuer.key}
         onClick={() => {
           setOpen(open === issuer.key ? null : issuer.key);
@@ -188,6 +209,7 @@ export function Matrix({
   setOpen: (key: string | null) => void;
 }) {
   const narrow = useNarrow();
+  const [reading, setReading] = useState("");
   const name = { chosen, toggle, open, setOpen };
   if (narrow)
     return (
@@ -201,7 +223,7 @@ export function Matrix({
               className="grid gap-3 rounded-ds-lg border border-border-subtle bg-surface-card p-4"
             >
               <div className="grid gap-0.5">
-                <IssuerName issuer={issuer} {...name} />
+                <IssuerName issuer={issuer} run={run} {...name} />
                 <RunLine run={run} />
               </div>
               <RunStates data={data} run={run} />
@@ -214,10 +236,13 @@ export function Matrix({
     <div className="grid gap-3">
       <Legend />
       <Scroller label="Issuers by module">
-        <table className="w-full text-small">
+        <table className="w-full table-fixed text-small">
           <caption className="sr-only">
             Each issuer’s newest run: what every module delivered, as shapes
           </caption>
+          <colgroup>
+            <col className="w-72" />
+          </colgroup>
           <StageHead data={data} />
           <tbody>
             {issuers.map((issuer) => {
@@ -225,24 +250,19 @@ export function Matrix({
               if (!run) return null;
               return (
                 <tr key={issuer.key} className="border-b border-border-hairline last:border-0">
-                  <th
-                    scope="row"
-                    className={cx(STICKY, "min-w-44 p-2 text-left align-top wrap-anywhere")}
-                  >
-                    <span className="grid gap-0.5">
-                      <IssuerName issuer={issuer} {...name} />
-                      <span className="pl-7">
-                        <RunLine run={run} />
-                      </span>
-                    </span>
+                  <th scope="row" className={cx(STICKY, "p-1 text-left font-semibold")}>
+                    <IssuerName issuer={issuer} run={run} {...name} />
                   </th>
-                  <ShapeCells data={data} run={run} issuer={issuer.name} />
+                  <ShapeCells data={data} run={run} issuer={issuer.name} say={setReading} />
                 </tr>
               );
             })}
           </tbody>
         </table>
       </Scroller>
+      <p role="status" className="min-h-5 text-small text-text-secondary">
+        {reading || "Point at, focus or press a shape to read the issuer, module and state."}
+      </p>
     </div>
   );
 }

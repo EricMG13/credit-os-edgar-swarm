@@ -11,19 +11,20 @@ const LOOK: Record<CellState, Look> = {
   unreadable: { shape: "diamond", tone: "text-error-mark" },
   "no-handoff": { shape: "ring", tone: "text-text-secondary" },
   "not-in-pathway": { shape: "hollow square", tone: "text-text-tertiary" },
-  "plan-unknown": { shape: "ring", tone: "text-text-tertiary" },
+  "plan-unknown": { shape: "square", tone: "text-text-tertiary" },
 };
 
 const WITH_GAPS: Look = { shape: "dashed ring", tone: "text-text-secondary" };
 
-/** The six states a cell can say, with the shape and the word each is drawn with. */
-export const LEGEND: readonly { word: string; look: Look }[] = [
-  { word: STATE_WORDS.assessed, look: LOOK.assessed },
-  { word: "Delivered with gaps", look: WITH_GAPS },
-  { word: STATE_WORDS["not-assessable"], look: LOOK["not-assessable"] },
-  { word: STATE_WORDS.unreadable, look: LOOK.unreadable },
-  { word: STATE_WORDS["no-handoff"], look: LOOK["no-handoff"] },
-  { word: STATE_WORDS["not-in-pathway"], look: LOOK["not-in-pathway"] },
+/** The seven states a cell can say, each with its own shape: the legend draws the same marks the cells do. */
+export const LEGEND: readonly { word: string; cell: Cell }[] = [
+  { word: STATE_WORDS.assessed, cell: { state: "assessed" } },
+  { word: "Delivered with gaps", cell: { state: "assessed", gaps: 1 } },
+  { word: STATE_WORDS["not-assessable"], cell: { state: "not-assessable" } },
+  { word: STATE_WORDS.unreadable, cell: { state: "unreadable" } },
+  { word: STATE_WORDS["no-handoff"], cell: { state: "no-handoff" } },
+  { word: STATE_WORDS["not-in-pathway"], cell: { state: "not-in-pathway" } },
+  { word: STATE_WORDS["plan-unknown"], cell: { state: "plan-unknown" } },
 ];
 
 function cellState(cell: Cell | undefined): { word: string; look: Look; state: CellState } {
@@ -83,13 +84,11 @@ export function StateMark({ cell }: { cell: Cell | undefined }) {
   );
 }
 
-/** One legend entry: a state's shape (from the legend table) and its word. */
-export function LegendItem({ word, look }: { word: string; look: Look }) {
+/** One legend entry: the cell's own shape, whatever treatment it carries, and its word. */
+export function LegendItem({ word, cell }: { word: string; cell: Cell }) {
   return (
     <li className="flex items-center gap-1.5 text-caption text-text-secondary">
-      <span className={look.tone}>
-        <StatusShape shape={look.shape} />
-      </span>
+      <Shape cell={cell} />
       {word}
     </li>
   );

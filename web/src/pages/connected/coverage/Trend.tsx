@@ -164,6 +164,9 @@ const ASCENT = 11;
 const DESCENT = 3;
 const EDGE = 1;
 const DOT_R = 4;
+/** Where the zero label's right edge and the period labels' baseline sit. */
+const ZERO_X = PAD.left - 4;
+const PERIOD_Y = HEIGHT - 8;
 type Point = { x: number; y: number };
 type Box = { left: number; right: number; top: number; bottom: number };
 type Anchor = "start" | "end" | "middle";
@@ -171,26 +174,18 @@ type Side = "above" | "below";
 type Label = { which: "first" | "last"; text: string; x: number; y: number; anchor: Anchor; box: Box };
 type End = { which: "first" | "last"; at: Point; toward: Point | undefined; text: string };
 
-/** Where a label sits across: the first leans left of its dot, the last right, never past an edge. */
-function across(end: End, width: number, single: boolean): { x: number; anchor: Anchor } {
-  const { which, at } = end;
-  if (single) {
-    const x = Math.min(Math.max(at.x, EDGE + width / 2), WIDTH - EDGE - width / 2);
-    return { x, anchor: "middle" };
-  }
-  if (which === "first")
-    return at.x + 4 - width < EDGE ? { x: EDGE, anchor: "start" } : { x: at.x + 4, anchor: "end" };
-  return at.x - 4 + width > WIDTH - EDGE
-    ? { x: WIDTH - EDGE, anchor: "end" }
-    : { x: at.x - 4, anchor: "start" };
-}
+/** Everything drawn that a value label must keep clear of. */
+type Obstacles = { points: Point[]; segments: [Point, Point][]; boxes: Box[] };
 
-function place(end: End, side: Side, single: boolean): Label {
-  const width = end.text.length * CHAR;
-  const { x, anchor } = across(end, width, single);
-  const y = side === "above" ? end.at.y - 8 : end.at.y + 16;
+const textBox = (text: string, x: number, anchor: Anchor, top: number, bottom: number): Box => {
+  const width = text.length * CHAR;
   const left = anchor === "end" ? x - width : anchor === "middle" ? x - width / 2 : x;
-  const box = { left, right: left + width, top: y - ASCENT, bottom: y + DESCENT };
+  return { left, right: left + width, top, bottom };
+};
+
+function place(end: End, side: Side, x: number, anchor: Anchor): Label {
+  const y = side === "above" ? end.at.y - 8 : end.at.y + 16;
+  const box = textBox(end.text, x, anchor, y - ASCENT, y + DESCENT);
   return { which: end.which, text: end.text, x, y, anchor, box };
 }
 
@@ -199,59 +194,129 @@ function sides(end: End): Side[] {
   return end.toward && end.toward.y < end.at.y ? ["below", "above"] : ["above", "below"];
 }
 
+/** Across a dot, for a first label (a last mirrors it): leaning out, centred, leaning in, then wholly beside the dot. */
+const ACROSS: [number, Anchor][] = [
+  [4, "end"],
+  [0, "middle"],
+  [-4, "start"],
+  [-DOT_R - 1, "end"],
+  [DOT_R + 1, "start"],
+];
+const MIRROR: Record<Anchor, Anchor> = { end: "start", start: "end", middle: "middle" };
+
+/** Every spot tried for a label, best first: each side of the dot, by every way across it. */
+function candidates(end: End, single: boolean): Label[] {
+  const mirrored = !single && end.which === "last";
+  const across = ACROSS.map(([dx, anchor]): [number, Anchor] =>
+    mirrored ? [-dx, MIRROR[anchor]] : [dx, anchor],
+  );
+  const order = single ? [...across.slice(1, 2), ...across.slice(0, 1), ...across.slice(2)] : across;
+  return sides(end).flatMap((side) =>
+    order.map(([dx, anchor]) => place(end, side, end.at.x + dx, anchor)),
+  );
+}
+
 const inBox = (box: Box, p: Point, pad = 0): boolean =>
   p.x >= box.left - pad && p.x <= box.right + pad && p.y >= box.top - pad && p.y <= box.bottom + pad;
+
+const grow = (box: Box, by: number): Box => ({
+  left: box.left - by,
+  right: box.right + by,
+  top: box.top - by,
+  bottom: box.bottom + by,
+});
 
 const meet = (a: Box, b: Box): boolean =>
   a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
 
-/** A label is clear when it stays above the period axis and off every dot and drawn line. */
-function clear(label: Label, points: readonly Point[], lines: readonly [Point, Point][]): boolean {
-  const { box } = label;
-  if (box.top < 0 || box.bottom > BOTTOM + 6) return false;
-  if (points.some((p) => inBox(box, p, DOT_R))) return false;
-  return lines.every(([a, b]) =>
-    Array.from({ length: 41 }, (_, i) => i / 40).every(
-      (t) => !inBox(box, { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t }, 1),
-    ),
-  );
+/** Whether a segment runs through a box (Liang-Barsky clipping, edges included). */
+function crosses(box: Box, a: Point, b: Point): boolean {
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const edges: [number, number][] = [
+    [-dx, a.x - box.left],
+    [dx, box.right - a.x],
+    [-dy, a.y - box.top],
+    [dy, box.bottom - a.y],
+  ];
+  let enter = 0;
+  let leave = 1;
+  for (const [p, q] of edges) {
+    if (p === 0) {
+      if (q < 0) return false;
+      continue;
+    }
+    if (p < 0) enter = Math.max(enter, q / p);
+    else leave = Math.min(leave, q / p);
+    if (enter > leave) return false;
+  }
+  return true;
 }
 
-/** Both labels, on the first pair of sides that keeps them clear and apart; else the higher dot's above. */
-function layout(ends: readonly End[], points: readonly Point[], lines: readonly [Point, Point][]): Label[] {
+/** A label is clear when it stays inside the panel and off every dot, line, axis text and other label. */
+function clear(label: Label, obstacles: Obstacles, others: readonly Label[]): boolean {
+  const { box } = label;
+  if (box.left < EDGE || box.right > WIDTH - EDGE || box.top < EDGE || box.bottom > HEIGHT - EDGE)
+    return false;
+  const margin = grow(box, 1);
+  if (obstacles.points.some((p) => inBox(box, p, DOT_R + 0.5))) return false;
+  if (obstacles.segments.some(([a, b]) => crosses(margin, a, b))) return false;
+  return [...obstacles.boxes, ...others.map((item) => item.box)].every((item) => !meet(margin, item));
+}
+
+/** Both labels on the first clear pair of spots; failing that, each one that can stand alone. A label with no clear spot is not drawn. */
+function layout(ends: readonly End[], obstacles: Obstacles): Label[] {
   const single = ends.length === 1;
   const [a, b] = ends;
   if (!a) return [];
-  if (!b) {
-    const options = sides(a).map((side) => place(a, side, true));
-    return [options.find((label) => clear(label, points, lines)) ?? (options[0] as Label)];
+  const forA = candidates(a, single).filter((label) => clear(label, obstacles, []));
+  if (!b) return forA.slice(0, 1);
+  const forB = candidates(b, single).filter((label) => clear(label, obstacles, []));
+  for (const la of forA) {
+    const lb = forB.find((label) => clear(label, obstacles, [la]));
+    if (lb) return [la, lb];
   }
-  const pairs = sides(a).flatMap((sa) => sides(b).map((sb) => [place(a, sa, single), place(b, sb, single)]));
-  const found = pairs.find(
-    ([la, lb]) =>
-      la && lb && clear(la, points, lines) && clear(lb, points, lines) && !meet(la.box, lb.box),
-  );
-  if (found) return found;
-  const aHigher = a.at.y <= b.at.y;
-  return [place(a, aHigher ? "above" : "below", single), place(b, aHigher ? "below" : "above", single)];
+  return [...forA.slice(0, 1), ...forB.slice(0, forA.length > 0 ? 0 : 1)];
 }
 
-function EndLabels({ dots, count, y }: { dots: readonly Dot[]; count: number; y: (v: number) => number }) {
-  const points = dots.map((dot) => ({ x: x(dot.index, count), y: y(dot.fact.at) }));
+/** What a panel draws that a value label must avoid: its dots, its lines, the zero and bottom axes and their text. */
+function obstaclesOf(
+  points: readonly Point[],
+  dots: readonly Dot[],
+  zero: number,
+  periodLabels: readonly { period: string; x: number }[],
+): Obstacles {
   const lines = dots.flatMap((dot, i): [Point, Point][] => {
     const prev = dots[i - 1];
     const from = points[i - 1];
     const to = points[i];
     return prev && from && to && prev.index === dot.index - 1 ? [[from, to]] : [];
   });
+  const axis = (at: number): [Point, Point] => [
+    { x: PAD.left, y: at },
+    { x: WIDTH - PAD.right, y: at },
+  ];
+  const zeroLabel = textBox("0", ZERO_X, "end", zero - 7, zero + 7);
+  const row = periodLabels.map(({ period, x: px }) =>
+    textBox(period, px, "middle", PERIOD_Y - ASCENT, PERIOD_Y + DESCENT),
+  );
+  return { points: [...points], segments: [...lines, axis(zero), axis(BOTTOM)], boxes: [zeroLabel, ...row] };
+}
+
+/** The first and last value labels a panel can draw clear of everything else. */
+function endLabels(dots: readonly Dot[], points: readonly Point[], obstacles: Obstacles): Label[] {
   const end = (which: "first" | "last", i: number, toward: number): End[] => {
     const dot = dots[i];
     const at = points[i];
     return dot && at ? [{ which, at, toward: points[toward], text: figure(dot.fact) }] : [];
   };
-  const ends =
-    dots.length === 1 ? end("first", 0, 1) : [...end("first", 0, 1), ...end("last", dots.length - 1, dots.length - 2)];
-  return layout(ends, points, lines).map((label) => (
+  const last = dots.length - 1;
+  const ends = last === 0 ? end("first", 0, 1) : [...end("first", 0, 1), ...end("last", last, last - 1)];
+  return layout(ends, obstacles);
+}
+
+function EndLabels({ labels }: { labels: readonly Label[] }) {
+  return labels.map((label) => (
     <text
       key={label.which}
       data-label={label.which}
@@ -264,6 +329,15 @@ function EndLabels({ dots, count, y }: { dots: readonly Dot[]; count: number; y:
       {label.text}
     </text>
   ));
+}
+
+/** The figures written under a panel: every one of a short series; of a line, the last and any first not labelled on it. */
+function writtenDots(dots: readonly Dot[], labels: readonly Label[]): Dot[] {
+  if (dots.length < LINE_FROM) return [...dots];
+  const first = dots[0];
+  const last = dots.at(-1);
+  const unlabelled = first && !labels.some((label) => label.which === "first") ? [first] : [];
+  return [...unlabelled, ...(last ? [last] : [])];
 }
 
 function Panel({
@@ -287,8 +361,13 @@ function Panel({
     isStated(series.points[index]) ? [] : [{ period, ...missingAt(facts, period, unit) }],
   );
   const at = (dot: Dot) => `${x(dot.index, periods.length).toFixed(2)},${y(dot.fact.at).toFixed(2)}`;
-  const last = dots.at(-1);
   const step = Math.ceil(periods.length / 6);
+  const periodLabels = periods.flatMap((period, index) =>
+    index % step === 0 ? [{ period, x: x(index, periods.length) }] : [],
+  );
+  const points = dots.map((dot) => ({ x: x(dot.index, periods.length), y: y(dot.fact.at) }));
+  const labels = endLabels(dots, points, obstaclesOf(points, dots, y(0), periodLabels));
+  const written = writtenDots(dots, labels);
   const zero = y(0).toFixed(2);
   const label = `${series.name}: ${dots.map((dot) => figure(dot.fact)).join(", ")} across ${dots
     .map((dot) => dot.fact.period)
@@ -324,7 +403,7 @@ function Panel({
         />
         <text
           data-zero-label=""
-          x={PAD.left - 4}
+          x={ZERO_X}
           y={zero}
           textAnchor="end"
           dominantBaseline="middle"
@@ -332,19 +411,18 @@ function Panel({
         >
           0
         </text>
-        {periods.map((period, index) =>
-          index % step === 0 ? (
-            <text
-              key={period}
-              x={x(index, periods.length)}
-              y={HEIGHT - 8}
-              textAnchor="middle"
-              className="fill-text-tertiary text-caption"
-            >
-              {period}
-            </text>
-          ) : null,
-        )}
+        {periodLabels.map(({ period, x: px }) => (
+          <text
+            key={period}
+            data-period-label=""
+            x={px}
+            y={PERIOD_Y}
+            textAnchor="middle"
+            className="fill-text-tertiary text-caption"
+          >
+            {period}
+          </text>
+        ))}
         {missing.map(({ period }) => {
           const gx = x(periods.indexOf(period), periods.length);
           return (
@@ -373,14 +451,15 @@ function Panel({
             fill="currentColor"
           />
         ))}
-        <EndLabels dots={dots} count={periods.length} y={y} />
+        <EndLabels labels={labels} />
       </svg>
       {dots.length < LINE_FROM ? (
         <ul
           aria-label="Figures as written"
+          data-written=""
           className="m-0 flex list-none flex-wrap gap-x-4 gap-y-1 p-0 font-mono text-small tabular-nums"
         >
-          {dots.map((dot) => (
+          {written.map((dot) => (
             <li key={dot.index}>
               <span className="text-text-tertiary">{dot.fact.period}</span>{" "}
               <span>{figure(dot.fact)}</span>
@@ -388,12 +467,17 @@ function Panel({
           ))}
         </ul>
       ) : (
-        last && (
-          <p className="m-0 font-mono text-small tabular-nums">
-            <span className="text-text-tertiary">{last.fact.period}</span>{" "}
-            <span>{figure(last.fact)}</span>
-          </p>
-        )
+        <p
+          data-written=""
+          className="m-0 flex flex-wrap gap-x-4 gap-y-1 font-mono text-small tabular-nums"
+        >
+          {written.map((dot) => (
+            <span key={dot.index}>
+              <span className="text-text-tertiary">{dot.fact.period}</span>{" "}
+              <span>{figure(dot.fact)}</span>
+            </span>
+          ))}
+        </p>
       )}
       {missing.length > 0 && (
         <ul
@@ -423,11 +507,18 @@ function TableView({
   factsFor: (run: CoverageRun) => Fact[];
 }) {
   return (
-    <details className="rounded-ds-lg border border-border-subtle bg-surface-card p-4">
+    <details className="min-w-0 rounded-ds-lg border border-border-subtle bg-surface-card p-4">
       <summary className="flex min-h-8 cursor-pointer items-center text-small font-medium max-[480px]:min-h-11">
         Table view
       </summary>
-      <div className="mt-3 overflow-x-auto">
+      <div
+        role="region"
+        aria-label={`${field.label} by period, table`}
+        // A scrolling region must take focus, or a keyboard reader cannot reach what it hides.
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+        tabIndex={0}
+        className="mt-3 min-w-0 overflow-x-auto outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2"
+      >
         <table className="w-full border-collapse text-small tabular-nums">
           <caption className="pb-2 text-left text-text-secondary">
             {`${field.label} by period, ${unit || "no unit stated"}`}
@@ -447,7 +538,7 @@ function TableView({
           <tbody>
             {series.map((item) => (
               <tr key={item.name} className="border-b border-border-subtle last:border-b-0">
-                <th scope="row" className="p-2 text-left font-semibold wrap-anywhere">
+                <th scope="row" className="min-w-36 p-2 text-left font-semibold">
                   {item.name}
                 </th>
                 {periods.map((period, index) => {
@@ -525,7 +616,7 @@ export function TrendView({
     return [{ issuer, reason: absentReason(run ? factsFor(run) : [], unit) }];
   });
   return (
-    <div className="grid gap-4">
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-4">
       {units.length > 1 && (
         <div role="group" aria-label="Reporting unit" className="flex flex-wrap gap-2">
           {units.map((item) => (
@@ -551,7 +642,7 @@ export function TrendView({
           {`Same scale in every panel: lowest stated figure ${figure(scale.low)}, highest ${figure(scale.high)}`}
         </p>
       )}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {series.map((item) => (
           <Panel
             key={item.name}

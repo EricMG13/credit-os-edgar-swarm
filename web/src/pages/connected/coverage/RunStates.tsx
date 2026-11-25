@@ -38,13 +38,12 @@ export function RunStates({
                     {hasHandoff(cell) ? (
                       <TextLink
                         href={`${reportPath(run.folder)}#modules/${column.code}`}
-                        grey
                         className="inline-flex min-h-8 items-center text-small font-normal max-[480px]:min-h-11"
                       >
                         {named(column)}
                       </TextLink>
                     ) : (
-                      <span className="text-text-primary">{named(column)}</span>
+                      <span className="text-text-secondary">{named(column)}</span>
                     )}
                     <StateMark cell={cell} />
                   </li>
