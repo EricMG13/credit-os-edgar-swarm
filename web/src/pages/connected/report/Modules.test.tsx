@@ -626,7 +626,7 @@ it("counts a passage drawn as a chart as present", () => {
     { chartGaps: [{ title: "Chart", table: 7, unit: "x", columns: [1], gap: "no data" }] },
   );
   expect(screen.getByText("Limitations says so.")).toBeInTheDocument();
-  expect(screen.queryByText(/The module's handoff has no such passage/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/The module wrote no such passage/)).not.toBeInTheDocument();
 });
 
 // docs/rulings/2026-11-16-reporting-currency-from-sources.md: the run's currency is CP-1's money

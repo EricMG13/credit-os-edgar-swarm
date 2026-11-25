@@ -116,9 +116,9 @@ function pageSections({ frame, limitations, hasRecords }: Page) {
 
 function EmptyHandoff({ run, entry }: { run: PublishedRun; entry: OutputEntry }) {
   return (
-    <Tile span={12} label="Handoff">
+    <Tile span={12} label="Module output">
       <p className="text-text-secondary">
-        This handoff has no findings in this report format.{" "}
+        This module wrote no findings in this report format.{" "}
         <Button href={evidencePath(run.folder, entry)} color="link-gray" size="sm">
           Open Evidence
         </Button>

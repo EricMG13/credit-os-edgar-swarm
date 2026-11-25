@@ -198,14 +198,14 @@ it("draws the gap of each owed passage in place and lists a declared chart gap a
   );
   for (const name of ["Key findings", "Contrary evidence and what would change the view"])
     expect(
-      within(screen.getByRole("region", { name })).getByText(
-        /The module's handoff has no such passage/,
-      ),
+      within(screen.getByRole("region", { name })).getByText(/The module wrote no such passage/),
     ).toBeVisible();
   const limits = screen.getByRole("region", { name: "Limitations of this module" });
   expect(within(limits).getByText("interest cover: not drawn")).toBeVisible();
   expect(within(limits).getByText("Not supplied: cash interest is not stated")).toBeVisible();
-  expect(within(limits).getByText(/The module's handoff has no such passage/)).toBeVisible();
+  expect(within(limits).getByText(/The module wrote no such passage/)).toBeVisible();
+  // Wording ruling: a gap sentence never says "handoff" to the reader.
+  expect(screen.queryByText(/handoff/i)).toBeNull();
 });
 
 it("names the next module in stage order and links to it", () => {
@@ -235,7 +235,9 @@ it.each([
 it("states an unreadable handoff once, with its reason, and no passage gaps", () => {
   page([], { parseError: "the front matter is not valid YAML" });
   expect(
-    screen.getAllByText(/could not be read into sections: the front matter is not valid YAML/),
+    screen.getAllByText(
+      /This module's output could not be read into sections: the front matter is not valid YAML/,
+    ),
   ).toHaveLength(1);
   expect(screen.queryByText(/no such passage/)).toBeNull();
 });
@@ -247,7 +249,7 @@ it("draws a rowless table in a passage as its stated gap, not an empty tile", ()
     section("Key findings", 3, 4, [table(5, ["Metric", "FY2024"], [])]),
   ]);
   const findings = screen.getByRole("region", { name: "Key findings" });
-  expect(within(findings).getByText("This table has no rows in the handoff.")).toBeVisible();
+  expect(within(findings).getByText("This table has no rows.")).toBeVisible();
 });
 
 it("draws no empty well for a limitation that holds only its Basis line", () => {

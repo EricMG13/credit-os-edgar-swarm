@@ -1,0 +1,126 @@
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, expect, it } from "vitest";
+import { readerText, type Block, type OutputEntry, type Section } from "../publishedReport";
+import { CompanyProfile } from "./CompanyProfile";
+import { PublishedTraceProvider } from "./PublishedTrace";
+
+// The business description's rules, carried over from the report header's tests when S1 moved the
+// description to Business & governance (coordinator, 2026-11-25): each case below was a header case.
+
+afterEach(cleanup);
+
+const GAP = "Business description not in this run";
+const IN_EVIDENCE = "Business description in Evidence";
+const FILE = "TDG_2024-09-30_10-K_0001260221-24-000083_tdg-20240930.htm.jsonl";
+
+const table = (line: number, headers: string[], rows: string[][]): Block => ({
+  type: "table",
+  line,
+  headers,
+  rows: rows.map((cells, index) => ({ line: line + 2 + index, cells })),
+});
+const section = (heading: string, line: number, blocks: Block[]): Section => ({
+  heading,
+  level: 3,
+  line,
+  blocks,
+});
+const profile = (rows: string[][]) =>
+  section("Company profile", 10, [table(12, ["Field", "Detail"], rows)]);
+const register = (cells: string[]) =>
+  section("company_description - Register", 20, [
+    table(22, ["Issuer", "Business description", "Country", "Sector"], [cells]),
+  ]);
+
+function draw(sections: Section[]) {
+  const entry: OutputEntry = {
+    selected: true,
+    output: { id: "acme/CP-1A.md", module: "CP-1A", label: "a", href: "", sha256: "a".repeat(64) },
+    sections,
+  };
+  // The provider resolves the control's Evidence address to a handoff block; the trace itself is
+  // read only when the control is pressed.
+  return render(
+    <PublishedTraceProvider snapshot={{} as never} folder="acme" entries={[entry]} route="m">
+      <CompanyProfile entry={entry} folder="acme" />
+    </PublishedTraceProvider>,
+  ).container;
+}
+
+it("draws the description and sector exactly, with its Show sources control", () => {
+  draw([
+    profile([
+      ["Business", "Designs and makes proprietary aircraft components."],
+      ["Sector and segments", "Aerospace and defence components"],
+    ]),
+  ]);
+  expect(screen.getByText("Designs and makes proprietary aircraft components.")).toBeVisible();
+  expect(screen.getByText("Aerospace and defence components")).toBeVisible();
+  expect(
+    screen.getByRole("button", { name: "Show sources for Business description" }),
+  ).toBeInTheDocument();
+});
+
+it("prefers the company_description register over a Company profile table", () => {
+  draw([
+    profile([["Business", "From the profile."]]),
+    register(["Acme", "From the register.", "UK", "Industrial sector"]),
+  ]);
+  expect(screen.getByText("From the register.")).toBeVisible();
+  expect(screen.queryByText("From the profile.")).toBeNull();
+  expect(screen.getByText("Industrial sector")).toBeVisible();
+});
+
+it("draws the gap when the run holds no description", () => {
+  draw([]);
+  expect(screen.getByText(GAP)).toBeVisible();
+  expect(screen.queryByRole("button", { name: /Show sources/ })).toBeNull();
+});
+
+it("draws the gap rather than guess between two Business rows", () => {
+  draw([
+    profile([
+      ["Business", "First."],
+      ["Business", "Second."],
+    ]),
+  ]);
+  expect(screen.getByText(GAP)).toBeVisible();
+  expect(screen.queryByText("First.")).toBeNull();
+  expect(screen.queryByText("Second.")).toBeNull();
+});
+
+it("draws the description and sector through readerText", () => {
+  const raw = "Makes components; see CP-2A for the downside case.";
+  const sector = "Aerospace, see CP-2A";
+  draw([
+    profile([
+      ["Business", raw],
+      ["Sector and segments", sector],
+    ]),
+  ]);
+  const shown = readerText(raw);
+  expect(shown).not.toContain("CP-2A");
+  expect(screen.getByText(shown).textContent).toBe(shown);
+  expect(screen.getByText(readerText(sector))).toBeVisible();
+  expect(readerText(sector)).not.toContain("CP-2A");
+});
+
+it("draws no description text or title when the description holds a file name", () => {
+  const container = draw([
+    profile([["Business", `Designs aircraft components (${FILE}, page 4).`]]),
+  ]);
+  expect(container.innerHTML).not.toContain(FILE);
+  expect(container.querySelector("[title]")).toBeNull();
+  expect(screen.getByText(IN_EVIDENCE)).toBeVisible();
+});
+
+it("draws no description text when the register's description holds a register id", () => {
+  const container = draw([register(["A", "Makes components; see CP-1A-FACT-004.", "US", "Aero"])]);
+  expect(container.innerHTML).not.toContain("CP-1A-FACT-004");
+  expect(screen.getByText(IN_EVIDENCE)).toBeVisible();
+});
+
+it("omits a sector that holds a reference", () => {
+  const container = draw([profile([["Sector and segments", `Aerospace per ${FILE}`]])]);
+  expect(container.innerHTML).not.toContain(FILE);
+});

@@ -191,7 +191,7 @@ it("bars an amount column with the figures as written and a stated gap in words"
   expect(within(revolver).getByText("Not supplied: synthetic")).toBeInTheDocument();
   expect(revolver.querySelector('[style*="width"]')).toBeNull();
   expect(within(revolver).queryByText("0")).toBeNull();
-  expect(within(revolver).getByLabelText("Empty in the handoff")).toHaveTextContent("—");
+  expect(within(revolver).getByLabelText("Left blank")).toHaveTextContent("—");
   expect(within(first).getByText("275")).toBeInTheDocument();
 });
 
@@ -611,10 +611,10 @@ describe("records states and targets", () => {
     );
   });
 
-  it("says a table without rows has no rows in the handoff", () => {
+  it("says a table without rows has no rows", () => {
     draw(one("Segment schedule", table(11, ["Segment", "Revenue"], [])));
     openRecords();
-    expect(screen.getByText(/This table has no rows in the handoff\./)).toBeInTheDocument();
+    expect(screen.getByText(/This table has no rows\./)).toBeInTheDocument();
     expect(screen.queryByText(/no columns drawn/)).toBeNull();
   });
 

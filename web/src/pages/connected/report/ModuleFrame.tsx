@@ -32,10 +32,10 @@ import {
 } from "./moduleFrame";
 import { proseWithoutMachinery, readableTitle } from "./moduleRecords";
 
-const MISSING_PASSAGE = "Not established for this run. The module's handoff has no such passage.";
+const MISSING_PASSAGE = "Not established for this run. The module wrote no such passage.";
 
 const NO_TEXT = "This passage holds no text.";
-const NO_ROWS = "This table has no rows in the handoff.";
+const NO_ROWS = "This table has no rows.";
 
 export type FrameModule = { id: string; name: string; state: ModuleState };
 
@@ -258,7 +258,7 @@ function HeaderBottom({
     return (
       <Bottom>
         <GapNote>
-          This handoff could not be read into sections
+          This module's output could not be read into sections
           {containsReference(reason) ? "." : `: ${readerText(reason)}`}{" "}
           <Button href={evidencePath(folder, entry)} color="link-gray" size="sm">
             Open Evidence

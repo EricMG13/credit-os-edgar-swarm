@@ -142,7 +142,7 @@ function useNarrow(): boolean {
 
 /** A card's value: a reference as an Evidence link, a stated gap as its chip, else as written. */
 function cardValue(cell: string, column: number, href: string): ReactNode {
-  if (!cell.trim()) return <span aria-label="Empty in the handoff">—</span>;
+  if (!cell.trim()) return <span aria-label="Left blank">—</span>;
   if (containsReference(cell))
     return (
       <Button href={href} color="link-gray" size="sm">
@@ -220,7 +220,7 @@ function RecordGap({ run, entry, record }: { run: Run; entry: OutputEntry; recor
     <GapNote>
       {record.table.rows.length
         ? "This table has no columns drawn on this page."
-        : "This table has no rows in the handoff."}{" "}
+        : "This table has no rows."}{" "}
       <Button href={evidencePath(run.folder, entry, record.table.line)} color="link-gray" size="sm">
         Open it in Evidence
       </Button>
@@ -283,6 +283,7 @@ function RecordDrawing({
           region
           wideBars
           records
+          emptyLabel="Left blank"
           drawCell={compact && !all ? gapChip : undefined}
         />
       )}
