@@ -540,7 +540,13 @@ function readerBlock(block: Block): boolean {
 const RECORDS_ID = "statements-and-records";
 // One register code (T4.4, P3, T2F.2); the prefix also takes the dash that follows it.
 const CODE = String.raw`[TP]\d+[A-Z]?(?:\.\d+)?`;
-const RECORD_PREFIX = new RegExp(String.raw`^${CODE}\s+(?:[-\u2013\u2014]\s*)?`);
+// A heading's register code is stripped only where it is plainly one: a dotted number (T4.18,
+// TDR.3, P2.1) or a code set off by a dash or colon ("T1 - Register"); "T2 Heathrow" keeps its word.
+const DOTTED_CODE = String.raw`(?:TL|T|P)[A-Z0-9]{0,5}\.\d+(?:\.\d+)?`;
+const SET_OFF_CODE = String.raw`(?:TL|T|P)[A-Z0-9]{0,5}`;
+const RECORD_PREFIX = new RegExp(
+  String.raw`^(?:${DOTTED_CODE}\s+(?:[-\u2013\u2014:]\s*)?|${SET_OFF_CODE}\s*[-\u2013\u2014:]\s+)`,
+);
 const RECORD_CODE = new RegExp(String.raw`^${CODE}\s`);
 
 /** The register tables a working page draws; every other register table is held in Evidence. */

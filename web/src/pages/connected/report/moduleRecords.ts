@@ -110,10 +110,19 @@ export function moduleRecords(entry: OutputEntry) {
 
 /** The handoff's register codes at the start of a heading (T4.18, T2B.7, T2DS.6, TL10.2, P3), with
  * the dash that follows. A heading that only starts with a letter and digits ("Q4 2025") keeps them. */
-const REGISTER_CODE = /^(?:TL|T|P)\d+[A-Z]{0,2}(?:\.\d+)?\s+(?:[-\u2013\u2014]\s*)?/;
+const REGISTER_CODE =
+  /^(?:(?:TL|T|P)[A-Z0-9]{0,5}\.\d+(?:\.\d+)?\s+(?:[-–—:]\s*)?|(?:TL|T|P)[A-Z0-9]{0,5}\s*[-–—:]\s+)/;
 const PARENTHESISED = /\s*\([^()]*\)/g;
 const CLAUSE = /\s+(?:per|from|in|see)\s|\s+source:\s*|\s+[\u2013\u2014]\s/gi;
 const LOOSE_END = /[\s,;:\u2013\u2014-]+$/;
+
+/** A snake_case table id (transaction_summary) as the words it stands for, the first capitalised. */
+function wordsOfIds(title: string) {
+  const words = title.replace(/\b[a-z][a-z0-9]*(?:_[a-z0-9]+)+\b/g, (id) =>
+    id.replaceAll("_", " "),
+  );
+  return words === title ? title : words.charAt(0).toUpperCase() + words.slice(1);
+}
 
 /** The title without its cited source: a parenthesised reference, then a trailing clause that
  * cites one, then any word that is one. */
@@ -133,10 +142,16 @@ function withoutReference(title: string) {
 /** A heading as the reader sees it: no drawing prefix or register code, module names for codes,
  * and the title's own words without the source it cites, which belongs in Evidence. */
 export function readableTitle(heading: string, untitled = "Untitled table") {
-  const coded = plainText(drawingTitle(heading)).replace(REGISTER_CODE, "");
-  const title = readerText(withoutReference(coded)).trim();
-  return title && !containsReference(title) ? title : untitled;
+  const coded = wordsOfIds(plainText(drawingTitle(heading)).replace(REGISTER_CODE, ""));
+  // A leading name such as "P3 programme" reads to the page-citation test as "p 3": a name, not
+  // a source, when the rest of the title cites none.
+  const name = LEADING_NAME.exec(coded)?.[0] ?? "";
+  const rest = coded.slice(name.length);
+  const title = readerText(name + withoutReference(rest)).trim();
+  return title && !containsReference(title.slice(name.length)) ? title : untitled;
 }
+
+const LEADING_NAME = /^[A-Z]{1,3}\d+[A-Z]?\s+(?=\S)/;
 
 /** Whether a section of this heading and role is listed under "Held in Evidence" by its heading:
  * a source register, entity keys or definition conflicts never reach the module page. */

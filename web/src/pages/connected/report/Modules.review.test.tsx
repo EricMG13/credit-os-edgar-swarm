@@ -418,3 +418,36 @@ it("17: draws a typed table's section as one region of its name, without the reg
   expect(screen.getByRole("region", { name: "Monitoring triggers table" })).toBeVisible();
   expect(document.body.textContent).not.toContain("T2.12");
 });
+
+it("H5: shows the catalogue's figures only on the selected output, a gap line on another", () => {
+  const catalogue = { id: "r", metrics } as unknown as CatalogueRun;
+  const selected: OutputEntry = {
+    selected: true,
+    output: { id: "r/CP-1.md", module: "CP-1", label: "a", href: "", sha256: "a".repeat(64) },
+    sections: [findings, bottom],
+  };
+  const other: OutputEntry = {
+    ...selected,
+    selected: false,
+    output: { ...selected.output, id: "r/CP-1-draft1.md", sha256: "b".repeat(64) },
+  };
+  const view = {
+    entries: [selected, other],
+    modules: [
+      { id: "CP-1", name: "Financial foundation", state: "Delivered", outputs: [selected, other] },
+    ],
+    catalogue,
+    lead: undefined,
+    models: [],
+  } as unknown as ReportView;
+  const run = { folder: "r", issuer: "Issuer", asOf: "2026-10-31", modules: {} } as PublishedRun;
+  const { rerender } = render(
+    <Modules snapshot={{ chips: {} } as Snapshot} run={run} view={view} module="CP-1" output="1" />,
+  );
+  expect(screen.queryByLabelText("Headline figures")).toBeNull();
+  expect(screen.getByText("Headline figures are shown for the selected output.")).toBeVisible();
+  rerender(
+    <Modules snapshot={{ chips: {} } as Snapshot} run={run} view={view} module="CP-1" output="0" />,
+  );
+  expect(screen.getByLabelText("Headline figures")).toBeVisible();
+});

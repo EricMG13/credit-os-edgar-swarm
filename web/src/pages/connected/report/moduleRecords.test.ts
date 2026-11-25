@@ -365,6 +365,11 @@ describe("readableTitle", () => {
     "A320 deliveries",
     "Debt maturity in 2028",
     "Cash flow from operations",
+    "T2 Heathrow expansion",
+    "P3 programme",
+    "TL1 lender group",
+    "T10Y yield",
+    "T1 notes due 2027",
   ])("keeps %s intact", (heading) => {
     expect(readableTitle(heading)).toBe(heading);
   });
@@ -380,8 +385,20 @@ describe("readableTitle", () => {
     ["T2R.1 – Rating drivers", "Rating drivers"],
     ["TL10.2 Lender list", "Lender list"],
     ["T2DS.6 Break points", "Break points"],
-    ["P3 Priorities", "Priorities"],
+    ["P3 - Priorities", "Priorities"],
+    ["P2.1 Programme risks", "Programme risks"],
+    ["TDR.3 limitations", "limitations"],
+    ["TDR.2 - Register", "Register"],
+    ["T1 - Register", "Register"],
+    ["T5: Hedges", "Hedges"],
   ])("strips the register code of %s", (heading, title) => {
+    expect(readableTitle(heading)).toBe(title);
+  });
+
+  it.each([
+    ["transaction_summary - Register", "Transaction summary - Register"],
+    ["gaps_ledger - Register", "Gaps ledger - Register"],
+  ])("draws the table id of %s as words", (heading, title) => {
     expect(readableTitle(heading)).toBe(title);
   });
 
@@ -710,24 +727,22 @@ describe("H1: bars leave out only rows the table itself marks as totals", () => 
     expect(barExclusions(item)).toEqual([name.replaceAll("**", "")]);
   });
 
-  it.each([
-    "Power & Control",
-    "Group A notes",
-    "Control systems",
-    "Netherlands notes",
-  ])("keeps %s as a peer: a word inside a name says nothing", (name) => {
-    const item = table(
-      1,
-      ["Item name", "Principal"],
-      [
-        [name, "100"],
-        ["Loan", "50"],
-        ["Bond", "20"],
-      ],
-    );
-    expect(amountColumns(item).get(1)?.share("100", 3)).toBe(1);
-    expect(barExclusions(item)).toEqual([]);
-  });
+  it.each(["Power & Control", "Group A notes", "Control systems", "Netherlands notes"])(
+    "keeps %s as a peer: a word inside a name says nothing",
+    (name) => {
+      const item = table(
+        1,
+        ["Item name", "Principal"],
+        [
+          [name, "100"],
+          ["Loan", "50"],
+          ["Bond", "20"],
+        ],
+      );
+      expect(amountColumns(item).get(1)?.share("100", 3)).toBe(1);
+      expect(barExclusions(item)).toEqual([]);
+    },
+  );
 
   it("draws no bars where an unlabelled row is the sum of the others", () => {
     const item = table(

@@ -11,7 +11,8 @@ import { containsReference, displayColumns, readerText, type Table } from "../pu
 import { plainText, richParts } from "../richText";
 
 /** A register code at the start of a heading (T4.18, T2B.7 -, TL10.2), with its dash. */
-const REGISTER_CODE = /^(?:TL|T|P)\d+[A-Z]{0,2}(?:\.\d+)?\s+(?:[-\u2013\u2014]\s*)?/;
+const REGISTER_CODE =
+  /^(?:(?:TL|T|P)[A-Z0-9]{0,5}\.\d+(?:\.\d+)?\s+(?:[-–—:]\s*)?|(?:TL|T|P)[A-Z0-9]{0,5}\s*[-–—:]\s+)/;
 
 /** A heading as a typed table draws it: no register code, module names for codes. */
 const shownTitle = (title: string) => readerText(plainText(title).replace(REGISTER_CODE, ""));

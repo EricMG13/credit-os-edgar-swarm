@@ -10,6 +10,7 @@ import {
 } from "../publishedReport";
 import { headlineSources, stated, type HeadlineSource } from "../reportView";
 import { changeText, tone } from "../signal";
+import { GapNote } from "./overview/Tile";
 import { PublishedSource } from "./PublishedTrace";
 
 /** The headline figures the Overview and Library draw, in their order and names. */
@@ -105,6 +106,13 @@ export function ModuleStats({
 }) {
   const stats = headlineStats(entry, catalogue, folder);
   if (!stats.length) return null;
+  // The catalogue's figures are the selected output's: another saved output does not show them.
+  if (!entry.selected)
+    return (
+      <div className="min-w-0 lg:col-span-12">
+        <GapNote>Headline figures are shown for the selected output.</GapNote>
+      </div>
+    );
   return (
     <div className="min-w-0 lg:col-span-12">
       <StatsStrip label="Headline figures" stats={stats} />
