@@ -400,9 +400,9 @@ it("draws the stance was → now, both read from the handoffs, beside the change
   expect(within(tile).queryByText("About the same")).toBeNull();
   expect(within(tile).getByText("Requires More Work")).toBeVisible();
   expect(within(tile).getByText("Watchlist")).toBeVisible();
-  expect(within(tile).getByText("Stance was Requires More Work, now Watchlist.")).toHaveClass(
-    "sr-only",
-  );
+  expect(
+    within(tile).getByText("Earlier stance: Requires More Work. Current stance: Watchlist."),
+  ).toHaveClass("sr-only");
   expect(
     within(tile).getByText("About the same: the credit picture has not changed."),
   ).toBeVisible();
@@ -417,7 +417,9 @@ it("draws no verdict word, and says which stance the handoffs do not state", () 
   render(<CallRow snapshot={snap} run={current} view={view([lead, changes], lead)} />);
   const tile = screen.getByRole("region", { name: "Since the earlier run" });
   expect(within(tile).queryByText(/^(Better|Worse|About the same)$/)).toBeNull();
-  expect(within(tile).getByText("Stance was not stated, now Watchlist.")).toHaveClass("sr-only");
+  expect(
+    within(tile).getByText("Earlier stance: not stated. Current stance: Watchlist."),
+  ).toHaveClass("sr-only");
   expect(within(tile).getByText("Not stated")).toBeVisible();
   expect(within(tile).getByText("Leverage rose while cover held.")).toBeVisible();
 });

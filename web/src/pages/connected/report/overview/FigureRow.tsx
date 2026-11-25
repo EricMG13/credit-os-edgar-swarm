@@ -89,6 +89,16 @@ const slotOf =
     basis: (point.basis ?? "").trim(),
   });
 
+/** A leverage ratio below zero (EBITDA below zero, or net cash) has no better or worse direction. */
+const RATIOS = new Set(["leverage", "net_leverage"]);
+const belowZero = (point: Point | undefined) => (point?.value ?? 0) < 0;
+
+function readTone(toneKey: string, change: string | null, { latest, prior }: Timeline): MarkTone {
+  if (change === null) return "none";
+  if (RATIOS.has(toneKey) && (belowZero(latest) || belowZero(prior))) return "none";
+  return tone(toneKey, change);
+}
+
 function read(entry: OutputEntry, key: FigureKey): Reading {
   const [fallback, chart, heading, toneKey] = FIGURES[key];
   const found = readSeries(entry, chart, heading, fallback);
@@ -98,7 +108,7 @@ function read(entry: OutputEntry, key: FigureKey): Reading {
   const title = readerCell(series.name) ?? fallback;
   if (!line) return { state: "unordered", title, series };
   const { change, why } = compare(line);
-  const toned = change === null ? "none" : tone(toneKey, change);
+  const toned = readTone(toneKey, change, line);
   return {
     state: "ready",
     title,

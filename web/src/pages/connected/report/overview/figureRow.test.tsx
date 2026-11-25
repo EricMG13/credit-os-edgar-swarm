@@ -181,6 +181,25 @@ describe("the latest figure is the latest period, never the last row", () => {
     expect(within(net).getByText(wholeLine("from -2.0x in FY2023 (+0.5x)"))).toBeVisible();
   });
 
+  it("calls no leverage change better or worse when either year's ratio is below zero", () => {
+    draw(
+      foundation(
+        chart(
+          "leverage",
+          LEVERAGE,
+          ["FY2023", "3.00", "(1.0)", "x", "Stated."],
+          ["FY2024", "(12.3)", "(3.0)", "x", "Stated."],
+        ),
+      ),
+    );
+    for (const name of ["Total debt / EBITDA", "Net debt / EBITDA"]) {
+      const tile = screen.getByRole("region", { name });
+      expect(tile).not.toHaveTextContent(/Better|Worse/);
+      expect(tile.querySelector("[class*='success'], [class*='warning']")).toBeNull();
+    }
+    expect(within(gross()).getByText(wholeLine("from 3.00x in FY2023 (-15.30x)"))).toBeVisible();
+  });
+
   it("compares only a period whose start and end are both a year earlier, by the period table", () => {
     const rows = [
       ["FY2023", "2022-07-01", "2023-12-31"],
@@ -639,7 +658,7 @@ describe("cells drawn as the module wrote them", () => {
     const net = screen.getByRole("region", { name: "Net debt / EBITDA" });
     expect(within(net).getByText("(1.50x)", { selector: "span" })).toBeVisible();
     expect(within(net).getByText(wholeLine("from 4.50x in FY2023 (-6.00x)"))).toBeVisible();
-    expect(within(net).getByText("Better")).toBeVisible();
+    expect(net).not.toHaveTextContent(/Better|Worse/);
     expect(net).not.toHaveTextContent(/n\.a\.|not one figure/);
   });
 

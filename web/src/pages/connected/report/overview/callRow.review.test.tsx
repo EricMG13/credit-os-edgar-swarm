@@ -162,7 +162,9 @@ it("shows CP-8's opening words as written and draws no verdict word of its own",
     const tile = screen.getByRole("region", { name: "Since the earlier run" });
     expect(within(tile).getByText(sentence)).toBeVisible();
     expect(within(tile).queryByText(/^(Better|Worse|About the same)$/)).toBeNull();
-    expect(within(tile).getByText("Stance was not stated, now Watchlist.")).toHaveClass("sr-only");
+    expect(
+      within(tile).getByText("Earlier stance: not stated. Current stance: Watchlist."),
+    ).toHaveClass("sr-only");
     expect(within(tile).getByText("Not stated")).toBeVisible();
     unmount();
   }
@@ -424,4 +426,102 @@ it("says a bottom line written as a table is a table, with the way to it, and ke
   ).toBeGreaterThan(0);
   const clearance = screen.getByRole("region", { name: "Evidence clearance" });
   expect(within(clearance).getByText("The bottom line is a table.")).toBeVisible();
+});
+
+it("says each side of the stance move as the page read it, and that more is in Changes", () => {
+  const current = {
+    ...run,
+    issuerKey: "nb",
+    pathway: "full",
+    changes: {
+      pack: {
+        prior: { run: "run-0", as_of: "2025-03-31", pathway: "full" },
+        current: { as_of: "2026-03-31", pathway: "full" },
+      },
+    },
+  } as unknown as PublishedRun;
+  const priorRun = (extra: object) =>
+    ({
+      ...run,
+      folder: "run-0",
+      asOf: "2025-03-31",
+      issuerKey: "nb",
+      pathway: "full",
+      modules: { "CP-6": { outputs: ["run-0/cp6"], default: "run-0/cp6" } },
+      ...extra,
+    }) as unknown as PublishedRun;
+  const snap = (prior: PublishedRun, bias: string) =>
+    ({
+      catalogue: { real: [] },
+      workspace: {
+        runs: { k0: prior, k1: current },
+        outputs: {
+          "run-0/cp6": {
+            id: "run-0/cp6",
+            run: "k0",
+            module: "CP-6",
+            sha256: "p".repeat(64),
+            label: "CP-6",
+            href: "",
+          },
+        },
+        handoffs: { ["p".repeat(64)]: [decision(bias)] },
+        models: [],
+      },
+      chips: {},
+    }) as unknown as Snapshot;
+  const changes = entry("CP-8", [text("Bottom line", "Leverage rose.", "Cover fell.")]);
+  const cases: [Snapshot, string, string, string[]][] = [
+    // Both sides state a stance the page cannot read.
+    [
+      snap(priorRun({}), "Hold"),
+      "Hold",
+      "Earlier stance: could not be read. Current stance: could not be read.",
+      ["Could not be read"],
+    ],
+    // The earlier run is held only as a summary.
+    [
+      snap(
+        priorRun({ history: { modules: [], earlierFormat: true, earlierMethods: false } }),
+        "Hold",
+      ),
+      "Watchlist",
+      "Earlier stance: not in the run list. Current stance: Watchlist.",
+      ["Not in the run list"],
+    ],
+    // Both decisions are read.
+    [snap(priorRun({}), "Avoid"), "Avoid", "Earlier stance: Avoid. Current stance: Avoid.", []],
+  ];
+  for (const [snapshotCase, now, said, shown] of cases) {
+    const lead = entry("CP-6", [text("Bottom line", "The view."), decision(now)]);
+    const { unmount } = render(
+      <CallRow snapshot={snapshotCase} run={current} view={view([lead, changes], lead)} />,
+    );
+    const tile = screen.getByRole("region", { name: "Since the earlier run" });
+    expect(within(tile).getByText(said)).toHaveClass("sr-only");
+    for (const word of shown)
+      for (const chip of within(tile).getAllByText(word)) expect(chip).toBeVisible();
+    expect(within(tile).queryByText("Not stated")).toBeNull();
+    expect(within(tile).getByText("Leverage rose.")).toBeVisible();
+    expect(within(tile).getByText("More in Changes")).toBeVisible();
+    unmount();
+  }
+  const read = (bias: string) =>
+    entry("CP-6", [text("Bottom line", "The view."), text("Decision", bias)]);
+  const silent = read("The committee met and set no bias.");
+  const one = entry("CP-8", [text("Bottom line", "Leverage rose.")]);
+  render(
+    <CallRow
+      snapshot={snap(priorRun({}), "Avoid")}
+      run={current}
+      view={view([silent, one], silent)}
+    />,
+  );
+  const tile = screen.getByRole("region", { name: "Since the earlier run" });
+  expect(within(tile).getByText("Earlier stance: Avoid. Current stance: not stated.")).toHaveClass(
+    "sr-only",
+  );
+  expect(within(tile).getByText("Not stated")).toBeVisible();
+  expect(within(tile).queryByText("More in Changes")).toBeNull();
+  expect(within(tile).queryByText("Could not be read")).toBeNull();
 });

@@ -16,7 +16,7 @@ import {
 import { moduleBottomLines, moduleState, runMoneyUnit, type ReportView } from "../../reportView";
 import { TextLink } from "../../../run/TextLink";
 import { PublishedSource } from "../PublishedTrace";
-import { UNREAD_STANCE, committeeStance, earlierStance } from "./changeData";
+import { UNREAD_STANCE, committeeStance, earlierStance, type StanceReading } from "./changeData";
 import { readerReason } from "./reason";
 import { useSvgScale } from "./svgScale";
 import { bottomLineBlocks, entryOf, type Passage, type PassageTable, type RowProps } from "./read";
@@ -480,8 +480,8 @@ function ChangesBody({ snapshot, run, view }: RowProps): ReactNode {
           : "No comparison with an earlier run is shown for this run."}
       </p>
     );
-  const [first] = bottomLineBlocks(entry);
-  const now = view.lead ? committeeStance(view.lead).stance : undefined;
+  const [first, ...more] = bottomLineBlocks(entry);
+  const now: StanceReading = { ...committeeStance(view.lead), held: true };
   return (
     <>
       <Sentence
@@ -490,38 +490,44 @@ function ChangesBody({ snapshot, run, view }: RowProps): ReactNode {
         passage={first}
         className="text-body font-medium text-pretty text-text-primary"
       />
-      <StanceMove was={was} now={now} />
+      {more.length > 0 && <p className="text-caption text-text-secondary">More in Changes</p>}
+      <StanceMove was={was ?? { unread: false, held: false }} now={now} />
     </>
   );
 }
 
-const NOT_STATED = "Not stated";
+/** One side of the stance move in words: the committee's word, or why the page shows none. */
+function sideWords({ stance, unread, held }: StanceReading) {
+  if (stance) return stance;
+  if (!held) return "Not in the run list";
+  return unread ? "Could not be read" : "Not stated";
+}
 
-/** One side of the stance move: the committee's word, or that the run states none. */
-function Side({ stance }: { stance: string | undefined }) {
-  if (stance) return <StanceChip stance={stance} />;
+/** One side of the stance move: the committee's word in its chip, or why the page shows none. */
+function Side({ reading }: { reading: StanceReading }) {
+  if (reading.stance) return <StanceChip stance={reading.stance} />;
   return (
     <span className="flex min-h-6 items-center rounded-ds-xs border border-dashed border-border-gap px-2 text-caption text-gap-text">
-      {NOT_STATED}
+      {sideWords(reading)}
     </span>
   );
 }
 
-/** The stance in the earlier run and in this one, as two chips; a side not stated says so. */
-function StanceMove({ was, now }: { was: string | undefined; now: string | undefined }) {
-  const words = (stance: string | undefined) => stance ?? NOT_STATED.toLowerCase();
+/** The stance in the earlier run and in this one, as two chips; a side the page cannot show says why. */
+function StanceMove({ was, now }: { was: StanceReading; now: StanceReading }) {
+  const words = (reading: StanceReading) => reading.stance ?? sideWords(reading).toLowerCase();
   return (
     <span className="flex flex-wrap items-center gap-1.5">
-      <span className="sr-only">{`Stance was ${words(was)}, now ${words(now)}.`}</span>
+      <span className="sr-only">{`Earlier stance: ${words(was)}. Current stance: ${words(now)}.`}</span>
       <span aria-hidden="true" className="text-caption text-text-tertiary">
         Stance
       </span>
       <span aria-hidden="true">
-        <Side stance={was} />
+        <Side reading={was} />
       </span>
       <ArrowNarrowRight aria-hidden="true" className="size-3.5 text-text-secondary" />
       <span aria-hidden="true">
-        <Side stance={now} />
+        <Side reading={now} />
       </span>
     </span>
   );

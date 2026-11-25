@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import type { PublishedRun, Section, Snapshot } from "../../publishedReport";
-import { committeeStance, earlierStance, runStance } from "./changeData";
+import { committeeStance, earlierStance, runStanceRead } from "./changeData";
 
 const decision = (bias: string): Section[] => [
   {
@@ -65,19 +65,36 @@ function snapshot(): Snapshot {
 it("reads each run's stance from its own committee decision, and the earlier run's through the comparison", () => {
   const snap = snapshot();
   const runs = snap.workspace.runs;
-  expect(runStance(snap, "newKey", runs.newKey as PublishedRun)).toBe("Watchlist");
-  expect(runStance(snap, "oldKey", runs.oldKey as PublishedRun)).toBe("Requires More Work");
-  expect(earlierStance(snap, runs.newKey as PublishedRun)).toBe("Requires More Work");
+  expect(runStanceRead(snap, "newKey", runs.newKey as PublishedRun)).toEqual({
+    stance: "Watchlist",
+    unread: false,
+    held: true,
+  });
+  expect(runStanceRead(snap, "oldKey", runs.oldKey as PublishedRun)).toEqual({
+    stance: "Requires More Work",
+    unread: false,
+    held: true,
+  });
+  expect(earlierStance(snap, runs.newKey as PublishedRun)).toEqual({
+    stance: "Requires More Work",
+    unread: false,
+    held: true,
+  });
   expect(earlierStance(snap, runs.oldKey as PublishedRun)).toBeUndefined();
 });
 
-it("states no stance for an earlier-format record or a comparison that does not match", () => {
+it("says a run held only as a summary is not in the run list, and draws no move for a comparison that does not match", () => {
   const snap = snapshot();
   const record = {
     ...(snap.workspace.runs.oldKey as PublishedRun),
     history: { modules: [], earlierFormat: true, earlierMethods: false },
   };
-  expect(runStance(snap, "oldKey", record)).toBeUndefined();
+  expect(runStanceRead(snap, "oldKey", record)).toEqual({ unread: false, held: false });
+  snap.workspace.runs.oldKey = record;
+  expect(earlierStance(snap, snap.workspace.runs.newKey as PublishedRun)).toEqual({
+    unread: false,
+    held: false,
+  });
   const mismatched = { ...(snap.workspace.runs.newKey as PublishedRun), asOf: "2026-06-30" };
   expect(earlierStance(snap, mismatched)).toBeUndefined();
 });
@@ -102,5 +119,12 @@ it("says the page could not read a stance when the decision passage states one i
     unread: false,
   });
   expect(committeeStance(entry("The committee met."))).toEqual({ unread: false });
+  expect(committeeStance(entry("**Final Action Bias:** Watchlist. The view."))).toEqual({
+    stance: "Watchlist",
+    unread: false,
+  });
+  expect(committeeStance(entry("**Final Action Bias:** Hold. The view."))).toEqual({
+    unread: true,
+  });
   expect(committeeStance(undefined)).toEqual({ unread: false });
 });
