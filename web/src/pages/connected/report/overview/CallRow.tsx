@@ -23,6 +23,7 @@ import {
 import { TextLink } from "../../../run/TextLink";
 import { PublishedSource } from "../PublishedTrace";
 import { earlierStance } from "./changeData";
+import { useSvgScale } from "./svgScale";
 import { bottomLine, entryOf, type Passage, type RowProps } from "./read";
 import { Figure, GapNote, Tile } from "./Tile";
 
@@ -294,13 +295,15 @@ const meterReading = (first: Scored, second: Scored | null) =>
  * scores are named on a line under the bar, so their labels never collide or leave the scale.
  */
 function Meter({ first, second }: { first: Scored; second: Second }) {
+  const { ref, font } = useSvgScale(408);
   const x = (score: number) => (Math.min(Math.max(score, 0), 100) / 100) * 408;
   const scored = second?.score ? second : null;
   const tick = scored?.score.value ?? null;
   return (
     <div className="flex flex-col gap-1.5">
       <svg
-        viewBox="0 0 408 32"
+        ref={ref}
+        viewBox="0 0 408 40"
         width="100%"
         role="img"
         aria-label={meterReading(first, scored)}
@@ -318,10 +321,16 @@ function Meter({ first, second }: { first: Scored; second: Second }) {
             className="stroke-text-primary"
           />
         )}
-        <text x="0" y="30" className="fill-text-tertiary font-mono text-caption">
+        <text x="0" y="38" fontSize={font()} className="fill-text-tertiary font-mono">
           0
         </text>
-        <text x="408" y="30" textAnchor="end" className="fill-text-tertiary font-mono text-caption">
+        <text
+          x="408"
+          y="38"
+          textAnchor="end"
+          fontSize={font()}
+          className="fill-text-tertiary font-mono"
+        >
           100
         </text>
       </svg>

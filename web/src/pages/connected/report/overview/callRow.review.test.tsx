@@ -5,6 +5,7 @@ import { afterEach, expect, it } from "vitest";
 import type { OutputEntry, PublishedRun, Section, Snapshot } from "../../publishedReport";
 import type { ReportView } from "../../reportView";
 import { CallRow } from "./CallRow";
+import { measuredAt } from "./resize.fixture";
 
 afterEach(cleanup);
 
@@ -344,4 +345,16 @@ it("lets no tile in the call row stretch past its content", () => {
     expect(tile.className).not.toMatch(/\bflex-1\b|justify-between/);
   }
   expect(document.body.innerHTML).not.toMatch(/text-\[\d+px\]/);
+});
+
+it("keeps the meter's scale labels at least 12 px on screen when the meter is drawn small", () => {
+  const restore = measuredAt(204);
+  const lead = entry("CP-6", [text("Bottom line", "The view.")], {
+    confidence: { value: 53, band: "Low" },
+  });
+  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  const meter = within(screen.getByRole("region", { name: "Confidence" })).getByRole("img");
+  for (const label of meter.querySelectorAll("text"))
+    expect(Number(label.getAttribute("font-size")) * (204 / 408)).toBeGreaterThanOrEqual(12);
+  restore();
 });
