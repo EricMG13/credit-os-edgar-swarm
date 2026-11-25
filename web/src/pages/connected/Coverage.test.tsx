@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { Coverage } from "./Coverage";
 import type { Coverage as Data } from "./coverageData";
 
@@ -113,15 +113,19 @@ afterEach(() => {
   window.localStorage.clear();
 });
 
-test("the matrix says each module's state in words and draws no code, hash or file name", async () => {
+test("the matrix names each module's state in words and draws no code, hash or file name", async () => {
   answer(data);
   const { container } = render(<Coverage />);
   const table = await screen.findByRole("table");
   const alpha = within(table).getByRole("row", { name: /Alpha plc/ });
-  expect(within(alpha).getByText("Delivered with gaps")).toBeInTheDocument();
-  expect(within(alpha).getByText("Not assessable")).toBeInTheDocument();
+  expect(
+    within(alpha).getByLabelText(/Financial foundation.*: Delivered with gaps$/),
+  ).toBeInTheDocument();
+  expect(within(alpha).getByLabelText(/Fundamental credit.*: Not assessable$/)).toBeInTheDocument();
   const beta = within(table).getByRole("row", { name: /Beta SA/ });
-  expect(within(beta).getByText("Not asked for in this run")).toBeInTheDocument();
+  expect(
+    within(beta).getByLabelText(/Fundamental credit.*: Not asked for in this run$/),
+  ).toBeInTheDocument();
   expect(screen.getByText("2 of 2 issuers shown")).toBeInTheDocument();
   const drawn = container.textContent;
   for (const hidden of ["CP-1", "CP-2", SHA, ".md", "alpha-run", "credit_snapshot"])
@@ -132,20 +136,42 @@ test("a rank shows the figure as written with period and basis, and missing apar
   answer(data);
   window.history.replaceState(null, "", "/coverage?view=rank");
   render(<Coverage />);
-  const table = await screen.findByRole("table");
-  const row = within(table).getByRole("row", { name: /Alpha plc/ });
+  const list = await screen.findByRole("list", { name: /Net debt \/ EBITDA, FY2025/ });
+  const row = within(list).getByRole("listitem");
+  expect(within(row).getByText("Alpha plc")).toBeInTheDocument();
   expect(within(row).getByText("4.6x")).toBeInTheDocument();
-  expect(within(row).getByText("FY2025")).toBeInTheDocument();
-  expect(within(row).getByText("Issuer-adjusted EBITDA.")).toBeInTheDocument();
+  expect(within(row).getByText(/FY2025 · Issuer-adjusted EBITDA\./)).toBeInTheDocument();
   expect(within(row).getByRole("link", { name: "View sources" })).toHaveAttribute(
     "href",
     `/report/alpha-run#evidence/alpha-run%2FCP-1.md~${SHA}-22`,
   );
-  expect(within(table).queryByText(/Beta SA/)).not.toBeInTheDocument();
+  expect(within(list).queryByText(/Beta SA/)).not.toBeInTheDocument();
   expect(
     screen.getByText("Not ranked: no figure for FY2025 in the newest run"),
   ).toBeInTheDocument();
-  expect(screen.getByRole("combobox", { name: "Period" })).toHaveValue("FY2025");
+  expect(
+    within(screen.getByRole("group", { name: "Period" })).getByRole("button", { name: "FY2025" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByText(/Not supplied: cash not stated/)).toBeInTheDocument();
+});
+
+test("a bound in Rank keeps issuers with no figure listed apart, never ranked", async () => {
+  answer(data);
+  window.history.replaceState(null, "", "/coverage?view=rank");
+  render(<Coverage />);
+  fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
+    target: { value: "4" },
+  });
+  const list = screen.getByRole("list", { name: /Net debt \/ EBITDA, FY2025/ });
+  expect(within(list).getByText("Alpha plc")).toBeInTheDocument();
+  expect(
+    screen.getByText("Not ranked: no figure for FY2025 in the newest run"),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/Not supplied: cash not stated/)).toBeInTheDocument();
+  fireEvent.change(screen.getByRole("textbox", { name: /At least/ }), {
+    target: { value: "5" },
+  });
+  expect(screen.queryByRole("list", { name: /Net debt \/ EBITDA, FY2025/ })).toBeNull();
   expect(screen.getByText(/Not supplied: cash not stated/)).toBeInTheDocument();
 });
 
@@ -171,9 +197,11 @@ test("ticked issuers can be saved as a group kept in this browser", async () => 
   expect(JSON.parse(window.localStorage.getItem("credit-os-coverage-groups") ?? "")).toEqual([
     { name: "Watch", issuers: ["alpha"] },
   ]);
-  fireEvent.change(screen.getByRole("combobox", { name: "Saved group" }), {
-    target: { value: "Watch" },
-  });
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Saved group" })).getByRole("button", {
+      name: "Watch",
+    }),
+  );
   expect(screen.getByText("1 of 2 issuers shown")).toBeInTheDocument();
 });
 
@@ -194,10 +222,10 @@ test("module text is drawn by the reader's rule: references stay in Evidence, co
   });
   window.history.replaceState(null, "", "/coverage?view=rank");
   const { container } = render(<Coverage />);
-  expect(await screen.findByText("Qualification recorded in Evidence.")).toBeInTheDocument();
-  expect(screen.getByText("Stated as Net debt / adjusted EBITDA")).toBeInTheDocument();
+  expect(await screen.findByText(/Qualification recorded in Evidence\./)).toBeInTheDocument();
+  expect(screen.getByText(/Stated as Net debt \/ adjusted EBITDA/)).toBeInTheDocument();
   expect(container.textContent).not.toContain("pages 71");
-  fireEvent.click(screen.getByRole("radio", { name: "Find" }));
+  fireEvent.click(screen.getByRole("button", { name: "Find" }));
   expect(await screen.findByText("Headroom is thin per Legal & covenants.")).toBeInTheDocument();
   expect(container.textContent).not.toContain("filing.pdf");
 });
@@ -214,8 +242,10 @@ test("a sector in the link that no issuer has is shown as unavailable, not hidde
   answer(data);
   window.history.replaceState(null, "", "/coverage?sector=Chemicals");
   render(<Coverage />);
-  expect(await screen.findByRole("combobox", { name: "Sector" })).toHaveValue("Chemicals");
-  expect(screen.getByRole("option", { name: "Chemicals (unavailable)" })).toBeInTheDocument();
+  expect(await screen.findByRole("button", { name: "Chemicals (unavailable)" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
 });
 
 test("an unreadable bound is marked, and the detail closes when its issuer is filtered out", async () => {
@@ -225,12 +255,34 @@ test("an unreadable bound is marked, and the detail closes when its issuer is fi
   expect(screen.getByRole("heading", { name: "Alpha plc" })).toBeInTheDocument();
   fireEvent.change(screen.getByRole("textbox", { name: /At most/ }), { target: { value: "5x" } });
   expect(screen.getByRole("textbox", { name: /At most/ })).toBeInvalid();
-  fireEvent.change(screen.getByRole("combobox", { name: "Sector" }), {
-    target: { value: "Retail" },
-  });
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Sector" })).getByRole("button", { name: "Retail" }),
+  );
   expect(screen.queryByRole("heading", { name: "Alpha plc" })).not.toBeInTheDocument();
-  fireEvent.click(screen.getByRole("radio", { name: "Trend" }));
+  fireEvent.click(screen.getByRole("button", { name: "Trend" }));
   expect(screen.queryByRole("textbox", { name: /At most/ })).not.toBeInTheDocument();
+});
+
+test("a bound filters Modules and Find as well as Rank, shows as a removable chip on each, and carries across views", async () => {
+  answer(data);
+  render(<Coverage />);
+  fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
+    target: { value: "5" },
+  });
+  // Alpha states 4.6x, below 5, and is removed. Beta states no figure: it was not compared, so it stays.
+  expect(
+    screen.getByText("1 of 2 issuers shown · 0 compared, 1 not compared (no figure for FY2025)"),
+  ).toBeInTheDocument();
+  const chip = screen.getByRole("button", {
+    name: "Remove filter Net debt / EBITDA ≥ 5x · FY2025",
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Find" }));
+  expect(chip).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Rank" }));
+  expect(screen.getByText(/Not supplied: cash not stated/)).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: /Remove filter Net debt/ }));
+  expect(screen.getByText("2 of 2 issuers shown")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Remove filter Net debt/ })).toBeNull();
 });
 
 test("a retained test preview says so, as the Library does", async () => {
@@ -243,4 +295,340 @@ test("nothing published is said plainly", async () => {
   answer(null);
   render(<Coverage />);
   expect(await screen.findByText("No published runs yet")).toBeInTheDocument();
+});
+
+test("an unreadable bound shows as an error chip and a marked summary with the disclosure closed", async () => {
+  answer(data);
+  render(<Coverage />);
+  fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
+    target: { value: "1,0" },
+  });
+  // A comma that is not a thousands group is invalid, not read as ten.
+  expect(
+    screen.getByRole("button", { name: "Remove filter At least: not a number" }),
+  ).toBeVisible();
+  expect(screen.getByText(/a bound is not a number/)).toBeVisible();
+  expect(screen.getByText("2 of 2 issuers shown")).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Remove filter At least: not a number" }));
+  expect(screen.queryByText(/a bound is not a number/)).toBeNull();
+});
+
+function unitsData(
+  units: Record<string, string | undefined>,
+  values: Record<string, number>,
+): Data {
+  const keys = Object.keys(units);
+  return {
+    columns: data.columns,
+    issuers: keys.map((key) => ({
+      key,
+      name: key.toUpperCase(),
+      sector: null,
+      runs: [
+        {
+          key: `${key}1`,
+          folder: `${key}-run`,
+          asOf: "2026-03-31",
+          pathway: null,
+          pathwayTitle: null,
+          cells: {},
+          other: [],
+        },
+      ],
+    })),
+    fields: [
+      {
+        id: "lev",
+        module: "CP-1",
+        group: "Leverage",
+        label: "Net debt / EBITDA",
+        kind: "number",
+        series: "period",
+      },
+    ],
+    facts: keys.map((key) => ({
+      field: "lev",
+      issuer: key,
+      run: `${key}1`,
+      period: "FY2025",
+      row: null,
+      text: String(values[key]),
+      at: values[key] ?? null,
+      ...(units[key] === undefined ? {} : { unit: units[key] }),
+      basis: "Reported.",
+      line: 1,
+      output: `${key}-run/CP-1.md`,
+      sha256: SHA,
+    })),
+  };
+}
+
+test("a bound never removes an issuer stated in another unit: it stays, listed as not compared", async () => {
+  const keys = ["a", "b", "c", "d", "e", "f", "g", "h"];
+  const units: Record<string, string> = Object.fromEntries(keys.map((key) => [key, "US$m"]));
+  units.i = "EURm";
+  const values: Record<string, number> = Object.fromEntries(keys.map((key, at) => [key, at]));
+  values.i = 9;
+  answer(unitsData(units, values));
+  render(<Coverage />);
+  fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
+    target: { value: "1" },
+  });
+  // A is 0 (below 1) and drops; B–H pass; I is in EURm, was not compared, and stays.
+  expect(
+    screen.getByText("8 of 9 issuers shown · 7 compared, 1 not compared (another unit)"),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(/Not compared, stated in another unit: I \(EURm\)\./),
+  ).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /Remove filter .*≥ 1 US\$m · FY2025/ })).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Rank" }));
+  expect(screen.getByRole("list", { name: /reporting unit EURm/ })).toBeVisible();
+  expect(
+    screen.getByText(/Bound not applied: this list is in EURm, and the bound compares US\$m\./),
+  ).toBeVisible();
+  // A bound below the other unit's figure does not remove it either.
+  fireEvent.change(screen.getByRole("textbox", { name: /At least/ }), { target: { value: "-5" } });
+  expect(screen.getByRole("list", { name: /reporting unit EURm/ })).toBeVisible();
+});
+
+test("two units that tie leave the bound open and ask the reader to choose; no unit stated never wins a tie", async () => {
+  answer(unitsData({ a: "x", b: "%" }, { a: 4.6, b: 610 }));
+  render(<Coverage />);
+  fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
+    target: { value: "5" },
+  });
+  expect(screen.getByText("Choose a unit for the bound: % or x")).toBeVisible();
+  expect(screen.getByText("2 of 2 issuers shown")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Remove filter .*≥/ })).toBeNull();
+  const chips = within(screen.getByRole("group", { name: "Bound unit" }));
+  expect(chips.getByRole("button", { name: "%" })).toHaveAttribute("aria-pressed", "false");
+  expect(chips.getByRole("button", { name: "x" })).toHaveAttribute("aria-pressed", "false");
+  fireEvent.click(chips.getByRole("button", { name: "x" }));
+  expect(screen.queryByText(/Choose a unit for the bound/)).toBeNull();
+  expect(screen.getByRole("button", { name: /Remove filter .*≥ 5x · FY2025/ })).toBeVisible();
+  cleanup();
+  answer(unitsData({ a: "x", b: "" }, { a: 1, b: 2 }));
+  render(<Coverage />);
+  fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
+    target: { value: "0" },
+  });
+  expect(screen.queryByText(/Choose a unit/)).toBeNull();
+  expect(screen.getByRole("button", { name: /Remove filter .*≥ 0x · FY2025/ })).toBeVisible();
+});
+
+test("the bound chip names 'no unit stated' when that is the unit compared", async () => {
+  answer(unitsData({ a: "", b: "" }, { a: 1, b: 2 }));
+  render(<Coverage />);
+  fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
+    target: { value: "0" },
+  });
+  expect(
+    screen.getByRole("button", { name: /Remove filter .*≥ 0 \(no unit stated\) · FY2025/ }),
+  ).toBeVisible();
+});
+
+type Row = { key: string; at: number | null; unit?: string; period?: string; sector?: string };
+
+/** One figure per row; a row with `at: null` is a stated gap. Issuers appear in first-row order. */
+function figures(rows: Row[]): Data {
+  const keys = [...new Set(rows.map((row) => row.key))];
+  return {
+    columns: data.columns,
+    issuers: keys.map((key) => ({
+      key,
+      name: key.toUpperCase(),
+      sector: rows.find((row) => row.key === key)?.sector ?? null,
+      runs: [
+        {
+          key: `${key}1`,
+          folder: `${key}-run`,
+          asOf: "2026-03-31",
+          pathway: null,
+          pathwayTitle: null,
+          cells: {},
+          other: [],
+        },
+      ],
+    })),
+    fields: [
+      {
+        id: "lev",
+        module: "CP-1",
+        group: "Leverage",
+        label: "Net debt / EBITDA",
+        kind: "number",
+        series: "period",
+      },
+    ],
+    facts: rows.map((row, line) => ({
+      field: "lev",
+      issuer: row.key,
+      run: `${row.key}1`,
+      period: row.period ?? "FY2025",
+      row: null,
+      text: row.at === null ? "Not supplied: none stated" : String(row.at),
+      at: row.at,
+      ...(row.unit === undefined ? {} : { unit: row.unit }),
+      ...(row.at === null ? { gap: true } : {}),
+      basis: "Reported.",
+      line,
+      output: `${row.key}-run/CP-1.md`,
+      sha256: SHA,
+    })),
+  };
+}
+
+const NINE: Row[] = [
+  { key: "a", at: 6, unit: "x" },
+  { key: "b", at: 7, unit: "x" },
+  { key: "c", at: 8, unit: "x" },
+  { key: "d", at: 9, unit: "x" },
+  { key: "e", at: 10, unit: "x" },
+  { key: "f", at: 2, unit: "x" },
+  { key: "g", at: 40, unit: "%" },
+  { key: "h", at: 3, unit: "%" },
+  { key: "i", at: 5, unit: "x", period: "FY2024" },
+];
+
+async function bounded(rows: Row[], bounds: { min?: string; max?: string }, view = "rank") {
+  answer(figures(rows));
+  window.history.replaceState(null, "", `/coverage?view=${view}`);
+  render(<Coverage />);
+  for (const [side, value] of Object.entries(bounds)) {
+    fireEvent.change(
+      await screen.findByRole("textbox", { name: side === "min" ? /At least/ : /At most/ }),
+      {
+        target: { value },
+      },
+    );
+  }
+}
+
+test("the count line counts only issuers actually compared, and names each way one was not", async () => {
+  await bounded(NINE, { min: "5" });
+  // 6, 7, 8, 9, 10 pass; 2 fails and goes; 40% and 3% are in another unit; I states FY2024 only.
+  expect(
+    screen.getByText(
+      "8 of 9 issuers shown · 5 compared, 2 not compared (another unit), 1 not compared (no figure for FY2025)",
+    ),
+  ).toBeInTheDocument();
+});
+
+test("a lower and an upper bound count the issuers that fall between them", async () => {
+  await bounded(NINE, { min: "5", max: "8" });
+  expect(
+    screen.getByText(
+      "6 of 9 issuers shown · 3 compared, 2 not compared (another unit), 1 not compared (no figure for FY2025)",
+    ),
+  ).toBeInTheDocument();
+});
+
+const FIVE: Row[] = [
+  { key: "a", at: 6, unit: "x" },
+  { key: "b", at: 7, unit: "x" },
+  { key: "c", at: 5, unit: "x" },
+  { key: "c", at: 9, unit: "x" },
+  { key: "d", at: null, unit: "x" },
+  { key: "e", at: 1, unit: "x" },
+];
+
+test("an issuer that states a period twice, or states a gap, stays under a bound with its own reason", async () => {
+  await bounded(FIVE, { min: "5" }, "matrix");
+  expect(
+    screen.getByText("4 of 5 issuers shown · 2 compared, 2 not compared (no figure for FY2025)"),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      "Not compared, no figure for FY2025: C (states it more than once); D (states a gap).",
+    ),
+  ).toBeInTheDocument();
+  // Modules and Find keep them as rows and passages, not only Rank.
+  expect(screen.getByRole("button", { name: "C" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "D" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "E" })).toBeNull();
+});
+
+test("a bound typed where no issuer states a figure still shows its chip and keeps every issuer", async () => {
+  await bounded(
+    [
+      { key: "a", at: null, unit: "x" },
+      { key: "b", at: null, unit: "x" },
+    ],
+    { min: "1" },
+    "matrix",
+  );
+  expect(
+    screen.getByRole("button", { name: "Remove filter Net debt / EBITDA ≥ 1 · FY2025" }),
+  ).toBeVisible();
+  expect(
+    screen.getByText("2 of 2 issuers shown · 0 compared, 2 not compared (no figure for FY2025)"),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText("Not compared, no figure for FY2025: A (states a gap); B (states a gap)."),
+  ).toBeInTheDocument();
+});
+
+test("a unit chosen for one period or figure is forgotten when the period changes", async () => {
+  answer(
+    figures([
+      { key: "a", at: 4, unit: "x" },
+      { key: "b", at: 400, unit: "%" },
+      { key: "a", at: 5, unit: "x", period: "FY2024" },
+      { key: "b", at: 500, unit: "%", period: "FY2024" },
+    ]),
+  );
+  render(<Coverage />);
+  fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
+    target: { value: "1" },
+  });
+  expect(screen.getByText("Choose a unit for the bound: % or x")).toBeVisible();
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Bound unit" })).getByRole("button", { name: "x" }),
+  );
+  expect(screen.queryByText(/Choose a unit/)).toBeNull();
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Period" })).getByRole("button", { name: "FY2024" }),
+  );
+  expect(screen.getByText("Choose a unit for the bound: % or x")).toBeVisible();
+});
+
+test("the bound's unit is read from the issuers the other filters keep", async () => {
+  answer(
+    figures([
+      { key: "a", at: 4, unit: "x", sector: "Retail" },
+      { key: "b", at: 400, unit: "%", sector: "Mining" },
+    ]),
+  );
+  render(<Coverage />);
+  fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
+    target: { value: "1" },
+  });
+  expect(screen.getByText("Choose a unit for the bound: % or x")).toBeVisible();
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Sector" })).getByRole("button", { name: "Retail" }),
+  );
+  expect(screen.queryByText(/Choose a unit/)).toBeNull();
+  expect(screen.getByRole("button", { name: /Remove filter .*≥ 1x · FY2025/ })).toBeVisible();
+});
+
+test("periods no rule can order open on the first stated and say so", async () => {
+  answer(
+    figures([
+      { key: "a", at: 4, unit: "x", period: "LTM Jun 2026" },
+      { key: "a", at: 4.5, unit: "x", period: "LTM Dec 2025" },
+    ]),
+  );
+  window.history.replaceState(null, "", "/coverage?view=rank");
+  render(<Coverage />);
+  expect(
+    within(await screen.findByRole("group", { name: "Period" })).getByRole("button", {
+      name: "LTM Jun 2026",
+    }),
+  ).toHaveAttribute("aria-pressed", "true");
+  expect(
+    screen.getByText(
+      "Periods are in the order the modules state them; this page could not put them in time order.",
+    ),
+  ).toBeVisible();
 });

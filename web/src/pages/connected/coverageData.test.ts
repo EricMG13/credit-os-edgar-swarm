@@ -1,5 +1,6 @@
 import {
   commonPeriod,
+  periodsOrdered,
   evidenceLink,
   factAt,
   fieldUnits,
@@ -14,6 +15,7 @@ import {
   type Coverage,
   type CoverageRun,
   type Fact,
+  type Issuer,
 } from "./coverageData";
 
 const LEVERAGE = "cp-1/leverage/net";
@@ -160,14 +162,17 @@ test("an issuer with no figure for the chosen period is never ranked on another 
   ]);
 });
 
-test("filters read the newest run only, and a missing figure passes no numeric bound", () => {
+test("filters read the newest run only, and a numeric bound never removes an issuer it did not compare", () => {
   const at = (filters: Partial<typeof NO_FILTERS>, period: string | null = "FY2025") =>
     names(matchIssuers(data, { ...NO_FILTERS, ...filters }, LEVERAGE, period));
   expect(at({})).toEqual(["Alpha", "Beta", "Gamma", "Delta"]);
-  expect(at({ max: "5" })).toEqual(["Alpha", "Beta"]);
-  expect(at({ min: "5" })).toEqual(["Gamma"]);
-  expect(at({ min: "0", max: "0" })).toEqual(["Beta"]);
-  expect(at({ max: "5.1" }, "FY2024")).toEqual(["Alpha"]);
+  // Delta states no figure for FY2025, so no bound compares it: it stays, whatever the bound.
+  expect(at({ max: "5" })).toEqual(["Alpha", "Beta", "Delta"]);
+  expect(at({ min: "5" })).toEqual(["Gamma", "Delta"]);
+  expect(at({ min: "0", max: "0" })).toEqual(["Beta", "Delta"]);
+  // Only Alpha states a figure for FY2024; the others were not compared and stay.
+  expect(at({ max: "5.1" }, "FY2024")).toEqual(["Alpha", "Beta", "Gamma", "Delta"]);
+  expect(at({ max: "5" }, "FY2024")).toEqual(["Beta", "Gamma", "Delta"]);
   expect(at({ max: "5" }, null)).toHaveLength(4);
   expect(at({ sector: "Retail" })).toEqual(["Beta", "Delta"]);
   expect(at({ pathway: "Lite credit assessment" })).toEqual(["Gamma"]);
@@ -243,11 +248,44 @@ test("a period stated twice has no one figure: it is not ranked, bounded or draw
   expect(ranking.units[0]?.rows.map((row) => row.issuer.name)).toEqual(["Beta"]);
   const alpha = ranking.missing.find((item) => item.issuer.name === "Alpha");
   expect(alpha?.repeated.map((row) => row.text)).toEqual(["4.6", "4.1"]);
+  // Alpha states the period twice (no one figure), Delta none: neither was compared, so both stay.
   expect(names(matchIssuers(twice, { ...NO_FILTERS, max: "5" }, LEVERAGE, "FY2025"))).toEqual([
+    "Alpha",
     "Beta",
+    "Delta",
   ]);
   const [series] = trend(twice, twice.issuers, LEVERAGE, "x").series;
   expect(series?.points.map((point) => point?.text ?? null)).toEqual(["5.1", null]);
+});
+
+test("a comma that is not a thousands group is invalid, never read as a different number", () => {
+  for (const typed of ["1,0", "1,00", "12,34", "1,2345", ",5", "1,000,0"])
+    expect(readBound(typed)).toEqual({ value: null, invalid: true });
+  expect(readBound("1,000")).toEqual({ value: 1000, invalid: false });
+  expect(readBound("1,234,567.5")).toEqual({ value: 1234567.5, invalid: false });
+});
+
+test("a bound compares one reporting unit and never removes an issuer it did not compare", () => {
+  const mixed: Coverage = {
+    ...data,
+    facts: [
+      fact("a2", "alpha", LEVERAGE, { period: "FY2025", text: "4.6", at: 4.6, unit: "x" }),
+      fact("b1", "beta", LEVERAGE, { period: "FY2025", text: "610", at: 610, unit: "%" }),
+    ],
+  };
+  const bound = { ...NO_FILTERS, min: "5" };
+  // Gamma and Delta state nothing for the period: not compared, so they stay.
+  expect(names(matchIssuers(mixed, bound, LEVERAGE, "FY2025", "x"))).toEqual([
+    "Beta",
+    "Gamma",
+    "Delta",
+  ]);
+  expect(names(matchIssuers(mixed, bound, LEVERAGE, "FY2025", "%"))).toEqual([
+    "Alpha",
+    "Beta",
+    "Gamma",
+    "Delta",
+  ]);
 });
 
 test("a bound may carry thousands separators; any other text is invalid, not ignored silently", () => {
@@ -257,5 +295,82 @@ test("a bound may carry thousands separators; any other text is invalid, not ign
   expect(readBound("5x")).toEqual({ value: null, invalid: true });
   expect(names(matchIssuers(data, { ...NO_FILTERS, min: "1,000" }, LEVERAGE, "FY2025"))).toEqual([
     "Gamma",
+    "Delta",
   ]);
+});
+
+const ltm = (rows: [string, number][]): Coverage => ({
+  ...data,
+  issuers: [data.issuers[0] as Issuer],
+  facts: rows.map(([period, at], line) =>
+    fact("a2", "alpha", LEVERAGE, { period, text: String(at), at, unit: "x", line }),
+  ),
+});
+
+test("a trend says whether it could put the periods in time order", () => {
+  const one = (rows: [string, number][]) => trend(ltm(rows), ltm(rows).issuers, LEVERAGE, "x");
+  // Rows written newest first, in a form the reader's rule cannot order.
+  const newestFirst = one([
+    ["LTM Jun 2026", 4.0],
+    ["LTM Dec 2025", 4.5],
+    ["LTM Jun 2025", 5.0],
+    ["LTM Dec 2024", 5.5],
+  ]);
+  expect(newestFirst.ordered).toBe(false);
+  expect(newestFirst.periods).toEqual([
+    "LTM Jun 2026",
+    "LTM Dec 2025",
+    "LTM Jun 2025",
+    "LTM Dec 2024",
+  ]);
+  expect(
+    one([
+      ["Q3 2025", 1],
+      ["Q4 2025", 2],
+      ["Q1 2025", 3],
+    ]).ordered,
+  ).toBe(false);
+  expect(
+    one([
+      ["FY2026E", 1],
+      ["FY2024", 2],
+      ["FY2025", 3],
+    ]).ordered,
+  ).toBe(false);
+  expect(
+    one([
+      ["FY2025", 1],
+      ["LTM Dec 2025", 2],
+    ]).ordered,
+  ).toBe(false);
+  const fiscal = one([
+    ["FY2025", 3],
+    ["FY2023", 1],
+    ["FY2024", 2],
+  ]);
+  expect(fiscal.ordered).toBe(true);
+  expect(fiscal.periods).toEqual(["FY2023", "FY2024", "FY2025"]);
+  expect(
+    one([
+      ["2025-03-31", 1],
+      ["2024-09-30", 2],
+    ]).ordered,
+  ).toBe(true);
+  // One label is trivially in order, whatever its form.
+  expect(one([["LTM Dec 2025", 1]]).ordered).toBe(true);
+});
+
+test("a period the rule cannot order is opened on the first stated, never on 'the later'", () => {
+  const unordered = ltm([
+    ["LTM Jun 2026", 4.0],
+    ["LTM Dec 2025", 4.5],
+  ]);
+  expect(periodsOrdered(unordered, unordered.issuers, LEVERAGE)).toBe(false);
+  expect(commonPeriod(unordered, unordered.issuers, LEVERAGE)).toBe("LTM Jun 2026");
+  const ordered = ltm([
+    ["FY2024", 4.0],
+    ["FY2025", 4.5],
+  ]);
+  expect(periodsOrdered(ordered, ordered.issuers, LEVERAGE)).toBe(true);
+  expect(commonPeriod(ordered, ordered.issuers, LEVERAGE)).toBe("FY2025");
 });
