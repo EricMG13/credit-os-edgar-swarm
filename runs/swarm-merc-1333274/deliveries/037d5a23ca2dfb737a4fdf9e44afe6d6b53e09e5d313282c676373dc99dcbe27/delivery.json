@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Mercer International Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "6651d50886364812d02ec797f9d59c4554d673c6522933b3dcc57688bcc18e0b",
+    "CP-1.md": "0b49383b1fe697a388b25e6a5777cca4e82759bb42aed4ce35edc442b9028ff2",
+    "CP-1A.md": "67c5566c09ab9ef29a7dcad819a1443776f7db3cd914df1d38e4ced36a94f7f2",
+    "CP-2.md": "1b01fbff9840c00a7a164895e590b4339f02c6c757b354db2e912ece5a3d4ce6",
+    "coverage.json": "f2c350c52a1968f87dad599efaea764067c241faa6c82831810412ccc801db8b",
+    "view.json": "ca3cd5df7ba6cb480bcdfe4273d8e8d9b9b4556a24f3fdc73f2af29d9433a4bf",
+    "report-view.json": "c170ef4b31e7a1463f3c97e90622d9bff8e66db79f84472229313eebc54d512a"
+  }
+}

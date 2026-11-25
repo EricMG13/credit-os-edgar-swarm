@@ -64,5 +64,27 @@
       "CP-2": 1
     },
     "notes": "Source defects I logged as gaps but could not fix: the Q3 2026 release's net leverage of (0.1)x has no stated definition and cannot be reproduced from printed debt and cash, no document prints full-year or trailing adjusted EBITDA so the FY2025 and LTM adjusted figures are house-built estimates, and fiscal 2025 is not recast to the new segments; each draft was also pre-checked offline with the repository's own checker functions before submission."
+  },
+  {
+    "issuer_id": "merc-1333274",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The run finished and the launcher produced its delivery with no provider call; CP-0 was already accepted on attempt 1 in the resumed folder, so I submitted CP-1, CP-1A and CP-2 once each and every one passed first time. I could not fix two source defects, which are logged as conflicts and gaps. The logging operation's ownership is 50% in the FY2024 report but 20% in the FY2025 report. Restructuring equity support is 'approximately 50%' in one place and 'a majority' in another. uv 0.12.5 had to be put first on PATH because ~/.local/bin held 0.11.32."
+  },
+  {
+    "issuer_id": "nbr",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "All four modules were accepted on first submission, and the sources could not fill these gaps: interim 10-Qs print no cash interest paid, note collateral, guarantor list, class ranking, covenant EBITDA definition, proxy statement and executed agreements are not supplied, and the Quail Tools sale consideration (cash 375.0 plus note 250.0 against stated net 600.0) is unexplained."
   }
 ]

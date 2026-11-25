@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "bwxt-1486957-2026-11-18-credit_snapshot-host",
+    "issuer_id": "bwxt-1486957",
+    "issuer_name": "BWX Technologies, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_bwxt_bwxt-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_bwxt_bwxt-20241231.htm.jsonl",
+      "sha256": "4c098f8d2a1715022c3b3655e0e43ed4f53750c3f067df955db75d301a228716"
+    },
+    "10-K_2025-12-31_bwxt_bwxt-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_bwxt_bwxt-20251231.htm.jsonl",
+      "sha256": "def93ae8c10cb214fb65da64dcd7dd125942a65c7869e835012a100d15eeaf07"
+    },
+    "10-Q_2026-03-31_bwxt_bwxt-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_bwxt_bwxt-20260331.htm.jsonl",
+      "sha256": "aad238f33784853b150043fe56fc1d514288d307f3b8f29aa6249ed6d1ee948c"
+    },
+    "10-Q_2026-06-30_bwxt_bwxt-63026x10qdocument.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_bwxt_bwxt-63026x10qdocument.htm.jsonl",
+      "sha256": "fe053d0dfc1bc4c2a1301ddd64492022b908895f23a813636bee053c358c56c7"
+    },
+    "10-Q_2026-09-30_bwxt_bwxt-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_bwxt_bwxt-20260930.htm.jsonl",
+      "sha256": "c9c32e7bb10f296af0eb68ef864989cc5fc42e74ce55f469485034020f37a34c"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1486957-bwx-technologies-inc.json",
+      "sha256": "741c781f7776270a69ef43f4152a7804678fd852b6cb9ff305d9220e111387bf"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "45af08bdc33d9c360aaddeda91263e227c450b89d67f61c8d27280b6fd7891c4"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "179d34bed4d31bf7ad9a64c71911f848468be99dfe5a15f2697a1a5b9d34852a"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "d48867ca2671a3cc7dd0a9454c2405ac38051f3467d4cc8abef63b91af84b437"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "218203931ac8f63c646d236900720d3f18e1aa917f5a3d8d1d919388d8c81c74"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for BWX Technologies, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "BWX Technologies, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}
