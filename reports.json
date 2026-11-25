@@ -64,5 +64,49 @@
       "CP-2": 1
     },
     "notes": "The pack has no credit agreement, indentures, ratings, proxy statement or fiscal 2025 non-GAAP reconciliation, so covenant headroom on contract EBITDA, note ranking and guarantors, and market access could not be established, and the page-numbered text extracts could not be checked against the original filings."
+  },
+  {
+    "issuer_id": "cvi",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "Defect not fixed (accepted answers cannot be replaced): the accepted Financial foundation (CP-1) text says the sources do not state when the Marathon acquisition closes, but the Sept 2026 10-Q (page 31) states the company's expectation of closing before the end of 2026; CP-1A and CP-2 use that wording and CP-2 says so plainly. Also: CP-0 was already accepted (attempt 1) before this session started, and the launcher needed /usr/local/bin (uv 0.12.5) put first on PATH; before each submission I pre-tested my drafts with the repo's read-only checker functions (nothing in the repository was edited)."
+  },
+  {
+    "issuer_id": "cmp-1227654",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The already-accepted CP-0 answer (accepted at attempt 1 before this session, so I submitted CP-1, CP-1A and CP-2 only, each accepted first time) says in gap G7 that no significant shareholder is named, but the 2025 annual report names Koch Minerals & Trading at about 17% from October 2022, which I corrected in CP-1A and CP-2 because an accepted answer cannot be replaced."
+  },
+  {
+    "issuer_id": "amcx",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The source set has no executed indentures, proxy statement, ratings, market quotes or Q3 2026 report, and the 10-Q guarantor summary's \"unsecured basis\" wording conflicts with the 10-K's secured description of the 2032 notes; these are logged as gaps and conflicts in the handoffs, not resolvable from the sources. (The default `uv` on PATH was 0.11.32, so I ran the launcher with /usr/local/bin first, where 0.12.5 is installed.)"
+  },
+  {
+    "issuer_id": "w",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "Business & governance (CP-1A) was accepted before I applied a late fix: its liability-management flag says \"None described\" although the annual report (page 54, page 79) says Wayfair may use exchanges for equity or debt on its convertible notes. An accepted answer cannot be replaced, so Fundamental credit (CP-2) states this plainly in its Limitations and Gaps."
   }
 ]

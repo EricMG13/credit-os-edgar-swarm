@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Wayfair Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "43399c8cef27a5fea1c5523c8802a00ed6679b3ea634675ab7f84523ab1a7ba4",
+    "CP-1.md": "0c5422837fabafe76ecb1185b86004c1355f61493dee84c8b96fbd07321b0efa",
+    "CP-1A.md": "12427f2628bd07d0b81b4b6a5fb40457247f958769955bd932bd281e27e4fdf4",
+    "CP-2.md": "38924ee10f6214e830bdaf0e19aab5c3b823728c4e095eefe56f149dc361cbc4",
+    "coverage.json": "b5a1e0d7f5d9d6af0efb9553e1055dd628860bf7c85328a04b8da4bb84cf23b4",
+    "view.json": "34ff1fc06c3a99381f988eb9337c7a8fb267838e610c4c01ed410587774c2ada",
+    "report-view.json": "c147054e53355f085c49d2614229d7f5bb5b0effc1ee3c13a60882cf48cdd074"
+  }
+}

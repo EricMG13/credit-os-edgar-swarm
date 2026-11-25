@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for CVR ENERGY INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "341f6d6d18a1cef5aafa0f3dcc12be394109eaf5840a3d3ac714eb1fe2bac0b4",
+    "CP-1.md": "aea6c06909c432843f7f0fa1a78f608bc020a851e4d0565dd15ef262fc281cf5",
+    "CP-1A.md": "5d26223b96e5bcebbc0a9164fb5d41e8ce018ce8748ba0043f6d9895d8a73055",
+    "CP-2.md": "68034af19b9aae69d28077520800adc76346bb7f2b7a89552d7c909b5250c8b6",
+    "coverage.json": "1d3b0595e6bbb78af994eb8120d67dcb04e5c62ed7ff07fca08607821ab72aaf",
+    "view.json": "0fd4183bd3d407e221bcefae491b54ccf66463dd9917eedfc41b3e87bb63ee59",
+    "report-view.json": "1999d05916c0261971229824ef289ff0ec544380fdc4fbbc8f0c1d1719bee5c7"
+  }
+}

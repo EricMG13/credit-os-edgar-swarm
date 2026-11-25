@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Wayfair Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/6792d3e22edf9e797246db0a3a9a8099971e35237eb306c273422845ea7aa11d/1.response.md",
+    "CP-1": "requests/CP-1/b6866f2b15c3b90a0797fb60237b1a13835f7adee53b447dd5b433f496da26ff/1.response.md",
+    "CP-1A": "requests/CP-1A/b6b245738fa7b884f57682bf4d7e19ba0b88f66616452663f1e15509f39d42ad/1.response.md",
+    "CP-2": "requests/CP-2/3a71332bbb2bab88edfa49e83aef4ce6d7d67babea64150a519f5444f430bb21/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "3f0798798641e0f9bf947c37306f6e53a274da2f5e1423938adead4136e3b41c",
+  "delivery_sha256": "cc7a3ce149f7b1a80642fcd2ac931213346180021499c79d99332fd01d815028"
+}
