@@ -372,7 +372,12 @@ function StressMultiple({
           const at = (value: number) => left + ((value - panel.min) / span) * bars;
           return (
             <g key={panel.measure}>
-              <text x={left} y={top + 12} className="fill-text-secondary text-caption">
+              {/* Stacked panels have the full width for their title, above the names. */}
+              <text
+                x={across === 1 ? 0 : left}
+                y={top + 12}
+                className="fill-text-secondary text-caption"
+              >
                 {panel.measure}
               </text>
               {(across === 1 || index % across === 0) &&

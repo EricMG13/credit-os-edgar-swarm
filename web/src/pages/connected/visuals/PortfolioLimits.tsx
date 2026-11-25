@@ -42,7 +42,7 @@ export function portfolioLimits(table: SourceTable, basis: PortfolioBasis, frame
         }}
       />
       <details className="min-w-0">
-        <summary className="cursor-pointer font-semibold">
+        <summary className="flex min-h-8 cursor-pointer items-center font-semibold max-[480px]:min-h-11">
           Published exposures and proposals
         </summary>
         <ChartTable caption="Published exposures and proposals" {...chartTable(table)} />

@@ -421,7 +421,7 @@ function EventRow({
           aria-label={`Details for ${event.event}`}
           aria-expanded={open}
           aria-controls={panelId}
-          className="relative flex size-7 flex-none cursor-pointer items-center justify-center self-center rounded-ds-sm border border-transparent bg-transparent text-text-tertiary transition-colors duration-150 hover:border-border-control hover:bg-action-subtle hover:text-action focus-visible:border-border-control focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 motion-reduce:transition-none @3xl:-my-[3px] @3xl:self-start max-[480px]:after:absolute max-[480px]:after:-inset-[9px]"
+          className="relative flex size-8 flex-none cursor-pointer items-center justify-center self-center rounded-ds-sm border border-transparent bg-transparent text-text-tertiary transition-colors duration-150 hover:border-border-control hover:bg-action-subtle hover:text-action focus-visible:border-border-control focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 motion-reduce:transition-none @3xl:-my-[3px] @3xl:self-start max-[480px]:z-10 max-[480px]:after:absolute max-[480px]:after:-inset-[7px]"
           onClick={onToggle}
         >
           <ChevronDown aria-hidden="true" className={cx("size-4", open && "rotate-180")} />
