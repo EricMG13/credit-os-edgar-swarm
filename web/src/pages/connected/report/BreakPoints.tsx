@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Segmented } from "@/components/kit/Segmented";
 import type { OutputEntry, Table } from "../publishedReport";
 import { namedTable } from "../reportView";
-import { distinct, sharePosition } from "../visuals/visualData";
+import { distinct, sharePosition, ticks as niceTicks } from "../visuals/visualData";
 import { canReadDownside, registerOrTitled, scenarioShareLabel, share } from "./Downside";
 import { sourceOf, writtenTable } from "./leads/written";
 import { Key } from "./overview/figureParts";
@@ -60,9 +60,9 @@ export function breakPointView(entry: OutputEntry) {
 }
 
 function threshold(text: string) {
+  // A stated share above 100% is kept as written; the axis scales to it.
   const percent = /^(\d+(?:\.\d+)?)%$/.exec(text);
-  const value = Number(percent?.[1]);
-  return percent ? (value <= 100 ? value / 100 : null) : sharePosition(text);
+  return percent ? Number(percent[1]) / 100 : sharePosition(text);
 }
 
 /** A cell as a working page draws it (`readerCell`): a cited clause to the trace, its words kept. */
@@ -139,11 +139,14 @@ export function Ladder({
   label,
   rungs,
   ticks,
+  axis,
   ordered = false,
 }: {
   label: string;
   rungs: readonly Rung[];
   ticks: readonly { at: number; label: string }[];
+  /** What the axis measures and its range, under the tick labels ("Fall in EBITDA, 0–40%"). */
+  axis?: string;
   ordered?: boolean;
 }) {
   const List = ordered ? "ol" : "ul";
@@ -194,11 +197,30 @@ export function Ladder({
           ))}
         </span>
       </div>
+      {axis && (
+        <p aria-hidden="true" className={ROW}>
+          <span className="hidden @md:block" />
+          <span className="col-span-2 text-caption text-text-tertiary @md:col-span-1">{axis}</span>
+        </p>
+      )}
     </div>
   );
 }
 
-const DECLINE_TICKS = [0, 0.25, 0.5, 0.75, 1].map((at) => ({ at, label: `${String(at * 100)}%` }));
+/**
+ * The fall-in-EBITDA axis: from zero to a round maximum at or above the largest stated break (32%
+ * runs to 40%), its ticks as shares of that maximum.
+ */
+function declineAxis(values: readonly (number | null)[]) {
+  const scale = niceTicks(values.map((value) => (value === null ? null : value * 100)));
+  const top = scale.at(-1)?.value || 1;
+  const percent = (value: number) => `${String(value)}%`;
+  return {
+    top: top / 100,
+    ticks: scale.map((tick) => ({ at: tick.value / top, label: `${tick.label}%` })),
+    words: `Fall in EBITDA, 0–${percent(top)}`,
+  };
+}
 const TITLE = "EBITDA break points";
 
 type Data = NonNullable<ReturnType<typeof breakPointView>>;
@@ -247,16 +269,18 @@ export function BreakPointsTile({
         endHeading: "Source",
       }
     : writtenTable(sourceOf(data.table), href);
+  const scale = declineAxis(rows.map(({ value }) => value));
   const figure = chart ? (
     <Ladder
       label={closed(`${TITLE}${basis ? `, ${basis.name.toLowerCase()}` : ""}: ${reading}`)}
       ordered={data.ranked}
-      ticks={DECLINE_TICKS}
+      ticks={scale.ticks}
+      axis={scale.words}
       rungs={rows.map((row) => ({
         key: row.line,
         label: row.label,
         detail: row.status,
-        at: row.value,
+        at: row.value === null ? null : row.value / scale.top,
         words: row.text || "Not stated",
         figure: row.value === null ? "" : row.text,
         bar: row.value === null ? undefined : { "data-decline": String(row.value) },

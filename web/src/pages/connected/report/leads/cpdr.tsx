@@ -21,11 +21,11 @@ export const ResearchLead = withDraws(
           span={12}
           label={QUESTIONS}
           title={QUESTIONS}
-          reason="This page could not read a list of questions with their answers."
+          reason="This page could not read the research questions and their answers."
         >
           {answered && (
             <p className="text-caption text-text-secondary">
-              The answers are written as the executive answer passage.
+              The answers are under Executive answer below.
             </p>
           )}
         </LeadGap>
@@ -41,10 +41,10 @@ export const ResearchLead = withDraws(
             reason="This page could not read causal scenarios."
           />
         )}
-        {/* A third-rank list at span 8: it cannot fit beside the scenarios, so it takes the next row. */}
+        {/* The dated catalysts beside the scenarios, so the row has no hole. */}
         <LaneTile
           lane={eventsOf(entry, "Research catalysts")}
-          span={8}
+          span={4}
           label="Research catalysts"
           title="Research catalysts"
           href={href}

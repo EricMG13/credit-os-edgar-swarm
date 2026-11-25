@@ -18,7 +18,12 @@ it("draws the break-point ladder in authored order on the fall-in-EBITDA axis, w
   expect(figure).toHaveAccessibleName(
     /FCF reaches zero 10%.*Cover reaches watch level 15%.*Net leverage watch level 32%/,
   );
-  expect(figure.querySelector('[data-decline="0.32"]')).toHaveStyle({ width: "32%" });
+  // Review 4, Q3(c): the axis runs to a nice maximum above the largest break (32% → 40%) and says so.
+  expect(figure.querySelector('[data-decline="0.32"]')).toHaveStyle({ width: "80%" });
+  expect(within(ladder).getByText("Fall in EBITDA, 0–40%")).toBeVisible();
+  // Review 4, Q5: the scenarios sit in the column beside the ladder, not under a hole.
+  const column = screen.getByRole("region", { name: "Downside scenarios" }).parentElement;
+  expect(column).toHaveClass("lg:col-span-4", "flex-col");
   expect(within(figure).getByText("Analyst watch level, not a covenant")).toBeInTheDocument();
   fireEvent.click(within(ladder).getByRole("button", { name: "Cash-interest increase 5%" }));
   const shocked = within(ladder).getByRole("img");
@@ -61,15 +66,18 @@ it("draws the gaps truthfully on the retained real T2DS.1 tables, where the read
     const real = fixtureEntry("CP-2A", retained("tdg_sol_high_2026_11_13", file));
     render(<DownsideLead {...leadProps(real)} />);
     const ladder = screen.getByRole("region", { name: "EBITDA break points" });
-    expect(within(ladder).getByText("This page could not read break points.")).toBeVisible();
+    expect(within(ladder).getByText("This page could not read the break points.")).toBeVisible();
     expect(ladder.textContent).not.toMatch(/methodology|Needs/);
     const scenarios = screen.getByRole("region", { name: "Downside scenarios" });
     expect(
-      within(scenarios).getByText("This page could not read stressed metrics by scenario."),
+      within(scenarios).getByText("This page could not read the stressed metrics by scenario."),
     ).toBeVisible();
     expect(screen.queryByRole("img")).toBeNull();
     expect(screen.queryByText("0")).toBeNull();
     expect(screen.queryByText("0%")).toBeNull();
+    // Review 4, Q5: a first tile that is only a gap spans the row; the scenarios take the next.
+    expect(ladder.className).toMatch(/lg:col-span-12/);
+    expect(scenarios.className).toMatch(/lg:col-span-12/);
     cleanup();
   }
 });
@@ -102,15 +110,16 @@ it("says it could not read the tables the real headings carry, and traces each o
   );
   render(<DownsideLead {...leadProps(made)} />);
   const ladder = screen.getByRole("region", { name: "EBITDA break points" });
-  expect(within(ladder).getByText("This page could not read the break-point table.")).toBeVisible();
+  // Review 4, Q8: the reader's words, never "table".
+  expect(within(ladder).getByText("This page could not read the break points.")).toBeVisible();
   expect(
     within(ladder).getByRole("link", { name: "Source for EBITDA break points" }),
   ).toHaveAttribute("href", expect.stringMatching(/#evidence\/.*30/));
   const scenarios = screen.getByRole("region", { name: "Downside scenarios" });
   expect(
-    within(scenarios).getByText("This page could not read the stressed-metrics table."),
+    within(scenarios).getByText("This page could not read the stressed metrics by scenario."),
   ).toBeVisible();
-  expect(document.body.textContent).not.toMatch(/prose|one column per scenario/);
+  expect(document.body.textContent).not.toMatch(/prose|one column per scenario|table\./);
 });
 
 it("draws the ladder from the real T2DS.6 heading when its header is the reader's", () => {
@@ -132,7 +141,7 @@ it("draws nothing for a handoff the store could not read, and words a wrong modu
   cleanup();
   const other = entry("CP-2D", [], []);
   render(<DownsideLead {...leadProps(other)} />);
-  expect(screen.getByText("This page could not read break points.")).toBeVisible();
+  expect(screen.getByText("This page could not read the break points.")).toBeVisible();
 });
 
 it("puts each tile's own choice and its Figure / Table switch in one control row", () => {

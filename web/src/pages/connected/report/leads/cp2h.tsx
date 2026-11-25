@@ -15,6 +15,8 @@ import {
   WITHHELD,
   drawsNothing,
 } from "./read";
+import type { Table } from "../../publishedReport";
+import { onlyGaps } from "./cp2a";
 import type { LeadProps } from "./types";
 
 const TRIGGERS = "Rating triggers";
@@ -22,21 +24,69 @@ const REGISTER = "Rating register";
 
 type Trigger = { agency: string; test: HeadroomTest; line: number };
 
-function Triggers({ entry, href }: { entry: LeadProps["entry"]; href: (line?: number) => string }) {
+type Href = (line?: number) => string;
+
+/** The trigger chart and its tests, or null tests when the page cannot read them. */
+function triggersOf(entry: LeadProps["entry"]) {
   const chart = chartOf(entry, TRIGGERS);
   const tests =
     chart.state === "ready" ? leadTests(chart.table, { ...chart.descriptor, label: 1 }) : null;
+  return { chart, tests };
+}
+
+const SUPERSEDED = /\b(?:superseded|withdrawn|replaced|historical)\b/i;
+
+/**
+ * Each agency's ratings in force from the rating register, by agency name in any letter case:
+ * "BB- · Negative watch" as written, the instrument before it when the agency states more than one.
+ * A superseded or withdrawn row, or one with no rating, gives no chip.
+ */
+function ratingsByAgency(found: Table | undefined) {
+  const by = new Map<string, { instrument: string; text: string }[]>();
+  if (!found) return by;
+  const at = (name: string) => columnOf(found, name);
+  const [agency, rating, outlook, issuer, status] = [
+    "agency",
+    "rating",
+    "outlook/watch",
+    "issuer/instrument",
+    "status",
+  ].map(at);
+  const cell = (cells: string[], column = -1) =>
+    column < 0 ? "" : readerCell(cells[column] ?? "");
+  for (const { cells } of found.rows) {
+    const name = cell(cells, agency).toLowerCase();
+    const stated = cell(cells, rating);
+    if (!name || !stated || SUPERSEDED.test(cell(cells, status))) continue;
+    const text = [stated, cell(cells, outlook)].filter(Boolean).join(" · ");
+    by.set(name, [...(by.get(name) ?? []), { instrument: cell(cells, issuer), text }]);
+  }
+  return by;
+}
+
+function Triggers({
+  entry,
+  register,
+  href,
+  span,
+}: {
+  entry: LeadProps["entry"];
+  register: Table | undefined;
+  href: Href;
+  span: 8 | 12;
+}) {
+  const { chart, tests } = triggersOf(entry);
   if (chart.state !== "ready" || !tests)
     return (
       <LeadGap
-        span={8}
+        span={span}
         label={TRIGGERS}
         title={TRIGGERS}
         reason={
           chart.state === "gap"
             ? chart.reason
             : chart.state === "ready"
-              ? "This page could not read a trigger, threshold and current value from the trigger table."
+              ? "This page could not read each trigger's threshold and current value."
               : chart.state === "withheld"
                 ? WITHHELD
                 : "This page could not read rating triggers."
@@ -58,9 +108,10 @@ function Triggers({ entry, href }: { entry: LeadProps["entry"]; href: (line?: nu
   }));
   const agencies = [...new Set(triggers.map((trigger) => trigger.agency))];
   const basis = rowBasis(table);
+  const ratings = ratingsByAgency(register);
   return (
     <LeadFigure
-      span={8}
+      span={span}
       label={TRIGGERS}
       title={TRIGGERS}
       legend={
@@ -76,8 +127,27 @@ function Triggers({ entry, href }: { entry: LeadProps["entry"]; href: (line?: nu
       figure={
         <div className="flex flex-col gap-4">
           {agencies.map((agency) => (
-            <div key={agency} role="group" aria-label={agency} className="flex flex-col gap-2">
-              <h4 className="text-small font-medium text-text-primary">{agency}</h4>
+            <div
+              key={agency}
+              role="group"
+              aria-label={agency}
+              className="flex flex-col gap-3 border-t border-border-hairline pt-4"
+            >
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <h4 className="text-h4 font-medium text-text-primary">{agency}</h4>
+                {(() => {
+                  const own = ratings.get(agency.toLowerCase()) ?? [];
+                  return own.map(({ instrument, text }, at) => (
+                    <span
+                      key={at}
+                      data-rating=""
+                      className="rounded-ds-xs border border-border-hairline px-1.5 font-mono text-caption text-text-secondary"
+                    >
+                      {own.length > 1 && instrument ? `${instrument}: ${text}` : text}
+                    </span>
+                  ));
+                })()}
+              </div>
               {(() => {
                 const own = triggers.filter((trigger) => trigger.agency === agency);
                 return (
@@ -117,15 +187,14 @@ function Triggers({ entry, href }: { entry: LeadProps["entry"]; href: (line?: nu
  * beside it (a superseded rating reads as superseded), the instrument under it, and the register as
  * written in the table view.
  */
-function Register({ entry, href }: { entry: LeadProps["entry"]; href: (line?: number) => string }) {
-  const found = registerTable(entry, "T2R.1", ["agency", "rating", "outlook/watch"]);
+function Register({ found, href, span }: { found: Table | undefined; href: Href; span: 4 | 12 }) {
   if (!found)
     return (
       <LeadGap
-        span={4}
+        span={span}
         label={REGISTER}
         title={REGISTER}
-        reason="This page could not read a rating register."
+        reason="This page could not read the rating history."
       />
     );
   const at = {
@@ -140,7 +209,7 @@ function Register({ entry, href }: { entry: LeadProps["entry"]; href: (line?: nu
     column < 0 ? "" : readerCell(cells[column] ?? "");
   return (
     <LeadFigure
-      span={4}
+      span={span}
       label={REGISTER}
       title={REGISTER}
       trace={<Trace href={href(found.line)} name={REGISTER} />}
@@ -193,17 +262,35 @@ function Register({ entry, href }: { entry: LeadProps["entry"]; href: (line?: nu
   );
 }
 
+/** The column beside a tall first tile: the page's shorter tiles stacked, so the two columns end near each other. */
+const COLUMN = "flex min-w-0 flex-col gap-4 lg:col-span-4";
+
 /** CP-2H: where each agency's triggers stand, and the ratings now in force. */
 export const RatingsLead = withDraws(
   function RatingsLead(props: LeadProps) {
     const { entry } = props;
     if (drawsNothing(entry)) return null;
     const href = leadHref(props);
+    const register = registerTable(entry, "T2R.1", ["agency", "rating", "outlook/watch"]);
+    const others = <OtherCharts entry={entry} module="CP-2H" href={href} drawn={[TRIGGERS]} />;
+    // A first tile that is only a gap spans the row; the ratings then take the next row whole.
+    if (!triggersOf(entry).tests)
+      return (
+        <Bento>
+          <Triggers entry={entry} register={register} href={href} span={12} />
+          <Register found={register} href={href} span={12} />
+          {others}
+        </Bento>
+      );
+    const short = onlyGaps(entry, [TRIGGERS]);
     return (
       <Bento>
-        <Triggers entry={entry} href={href} />
-        <Register entry={entry} href={href} />
-        <OtherCharts entry={entry} module="CP-2H" href={href} drawn={[TRIGGERS]} />
+        <Triggers entry={entry} register={register} href={href} span={8} />
+        <div className={COLUMN}>
+          <Register found={register} href={href} span={4} />
+          {short && others}
+        </div>
+        {!short && others}
       </Bento>
     );
   },

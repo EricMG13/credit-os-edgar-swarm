@@ -169,6 +169,30 @@ it("draws the typed ledger: strengths left, weaknesses right, each ranked, under
     expect.stringContaining("#evidence/"),
   );
   expect(screen.queryByText(/score/i)).toBeNull();
+  // Review 4, Q5: the measures and the map stack in the column beside the ledger.
+  const tile = screen.getByRole("region", { name: "Strengths and weaknesses" });
+  expect(tile.className).toMatch(/lg:col-span-8/);
+  const column = tile.nextElementSibling as HTMLElement;
+  expect(column).toHaveClass("lg:col-span-4", "flex-col");
+  expect([...column.children].map((item) => item.getAttribute("aria-label"))).toEqual([
+    "Leverage, cover and headroom",
+    "Credit-risk transmission",
+  ]);
+});
+
+it("makes a ledger that is only a gap one full row, the measures and the map beside each other", () => {
+  render(<CreditLead {...leadProps(credit([]))} />);
+  const ledger = screen.getByRole("region", { name: "Strengths and weaknesses" });
+  expect(
+    within(ledger).getByText("This page could not read the strengths and weaknesses."),
+  ).toBeVisible();
+  expect(ledger.className).toMatch(/lg:col-span-12/);
+  expect(screen.getByRole("region", { name: "Leverage, cover and headroom" }).className).toMatch(
+    /lg:col-span-4/,
+  );
+  expect(screen.getByRole("region", { name: "Credit-risk transmission" }).className).toMatch(
+    /lg:col-span-8/,
+  );
 });
 
 it("falls back to the materiality filter by direction, keeping None supported in words", () => {
@@ -306,9 +330,7 @@ it("draws the transmission map, or its gap, and nothing for a blocked module", (
   expect(tile.textContent).not.toMatch(/The map does not mark/);
   cleanup();
   render(<CreditLead {...leadProps(credit([], false))} />);
-  expect(
-    screen.getByText("This page could not read a credit-risk transmission map."),
-  ).toBeVisible();
+  expect(screen.getByText("This page could not read the credit-risk transmission.")).toBeVisible();
   cleanup();
   const { container } = render(
     <CreditLead

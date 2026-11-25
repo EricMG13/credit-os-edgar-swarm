@@ -63,12 +63,13 @@ function research(withAll: boolean) {
 it("states why the question list is a gap, points to the executive answer and never invents coverage", () => {
   render(<ResearchLead {...leadProps(research(true))} />);
   const tile = screen.getByRole("region", { name: "Research questions and answers" });
+  // Review 4, Q8: the reader's words, never "passage"; Q5: one compact full row.
+  expect(tile.className).toMatch(/lg:col-span-12/);
   expect(
-    within(tile).getByText("This page could not read a list of questions with their answers."),
+    within(tile).getByText("This page could not read the research questions and their answers."),
   ).toBeVisible();
-  expect(
-    within(tile).getByText("The answers are written as the executive answer passage."),
-  ).toBeVisible();
+  expect(within(tile).getByText("The answers are under Executive answer below.")).toBeVisible();
+  expect(tile.textContent).not.toMatch(/passage|register|table/);
   // Ruling vii: no note on where the method puts coverage.
   expect(tile.textContent).not.toMatch(/no fixed place|methodology/);
   expect(within(tile).queryByText("Answered")).toBeNull();
@@ -82,13 +83,12 @@ it("draws the causal scenarios as written and the catalysts earliest first", () 
       "A traffic shock would lift leverage.",
     ),
   ).toBeVisible();
-  // The catalysts (third rank) take a row of their own at span 8, not the slot beside the scenarios.
-  expect(screen.getByRole("region", { name: "Research catalysts" }).className).toMatch(
-    /lg:col-span-8/,
-  );
-  expect(screen.getByRole("region", { name: "Causal scenarios" }).className).toMatch(
-    /lg:col-span-8/,
-  );
+  // Review 4, Q5: the catalysts sit beside the scenarios, not on a row of their own.
+  const scenarios = screen.getByRole("region", { name: "Causal scenarios" });
+  expect(scenarios.className).toMatch(/lg:col-span-8/);
+  const catalysts = screen.getByRole("region", { name: "Research catalysts" });
+  expect(catalysts.className).toMatch(/lg:col-span-4/);
+  expect(scenarios.nextElementSibling).toBe(catalysts);
   const items = within(screen.getByRole("list", { name: "Research catalysts" })).getAllByRole(
     "listitem",
   );
@@ -107,7 +107,7 @@ it("says what is missing when the handoff has no scenarios, catalysts or executi
   expect(
     within(catalysts).getByText("This page could not read dated research catalysts."),
   ).toBeVisible();
-  expect(screen.queryByText(/executive answer passage/)).toBeNull();
+  expect(screen.queryByText(/Executive answer/)).toBeNull();
 });
 
 it("draws nothing for a blocked module", () => {

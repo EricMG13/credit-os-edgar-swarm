@@ -37,7 +37,9 @@ it("J3-016 gives the break-point decline one percentage form", () => {
   );
   if (!data) throw new Error("Missing break-point fixture");
   render(<BreakPoints data={data} href={(line) => `#evidence/${String(line)}`} />);
-  expect(within(tile()).getByText("10%", { exact: true })).toBeInTheDocument();
+  // The row's figure (the axis also ends at 10%).
+  const row = within(tile()).getByRole("img").querySelector("li") as HTMLElement;
+  expect(within(row).getByText("10%", { exact: true })).toBeInTheDocument();
   expect(screen.queryByText("0.10 (10%)", { exact: true })).toBeNull();
 });
 
@@ -67,7 +69,9 @@ it("reads the canonical ranking's shares, drawing zero and keeping the original 
   expect(origins).toHaveLength(1);
   expect(items(figure)[0]?.contains(origins[0] ?? null)).toBe(true);
   expect(origins[0]).toHaveClass("w-1", "bg-chart-1");
-  expect(figure.querySelector('[data-decline="0.125"]')).toHaveStyle({ width: "12.5%" });
+  // The axis ends at a round maximum at or above the largest break: 12.5% is itself one.
+  expect(figure.querySelector('[data-decline="0.125"]')).toHaveStyle({ width: "100%" });
+  expect(within(tile()).getByText("Fall in EBITDA, 0–12.5%")).toBeInTheDocument();
   fireEvent.click(within(tile()).getByRole("button", { name: "Table" }));
   expect(within(tile()).getByRole("cell", { name: "12.5%" })).toBeInTheDocument();
   expect(within(tile()).getByRole("cell", { name: "0%" })).toBeInTheDocument();
@@ -208,4 +212,48 @@ it("ends the reading with one full stop when the last value is n.m.", () => {
   expect(within(tile()).getByRole("img")).toHaveAccessibleName(
     "EBITDA break points, required ebitda decline: Cash flow reaches zero 10%, Cover below one n.m.",
   );
+});
+
+// Review 4, Q3(c): the ladder's axis runs to a nice maximum above the largest stated break.
+it("scales the axis to a round maximum above the largest break and says so", () => {
+  const data = breakPointView(
+    entry(
+      "First-break ranking",
+      ["Break point", "Required EBITDA decline"],
+      [
+        ["Cover reaches watch level", "15%"],
+        ["Net leverage watch level", "32%"],
+      ],
+    ),
+  );
+  if (!data) throw new Error("ranking was rejected");
+  render(<BreakPoints data={data} href={() => "#evidence"} />);
+  const figure = within(tile()).getByRole("img");
+  // 32 of 40 and 15 of 40, worked by hand.
+  expect(figure.querySelector('[data-decline="0.32"]')).toHaveStyle({ width: "80%" });
+  expect(figure.querySelector('[data-decline="0.15"]')).toHaveStyle({ width: "37.5%" });
+  expect(within(figure).getByText("40%")).toBeInTheDocument();
+  expect(within(figure).queryByText("100%")).toBeNull();
+  expect(within(tile()).getByText("Fall in EBITDA, 0–40%")).toBeInTheDocument();
+});
+
+it("keeps a stated break above 100% as written and scales the axis to it", () => {
+  const data = breakPointView(
+    entry(
+      "First-break ranking",
+      ["Break point", "Required EBITDA decline"],
+      [
+        ["Cash flow reaches zero", "40%"],
+        ["Net debt exceeds the facility", "120%"],
+      ],
+    ),
+  );
+  if (!data) throw new Error("ranking was rejected");
+  render(<BreakPoints data={data} href={() => "#evidence"} />);
+  const figure = within(tile()).getByRole("img");
+  expect(within(figure).getByText("120%")).toBeInTheDocument();
+  // 120 of 125 (ticks of 25 to 125) and 40 of 125, worked by hand.
+  expect(figure.querySelector('[data-decline="1.2"]')).toHaveStyle({ width: "96%" });
+  expect(figure.querySelector('[data-decline="0.4"]')).toHaveStyle({ width: "32%" });
+  expect(within(tile()).getByText("Fall in EBITDA, 0–125%")).toBeInTheDocument();
 });

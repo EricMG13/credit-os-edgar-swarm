@@ -94,7 +94,7 @@ it("draws the operating model map as the module wrote it, with a table view", ()
 it("states the revenue mix gap and draws ownership, the transaction passage and the history", () => {
   render(<BusinessLead {...leadProps(business({ op: OP, own: OWN, prose: true }))} />);
   const mix = screen.getByRole("region", { name: "Revenue mix" });
-  expect(within(mix).getByText("This page could not read a revenue mix.")).toBeVisible();
+  expect(within(mix).getByText("This page could not read the revenue mix.")).toBeVisible();
   expect(within(mix).queryByText("0")).toBeNull();
   const own = screen.getByRole("list", { name: "Ownership and control" });
   expect(within(own).getByText("Synthetic C")).toBeVisible();
@@ -128,8 +128,10 @@ it("says why when a map or the transaction passage is absent or gapped", () => {
   ).toBeVisible();
   cleanup();
   render(<BusinessLead {...leadProps(entry("CP-1A", [], []))} />);
-  expect(screen.getByText("This page could not read an operating-model map.")).toBeVisible();
-  expect(screen.getByText("This page could not read an ownership and control map.")).toBeVisible();
+  expect(screen.getByText("This page could not read the operating model.")).toBeVisible();
+  expect(
+    screen.getByText("This page could not read who owns and controls the issuer."),
+  ).toBeVisible();
 });
 
 it("draws nothing for a blocked module", () => {
@@ -226,29 +228,54 @@ it("draws no source reference or module code from a map edge or a dated event", 
   expect(tile.textContent).not.toMatch(/annual_report|CP-2A/);
 });
 
-it("draws the proof handoff's revenue mix register cell by cell as written, in a small table tile", () => {
+it("draws the proof handoff's revenue mix cell by cell as written, a stated gap as the gap chip", () => {
   render(<BusinessLead {...leadProps(proofHandoff("CP-1A"))} />);
   const mix = screen.getByRole("region", { name: "Revenue mix" });
-  expect(mix.className).toMatch(/lg:col-span-4/);
+  // Review 4, Q7: "Not supplied: …" is the one gap chip with its reason, never plain text.
+  const list = within(mix).getByRole("list", { name: "Revenue mix" });
+  const [observed] = within(list).getAllByRole("listitem");
+  if (!observed) throw new Error("revenue mix row missing");
+  expect(within(observed).getByText("Observed")).toBeVisible();
+  expect(within(observed).getByText("Not supplied")).toHaveClass("border-dashed");
+  expect(within(observed).getByText("Nothing to report")).toBeVisible();
+  expect(mix.textContent).not.toMatch(/Not supplied:/);
+  expect(within(observed).getByRole("link", { name: /Source for Observed/ })).toHaveAttribute(
+    "href",
+    expect.stringContaining("#evidence/"),
+  );
+  expect(within(mix).queryByText(/could not read/)).toBeNull();
+  fireEvent.click(within(mix).getByRole("button", { name: "Table" }));
   const table = within(mix).getByRole("region", { name: "Revenue mix table" });
   expect(within(table).getByRole("columnheader", { name: "Item" })).toBeVisible();
   expect(within(table).getByRole("rowheader", { name: "Observed" })).toBeVisible();
   expect(
     within(table).getByRole("cell", { name: "Not supplied: nothing to report" }),
   ).toBeVisible();
-  expect(within(mix).getAllByRole("link", { name: /Source for/ })[0]).toHaveAttribute(
-    "href",
-    expect.stringContaining("#evidence/"),
-  );
-  expect(within(mix).queryByText(/could not read/)).toBeNull();
 });
 
-it("keeps the issuer history (third rank) a half-width tile after the maps and the passage", () => {
+// Review 4, Q5: beside the tall operating-model map, the shorter tiles stack in one column.
+it("stacks the revenue mix, the transaction passage and the history beside the operating-model map", () => {
   render(<BusinessLead {...leadProps(business({ op: OP, own: OWN, prose: true }))} />);
-  const history = screen.getByRole("region", { name: "Issuer history" });
-  expect(history.className).toMatch(/lg:col-span-6/);
-  const regions = screen.getAllByRole("region").map((item) => item.getAttribute("aria-label"));
-  expect(regions.indexOf("Issuer history")).toBeGreaterThan(
-    regions.indexOf("Transaction and new debt"),
+  const map = screen.getByRole("region", { name: "Operating model to credit" });
+  expect(map.className).toMatch(/lg:col-span-8/);
+  const column = map.nextElementSibling as HTMLElement;
+  expect(column).toHaveClass("lg:col-span-4", "flex-col");
+  expect([...column.children].map((item) => item.getAttribute("aria-label"))).toEqual([
+    "Revenue mix",
+    "Transaction and new debt",
+    "Issuer history",
+  ]);
+  // A lone map after them takes the full row.
+  expect(screen.getByRole("region", { name: "Ownership and control" }).className).toMatch(
+    /lg:col-span-12/,
   );
+});
+
+it("makes a first map that is only a gap one full row, the ownership map then heads the column", () => {
+  render(<BusinessLead {...leadProps(business({ own: OWN, prose: true }))} />);
+  const gap = screen.getByRole("region", { name: "Operating model to credit" });
+  expect(gap.className).toMatch(/lg:col-span-12/);
+  const own = screen.getByRole("region", { name: "Ownership and control" });
+  expect(own.className).toMatch(/lg:col-span-8/);
+  expect(own.nextElementSibling).toHaveClass("lg:col-span-4");
 });

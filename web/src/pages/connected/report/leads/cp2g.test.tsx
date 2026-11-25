@@ -87,7 +87,12 @@ it("draws every panel's text at 12px and one column per case", () => {
   const figure = within(screen.getByRole("region", { name: "Net leverage path" })).getByRole("img");
   const svg = figure.querySelector("svg") as SVGSVGElement;
   // The view box is the drawn width: user units are CSS pixels.
-  expect(svg.getAttribute("viewBox")).toBe(`0 0 ${String(svg.getAttribute("width"))} 160`);
+  expect(svg.getAttribute("viewBox")).toBe(`0 0 ${String(svg.getAttribute("width"))} 232`);
+  // Review 4, Q6: the plot itself, from the lowest gridline to the highest, is at least 160px tall.
+  const grid = [...svg.querySelectorAll("line.stroke-border-hairline")].map((line) =>
+    Number(line.getAttribute("y1")),
+  );
+  expect(Math.max(...grid) - Math.min(...grid)).toBeGreaterThanOrEqual(160);
   for (const text of figure.querySelectorAll("text"))
     expect(text).toHaveAttribute("font-size", "12");
   expect(figure.querySelector("[data-columns]")).toHaveAttribute("data-columns", "2");
@@ -172,6 +177,33 @@ it("lists the retained drivers by case and year as stated, inheritance as words"
   ).toBeVisible();
   expect(tile.textContent).not.toMatch(/1\.84%/);
   expect(within(tile).getByText(/USD millions/)).toBeVisible();
+});
+
+// Review 4, Q6: below sm the drivers table becomes one card per driver, case × year as a list.
+it("gives each driver a card of its case and year values for a phone, the table above sm", () => {
+  render(<ForwardLead {...leadProps(high(), [], [model])} />);
+  const tile = screen.getByRole("region", { name: "Drivers by case" });
+  const table = within(tile).getByRole("region", { name: "Drivers by case table" });
+  expect(table.parentElement).toHaveClass("hidden", "sm:block");
+  const cards = within(tile).getByRole("list", { name: "Drivers by case, by driver" });
+  expect(cards).toHaveClass("sm:hidden");
+  const growth = within(cards)
+    .getAllByRole("listitem")
+    .find((item) => within(item).queryByRole("heading", { name: "Revenue growth" }));
+  if (!growth) throw new Error("revenue growth card missing");
+  const terms = [...growth.querySelectorAll("dt")].map((item) => item.textContent);
+  const values = [...growth.querySelectorAll("dd")].map((item) => item.textContent);
+  expect(terms.slice(0, 3)).toEqual(["Base case, 2025", "Base case, 2026", "Base case, 2027"]);
+  expect(values.slice(0, 3)).toEqual(["12%", "12%", "12%"]);
+  expect(terms).toContain("Upside case, 2025");
+  expect(values[terms.indexOf("Upside case, 2025")]).toBe("16.2%");
+  const margin = within(cards)
+    .getAllByRole("listitem")
+    .find((item) => within(item).queryByRole("heading", { name: "EBITDA margin" }));
+  if (!margin) throw new Error("margin card missing");
+  const marginTerms = [...margin.querySelectorAll("dt")].map((item) => item.textContent);
+  const marginValues = [...margin.querySelectorAll("dd")].map((item) => item.textContent);
+  expect(marginValues[marginTerms.indexOf("Upside case, 2025")]).toBe("As base");
 });
 
 it("states a declined forecast block with the drivers' own reasons, never zeros", () => {

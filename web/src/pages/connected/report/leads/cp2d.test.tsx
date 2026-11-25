@@ -107,7 +107,7 @@ it("says why when the module wrote no bridge, and draws nothing for a blocked mo
   render(<LiquidityLead {...leadProps(none)} />);
   expect(
     within(screen.getByRole("region", { name: "Liquidity bridge" })).getByText(
-      "This page could not read a liquidity bridge.",
+      "This page could not read the liquidity bridge.",
     ),
   ).toBeVisible();
   cleanup();
@@ -220,9 +220,23 @@ it("states a stated gap or a withheld table of another chart the module publishe
     { title: "Cash runway", table: 99, gap: "no monthly cash flow supplied" },
   ];
   render(<LiquidityLead {...leadProps(made)} />);
-  expect(
-    within(screen.getByRole("region", { name: "Cash runway" })).getByText(
-      "No monthly cash flow supplied",
-    ),
-  ).toBeVisible();
+  const runway = screen.getByRole("region", { name: "Cash runway" });
+  expect(within(runway).getByText("No monthly cash flow supplied")).toBeVisible();
+  // Review 4, Q5: the dates and a short gap tile stack in the column beside the bridge.
+  const bridge = screen.getByRole("region", { name: "Liquidity bridge" });
+  expect(bridge.className).toMatch(/lg:col-span-8/);
+  const column = bridge.nextElementSibling as HTMLElement;
+  expect(column).toHaveClass("lg:col-span-4", "flex-col");
+  expect([...column.children].map((item) => item.getAttribute("aria-label"))).toEqual([
+    "Funding dates",
+    "Cash runway",
+  ]);
+});
+
+it("makes a bridge that is only a gap one full row, and the dates the next", () => {
+  render(<LiquidityLead {...leadProps(entry("CP-2D", [], []))} />);
+  expect(screen.getByRole("region", { name: "Liquidity bridge" }).className).toMatch(
+    /lg:col-span-12/,
+  );
+  expect(screen.getByRole("region", { name: "Funding dates" }).className).toMatch(/lg:col-span-12/);
 });

@@ -153,7 +153,7 @@ it("says why when the triggers are a stated gap or the tables are absent", () =>
     ),
   ).toBeVisible();
   const register = screen.getByRole("region", { name: "Rating register" });
-  expect(within(register).getByText("This page could not read a rating register.")).toBeVisible();
+  expect(within(register).getByText("This page could not read the rating history.")).toBeVisible();
   expect(register.textContent).not.toMatch(/Built from the module's contract/);
   cleanup();
   render(<RatingsLead {...leadProps(ratings())} />);
@@ -322,4 +322,67 @@ it("draws each rating's effective date and status beside it, and every column in
       .slice(0, 5),
   ).toEqual(["Senior notes", "B+", "Rating Watch Positive", "2025-01-15", "Superseded"]);
   expect(tile.textContent).not.toMatch(/p\.1|Release/);
+});
+
+// Review 4, Q3(b): agency groups read as headings, with the agency's rating and outlook beside them.
+it("heads each agency's triggers with a heading and its rating and outlook from the register", () => {
+  render(
+    <RatingsLead {...leadProps(ratings({ triggers: TRIGGER_ROWS, register: REGISTER_ROWS }))} />,
+  );
+  const tile = screen.getByRole("region", { name: "Rating triggers" });
+  const groupA = within(tile).getByRole("group", { name: "Synthetic Agency A" });
+  const heading = within(groupA).getByRole("heading", { level: 4, name: "Synthetic Agency A" });
+  // A heading style distinct from the test names, a hairline above the group.
+  expect(heading).toHaveClass("text-h4");
+  expect(within(groupA).getByText("Net leverage")).not.toHaveClass("text-h4");
+  expect(groupA).toHaveClass("border-t", "border-border-hairline");
+  const chip = within(groupA).getByText("BB- · Negative watch");
+  expect(heading.parentElement).toContainElement(chip);
+  // The bullets sit beneath the heading.
+  expect(within(groupA).getByRole("list", { name: "Synthetic Agency A triggers" })).toBeVisible();
+  const groupB = within(tile).getByRole("group", { name: "Synthetic Agency B" });
+  expect(within(groupB).getByText("Ba3 · Stable")).toBeVisible();
+  // Review 4, Q5: the ratings stack in the column beside the triggers.
+  const register = screen.getByRole("region", { name: "Rating register" });
+  expect(register.parentElement).toHaveClass("lg:col-span-4", "flex-col");
+});
+
+it("draws no rating chip where the register states none for the agency, nor a superseded one", () => {
+  render(
+    <RatingsLead
+      {...leadProps(
+        ratings({
+          triggers: TRIGGER_ROWS,
+          register: [
+            [
+              "Synthetic Agency A",
+              "Synthetic Issuer",
+              "B+",
+              "Stable",
+              "2024-01-15",
+              "Release",
+              "p.1",
+              "Superseded",
+            ],
+            [
+              "Synthetic Agency A",
+              "Synthetic Issuer",
+              "BB-",
+              "",
+              "2025-06-30",
+              "Release",
+              "p.2",
+              "Current",
+            ],
+          ],
+        }),
+      )}
+    />,
+  );
+  const tile = screen.getByRole("region", { name: "Rating triggers" });
+  const groupA = within(tile).getByRole("group", { name: "Synthetic Agency A" });
+  expect(within(groupA).getByText("BB-")).toBeVisible();
+  expect(within(groupA).queryByText(/B\+/)).toBeNull();
+  const groupB = within(tile).getByRole("group", { name: "Synthetic Agency B" });
+  expect(groupB.querySelectorAll("[data-rating]")).toHaveLength(0);
 });

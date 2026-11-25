@@ -253,11 +253,20 @@ function AfterValue({ net, placed }: { net: string; placed: boolean }) {
   );
 }
 
+/** "after" and its figure, or "after" and its gap chip, as one group that never breaks; a gap's reason follows. */
 function AfterHedges({ net, placed }: { net: string; placed: boolean }) {
+  const gap = placed ? null : statedGap(readerCell(net));
   return (
     <span className="flex flex-wrap items-baseline justify-end gap-x-1.5 text-caption text-text-secondary">
-      <span className="font-body">after</span>
-      <AfterValue net={net} placed={placed} />
+      <span data-after="" className="inline-flex items-baseline gap-x-1.5 whitespace-nowrap">
+        <span className="font-body">after</span>
+        {gap ? (
+          <GapCell word={gap.word} className="font-body" />
+        ) : (
+          <AfterValue net={net} placed={placed} />
+        )}
+      </span>
+      {gap && <span className="min-w-0 font-body wrap-anywhere text-gap-text">{gap.reason}</span>}
     </span>
   );
 }
@@ -400,7 +409,7 @@ export function RateLadderTile({
           />
         ) : (
           <CompactGap>
-            This page could not read comparable added annual interest from the rate-shock table.
+            This page could not read comparable added annual interest for each rate shock.
           </CompactGap>
         )
       }
@@ -441,9 +450,13 @@ function fxRows(table: Table, currency: string) {
       const text = row[column] ?? "";
       return { text: readerCell(text), value: unit ? read(text) : null };
     });
-    const top = Math.max(0, ...cells.map(({ value }) => (value !== null && value > 0 ? value : 0)));
+    const placed = cells.flatMap(({ value }) => (value !== null && value >= 0 ? [value] : []));
+    const top = Math.max(0, ...placed);
+    // Bars only where they tell the moves apart: a range under a tenth of the scale is figures only.
+    const bars = top > 0 && Math.max(...placed) - Math.min(...placed) >= top / 10;
     return {
       measure: shown ? `${measure} (${shown})` : measure,
+      bars,
       cells: cells.map(({ text, value }) => ({
         text,
         share: value === null || value < 0 ? null : top > 0 ? value / top : 0,
@@ -507,20 +520,23 @@ export function FxShocksTile({
                   </th>
                 </tr>
                 <tr>
-                  {row.cells.map((cell, at) => (
-                    <td key={at} className="px-2 pt-1 pb-2.5">
-                      <BarCell text={cell.text} share={cell.share} />
-                    </td>
-                  ))}
+                  {row.cells.map((cell, at) =>
+                    row.bars ? (
+                      <td key={at} data-bar-cell="" className="px-2 pt-1 pb-2.5">
+                        <BarCell text={cell.text} share={cell.share} />
+                      </td>
+                    ) : (
+                      <td key={at} className="px-2 pt-1 pb-2.5">
+                        <Figure className="text-small">{cell.text}</Figure>
+                      </td>
+                    ),
+                  )}
                 </tr>
               </tbody>
             ))}
           </table>
         ) : (
-          <CompactGap>
-            This page could not read two or more distinct currency moves from the currency-shock
-            table.
-          </CompactGap>
+          <CompactGap>This page could not read two or more distinct currency moves.</CompactGap>
         )
       }
       table={writtenTable(sourceOf(table), href)}

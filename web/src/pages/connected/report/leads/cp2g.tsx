@@ -5,9 +5,9 @@ import { scenarioShareLabel } from "../Downside";
 import { forecastInput } from "../ForecastRecord";
 import { GapPattern } from "../overview/figureParts";
 import { forwardPath } from "../overview/stressData";
-import { Bento, Tile } from "../overview/Tile";
+import { Bento, Figure, Tile } from "../overview/Tile";
 import { withDraws } from "./draws";
-import { GapCell, LeadFigure, LeadGap, Notes, TableRegion, Trace } from "./parts";
+import { GapCell, KeyValues, LeadFigure, LeadGap, Notes, TableRegion, Trace } from "./parts";
 import { leadHref, readerCell, drawsNothing } from "./read";
 import type { LeadProps } from "./types";
 
@@ -79,7 +79,8 @@ function useWidth(fallback: number) {
   return { box, width };
 }
 
-const P = { height: 160, left: 40, top: 36, base: 124, inset: 30 } as const;
+/** The panel box: the plot runs 160px from its top gridline to its base, labels above and below. */
+const P = { height: 232, left: 40, top: 36, base: 196, inset: 30 } as const;
 
 /** One scale for every case: the model's values placed between the axis ticks, nothing joined across a gap. */
 function scaleOf(path: Path) {
@@ -496,9 +497,31 @@ function DriversTile({
         {amountUnits(document)} A case shows “As base” where it keeps the base driver.
       </p>
       {/* Row labels keep a reading width; the table scrolls inside its own named region. */}
-      <div className="min-w-0 [&_tbody_th]:min-w-[16ch] [&_tbody_th]:whitespace-normal sm:[&_tbody_th]:min-w-[22ch]">
+      <div className="hidden min-w-0 sm:block [&_tbody_th]:min-w-[16ch] [&_tbody_th]:whitespace-normal sm:[&_tbody_th]:min-w-[22ch]">
         <TableRegion label={DRIVERS} table={{ head, rows }} />
       </div>
+      {/* Below sm, one card per driver: its case and year values as a list, never a one-column scroll. */}
+      <ul aria-label={`${DRIVERS}, by driver`} className="flex flex-col sm:hidden">
+        {rows.map((row) => (
+          <li
+            key={row.label}
+            className="flex flex-col gap-2 border-t border-border-hairline py-3 first:border-t-0 first:pt-0"
+          >
+            <h4 className="text-small font-medium text-text-primary">{row.label}</h4>
+            <KeyValues
+              items={row.cells.map((value, at) => ({
+                key: head[at + 1] ?? "",
+                value:
+                  typeof value === "string" ? (
+                    <Figure className="text-caption">{value}</Figure>
+                  ) : (
+                    <GapCell word="Not stated" />
+                  ),
+              }))}
+            />
+          </li>
+        ))}
+      </ul>
       <Notes notes={[shockLine(document), ...beyond]} />
     </Tile>
   );

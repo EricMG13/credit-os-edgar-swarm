@@ -179,47 +179,46 @@ function Column({
   );
 }
 
+const LEDGER = "Strengths and weaknesses";
+
+/** The ledger the page draws: the typed table, the materiality filter, the written passage, or none. */
+function ledgerOf(entry: LeadProps["entry"]) {
+  const ledger = typedLedger(entry) ?? filterLedger(entry);
+  if (ledger) return { ledger, paragraphs: [] };
+  const paragraphs = sectionParagraphs(entry, LEDGER);
+  return paragraphs.length ? { ledger: null, paragraphs } : null;
+}
+
 function LedgerTile({
-  entry,
+  read,
   href,
 }: {
-  entry: LeadProps["entry"];
+  read: ReturnType<typeof ledgerOf>;
   href: (line?: number) => string;
 }) {
-  const ledger = typedLedger(entry) ?? filterLedger(entry);
-  if (ledger)
-    return (
-      <Tile
-        span={8}
-        label="Strengths and weaknesses"
-        title="Strengths and weaknesses"
-        className="w-full self-start"
-      >
-        <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2">
-          <Column title={ledger.words.strengths} items={ledger.strengths} href={href} />
-          <Column title={ledger.words.weaknesses} items={ledger.weaknesses} href={href} />
-        </div>
-        <Notes notes={ledger.unplaced.map((text) => `Not placed: ${text}`)} />
-      </Tile>
-    );
-  const paragraphs = sectionParagraphs(entry, "Strengths and weaknesses");
-  if (!paragraphs.length)
+  if (!read)
     return (
       <LeadGap
-        span={8}
-        label="Strengths and weaknesses"
-        title="Strengths and weaknesses"
-        reason="This page could not read strengths and weaknesses."
+        span={12}
+        label={LEDGER}
+        title={LEDGER}
+        reason="This page could not read the strengths and weaknesses."
       />
     );
+  const { ledger, paragraphs } = read;
   return (
-    <Tile
-      span={8}
-      label="Strengths and weaknesses"
-      title="Strengths and weaknesses"
-      className="w-full self-start"
-    >
-      <Prose label="Strengths and weaknesses" paragraphs={paragraphs} href={href} />
+    <Tile span={8} label={LEDGER} title={LEDGER} className="w-full self-start">
+      {ledger ? (
+        <>
+          <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2">
+            <Column title={ledger.words.strengths} items={ledger.strengths} href={href} />
+            <Column title={ledger.words.weaknesses} items={ledger.weaknesses} href={href} />
+          </div>
+          <Notes notes={ledger.unplaced.map((text) => `Not placed: ${text}`)} />
+        </>
+      ) : (
+        <Prose label={LEDGER} paragraphs={paragraphs} href={href} />
+      )}
     </Tile>
   );
 }
@@ -413,45 +412,66 @@ function HeadroomStat({ props }: { props: LeadProps }) {
   );
 }
 
+/** The column beside a tall first tile: the page's shorter tiles stacked, so the two columns end near each other. */
+const COLUMN = "flex min-w-0 flex-col gap-4 lg:col-span-4";
+
 /** CP-2: the credit view in one place: what supports it, what weakens it, and how risk travels. */
 export const CreditLead = withDraws(
   function CreditLead(props: LeadProps) {
     const { entry } = props;
     if (drawsNothing(entry)) return null;
     const href = leadHref(props);
+    const read = ledgerOf(entry);
+    const measures = (
+      <Tile
+        span={4}
+        label="Leverage, cover and headroom"
+        title="Leverage, cover and headroom"
+        className="w-full self-start"
+      >
+        <dl className="flex flex-col gap-3">
+          <SeriesStat
+            props={props}
+            name="Total debt / EBITDA"
+            chart="leverage"
+            heading={/^Total debt \/ EBITDA$/}
+          />
+          <SeriesStat
+            props={props}
+            name="EBITDA / cash interest"
+            chart="interest cover"
+            heading={/^EBITDA \/ cash interest$/}
+          />
+          <HeadroomStat props={props} />
+        </dl>
+      </Tile>
+    );
+    const map = (span: 4 | 8) => (
+      <MapTile
+        map={mapOf(entry, "credit-risk transmission")}
+        href={href}
+        span={span}
+        label="Credit-risk transmission"
+        title="Credit-risk transmission"
+        absent="This page could not read the credit-risk transmission."
+      />
+    );
+    // The ledger heads the page with the measures and the map stacked beside it; a ledger that is
+    // only a gap is one full row, the measures and the map then beside each other.
     return (
       <Bento>
-        <LedgerTile entry={entry} href={href} />
-        <Tile
-          span={4}
-          label="Leverage, cover and headroom"
-          title="Leverage, cover and headroom"
-          className="w-full self-start"
-        >
-          <dl className="flex flex-col gap-3">
-            <SeriesStat
-              props={props}
-              name="Total debt / EBITDA"
-              chart="leverage"
-              heading={/^Total debt \/ EBITDA$/}
-            />
-            <SeriesStat
-              props={props}
-              name="EBITDA / cash interest"
-              chart="interest cover"
-              heading={/^EBITDA \/ cash interest$/}
-            />
-            <HeadroomStat props={props} />
-          </dl>
-        </Tile>
-        <MapTile
-          map={mapOf(entry, "credit-risk transmission")}
-          href={href}
-          span={12}
-          label="Credit-risk transmission"
-          title="Credit-risk transmission"
-          absent="This page could not read a credit-risk transmission map."
-        />
+        <LedgerTile read={read} href={href} />
+        {read ? (
+          <div className={COLUMN}>
+            {measures}
+            {map(4)}
+          </div>
+        ) : (
+          <>
+            {measures}
+            {map(8)}
+          </>
+        )}
       </Bento>
     );
   },

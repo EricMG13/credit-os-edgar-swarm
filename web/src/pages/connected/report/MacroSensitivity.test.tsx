@@ -118,7 +118,7 @@ it.each([
     expect(within(tile).queryByRole("img")).toBeNull();
     expect(
       within(tile).getByText(
-        "This page could not read comparable added annual interest from the rate-shock table.",
+        "This page could not read comparable added annual interest for each rate shock.",
       ),
     ).toBeVisible();
     fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
@@ -187,6 +187,51 @@ it("draws every stated move in one compact table, each measure's cells as writte
   expect(within(tile).getByRole("cell", { name: "3.01x" })).toBeVisible();
 });
 
+// Review 4, Q7: a measure whose moves differ by under a tenth of its scale is figures only.
+it("draws no bars for a measure whose range across moves is under a tenth of its scale", () => {
+  drawFx(["5%", "10%"]);
+  const figure = within(
+    screen.getByRole("region", { name: "Foreign-currency strengthening" }),
+  ).getByRole("table");
+  const measure = (name: RegExp) => within(figure).getByText(name).closest("tbody") as HTMLElement;
+  // 800 and 801: range 1 against a scale of 801, so no bars, the figures as written.
+  const debt = measure(/^Total debt after the move/);
+  expect(debt.querySelectorAll("[data-bar-cell]")).toHaveLength(0);
+  expect(within(debt).getByText("801")).toBeInTheDocument();
+  // 3.00x and 3.01x: no bars either.
+  const leverage = measure(/^Total leverage after the move/);
+  expect(leverage.querySelectorAll("[data-bar-cell]")).toHaveLength(0);
+  expect(within(leverage).getByText("3.01x")).toBeInTheDocument();
+  // 2 and 3: range 1 against a scale of 3, so each figure keeps its bar.
+  const ebitda = measure(/^Change in EBITDA/);
+  expect(ebitda.querySelectorAll("[data-bar-cell]")).toHaveLength(2);
+});
+
+it("keeps the after-hedges word on the same line as its gap chip", () => {
+  const data = macroView(
+    steps([
+      ["Reference rate up, first shock", "100", "8.00", "0.00"],
+      [
+        "Reference rate up, second shock",
+        "200",
+        "16.00",
+        "Not supplied: no hedge sensitivity retained",
+      ],
+      ["Reference rate up, third shock", "300", "24.00", "8.00"],
+    ]),
+  );
+  if (!data) throw new Error("scenario was rejected");
+  render(<MacroSensitivity data={data} href={() => "#evidence/1"} />);
+  const tile = screen.getByRole("region", { name: "Added annual interest" });
+  const chip = within(tile).getByText("Not supplied");
+  // The word and the chip share one unbreakable group; the reason may wrap after them.
+  const group = chip.closest("[data-after]") as HTMLElement;
+  expect(group).toHaveClass("whitespace-nowrap");
+  expect(within(group).getByText("after")).toBeInTheDocument();
+  expect(within(tile).getByText("No hedge sensitivity retained")).toBeInTheDocument();
+  expect(group).not.toHaveTextContent("No hedge sensitivity retained");
+});
+
 it("draws a third move as a third column, never behind a selector", () => {
   drawFx(["5%", "10%", "15%"]);
   const tile = screen.getByRole("region", { name: "Foreign-currency strengthening" });
@@ -200,9 +245,7 @@ it("says it could not read the moves when two read alike, and keeps the table", 
   drawFx(["5%", "5%"]);
   const tile = screen.getByRole("region", { name: "Foreign-currency strengthening" });
   expect(
-    within(tile).getByText(
-      "This page could not read two or more distinct currency moves from the currency-shock table.",
-    ),
+    within(tile).getByText("This page could not read two or more distinct currency moves."),
   ).toBeVisible();
   fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
   expect(within(tile).getAllByRole("cell", { name: "5%" })).toHaveLength(2);

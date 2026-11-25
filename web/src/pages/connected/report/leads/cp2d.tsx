@@ -6,6 +6,7 @@ import { withDraws } from "./draws";
 import { OtherCharts, rowBasis } from "./written";
 import { CompactGap, LaneTile, LeadFigure, LeadGap, Trace, type LeadTable } from "./parts";
 import { chartOf, eventsOf, leadHref, drawsNothing } from "./read";
+import { onlyGaps } from "./cp2a";
 import type { LeadProps } from "./types";
 
 const TITLE = "Liquidity bridge";
@@ -38,11 +39,11 @@ function LiquidityBridge({
   if (!read)
     return (
       <LeadGap
-        span={8}
+        span={12}
         label={TITLE}
         title={TITLE}
         reason={
-          chart.state === "gap" ? chart.reason : "This page could not read a liquidity bridge."
+          chart.state === "gap" ? chart.reason : "This page could not read the liquidity bridge."
         }
       />
     );
@@ -82,24 +83,47 @@ function LiquidityBridge({
   );
 }
 
+/** The column beside a tall first tile: the page's shorter tiles stacked, so the two columns end near each other. */
+const COLUMN = "flex min-w-0 flex-col gap-4 lg:col-span-4";
+
 /** CP-2D: does cash last, and until when. */
 export const LiquidityLead = withDraws(
   function LiquidityLead(props: LeadProps) {
     const { entry } = props;
     if (drawsNothing(entry)) return null;
     const href = leadHref(props);
+    const drawn = Boolean(bridgeOf(chartOf(entry, TITLE)));
+    const dates = (
+      <LaneTile
+        lane={eventsOf(entry, "Financing")}
+        span={drawn ? 4 : 12}
+        label="Funding dates"
+        title="Funding dates"
+        href={href}
+        absent="This page could not read dated financing events."
+      />
+    );
+    const others = <OtherCharts entry={entry} module="CP-2D" href={href} drawn={[TITLE]} />;
+    const short = onlyGaps(entry, [TITLE]);
+    // The bridge heads the page with the dates (and short gap tiles) stacked beside it; a bridge
+    // that is only a gap is one full row and the dates take the next.
     return (
       <Bento>
         <LiquidityBridge entry={entry} href={href} />
-        <LaneTile
-          lane={eventsOf(entry, "Financing")}
-          span={4}
-          label="Funding dates"
-          title="Funding dates"
-          href={href}
-          absent="This page could not read dated financing events."
-        />
-        <OtherCharts entry={entry} module="CP-2D" href={href} drawn={[TITLE]} />
+        {drawn ? (
+          <>
+            <div className={COLUMN}>
+              {dates}
+              {short && others}
+            </div>
+            {!short && others}
+          </>
+        ) : (
+          <>
+            {dates}
+            {others}
+          </>
+        )}
       </Bento>
     );
   },
