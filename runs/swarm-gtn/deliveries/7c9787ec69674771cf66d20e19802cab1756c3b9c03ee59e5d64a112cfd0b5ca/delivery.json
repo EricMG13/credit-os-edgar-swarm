@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for GRAY MEDIA, INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "151d7c6976209778fb24f710b491d64f53ea1be92150190307d6b329db17921e",
+    "CP-1.md": "63eed181095e77cc7e248e9e142768bcc82855cff7455c99c82346c784108c7f",
+    "CP-1A.md": "5a58416943afd8a75218e9421f83511b078c33cedb06b69c436f51e3be247ff0",
+    "CP-2.md": "fbdc38ea30993d8f05a9f41b94f7bbac7f224d933ac841490665ca0a9c0005a7",
+    "coverage.json": "b510b82ff88e89df13e0c2cd14125f23de85dd0d908fe4c6880002283be3283a",
+    "view.json": "194e08318063bc2b97c72207d11219e588f39e5013306c0f5468718214737d34",
+    "report-view.json": "066ac52308f015558d43c3212c6bd287c48d400c04db1f4a60b58a3bacd658dc"
+  }
+}
