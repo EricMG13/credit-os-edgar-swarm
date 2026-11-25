@@ -97,6 +97,10 @@ unit, CP-1 headline figures) and `run` (folder, as-of). Nothing else.
   trace to the handoff row (`headlineSources`) or the missing-trace marker. An absent figure is
   "Not shown here" (or the module's Not supplied words), never zero. (Round 1 read
   `foundationMetrics` and wrongly stated that the catalogue held no CP-1 figures.)
+- Round 3 (V4): a catalogue figure is drawn only when `headlineSources` finds the handoff row that
+  states the same value; otherwise the cell is a gap with no trace control (no dead stop). The
+  `mark` beside it is a zero-based two-point mark (prior ring, current dot, warning fill when worse)
+  with the basis caption; the strip shows for the selected output only, else a gap note.
 - Other modules: no headline-figure source; the strip is not drawn. A lead may draw its own.
 - 1440: span 12, cells divided by hairlines. 390: two columns.
 
