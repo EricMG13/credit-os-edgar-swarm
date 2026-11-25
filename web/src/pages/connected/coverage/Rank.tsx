@@ -70,7 +70,7 @@ export function RankView({
               const signed = values.some((value) => value < 0);
               const largest = Math.max(...values);
               const lowest = Math.min(...values);
-              const name = `${field.label}, ${period}${`, ${unit === "" ? unitName(unit) : `reporting unit ${unit}`}`}${order === "high" ? ", highest first" : ", lowest first"}`;
+              const name = `${field.label}, ${period}, ${unit === "" ? unitName(unit) : `reporting unit ${unit}`}${order === "high" ? ", highest first" : ", lowest first"}`;
               return (
                 <div key={unit} className="grid gap-2">
                   <p className="text-small text-text-secondary">{name}</p>

@@ -1,4 +1,10 @@
-import { useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import { cx } from "@/utils/cx";
 import {
   factsOf,
@@ -16,6 +22,7 @@ import {
 import { Chip } from "@/components/kit/Chip";
 import { card } from "../layout";
 import { prose } from "./shared";
+import { layoutTrend, type Box, type Metrics, type Placed, type Point } from "./trendLayout";
 
 type Stated = Fact & { at: number };
 type Dot = { fact: Stated; index: number };
@@ -23,10 +30,10 @@ type Scale = { y: (value: number) => number; low: Stated | undefined; high: Stat
 /** Why a period draws no point, by what the run itself states for it. */
 type Missing = { long: string; short: string };
 
-const WIDTH = 320;
-const HEIGHT = 150;
-const PAD = { left: 20, right: 12, top: 20, bottom: 26 };
-const PLOT_WIDTH = WIDTH - PAD.left - PAD.right;
+/** The width a panel is laid out at until (or where) its own width can be read. */
+const FALLBACK_WIDTH = 320;
+const HEIGHT = 170;
+const PAD = { left: 22, right: 12, top: 22, bottom: 34 };
 const PLOT_HEIGHT = HEIGHT - PAD.top - PAD.bottom;
 const BOTTOM = PAD.top + PLOT_HEIGHT;
 /** From this many points a series is drawn as lines; fewer are dots (two with a connector) and written values. */
@@ -47,7 +54,9 @@ function missingAt(facts: readonly Fact[], period: string, unit: string): Missin
   const here = facts.filter((fact) => fact.period === period);
   const inUnit = here.filter((fact) => fact.at !== null && (fact.unit ?? "") === unit);
   if (inUnit.length > 1) {
-    const texts = inUnit.map(figure).join("; ");
+    const texts = inUnit
+      .map((fact) => `${figure(fact)}${fact.heading ? `, stated as ${fact.heading}` : ""}`)
+      .join("; ");
     return {
       long: `states this period more than once (${texts}), so none is drawn`,
       short: `Stated more than once: ${texts}`,
@@ -110,8 +119,8 @@ function scaleOf(series: readonly TrendSeries[]): Scale {
   return { y: (value) => PAD.top + ((top - value) / span) * PLOT_HEIGHT, low, high };
 }
 
-const x = (index: number, count: number): number =>
-  PAD.left + ((index + 0.5) / count) * PLOT_WIDTH;
+const x = (index: number, count: number, width: number): number =>
+  PAD.left + ((index + 0.5) / count) * (width - PAD.left - PAD.right);
 
 /** Stated points cut into runs of consecutive periods; a line never crosses a missing period. */
 function segmentsOf(dots: readonly Dot[]): Dot[][] {
@@ -157,188 +166,96 @@ function Lines({ dots, at }: { dots: readonly Dot[]; at: (dot: Dot) => string })
   });
 }
 
-/** SVG font size of a value label; its width is estimated at 7 units a character. */
-const LABEL_FONT = 11;
-const CHAR = 7;
-const ASCENT = 11;
-const DESCENT = 3;
-const EDGE = 1;
+/** Every SVG text is drawn at this size; 1 SVG unit is 1px, so this is its rendered size. */
+const FONT = 12;
 const DOT_R = 4;
-/** Where the zero label's right edge and the period labels' baseline sit. */
-const ZERO_X = PAD.left - 4;
-const PERIOD_Y = HEIGHT - 8;
-type Point = { x: number; y: number };
-type Box = { left: number; right: number; top: number; bottom: number };
-type Anchor = "start" | "end" | "middle";
-type Side = "above" | "below";
-type Label = { which: "first" | "last"; text: string; x: number; y: number; anchor: Anchor; box: Box };
-type End = { which: "first" | "last"; at: Point; toward: Point | undefined; text: string };
+const GAP_RISE = 14;
+const TEXT_CLASS = "font-mono";
+/** Where text cannot be measured (jsdom), a character is taken as 0.6em wide. */
+const estimate = (text: string): number => text.length * FONT * 0.6;
+const FALLBACK: Metrics = { width: estimate, ascent: FONT * 0.92, descent: FONT * 0.24 };
 
-/** Everything drawn that a value label must keep clear of. */
-type Obstacles = { points: Point[]; segments: [Point, Point][]; boxes: Box[] };
-
-const textBox = (text: string, x: number, anchor: Anchor, top: number, bottom: number): Box => {
-  const width = text.length * CHAR;
-  const left = anchor === "end" ? x - width : anchor === "middle" ? x - width / 2 : x;
-  return { left, right: left + width, top, bottom };
-};
-
-function place(end: End, side: Side, x: number, anchor: Anchor): Label {
-  const y = side === "above" ? end.at.y - 8 : end.at.y + 16;
-  const box = textBox(end.text, x, anchor, y - ASCENT, y + DESCENT);
-  return { which: end.which, text: end.text, x, y, anchor, box };
+/** The panel's width in px, read after mount and on every resize; a fixed width where none can be read. */
+function usePanelWidth(ref: RefObject<HTMLDivElement | null>): number {
+  const [width, setWidth] = useState(FALLBACK_WIDTH);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return undefined;
+    const read = () => {
+      const px = Math.floor(el.getBoundingClientRect().width);
+      setWidth(px > 0 ? px : FALLBACK_WIDTH);
+    };
+    read();
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const observer = new ResizeObserver(read);
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+    };
+  }, [ref]);
+  return width;
 }
 
-/** Away from the line: below when the neighbouring line rises from the dot, above otherwise. */
-function sides(end: End): Side[] {
-  return end.toward && end.toward.y < end.at.y ? ["below", "above"] : ["above", "below"];
+/** A count that rises once web fonts have loaded, so text is measured again in its real face. */
+function useFontsLoaded(): number {
+  const [loaded, setLoaded] = useState(0);
+  useEffect(() => {
+    const fonts = (document as { fonts?: FontFaceSet }).fonts;
+    if (!fonts) return undefined;
+    let live = true;
+    void fonts.ready.then(() => {
+      if (live) setLoaded((n) => n + 1);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
+  return loaded;
 }
 
-/** Across a dot, for a first label (a last mirrors it): leaning out, centred, leaning in, then wholly beside the dot. */
-const ACROSS: [number, Anchor][] = [
-  [4, "end"],
-  [0, "middle"],
-  [-4, "start"],
-  [-DOT_R - 1, "end"],
-  [DOT_R + 1, "start"],
-];
-const MIRROR: Record<Anchor, Anchor> = { end: "start", start: "end", middle: "middle" };
-
-/** Every spot tried for a label, best first: each side of the dot, by every way across it. */
-function candidates(end: End, single: boolean): Label[] {
-  const mirrored = !single && end.which === "last";
-  const across = ACROSS.map(([dx, anchor]): [number, Anchor] =>
-    mirrored ? [-dx, MIRROR[anchor]] : [dx, anchor],
-  );
-  const order = single ? [...across.slice(1, 2), ...across.slice(0, 1), ...across.slice(2)] : across;
-  return sides(end).flatMap((side) =>
-    order.map(([dx, anchor]) => place(end, side, end.at.x + dx, anchor)),
-  );
-}
-
-const inBox = (box: Box, p: Point, pad = 0): boolean =>
-  p.x >= box.left - pad && p.x <= box.right + pad && p.y >= box.top - pad && p.y <= box.bottom + pad;
-
-const grow = (box: Box, by: number): Box => ({
-  left: box.left - by,
-  right: box.right + by,
-  top: box.top - by,
-  bottom: box.bottom + by,
-});
-
-const meet = (a: Box, b: Box): boolean =>
-  a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
-
-/** Whether a segment runs through a box (Liang-Barsky clipping, edges included). */
-function crosses(box: Box, a: Point, b: Point): boolean {
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const edges: [number, number][] = [
-    [-dx, a.x - box.left],
-    [dx, box.right - a.x],
-    [-dy, a.y - box.top],
-    [dy, box.bottom - a.y],
-  ];
-  let enter = 0;
-  let leave = 1;
-  for (const [p, q] of edges) {
-    if (p === 0) {
-      if (q < 0) return false;
-      continue;
+/** Widths of the hidden measuring texts in the SVG, and the font's box from one of them. */
+function measure(svg: SVGSVGElement): Metrics {
+  const widths = new Map<string, number>();
+  let ascent = 0;
+  let descent = 0;
+  for (const el of svg.querySelectorAll<SVGTextElement>("text[data-measure]")) {
+    const text = el.textContent;
+    const width = typeof el.getComputedTextLength === "function" ? el.getComputedTextLength() : 0;
+    if (width > 0) widths.set(text, width);
+    if (typeof el.getBBox === "function" && ascent === 0) {
+      const box = el.getBBox();
+      // Measured at baseline 0: the box starts ascent above it.
+      if (box.height > 0) {
+        ascent = -box.y;
+        descent = box.y + box.height;
+      }
     }
-    if (p < 0) enter = Math.max(enter, q / p);
-    else leave = Math.min(leave, q / p);
-    if (enter > leave) return false;
   }
-  return true;
+  if (widths.size === 0 || ascent <= 0) return FALLBACK;
+  return { width: (text) => widths.get(text) ?? estimate(text), ascent, descent };
 }
 
-/** A label is clear when it stays inside the panel and off every dot, line, axis text and other label. */
-function clear(label: Label, obstacles: Obstacles, others: readonly Label[]): boolean {
-  const { box } = label;
-  if (box.left < EDGE || box.right > WIDTH - EDGE || box.top < EDGE || box.bottom > HEIGHT - EDGE)
-    return false;
-  const margin = grow(box, 1);
-  if (obstacles.points.some((p) => inBox(box, p, DOT_R + 0.5))) return false;
-  if (obstacles.segments.some(([a, b]) => crosses(margin, a, b))) return false;
-  return [...obstacles.boxes, ...others.map((item) => item.box)].every((item) => !meet(margin, item));
+function useMetrics(ref: RefObject<SVGSVGElement | null>, key: string, width: number): Metrics {
+  const [metrics, setMetrics] = useState<Metrics>(FALLBACK);
+  const fonts = useFontsLoaded();
+  useLayoutEffect(() => {
+    if (ref.current) setMetrics(measure(ref.current));
+  }, [ref, key, width, fonts]);
+  return metrics;
 }
 
-/** Both labels on the first clear pair of spots; failing that, each one that can stand alone. A label with no clear spot is not drawn. */
-function layout(ends: readonly End[], obstacles: Obstacles): Label[] {
-  const single = ends.length === 1;
-  const [a, b] = ends;
-  if (!a) return [];
-  const forA = candidates(a, single).filter((label) => clear(label, obstacles, []));
-  if (!b) return forA.slice(0, 1);
-  const forB = candidates(b, single).filter((label) => clear(label, obstacles, []));
-  for (const la of forA) {
-    const lb = forB.find((label) => clear(label, obstacles, [la]));
-    if (lb) return [la, lb];
-  }
-  return [...forA.slice(0, 1), ...forB.slice(0, forA.length > 0 ? 0 : 1)];
-}
-
-/** What a panel draws that a value label must avoid: its dots, its lines, the zero and bottom axes and their text. */
-function obstaclesOf(
-  points: readonly Point[],
-  dots: readonly Dot[],
-  zero: number,
-  periodLabels: readonly { period: string; x: number }[],
-): Obstacles {
-  const lines = dots.flatMap((dot, i): [Point, Point][] => {
-    const prev = dots[i - 1];
-    const from = points[i - 1];
-    const to = points[i];
-    return prev && from && to && prev.index === dot.index - 1 ? [[from, to]] : [];
-  });
-  const axis = (at: number): [Point, Point] => [
-    { x: PAD.left, y: at },
-    { x: WIDTH - PAD.right, y: at },
-  ];
-  const zeroLabel = textBox("0", ZERO_X, "end", zero - 7, zero + 7);
-  const row = periodLabels.map(({ period, x: px }) =>
-    textBox(period, px, "middle", PERIOD_Y - ASCENT, PERIOD_Y + DESCENT),
-  );
-  return { points: [...points], segments: [...lines, axis(zero), axis(BOTTOM)], boxes: [zeroLabel, ...row] };
-}
-
-/** The first and last value labels a panel can draw clear of everything else. */
-function endLabels(dots: readonly Dot[], points: readonly Point[], obstacles: Obstacles): Label[] {
-  const end = (which: "first" | "last", i: number, toward: number): End[] => {
-    const dot = dots[i];
-    const at = points[i];
-    return dot && at ? [{ which, at, toward: points[toward], text: figure(dot.fact) }] : [];
-  };
-  const last = dots.length - 1;
-  const ends = last === 0 ? end("first", 0, 1) : [...end("first", 0, 1), ...end("last", last, last - 1)];
-  return layout(ends, obstacles);
-}
-
-function EndLabels({ labels }: { labels: readonly Label[] }) {
-  return labels.map((label) => (
-    <text
-      key={label.which}
-      data-label={label.which}
-      x={label.x.toFixed(2)}
-      y={label.y.toFixed(2)}
-      textAnchor={label.anchor}
-      fontSize={LABEL_FONT}
-      className="fill-text-primary font-mono"
-    >
-      {label.text}
-    </text>
-  ));
-}
-
-/** The figures written under a panel: every one of a short series; of a line, the last and any first not labelled on it. */
-function writtenDots(dots: readonly Dot[], labels: readonly Label[]): Dot[] {
+/** The figures written under a panel: every one of a short series; of a line, the last and any end not labelled on it. */
+function writtenDots(dots: readonly Dot[], fallback: readonly number[]): Dot[] {
   if (dots.length < LINE_FROM) return [...dots];
-  const first = dots[0];
-  const last = dots.at(-1);
-  const unlabelled = first && !labels.some((label) => label.which === "first") ? [first] : [];
-  return [...unlabelled, ...(last ? [last] : [])];
+  return dots.filter((_, i) => i === dots.length - 1 || fallback.includes(i));
 }
+
+const plotOf = (width: number): Box => ({
+  left: PAD.left,
+  right: width - PAD.right,
+  top: PAD.top,
+  bottom: BOTTOM,
+});
 
 function Panel({
   series,
@@ -353,21 +270,49 @@ function Panel({
   facts: readonly Fact[];
   unit: string;
 }) {
+  const holder = useRef<HTMLDivElement>(null);
+  const svg = useRef<SVGSVGElement>(null);
+  const width = usePanelWidth(holder);
   const { y } = scale;
+  const plot = plotOf(width);
+  const px = (index: number) => x(index, periods.length, width);
   const dots: Dot[] = series.points.flatMap((fact, index) =>
     isStated(fact) ? [{ fact, index }] : [],
   );
   const missing = periods.flatMap((period, index) =>
-    isStated(series.points[index]) ? [] : [{ period, ...missingAt(facts, period, unit) }],
+    isStated(series.points[index]) ? [] : [{ period, index, ...missingAt(facts, period, unit) }],
   );
-  const at = (dot: Dot) => `${x(dot.index, periods.length).toFixed(2)},${y(dot.fact.at).toFixed(2)}`;
-  const step = Math.ceil(periods.length / 6);
-  const periodLabels = periods.flatMap((period, index) =>
-    index % step === 0 ? [{ period, x: x(index, periods.length) }] : [],
-  );
-  const points = dots.map((dot) => ({ x: x(dot.index, periods.length), y: y(dot.fact.at) }));
-  const labels = endLabels(dots, points, obstaclesOf(points, dots, y(0), periodLabels));
-  const written = writtenDots(dots, labels);
+  const points = dots.map((dot) => ({
+    x: px(dot.index),
+    y: y(dot.fact.at),
+    text: figure(dot.fact),
+    period: dot.fact.period ?? "",
+  }));
+  const segments = dots.flatMap((dot, i): [Point, Point][] => {
+    const prev = dots[i - 1];
+    const from = points[i - 1];
+    const to = points[i];
+    return prev && from && to && prev.index === dot.index - 1 ? [[from, to]] : [];
+  });
+  const labelled = dots.length === 0 ? [] : [...new Set([0, dots.length - 1])];
+  const texts = [
+    "0",
+    ...periods,
+    ...points.flatMap((point) => [point.text, `${point.text} · ${point.period}`]),
+  ];
+  const metrics = useMetrics(svg, texts.join("\n"), width);
+  const layout = layoutTrend({
+    metrics,
+    geometry: { width, height: HEIGHT, plot: plot, zero: y(0), axis: BOTTOM },
+    points,
+    segments,
+    ticks: periods.map((period, index) => ({ x: px(index), text: period })),
+    gaps: missing.map(({ index }) => ({ x: px(index), top: BOTTOM - GAP_RISE, bottom: BOTTOM })),
+    dotRadius: DOT_R,
+    labelled,
+  });
+  const written = writtenDots(dots, layout.fallback);
+  const at = (dot: Dot) => `${px(dot.index).toFixed(2)},${y(dot.fact.at).toFixed(2)}`;
   const zero = y(0).toFixed(2);
   const label = `${series.name}: ${dots.map((dot) => figure(dot.fact)).join(", ")} across ${dots
     .map((dot) => dot.fact.period)
@@ -378,107 +323,84 @@ function Panel({
       className="flex min-w-0 flex-col gap-3 rounded-ds-lg border border-border-subtle bg-surface-card p-4"
     >
       <h3 className="text-small font-semibold wrap-anywhere">{series.name}</h3>
-      <svg
-        role="img"
-        aria-label={label}
-        viewBox={`0 0 ${String(WIDTH)} ${String(HEIGHT)}`}
-        className="h-auto w-full text-chart-1"
-      >
-        <line
-          data-bottom=""
-          x1={PAD.left}
-          x2={WIDTH - PAD.right}
-          y1={BOTTOM}
-          y2={BOTTOM}
-          stroke="var(--color-border-subtle)"
-        />
-        <line
-          data-zero=""
-          x1={PAD.left}
-          x2={WIDTH - PAD.right}
-          y1={zero}
-          y2={zero}
-          stroke="var(--color-text-tertiary)"
-          strokeWidth={1}
-        />
-        <text
-          data-zero-label=""
-          x={ZERO_X}
-          y={zero}
-          textAnchor="end"
-          dominantBaseline="middle"
-          className="fill-text-tertiary font-mono text-caption"
+      <div ref={holder} className="w-full min-w-0">
+        <svg
+          ref={svg}
+          role="img"
+          aria-label={label}
+          viewBox={`0 0 ${String(width)} ${String(HEIGHT)}`}
+          className="block h-auto w-full text-chart-1"
         >
-          0
-        </text>
-        {periodLabels.map(({ period, x: px }) => (
-          <text
-            key={period}
-            data-period-label=""
-            x={px}
-            y={PERIOD_Y}
-            textAnchor="middle"
-            className="fill-text-tertiary text-caption"
-          >
-            {period}
-          </text>
-        ))}
-        {missing.map(({ period }) => {
-          const gx = x(periods.indexOf(period), periods.length);
-          return (
+          <g data-measuring="" aria-hidden="true" visibility="hidden">
+            {[...new Set(texts)].map((text) => (
+              <text key={text} data-measure="" x={0} y={0} fontSize={FONT} className={TEXT_CLASS}>
+                {text}
+              </text>
+            ))}
+          </g>
+          <line
+            data-bottom=""
+            x1={plot.left}
+            x2={plot.right}
+            y1={BOTTOM}
+            y2={BOTTOM}
+            stroke="var(--color-border-subtle)"
+          />
+          <line
+            data-zero=""
+            x1={plot.left}
+            x2={plot.right}
+            y1={zero}
+            y2={zero}
+            stroke="var(--color-text-tertiary)"
+            strokeWidth={1}
+          />
+          <PlacedText item={layout.zeroLabel} data="data-zero-label" tone="fill-text-tertiary" />
+          {layout.ticks.map((tick) => (
+            <PlacedText
+              key={tick.index}
+              item={tick}
+              data="data-period-label"
+              tone="fill-text-tertiary"
+            />
+          ))}
+          {missing.map(({ period, index }) => (
             <line
               key={period}
               data-gap={period}
-              x1={gx}
-              x2={gx}
+              x1={px(index)}
+              x2={px(index)}
               y1={BOTTOM}
-              y2={BOTTOM - 14}
+              y2={BOTTOM - GAP_RISE}
               stroke="var(--color-text-tertiary)"
               strokeWidth={2}
               strokeDasharray="2 2"
             />
-          );
-        })}
-        <Lines dots={dots} at={at} />
-        {dots.map((dot) => (
-          <circle
-            key={dot.index}
-            data-value={dot.fact.text}
-            data-period={dot.fact.period ?? ""}
-            cx={x(dot.index, periods.length).toFixed(2)}
-            cy={y(dot.fact.at).toFixed(2)}
-            r={4}
-            fill="currentColor"
-          />
-        ))}
-        <EndLabels labels={labels} />
-      </svg>
-      {dots.length < LINE_FROM ? (
-        <ul
-          aria-label="Figures as written"
-          data-written=""
-          className="m-0 flex list-none flex-wrap gap-x-4 gap-y-1 p-0 font-mono text-small tabular-nums"
-        >
-          {written.map((dot) => (
-            <li key={dot.index}>
-              <span className="text-text-tertiary">{dot.fact.period}</span>{" "}
-              <span>{figure(dot.fact)}</span>
-            </li>
           ))}
-        </ul>
-      ) : (
-        <p
-          data-written=""
-          className="m-0 flex flex-wrap gap-x-4 gap-y-1 font-mono text-small tabular-nums"
-        >
-          {written.map((dot) => (
-            <span key={dot.index}>
-              <span className="text-text-tertiary">{dot.fact.period}</span>{" "}
-              <span>{figure(dot.fact)}</span>
-            </span>
+          <Lines dots={dots} at={at} />
+          {dots.map((dot) => (
+            <circle
+              key={dot.index}
+              data-value={dot.fact.text}
+              data-period={dot.fact.period ?? ""}
+              cx={px(dot.index).toFixed(2)}
+              cy={y(dot.fact.at).toFixed(2)}
+              r={DOT_R}
+              fill="currentColor"
+            />
           ))}
-        </p>
-      )}
+          {layout.labels.map((item) => (
+            <PlacedText
+              key={item.index}
+              item={item}
+              data="data-label"
+              value={item.index === 0 ? "first" : "last"}
+              tone="fill-text-primary"
+            />
+          ))}
+        </svg>
+      </div>
+      <Written dots={written} list={dots.length < LINE_FROM} />
       {missing.length > 0 && (
         <ul
           aria-label="Periods not drawn"
@@ -490,6 +412,57 @@ function Panel({
         </ul>
       )}
     </article>
+  );
+}
+
+/** One text placed by the layout: left-aligned at its box, in the measured font. */
+function PlacedText({
+  item,
+  data,
+  value = "",
+  tone,
+}: {
+  item: Placed;
+  data: string;
+  value?: string;
+  tone: string;
+}) {
+  return (
+    <text
+      {...{ [data]: value }}
+      x={item.x.toFixed(2)}
+      y={item.y.toFixed(2)}
+      textAnchor="start"
+      fontSize={FONT}
+      className={cx(tone, TEXT_CLASS)}
+    >
+      {item.text}
+    </text>
+  );
+}
+
+/** The figures written under the panel, each with its period. */
+function Written({ dots, list }: { dots: readonly Dot[]; list: boolean }) {
+  const entry = (dot: Dot) => (
+    <>
+      <span className="text-text-tertiary">{dot.fact.period}</span> <span>{figure(dot.fact)}</span>
+    </>
+  );
+  const row = "m-0 flex flex-wrap gap-x-4 gap-y-1 font-mono text-small tabular-nums";
+  if (list)
+    return (
+      <ul aria-label="Figures as written" data-written="" className={cx(row, "list-none p-0")}>
+        {dots.map((dot) => (
+          <li key={dot.index}>{entry(dot)}</li>
+        ))}
+      </ul>
+    );
+  return (
+    <p data-written="" className={row}>
+      {dots.map((dot) => (
+        <span key={dot.index}>{entry(dot)}</span>
+      ))}
+    </p>
   );
 }
 

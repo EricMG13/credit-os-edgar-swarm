@@ -21,7 +21,9 @@ export function IssuerDetail({ data, issuer }: { data: Data; issuer: Issuer }) {
   // Opened below the matrix, the detail comes into view and takes focus at its heading.
   useEffect(() => {
     title.current?.focus();
-    title.current?.scrollIntoView?.({ block: "start" });
+    // jsdom has no scrollIntoView.
+    if (typeof title.current?.scrollIntoView === "function")
+      title.current.scrollIntoView({ block: "start" });
   }, []);
   return (
     <section className={card} aria-label={issuer.name}>
