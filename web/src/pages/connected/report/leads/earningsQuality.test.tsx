@@ -676,4 +676,34 @@ describe("EarningsQualityLead", () => {
     for (const rect of svg?.querySelectorAll("rect[data-bar]") ?? [])
       expect(attr(rect, "x") + attr(rect, "width")).toBeLessThanOrEqual(390);
   });
+
+  it("never doubles a full stop in a gap sentence or an aria-label", () => {
+    const hole = quality([
+      BRIDGE[0] ?? [],
+      ["Run-rate savings", "Not supplied: not quantified.", "US$m", ""],
+      BRIDGE[4] ?? [],
+    ]);
+    render(<EarningsQualityLead {...leadProps(hole)} />);
+    expect(document.body.textContent).not.toContain("..");
+    for (const el of document.querySelectorAll("[aria-label]"))
+      expect(el.getAttribute("aria-label"), el.getAttribute("aria-label") ?? "").not.toContain(
+        "..",
+      );
+    cleanup();
+    render(
+      <EarningsQualityLead
+        {...leadProps(
+          quality(BRIDGE, ASSESSMENT, [
+            ["Statements (CP-1)", "", "", "", "n.m.", "4.0x"],
+            ["Supported", "", "", "", "Not supplied: cash not split.", "5.9x"],
+          ]),
+        )}
+      />,
+    );
+    expect(document.body.textContent).not.toContain("..");
+    for (const el of document.querySelectorAll("[aria-label]"))
+      expect(el.getAttribute("aria-label"), el.getAttribute("aria-label") ?? "").not.toContain(
+        "..",
+      );
+  });
 });

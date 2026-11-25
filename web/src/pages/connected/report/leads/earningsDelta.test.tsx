@@ -18,6 +18,7 @@ import {
   TWICE_RESULTS,
 } from "./earningsDeltaData";
 import { cp1bEntry, leadProps } from "./fixtures/load";
+import { chartTitles } from "./kit/UnreadFigures";
 
 afterEach(cleanup);
 
@@ -1141,8 +1142,8 @@ describe("EarningsDeltaLead with a variance bridge", () => {
   const GOOD = BRIDGE_ROWS;
   it("draws the waterfall first, plainly titled, each step a bar from the running total", () => {
     const { container } = lead(delta(steps(GOOD), results(MONEY)));
-    const tile = screen.getByRole("region", { name: "Variance bridge" });
-    expect(within(tile).getByRole("heading", { name: "Variance bridge" })).toBeVisible();
+    const tile = screen.getByRole("region", { name: "Earnings bridge" });
+    expect(within(tile).getByRole("heading", { name: "Earnings bridge" })).toBeVisible();
     expect(within(tile).getByText("Prior to current, US$m")).toBeVisible();
     const bar = (label: string) =>
       container.querySelector(`rect[data-label="${label}"]`) as SVGRectElement;
@@ -1159,7 +1160,7 @@ describe("EarningsDeltaLead with a variance bridge", () => {
   });
   it("names a negative step by its label as written, never as an add-back, and makes no running total", () => {
     const { container } = lead(delta(steps(GOOD)));
-    const tile = screen.getByRole("region", { name: "Variance bridge" });
+    const tile = screen.getByRole("region", { name: "Earnings bridge" });
     expect(textOf(tile, "label")).toContain("Disposal");
     expect(tile.textContent).toContain("−10");
     expect(tile).not.toHaveTextContent(/add-back|running total/i);
@@ -1169,7 +1170,7 @@ describe("EarningsDeltaLead with a variance bridge", () => {
   });
   it("carries the steps as the handoff states them in the table view, with no total made here", () => {
     lead(delta(steps(GOOD)));
-    const tile = screen.getByRole("region", { name: "Variance bridge" });
+    const tile = screen.getByRole("region", { name: "Earnings bridge" });
     const rows = rowsOf(tile);
     const head = [...tile.querySelectorAll("table thead th")].map((cell) => cell.textContent);
     expect(head).toEqual(["Step", "Role", "Amount (US$m)"]);
@@ -1179,7 +1180,7 @@ describe("EarningsDeltaLead with a variance bridge", () => {
     lead(
       delta(steps([...GOOD.slice(0, 3), ["Revenue FY2024", "116", "US$m", "x"]]), results(MONEY)),
     );
-    const own = screen.getByRole("region", { name: "Variance bridge" });
+    const own = screen.getByRole("region", { name: "Earnings bridge, not drawn" });
     expect(
       within(own).getByText(
         /did not draw the variance bridge because its steps do not add up to its closing figure\./,
@@ -1201,7 +1202,7 @@ describe("EarningsDeltaLead with a variance bridge", () => {
         results(MONEY),
       ),
     );
-    const own = screen.getByRole("region", { name: "Variance bridge" });
+    const own = screen.getByRole("region", { name: "Earnings bridge, not drawn" });
     expect(
       within(own).getByText(
         /This page could not draw the variance bridge because Disposals is not supplied \(not split\)\./,
@@ -1209,13 +1210,80 @@ describe("EarningsDeltaLead with a variance bridge", () => {
     ).toBeVisible();
     expect(screen.queryByText(/add up/)).toBeNull();
   });
-  it("says two bridge tables are two, in the gap tile", () => {
-    lead(delta(steps(GOOD), steps(GOOD, "Chart data: other"), results(MONEY)));
+  it("draws each of two step tables as its own bridge, under its own title, with the exact stated steps", () => {
+    lead(
+      delta(
+        steps(GOOD, "Chart data: EBITDA variance"),
+        steps(
+          [
+            ["Sales 2023", "1000", "US$m", "Reported."],
+            ["Price", "50", "US$m", "Reported."],
+            ["Sales 2024", "1050", "US$m", "Reported."],
+          ],
+          "Chart data: revenue variance",
+        ),
+        results(MONEY),
+      ),
+    );
+    const names = screen.getAllByRole("region").map((one) => one.getAttribute("aria-label"));
+    expect(names.slice(0, 2)).toEqual(["EBITDA variance", "Revenue variance"]);
+    for (const [name, labels] of [
+      ["EBITDA variance", ["Revenue FY2023", "Organic growth", "Disposal", "Revenue FY2024"]],
+      ["Revenue variance", ["Sales 2023", "Price", "Sales 2024"]],
+    ] as const) {
+      const tile = screen.getByRole("region", { name });
+      expect(
+        [...tile.querySelectorAll("rect[data-label]")].map((one) => one.getAttribute("data-label")),
+      ).toEqual(labels);
+    }
+    expect(screen.queryByText(/more than one/)).toBeNull();
+  });
+  it("draws the readable bridge and still lists the rows of the one it could not draw", () => {
+    lead(
+      delta(
+        steps(GOOD, "Chart data: EBITDA variance"),
+        steps(
+          [GOOD[0] ?? [], ["Disposals", "Not supplied: not split", "US$m", "x"], GOOD[3] ?? []],
+          "Chart data: revenue variance",
+        ),
+        results(MONEY),
+      ),
+    );
+    // One bridge, the gap saying why the other was not drawn, and the other's rows as stated.
     expect(
-      within(screen.getByRole("region", { name: "Variance bridge" })).getByText(
-        new RegExp(TWICE_BRIDGE.slice(0, 40)),
+      screen.getByRole("region", { name: "EBITDA variance" }).querySelectorAll("rect[data-label]"),
+    ).toHaveLength(4);
+    expect(
+      within(screen.getByRole("region", { name: "Revenue variance, not drawn" })).getByText(
+        /Disposals is not supplied \(not split\)/,
       ),
     ).toBeVisible();
+    const listed = screen.getByRole("region", { name: "Revenue variance" });
+    expect(within(listed).getByText("Revenue FY2023")).toBeVisible();
+    expect(within(listed).getAllByText("Disposals").length).toBeGreaterThan(0);
+    expect(within(listed).getByText("Not supplied: not split")).toBeVisible();
+  });
+  it("lists every published chart heading: none is drawn by neither this lead nor the list", () => {
+    const entryWith = delta(
+      steps(GOOD, "Chart data: EBITDA variance"),
+      steps(
+        [GOOD[0] ?? [], ["Disposals", "Not supplied: not split", "US$m", "x"], GOOD[3] ?? []],
+        "Chart data: revenue variance",
+      ),
+      results(MONEY),
+      kpis([["Gross margin", "FY2023", "58.3", "FY2024", "58.8", "%", "x"]]),
+    );
+    lead(entryWith);
+    const regions = screen.getAllByRole("region").map((one) => one.getAttribute("aria-label"));
+    for (const title of chartTitles(entryWith)) {
+      const covered = regions.some(
+        (name) =>
+          name?.toLowerCase().startsWith(title.toLowerCase()) ||
+          (name ?? "") === "Margins and KPIs" ||
+          (name ?? "") === "Prior and current results",
+      );
+      expect(covered, title).toBe(true);
+    }
   });
 });
 

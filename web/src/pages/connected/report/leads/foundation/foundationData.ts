@@ -9,6 +9,7 @@ import {
   comparisonOf,
   isUnordered,
   normalLabel,
+  UNORDERED_SENTENCE,
   orderByPeriod,
   periodOf,
   periodRows,
@@ -37,7 +38,7 @@ const inSentence = (what: string) =>
   /^[A-Z][a-z]/.test(what) ? what.charAt(0).toLowerCase() + what.slice(1) : what;
 const NOT_IN = (what: string) => `This page could not read ${inSentence(what)}.`;
 const BECAUSE = (what: string, cause: string) =>
-  `This page could not read ${inSentence(what)} because ${cause}.`;
+  `This page could not read ${inSentence(what)} because ${cause.replace(/\.$/, "")}.`;
 const periodsGap = (table: string, cause: string) =>
   BECAUSE(`the periods of ${inSentence(table)}`, cause);
 const NOT_A_SHAPE = "the table is not in a shape this page reads";
@@ -50,26 +51,75 @@ function changeOf(values: readonly PeriodCell[], comparison: Comparison) {
   return from?.kind === "number" && to?.kind === "number" ? difference(to.text, from.text) : null;
 }
 
+/**
+ * A period as the kit read it. In a set the kit cannot put in time order, a label that names no
+ * year is kept as written (its year unknown, `NaN`): it is drawn in the handoff's order, never placed.
+ */
+const asWritten = (label: string, period: Period | null): Period =>
+  period ?? {
+    label,
+    kind: "other",
+    form: label.toUpperCase().replace(/[^A-Z0-9]/g, ""),
+    year: Number.NaN,
+  };
+
+/**
+ * Items in time order (`ordered`), or, when the kit cannot put them in time order, every item in the
+ * handoff's order with its period as written (`ordered: false`: drawn with no line, no change and
+ * `UNORDERED_SENTENCE`). A string for a stated gap (a period stated twice, no rows).
+ */
+type InOrder<T> = { items: { period: Period; item: T }[]; ordered: boolean };
+function inOrder<T>(read: Ordered<T>): InOrder<T> | string {
+  if ("periods" in read) return { items: read.periods, ordered: true };
+  if (isUnordered(read))
+    return {
+      items: read.stated.map(({ label, period, item }) => ({
+        period: asWritten(label, period),
+        item,
+      })),
+      ordered: false,
+    };
+  return read.reason;
+}
+
+/**
+ * The periods of several lists once each: in time order when every list is in time order and the
+ * whole set can be put in time order; otherwise as first stated (`ordered: false`).
+ */
+function combine(lists: readonly (readonly Period[])[], ordered: boolean) {
+  if (ordered) {
+    const periods = unionPeriods(lists);
+    const check = orderByPeriod(periods.map((period) => ({ cell: period.label, item: period })));
+    if ("periods" in check) return { periods, ordered: true };
+  }
+  const seen = new Map<string, Period>();
+  for (const period of lists.flat()) if (!seen.has(period.label)) seen.set(period.label, period);
+  return { periods: [...seen.values()], ordered: false };
+}
+
 /** A period-rows table read: its rows by period, and its one unit when every row states the same. */
 type PeriodTable = {
   table: Table;
   rows: { period: Period; row: Row }[];
   unit: string | null;
+  /** False when the rows are in the handoff's order because no time order can be told. */
+  ordered: boolean;
 };
 
 /** Chart and net debt tables: rows by period with a `Reporting unit` column; a reason when unreadable. */
 function periodTable(entry: OutputEntry, heading: string, what: string): PeriodTable | string {
   const table = tableUnder(entry, heading);
   if (!table) return NOT_IN(what);
-  const ordered = periodRows(table);
-  if ("reason" in ordered) return periodsGap(tableName(heading), ordered.reason);
+  const read = inOrder(periodRows(table));
+  if (typeof read === "string") return periodsGap(tableName(heading), read);
   const unitAt = columnOf(table, "Reporting unit");
-  const units = new Set(ordered.periods.map(({ item }) => item.cells[unitAt] ?? ""));
+  const units = new Set(read.items.map(({ item }) => item.cells[unitAt] ?? ""));
   const [unit] = [...units];
   return {
     table,
-    rows: ordered.periods.map(({ period, item }) => ({ period, row: item })),
+    rows: read.items.map(({ period, item }) => ({ period, row: item })),
     unit: unitAt >= 0 && units.size === 1 && unit ? unitLabel(unit) : null,
+    ordered: read.ordered,
   };
 }
 
@@ -85,18 +135,28 @@ function columnCells(read: PeriodTable, column: string): PeriodCell[] | null {
 }
 
 /** A statement table (`| Line item | FY2024 | FY2023 | Unit | …`): its period columns, in order. */
-type Statement = { table: Table; columns: { period: Period; at: number }[] };
+type Statement = { table: Table; columns: { period: Period; at: number }[]; ordered: boolean };
 
 function statement(entry: OutputEntry, heading: string): Statement | string {
   const table = tableUnder(entry, heading);
   if (!table) return NOT_IN(`the ${inSentence(tableName(heading))}`);
-  const ordered = statementColumns(table);
-  if ("reason" in ordered) return periodsGap(tableName(heading), ordered.reason);
-  return { table, columns: ordered.periods.map(({ period, item }) => ({ period, at: item })) };
+  const read = inOrder(statementColumns(table));
+  if (typeof read === "string") return periodsGap(tableName(heading), read);
+  return {
+    table,
+    columns: read.items.map(({ period, item }) => ({ period, at: item })),
+    ordered: read.ordered,
+  };
 }
 
 /** One row of a statement, every period, with its unit. */
-type StatementRow = { label: string; values: PeriodCell[]; unit: string | null; line: number };
+type StatementRow = {
+  label: string;
+  values: PeriodCell[];
+  unit: string | null;
+  line: number;
+  ordered: boolean;
+};
 
 function statementRow(read: Statement, row: Row): StatementRow {
   const unitAt = columnOf(read.table, "Unit");
@@ -110,6 +170,7 @@ function statementRow(read: Statement, row: Row): StatementRow {
     })),
     unit: unit ? unitLabel(unit) : null,
     line: row.line,
+    ordered: read.ordered,
   };
 }
 
@@ -133,10 +194,7 @@ const onto = (periods: readonly Period[], values: readonly PeriodCell[]): Period
   );
 
 const periodsOf = (values: readonly PeriodCell[]): Period[] =>
-  values.flatMap((value) => {
-    const period = periodOf(value.label);
-    return period ? [period] : [];
-  });
+  values.map((value) => asWritten(value.label, periodOf(value.label)));
 
 // A cell's clauses that name a source, a register or a calculation are left out; the rest are the
 // module's own words, in its order. `safeText` screens each clause; a short calculation id ("C3")
@@ -172,8 +230,10 @@ export type StatedPeriods = {
   comparison: Comparison;
   /** Which figure table states which periods, in handoff order. */
   tables: { table: string; labels: string[] }[];
-  /** Figure tables whose periods cannot be read, with the reason (a repeated year, an undated label). */
+  /** Figure tables whose periods cannot be read, with the reason (a repeated year, no rows). */
   gaps: { table: string; reason: string }[];
+  /** False when the periods cannot be put in time order: they are listed as first stated. */
+  ordered: boolean;
 };
 
 const ROW_TABLES = [
@@ -189,10 +249,18 @@ const STATEMENTS = ["T4.4 Income statement", "T4.5 Cash flow statement"] as cons
 export function statedPeriods(entry: OutputEntry): StatedPeriods {
   const tables: StatedPeriods["tables"] = [];
   const gaps: StatedPeriods["gaps"] = [];
-  const add = (heading: string, read: Ordered<unknown>) => {
+  const lists: Period[][] = [];
+  let ordered = true;
+  const add = (heading: string, given: Ordered<unknown>) => {
     const table = tableName(heading);
-    if ("reason" in read) gaps.push({ table, reason: periodsGap(table, read.reason) });
-    else tables.push({ table, labels: read.periods.map(({ period }) => period.label) });
+    const read = inOrder(given);
+    if (typeof read === "string") {
+      gaps.push({ table, reason: periodsGap(table, read) });
+      return;
+    }
+    ordered &&= read.ordered;
+    lists.push(read.items.map(({ period }) => period));
+    tables.push({ table, labels: read.items.map(({ period }) => period.label) });
   };
   const found = allTables(entry);
   for (const heading of [...ROW_TABLES, ...STATEMENTS]) {
@@ -212,18 +280,29 @@ export function statedPeriods(entry: OutputEntry): StatedPeriods {
       );
   }
   const segments = segmentSchedule(entry);
-  if (typeof segments !== "string")
-    add("Segment schedule", { periods: segments.periods.map((period) => ({ period, item: 0 })) });
-  const periods = unionPeriods(
-    tables.map((table) => table.labels.flatMap((label) => periodOf(label) ?? [])),
-  );
+  if (typeof segments !== "string") {
+    const items = segments.periods.map((period) => ({ period, item: 0 }));
+    add(
+      "Segment schedule",
+      segments.ordered
+        ? { periods: items }
+        : {
+            unordered: true,
+            reason: UNORDERED_SENTENCE,
+            stated: items.map(({ period, item }) => ({ label: period.label, period, item })),
+          },
+    );
+  }
+  const all = combine(lists, ordered);
+  const { periods } = all;
   return {
     labels: periods.map((period) => period.label),
     periods,
     kind: periods.length > 0 && periods.every((p) => p.kind === "annual") ? "annual" : "other",
-    comparison: comparisonOf(periods),
+    comparison: all.ordered ? comparisonOf(periods) : null,
     tables,
     gaps,
+    ordered: all.ordered,
   };
 }
 

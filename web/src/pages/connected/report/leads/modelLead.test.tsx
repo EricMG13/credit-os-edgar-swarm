@@ -342,4 +342,29 @@ describe("ModelLead", () => {
     for (const point of svg?.querySelectorAll("[data-point]") ?? [])
       expect(num(point, "data-cx")).toBeLessThanOrEqual(390);
   });
+
+  it("never doubles a full stop: a reason that ends in one is not followed by another", () => {
+    const stop = {
+      cashflow: {
+        ...TWO.cashflow,
+        rows: [
+          {
+            ...TWO.cashflow.rows[0],
+            cells: TWO.cashflow.rows[0]?.cells.map((c) =>
+              c.status === "na" ? { ...c, reason: "the inputs do not state this period." } : c,
+            ),
+          },
+        ],
+      },
+    };
+    render(<ModelLead {...props([stop])} />);
+    for (const el of document.querySelectorAll("[aria-label]"))
+      expect(el.getAttribute("aria-label"), el.getAttribute("aria-label") ?? "").not.toContain(
+        "..",
+      );
+    expect(document.body.textContent).not.toContain("..");
+    expect(
+      screen.getByText(/Base case, FY2026E: the inputs do not state this period\./),
+    ).toBeVisible();
+  });
 });

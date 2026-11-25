@@ -464,4 +464,26 @@ describe("ShortSnapshotLead", () => {
     expect(document.body.textContent).not.toMatch(/derived|the module|from the handoff/i);
     expect(ShortSnapshotLead.draws).toEqual([]);
   });
+
+  it("never doubles a full stop in a reason, a label or the change screen text", () => {
+    render(
+      <ShortSnapshotLead
+        {...leadProps(
+          snapshot(
+            [
+              ["Revenue", "Not supplied: not stated.", "FY2024", SOURCE],
+              ["Cash", "5", "FY2023", SOURCE],
+              ["Cash", "9", "FY2024", SOURCE],
+            ],
+            [screenOf(["Topic", "Prior", "Current", "Change"], [["Cash", "5", "9", "Cash rose."]])],
+          ),
+        )}
+      />,
+    );
+    expect(document.body.textContent).not.toContain("..");
+    for (const el of document.querySelectorAll("[aria-label]"))
+      expect(el.getAttribute("aria-label"), el.getAttribute("aria-label") ?? "").not.toContain(
+        "..",
+      );
+  });
 });
