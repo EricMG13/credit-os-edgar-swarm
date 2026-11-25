@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import {
   FORECAST_INPUTS,
+  blocked,
   evidencePath,
   withUnit,
   type OutputEntry,
@@ -8,15 +9,20 @@ import {
   type Snapshot,
 } from "../../publishedReport";
 import type { ReportView } from "../../reportView";
-import { basisNotes, figureSource, moduleSource, type Cell, type FigureSource } from "./figureData";
+import { ticks } from "../../visuals/visualData";
+import { figureSource, moduleSource, type FigureSource } from "./figureData";
 import { FigureGap, FigureSourceControl, GapPattern, Key } from "./figureParts";
 import { FigureTile } from "./figureTile";
 import {
   NoteText,
   ReasonNotes,
+  basisNoteList,
+  figureText,
   gapReading,
+  gapText,
   gapWord,
   plainNotes,
+  readerCell,
   type Note,
   type NoteHref,
 } from "./notes";
@@ -24,23 +30,23 @@ import {
   BULLET,
   PATH,
   bulletGeometry,
-  covenantLimit,
-  downsideCases,
-  dumbbellScale,
+  downsidePanels,
   forwardPath,
   headroomTests,
+  panelScale,
   pathGeometry,
+  type DownsidePanel,
   type HeadroomTest,
 } from "./stressData";
 import { Figure } from "./Tile";
 import { entryLine } from "./traceLine";
-import { scrollRegion, useFrameWidth } from "./useFrameWidth";
+import { useFrameWidth } from "./useFrameWidth";
 
 type RowProps = { snapshot: Snapshot; run: PublishedRun; view: ReportView };
 type Ready = Extract<FigureSource, { state: "ready" }>;
 
 const shown = (test: HeadroomTest, cell: HeadroomTest["current"]) =>
-  cell.value === null ? cell.text : withUnit(cell.text, test.unit);
+  cell.value === null ? gapWord(cell.text) : withUnit(figureText(cell.text), test.unit);
 
 /** Where the current value's label sits: inside a bar long enough to hold it, else past its end. */
 function valueLabel(current: number, zero: number) {
@@ -154,7 +160,7 @@ const gapCell = (test: HeadroomTest) =>
 /** Why a test has no bar: the handoff's reason, or its cell as written when that is all it says. */
 function TestGap({ test, href }: { test: HeadroomTest; href: NoteHref }) {
   const cell = gapCell(test);
-  const text = cell.reason ?? (gapWord(cell.text) === cell.text.trim() ? null : cell.text);
+  const text = gapText(cell);
   if (text === null) return null;
   return (
     <span className="text-caption font-normal text-text-secondary">
@@ -198,10 +204,32 @@ function TestRow({ test, href }: { test: HeadroomTest; href: NoteHref }) {
       ) : (
         <TestGap test={test} href={href} />
       )}
-      {test.direction && (
-        <span className="text-caption font-normal text-text-tertiary">{test.direction}</span>
+      {test.direction.trim() && (
+        <span className="text-caption font-normal text-text-tertiary">
+          <NoteText note={{ text: test.direction, line: test.line }} href={href} />
+        </span>
       )}
     </li>
+  );
+}
+
+/** The lead test in words: its value against its threshold, then its direction as the module
+ * wrote it, or a link to it where it cites a source. */
+function LeadSentence({ test, href }: { test: HeadroomTest; href: NoteHref }) {
+  const direction = test.direction.trim();
+  const words = direction ? readerCell(direction) : "";
+  const figures = `${shown(test, test.current)} against a threshold of ${shown(test, test.threshold)}`;
+  return (
+    <span className="text-small text-text-secondary">
+      {words === null ? (
+        <>
+          {`${figures}. `}
+          <NoteText note={{ text: direction, line: test.line }} href={href} />
+        </>
+      ) : (
+        `${figures}${words ? `. ${words}${/[.!?]$/.test(words) ? "" : "."}` : "."}`
+      )}
+    </span>
   );
 }
 
@@ -214,17 +242,12 @@ function Headroom({ source, href }: { source: Ready; href: NoteHref }) {
     <>
       <div className="flex flex-col gap-1">
         <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <Figure className="text-display font-medium">
-            {lead.headroom ?? shown(lead, lead.current)}
-          </Figure>
+          <Figure className="text-metric">{lead.headroom ?? shown(lead, lead.current)}</Figure>
           <span className="text-small text-text-secondary">
             {lead.headroom ? `headroom, ${lead.label}` : lead.label}
           </span>
         </div>
-        <span className="text-small text-text-secondary">
-          {shown(lead, lead.current)} against a threshold of {shown(lead, lead.threshold)}
-          {lead.direction ? `. ${lead.direction}.` : "."}
-        </span>
+        <LeadSentence test={lead} href={href} />
       </div>
       <BulletChart test={lead} />
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -242,67 +265,74 @@ function Headroom({ source, href }: { source: Ready; href: NoteHref }) {
           )}
         </ul>
       )}
-      <ReasonNotes notes={plainNotes(basisNotes(source.table))} href={href} />
+      <ReasonNotes notes={basisNoteList(source.table)} href={href} />
     </>
   );
 }
 
-/** The figure's columns: case names, the leverage dumbbells, then cover as written. `least` is
- * the narrowest it is drawn: below it the cases keep their type size and the frame scrolls. */
+/** The downside figure's layout. A panel is one measure on its own scale; as many sit side by
+ * side as the frame holds at `panel` pixels each, the rest below, each row repeating the cases. */
 const DOWNSIDE = {
   width: 524,
-  head: 26,
-  row: 40,
-  plot: 150,
-  room: 250,
-  cover: 444,
-  foot: 22,
-  least: 460,
+  names: 120,
+  panel: 150,
+  gutter: 20,
+  head: 22,
+  row: 30,
+  foot: 20,
+  labelRoom: 60,
 } as const;
 
-type Downside = NonNullable<ReturnType<typeof downsideCases>>;
-type Limit = ReturnType<typeof covenantLimit>;
+type Downside = NonNullable<ReturnType<typeof downsidePanels>>;
 
-const cellReading = (cell: Cell | undefined) =>
-  !cell ? "" : cell.value === null ? gapReading(cell.text) : cell.text;
+const cellReading = (cell: DownsidePanel["cells"][number] | undefined) =>
+  !cell ? "" : cell.value === null ? gapReading(cell.text) : figureText(cell.text);
 
-function downsideReading(data: Downside, limit: Limit) {
-  const measures = [data.leverage, data.cover].filter((item) => item !== null);
-  const cases = data.cases.map(
-    (item, at) =>
-      `${item.name}: ${measures.map((row) => `${row.measure} ${cellReading(row.cells[at])}`).join(", ")}`,
-  );
-  return [...cases, ...(limit ? [`Covenant limit ${limit.text}`] : [])].join(". ");
+function downsideReading(cases: Downside["cases"], panels: DownsidePanel[]) {
+  return cases
+    .map(
+      (item, at) =>
+        `${item.name}: ${panels.map((panel) => `${panel.measure} ${cellReading(panel.cells[at])}`).join(", ")}`,
+    )
+    .join(". ");
 }
 
-/** The notes under the downside figure: each case's assumptions, then why a case has no figure. */
+/** The notes under the downside figure: the cases' assumptions, then why a case has no figure. */
 function downsideNotes(data: Downside): Note[] {
-  const measures = [data.leverage, data.cover].filter((item) => item !== null);
-  const gaps = measures.flatMap((row) =>
-    row.cells.flatMap((cell, at) =>
-      cell.value === null
-        ? [
+  const gaps = data.panels.flatMap((panel) =>
+    panel.cells.flatMap((cell, at) => {
+      const text = cell.value === null ? gapText(cell) : null;
+      return text === null
+        ? []
+        : [
             {
-              lead: `${data.cases[at]?.name ?? ""}, ${row.measure}: `,
-              text: cell.reason ?? cell.text,
-              line: row.line,
+              lead: `${data.cases[at]?.name ?? ""}, ${panel.measure}: `,
+              text,
+              line: panel.line,
               end: ".",
             },
-          ]
-        : [],
-    ),
+          ];
+    }),
   );
   return [...plainNotes(data.assumptions), ...gaps];
 }
 
-/** A case with no figure: the gap mark and the module's own word, at the start of its column. */
-function GapMark({ x, y, text }: { x: number; y: number; text: string }) {
+/** A panel's scale: its ticks, from zero, and where a value sits across `room` pixels. */
+function panelAxis(panel: DownsidePanel, room: number) {
+  const scale = ticks(panel.cells.map((cell) => cell.value));
+  const low = scale[0]?.value ?? panel.min;
+  const top = scale.at(-1)?.value ?? panel.max;
+  const { zero, at } = panelScale({ ...panel, min: low, max: top }, room);
+  return { zero, at, ticks: scale.map((tick) => ({ label: tick.label, x: at(tick.value) })) };
+}
+
+function PanelGap({ x, y, text }: { x: number; y: number; text: string }) {
   return (
     <>
       <rect
         data-gap
         x={x + 0.5}
-        y={y - 5.5}
+        y={y + 0.5}
         width="27"
         height="11"
         rx="2"
@@ -310,197 +340,169 @@ function GapMark({ x, y, text }: { x: number; y: number; text: string }) {
         strokeDasharray="3 3"
         className="stroke-border-gap"
       />
-      <text x={x + 34} y={y + 4} fontSize="11" className="fill-gap-text font-body">
+      <text x={x + 34} y={y + 10} fontSize="11" className="fill-gap-text font-body">
         {gapWord(text)}
       </text>
     </>
   );
 }
 
-/** One case's leverage: from the control case's figure to its own, labelled as written. */
-function Dumbbell({
-  cell,
-  from,
-  at,
-  y,
-  name,
+function PanelBars({
+  panel,
+  x,
+  room,
+  rows,
+  first,
 }: {
-  cell: Cell;
-  from: number | null;
-  at: (value: number) => number;
-  y: number;
-  name: string;
+  panel: DownsidePanel;
+  x: number;
+  room: number;
+  rows: number;
+  first: boolean;
 }) {
-  if (cell.value === null) return <GapMark x={DOWNSIDE.plot} y={y} text={cell.text} />;
-  const x = DOWNSIDE.plot + at(cell.value);
-  const start = from === null ? null : DOWNSIDE.plot + at(from);
-  const right = x > DOWNSIDE.plot + DOWNSIDE.room - 40;
+  const { zero, at, ticks: axis } = panelAxis(panel, room - DOWNSIDE.labelRoom);
+  const bottom = DOWNSIDE.head + rows * DOWNSIDE.row;
   return (
-    <>
-      {start !== null && (
-        <>
-          <line
-            data-dumbbell
-            x1={start}
-            y1={y}
-            x2={x}
-            y2={y}
-            strokeWidth="2"
-            className="stroke-chart-1"
-          />
-          <circle
-            cx={start}
-            cy={y}
-            r="3.5"
-            strokeWidth="1.5"
-            className="fill-surface-card stroke-chart-1"
-          />
-        </>
-      )}
-      <circle data-dot={name} cx={x} cy={y} r="5" className="fill-chart-1" />
-      <text
-        x={right ? x - 9 : x + 9}
-        y={y - 8}
-        textAnchor={right ? "end" : "start"}
-        fontSize="11"
-        className="fill-text-primary font-mono"
-      >
-        {cell.text}
+    <g data-panel={panel.measure}>
+      <text x={x} y="12" fontSize="11" className="fill-text-tertiary font-body">
+        {panel.measure}
       </text>
-    </>
-  );
-}
-
-function LimitLine({ x, bottom, limit }: { x: number; bottom: number; limit: NonNullable<Limit> }) {
-  return (
-    <>
       <line
-        data-limit
         x1={x}
-        y1={DOWNSIDE.head - 6}
-        x2={x}
+        y1={bottom}
+        x2={x + room - DOWNSIDE.labelRoom}
         y2={bottom}
-        strokeWidth="1.5"
-        strokeDasharray="4 3"
-        className="stroke-text-primary"
+        className="stroke-connector"
       />
-      <text
-        x={x}
-        y={bottom + 14}
-        textAnchor="middle"
-        fontSize="11"
-        className="fill-text-secondary font-body"
-      >
-        Covenant limit {limit.text}
-      </text>
-    </>
-  );
-}
-
-function CaseRow({
-  data,
-  row,
-  at,
-}: {
-  data: Downside;
-  row: number;
-  at: (value: number) => number;
-}) {
-  const item = data.cases[row];
-  const y = DOWNSIDE.head + row * DOWNSIDE.row + DOWNSIDE.row / 2;
-  const control = data.cases.findIndex((entry) => entry.control);
-  const lever = data.leverage?.cells[row];
-  const from = row === control ? null : (data.leverage?.cells[control]?.value ?? null);
-  const cover = data.cover?.cells[row];
-  return (
-    <>
-      {row > 0 && (
-        <line
-          x1="0"
-          y1={y - DOWNSIDE.row / 2}
-          x2={DOWNSIDE.width}
-          y2={y - DOWNSIDE.row / 2}
-          className="stroke-border-hairline"
-        />
-      )}
-      <text
-        x="0"
-        y={y + 4}
-        fontSize="12"
-        className={item?.control ? "fill-text-secondary font-body" : "fill-text-primary font-body"}
-      >
-        {item?.name}
-      </text>
-      {lever && <Dumbbell cell={lever} from={from} at={at} y={y} name={item?.name ?? ""} />}
-      {cover &&
-        (cover.value === null ? (
-          <GapMark x={DOWNSIDE.cover} y={y} text={cover.text} />
-        ) : (
-          <text
-            x={DOWNSIDE.width}
-            y={y + 4}
-            textAnchor="end"
-            fontSize="12"
-            className="fill-text-primary font-mono"
-          >
-            {cover.text}
-          </text>
-        ))}
-    </>
-  );
-}
-
-function DownsideFigure({ data, limit }: { data: Downside; limit: Limit }) {
-  const { frame, measured } = useFrameWidth();
-  const scrolls = measured !== null && measured < DOWNSIDE.least;
-  const bottom = DOWNSIDE.head + data.cases.length * DOWNSIDE.row;
-  const height = bottom + DOWNSIDE.foot;
-  const at = dumbbellScale(data.leverage?.cells ?? [], limit?.value ?? null, DOWNSIDE.room);
-  return (
-    // On a phone the cases keep their type size and the figure scrolls sideways in its tile.
-    <div
-      ref={frame}
-      className="-mx-1 overflow-x-auto rounded-ds-sm px-1 outline-focus-ring focus-visible:outline-2"
-      {...scrollRegion(scrolls, "Downside scenarios figure, scrolls sideways")}
-    >
-      <svg
-        viewBox={`0 0 ${String(DOWNSIDE.width)} ${String(height)}`}
-        width={scrolls ? DOWNSIDE.least : "100%"}
-        role="img"
-        aria-label={`Downside scenarios. ${downsideReading(data, limit)}.`}
-      >
-        <defs>
-          <GapPattern id="downside-gap" />
-        </defs>
-        <text x={DOWNSIDE.plot} y="12" fontSize="11" className="fill-text-tertiary font-body">
-          {data.leverage?.measure ?? "No stressed net leverage in the handoff"}
+      {axis.map((tick, at_) => (
+        <text
+          key={at_}
+          x={x + tick.x}
+          y={bottom + 14}
+          textAnchor="middle"
+          fontSize="11"
+          className="fill-text-tertiary font-mono"
+        >
+          {tick.label}
         </text>
-        {data.cover && (
-          <text
-            x={DOWNSIDE.width}
-            y="12"
-            textAnchor="end"
-            fontSize="11"
-            className="fill-text-tertiary font-body"
-          >
-            {data.cover.measure}
-          </text>
-        )}
-        {limit && <LimitLine x={DOWNSIDE.plot + at(limit.value)} bottom={bottom} limit={limit} />}
-        {data.cases.map((item, row) => (
-          <CaseRow key={item.id} data={data} row={row} at={at} />
-        ))}
-      </svg>
-    </div>
+      ))}
+      <line
+        x1={x + zero}
+        y1={DOWNSIDE.head}
+        x2={x + zero}
+        y2={bottom}
+        className="stroke-connector"
+      />
+      {panel.cells.map((cell, row) => {
+        const y = DOWNSIDE.head + row * DOWNSIDE.row + 9;
+        if (cell.value === null) return <PanelGap key={row} x={x + zero} y={y} text={cell.text} />;
+        const end = at(cell.value);
+        return (
+          <Fragment key={row}>
+            <rect
+              data-bar={cell.text}
+              x={x + Math.min(zero, end)}
+              y={y}
+              width={Math.max(1, Math.abs(end - zero))}
+              height="12"
+              rx="2"
+              className={first ? "fill-chart-1" : "fill-chart-2"}
+            />
+            <text
+              x={x + Math.max(zero, end) + 6}
+              y={y + 10}
+              fontSize="11"
+              className="fill-text-primary font-mono"
+            >
+              {figureText(cell.text)}
+            </text>
+          </Fragment>
+        );
+      })}
+    </g>
   );
 }
 
-function Downside({ data, limit, href }: { data: Downside | null; limit: Limit; href: NoteHref }) {
+/** How many panels sit side by side in a frame `width` pixels wide: at least one. */
+function perRow(width: number) {
+  const room = width - DOWNSIDE.names;
+  return Math.max(1, Math.floor((room + DOWNSIDE.gutter) / (DOWNSIDE.panel + DOWNSIDE.gutter)));
+}
+
+/** One row of panels, drawn at the frame's own width so it fits and never scrolls. */
+function PanelRow({
+  cases,
+  panels,
+  width,
+  first,
+}: {
+  cases: Downside["cases"];
+  panels: DownsidePanel[];
+  width: number;
+  first: number;
+}) {
+  const room = (width - DOWNSIDE.names - DOWNSIDE.gutter * (panels.length - 1)) / panels.length;
+  const height = DOWNSIDE.head + cases.length * DOWNSIDE.row + DOWNSIDE.foot;
+  return (
+    <svg
+      viewBox={`0 0 ${String(width)} ${String(height)}`}
+      width="100%"
+      role="img"
+      aria-label={`Downside scenarios. ${downsideReading(cases, panels)}.`}
+    >
+      <defs>
+        <GapPattern id="downside-gap" />
+      </defs>
+      {cases.map((item, row) => (
+        <text
+          key={item.id}
+          x="0"
+          y={DOWNSIDE.head + row * DOWNSIDE.row + 19}
+          fontSize="12"
+          className={item.control ? "fill-text-secondary font-body" : "fill-text-primary font-body"}
+        >
+          {item.name}
+        </text>
+      ))}
+      {panels.map((panel, at) => (
+        <PanelBars
+          key={at}
+          panel={panel}
+          x={DOWNSIDE.names + at * (room + DOWNSIDE.gutter)}
+          room={room}
+          rows={cases.length}
+          first={first + at === 0}
+        />
+      ))}
+    </svg>
+  );
+}
+
+function Downside({
+  data,
+  untested,
+  href,
+}: {
+  data: Downside | null;
+  untested: boolean;
+  href: NoteHref;
+}) {
+  const { frame, measured } = useFrameWidth();
   if (!data)
-    return <FigureGap reason="The downside handoff states no stressed leverage or cover." />;
+    return <FigureGap reason="The downside handoff states no stressed metric that can be drawn." />;
+  const width = measured === null || measured <= 0 ? DOWNSIDE.width : Math.round(measured);
+  const step = perRow(width);
+  const rows = Array.from({ length: Math.ceil(data.panels.length / step) }, (_, at) =>
+    data.panels.slice(at * step, at * step + step),
+  );
   return (
     <>
-      <DownsideFigure data={data} limit={limit} />
+      {untested && <Key tone="gap">Limit not tested</Key>}
+      <div ref={frame} className="flex min-w-0 flex-col gap-4">
+        {rows.map((panels, at) => (
+          <PanelRow key={at} cases={data.cases} panels={panels} width={width} first={at * step} />
+        ))}
+      </div>
       <ReasonNotes notes={downsideNotes(data)} href={href} />
     </>
   );
@@ -658,7 +660,7 @@ function PathHeadline({ path }: { path: Path }) {
     ) : null;
   return (
     <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-      <Figure className="text-h1 font-medium">{last.display}</Figure>
+      <Figure className="text-metric">{last.display}</Figure>
       <span className="text-small text-text-secondary">
         {base.group}, by {last.period}
       </span>
@@ -706,20 +708,20 @@ const hrefOf =
   (line) =>
     entry && evidencePath(folder, entry, line ?? fallback);
 
-/** The downside tile's data: the cases, and the covenant limit for its leverage measure. */
-function downsideSource(view: ReportView, headroom: FigureSource) {
+/** The downside tile's data, and whether the covenant limit could not be tested: the legal
+ * module is blocked. */
+function downsideSource(view: ReportView) {
   const source = moduleSource(view, "CP-2A", "Downside");
-  const data = source.entry && !source.reason ? downsideCases(source.entry) : null;
-  const tests =
-    headroom.state === "ready" ? headroomTests(headroom.table, headroom.descriptor) : null;
-  const limit = data?.leverage ? covenantLimit(tests, data.leverage.measure) : null;
-  return { ...source, data, limit, line: data?.line ?? entryLine(source.entry) };
+  const data = source.entry && !source.reason ? downsidePanels(source.entry) : null;
+  const legal = moduleSource(view, "CP-4", "Legal & covenants").entry;
+  const untested = legal !== undefined && blocked(legal);
+  return { ...source, data, untested, line: data?.line ?? entryLine(source.entry) };
 }
 
 /** Row 5, stress: room to the covenant levels, the downside cases, and where leverage goes. */
 export function StressRow({ run, view }: RowProps) {
   const headroom = figureSource(view, "CP-4", "Covenant headroom", "Legal & covenants");
-  const downside = downsideSource(view, headroom);
+  const downside = downsideSource(view);
   const forward = forwardSource(view);
   const model = moduleSource(view, "CP-2G", "Forward credit model");
   const headroomLine = headroom.state === "ready" ? headroom.table.line : entryLine(headroom.entry);
@@ -747,7 +749,7 @@ export function StressRow({ run, view }: RowProps) {
       <FigureTile
         span={5}
         title="Downside scenarios"
-        basis={`Net leverage by case from the control case${downside.limit ? ", against the covenant limit" : ""}; cover beside it`}
+        basis="Each stressed metric by case, from zero"
         trace={
           <FigureSourceControl
             folder={run.folder}
@@ -760,7 +762,7 @@ export function StressRow({ run, view }: RowProps) {
         {downside.entry && !downside.reason ? (
           <Downside
             data={downside.data}
-            limit={downside.limit}
+            untested={downside.untested}
             href={hrefOf(run.folder, downside.entry, downside.line)}
           />
         ) : (

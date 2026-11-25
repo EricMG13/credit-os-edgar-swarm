@@ -9,7 +9,7 @@ import type { Mark, MarkTone, Slot } from "./marks";
 import {
   entryOf,
   gapReason,
-  periodSeries,
+  readSeries,
   timeline,
   type Point,
   type RowProps,
@@ -52,39 +52,48 @@ type Ready = {
 };
 type Reading =
   | { state: "absent"; title: string; reason: string; line?: number }
-  | { state: "unordered"; title: string }
+  | { state: "unordered"; title: string; series: Series }
   | Ready;
 
 const sameBasis = (a: Point, b: Point) => (a.basis ?? "").trim() === (b.basis ?? "").trim();
 
 /** The change drawn against the period exactly a year earlier, on the same basis; or why not. */
-function compare({ latest, prior }: Timeline) {
-  const none = (why: string | null) => ({ change: null, why });
-  if (latest.value === null) return none(null);
-  if (!prior) return none("No period a year earlier to compare.");
-  if (prior.value === null) return none(`No figure for ${prior.period} to compare.`);
+function compare({ latest, prior, why }: Timeline) {
+  const none = (reason: string | null) => ({ change: null, why: reason });
+  if (latest.figure === null) return none(null);
+  if (!prior) return none(why ?? null);
+  if (prior.figure === null) return none(`No figure for ${prior.period} to compare.`);
   if (!sameBasis(latest, prior))
     return none(
       `Not compared with ${prior.period}: the two periods are stated on different bases.`,
     );
-  return { change: exactDifference(latest.cell, prior.cell), why: null };
+  return { change: exactDifference(latest.figure, prior.figure), why: null };
+}
+
+/** Where a period sits in time, in years: a fiscal year as itself, a date by its day. */
+function timeAt(order: string | undefined) {
+  const [, year, date] = /^1-(\d{4})$|^2-(\d{4}-\d{2}-\d{2})$/.exec(order ?? "") ?? [];
+  if (year) return Number(year);
+  return date ? 1970 + Date.parse(`${date}T00:00:00Z`) / (365.25 * 86_400_000) : undefined;
 }
 
 const slotOf =
   (unit: string) =>
-  ({ period, cell, value }: Point): Slot => ({
+  ({ period, figure, value, basis, order }: Point): Slot => ({
     label: period,
     value,
-    text: value === null ? "n.a." : withUnit(cell, unit),
+    text: figure === null ? "n.a." : withUnit(figure, unit),
+    at: timeAt(order),
+    basis: (basis ?? "").trim(),
   });
 
 function read(entry: OutputEntry, key: FigureKey): Reading {
   const [fallback, chart, heading, toneKey] = FIGURES[key];
-  const found = periodSeries(entry, chart, heading, fallback);
+  const found = readSeries(entry, chart, heading, fallback);
   if ("reason" in found) return { state: "absent", title: fallback, ...found };
   const { series } = found;
-  const line = timeline(series);
-  if (!line) return { state: "unordered", title: series.name };
+  const line = timeline(series, entry);
+  if (!line) return { state: "unordered", title: series.name, series };
   const { change, why } = compare(line);
   const toned = change === null ? "none" : tone(toneKey, change);
   return {
@@ -116,7 +125,7 @@ function ToneChip({ reading, large }: { reading: Ready; large: boolean }) {
   return (
     <span
       className={cx(
-        "flex items-center gap-1 text-caption whitespace-nowrap",
+        "flex flex-none items-center gap-1 text-caption whitespace-nowrap",
         look.text,
         large && cx("h-6 rounded-ds-xs border px-2", look.box),
       )}
@@ -157,9 +166,9 @@ function Movement({ reading }: { reading: Ready }) {
   const { unit } = reading.series;
   const note = "text-caption text-text-tertiary";
   if (reading.why) return <p className={note}>{reading.why}</p>;
-  if (prior?.value == null) return null;
-  const earlier = `${withUnit(prior.cell, unit)} in ${prior.period}`;
-  if (latest.value === null || reading.change === null) return <p className={note}>{earlier}</p>;
+  if (prior?.figure == null) return null;
+  const earlier = `${withUnit(prior.figure, unit)} in ${prior.period}`;
+  if (latest.figure === null || reading.change === null) return <p className={note}>{earlier}</p>;
   return (
     <p className={note}>
       {`from ${earlier} `}
@@ -168,12 +177,33 @@ function Movement({ reading }: { reading: Ready }) {
   );
 }
 
-const UNORDERED =
-  "Not shown here: the periods of the module's chart table cannot be put in order, so no latest figure is drawn.";
+const UNORDERED = "The periods cannot be put in order, so no latest figure or change is drawn.";
+
+/** Every period's cell as written, in the table's order, where no latest can be chosen. */
+function AsWritten({ series, href }: { series: Series; href: Href }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <ul className="flex flex-col gap-0.5 text-small text-text-primary">
+        {series.points.map((point) =>
+          point.figure === null ? (
+            <li key={point.line}>
+              <GapLine point={point} href={href} />
+            </li>
+          ) : (
+            <li key={point.line} className="font-mono tabular-nums">
+              {`${withUnit(point.figure, series.unit)} in ${point.period}`}
+            </li>
+          ),
+        )}
+      </ul>
+      <p className="text-caption text-text-tertiary">{UNORDERED}</p>
+    </div>
+  );
+}
 
 const FIGURE = {
   large: "text-metric font-medium",
-  small: "text-h3 font-medium wrap-anywhere sm:text-h2",
+  small: "min-w-0 text-h3 font-medium wrap-anywhere sm:text-h2",
 } as const;
 
 /** The latest figure, its basis, how it moved and every gap in the series, in the module's words. */
@@ -185,20 +215,19 @@ function Level({ reading, large, href }: { reading: Reading; large: boolean; hre
         <Reason text={reading.reason} href={href()} />
       </GapNote>
     );
-  if (reading.state === "unordered")
-    return (
-      <div className="flex flex-col gap-1">
-        <Figure className={cx(size, "text-text-tertiary")}>n.a.</Figure>
-        <GapNote>{UNORDERED}</GapNote>
-      </div>
-    );
+  if (reading.state === "unordered") return <AsWritten series={reading.series} href={href} />;
   const { latest, points } = reading.timeline;
-  const stated = latest.value !== null;
+  const stated = latest.figure !== null;
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+      <div
+        className={cx(
+          "flex items-baseline gap-x-3 gap-y-1",
+          large ? "flex-wrap" : "min-w-0 gap-x-2",
+        )}
+      >
         <Figure className={cx(size, !stated && "text-text-tertiary")}>
-          {stated ? withUnit(latest.cell, reading.series.unit) : "n.a."}
+          {latest.figure === null ? "n.a." : withUnit(latest.figure, reading.series.unit)}
         </Figure>
         <ToneChip reading={reading} large={large} />
       </div>
@@ -218,10 +247,14 @@ function Level({ reading, large, href }: { reading: Reading; large: boolean; hre
   );
 }
 
-/** The tile's one trace control: the latest row, or the table a gap is about; else none. */
+/** The tile's one trace control: the latest row, or the table itself; none without a table. */
 function Source({ reading, href }: { reading: Reading; href: Href }) {
-  if (reading.state === "unordered") return null;
-  const line = reading.state === "ready" ? reading.timeline.latest.line : reading.line;
+  const line =
+    reading.state === "ready"
+      ? reading.timeline.latest.line
+      : reading.state === "unordered"
+        ? reading.series.line
+        : reading.line;
   if (line === undefined) return null;
   return (
     <PublishedSource
@@ -236,9 +269,8 @@ function Source({ reading, href }: { reading: Reading; href: Href }) {
 
 /** A series mark needs the latest figure and one more stated period; otherwise a gap bar. */
 function Drawn({ reading, children }: { reading: Reading; children: ReactNode }) {
-  if (reading.state === "absent") return null;
+  if (reading.state !== "ready") return null;
   const comparable =
-    reading.state === "ready" &&
     reading.timeline.latest.value !== null &&
     reading.slots.filter(({ value }) => value !== null).length >= 2;
   return comparable ? children : <GapBar />;
@@ -247,16 +279,32 @@ function Drawn({ reading, children }: { reading: Reading; children: ReactNode })
 type TileProps = { reading: Reading; href: Href; children: ReactNode };
 
 /** A small tile inside the 2x2 grid: one column of it, with the Overview's small head. */
+/**
+ * A small tile's head: the 13 px title, which wraps, and the trace, which never leaves the row
+ * (Tile's own small head lets the trace wrap below a long title in a narrow tile).
+ */
+function SmallHead({ reading, href }: { reading: Reading; href: Href }) {
+  return (
+    <div className="flex items-start justify-between gap-2">
+      <h3 className="min-w-0 text-small font-medium text-pretty text-text-primary">
+        {reading.title}
+      </h3>
+      <div className="flex-none">
+        <Source reading={reading} href={href} />
+      </div>
+    </div>
+  );
+}
+
 function SmallTile({ reading, href, children }: TileProps) {
   return (
     <Tile
       span={12}
       head="small"
       label={reading.title}
-      title={reading.title}
-      trace={<Source reading={reading} href={href} />}
       className="justify-between gap-2 p-4 sm:p-4 lg:col-span-1"
     >
+      <SmallHead reading={reading} href={href} />
       <Level reading={reading} large={false} href={href} />
       <Drawn reading={reading}>{children}</Drawn>
     </Tile>
@@ -272,7 +320,7 @@ function LargeTile({ reading, href, children }: TileProps) {
       title={reading.title}
       kicker={reading.state === "ready" ? reading.timeline.latest.period : undefined}
       trace={<Source reading={reading} href={href} />}
-      className="justify-between"
+      className="self-start"
     >
       <Level reading={reading} large href={href} />
       <Drawn reading={reading}>{children}</Drawn>
@@ -368,7 +416,7 @@ export function FigureRow({ run, view }: RowProps) {
       <LargeTile reading={net} href={href}>
         <SeriesMark reading={net} kind="strip" />
       </LargeTile>
-      <div className="grid min-w-0 auto-rows-fr grid-cols-2 gap-3 sm:gap-4 lg:col-span-4">
+      <div className="grid min-w-0 auto-rows-fr grid-cols-2 gap-3 self-start sm:gap-4 lg:col-span-4">
         <SmallTile reading={revenue} href={href}>
           <SeriesMark reading={revenue} kind="mini" />
         </SmallTile>

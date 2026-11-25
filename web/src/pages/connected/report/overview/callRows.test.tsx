@@ -107,6 +107,12 @@ const committee = () =>
 const foundation = () =>
   entry("CP-1", [
     table(
+      "Period table",
+      ["Period", "Start", "End"],
+      ["FY2023", "2023-01-01", "2023-12-31"],
+      ["FY2024", "2024-01-01", "2024-12-31"],
+    ),
+    table(
       "Chart data: leverage",
       ["Period", "Total debt / EBITDA", "Net debt / EBITDA", "Reporting unit", "Basis"],
       ["FY2023", "3.75", "3.00", "x", "Stated."],

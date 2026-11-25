@@ -1,16 +1,19 @@
-import { containsReference, withUnit, type OutputEntry } from "../../publishedReport";
+import type { OutputEntry } from "../../publishedReport";
 import { gridOf } from "../../visuals/LegacyForecast";
 import {
   amount,
   items,
   record,
+  sharePosition,
   stringsIn,
   ticks,
   word,
   type SourceTable,
 } from "../../visuals/visualData";
+import { namedTable } from "../../reportView";
 import { downsideView, scenarioShareLabel } from "../Downside";
 import { columnAt, readCell, type Cell } from "./figureData";
+import { labelText, readerCell } from "./notes";
 import { readerReason } from "./reason";
 
 type Descriptor = Record<string, unknown>;
@@ -26,8 +29,9 @@ export type HeadroomTest = {
   line?: number;
 };
 
+/** A stated headroom, through the reader rule: a trailing citation set aside. */
 const stated = (text: string) =>
-  text.trim() && !/^Not (?:supplied|calculated)\b/.test(text) ? text : null;
+  text.trim() && !/^Not (?:supplied|calculated)\b/.test(text) ? readerCell(text) : null;
 
 /** The covenant tests as published: each test's own threshold, current value and unit. */
 export function headroomTests(table: SourceTable, descriptor: Descriptor): HeadroomTest[] | null {
@@ -41,7 +45,7 @@ export function headroomTests(table: SourceTable, descriptor: Descriptor): Headr
     const unit = row.at(-2) ?? "";
     const scope = [row[threshold] ?? "", row[current] ?? ""];
     return {
-      label: row[label] ?? "",
+      label: labelText(row[label] ?? "", "A test"),
       unit,
       threshold: readCell(scope[0] ?? "", scope, unit),
       current: readCell(scope[1] ?? "", scope, unit),
@@ -76,83 +80,113 @@ export function bulletGeometry(test: HeadroomTest) {
   };
 }
 
-/** One stressed measure: a cell a case, word for word, at its handoff line. */
-type DownsideMeasure = {
+export type DownsidePanel = {
   measure: string;
-  line: number;
   cells: Cell[];
+  min: number;
+  max: number;
+  /** The handoff line of the measure's row. */
+  line?: number;
 };
 
 const LEAD_NUMBER = /^(-?\d[\d,]*(?:\.\d+)?) \(/;
+const STATED_GAP = /^Not (?:supplied|calculated):\s*(\S.*)$/;
 
-function stressCell(text: string): Cell {
-  const plain = text.replaceAll("−", "-");
-  const value = amount(plain) ?? amount(LEAD_NUMBER.exec(plain)?.[1] ?? "");
-  const reason = /^Not (?:supplied|calculated):\s*(\S.*)$/.exec(text)?.[1] ?? null;
-  return { text, value, reason: value === null ? (reason ?? "No value in the handoff") : null };
+/** A stressed cell read in its measure's unit ("7.5x" in an "(x)" row is 7.5). A gap keeps the
+ * module's reason; a cell with words of its own is never called empty. */
+function stressCell(text: string, unit: string): Cell {
+  const plain = text.replaceAll("−", "-").trim();
+  const value = amount(plain, unit) ?? amount(LEAD_NUMBER.exec(plain)?.[1] ?? "");
+  const reason = STATED_GAP.exec(text.trim())?.[1] ?? (plain ? null : "No value in the handoff");
+  return { text, value, reason: value === null ? reason : null };
 }
 
-const LEVERAGE = /^Net leverage\b.*\(x\)$/i;
-const COVER = /\bcover\b.*\(x\)$/i;
+const SCENARIOS = "T2DS.1 Scenarios";
+const REGISTER = ["Scenario ID", "Name", "EBITDA decline s", "Cash-interest increase k"];
 
-/** The first measure of the matrix that `pattern` names and that states a figure for some case. */
-function measureOf(rows: { line: number; cells: string[] }[], ids: string[], pattern: RegExp) {
-  const row = rows.find(
-    ({ cells }) => pattern.test(cells[0] ?? "") && !containsReference(cells[0] ?? ""),
+/** The module's scenario register by id: each case's name and its two shocks, as written. */
+function register(entry: OutputEntry) {
+  const table = namedTable(entry, SCENARIOS, REGISTER);
+  const at = (name: string) => table?.headers.indexOf(name) ?? -1;
+  const [id, name, decline, interest] = REGISTER.map(at);
+  return new Map(
+    (table?.rows ?? []).map(({ cells }) => [
+      cells[id ?? -1] ?? "",
+      {
+        name: readerCell(cells[name ?? -1] ?? ""),
+        decline: cells[decline ?? -1] ?? "",
+        interest: cells[interest ?? -1] ?? "",
+      },
+    ]),
   );
-  if (!row) return null;
-  const cells = ids.map((_, at) => stressCell(row.cells[at + 1] ?? ""));
-  if (!cells.some((cell) => cell.value !== null)) return null;
-  return { measure: row.cells[0] ?? "", line: row.line, cells } satisfies DownsideMeasure;
 }
 
-/** The stress results as each case's net leverage, with its cover beside it. */
-export function downsideCases(entry: OutputEntry) {
+type Scenario = ReturnType<typeof register> extends Map<string, infer V> ? V : never;
+
+const unshocked = (item: Scenario | undefined) =>
+  item !== undefined && sharePosition(item.decline) === 0 && sharePosition(item.interest) === 0;
+
+/** The cases in the matrix's order: the module's names, numbered where it gives none, and the
+ * one case with no shock applied, only when exactly one states zero shocks. */
+function downsideCaseList(entry: OutputEntry, ids: string[]) {
+  const scenarios = register(entry);
+  const quiet = ids.filter((id) => unshocked(scenarios.get(id)));
+  const cases = ids.map((id, at) => ({
+    id,
+    name: scenarios.get(id)?.name || `Case ${String(at + 1)}`,
+    control: quiet.length === 1 && quiet[0] === id,
+  }));
+  const named = ids.filter((id) => scenarios.get(id)?.name).length;
+  const numbering =
+    named === 0
+      ? ["The module names none of these cases; they are numbered here in the handoff's order."]
+      : named < ids.length
+        ? ["Cases the module does not name are numbered here in the handoff's order."]
+        : [];
+  const assumptions = cases.flatMap(({ id, name, control }) => {
+    const item = scenarios.get(id);
+    if (control) return [`${name}: the case with no shock applied.`];
+    if (!item) return [];
+    return [
+      `${name}: EBITDA decline ${scenarioShareLabel(item.decline)}, cash interest increase ${scenarioShareLabel(item.interest)}.`,
+    ];
+  });
+  return { cases, assumptions: [...numbering, ...assumptions] };
+}
+
+/** A measure's unit from its label's last bracket: "(x)", "(%)", "(USD millions)". */
+const unitOfMeasure = (measure: string) => /\(([^()]+)\)$/.exec(measure.trim())?.[1] ?? "";
+
+/**
+ * The stress results as small multiples: one panel a measure the handoff states, in its order and
+ * as written, one bar a case, each panel on its own scale from zero.
+ */
+export function downsidePanels(entry: OutputEntry) {
   const view = downsideView(entry);
   if (!view) return null;
   const ids = view.matrix.headers.slice(1, -1);
-  const cases = ids.map((id) => {
-    const named = view.cases.find((item) => item.id === id);
-    return { id, name: named?.name ?? id, control: named !== undefined && named === view.control };
+  const { cases, assumptions } = downsideCaseList(entry, ids);
+  const panels = view.matrix.rows.map(({ cells, line }): DownsidePanel => {
+    const label = cells[0] ?? "";
+    const read = ids.map((_, at) => stressCell(cells[at + 1] ?? "", unitOfMeasure(label)));
+    const values = read.flatMap((cell) => (cell.value === null ? [] : [cell.value]));
+    return {
+      measure: labelText(label, "A measure"),
+      cells: read,
+      min: Math.min(0, ...values),
+      max: Math.max(0, ...values),
+      line,
+    };
   });
-  const leverage = measureOf(view.matrix.rows, ids, LEVERAGE);
-  const cover = measureOf(view.matrix.rows, ids, COVER);
-  if (!leverage && !cover) return null;
-  const assumptions = view.cases
-    .filter((item) => item !== view.control)
-    .map(
-      (item) =>
-        `${item.name}: EBITDA decline ${scenarioShareLabel(item.decline)}, cash interest increase ${scenarioShareLabel(item.interest)}.`,
-    );
-  return { cases, leverage, cover, assumptions, line: view.matrix.line };
+  if (!panels.length) return null;
+  return { cases, panels, assumptions, line: view.matrix.line };
 }
 
-/**
- * The covenant limit for a stressed measure: the run's covenant test of the same measure and unit
- * ("Net leverage (x)" and a "Net leverage" test in x) with a stated threshold; null otherwise.
- */
-export function covenantLimit(tests: HeadroomTest[] | null, measure: string) {
-  const unit = /\(([^()]+)\)$/.exec(measure)?.[1] ?? "";
-  const name = measure
-    .replace(/\s*\([^()]+\)$/, "")
-    .trim()
-    .toLowerCase();
-  const test = tests?.find(
-    (item) =>
-      item.label.trim().toLowerCase() === name &&
-      item.unit.trim() === unit &&
-      item.threshold.value !== null,
-  );
-  if (!test || test.threshold.value === null) return null;
-  return { value: test.threshold.value, text: withUnit(test.threshold.text, unit) };
-}
-
-/** Where a value sits across `room` pixels, on one scale that holds every case and the limit. */
-export function dumbbellScale(cells: Cell[], limit: number | null, room: number) {
-  const scale = ticks([...cells.map((cell) => cell.value), limit]);
-  const low = scale[0]?.value ?? 0;
-  const top = scale.at(-1)?.value ?? 1;
-  return (value: number) => ((value - low) / (top - low)) * room;
+/** Where a panel's zero and a value sit across `room` pixels. */
+export function panelScale(panel: DownsidePanel, room: number) {
+  const span = panel.max - panel.min || 1;
+  const at = (value: number) => ((value - panel.min) / span) * room;
+  return { zero: at(0), at };
 }
 
 type PathPoint = { period: string; display: string; value: number | null; reason: string };

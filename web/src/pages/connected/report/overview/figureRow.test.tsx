@@ -153,7 +153,9 @@ describe("the latest figure is the latest period, never the last row", () => {
         ),
       ).toBeVisible();
       expect(tile).not.toHaveTextContent(/n\.a\.|Not supplied|Better|Worse|from |-1\.00x/);
-      expect(within(tile).getByRole("link", { name: "Source for Total debt / EBITDA" })).toBeVisible();
+      expect(
+        within(tile).getByRole("link", { name: "Source for Total debt / EBITDA" }),
+      ).toBeVisible();
       expect(within(tile).queryByRole("img")).toBeNull();
     },
   );
@@ -343,7 +345,8 @@ describe("a period the module did not supply between stated periods", () => {
 
   it("breaks the dot strip and the small slope at the gap too", () => {
     const entry = gapped();
-    const revenue = entry.sections[3]?.blocks[0];
+    const revenue = entry.sections.find(({ heading }) => heading.endsWith("revenue and EBITDA"))
+      ?.blocks[0];
     if (revenue?.type !== "table") throw new Error("fixture");
     revenue.rows = [
       { line: 1, cells: ["FY2021", "1,900", "400", "US$m", "Stated."] },
@@ -446,7 +449,9 @@ const num = (element: Element, name: string) => Number(element.getAttribute(name
 
 /** A text label's box, from its position, anchor and font size (monospace, 0.6 em a glyph). */
 function labelBox(text: Element): Box {
-  const size = Number(/text-\[(\d+)px\]/.exec(text.getAttribute("class") ?? "")?.[1] ?? 12);
+  const ramp = { "text-caption": 12, "text-mono": 13, "text-small": 14 } as const;
+  const classes = (text.getAttribute("class") ?? "").split(/\s+/);
+  const size = Object.entries(ramp).find(([name]) => classes.includes(name))?.[1] ?? 12;
   const width = text.textContent.length * size * 0.6;
   const x = num(text, "x");
   const y = num(text, "y");
@@ -485,14 +490,23 @@ function crosses(line: Element, box: Box) {
 
 /** The figure labels of a mark (not its axis ticks) that a connector or gridline strikes. */
 function struck(mark: Element, lines: string) {
-  const labels = [...mark.querySelectorAll("text")].filter(
-    (text) => !/text-\[11px\]/.test(text.getAttribute("class") ?? ""),
-  );
+  const labels = [...mark.querySelectorAll("text:not([data-tick])")];
   return labels.flatMap((text) =>
     [...mark.querySelectorAll(lines)].some((line) => crosses(line, labelBox(text)))
       ? [text.textContent]
       : [],
   );
+}
+
+/** The labels of a mark that reach outside its drawing. */
+function outside(mark: Element) {
+  const [, , width = 0, height = 0] = (mark.getAttribute("viewBox") ?? "").split(" ").map(Number);
+  return [...mark.querySelectorAll("text")].flatMap((text) => {
+    const box = labelBox(text);
+    return box.left < 0 || box.right > width || box.top < 0 || box.bottom > height
+      ? [text.textContent]
+      : [];
+  });
 }
 
 describe("mark labels sit clear of the lines", () => {
@@ -505,6 +519,7 @@ describe("mark labels sit clear of the lines", () => {
     const mark = within(screen.getByRole("region", { name: "Net debt / EBITDA" })).getByRole("img");
     expect(within(mark).getByText("3.00x")).toBeTruthy();
     expect(struck(mark, "[data-segment]")).toEqual([]);
+    expect(outside(mark)).toEqual([]);
   });
 
   it("keeps every slope label off its line and its gridlines", () => {
@@ -521,6 +536,7 @@ describe("mark labels sit clear of the lines", () => {
     const mark = within(gross()).getByRole("img");
     expect(within(mark).getByText("2.80x")).toBeTruthy();
     expect(struck(mark, "line")).toEqual([]);
+    expect(outside(mark)).toEqual([]);
   });
 });
 
@@ -613,5 +629,56 @@ describe("series marks place periods by time", () => {
     );
     const [first = 0, second = 0, third = 0] = dots;
     expect((second - first) / (third - second)).toBeCloseTo(2, 5);
+  });
+});
+
+describe("the figure rows' layout", () => {
+  it("draws every mark text on the type ramp, none at an arbitrary size", () => {
+    draw(
+      foundation(
+        chart(
+          "leverage",
+          LEVERAGE,
+          ["FY2023", "3.75", "3.00", "x", "Stated."],
+          ["FY2024", "2.80", "2.25", "x", "Stated."],
+        ),
+      ),
+    );
+    for (const text of document.querySelectorAll("svg text"))
+      expect(text.getAttribute("class") ?? "").not.toMatch(/text-\[/);
+  });
+
+  it("lets the large tiles and their grid take their content height, not stretch", () => {
+    draw(foundation(chart("leverage", LEVERAGE, ["FY2024", "4.00", "3.50", "x", "Stated."])));
+    for (const name of ["Total debt / EBITDA", "Net debt / EBITDA"]) {
+      const tile = screen.getByRole("region", { name });
+      expect(tile).toHaveClass("self-start");
+      expect(tile).not.toHaveClass("justify-between");
+    }
+    expect(screen.getByRole("region", { name: "Revenue" }).parentElement).toHaveClass("self-start");
+  });
+
+  it("keeps each small tile's trace in its head row, the title wrapping instead", () => {
+    draw(foundation(chart("leverage", LEVERAGE, ["FY2024", "4.00", "3.50", "x", "Stated."])));
+    for (const name of ["Revenue", "EBITDA / cash interest", "Adjusted EBITDA", "Cash"]) {
+      const tile = screen.getByRole("region", { name });
+      const heading = within(tile).getByRole("heading", { level: 3, name });
+      const row = heading.parentElement;
+      expect(row).not.toHaveClass("flex-wrap");
+      expect(heading).toHaveClass("min-w-0");
+      const control = within(tile).getByRole("link", { name: `Source for ${name}` });
+      expect(row).toContainElement(control);
+      expect(control.parentElement).toHaveClass("flex-none");
+    }
+  });
+
+  it("puts the better or worse word inline after the figure on every small tile", () => {
+    draw(foundation(chart("leverage", LEVERAGE, ["FY2024", "4.00", "3.50", "x", "Stated."])));
+    for (const name of ["Revenue", "EBITDA / cash interest", "Adjusted EBITDA"]) {
+      const word = within(screen.getByRole("region", { name })).getByText(/^(Better|Worse)$/);
+      const row = word.parentElement;
+      expect(row).not.toHaveClass("flex-wrap");
+      expect(row?.firstElementChild?.className).toMatch(/font-mono/);
+    }
   });
 });

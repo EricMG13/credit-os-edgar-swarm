@@ -93,11 +93,15 @@ export function readCell(text: string, scope: readonly string[], unit: string): 
   };
 }
 
-/** The table's own notes on its basis, each once; a note that names a source stays in Evidence. */
+/**
+ * The table's own notes on its basis, each once, as the module wrote them (trimmed). A note that
+ * cites a source is kept: whoever draws the notes draws each through `Reason`, which makes that
+ * one a link to Evidence (`FigureNotes`, `ReasonNotes`); none is drawn raw.
+ */
 export function basisNotes(table: SourceTable) {
   const column = table.headers.findIndex((header) => /^Basis and limitation$/i.test(header));
   if (column < 0) return [];
-  const notes = table.rows.flatMap((row) => readerReason(row[column] ?? "") ?? []);
+  const notes = table.rows.map((row) => (row[column] ?? "").trim()).filter(Boolean);
   return [...new Set(notes)];
 }
 

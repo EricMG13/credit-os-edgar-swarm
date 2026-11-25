@@ -40,37 +40,57 @@ function PassageGrid({
 }: Pick<RowProps, "run"> & { entry: OutputEntry; passage: PassageTable }) {
   const { headers, rows } = passage.table;
   return (
-    <div className="min-w-0 overflow-x-auto">
-      <table className="w-full text-left text-small text-text-primary">
-        <thead>
-          <tr>
-            {headers.map((header, at) => (
-              <th
-                key={at}
-                scope="col"
-                className="py-1 pr-4 text-caption font-medium text-text-secondary"
-              >
-                {header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.line} className="border-t border-border-hairline">
-              {row.cells.map((cell, at) => (
-                <td key={at} className="py-1 pr-4 align-top">
-                  {cell ?? (
-                    <EvidenceLink href={evidencePath(run.folder, entry, row.line)}>
-                      Read this cell in Evidence
-                    </EvidenceLink>
-                  )}
-                </td>
+    <div className="flex min-w-0 flex-col gap-1">
+      <div className="min-w-0 overflow-x-auto">
+        <table className="w-full text-left text-small text-text-primary">
+          <thead>
+            <tr>
+              {headers.map((header, at) => (
+                <th
+                  key={at}
+                  scope="col"
+                  className="py-1 pr-4 text-caption font-medium text-text-secondary"
+                >
+                  {header}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.line} className="border-t border-border-hairline">
+                {row.cells.map((cell, at) => (
+                  <td key={at} className="py-1 pr-4 align-top">
+                    {cell ?? (
+                      <EvidenceLink href={evidencePath(run.folder, entry, row.line)}>
+                        Read this cell in Evidence
+                      </EvidenceLink>
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <HeldColumns run={run} entry={entry} passage={passage} />
+    </div>
+  );
+}
+
+/** The columns of a passage table held in Evidence, named, with the link to read them there. */
+function HeldColumns({
+  run,
+  entry,
+  passage,
+}: Pick<RowProps, "run"> & { entry: OutputEntry; passage: PassageTable }) {
+  if (!passage.held.length) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 text-caption text-text-tertiary">
+      <p>{`Held in Evidence: ${passage.held.join(", ")}.`}</p>
+      <EvidenceLink href={evidencePath(run.folder, entry, passage.line)}>
+        Read this table in Evidence
+      </EvidenceLink>
     </div>
   );
 }
@@ -166,6 +186,7 @@ function Counter({
       label={CONTRARY}
       title={CONTRARY}
       tone="counter"
+      className="self-start"
       trace={
         first && <Source run={run} entry={entry} passage={first} name="the contrary evidence" />
       }

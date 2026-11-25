@@ -112,3 +112,54 @@ it("draws one counter tile, the untyped outcomes a one-line gap inside it", () =
   expect(gap.closest(".min-h-24")).toBeNull();
   expect(gap).toHaveClass("text-gap-text");
 });
+
+it("says under a passage table which columns are held in Evidence, and links the table", () => {
+  draw(
+    lead(
+      [
+        words(4, "Distributions exceed free cash flow."),
+        grid(
+          6,
+          ["Measure", "Evidence", "Consumer", "Case ID", "Value"],
+          ["Gross leverage", "Annual report", "Downside", "C1", "6.53x"],
+        ),
+      ],
+      [words(41, "Cash generation improved.")],
+    ),
+  );
+  const findings = screen.getByRole("region", { name: "Key findings" });
+  const shown = within(findings).getByRole("table");
+  expect(
+    within(shown)
+      .getAllByRole("columnheader")
+      .map((cell) => cell.textContent),
+  ).toEqual(["Measure", "Value"]);
+  expect(
+    within(findings).getByText("Held in Evidence: Evidence, Consumer, Case ID."),
+  ).toBeVisible();
+  expect(within(findings).getByRole("link", { name: "Read this table in Evidence" })).toBeVisible();
+});
+
+it("links a block it cannot draw inside a passage instead of dropping it", () => {
+  draw(
+    lead(
+      [
+        words(4, "Distributions exceed free cash flow."),
+        { type: "equity", line: 8, text: "Equity cushion chart" },
+      ],
+      [words(41, "Cash generation improved.")],
+    ),
+  );
+  const findings = screen.getByRole("region", { name: "Key findings" });
+  expect(within(findings).getAllByRole("listitem")).toHaveLength(2);
+  expect(
+    within(findings).getByRole("link", { name: "Read this passage in Evidence" }),
+  ).toBeVisible();
+});
+
+it("lets the counter tile take its content height, the findings tile carrying the row", () => {
+  draw(lead([words(4, "Distributions exceed free cash flow.")], [words(41, "Cash improved.")]));
+  const counter = screen.getByRole("region", { name: CONTRARY });
+  expect(counter).toHaveClass("self-start");
+  expect(counter).not.toHaveClass("flex-1");
+});

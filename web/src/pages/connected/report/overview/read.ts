@@ -7,10 +7,11 @@ import {
   readerText,
   type OutputEntry,
   type PublishedRun,
+  type Row,
   type Snapshot,
   type Table,
 } from "../../publishedReport";
-import { periodOrder, type ReportView } from "../../reportView";
+import { namedTable, periodOrder, type ReportView } from "../../reportView";
 
 /** What every Overview row is given: the published snapshot, this run and its report view. */
 export type RowProps = { snapshot: Snapshot; run: PublishedRun; view: ReportView };
@@ -20,10 +21,14 @@ export const entryOf = (view: ReportView, module: string) =>
   view.entries.find((entry) => entry.selected && entry.output.module === module);
 
 export type Passage = { line: number; text: string | null };
-/** A table the module wrote in a passage: source columns left out, a cell that cites one null. */
+/**
+ * A table the module wrote in a passage: a cell that cites a source is null; the columns that are
+ * held in Evidence (sources, ids, text for another module) are named in `held`, never drawn.
+ */
 export type PassageTable = {
   line: number;
   table: { headers: string[]; rows: { line: number; cells: (string | null)[] }[] };
+  held: string[];
 };
 
 const plain = (text: string) => text.replaceAll("**", "").replaceAll("`", "").trim();
@@ -38,8 +43,12 @@ function tableOf(table: Table): PassageTable | Passage {
   const columns = displayColumns(table.headers, false, table.rows);
   if (!columns.length) return { line: table.line, text: null };
   const cell = (text: string) => (containsReference(text) ? null : readerText(plain(text)));
+  const held = table.headers.flatMap((header, at) =>
+    columns.includes(at) ? [] : [readerText(plain(header))],
+  );
   return {
     line: table.line,
+    held,
     table: {
       headers: columns.map((at) => readerText(plain(table.headers[at] ?? ""))),
       rows: table.rows.map(({ line, cells }) => ({
@@ -60,27 +69,40 @@ export function passageBlocks(entry: OutputEntry, heading: string): (Passage | P
     .flatMap(({ blocks }) => blocks)
     .flatMap((block) => {
       if (block.type === "table") return [tableOf(block)];
-      if (block.type !== "text" || methodNote(block.text)) return [];
+      if (block.type !== "text") return [{ line: block.line, text: null }];
+      if (methodNote(block.text)) return [];
       const paragraph = paragraphOf(block.line, block.text);
       return paragraph.text === "" ? [] : [paragraph];
     });
 }
 
-/** The paragraphs a module wrote under one reader passage, in its words; its tables left out. */
-function passageParagraphs(entry: OutputEntry, heading: string): Passage[] {
+/**
+ * The paragraphs a module wrote under one reader passage, in its words; its tables left out. `text`
+ * is null for a paragraph (or a block the page cannot draw) that is read in Evidence instead.
+ */
+export function passageParagraphs(entry: OutputEntry, heading: string): Passage[] {
   return passageBlocks(entry, heading).filter((block): block is Passage => !("table" in block));
 }
 
 const NUMBER = /^-?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/;
 
-/** A cell's number, exactly as stated; null for a gap or any other words. */
-const cellNumber = (cell: string) =>
-  NUMBER.test(cell.trim()) ? Number(cell.trim().replaceAll(",", "")) : null;
+/**
+ * A cell's figure as plain decimal text, exactly as stated: trimmed, a Unicode minus read as "-",
+ * and the table's own reporting unit after it (as "4.0x" in an x table) set aside. Null for a gap
+ * or any other words.
+ */
+function figureText(cell: string, unit: string) {
+  const text = cell.trim().replace(/^\u2212/, "-");
+  const bare = unit && text.endsWith(unit) ? text.slice(0, -unit.length).trim() : text;
+  return NUMBER.test(bare) ? bare : null;
+}
 
 export type Point = {
   period: string;
   /** The cell as the module wrote it: a figure, or its `Not supplied: …` words. */
   cell: string;
+  /** The cell's figure as plain decimal text (`figureText`); null when it is not one figure. */
+  figure: string | null;
   value: number | null;
   /** The row's "Basis and limitation" (or "Basis") cell as written; null without that column. */
   basis: string | null;
@@ -88,7 +110,13 @@ export type Point = {
   order: string | undefined;
   line: number;
 };
-export type Series = { name: string; unit: string; points: Point[] };
+export type Series = {
+  name: string;
+  unit: string;
+  points: Point[];
+  /** The chart table's own line, for a trace of the whole table. */
+  line?: number;
+};
 /** A chart column read for a tile, or the true reason it cannot be. */
 export type SeriesRead = { series: Series } | { reason: string; line?: number };
 
@@ -146,24 +174,29 @@ function figureColumn(
 
 const BASIS = /^Basis(?: and limitation)?$/i;
 
-function points(table: Table, column: number): Point[] {
+function points(table: Table, column: number, unit: string): Point[] {
   const period = table.headers.indexOf("Period");
   const basis = table.headers.findIndex((name) => BASIS.test(name.trim()));
-  return table.rows.map(({ cells, line }) => ({
-    period: cells[period] ?? "",
-    cell: cells[column] ?? "",
-    value: cellNumber(cells[column] ?? ""),
-    basis: basis < 0 ? null : (cells[basis] ?? ""),
-    order: cells.length === table.headers.length ? periodOrder(cells[period] ?? "") : undefined,
-    line,
-  }));
+  return table.rows.map(({ cells, line }) => {
+    const name = (cells[period] ?? "").trim();
+    const figure = figureText(cells[column] ?? "", unit);
+    return {
+      period: name,
+      cell: cells[column] ?? "",
+      figure,
+      value: figure === null ? null : Number(figure.replaceAll(",", "")),
+      basis: basis < 0 ? null : (cells[basis] ?? ""),
+      order: cells.length === table.headers.length ? periodOrder(name) : undefined,
+      line,
+    };
+  });
 }
 
 /**
  * One column of a CP-1 `Chart data:` period table, row by row; or, when the table, the one
  * matching column or the one reporting unit is not there, the true reason: a tile draws it.
  */
-export function periodSeries(
+export function readSeries(
   entry: OutputEntry,
   chart: string,
   heading: RegExp,
@@ -176,7 +209,18 @@ export function periodSeries(
   const unit = reportingUnit(table, chart);
   if ("reason" in unit) return { reason: unit.reason, line: table.line };
   const name = table.headers[found.column] ?? title;
-  return { series: { name, unit: unit.unit, points: points(table, found.column) } };
+  const series = { name, unit: unit.unit, points: points(table, found.column, unit.unit) };
+  return { series: { ...series, line: table.line } };
+}
+
+/** `readSeries` with its earlier arguments and result: the series, or null for any reason. */
+export function periodSeries(
+  entry: OutputEntry | undefined,
+  chart: string,
+  heading: RegExp,
+): Series | null {
+  const read = entry && readSeries(entry, chart, heading, "");
+  return read && "series" in read ? read.series : null;
 }
 
 /**
@@ -194,29 +238,73 @@ function inPeriodOrder(series: Series): Point[] | null {
   return [...series.points].sort((a, b) => ((a.order ?? "") < (b.order ?? "") ? -1 : 1));
 }
 
-const yearEarlier = (year: string) => String(Number(year) - 1).padStart(4, "0");
-
-/**
- * The `periodOrder` key of the period exactly a year before: FY2024 → FY2023, a date (or the date
- * of "FYn / date") less one year. None for 29 February, as `oneYearBefore` in `reportView.ts`.
- */
-function yearBefore(order: string) {
-  const fiscal = /^1-(\d{4})$/.exec(order);
-  if (fiscal?.[1]) return `1-${yearEarlier(fiscal[1])}`;
-  const [, year, month, day] = /^2-(\d{4})-(\d{2})-(\d{2})$/.exec(order) ?? [];
-  if (!year || !month || !day || (month === "02" && day === "29")) return undefined;
-  return `2-${yearEarlier(year)}-${month}-${day}`;
+/** `oneYearBefore` of `reportView.ts`, kept identical: the same date a year earlier; none for 29 February. */
+function oneYearBefore(date: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  const [, year = "", month = "", day = ""] = match ?? [];
+  return match && !(month === "02" && day === "29")
+    ? `${String(Number(year) - 1).padStart(4, "0")}-${month}-${day}`
+    : undefined;
 }
 
-/** The latest period, and the one exactly a year before it when the chart states one. */
-export type Timeline = { points: Point[]; latest: Point; prior: Point | undefined };
+const dateOf = (period: string) => /(\d{4}-\d{2}-\d{2})$/.exec(period)?.[1];
+const NO_YEAR = "No period a year earlier to compare.";
 
-export function timeline(series: Series): Timeline | null {
+type Earlier = { prior?: Point; why?: string };
+
+/**
+ * The period exactly a year before the latest, by the rule of `priorMetricColumn` in
+ * `reportView.ts`: the handoff's period table names the latest once (by its name or its end date),
+ * and exactly one period there both starts and ends a year earlier; the chart's row for that
+ * period (by its name or its end date) is the prior.
+ */
+function yearEarlier(entry: OutputEntry, latest: Point, ordered: Point[]): Earlier {
+  const table = namedTable(entry, "Period table", ["Period", "Start", "End"]);
+  const [name, start, end] = ["Period", "Start", "End"].map((h) => table?.headers.indexOf(h) ?? -1);
+  const cell = (row: Row, at: number | undefined) => (row.cells[at ?? -1] ?? "").trim();
+  const date = dateOf(latest.period);
+  const now = table?.rows.filter(
+    (row) => cell(row, name) === latest.period || (date !== undefined && cell(row, end) === date),
+  );
+  const [current] = now ?? [];
+  if (!table || now?.length !== 1 || !current)
+    return {
+      why: `No change is drawn: the handoff's period table does not state when ${latest.period} starts and ends.`,
+    };
+  const from = oneYearBefore(cell(current, start));
+  const to = oneYearBefore(cell(current, end));
+  const before = table.rows.filter((row) => cell(row, end) === to);
+  const [row] = before;
+  if (!from || !to || before.length !== 1 || !row || cell(row, start) !== from)
+    return { why: NO_YEAR };
+  const named = cell(row, name);
+  const match = ordered.filter(
+    (point) => point !== latest && (point.period === named || dateOf(point.period) === to),
+  );
+  return match.length === 1 ? { prior: match[0] } : { why: NO_YEAR };
+}
+
+/**
+ * The latest period, and the one exactly a year before it when the handoff states one; `why`
+ * says why there is none. Null when the periods cannot be put in order.
+ */
+export type Timeline = { points: Point[]; latest: Point; prior: Point | undefined; why?: string };
+
+export function timeline(series: Series, entry: OutputEntry): Timeline | null {
   const ordered = inPeriodOrder(series);
   const latest = ordered?.at(-1);
   if (!ordered || !latest) return null;
-  const before = yearBefore(latest.order ?? "");
-  return { points: ordered, latest, prior: ordered.find(({ order }) => order === before) };
+  const { prior, why } = yearEarlier(entry, latest, ordered);
+  return { points: ordered, latest, prior, ...(why !== undefined && { why }) };
+}
+
+/**
+ * The latest row by period and, given the entry, the row a year before it (earlier this took the
+ * last two rows by position). No prior without the entry's period table: none is guessed.
+ */
+export function lastTwo(series: Series, entry?: OutputEntry) {
+  const line = entry ? timeline(series, entry) : null;
+  return { latest: line?.latest ?? inPeriodOrder(series)?.at(-1), prior: line?.prior };
 }
 
 /** A `Not supplied: reason` cell's reason, in the module's words; null for any other cell. */

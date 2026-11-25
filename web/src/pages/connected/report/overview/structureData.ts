@@ -1,5 +1,6 @@
 import { items, ticks, type SourceTable } from "../../visuals/visualData";
 import { columnAt, readCell, type Cell } from "./figureData";
+import { labelText } from "./notes";
 
 type Descriptor = Record<string, unknown>;
 
@@ -35,7 +36,7 @@ export function wallSlots(table: SourceTable, descriptor: Descriptor, unit: stri
   if (column === null || column === 0) return null;
   const texts = table.rows.map((row) => row[column] ?? "");
   const rows: WallSlot[] = table.rows.map((row, at) => ({
-    label: row[0] ?? "",
+    label: labelText(row[0] ?? "", "A period"),
     cell: readCell(texts[at] ?? "", texts, unit),
     line: table.rowLines?.[at],
   }));
@@ -107,7 +108,7 @@ export function stackRows(table: SourceTable, descriptor: Descriptor, unit: stri
   const levers = leverage === null ? [] : table.rows.map((row) => row[leverage] ?? "");
   const rows = table.rows.map((row, at) => ({
     order: rank === null ? at : Number(row[rank]),
-    label: row[label] ?? "",
+    label: labelText(row[label] ?? "", "A facility"),
     secured: secured === null ? null : flag(row[secured] ?? ""),
     amount: readCell(amounts[at] ?? "", amounts, unit),
     leverage: leverage === null ? null : readCell(levers[at] ?? "", levers, "x"),

@@ -2,15 +2,25 @@ import { cx } from "@/utils/cx";
 
 /** One stated figure on a mark: where it sits (`value`) and the module's own text for it. */
 export type Mark = { label: string; value: number; text: string };
-/** One period of a series: a stated figure, or a gap (`value` null) the line breaks at. */
-export type Slot = { label: string; value: number | null; text: string };
+/**
+ * One period of a series: a stated figure, or a gap (`value` null) the line breaks at. `at` places
+ * it in time (in years) where every period gives one; a line joins two periods only when both are
+ * stated and their `basis` is the same.
+ */
+export type Slot = {
+  label: string;
+  value: number | null;
+  text: string;
+  at?: number;
+  basis?: string;
+};
 export type MarkTone = "better" | "worse" | "flat" | "none";
 
 const FILL = { worse: "fill-warning-mark", other: "fill-chart-1" } as const;
 const STROKE = { worse: "stroke-warning-mark", other: "stroke-chart-1" } as const;
 const ink = (tone: MarkTone) => (tone === "worse" ? "worse" : "other");
 
-const TICK = "fill-text-tertiary font-mono text-[11px]";
+const TICK = "fill-text-tertiary font-mono text-caption";
 const GRID = "stroke-border-hairline";
 const PRIOR_RING = "fill-surface-card stroke-chart-3";
 const GAP_RING = "fill-none stroke-border-gap";
@@ -42,6 +52,22 @@ function axis(values: number[], parts: number, suffix: string) {
 const spread = (count: number, from: number, to: number) => (at: number) =>
   count === 1 ? (from + to) / 2 : from + (at * (to - from)) / (count - 1);
 
+/** Each period's place across `from`..`to`: by its time where every period has one, else evenly. */
+function across(slots: Slot[], from: number, to: number) {
+  const times = slots.map((slot) => slot.at);
+  const even = spread(slots.length, from, to);
+  if (times.some((time) => time === undefined)) return even;
+  const known = times as number[];
+  const first = Math.min(...known);
+  const span = Math.max(...known) - first;
+  return (at: number) =>
+    span > 0 ? from + (((known[at] ?? first) - first) / span) * (to - from) : even(at);
+}
+
+/** Two neighbouring periods are joined only when both state a figure on the same basis. */
+const joined = (from: Slot | undefined, to: Slot) =>
+  from?.value != null && to.value !== null && (from.basis ?? "") === (to.basis ?? "");
+
 const stated = (slots: Slot[]) =>
   slots.flatMap((slot) => (slot.value === null ? [] : [slot.value]));
 
@@ -49,7 +75,7 @@ const stated = (slots: Slot[]) =>
 function segments(slots: Slot[]) {
   return slots.slice(1).flatMap((to, at) => {
     const from = slots[at];
-    return from?.value != null && to.value !== null
+    return joined(from, to) && from?.value != null && to.value !== null
       ? [{ at, from: from.value, to: to.value, label: to.label }]
       : [];
   });
@@ -59,8 +85,9 @@ function segments(slots: Slot[]) {
 function runs(slots: Slot[]) {
   const all: { at: number; value: number }[][] = [[]];
   slots.forEach((slot, at) => {
-    if (slot.value === null) all.push([]);
-    else all.at(-1)?.push({ at, value: slot.value });
+    if (slot.value === null) return void all.push([]);
+    if (at > 0 && !joined(slots[at - 1], slot)) all.push([]);
+    all.at(-1)?.push({ at, value: slot.value });
   });
   return all.filter((run) => run.length > 1);
 }
@@ -101,7 +128,10 @@ const inside = (box: Frame, frame: Frame) =>
   box.top >= frame.top &&
   box.bottom <= frame.bottom;
 
-/** The first spot whose label fits the frame and touches no line; the first spot if none does. */
+/**
+ * The first spot whose label fits the frame and touches no line; else the first that fits the
+ * frame (a label is never cut off); else the first.
+ */
 function clearSpot(
   spots: [Spot, ...Spot[]],
   text: string,
@@ -109,11 +139,11 @@ function clearSpot(
   lines: Line[],
   frame: Frame,
 ) {
-  const clear = spots.find((spot) => {
-    const box = labelBox(spot, text, size);
-    return inside(box, frame) && !lines.some((line) => crosses(line, box));
-  });
-  return clear ?? spots[0];
+  const fits = spots.filter((spot) => inside(labelBox(spot, text, size), frame));
+  const clear = fits.find(
+    (spot) => !lines.some((line) => crosses(line, labelBox(spot, text, size))),
+  );
+  return clear ?? fits[0] ?? spots[0];
 }
 
 /** A slope across the stated periods on a labelled axis, broken at a gap: the large tile's mark. */
@@ -129,7 +159,7 @@ export function Slope({
   label: string;
 }) {
   const scale = axis(stated(marks), 3, suffix);
-  const x = spread(marks.length, 72, 336);
+  const x = across(marks, 72, 336);
   const y = (value: number) => scale.place(value, 150, 24);
   const last = marks.length - 1;
   const lines: Line[] = [
@@ -141,7 +171,7 @@ export function Slope({
       {scale.ticks.map((tick) => (
         <g key={tick}>
           <line x1="40" x2="408" y1={y(tick)} y2={y(tick)} className={GRID} />
-          <text x="0" y={y(tick) + 4} className={TICK}>
+          <text data-tick="" x="0" y={y(tick) + 4} className={TICK}>
             {scale.label(tick)}
           </text>
         </g>
@@ -161,7 +191,7 @@ export function Slope({
       {marks.map((mark, at) => (
         <g key={mark.label}>
           <SlopePoint mark={mark} cx={x(at)} y={y} latest={at === last} tone={tone} lines={lines} />
-          <text x={x(at)} y="174" textAnchor="middle" className="fill-text-tertiary text-[12px]">
+          <text x={x(at)} y="174" textAnchor="middle" className="fill-text-tertiary text-caption">
             {mark.label}
           </text>
         </g>
@@ -215,7 +245,7 @@ function SlopePoint({
         y={spot.y}
         textAnchor={spot.anchor}
         className={cx(
-          "font-mono text-[13px]",
+          "font-mono text-mono",
           latest ? "fill-text-primary font-medium" : "fill-text-secondary",
         )}
       >
@@ -253,7 +283,7 @@ export function DotStrip({
   label: string;
 }) {
   const scale = axis(stated(marks), 4, suffix);
-  const x = (value: number) => scale.place(value, 100, 396);
+  const x = (value: number) => scale.place(value, 100, 388);
   const y = (at: number) => 36 + at * 46;
   const floor = y(marks.length - 1) + 22;
   const last = marks.length - 1;
@@ -275,7 +305,7 @@ export function DotStrip({
       {scale.ticks.map((tick) => (
         <g key={tick}>
           <line x1={x(tick)} x2={x(tick)} y1="14" y2={floor} className={GRID} />
-          <text x={x(tick)} y={floor + 18} textAnchor="middle" className={TICK}>
+          <text data-tick="" x={x(tick)} y={floor + 18} textAnchor="middle" className={TICK}>
             {scale.label(tick)}
           </text>
         </g>
@@ -299,7 +329,7 @@ export function DotStrip({
             x="0"
             y={y(at) + 4}
             className={cx(
-              "text-[12px]",
+              "text-caption",
               at === last ? "fill-text-primary font-medium" : "fill-text-secondary",
             )}
           >
@@ -345,6 +375,10 @@ function StripPoint({
       { x: at - 12, y: cy + 4, anchor: "end" },
       { x: at, y: cy - 12, anchor: "middle" },
       { x: at, y: cy + 20, anchor: "middle" },
+      { x: at + 6, y: cy - 12, anchor: "end" },
+      { x: at - 6, y: cy - 12, anchor: "start" },
+      { x: at + 6, y: cy + 20, anchor: "end" },
+      { x: at - 6, y: cy + 20, anchor: "start" },
     ],
     mark.text,
     12,
@@ -363,7 +397,7 @@ function StripPoint({
         y={spot.y}
         textAnchor={spot.anchor}
         className={cx(
-          "font-mono text-[12px]",
+          "font-mono text-caption",
           latest ? "fill-text-primary font-medium" : "fill-text-secondary",
         )}
       >
@@ -386,7 +420,7 @@ export function MiniSlope({
   const values = stated(marks);
   const min = Math.min(...values);
   const max = Math.max(...values);
-  const x = spread(marks.length, 8, 176);
+  const x = across(marks, 8, 176);
   const y = (value: number) => (max === min ? 20 : 34 - ((value - min) / (max - min)) * 28);
   const last = marks.length - 1;
   return (
@@ -457,10 +491,10 @@ export function Ruler({
         className={FILL[ink(tone)]}
       />
       <circle cx={x(from.value)} cy="14" r="4" strokeWidth="2" className={PRIOR_RING} />
-      <text x="8" y="36" className={TICK}>
+      <text data-tick="" x="8" y="36" className={TICK}>
         {scale.label(ends[0] ?? 0)}
       </text>
-      <text x="176" y="36" textAnchor="end" className={TICK}>
+      <text data-tick="" x="176" y="36" textAnchor="end" className={TICK}>
         {scale.label(ends[1] ?? 0)}
       </text>
     </svg>

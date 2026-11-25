@@ -1,7 +1,11 @@
-import { expect, it } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, expect, it } from "vitest";
 import type { OutputEntry } from "../../publishedReport";
 import type { ReportView } from "../../reportView";
 import { basisNotes, moduleSource } from "./figureData";
+import { FigureNotes } from "./figureParts";
+
+afterEach(cleanup);
 
 const blockedEntry = (reason: string): OutputEntry => ({
   output: {
@@ -40,14 +44,23 @@ it("sends a blocked reason that cites a source to Evidence", () => {
   );
 });
 
-it("draws basis notes in the reader's words, each once, none that cites a source", () => {
+it("keeps each basis note once, a note that cites a source included for its Evidence link", () => {
   const table = {
     headers: ["Period", "Value", "Basis and limitation"],
     rows: [
       ["FY2023", "1", "Per **CP-1C**."],
-      ["FY2024", "2", "Per **CP-1C**."],
+      ["FY2024", "2", "Per **CP-1C**. "],
       ["FY2025", "3", "As in notes_2024.pdf page 88."],
+      ["FY2026", "4", " "],
     ],
   };
-  expect(basisNotes(table as never)).toEqual(["Per Peer benchmark."]);
+  const notes = basisNotes(table as never);
+  expect(notes).toEqual(["Per **CP-1C**.", "As in notes_2024.pdf page 88."]);
+  render(<FigureNotes notes={notes} href={() => "/report/run#evidence/CP-1"} />);
+  expect(screen.getByText("Per Peer benchmark.")).toBeVisible();
+  expect(screen.getByRole("link", { name: "Read the reason in Evidence" })).toHaveAttribute(
+    "href",
+    "/report/run#evidence/CP-1",
+  );
+  expect(document.body).not.toHaveTextContent(/notes_2024|page 88|CP-1C/);
 });

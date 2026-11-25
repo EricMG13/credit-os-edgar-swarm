@@ -355,21 +355,25 @@ it("prints a stress cell whole and draws its gap reasons through the reader rule
   );
 });
 
-it("makes the downside figure a focusable scroll region only when it scrolls", () => {
+// Rewritten (round 2, D3): the downside figure no longer scrolls at any width. It is drawn at its
+// frame's own width; on a narrow frame its panels stack, one measure a row, each with the cases.
+it("fits the downside figure to its frame, stacking the measures on a narrow one, and never scrolls", () => {
   render(<StressRow {...rowProps([downside])} />);
   expect(screen.queryByRole("region", { name: /scrolls sideways/ })).toBeNull();
-  const tile = screen.getByRole("region", { name: "Downside scenarios" });
-  const frame = within(tile).getByRole("img").parentElement;
-  expect(frame).not.toHaveAttribute("tabindex");
-  expect(frame).not.toHaveAttribute("role");
+  const wide = within(downsideTile()).getAllByRole("img");
+  expect(wide[0]).toHaveAttribute("width", "100%");
+  expect(wide[0]).toHaveAttribute("viewBox", expect.stringMatching(/^0 0 600 /));
   cleanup();
   const restore = measuredAt(320);
   try {
     render(<StressRow {...rowProps([downside])} />);
-    expect(screen.getByRole("region", { name: /scrolls sideways/ })).toHaveAttribute(
-      "tabindex",
-      "0",
-    );
+    expect(screen.queryByRole("region", { name: /scrolls sideways/ })).toBeNull();
+    const figures = within(downsideTile()).getAllByRole("img");
+    expect(figures).toHaveLength(2);
+    for (const figure of figures) {
+      expect(figure.querySelectorAll("[data-panel]")).toHaveLength(1);
+      expect(figure.parentElement).not.toHaveAttribute("tabindex");
+    }
   } finally {
     restore();
   }
@@ -433,13 +437,16 @@ it("draws every measure the handoff states, in its order and as written, each on
   ]);
   expect(downsideTile()).not.toHaveTextContent(/states no stressed/);
   expect(within(downsideTile()).getByText("-5.1250 (−USD 5.13 million)")).toBeInTheDocument();
-  // Each panel on its own scale: the largest figure of each spans the same width.
-  const widest = (name: string, text: string) =>
+  // Each panel on its own scale from zero: in proportion within a panel, not across panels.
+  const width = (name: string, text: string) =>
     x(downsideTile().querySelector(`[data-panel="${name}"] [data-bar="${text}"]`) ?? null, "width");
-  expect(widest("Net debt / EBITDA (x)", "5.0")).toBeCloseTo(
-    widest("Interest cover (x)", "3.1"),
+  expect(width("Net debt / EBITDA (x)", "4.0") / width("Net debt / EBITDA (x)", "5.0")).toBeCloseTo(
+    0.8,
     6,
   );
+  expect(
+    width("Net debt / EBITDA (x)", "5.0") / width("Interest cover (x)", "3.1"),
+  ).not.toBeCloseTo(5.0 / 3.1, 1);
 });
 
 it("draws a measure the module could not calculate, with its reasons, beside the one it did", () => {
@@ -602,4 +609,16 @@ it("draws every covenant cell and label through the reader rule", () => {
   expect(within(tile).getAllByRole("link", { name: "Read the reason in Evidence" })).toHaveLength(
     3,
   );
+});
+
+it("keeps the per-measure exports callable with their earlier arguments", async () => {
+  const { downsidePanels, panelScale } = await import("./stressData");
+  const data = downsidePanels(downside);
+  expect(Object.keys(data ?? {}).sort()).toEqual(["assumptions", "cases", "line", "panels"]);
+  const [panel] = data?.panels ?? [];
+  expect(panel?.measure).toBe("All-in cover (x)");
+  expect([panel?.min, panel?.max]).toEqual([0, 3.1]);
+  const { zero, at } = panelScale(panel as NonNullable<typeof panel>, 310);
+  expect(zero).toBe(0);
+  expect(at(3.1)).toBeCloseTo(310, 6);
 });

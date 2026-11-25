@@ -1,13 +1,15 @@
 import { evidencePath, unitLabel, type PublishedRun, type Snapshot } from "../../publishedReport";
 import type { ReportView } from "../../reportView";
-import { basisNotes, figureSource, unitOf, type FigureSource } from "./figureData";
+import { figureSource, unitOf, type Cell, type FigureSource } from "./figureData";
 import { FigureGap, FigureSourceControl, GapPattern, Key } from "./figureParts";
 import {
   NoteText,
   ReasonNotes,
   gapReading,
   gapWord,
-  plainNotes,
+  basisNoteList,
+  figureText,
+  gapText,
   type Note,
   type NoteHref,
 } from "./notes";
@@ -134,7 +136,7 @@ function WallLabels({ mark }: { mark: WallMark }) {
           fontSize="13"
           className="fill-text-primary font-mono"
         >
-          {mark.cell?.text}
+          {figureText(mark.cell?.text ?? "")}
         </text>
       )}
       <text
@@ -170,7 +172,7 @@ function WallAxis({ breakAt, end }: { breakAt: number | null; end: number }) {
 
 /** A slot as the figure's reading says it: the same words its label draws. */
 function slotReading(mark: WallMark) {
-  if (mark.height !== null) return mark.cell?.text ?? "";
+  if (mark.height !== null) return figureText(mark.cell?.text ?? "");
   return mark.cell ? gapReading(mark.cell.text) : "no row in the schedule";
 }
 
@@ -196,7 +198,7 @@ function MaturityWall({ source, href }: { source: Ready; href: NoteHref }) {
   const scrolls = measured !== null && width > measured + 1;
   const { marks, bar, breakAt } = wallGeometry(slots.dated, slots.undated, width);
   const gaps = marks.filter((mark) => mark.height === null);
-  const notes = [...gaps.map(wallNote), ...plainNotes(basisNotes(source.table))];
+  const notes = [...gaps.map(wallNote), ...basisNoteList(source.table)];
   return (
     <>
       <div className="flex flex-wrap items-center gap-4">
@@ -250,18 +252,31 @@ const RANK_FILL = new Map<boolean | null, string>([
   [null, "fill-chart-3"],
 ]);
 
+/** Why a cell has no figure: its gap word, then the module's words, or a link where they cite. */
+function gapNote(cell: Cell, lead: string, line: number | undefined): Note {
+  const word = gapWord(cell.text);
+  const reason = gapText(cell);
+  const said = lead ? (word === "No figure" ? lead : `${lead} ${gapReading(cell.text)}`) : word;
+  return reason === null ? { text: said, line } : { lead: `${said}: `, text: reason, line };
+}
+
 /** What the list says under a facility: its rank and leverage, or why it states no amount. */
 function StackDetail({ row, href }: { row: StackRow; href: NoteHref }) {
-  const { amount } = row;
-  if (amount.value === null) {
-    const note = amount.reason
-      ? { lead: `${gapWord(amount.text)}: `, text: amount.reason, line: row.line }
-      : { text: amount.text, line: row.line };
-    return <NoteText note={note} href={href} />;
+  const { amount, leverage } = row;
+  if (amount.value === null) return <NoteText note={gapNote(amount, "", row.line)} href={href} />;
+  const rank = row.secured === null ? null : row.secured ? "Secured" : "Not secured";
+  if (leverage && leverage.value === null && leverage.text.trim()) {
+    const note = gapNote(leverage, "Cumulative leverage", row.line);
+    return (
+      <NoteText
+        note={{ ...note, lead: rank ? `${rank} · ${note.lead ?? ""}` : note.lead }}
+        href={href}
+      />
+    );
   }
   const parts = [
-    row.secured === null ? null : row.secured ? "Secured" : "Not secured",
-    row.leverage?.value == null ? null : `${multiple(row.leverage.text)} cumulative leverage`,
+    rank,
+    leverage?.value == null ? null : `${multiple(figureText(leverage.text))} cumulative leverage`,
   ];
   return <>{parts.filter(Boolean).join(" · ")}</>;
 }
@@ -290,7 +305,7 @@ function StackLabels({
           <span className="flex items-baseline justify-between gap-3">
             <span className="text-small text-text-primary">{row.label}</span>
             {row.amount.value !== null && (
-              <Figure className="text-small font-medium">{row.amount.text}</Figure>
+              <Figure className="text-small font-medium">{figureText(row.amount.text)}</Figure>
             )}
           </span>
           <span className="text-caption font-normal text-text-secondary">
@@ -305,7 +320,7 @@ function StackLabels({
 function stackReading(rows: StackRow[], unit: string) {
   const parts = rows.map(
     (row) =>
-      `${row.label} ${row.amount.value === null ? gapReading(row.amount.text) : row.amount.text}`,
+      `${row.label} ${row.amount.value === null ? gapReading(row.amount.text) : figureText(row.amount.text)}`,
   );
   return `Debt by rank${unit ? `, ${unit}` : ""}, first claim first: ${parts.join(", ")}.`;
 }
@@ -384,7 +399,7 @@ function CapitalStack({ source, href }: { source: Ready; href: NoteHref }) {
         </svg>
         <StackLabels segments={segments} height={height} href={href} />
       </div>
-      <ReasonNotes notes={plainNotes(basisNotes(source.table))} href={href} />
+      <ReasonNotes notes={basisNoteList(source.table)} href={href} />
     </>
   );
 }

@@ -16,7 +16,8 @@ export function FigureTile({
   children: ReactNode;
 }) {
   return (
-    <Tile span={span} label={title} head="small" title={title} trace={trace}>
+    // A tile takes its content's height: no stretched tile with an empty interior.
+    <Tile span={span} label={title} head="small" title={title} trace={trace} className="self-start">
       <p className="-mt-3 text-caption font-normal text-text-tertiary">{basis}</p>
       {children}
     </Tile>

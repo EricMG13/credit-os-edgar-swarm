@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { cx } from "@/utils/cx";
 import { evidencePath, type OutputEntry } from "../../publishedReport";
 import { PublishedSource } from "../PublishedTrace";
+import { Reason } from "./reason";
 import { GapNote } from "./Tile";
 
 export function FigureSourceControl({
@@ -44,6 +45,30 @@ export function Key({ tone, children }: { tone: SwatchTone; children: ReactNode 
       <span aria-hidden="true" className={cx("size-2.5 flex-none rounded-[2px]", SWATCH[tone])} />
       {children}
     </span>
+  );
+}
+
+/**
+ * The notes under a figure: what the handoff says about its own basis, set apart by a hairline.
+ * Each is drawn through the reader rule; a note that cites a source becomes a link to Evidence
+ * (`href`), or says it is read there.
+ */
+export function FigureNotes({
+  notes,
+  href,
+}: {
+  notes: readonly string[];
+  href?: (line?: number) => string | undefined;
+}) {
+  if (!notes.length) return null;
+  return (
+    <ul className="flex flex-col gap-1.5 border-t border-border-hairline pt-3 text-caption font-normal text-text-secondary">
+      {notes.map((note) => (
+        <li key={note} className="wrap-anywhere">
+          <Reason text={note} href={href?.()} />
+        </li>
+      ))}
+    </ul>
   );
 }
 

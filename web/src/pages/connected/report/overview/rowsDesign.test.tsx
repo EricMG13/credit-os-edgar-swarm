@@ -167,7 +167,8 @@ it("draws no covenant limit and makes no covenant claim on the downside tile", (
   const tile = screen.getByRole("region", { name: "Downside scenarios" });
   expect(tile.querySelector("[data-limit]")).toBeNull();
   expect(tile).not.toHaveTextContent(/covenant limit|against the covenant/i);
-  expect(within(tile).getByRole("img").getAttribute("aria-label")).not.toMatch(/covenant/i);
+  for (const figure of within(tile).getAllByRole("img"))
+    expect(figure.getAttribute("aria-label")).not.toMatch(/covenant/i);
 });
 
 const SHA = (digit: string) => digit.repeat(64);
@@ -227,4 +228,45 @@ it("gives the structure tiles a trace record when the foundation is blocked", ()
   traced([blocked], (props) => <StructureRow {...props} />);
   for (const name of ["the maturity wall", "the capital structure"])
     expect(screen.getByRole("button", { name: `Show sources for ${name}` })).toBeVisible();
+});
+
+// Round 2, part 2: D2, D6, D9, D10.
+
+it("draws each downside panel on an axis with ticks, and says the limit is not tested only when the legal module is blocked", () => {
+  render(<StressRow {...rowProps([downside, covenants("Net leverage")])} />);
+  const tile = screen.getByRole("region", { name: "Downside scenarios" });
+  const panel = tile.querySelector('[data-panel="All-in cover (x)"]');
+  expect(within(panel as HTMLElement).getByText("0")).toBeInTheDocument();
+  expect(within(panel as HTMLElement).getByText("3")).toBeInTheDocument();
+  expect(within(tile).queryByText("Limit not tested")).toBeNull();
+  cleanup();
+  render(
+    <StressRow
+      {...rowProps([downside, bottomLine("CP-4", "Not assessable: no executed document.")])}
+    />,
+  );
+  expect(
+    within(screen.getByRole("region", { name: "Downside scenarios" })).getByText(
+      "Limit not tested",
+    ),
+  ).toBeVisible();
+});
+
+it("sets every headline figure at the metric size, and no tile stretches past its content", () => {
+  const model = {
+    cashflow: {
+      columns: [{ label: "FY2025E", group: "Base case", start: "2025-04-01", end: "2026-03-31" }],
+      rows: [
+        {
+          label: "Net leverage (net debt / Adj EBITDA)",
+          cells: [{ exact: "2.0", display: "2.00x", reason: null, status: "value" }],
+        },
+      ],
+    },
+  };
+  render(<StressRow {...rowProps([covenants("Net leverage")], [model])} />);
+  expect(screen.getByText("0.8x")).toHaveClass("text-metric");
+  expect(screen.getByText("2.00x", { selector: "span" })).toHaveClass("text-metric");
+  for (const name of ["Covenant headroom", "Downside scenarios", "Forward path"])
+    expect(screen.getByRole("region", { name })).toHaveClass("self-start");
 });
