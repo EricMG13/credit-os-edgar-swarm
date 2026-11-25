@@ -264,3 +264,13 @@ the issuer crumb's baseline at 390.
 Checks: tsc pass; eslint --max-warnings=0 and prettier --check on every file changed since the
 base pass; vitest src/pages/connected, src/styles, src/shell, src/components — 178 files, 2,544
 tests pass; npm run unused — only LeadProps in the frozen leads/types.ts; npm run build pass.
+
+### Render check (docs/design/preview/check-render.cjs), after round 2
+
+Overview and History at 1440, 1280, 1024, 768 and 390, plain, `--stress` and with a fixture
+(Legal & covenants blocked, eleven dates over two years, no ratings, a 62-character issuer name).
+First pass: 142 failures, nearly all chart text under 12 px once a fixed viewBox scaled down.
+Every figure is now drawn at its frame's measured width (12 px text, labels placed clear, ticks
+thinned, long cells wrapped). Last pass: 9 / 9 / 11 failures, all from code outside S1: pipeline
+node names cut at 1024 (and "Legal & covenants" at 1280/1440 in the fixture), PipelineRow (S10);
+the shell nav scroll box at 390 (shell). PNGs looked at for every page and width.
