@@ -126,15 +126,21 @@ export function factAt(
 
 /**
  * Period labels in time order by the reader's own rule (`periodOrder`), which orders one form of
- * label only. Where a label cannot be ordered or the forms are mixed, the order is the modules'
- * own: as first written. Labels are compared as written; two periods match only when equal.
+ * label only. `ordered` is true only when every distinct label has a key and all keys share one
+ * form (or there is one label); then the labels are sorted. Otherwise the order is the modules'
+ * own, as first written, and `ordered` is false: nothing may be drawn that depends on the order.
+ * Labels are compared as written; two periods match only when equal.
  */
-function inOrder(periods: readonly string[]): string[] {
+function inOrder(periods: readonly string[]): { periods: string[]; ordered: boolean } {
   const distinct = [...new Set(periods)];
   const keys = new Map(distinct.map((period) => [period, periodOrder(period)]));
   const forms = new Set([...keys.values()].map((key) => key?.[0]));
-  if (forms.size !== 1 || forms.has(undefined)) return distinct;
-  return distinct.sort((a, b) => (keys.get(a) ?? "").localeCompare(keys.get(b) ?? ""));
+  if (forms.size !== 1 || forms.has(undefined))
+    return { periods: distinct, ordered: distinct.length <= 1 };
+  return {
+    periods: distinct.sort((a, b) => (keys.get(a) ?? "").localeCompare(keys.get(b) ?? "")),
+    ordered: true,
+  };
 }
 
 function newestFacts(data: Coverage, issuers: readonly Issuer[], field: string): Fact[] {
@@ -146,11 +152,17 @@ function newestFacts(data: Coverage, issuers: readonly Issuer[], field: string):
 
 /** The periods the issuers' newest runs state for a field, in reading order. */
 export function periodsOf(data: Coverage, issuers: readonly Issuer[], field: string): string[] {
-  return inOrder(newestFacts(data, issuers, field).flatMap((fact) => fact.period ?? []));
+  return inOrder(newestFacts(data, issuers, field).flatMap((fact) => fact.period ?? [])).periods;
+}
+
+/** Whether the periods the newest runs state could be put in time order (see `inOrder`). */
+export function periodsOrdered(data: Coverage, issuers: readonly Issuer[], field: string): boolean {
+  return inOrder(newestFacts(data, issuers, field).flatMap((fact) => fact.period ?? [])).ordered;
 }
 
 /**
  * The period a view opens on: the one most newest runs state a figure for, the later of equals.
+ * Where the periods cannot be put in time order there is no "later": it opens on the first stated.
  * The reader sees it in the Period control and can change it.
  */
 export function commonPeriod(
@@ -158,6 +170,7 @@ export function commonPeriod(
   issuers: readonly Issuer[],
   field: string,
 ): string | null {
+  if (!periodsOrdered(data, issuers, field)) return periodsOf(data, issuers, field)[0] ?? null;
   const counts = new Map<string, number>();
   for (const fact of newestFacts(data, issuers, field)) {
     if (fact.period !== null && fact.at !== null)
@@ -171,21 +184,28 @@ export function commonPeriod(
   return best ?? periodsOf(data, issuers, field).at(-1) ?? null;
 }
 
-/** A typed bound: empty is open; thousands separators are allowed; any other text is invalid. */
+/**
+ * A typed bound: empty is open; a number written with its decimal point, and optionally with
+ * comma thousands groups of three ("1,000"), is read as written; any other text, a comma used as a
+ * decimal point ("1,0") included, is invalid.
+ */
 export function readBound(text: string): { value: number | null; invalid: boolean } {
   const typed = text.trim();
   if (typed === "") return { value: null, invalid: false };
-  const plain = /^-?\d[\d,]*(?:\.\d+)?$/.test(typed);
+  const plain = /^-?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/.test(typed);
   return plain
     ? { value: Number(typed.replaceAll(",", "")), invalid: false }
     : { value: null, invalid: true };
 }
 
-function within(fact: Fact | undefined, filters: Filters): boolean {
+function within(fact: Fact | undefined, filters: Filters, unit: string | null): boolean {
   const [min, max] = [readBound(filters.min).value, readBound(filters.max).value];
   if (min === null && max === null) return true;
-  // A missing figure is not zero: it passes no numeric bound.
-  if (fact?.at === null || fact?.at === undefined) return false;
+  // A bound removes an issuer only after comparing its figure. A missing figure (never zero), a
+  // stated gap and a period stated twice were not compared, so they stay: the page lists them.
+  if (fact?.at === null || fact?.at === undefined) return true;
+  // A bound compares figures in one reporting unit; a figure in another unit was not compared.
+  if (unit !== null && (fact.unit ?? "") !== unit) return true;
   return (min === null || fact.at >= min) && (max === null || fact.at <= max);
 }
 
@@ -205,6 +225,7 @@ export function matchIssuers(
   filters: Filters,
   field: string | null,
   period: string | null = null,
+  unit: string | null = null,
 ): Issuer[] {
   return data.issuers.filter((issuer) => {
     const run = latestRun(issuer);
@@ -218,7 +239,7 @@ export function matchIssuers(
       const said = factsOf(data, run.key, filters.choice).map((fact) => fact.text);
       if (!said.includes(filters.word)) return false;
     }
-    if (field && period !== null && !within(factAt(data, run.key, field, period), filters))
+    if (field && period !== null && !within(factAt(data, run.key, field, period), filters, unit))
       return false;
     return says(data, issuer, run, filters.query);
   });
@@ -311,7 +332,7 @@ export function trend(
   issuers: readonly Issuer[],
   field: string,
   unit: string,
-): { periods: string[]; series: TrendSeries[] } {
+): { periods: string[]; ordered: boolean; series: TrendSeries[] } {
   const found = issuers.flatMap((issuer) => {
     const run = latestRun(issuer);
     if (!run) return [];
@@ -320,10 +341,13 @@ export function trend(
     );
     return facts.length > 0 ? [{ issuer, run, facts }] : [];
   });
-  const periods = inOrder(found.flatMap(({ facts }) => facts.flatMap((fact) => fact.period ?? [])));
+  const { periods, ordered } = inOrder(
+    found.flatMap(({ facts }) => facts.flatMap((fact) => fact.period ?? [])),
+  );
   const seen = new Map<string, number>();
   return {
     periods,
+    ordered,
     series: found.map(({ issuer, run, facts }) => {
       const count = (seen.get(issuer.name) ?? 0) + 1;
       seen.set(issuer.name, count);

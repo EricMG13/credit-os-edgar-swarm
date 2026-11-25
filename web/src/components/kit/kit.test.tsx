@@ -78,3 +78,11 @@ it("sizes the bar from the share and draws no fill for a missing value", () => {
   rerender(<BarCell text="Not supplied" share={null} />);
   expect(container.querySelector("[style]")).toBeNull();
 });
+
+it("keeps the figure column at its default width and takes a width class for a list of rows", () => {
+  const { container, rerender } = render(<BarCell text="1" share={0.5} />);
+  expect(container.querySelector(".w-20")).not.toBeNull();
+  rerender(<BarCell text="US$1,250.00m" share={0.5} valueWidth="w-32" />);
+  expect(container.querySelector(".w-32")).not.toBeNull();
+  expect(container.querySelector(".w-20")).toBeNull();
+});

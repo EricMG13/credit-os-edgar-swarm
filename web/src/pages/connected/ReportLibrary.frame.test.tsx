@@ -1,5 +1,5 @@
 // T17: the report frame's error states (C3-007), its Earlier format and Earlier methods labels
-// (C3-008), key charts on Overview (C3-024), Report history rows (C1-007) and CP-8 kept off Overview
+// (C3-008), key charts retired from Overview (C3-024), Run history rows (C1-007) and CP-8 kept off Overview
 // (C3-026).
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
@@ -192,31 +192,50 @@ it("states a network failure in a fixed sentence, never the browser's, and Try a
   await screen.findByText("The report service could not be reached");
   expect(screen.queryByText(/Failed to fetch/)).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-  expect(await screen.findByRole("heading", { name: "Overview" })).toBeInTheDocument();
+  expect(await screen.findByRole("region", { name: "Overview" })).toBeInTheDocument();
 });
 
-it("keeps CP-8's bottom line and limitations off Overview", async () => {
-  serve({ [SNAPSHOT]: () => json(snapshot()) });
+it("draws CP-8's bottom line once, as the since-earlier sentence, and keeps its limitations off Overview", async () => {
+  const snap = snapshot({
+    others: [
+      {
+        folder: "acme-0",
+        issuerKey: "acme",
+        pathway: "credit_snapshot",
+        asOf: "2025-03-31",
+        period: "FY2024",
+      },
+    ],
+  });
+  const current = snap.workspace.runs.acmeKey as PublishedRun;
+  current.changes = {
+    pack: {
+      prior: { run: "acme-0", as_of: "2025-03-31", pathway: "credit_snapshot" },
+      current: { as_of: "2026-03-31", pathway: "credit_snapshot" },
+    },
+  };
+  serve({ [SNAPSHOT]: () => json(snap) });
   open();
-  await screen.findByRole("heading", { name: "Overview" });
-  const main = document.body;
-  expect(main).toHaveTextContent("The forecast rests on one year of audited figures.");
-  expect(main).not.toHaveTextContent("Leverage fell, and the credit view improved.");
-  expect(main).not.toHaveTextContent("The earlier run did not state gross debt.");
+  const since = await screen.findByRole("region", { name: "Since the earlier run" });
+  expect(within(since).getByText("Leverage fell, and the credit view improved.")).toBeVisible();
+  expect(screen.getAllByText("Leverage fell, and the credit view improved.")).toHaveLength(1);
+  const page = screen.getByRole("region", { name: "Overview" });
+  expect(page).toHaveTextContent("The forecast rests on one year of audited figures.");
+  expect(page).not.toHaveTextContent("The earlier run did not state gross debt.");
 });
 
-it("repeats the credit-risk transmission map under Key charts, with the chart index", async () => {
+it("draws no module chart repeat on Overview, and the transmission map on its own module page", async () => {
   serve({ [SNAPSHOT]: () => json(snapshot()) });
   open();
-  const title = await screen.findByRole("heading", { name: "Key charts" });
-  const section = title.closest("section") as HTMLElement;
+  await screen.findByRole("region", { name: "Overview" });
+  expect(screen.queryByRole("heading", { name: "Key charts" })).toBeNull();
+  expect(screen.queryByRole("heading", { name: /credit-risk transmission/ })).toBeNull();
+  expect(screen.queryByRole("figure", { name: "credit-risk transmission" })).toBeNull();
+  cleanup();
+  open("#modules/CP-2");
   expect(
-    within(section).getByRole("figure", { name: "credit-risk transmission" }),
+    await screen.findByRole("figure", { name: "credit-risk transmission" }),
   ).toBeInTheDocument();
-  expect(within(section).getByRole("link", { name: "Chart index" })).toHaveAttribute(
-    "href",
-    "#forecast/run-charts",
-  );
 });
 
 it("labels an earlier-format run with changed methods on Overview and Changes", async () => {
@@ -225,7 +244,7 @@ it("labels an earlier-format run with changed methods on Overview and Changes", 
       json(snapshot({ lead: "Reader summary", methodChanges: ["CP-2: methods/cp2.md changed"] })),
   });
   open();
-  await screen.findByRole("heading", { name: "Overview" });
+  await screen.findByRole("region", { name: "Overview" });
   expect(screen.getByText("Earlier format")).toBeInTheDocument();
   expect(screen.getByText("Earlier methods")).toBeInTheDocument();
   cleanup();
@@ -237,7 +256,7 @@ it("labels an earlier-format run with changed methods on Overview and Changes", 
 it("gives a run in the current format on today's methods neither label", async () => {
   serve({ [SNAPSHOT]: () => json(snapshot({ methodChanges: [] })) });
   open();
-  await screen.findByRole("heading", { name: "Overview" });
+  await screen.findByRole("region", { name: "Overview" });
   expect(screen.queryByText("Earlier format")).toBeNull();
   expect(screen.queryByText("Earlier methods")).toBeNull();
 });
@@ -255,10 +274,10 @@ it("gives every Report history row its modules run, its status and its labels", 
     [SNAPSHOT]: () => json(snapshot({ others: [older] })),
   });
   open("#history");
-  const section = (await screen.findByRole("heading", { name: "Report history" })).closest(
-    "section",
-  ) as HTMLElement;
-  const rows = within(section).getAllByRole("listitem");
+  const section = await screen.findByRole("region", { name: "Runs of Acme" });
+  const rows = within(
+    within(section).getByRole("list", { name: "Runs, newest first" }),
+  ).getAllByRole("listitem");
   expect(rows).toHaveLength(2);
   const [current, earlier] = rows as [HTMLElement, HTMLElement];
   expect(
@@ -274,6 +293,14 @@ it("gives every Report history row its modules run, its status and its labels", 
   );
   expect(within(earlier).getByText("Finished")).toBeInTheDocument();
   expect(within(earlier).getByText("Earlier methods")).toBeInTheDocument();
+  expect(within(current).getByRole("link", { name: "Open overview" })).toHaveAttribute(
+    "href",
+    "/report/acme#overview",
+  );
+  expect(within(earlier).getByRole("link", { name: "What changed" })).toHaveAttribute(
+    "href",
+    "/report/acme-2025#changes",
+  );
   expect(
     fetch.mock.calls.map(([url]) => url).filter((url) => url.startsWith("/connected/snapshot")),
   ).toEqual([SNAPSHOT]);
