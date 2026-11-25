@@ -25,6 +25,7 @@ import {
   wallSlots,
   type StackRow,
 } from "./structureData";
+import { TEXT, wrapText } from "./chartText";
 import { FigureTile } from "./figureTile";
 import { Figure } from "./Tile";
 import { entryLine } from "./traceLine";
@@ -93,41 +94,52 @@ function WallMarkShape({ mark, bar }: { mark: WallMark; bar: number }) {
 }
 
 /** What a mark with no figure says above it: the module's word, or that the year has no row. */
-function GapLabel({ mark, y }: { mark: WallMark; y: number }) {
-  if (mark.cell)
-    return (
-      <text
-        x={mark.centre}
-        y={y}
-        textAnchor="middle"
-        fontSize="11"
-        className="fill-gap-text font-body"
-      >
-        {gapWord(mark.cell.text)}
-      </text>
-    );
+const LINE = 14;
+
+/** Lines of 12 px text centred on `x`, the first baseline at `y`. */
+function CentredLines({
+  lines,
+  x,
+  y,
+  className,
+}: {
+  lines: readonly string[];
+  x: number;
+  y: number;
+  className: string;
+}) {
   return (
-    <text
-      x={mark.centre}
-      y={y - 13}
-      textAnchor="middle"
-      fontSize="11"
-      className="fill-gap-text font-body"
-    >
-      <tspan x={mark.centre}>No row</tspan>
-      <tspan x={mark.centre} dy="13">
-        in the schedule
-      </tspan>
+    <text x={x} y={y} textAnchor="middle" fontSize={TEXT} className={className}>
+      {lines.map((line, at) => (
+        <tspan key={at} x={x} dy={at === 0 ? 0 : LINE}>
+          {line}
+        </tspan>
+      ))}
     </text>
   );
 }
 
-function WallLabels({ mark }: { mark: WallMark }) {
+/** What a mark with no figure says above it, in lines that fit its slot: the module's word, or
+ * that the year has no row. */
+function GapLabel({ mark, y, room }: { mark: WallMark; y: number; room: number }) {
+  const said = mark.cell ? [gapWord(mark.cell.text)] : ["No row", "in the schedule"];
+  const lines = said.flatMap((line) => wrapText(line, room));
+  return (
+    <CentredLines
+      lines={lines}
+      x={mark.centre}
+      y={y - (lines.length - 1) * LINE}
+      className="fill-gap-text font-body"
+    />
+  );
+}
+
+function WallLabels({ mark, room }: { mark: WallMark; room: number }) {
   const top = WALL.base - (mark.height ?? WALL.gapMark) - 10;
   return (
     <>
       {mark.height === null ? (
-        <GapLabel mark={mark} y={top} />
+        <GapLabel mark={mark} y={top} room={room} />
       ) : (
         <text
           x={mark.centre}
@@ -139,15 +151,12 @@ function WallLabels({ mark }: { mark: WallMark }) {
           {figureText(mark.cell?.text ?? "")}
         </text>
       )}
-      <text
+      <CentredLines
+        lines={wrapText(mark.label, room)}
         x={mark.centre}
         y={WALL.base + 24}
-        textAnchor="middle"
-        fontSize="12"
         className="fill-text-secondary font-body"
-      >
-        {mark.label}
-      </text>
+      />
     </>
   );
 }
@@ -188,6 +197,12 @@ function wallNote(mark: WallMark): Note {
     : "no row in the schedule for this year";
   return { lead: `${mark.label}: `, text, line: mark.line, end: "." };
 }
+
+/** The room one slot's labels have: the distance between neighbouring marks, less a margin. */
+const slotRoom = (marks: WallMark[], width: number) =>
+  (marks.length > 1
+    ? Math.abs((marks[1]?.centre ?? 0) - (marks[0]?.centre ?? 0))
+    : width - 2 * WALL.left) - 2;
 
 function MaturityWall({ source, href }: { source: Ready; href: NoteHref }) {
   const { frame, measured } = useFrameWidth();
@@ -237,7 +252,7 @@ function MaturityWall({ source, href }: { source: Ready; href: NoteHref }) {
           ))}
           <WallAxis breakAt={breakAt} end={width} />
           {marks.map((mark, at) => (
-            <WallLabels key={at} mark={mark} />
+            <WallLabels key={at} mark={mark} room={slotRoom(marks, width)} />
           ))}
         </svg>
       </div>

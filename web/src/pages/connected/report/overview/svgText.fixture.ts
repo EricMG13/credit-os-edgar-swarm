@@ -4,12 +4,12 @@ export type Box = { left: number; right: number; top: number; bottom: number };
 const num = (element: Element, name: string) => Number(element.getAttribute(name));
 
 /** A text's size in user units: its font-size attribute. */
-export const fontOf = (text: Element) => num(text, "font-size");
+const fontOf = (text: Element) => num(text, "font-size");
 
 /** A text label's box, from its position, anchor and font size (monospace, 0.6 em a glyph). */
-export function labelBox(text: Element): Box {
+function labelBox(text: Element): Box {
   const size = fontOf(text);
-  const width = (text.textContent ?? "").length * size * 0.6;
+  const width = text.textContent.length * size * 0.6;
   const x = num(text, "x");
   const y = num(text, "y");
   const anchor = text.getAttribute("text-anchor") ?? "start";
@@ -18,7 +18,7 @@ export function labelBox(text: Element): Box {
 }
 
 /** Whether a drawn line passes through a box (Liang-Barsky clipping). */
-export function crosses(line: Element, box: Box) {
+function crosses(line: Element, box: Box) {
   const [x1, y1, x2, y2] = ["x1", "y1", "x2", "y2"].map((name) => num(line, name)) as [
     number,
     number,
@@ -82,7 +82,7 @@ export function overprinted(mark: Element) {
     texts
       .slice(at + 1)
       .filter((other) => meet(labelBox(text), labelBox(other)))
-      .map((other) => `${text.textContent ?? ""} / ${other.textContent ?? ""}`),
+      .map((other) => `${text.textContent} / ${other.textContent}`),
   );
 }
 
@@ -92,6 +92,6 @@ export function tooSmall(mark: Element, rendered: number, least = 12) {
   return [...mark.querySelectorAll("text")].flatMap((text) =>
     fontOf(text) * scale >= least - 1e-6
       ? []
-      : [`${text.textContent ?? ""} at ${String(fontOf(text) * scale)}`],
+      : [`${text.textContent} at ${String(fontOf(text) * scale)}`],
   );
 }

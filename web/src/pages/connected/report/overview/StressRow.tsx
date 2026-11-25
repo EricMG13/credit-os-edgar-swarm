@@ -9,7 +9,6 @@ import {
   type Snapshot,
 } from "../../publishedReport";
 import type { ReportView } from "../../reportView";
-import { ticks } from "../../visuals/visualData";
 import { figureSource, moduleSource, type FigureSource } from "./figureData";
 import { FigureGap, FigureSourceControl, GapPattern, Key } from "./figureParts";
 import { FigureTile } from "./figureTile";
@@ -33,11 +32,13 @@ import {
   downsidePanels,
   forwardPath,
   headroomTests,
-  panelScale,
   pathGeometry,
   type DownsidePanel,
   type HeadroomTest,
 } from "./stressData";
+import { DOWNSIDE, TEXT, gapPlace, perRow, rowLayout, type PanelLayout } from "./downsideLayout";
+import { inside, textWidth, thinTicks } from "./chartText";
+import { pathLayout } from "./pathLayout";
 import { Figure } from "./Tile";
 import { entryLine } from "./traceLine";
 import { useFrameWidth } from "./useFrameWidth";
@@ -48,108 +49,146 @@ type Ready = Extract<FigureSource, { state: "ready" }>;
 const shown = (test: HeadroomTest, cell: HeadroomTest["current"]) =>
   cell.value === null ? gapWord(cell.text) : withUnit(figureText(cell.text), test.unit);
 
-/** Where the current value's label sits: inside a bar long enough to hold it, else past its end. */
-function valueLabel(current: number, zero: number) {
-  const inside = Math.abs(current - zero) >= 64;
+/** Where the current value's label sits: inside a bar long enough to hold it, else past its end
+ * where that is inside the figure, else before its start. */
+function valueLabel(current: number, zero: number, label: string, width: number) {
+  const room = textWidth(label, "mono");
   const left = current < zero;
   const anchor = left ? ("end" as const) : ("start" as const);
-  if (inside) return { inside, x: left ? zero - 8 : zero + 8, anchor };
-  return { inside, x: left ? current - 6 : current + 6, anchor };
+  if (Math.abs(current - zero) >= room + 16)
+    return { inside: true, x: left ? zero - 8 : zero + 8, anchor };
+  if (!left && current + 6 + room <= width) return { inside: false, x: current + 6, anchor };
+  if (left && current - 6 - room >= 0) return { inside: false, x: current - 6, anchor };
+  const start = Math.min(current, zero);
+  return start - 6 - room >= 0
+    ? { inside: false, x: start - 6, anchor: "end" as const }
+    : { inside: false, x: Math.max(current, zero) + 6, anchor: "start" as const };
+}
+
+/** The bullet's marks across `width` pixels, from the test's shares of its scale. */
+function bulletMarks(test: HeadroomTest, width: number) {
+  const geometry = bulletGeometry(test);
+  if (!geometry) return null;
+  const x = (share: number) => BULLET.left + share * (width - 2 * BULLET.left);
+  const { share } = geometry;
+  const ticks = geometry.ticks.map((tick) => {
+    const value = Number(tick.label.replaceAll(",", ""));
+    return {
+      label: withUnit(tick.label, test.unit),
+      x: x((tick.x - BULLET.left) / (BULLET.right - BULLET.left)),
+      value,
+    };
+  });
+  return {
+    zero: x(share.zero),
+    current: x(share.current),
+    threshold: x(share.threshold),
+    ticks: thinTicks(ticks, width),
+  };
 }
 
 function BulletChart({ test }: { test: HeadroomTest }) {
-  const geometry = bulletGeometry(test);
-  if (!geometry) return null;
-  const { current, threshold, zero } = geometry;
+  const { frame, measured } = useFrameWidth();
+  const width = measured === null || measured <= 0 ? BULLET.width : Math.round(measured);
+  const marks = bulletMarks(test, width);
+  if (!marks) return null;
+  const { current, threshold, zero } = marks;
   const low = Math.min(current, threshold);
   const high = Math.max(current, threshold);
-  const label = valueLabel(current, zero);
+  const value = shown(test, test.current);
+  const label = valueLabel(current, zero, value, width);
+  const headroom = test.headroom ? `${test.headroom} headroom` : null;
+  const limit = shown(test, test.threshold);
   return (
-    <svg
-      viewBox={`0 0 ${String(BULLET.width)} 100`}
-      width="100%"
-      role="img"
-      aria-label={`${test.label}: ${shown(test, test.current)} against a threshold of ${shown(test, test.threshold)}${test.headroom ? `, headroom ${test.headroom}` : ""}.`}
-    >
-      {test.headroom && (
-        <>
-          <text
-            x={(low + high) / 2}
-            y="16"
-            textAnchor="middle"
-            fontSize="11"
-            className="fill-text-secondary font-body"
-          >
-            {test.headroom} headroom
-          </text>
-          <path
-            d={`M${String(low)} 30V23H${String(high)}V30`}
-            fill="none"
-            className="stroke-text-tertiary"
-          />
-        </>
-      )}
-      <rect
-        x={BULLET.left}
-        y="34"
-        width={BULLET.right - BULLET.left}
-        height="20"
-        rx="4"
-        className="fill-border-hairline"
-      />
-      <rect
-        data-current
-        x={Math.min(zero, current)}
-        y="34"
-        width={Math.abs(current - zero)}
-        height="20"
-        rx="4"
-        className="fill-chart-1"
-      />
-      <line
-        data-threshold
-        x1={threshold}
-        y1="28"
-        x2={threshold}
-        y2="60"
-        strokeWidth="2"
-        className="stroke-text-primary"
-      />
-      <text
-        x={label.x}
-        y="48.5"
-        textAnchor={label.anchor}
-        fontSize="12"
-        className={
-          label.inside
-            ? "fill-white font-mono font-medium"
-            : "fill-text-primary font-mono font-medium"
-        }
+    <div ref={frame} className="min-w-0">
+      <svg
+        viewBox={`0 0 ${String(width)} 100`}
+        width="100%"
+        role="img"
+        aria-label={`${test.label}: ${value} against a threshold of ${limit}${test.headroom ? `, headroom ${test.headroom}` : ""}.`}
       >
-        {shown(test, test.current)}
-      </text>
-      <text
-        x={threshold}
-        y="74"
-        textAnchor={threshold > BULLET.right - 24 ? "end" : "middle"}
-        fontSize="12"
-        className="fill-text-primary font-mono font-medium"
-      >
-        {shown(test, test.threshold)}
-      </text>
-      {geometry.ticks.map((tick) => (
+        {headroom && (
+          <>
+            <text
+              x={inside((low + high) / 2, headroom, width, "body")}
+              y="16"
+              textAnchor="middle"
+              fontSize={TEXT}
+              className="fill-text-secondary font-body"
+            >
+              {headroom}
+            </text>
+            <path
+              d={`M${String(low)} 30V23H${String(high)}V30`}
+              fill="none"
+              className="stroke-text-tertiary"
+            />
+          </>
+        )}
+        <rect
+          x={BULLET.left}
+          y="34"
+          width={width - 2 * BULLET.left}
+          height="20"
+          rx="4"
+          className="fill-border-hairline"
+        />
+        <rect
+          data-current
+          x={Math.min(zero, current)}
+          y="34"
+          width={Math.abs(current - zero)}
+          height="20"
+          rx="4"
+          className="fill-chart-1"
+        />
+        <line
+          data-threshold
+          x1={threshold}
+          y1="28"
+          x2={threshold}
+          y2="60"
+          strokeWidth="2"
+          className="stroke-text-primary"
+        />
         <text
-          key={tick.label}
-          x={tick.x}
-          y="94"
-          textAnchor="middle"
-          fontSize="11"
-          className="fill-text-tertiary font-mono"
+          x={label.x}
+          y="48.5"
+          textAnchor={label.anchor}
+          fontSize={TEXT}
+          className={
+            label.inside
+              ? "fill-white font-mono font-medium"
+              : "fill-text-primary font-mono font-medium"
+          }
         >
-          {withUnit(tick.label, test.unit)}
+          {value}
         </text>
-      ))}
-    </svg>
+        <text
+          x={inside(threshold, limit, width)}
+          y="76"
+          textAnchor="middle"
+          fontSize={TEXT}
+          className="fill-text-primary font-mono font-medium"
+        >
+          {limit}
+        </text>
+        <g data-axis>
+          {marks.ticks.map((tick, at) => (
+            <text
+              key={at}
+              x={tick.x}
+              y="95"
+              textAnchor="middle"
+              fontSize={TEXT}
+              className="fill-text-tertiary font-mono"
+            >
+              {tick.label}
+            </text>
+          ))}
+        </g>
+      </svg>
+    </div>
   );
 }
 
@@ -270,34 +309,7 @@ function Headroom({ source, href }: { source: Ready; href: NoteHref }) {
   );
 }
 
-/** The downside figure's layout. A panel is one measure on its own scale; as many sit side by
- * side as the frame holds at `panel` pixels each, the rest below, each row repeating the cases. */
-const DOWNSIDE = {
-  width: 524,
-  names: 120,
-  panel: 150,
-  gutter: 20,
-  head: 22,
-  row: 30,
-  foot: 20,
-  labelRoom: 60,
-} as const;
-
 type Downside = NonNullable<ReturnType<typeof downsidePanels>>;
-
-/** Room right of the bars for the panel's longest value as written (11 px mono, about 6.8 px a
- * character), so a value such as "-5.1250 (-USD 5.13 million)" is never cut or run into the next panel. */
-const labelRoom = (panel: DownsidePanel) =>
-  Math.max(
-    DOWNSIDE.labelRoom,
-    ...panel.cells.map((cell) =>
-      cell.value === null ? 0 : figureText(cell.text).length * 6.8 + 10,
-    ),
-  );
-
-/** The least width a panel takes: the bars' least room plus its value labels. */
-const panelWidth = (panels: readonly DownsidePanel[]) =>
-  DOWNSIDE.panel - DOWNSIDE.labelRoom + Math.max(...panels.map(labelRoom));
 
 const cellReading = (cell: DownsidePanel["cells"][number] | undefined) =>
   !cell ? "" : cell.value === null ? gapReading(cell.text) : figureText(cell.text);
@@ -331,22 +343,53 @@ function downsideNotes(data: Downside): Note[] {
   return [...plainNotes(data.assumptions), ...gaps];
 }
 
-/** A panel's scale: its ticks, from zero, and where a value sits across `room` pixels. */
-function panelAxis(panel: DownsidePanel, room: number) {
-  const scale = ticks(panel.cells.map((cell) => cell.value));
-  const low = scale[0]?.value ?? panel.min;
-  const top = scale.at(-1)?.value ?? panel.max;
-  const { zero, at } = panelScale({ ...panel, min: low, max: top }, room);
-  return { zero, at, ticks: scale.map((tick) => ({ label: tick.label, x: at(tick.value) })) };
+/** Lines of 12 px text from a first baseline, one line apart, each at `x`. */
+function Lines({
+  lines,
+  x,
+  y,
+  className,
+  anchor,
+}: {
+  lines: readonly string[];
+  x: number;
+  y: number;
+  className: string;
+  anchor?: "start" | "end";
+}) {
+  return (
+    <text x={x} y={y} fontSize={TEXT} textAnchor={anchor} className={className}>
+      {lines.map((line, at) => (
+        <tspan key={at} x={x} dy={at === 0 ? 0 : DOWNSIDE.line}>
+          {line}
+        </tspan>
+      ))}
+    </text>
+  );
 }
 
-function PanelGap({ x, y, text }: { x: number; y: number; text: string }) {
+/** The first baseline that centres `count` lines on `middle`. */
+const firstBaseline = (middle: number, count: number) =>
+  middle + 4 - ((count - 1) * DOWNSIDE.line) / 2;
+
+function PanelGap({
+  x,
+  y,
+  text,
+  layout,
+}: {
+  x: number;
+  y: number;
+  text: string;
+  layout: PanelLayout;
+}) {
+  const place = gapPlace(text, layout.zero, layout.room);
   return (
     <>
       <rect
         data-gap
-        x={x + 0.5}
-        y={y + 0.5}
+        x={x + place.mark + 0.5}
+        y={y - 5.5}
         width="27"
         height="11"
         rx="2"
@@ -354,88 +397,84 @@ function PanelGap({ x, y, text }: { x: number; y: number; text: string }) {
         strokeDasharray="3 3"
         className="stroke-border-gap"
       />
-      <text x={x + 34} y={y + 10} fontSize="11" className="fill-gap-text font-body">
-        {gapWord(text)}
-      </text>
+      <Lines
+        lines={place.lines}
+        x={x + place.x}
+        y={firstBaseline(y, place.lines.length)}
+        anchor={place.side === "left" ? "end" : undefined}
+        className="fill-gap-text font-body"
+      />
     </>
   );
 }
 
-function PanelBars({
-  panel,
-  x,
-  room,
-  rows,
-  first,
-}: {
-  panel: DownsidePanel;
-  x: number;
-  room: number;
-  rows: number;
-  first: boolean;
-}) {
-  const labels = labelRoom(panel);
-  const { zero, at, ticks: axis } = panelAxis(panel, room - labels);
-  const bottom = DOWNSIDE.head + rows * DOWNSIDE.row;
+function PanelAxis({ layout, bottom }: { layout: PanelLayout & { x: number }; bottom: number }) {
+  const { x } = layout;
   return (
-    <g data-panel={panel.measure}>
-      <text x={x} y="12" fontSize="11" className="fill-text-tertiary font-body">
-        {panel.measure}
-      </text>
-      <line x1={x} y1={bottom} x2={x + room - labels} y2={bottom} className="stroke-connector" />
-      {axis.map((tick, at_) => (
+    <g data-axis>
+      <line x1={x} y1={bottom} x2={x + layout.bars} y2={bottom} className="stroke-connector" />
+      {layout.axis.map((tick, at) => (
         <text
-          key={at_}
+          key={at}
           x={x + tick.x}
-          y={bottom + 14}
+          y={bottom + 16}
           textAnchor="middle"
-          fontSize="11"
+          fontSize={TEXT}
           className="fill-text-tertiary font-mono"
         >
           {tick.label}
         </text>
       ))}
-      <line
-        x1={x + zero}
-        y1={DOWNSIDE.head}
-        x2={x + zero}
-        y2={bottom}
-        className="stroke-connector"
-      />
+    </g>
+  );
+}
+
+function PanelBars({
+  layout,
+  head,
+  row: height,
+  first,
+}: {
+  layout: PanelLayout & { x: number };
+  head: number;
+  row: number;
+  first: boolean;
+}) {
+  const { x, panel, zero, at } = layout;
+  const bottom = head + panel.cells.length * height;
+  return (
+    <g data-panel={panel.measure}>
+      <Lines lines={layout.head} x={x} y={14} className="fill-text-tertiary font-body" />
+      <PanelAxis layout={layout} bottom={bottom} />
+      <line x1={x + zero} y1={head} x2={x + zero} y2={bottom} className="stroke-connector" />
       {panel.cells.map((cell, row) => {
-        const y = DOWNSIDE.head + row * DOWNSIDE.row + 9;
-        if (cell.value === null) return <PanelGap key={row} x={x + zero} y={y} text={cell.text} />;
+        const middle = head + row * height + height / 2;
+        if (cell.value === null)
+          return <PanelGap key={row} x={x} y={middle} text={cell.text} layout={layout} />;
         const end = at(cell.value);
+        const lines = layout.values[row] ?? [];
         return (
           <Fragment key={row}>
             <rect
               data-bar={cell.text}
               x={x + Math.min(zero, end)}
-              y={y}
+              y={middle - DOWNSIDE.bar / 2}
               width={Math.max(1, Math.abs(end - zero))}
-              height="12"
+              height={DOWNSIDE.bar}
               rx="2"
               className={first ? "fill-chart-1" : "fill-chart-2"}
             />
-            <text
+            <Lines
+              lines={lines}
               x={x + Math.max(zero, end) + 6}
-              y={y + 10}
-              fontSize="11"
+              y={firstBaseline(middle, lines.length)}
               className="fill-text-primary font-mono"
-            >
-              {figureText(cell.text)}
-            </text>
+            />
           </Fragment>
         );
       })}
     </g>
   );
-}
-
-/** How many panels of `least` pixels sit side by side in a frame `width` pixels wide: at least one. */
-function perRow(width: number, least: number) {
-  const room = width - DOWNSIDE.names;
-  return Math.max(1, Math.floor((room + DOWNSIDE.gutter) / (least + DOWNSIDE.gutter)));
 }
 
 /** One row of panels, drawn at the frame's own width so it fits and never scrolls. */
@@ -450,11 +489,14 @@ function PanelRow({
   width: number;
   first: number;
 }) {
-  const room = (width - DOWNSIDE.names - DOWNSIDE.gutter * (panels.length - 1)) / panels.length;
-  const height = DOWNSIDE.head + cases.length * DOWNSIDE.row + DOWNSIDE.foot;
+  const layout = rowLayout(
+    cases.map((item) => item.name),
+    panels,
+    width,
+  );
   return (
     <svg
-      viewBox={`0 0 ${String(width)} ${String(height)}`}
+      viewBox={`0 0 ${String(width)} ${String(layout.height)}`}
       width="100%"
       role="img"
       aria-label={`Downside scenarios. ${downsideReading(cases, panels)}.`}
@@ -462,24 +504,26 @@ function PanelRow({
       <defs>
         <GapPattern id="downside-gap" />
       </defs>
-      {cases.map((item, row) => (
-        <text
-          key={item.id}
-          x="0"
-          y={DOWNSIDE.head + row * DOWNSIDE.row + 19}
-          fontSize="12"
-          className={item.control ? "fill-text-secondary font-body" : "fill-text-primary font-body"}
-        >
-          {item.name}
-        </text>
-      ))}
-      {panels.map((panel, at) => (
+      {cases.map((item, row) => {
+        const lines = layout.nameLines[row] ?? [];
+        return (
+          <Lines
+            key={item.id}
+            lines={lines}
+            x={0}
+            y={firstBaseline(layout.head + row * layout.row + layout.row / 2, lines.length)}
+            className={
+              item.control ? "fill-text-secondary font-body" : "fill-text-primary font-body"
+            }
+          />
+        );
+      })}
+      {layout.panels.map((panel, at) => (
         <PanelBars
           key={at}
-          panel={panel}
-          x={DOWNSIDE.names + at * (room + DOWNSIDE.gutter)}
-          room={room}
-          rows={cases.length}
+          layout={panel}
+          head={layout.head}
+          row={layout.row}
           first={first + at === 0}
         />
       ))}
@@ -500,7 +544,7 @@ function Downside({
   if (!data)
     return <FigureGap reason="The downside handoff states no stressed metric that can be drawn." />;
   const width = measured === null || measured <= 0 ? DOWNSIDE.width : Math.round(measured);
-  const step = perRow(width, panelWidth(data.panels));
+  const step = perRow(width);
   const rows = Array.from({ length: Math.ceil(data.panels.length / step) }, (_, at) =>
     data.panels.slice(at * step, at * step + step),
   );
@@ -520,7 +564,9 @@ function Downside({
 type Path = NonNullable<ReturnType<typeof forwardPath>>;
 
 function PathChart({ path }: { path: Path }) {
-  const geometry = pathGeometry(path.cases);
+  const { frame, measured } = useFrameWidth();
+  const width = measured === null || measured <= 0 ? PATH.width : Math.round(measured);
+  const geometry = pathLayout(pathGeometry(path.cases), width);
   const [base = [], ...others] = geometry.lines;
   const missing = geometry.periods.filter(({ period }) =>
     base.some((point) => point.period === period && point.y === null),
@@ -539,123 +585,127 @@ function PathChart({ path }: { path: Path }) {
     )
     .join(". ");
   return (
-    <svg
-      viewBox={`0 0 ${String(PATH.width)} ${String(PATH.height)}`}
-      width="100%"
-      role="img"
-      aria-label={`${path.measure}. ${reading}.`}
-    >
-      <defs>
-        <GapPattern id="path-gap" />
-      </defs>
-      {geometry.ticks.map((tick) => (
-        <Fragment key={tick.label}>
-          <line
-            x1={PATH.left}
-            y1={tick.y}
-            x2={PATH.width}
-            y2={tick.y}
-            className="stroke-border-hairline"
+    <div ref={frame} className="min-w-0">
+      <svg
+        viewBox={`0 0 ${String(width)} ${String(PATH.height)}`}
+        width="100%"
+        role="img"
+        aria-label={`${path.measure}. ${reading}.`}
+      >
+        <defs>
+          <GapPattern id="path-gap" />
+        </defs>
+        <g data-axis-y>
+          {geometry.ticks.map((tick) => (
+            <Fragment key={tick.label}>
+              <line
+                x1={geometry.left}
+                y1={tick.y}
+                x2={width}
+                y2={tick.y}
+                className="stroke-border-hairline"
+              />
+              <text x="0" y={tick.y + 4} fontSize={TEXT} className="fill-text-tertiary font-mono">
+                {tick.label}x
+              </text>
+            </Fragment>
+          ))}
+        </g>
+        {missing.map(({ period, x }) => (
+          <rect
+            key={period}
+            data-gap={period}
+            x={x - 17.5}
+            y={PATH.top - 6}
+            width="35"
+            height={PATH.base - PATH.top + 12}
+            rx="4"
+            fill="url(#path-gap)"
+            strokeDasharray="3 3"
+            className="stroke-border-gap"
           />
-          <text x="0" y={tick.y + 4} fontSize="11" className="fill-text-tertiary font-mono">
-            {tick.label}x
-          </text>
-        </Fragment>
-      ))}
-      {missing.map(({ period, x }) => (
-        <rect
-          key={period}
-          data-gap={period}
-          x={x - 17.5}
-          y={PATH.top - 6}
-          width="35"
-          height={PATH.base - PATH.top + 12}
-          rx="4"
-          fill="url(#path-gap)"
-          strokeDasharray="3 3"
-          className="stroke-border-gap"
-        />
-      ))}
-      {others.flatMap((line, at) =>
-        segments(line).map((segment) => (
+        ))}
+        {others.flatMap((line, at) =>
+          segments(line).map((segment) => (
+            <line
+              key={`${String(at)}-${segment.key}`}
+              data-case-line
+              x1={segment.x1}
+              y1={segment.y1}
+              x2={segment.x2}
+              y2={segment.y2}
+              strokeWidth="2"
+              strokeDasharray="4 3"
+              className="stroke-chart-2"
+            />
+          )),
+        )}
+        {others.flatMap((line, at) =>
+          line.flatMap((point) =>
+            point.y === null
+              ? []
+              : [
+                  <circle
+                    key={`${String(at)}-${point.period}`}
+                    cx={point.x}
+                    cy={point.y}
+                    r="3.5"
+                    strokeWidth="2"
+                    className="fill-surface-card stroke-chart-2"
+                  />,
+                ],
+          ),
+        )}
+        {segments(base).map((segment) => (
           <line
-            key={`${String(at)}-${segment.key}`}
-            data-case-line
+            key={segment.key}
+            data-base-line
             x1={segment.x1}
             y1={segment.y1}
             x2={segment.x2}
             y2={segment.y2}
             strokeWidth="2"
-            strokeDasharray="4 3"
-            className="stroke-chart-2"
+            className="stroke-chart-1"
           />
-        )),
-      )}
-      {others.flatMap((line, at) =>
-        line.flatMap((point) =>
+        ))}
+        {base.flatMap((point) =>
           point.y === null
             ? []
             : [
-                <circle
-                  key={`${String(at)}-${point.period}`}
-                  cx={point.x}
-                  cy={point.y}
-                  r="3.5"
-                  strokeWidth="2"
-                  className="fill-surface-card stroke-chart-2"
-                />,
+                <Fragment key={point.period}>
+                  <circle
+                    data-point={point.period}
+                    cx={point.x}
+                    cy={point.y}
+                    r="5"
+                    className="fill-chart-1"
+                  />
+                  <text
+                    x={point.label}
+                    y={point.y + 20}
+                    textAnchor="middle"
+                    fontSize={TEXT}
+                    className="fill-text-primary font-mono"
+                  >
+                    {point.display}
+                  </text>
+                </Fragment>,
               ],
-        ),
-      )}
-      {segments(base).map((segment) => (
-        <line
-          key={segment.key}
-          data-base-line
-          x1={segment.x1}
-          y1={segment.y1}
-          x2={segment.x2}
-          y2={segment.y2}
-          strokeWidth="2"
-          className="stroke-chart-1"
-        />
-      ))}
-      {base.flatMap((point) =>
-        point.y === null
-          ? []
-          : [
-              <Fragment key={point.period}>
-                <circle
-                  data-point={point.period}
-                  cx={point.x}
-                  cy={point.y}
-                  r="5"
-                  className="fill-chart-1"
-                />
-                <text
-                  x={point.x}
-                  y={point.y + 20}
-                  textAnchor="middle"
-                  fontSize="12"
-                  className="fill-text-primary font-mono"
-                >
-                  {point.display}
-                </text>
-              </Fragment>,
-            ],
-      )}
-      {geometry.periods.map(({ period, x }) => (
-        <text
-          key={period}
-          x={x}
-          y={PATH.height - 12}
-          textAnchor="middle"
-          fontSize="11"
-          className="fill-text-tertiary font-body"
-        >
-          {period}
-        </text>
-      ))}
-    </svg>
+        )}
+        {geometry.periods.map(({ period, label }) => (
+          <text
+            key={period}
+            x={label}
+            y={PATH.height - 10}
+            textAnchor="middle"
+            fontSize={TEXT}
+            className="fill-text-tertiary font-body"
+          >
+            {period}
+          </text>
+        ))}
+      </svg>
+    </div>
   );
 }
 

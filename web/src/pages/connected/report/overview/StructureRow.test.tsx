@@ -324,7 +324,7 @@ it("draws a wall cell with no figure through the reader rule, on the mark and in
   expect(within(wall).getByRole("img").getAttribute("aria-label")).toBe(
     "Debt maturing by period, US$m: FY2026 500, FY2027 no figure.",
   );
-  expect(within(wall).getByText("No figure", { selector: "text" })).toBeInTheDocument();
+  expect(within(wall).getByText("No figure", { selector: "tspan" })).toBeInTheDocument();
   expect(within(wall).getByRole("link", { name: "Read the reason in Evidence" })).toBeVisible();
 });
 

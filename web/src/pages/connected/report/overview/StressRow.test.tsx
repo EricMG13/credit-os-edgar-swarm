@@ -125,6 +125,13 @@ const model = {
 
 const x = (element: Element | null, name: string) => Number(element?.getAttribute(name));
 
+/** Each SVG text as read: its lines joined by a space. */
+const drawnTexts = (region: HTMLElement) =>
+  [...region.querySelectorAll("svg text")].map((text) => {
+    const lines = [...text.querySelectorAll("tspan")].map((line) => line.textContent);
+    return lines.length ? lines.join(" ") : text.textContent;
+  });
+
 it("places the current value and the threshold on one scale from zero, and lists every other test", () => {
   render(<StressRow {...rowProps([covenants])} />);
   const tile = screen.getByRole("region", { name: "Covenant headroom" });
@@ -340,7 +347,8 @@ it("prints a stress cell whole and draws its gap reasons through the reader rule
   ]);
   render(<StressRow {...rowProps([stressed])} />);
   const tile = screen.getByRole("region", { name: "Downside scenarios" });
-  expect(within(tile).getByText("5.1 (covenant breached)")).toBeInTheDocument();
+  // A long value wraps over lines inside its panel; its words stay whole and in order.
+  expect(drawnTexts(tile)).toContain("5.1 (covenant breached)");
   // A long value widens its panel, so the panels may sit on separate rows, one figure each.
   const readings = within(tile)
     .getAllByRole("img")
@@ -440,7 +448,7 @@ it("draws every measure the handoff states, in its order and as written, each on
     "EBITDA / cash interest (x)",
   ]);
   expect(downsideTile()).not.toHaveTextContent(/states no stressed/);
-  expect(within(downsideTile()).getByText("-5.1250 (−USD 5.13 million)")).toBeInTheDocument();
+  expect(drawnTexts(downsideTile())).toContain("-5.1250 (−USD 5.13 million)");
   // Each panel on its own scale from zero: in proportion within a panel, not across panels.
   const width = (name: string, text: string) =>
     x(downsideTile().querySelector(`[data-panel="${name}"] [data-bar="${text}"]`) ?? null, "width");

@@ -588,7 +588,6 @@ describe("the figure rows' layout", () => {
     }
   });
 
-
   it("lets the large tiles and their grid take their content height, not stretch", () => {
     draw(foundation(chart("leverage", LEVERAGE, ["FY2024", "4.00", "3.50", "x", "Stated."])));
     for (const name of ["Total debt / EBITDA", "Net debt / EBITDA"]) {

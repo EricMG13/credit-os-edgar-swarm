@@ -270,3 +270,155 @@ it("sets every headline figure at the metric size, and no tile stretches past it
   for (const name of ["Covenant headroom", "Downside scenarios", "Forward path"])
     expect(screen.getByRole("region", { name })).toHaveClass("self-start");
 });
+
+// Rendering check: no text under 12 px on screen, every label inside its figure, ticks clear.
+
+/** A text's on-screen size: its font size times the figure's drawn-to-viewBox scale. */
+function screenSize(text: Element, frame: number) {
+  const svg = text.closest("svg");
+  const view = Number(svg?.getAttribute("viewBox")?.split(" ")[2]);
+  const drawn = svg?.getAttribute("width") === "100%" ? frame : Number(svg?.getAttribute("width"));
+  return Number(text.getAttribute("font-size")) * (drawn / view);
+}
+
+/** A text's left and right edge in user units, by a lean glyph estimate (6 px a character). */
+function extent(text: Element) {
+  const lines = [...text.querySelectorAll("tspan")];
+  const words = lines.length ? lines.map((line) => line.textContent) : [text.textContent];
+  const width = Math.max(...words.map((word) => word.length * 6));
+  const x = Number((lines[0] ?? text).getAttribute("x") ?? text.getAttribute("x"));
+  const anchor = text.getAttribute("text-anchor") ?? "start";
+  const left = anchor === "middle" ? x - width / 2 : anchor === "end" ? x - width : x;
+  return { left, right: left + width };
+}
+
+function expectLegible(region: HTMLElement, frame: number) {
+  for (const svg of region.querySelectorAll('svg[role="img"]')) {
+    const view = Number(svg.getAttribute("viewBox")?.split(" ")[2]);
+    for (const text of svg.querySelectorAll("text")) {
+      expect(screenSize(text, frame), text.textContent).toBeGreaterThanOrEqual(12);
+      const { left, right } = extent(text);
+      expect(left, text.textContent).toBeGreaterThanOrEqual(0);
+      expect(right, text.textContent).toBeLessThanOrEqual(view);
+    }
+    for (const axis of svg.querySelectorAll("[data-axis]")) {
+      const ticks = [...axis.querySelectorAll("text")].map(extent).sort((a, b) => a.left - b.left);
+      ticks.slice(1).forEach((tick, at) => {
+        expect(tick.left).toBeGreaterThanOrEqual(ticks[at]?.right ?? 0);
+      });
+    }
+  }
+}
+
+const stressed = entry(
+  "CP-2A",
+  [],
+  [
+    downside.sections[0] as OutputEntry["sections"][number],
+    section(
+      "T2DS.4 Stressed flows and metrics",
+      105,
+      table(
+        106,
+        ["Metric", "s00", "s01", "s02", "Source"],
+        [
+          ["Stressed FCF (USD millions)", "10.00", "-10.00", "-5.1250 (−USD 5.13 million)", "F"],
+          ["All-in cover (x)", "3.10", "2.00", "Not calculated: net debt is missing", "F"],
+        ],
+      ),
+    ),
+  ],
+);
+
+it("draws every downside label at 12 px or more, inside its figure, with ticks clear, at every width", () => {
+  for (const frame of [600, 455, 320]) {
+    const restore = measuredAt(frame);
+    try {
+      render(<StressRow {...rowProps([stressed])} />);
+      const tile = screen.getByRole("region", { name: "Downside scenarios" });
+      for (const svg of tile.querySelectorAll('svg[role="img"]'))
+        expect(svg.getAttribute("viewBox")).toMatch(new RegExp(`^0 0 ${String(frame)} `));
+      expectLegible(tile, frame);
+      expect(tile.querySelectorAll("[data-axis] text").length).toBeGreaterThan(1);
+    } finally {
+      restore();
+      cleanup();
+    }
+  }
+});
+
+it("draws the covenant bullet and the forward path at 12 px or more, inside their figures", () => {
+  const model = {
+    cashflow: {
+      columns: ["FY2025E", "FY2026E", "FY2027E"].map((label, at) => ({
+        label,
+        group: "Base case",
+        start: `${String(2025 + at)}-04-01`,
+        end: `${String(2026 + at)}-03-31`,
+      })),
+      rows: [
+        {
+          label: "Net leverage (net debt / Adj EBITDA)",
+          cells: ["1.23", "0.75", "0.29"].map((exact) => ({
+            exact,
+            display: `${exact}x`,
+            reason: null,
+            status: "value",
+          })),
+        },
+      ],
+    },
+  };
+  for (const frame of [360, 230]) {
+    const restore = measuredAt(frame);
+    try {
+      render(<StressRow {...rowProps([covenants("Net leverage")], [model])} />);
+      for (const name of ["Covenant headroom", "Forward path"]) {
+        const tile = screen.getByRole("region", { name });
+        expect(tile.querySelector('svg[role="img"]')?.getAttribute("viewBox")).toMatch(
+          new RegExp(`^0 0 ${String(frame)} `),
+        );
+        expectLegible(tile, frame);
+      }
+    } finally {
+      restore();
+      cleanup();
+    }
+  }
+});
+
+it("draws the maturity wall's labels at 12 px or more on a phone", () => {
+  const restore = measuredAt(320);
+  try {
+    render(
+      <StructureRow
+        {...rowProps([
+          entry(
+            "CP-1",
+            [{ title: "Debt maturities", table: 10, unit: "US$m", columns: [1] }],
+            [
+              section(
+                "Chart data: debt maturities",
+                9,
+                table(
+                  10,
+                  ["Period", "Debt maturing", ...BASIS],
+                  [
+                    ["FY2026", "500", "US$m", ""],
+                    ["FY2027", "Not supplied: the schedule stops here", "US$m", ""],
+                    ["2030 and after", "1,250", "US$m", ""],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ])}
+      />,
+    );
+    const wall = screen.getByRole("region", { name: "Maturity wall" });
+    for (const text of wall.querySelectorAll("text"))
+      expect(Number(text.getAttribute("font-size")), text.textContent).toBeGreaterThanOrEqual(12);
+  } finally {
+    restore();
+  }
+});
