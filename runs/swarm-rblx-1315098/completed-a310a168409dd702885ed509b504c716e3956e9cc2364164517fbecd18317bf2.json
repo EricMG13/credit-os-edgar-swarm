@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Roblox Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/216de38ff949488612483043141f92861026e9e333a0f11b0de7c0619190a0a7/1.response.md",
+    "CP-1": "requests/CP-1/67ad10e34f7ec4667a70916d45d97b2a77d5e4e7c981a35b9231074ee16647c1/1.response.md",
+    "CP-1A": "requests/CP-1A/b633e5ee540e0d5c5ba13940e134ece20c7fcb5ac83816c7b1959d6856de0839/1.response.md",
+    "CP-2": "requests/CP-2/e51b4dc4d33355e576da97b9e876715494c0b11a51b124b4a1ffdbe4a560261a/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "edec0fd48dacb752c71fb19812784caa2422513254c6660b1e6c3074a820b5d7",
+  "delivery_sha256": "f887a72586b412793bea0a68d12ca2903ac52f4e4053b0d58a1e5f5fb73e0bcf"
+}

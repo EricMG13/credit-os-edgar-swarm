@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for AMC ENTERTAINMENT HOLDINGS, INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "854b7bf19ae0ffe8fcc30d2b859150011c6e1df2925b279dc7ef285e86d85e7a",
+    "CP-1.md": "9f64172dfb3b1896cf486cf75bd4c76d7ce70c3b0e56cac7cad53b2afb397554",
+    "CP-1A.md": "96e4b0de6904acf295d39652cbdcae752261f61b1b7447bbab0ce81cc166543e",
+    "CP-2.md": "25c7a8a4906c69ee5a4efd42aae0ad12a5aa41b6881ac21fee5f008240983986",
+    "coverage.json": "5dfd1684ef9cb7c55e3221157ae567a47162370c9d7a2b56ef3ca6e654f61c36",
+    "view.json": "9de575ff9bad36b751dc3bb821d0f572cf366a7dfcdd90aa1e88a6a85bca2d28",
+    "report-view.json": "03ae5b62da3304e3b5d8cfb9b92d4b67815ff6e69aceada655ffc8a099e78c0c"
+  }
+}
