@@ -13,7 +13,7 @@ const TONE = {
 } as const;
 
 const LINK =
-  "inline-flex min-h-8 items-center text-link text-small underline underline-offset-2 max-[480px]:min-h-11";
+  "inline-flex min-h-8 items-center text-text-link text-small underline underline-offset-2 max-[480px]:min-h-11";
 
 /** The stated cause in words. "Unresolved" is the one word set apart; a long cause is plain text. */
 function CauseLine({ cause, href }: { cause: Cause; href: string | undefined }) {

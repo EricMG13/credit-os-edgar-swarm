@@ -6,7 +6,7 @@ import { GapNote, Tile } from "../overview/Tile";
 import type { PassageItem } from "./model";
 
 export const LINK =
-  "inline-flex min-h-8 items-center text-link text-small underline underline-offset-2 max-[480px]:min-h-11";
+  "inline-flex min-h-8 items-center text-text-link text-small underline underline-offset-2 max-[480px]:min-h-11";
 
 /** One written paragraph with its single trace control; a paragraph that cites a source is a link instead. */
 function ParagraphLine({ text, href, noun }: { text: string | null; href: string; noun: string }) {

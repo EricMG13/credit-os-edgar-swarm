@@ -140,7 +140,7 @@ export function ModuleMatrix({
                     )}
                     {cited && (
                       <a
-                        className="inline-flex min-h-8 items-center text-link text-small underline underline-offset-2 max-[480px]:min-h-11"
+                        className="inline-flex min-h-8 items-center text-text-link text-small underline underline-offset-2 max-[480px]:min-h-11"
                         href={href ?? "#evidence/trace/CP-8"}
                       >
                         Read the explanation in Evidence
