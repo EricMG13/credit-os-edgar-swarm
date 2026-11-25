@@ -1000,7 +1000,9 @@ and no method file changed. Layer 1 is CP-1, CP-1A, CP-1B, CP-1C and CP-1D, by t
 is not a module. Lite (`lite_credit_assessment`) and Full (`credit_snapshot`) gain CP-1B, CP-1C and
 CP-1D, each on its own selected method as in Deep and the purpose pathways, and Lite gains CP-DR;
 Deep is unchanged and now differs from Full by CP-2H, CP-3D and CP-4C. Order is the registry's
-plan. CP-1C receives CP-DR's peer pack in all three pathways; the analyst's comparables are
+plan. CP-DR runs in all three pathways; CP-1C receives its peer pack only when the peer source is
+CP-DR's public peers (the launcher's default), and with the analyst's own list or comparables, or
+no peers, CP-DR still runs but no pack is requested. The analyst's comparables are
 optional everywhere and never required. An earlier coordinator's ruling of the same day (Lite
 without CP-DR, CP-1C on the analyst's comparables only) was replaced by the owner's second quote
 and is not a scope reduction in force. Caps per run: Lite USD 20, Full 30, Deep 50; the purpose

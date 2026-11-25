@@ -85,8 +85,10 @@ _PRESETS: dict[PathwayId, tuple[str, ...]] = {
     # two downside blocks. No CP-MODEL, so no forecast is published; the chart strip and credit
     # metrics blocks are routed to CP-1 (ruling 2026-11-13). Owner, 2026-11-25: the other layer 1
     # modules, CP-1B, CP-1C and CP-1D, join, and "lite runs cp-dr too, user only provides comps if
-    # they want to at launcher": CP-DR joins, so CP-1C reads its peer pack as in Full and Deep
-    # (ruling 2026-11-25-layer-1-in-all-assessment-pathways). Still no CP-2E.
+    # they want to at launcher": CP-DR joins, so CP-1C reads its peer pack as in Full and Deep when
+    # the peer source is CP-DR's public peers, the default; with another peer source CP-DR still
+    # runs and no pack is requested (ruling 2026-11-25-layer-1-in-all-assessment-pathways). Still
+    # no CP-2E.
     "lite_credit_assessment": (
         *("CP-0", "CP-1", "CP-1A", "CP-1B", "CP-DR", "CP-1C", "CP-1D", "CP-2", "CP-2A"),
     ),

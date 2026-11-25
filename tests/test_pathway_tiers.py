@@ -348,6 +348,22 @@ def test_a_record_queued_before_per_pathway_caps_launches_at_no_more_than_was_ap
     assert argv[argv.index("--cap") + 1] == cap
 
 
+def test_a_legacy_record_launches_at_its_pathways_cap_when_that_is_below_usd_20(
+    root: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """No ruled cap is below USD 20 now, so the lower-of rule is shown on a table entry of 12: the
+    record without a cap launches at 12, not at the USD 20 its summary showed, and its neighbour
+    with a cap above 20 still launches at 20."""
+    table = {**PATHWAY_CAP_USD, "lite_credit_assessment": Decimal(12)}
+    monkeypatch.setattr(runs, "PATHWAY_CAP_USD", table)
+    for pathway, cap in (("lite_credit_assessment", "12"), ("credit_snapshot", "20")):
+        record = Record("r1", pathway, "Acme", "queued", "t")
+        assert runs.cap_of(record) == Decimal(cap)
+        argv = runs.command(layout(root), record, Path("c.json"), launcher=("L",), ruling=None)
+        assert argv[argv.index("--cap") + 1] == cap
+        assert snapshot(layout(root), [record], now=_NOW)["runs"][0]["cap"] == cap
+
+
 @pytest.mark.parametrize(
     ("pathway", "cap"),
     [

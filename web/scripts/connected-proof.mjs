@@ -403,7 +403,7 @@ async function checkActivity(page, channel) {
       name: "USD 0.00 of USD 30.00 cap usage; USD 0.00 settled, USD 0.00 reserved or unknown",
     })
     .waitFor();
-  await activity.getByRole("progressbar", { name: "14 of 14 modules" }).waitFor();
+  await activity.getByRole("progressbar", { name: "17 of 17 modules" }).waitFor();
   await activity.getByText(/^(?:\d+ min )?\d+ s$/u).waitFor();
   // S6-037: the card includes the separately delivered report.
   const modules = activity.getByRole("group", { name: "Modules and report delivery", exact: true });
@@ -1493,7 +1493,8 @@ async function checkPublishedRun({ context, page, report, endpoint, run, publica
   const { workspace: publishedWorkspace } = await publication.json();
   const published = Object.values(publishedWorkspace.runs).find((item) => item.folder === run);
   assert.ok(published);
-  assert.equal(Object.values(published.modules).filter((module) => module.default).length, 14);
+  assert.equal(Object.values(published.modules).filter((module) => module.default).length, 17);
+  for (const added of ["CP-1B", "CP-1C", "CP-1D"]) assert.ok(published.modules[added].default);
   assert.ok(published.modules["CP-2D"].default);
   assert.ok(published.modules["CP-3C"].default);
   const designated = publishedWorkspace.outputs[published.modules["CP-2"].default];

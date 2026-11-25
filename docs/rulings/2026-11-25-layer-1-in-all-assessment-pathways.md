@@ -79,14 +79,21 @@ presets already.
   an earlier run of the same issuer and pathway is listed. CP-1D follows CP-1B, CP-1C follows
   CP-DR, and CP-2 follows all of them, so CP-2 is sent their handoffs. In Full, CP-3 is sent CP-1C's
   handoff, as in Deep.
-- Peers: in all three pathways CP-1C receives CP-DR's peer pack. The analyst's comparables are
-  optional in every pathway and never required; the analyst gives them at the launcher only if
-  they want to.
+- Peers: CP-DR runs in all three pathways. CP-1C receives CP-DR's peer pack only when the peer
+  source is CP-DR's public peers, the launcher's default (`valuation.peer_source` is
+  `cp_dr_public`). With the analyst's own peer list or comparables, or with no peers, CP-DR still
+  runs and is paid for, but no peer pack is requested from it: CP-1C works from what the analyst
+  gave, or states that it has no peer set. The analyst's comparables are optional in every pathway
+  and never required; the analyst gives them at the launcher only if they want to.
 - Report sections: Lite and Full each gain three lead sections, as Deep has them: headline results
   (CP-1B), earnings quality (CP-1D) and peer positioning (CP-1C), each owned and placed as in Deep,
   after credit metrics. Lite's nine sections become twelve and Full's twelve become fifteen. CP-DR
   keeps no section in Lite, as in Full and Deep. This is a presentation choice made in this build,
   not by the owner.
+- Coverage page: its fixed columns follow Full's preset less CP-MODEL, so it gains three columns
+  (CP-1B, CP-1C and CP-1D; seventeen, fourteen before). A Full run made before this change shows
+  those three cells as not in the pathway. This is a presentation effect of this build, a
+  consequence of the columns following Full's preset, not an owner choice.
 - CP-8 compares a run only with an earlier run of the same pathway, as before. The first Lite or
   Full run of an issuer after this change, compared with an earlier Lite or Full run of it, shows
   the added modules as new (CP-1B, CP-1C and CP-1D; in Lite also CP-DR), with the cause Method
@@ -175,7 +182,7 @@ Full, seventeen calls:
   three added 1.40; CP-5 3.39. Total 11.38.
 - Balanced: 11.38 plus the uplifts on CP-1A 0.11, CP-2 0.17, CP-2A 0.18, CP-3 0.17, CP-3C 0.16,
   CP-4 0.00, CP-6 0.26 and CP-1D 0.41 = 12.84.
-- High: 7.49 + 1.35 + 2.09 + 4.20 = 15.12.
+- High: the same eleven 7.47; CP-2D and CP-3C 1.34; the three added 2.09; CP-5 4.20. Total 15.10.
 - Balanced with CP-8, plus one hold: 12.84 + 1.12 + 5.73 = 19.69.
 
 | Pathway | Cap | Medium | Balanced | High | Balanced with CP-8, plus one hold |
@@ -199,8 +206,10 @@ On GPT Sol, at the page's default and with CP-8 and one hold counted:
 
 Not in the estimate:
 
-- What CP-2, CP-2A and CP-3 pay to read the added handoffs. Only CP-5 and CP-8 are scaled, as the
-  old ruling did.
+- What the modules already in each pathway pay to read the added handoffs, each an optional
+  input in `src/deploy_vii/methodology.json`. In Full: CP-2 (CP-1B, CP-1C, CP-1D), CP-2A (CP-1B),
+  CP-2G (CP-1D), CP-4 (CP-1D), CP-3 (CP-1C, CP-1D) and CP-6 (CP-1B, CP-1C). In Lite: CP-2 (CP-1B,
+  CP-1C, CP-1D, CP-DR) and CP-2A (CP-1B). Only CP-5 and CP-8 are scaled, as the old ruling did.
 - CP-1B, CP-1C and CP-1D on their current method texts. Their figures are from 10 November, before
   the reader-voice change of 11 November made the instruction files 15% to 112% larger.
 - CP-DR with web search on: the measured 0.28 and 0.44 are from runs with it off.
@@ -222,7 +231,7 @@ CP-8, as spend and then with one hold:
 - Full on Opus still does not fit USD 30. With CP-8 it is past the cap at every setting once the
   hold is counted, and past it on spend alone at Balanced and High. A first Full run, without CP-8,
   is about 25.7 at medium (28.7 with the hold: fits, with about 1.3 of room), 29.0 at Balanced (32.0:
-  does not fit) and 34.2 at High (does not fit). An Opus Full run can stop at its cap before CP-6
+  does not fit) and 34.1 at High (does not fit). An Opus Full run can stop at its cap before CP-6
   or CP-8.
 - Deep on Opus fits USD 50 at medium and Balanced. At High it fits by about USD 2.3, which is
   inside the estimate's error: it may not.

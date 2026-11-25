@@ -20,7 +20,11 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
 - Modules: Lite is CP-0, CP-1, CP-1A, CP-1B, CP-DR, CP-1C, CP-1D, CP-2, CP-2A (9 calls without
   CP-8). Full gains CP-1B, CP-1C, CP-1D (17 calls; run order CP-0, CP-1, CP-1A, CP-1B, CP-DR, CP-1C,
   CP-1D, CP-2, CP-4, CP-2A, CP-2E, CP-2D, CP-2G, CP-3C, CP-3, CP-5, CP-6). Deep is unchanged: Full
-  plus CP-2H, CP-3D, CP-4C. CP-1C takes CP-DR's peer pack in all three; comparables are optional.
+  plus CP-2H, CP-3D, CP-4C. CP-DR runs in all three; CP-1C takes its peer pack only with the default
+  peer source (CP-DR's public peers), otherwise no pack is requested. Comparables are optional.
+- Coverage page: its fixed columns follow Full's preset, so 14 become 17; a Full run made before the
+  change shows CP-1B, CP-1C and CP-1D as not in the pathway (disclosed in the ruling; no layout
+  test covers the column count).
 - Sections: Lite (9 to 12) and Full (12 to 15) gain headline results, earnings quality and peer
   positioning, owned and placed as in Deep; the peer figure draws in both. Fidelity scope: synthetic
   handoffs only, through the launcher and library browser tests for Lite and Full (7 passed); no
@@ -37,18 +41,22 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
 - Cost, estimate not measured (GPT Sol, Balanced, with CP-8 and one USD 5.73 hold): Lite about
   USD 11.2, Full 19.7, Deep 22.2. Claude Opus at 2.26 times: Full with CP-8 is about USD 31 to 41
   with a hold, past USD 30; left open for the owner.
-- Commands, exit 0: `uv run python tools/quality_gate.py` (0 findings, 13 files); pytest, not
-  browser: `test_cpos_launch` (1025 passed, 1 skipped), `test_changes` (685), `test_pathway_tiers`,
-  `test_start_forecast_pathways`, `proof/test_launcher`, `test_approved_summary_limits`,
-  `test_run_start_service`, `test_react_run_activity` (212 together), and the run start, inbox and
-  parallel files; web `tsc`, eslint, prettier, and vitest on `api.test.ts`, `start/`, `run/start/`
-  and `ConnectedApp.test.tsx`. The whole web suite ran once under load: 7897 passed, 2 failed in
-  `ReportLibrary.design.test.tsx`, which passes alone (23 of 23).
+- Review: one independent review of the diff. It found four tests still at Full's 14 modules
+  (`test_react_coverage`, `test_react_runtime_identity`), the proof script's "14 of 14 modules", the
+  legacy-cap rule without a discriminating test (restored: a table entry of 12 gives 12, and the
+  test fails under `return LEGACY_CAP`), cent slips in the ruling and kit copy at the old Full cap;
+  all repaired. Left: the kit's saved example run (`web/fixtures/run.json`, USD 25, 13 modules).
+- Commands, exit 0: `uv run python tools/quality_gate.py` (0 findings, 16 files); pytest, not
+  browser, one file at a time: 87 files, 6,857 passed (`test_financial_workflow` timed out under
+  parallel load and was not rerun); browser files for the library, launcher, changes, model shell
+  and signal pages passed; web `tsc`, eslint, prettier, and the whole vitest suite (461 files,
+  7,899 passed).
 - Not verified: no paid or live run exercised the new presets or caps (no Lite run of any kind
   exists, nor a Full run with CP-1B, CP-1C, CP-1D); CP-DR's web lookup feeding CP-1C in Lite; the
   three sections in a delivered report; the Changes page against a real earlier run; the cost
-  estimate; a resume of a real folder started at an old cap; `npm run proof:connected`; the full
-  Python suite.
+  estimate; a resume of a real folder started at an old cap; `npm run proof:connected` (needs
+  Chrome, Edge and a built `web/dist`); `test_reporting_currency_proof` (same); the Coverage page at
+  17 columns in a browser; the slow Python tests.
 
 ## 2026-11-25 — Export PDF control and preview restyled to the redesign
 
@@ -989,11 +997,3 @@ Scope: the connected Start a run review only, under `web/` (`start/limits.ts`, `
 - Reviews: task review (one Low, fixed); paid-submit path by `mx-adversary` (one Medium, an acceptance carried to a different typed issuer, fixed test-first in `2056ece7`, re-review approved); sweep `refactoring discover changed-update` (no defect, one Info); whole-branch `adversarial-reviewer` (one Medium, a following module that will refuse listed only under "Also affects", fixed test-first in `6805f268`, re-review approved); `confidence-review`, `ponytail-review`, `rewrite-tournament` (no defect).
 - Rulings: the issuer ID is the carry identity (renaming under the same ID still carries); changing pathway and back before the next review carries; limit acceptance is enforced by the page only, as on `main`. Parked for the plan's last PR: a following module whose refusal has a different root cause can sit in a card whose cause is only "limited".
 - Not verified: the gates and Chrome proof on the merged tree and on the last two fixes (`2056ece7`, `6805f268`); the review in Chrome after those two fixes (viewed at desktop and mobile widths before them); Edge and Windows; keyboard and screen-reader behaviour in a real browser (jsdom only); paid mode against the live service (mock fetch); behaviour against the live service for #11's grouping. No paid execution.
-
-## 2026-11-16 — Browser proof script brought up to the merged reader (branch `claude/proof-forecast-every-scenario`, from `main` at `8bbb74ab`)
-
-- Scope: `web/scripts/connected-proof.mjs` only; no product code. On `main` the proof failed 0 of 2 (Chrome 157.0.8103.78 and Edge, macOS) at two assertions that predate deliberate, unit-tested product changes. (1) Cash proxy table with "Downside shock" selected: the script expected no "Base case" row; since `cc836f5f` every case is drawn and the selected one emphasised (`LegacyForecast.test.tsx`), so it now expects exactly one "Base case" and one "Downside shock" row. (2) Phone trace control: the script measured the button box as at least 44px; since `8d2089bc` the box is 28px with a 9px outset hit area (`ResponsiveReading.test.tsx`), which computes to exactly 44px by 44px, so it now requires the corner pixels of that square (22px before the centre to 21px after it, both ways) to hit the button.
-- Result: `npm run proof:connected` exits 0, 2 of 2, all synthetic upload-to-finished-report checks in both browsers; evidence `proof-artifacts/run-4T32BF/proof.json`. This is the first execution of the calendar check written for the year strip (Scenario marker and category toggle, Table view, trace drawer): it passes in both browsers. `lint`, `format:check` and `test:scripts` exit 0. Synthetic data, no provider.
-- Seen while measuring, not fixed (predates): at 390px wide the trace controls in the last column of the Forecast "Scenario comparison" table have their hit area cut off on the right by the table's edge.
-- Review: one scoped review, pass, three Low (probe the full 44px, applied; no browser assertion that the selected case is emphasised, the unit test holds it; clearance near a viewport edge, not seen).
-- Not verified: that the hit-area check fails on a build without the outset (reasoned from the 28px box, not run); Windows; the full suite on this branch (script-only change).
