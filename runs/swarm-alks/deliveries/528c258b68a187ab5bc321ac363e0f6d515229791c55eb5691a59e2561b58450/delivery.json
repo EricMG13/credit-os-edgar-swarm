@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Alkermes plc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "0e5b581d2f91b190b3dfd8805d4398aeed4711c3f5c9d4876162d9c95cb1b0ca",
+    "CP-1.md": "ac3b9cb68c536d70c495e33a34e4d664e1648efd19c0f6069b8ee21f08b9ca1a",
+    "CP-1A.md": "84daefcd7c3c90c301954d48bdf07a9a4145d58d8859fdcbeaff86c2a4910d98",
+    "CP-2.md": "1a475b94b27fe548f20d68f424e0ac7582cb80fa3ccc4be76eb61e75bc21ca32",
+    "coverage.json": "f295985d3ea713bcf41d2c3e19884ef81ac6c5a6823b38c5e171f48756d31569",
+    "view.json": "438785520d9e90861214a9909430b10cf809f5c5d1de66e866f6ba69750c6b15",
+    "report-view.json": "0b29238fb6ca259ded5faad224aa3945384237502ce16d11100dbe66f1f13969"
+  }
+}

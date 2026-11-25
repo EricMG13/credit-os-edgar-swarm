@@ -1,0 +1,244 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "alks-2026-11-05-credit_snapshot-host",
+    "issuer_id": "alks",
+    "issuer_name": "Alkermes plc.",
+    "as_of": "2026-11-05",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2025-12-31_alks-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_alks-20251231.htm.jsonl",
+      "sha256": "e4cb39ef2746983905a66c4851e17231fe0e2b3eb3dd9d346653644971686601"
+    },
+    "10-Q_2026-03-31_alks-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_alks-20260331.htm.jsonl",
+      "sha256": "2f002a6c3ee21ba1a12ed08afd7616a7de0cb6e62154bfb1ecb118ba4eafd45f"
+    },
+    "10-Q_2026-06-30_alks-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_alks-20260630.htm.jsonl",
+      "sha256": "bc67cf08c7dfc8de310d0ecdd1030e2a1391c6b7ce68e53f0b348219bcf79e99"
+    },
+    "10-Q_2026-09-30_alks-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_alks-20260930.htm.jsonl",
+      "sha256": "df6328c67d9ab03d30760e47eacac03760e7e83fb341e7073082128f2c7068d4"
+    },
+    "EX-99.1_2026-05-05_alks-ex99_1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-05-05_alks-ex99_1.htm.jsonl",
+      "sha256": "3f53152d2ff381e382b1d7a092db23f6a1d1dce5883995e4eda0a38a2d5d57a8"
+    },
+    "EX-99.1_2026-07-28_alks-ex99_1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-07-28_alks-ex99_1.htm.jsonl",
+      "sha256": "4e5567773d88766be4958174400b81baacad01bd80fe607c8eb27ade6994b31f"
+    },
+    "EX-99.1_2026-11-03_alks-ex99_1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-11-03_alks-ex99_1.htm.jsonl",
+      "sha256": "041cf8e725b3d45a5b701a4d1acae145f94c2d37b75244f3f5fe173ac5392fc6"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1520262-alkermes-plc-alks.json",
+      "sha256": "885addee0d736fc42d87bc797174ed4ac35a16798074c06e23b1959b2f8975fb"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "5165fc31cfba3591ab6a2ed714e1135c1b1e3464917971f384356e14c6fe7018"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "03685783a2c4c84d0f4c774eaa9874bf2cf5e9c623d5a09e415438e5a61e657f"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "2b9b59c1f97e7829941ceee5731bdf975b4e5411114f4ea6b3dc1ea1e4dfd430"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "3ba8e7d140dc19ff8a04dc21cdacac44e9359fbad7ce218be9f07e5865fdf9d1"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Alkermes plc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Alkermes plc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

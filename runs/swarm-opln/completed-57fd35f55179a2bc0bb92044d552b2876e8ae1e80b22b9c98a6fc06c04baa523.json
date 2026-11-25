@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for OPENLANE, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/f1fb76931eda7de2998d3357d6fda906633c2d20242fe9f8227fe28590e6972a/1.response.md",
+    "CP-1": "requests/CP-1/fec90aa89c65ce882e7177c1810098d9be80e587bb9b30b5a3821775dd2c0a52/1.response.md",
+    "CP-1A": "requests/CP-1A/416ac07567f0fa59f01bf2b3b648a1a944594ee1a512cf4a95630294fb1200d8/1.response.md",
+    "CP-2": "requests/CP-2/fc13b72dc273d002277d685d54f9d303641e4dbe0feeeb0a48f1e0c60b26c399/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "92bbbb45c9ba535eef39c74d60e1a85a764f385dbf50c287046caaabe6ab96e7",
+  "delivery_sha256": "0c5b014b741a29aa95c8b75b7430e2159572d4243a4189d9756a64caa504c070"
+}

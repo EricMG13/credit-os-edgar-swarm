@@ -53,5 +53,60 @@
       "CP-2": 1
     },
     "notes": "All four modules were accepted on the first submission and the launcher finished with exit 0 and a delivery; the one defect I could not fix is that the pack lacks the credit agreement, the 2026 proxy statement and any result after 2026-06-30, so covenant headroom, legal rank, governance detail and the fiscal 2026 year-end position remain unassessed (logged under Gaps in each handoff)."
+  },
+  {
+    "issuer_id": "ttmi-1116942",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The launcher finished with exit 0 and all four modules were accepted on their first launcher attempt (CP-0 and CP-1 were already accepted in the earlier partial run; I answered CP-1A and CP-2). One defect I could not fix: the two CP-1A Map tables have Relationship and Evidence cells over the prompt's 60-character map-text limit, which the launcher does not check and cannot be changed after acceptance."
+  },
+  {
+    "issuer_id": "mxl",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The source set has no executed credit agreement, proxy statement, ratings or letters-of-credit amount, so covenant headroom, board independence and revolver availability stay explicit gaps in CP-1A and CP-2, and the session's default uv 0.11.32 failed the repository's 0.12.5 pin until /usr/local/bin was put first on PATH. CP-0 and CP-1 were already accepted on attempt 1 in the retained folder, and I submitted CP-1A and CP-2 once each, both accepted first time."
+  },
+  {
+    "issuer_id": "opln",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "Each module was accepted on its first real launcher submission, after I checked the draft against a scratch copy of the run outside the repository; the one defect I saw and could not fix is that the two map tables in the accepted CP-1A answer have cells longer than the 60-character guidance, which the launcher does not enforce and which cannot be changed once accepted."
+  },
+  {
+    "issuer_id": "alks",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted CP-0 handoff cites page 7 instead of page 6 of the Q3 2026 earnings release for the cash and investments totals (figures are correct; later modules cite the right page and log the correction); separately, an unrelated untracked file .response.md for another issuer appeared in the repository root and was left untouched."
+  },
+  {
+    "issuer_id": "brsl",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "Filing rounding left Net Cash Change as Not supplied for FY2025, H1 2025 and Q1 2026, and the issuer's FY2025 net debt (2,723) is not reconcilable to the balance sheet (2,732); both are logged as gaps and not plugged."
   }
 ]

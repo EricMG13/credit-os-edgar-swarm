@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Brightstar Lottery PLC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "92265f25d9c950360facafa2bbdda38f6ad56da6d79ebee3881c8ecc4e19dc28",
+    "CP-1.md": "1b351acfd0e2a956010c6c00e3477f0c8b3721646986d1eccf75dd81e8abbdf2",
+    "CP-1A.md": "3069ea274881d9ad1be28f7c16d705408f306f58ab9a5ede01998472fa030403",
+    "CP-2.md": "eaeff330c73c4c2444eecd2ddbf1fde4ebb12ad67eb5e3dfefc39cfda559a891",
+    "coverage.json": "d6875d42f76837a429616ea4992583ab24ad3b3e634508f204a973843dc21f49",
+    "view.json": "62c8fbbd3f601dc2d837ec6d794159bc26db35702f8f09b7dff7c18ab4aa59e6",
+    "report-view.json": "bff2aa13872af1974a472ceb135b7f33036fff195a8125363eb09223f340d9f7"
+  }
+}

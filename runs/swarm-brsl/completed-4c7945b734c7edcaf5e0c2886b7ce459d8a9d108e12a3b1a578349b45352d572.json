@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Brightstar Lottery PLC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/ab28c316f2f462c870875bc703d8559e9bdef5eb0969bce071b061d030289a55/1.response.md",
+    "CP-1": "requests/CP-1/69448a4bb6c9acf7e4e8a0060e347956b5b1cca87152021e6e1405db90846eff/1.response.md",
+    "CP-1A": "requests/CP-1A/97a0a2a890ff5c943bd2a1d4653c7bdfdae88a6d21e4ddf42f00da2df74671d3/1.response.md",
+    "CP-2": "requests/CP-2/7ec7edb753a22cf431d669e0a50da294700dabac4c5b5289c95e4037e93f1c99/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "ad3e8922009edd440e8598e8296ffba370bbfebca6350733cb2e661a8cc09e98",
+  "delivery_sha256": "25f334be545e0c95d85ca30d909a671315c5846e98dcfe13d4f7cad3c6a4d086"
+}
