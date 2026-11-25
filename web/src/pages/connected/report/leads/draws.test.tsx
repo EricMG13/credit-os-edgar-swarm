@@ -16,14 +16,14 @@ import { LegalLead } from "./cp4";
 import { RestructuringLead } from "./cp4c";
 import { ResearchLead } from "./cpdr";
 import { LEADS as credit } from "./credit";
-import type { DrawingLead, DrawnKind } from "./draws";
+import type { Lead, LeadKind } from "./types";
 import { EVENT_HEADERS, leadProps, tableSection } from "./lead.fixture";
 import { proofHandoff } from "./proof.fixture";
 import { LEADS as structure } from "./structure";
 
 afterEach(cleanup);
 
-const DRAWS: [string, DrawingLead, DrawnKind[]][] = [
+const DRAWS: [string, Lead, LeadKind[]][] = [
   ["CP-1A", BusinessLead, ["maps", "events"]],
   ["CP-DR", ResearchLead, ["events"]],
   ["CP-2", CreditLead, ["maps"]],
