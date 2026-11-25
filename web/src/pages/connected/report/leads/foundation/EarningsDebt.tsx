@@ -3,7 +3,15 @@ import { tone } from "../../../signal";
 import { Slope } from "../../overview/marks";
 import { Figure, GapNote } from "../../overview/Tile";
 import { FigureTile, GapTile } from "../kit/LeadFrame";
-import { Dumbbell, GapSlot, LINE, SIZE, useFigureWidth, type LegendEntry } from "../kit/marks";
+import {
+  Dumbbell,
+  GapSlot,
+  LINE,
+  Measured,
+  SIZE,
+  useFigureWidth,
+  type LegendEntry,
+} from "../kit/marks";
 import { Grid, HALO, HALO_CLASS, TickLabels } from "../kit/marks/parts";
 import type { LeadProps } from "../types";
 import { UNORDERED_SENTENCE } from "../kit/tables";
@@ -423,10 +431,13 @@ function Leverage({
   basis,
   comparison,
   ordered,
+  pair,
 }: {
   leverage: LeverageSeries;
   basis: string | null;
   comparison: EarningsAgainstDebt["comparison"];
+  /** The compared pair, named where more than two periods are drawn. */
+  pair: string | null;
   /** False for periods that cannot be put in time order: the figures are written, never a slope. */
   ordered: boolean;
 }) {
@@ -445,7 +456,20 @@ function Leverage({
         {leverage.label}
         <span className="font-normal text-text-tertiary"> · own scale</span>
       </p>
-      {drawn && <Slope marks={marks} tone={slopeTone} suffix="x" label={reading} />}
+      {drawn && many && (
+        <Measured fallback={408}>
+          {(width) => (
+            <LeverageSlope
+              leverage={leverage}
+              comparison={comparison}
+              word={word}
+              label={reading}
+              width={width}
+            />
+          )}
+        </Measured>
+      )}
+      {drawn && !many && <Slope marks={marks} tone={slopeTone} suffix="x" label={reading} />}
       {!drawn && (
         <ul aria-label={reading} className="flex flex-wrap gap-x-4 gap-y-1 text-small">
           {marks.map((mark) => (
@@ -563,6 +587,7 @@ export function EarningsDebtTile({ lead }: { lead: LeadProps }) {
             basis={data.leverageBasis}
             comparison={data.comparison}
             ordered={data.ordered}
+            pair={pairNamed(data)}
           />
         ) : (
           <p className="text-caption text-gap-text">
