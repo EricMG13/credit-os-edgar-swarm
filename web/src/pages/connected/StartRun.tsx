@@ -3,6 +3,7 @@ import { Badge } from "@/components/base/badges/badges";
 import { Alert } from "@/components/alert/Alert";
 import { Button } from "@/components/base/buttons/button";
 import { Skeleton } from "@/components/gap/Skeleton";
+import { Bento, Tile } from "./report/overview/Tile";
 import {
   carryDocuments,
   getPriorInputs,
@@ -273,11 +274,48 @@ export function StartRun({
           </Alert>
         </div>
       ) : (
-        <div role="status" aria-label="Loading run options" className="mt-6">
-          <Skeleton lines={4} />
-        </div>
+        <LoadingLayout />
       )}
     </>
+  );
+}
+
+/**
+ * While the run options load: the page in its final layout (the stepper strip, the step's form
+ * and the readiness rail beside it from xl), each as quiet blocks in the shape of what will come.
+ */
+function LoadingLayout() {
+  return (
+    <div role="status" aria-label="Loading run options" className="mt-6">
+      {/* The blocks are shapes only: the status's name is what is said. */}
+      <div aria-hidden="true">
+        <Bento>
+          <div className="flex min-w-0 flex-col gap-4 lg:col-span-12 xl:col-span-8">
+            <Tile span={12} label="Steps loading" className="py-4 sm:py-4">
+              <div className="grid grid-cols-4 gap-4">
+                {[0, 1, 2, 3].map((step) => (
+                  <div key={step} className="flex items-center gap-2">
+                    <span className="size-8 shrink-0 rounded-ds-full bg-surface-subtle" />
+                    <span className="h-4 flex-1 rounded-ds-xs bg-surface-subtle max-md:hidden" />
+                  </div>
+                ))}
+              </div>
+            </Tile>
+            <Tile span={12} label="Step loading">
+              <span className="h-7 w-40 rounded-ds-xs bg-surface-subtle" />
+              <span className="min-h-40 rounded-ds-md bg-surface-subtle" />
+              <Skeleton lines={4} />
+            </Tile>
+          </div>
+          <div className="flex min-w-0 flex-col gap-4 lg:col-span-12 xl:col-span-4">
+            <Tile span={12} label="Readiness loading">
+              <span className="h-10 w-44 rounded-ds-xs bg-surface-subtle" />
+              <Skeleton lines={4} />
+            </Tile>
+          </div>
+        </Bento>
+      </div>
+    </div>
   );
 }
 
