@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for BWX Technologies, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/f4347c71540a53f79da1fa615e3b68a6266a31a98e568a986a527b5e6563e6cb/1.response.md",
+    "CP-1": "requests/CP-1/7729ee42caa6ad63dd1b0134c8f43b2823364bb7b99dd9d2ad1a954b30aca6e1/1.response.md",
+    "CP-1A": "requests/CP-1A/46c76e7b0591c9fb5585a48ad9e9d5419265995582f7ce63e180d21cbb3a7e29/1.response.md",
+    "CP-2": "requests/CP-2/3b66460bbffa9b57b5b0908baefb26c2317da5b914b277f2f3feba7cfe44f45b/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "8edf8e7df5d720da47ac9fe0a486cada8171f77b7cb01dc2fc8b2f2efed4278a",
+  "delivery_sha256": "84c9bdfe276c50862203e2179bcaa4b4a27dee0d62fe07aadcf363a3abc7099c"
+}

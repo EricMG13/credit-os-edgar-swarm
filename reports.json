@@ -86,5 +86,27 @@
       "CP-2": 1
     },
     "notes": "All four modules were accepted on first submission, and the sources could not fill these gaps: interim 10-Qs print no cash interest paid, note collateral, guarantor list, class ranking, covenant EBITDA definition, proxy statement and executed agreements are not supplied, and the Quail Tools sale consideration (cash 375.0 plus note 250.0 against stated net 600.0) is unexplained."
+  },
+  {
+    "issuer_id": "esi",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The launcher refused to start under the default uv 0.11.32 (the repo pins 0.12.5), so I ran the identical command with /usr/local/bin first on PATH, which holds uv 0.12.5; no repo file was changed, and the earlier analyst's CP-0 draft was already accepted on its first attempt."
+  },
+  {
+    "issuer_id": "bwxt-1486957",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The default uv on PATH (0.11.32 at /root/.local/bin) fails the repo's pinned 0.12.5 so the printed launcher command exits 2 until /usr/local/bin is first on PATH (I worked around it, not fixed it), and the already-accepted Financial foundation handoff's reading that customer advances lifted nine-month cash flow cannot be edited, so CP-2 states the correction in its own text."
   }
 ]
