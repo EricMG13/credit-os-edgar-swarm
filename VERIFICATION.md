@@ -4,6 +4,83 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-25 — Frontend redesign: every screen rebuilt and merged
+
+- Scope: the ten redesign branches (Run activity and progress with the module pipeline; Evidence
+  and the trace drawer; Changes and Calendar; report header, Overview and History; Library and
+  Coverage; Forecast; the module page frame; the module leads for all 22 modules; Start run)
+  merged into `claude/exciting-albattani-v1zoug`, plus the coordinator's integration commits.
+  Design authority `DESIGN.md`; the map of what each screen shows is `docs/design/screen-map.md`.
+  Delivery still adds no analysis: every branch was reviewed adversarially for derived numbers,
+  page-made judgements, false gap reasons, hidden content and machinery in reader text, by
+  independent reviewers on each round and a final review before each merge, on retained TransDigm
+  FY2024 handoffs (outdated evidence, used for shape only), the proof handoffs and the synthetic
+  Northbridge run. No paid run, no provider call.
+- What the page sends at Start run is unchanged: 19 recorded request transcripts from 18 drives
+  match byte for byte in CI mode, and independent drives (every pathway, re-pressed options,
+  edits after review, failures and retries) are byte-identical to the old page's captures.
+  Consent gating, caps (Lite 15, Full 25, Deep 40, purpose pathways 20) and `X-Shown-Cap` are as
+  before.
+- Integration review (independent, of the coordinator's own commits): six defects, all repaired
+  in `3759f22` and `f708842` with tests that fail without the repair. A prose-only chart section
+  was drawn twice on four Financials leads, once denying it ("could not read"); a records address
+  (`#modules/<code>/records/<table>`) threw on a malformed escape and did nothing on a change
+  within the module; phone styles start below 480 px, not at it; several phone targets were
+  narrow or short; the limits disclosure had lost its chevron. The render check itself was
+  lenient (a hit on a parent counted, width unmeasured) and is now strict.
+- Fidelity check (presentation change): `docs/design/preview/check-render.cjs` on the final
+  build over the synthetic run, every page (14 module pages, a module's records, Overview,
+  Changes, Forecast, Evidence, Calendar, History, Library, Coverage, Run activity, Start run) at
+  1440, 1024, 480, 479 and 390: running when this entry was first committed (no sideways scroll, no unnamed scroll box, no cut
+  text, no target under 32 px or under 44 px below 480 px in either dimension, no text under
+  12 px, no overlapping chart label). Screenshots were looked at for the pages each review names.
+- Tests: full `npm run gates` on `86471e1`: lint, format, types, 454 files and 7,711 tests with
+  coverage, audit, knip, duplication, build and 78 script tests pass; the file gates pass on their
+  own run (the combined run reached the shell's time limit inside them). On `f708842`:
+  running when this entry was first committed. Python front-end tests (15 files, 295 tests) passed on `c632e84`; the currency
+  proof (5 tests, pound and franc, reading the built pages) passes on `f708842`, and its new
+  checks fail on a wrong value. Quality gate 0 findings. Known timing-sensitive tests (pass alone,
+  fail only under load): the connected app's "reads the published handoff…" (wait raised to
+  10 s), `report.auditFollowups` T17, and `ReportLibrary.design` under parallel runs.
+- Not run: the confidence-review and rewrite-tournament skills are not in this session; the
+  independent review above stood in for the first, and a comparison of the changed parsers kept
+  one address parser (the scroll to the records reuses the router's).
+- Judged changes to record:
+  - Forecast prints the model's published display ("118"); exact values are in the calculation
+    download, which the currency proof now checks for the downside path and base interest.
+  - The Overview figure row is the financial foundation's own figures (revenue, EBITDA, cover,
+    leverage, cash with undrawn facilities), as the screen map asks; the catalogue's total
+    liquidity and free cash flow are in that module's records.
+  - "Will refuse" at Start run keeps the error red (`DESIGN.md` now allows red for a refusal).
+  - `DESIGN.md` reader words: machinery (handoff, registers, ids, file names) stays on Evidence;
+    "module" is the reader's word outside a lead, so gaps such as "The module wrote no such
+    passage" stay. Leads keep the stricter rule (no "the module"), enforced by test.
+- For the owner's local validation (rendering only; content findings were all fixed):
+  - Overview: with a three-sentence bottom line the first headline figure starts near y=900 at
+    1440×900; about 160 px empty under the call tile.
+  - Module pages: tiles take their content height, which leaves holes beside a taller neighbour
+    on several leads (about 500 px under Downside's break points and Rates' added interest);
+    Ratings and Covenants, and Liquidity and Restructuring, still look alike; a one-edge map on
+    Business & governance leaves space beside its side column; the paragraph trace sits beside
+    the text, not at the tile edge.
+  - Financial foundation: "1,158"/"1,160" labels collide at 390 on cash interest; three pro forma
+    marks at 4.88x overlap the dashed rule. Earnings delta, Ratings migration, Market-implied risk
+    and Restructuring are not in the synthetic run, so their leads were seen only in test renders;
+    nor is the portfolio limits disclosure (its chevron is checked in tests only).
+  - Forecast: 4,617 px at 1440 (target 4,500); at 390 it is longer than the old page (chart-table
+    list); headline figures are 20 px where the mockup has 36 (kit `StatsStrip` has no size
+    option yet).
+  - Top bar: between 480 and about 510 px the areas wrap to a second row (no sideways scroll).
+  - Coverage: the matrix has one tab stop per cell (no roving focus); seven issuers and part of an
+    eighth show at 1440×900.
+  - Start run: Submit sits just below the first screen at 1280×800 and 1024×768 for three limits,
+    and near 1,090 px with five at 1440; the dialog still says "Start a synthetic test?" (pinned
+    by the recorded transcripts and scripts; your call); the Documents step is restyled rather
+    than restructured.
+  - Run progress: with a stopped run the feed heading is below the fold at 1280×800.
+- Follow-on work the frontend cannot do alone: `docs/superpowers/plans/2026-11-25-redesign-follow-on.md`.
+- Trimmed the two oldest entries (2026-11-16) to keep this record under 1,000 lines.
+
 ## 2026-11-24 — Frontend redesign: theme tokens and shell
 
 - Scope: `web/src/styles/theme.css` re-valued under the existing token names and
@@ -894,81 +971,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
 - Final source tree `e26d7fe86f3bf6d9a480aa4907c7b1dae1a5cc10`; fresh build passes all 33 upload-to-finished-report checks in each browser on macOS: Chrome 157.0.8103.78 (`20261116-035417-01`) and Edge 157.0.4341.60 (`20261116-035435-01`). Evidence: `proof-artifacts/run-9vzN45/proof.json`. This is synthetic source-snapshot proof, not a Windows or ZIP proof.
 - Fidelity scope: behavior-preserving Evidence parser and test assertions only; no layout, component, chart, number, qualification or backend edits. Native backend and pins match RBOT-HTML `256101a`; React dependencies unchanged. No providers, tournaments, Signal changes or ZIP build/publication. Windows work-PC Chrome and Edge proof remains required.
 - Trimmed the oldest verification entry to keep this record below 1,000 lines; git history retains it.
-
-## 2026-11-16 — Financial qualifications and five reading-design fixes
-
-- Forecast preserves all recorded labels, dates, units and values while placing
-  exact base-period qualifications beside uniquely matched period headers and
-  exact interest-basis qualifications in the Interest row. Ambiguous/unrecognised
-  period tokens keep a visible table-level note; no analytical relabelling.
-- Historical chart qualifications now follow their owning chart, with paragraph
-  traces distinct from table traces. Ownership requires one matching section and
-  one table; source-bearing passages point to Evidence instead of leaking references.
-- Compact model tables hide only wholly unavailable/unmodelled rows without exact
-  operands, retain zeros/unknown states, and expand every missing-data reason.
-  Entirely unavailable tables remain visible. Forecast section jumps precede scope
-  and preserve keyboard focus; Evidence's duplicate preview notice is removed.
-- Under 768px the incumbent rail becomes bottom navigation and reading width grows;
-  narrow source controls are 44px, with matching text clearance. Cash charts use a
-  keyboard-scrollable minimum plot width under 480px to separate period labels.
-  Shared line rendering was extracted without changing points/labels/styles.
-- Two Astra confidence reviews ranked (1) qualification ownership/financial fidelity,
-  (2) missing versus zero, (3) source identity, (4) responsive width/trace overlap,
-  (5) navigation/focus/admission. Repaired partial-token association, all-missing
-  empty tables and mobile case/qualification text clearance; targeted regressions
-  cover them. Reviewers report no outstanding issue in the inspected scope.
-- 177 focused tests across 15 files pass; final Forecast/table subset 10/10 passes.
-  TypeScript, changed-file ESLint/Prettier and Python quality gate pass. Fallow
-  retains five inherited findings and labels `gapRecords` as introduced; its exact
-  function is unchanged from `fbcc5ac` (SHA-256
-  `554ac0b77d38e6a36775e67ed4d9b749f1965bdc38194b16f2a1cc21baf83753`).
-  No suppressions. Newly introduced chart duplication and changed-function
-  complexity were resolved; unchanged gap parsing was not refactored for this task.
-- Fresh offline install/build; source tree
-  `01e1525e6735cf738bf1eb2591ac546b1f270894`. Chrome 157.0.8103.78 run
-  `20261116-033501-01` and Edge 157.0.4341.60 run `20261116-033518-01` each pass
-  all 33 synthetic upload-to-report checks on macOS. Added browser checks cover
-  Forecast jumps, 390px main width, 44px source targets and nonoverlapping period
-  labels. Evidence: `proof-artifacts/run-ySH02V/proof.json` (source snapshot, no ZIP).
-- Fidelity check: Astra inspected actual retained Caesars at 1728x996 and 390x844;
-  Credit OS palette/type/icon language preserved, qualifications visible locally,
-  one Evidence notice, working keyboard jumps/trace dismissal/focus restoration,
-  mobile chart scroll and separated labels. Judgement card height about 334px
-  versus the reviewed ~650px. Viewport restored and reviewer tab closed.
-- User preview opened at port 58340, actual run `20261115-114658-01`; its assets
-  exactly match the tested build. CP-1 and CP-2G downloads retain their original
-  SHA-256 identities. Preview remains read-only and retains its admission notice.
-- Backend/Python pins match RBOT-HTML `256101a`; React dependencies unchanged.
-  No providers, Signal work or tournaments. ZIP not built/published; both browsers
-  still require acceptance on the actual Windows work PC.
-
-## 2026-11-16 — Remaining Modules and ReportReader findings resolved
-
-- Verified both findings using `fallow inspect --file ... --format json` before
-  editing. Modules now separates output selection, figures, findings and saved
-  outputs. ReportReader separates its header, badges and status messages while
-  retaining its hooks, admission lookup and route handling. No suppressions.
-- Two Astra reviewers used confidence-review. Ranked doubts: (1) unpublished-run
-  admission and preview truthfulness, (2) retained-output selection/source identity,
-  (3) null/loading/error boundaries, (4) metrics and transformed figure table lines,
-  (5) navigation remounts, original workspace keys and title fallbacks. Compared
-  source and consumers with `71d55d4`; no defects found. Added adversarial tests for
-  catalogue-only rejection, preview with empty reason, null/error/title states,
-  default/selected/singleton/ambiguous outputs, invalid output addresses and exact
-  alternate evidence links. Calendar fixture now checks a distinct workspace key.
-- 72 focused tests across ten files pass. TypeScript, changed-file ESLint/Prettier
-  and Python quality gate pass. Fallow audit against `dd765b5`: PASS, zero introduced
-  and zero inherited findings. Backend/Python pins match RBOT-HTML `256101a`;
-  React dependency files unchanged. No providers, Signal work or tournaments.
-- Clean offline install/build, source tree
-  `9be6488b01f37c6b859ad39db4c02ab527d9c334`. Chrome 157.0.8103.78 run
-  `20261116-031733-01` and Edge 157.0.4341.60 run `20261116-031749-01` each pass
-  all 32 synthetic upload-to-report checks on macOS, including module charts,
-  mobile navigation, report history and evidence traces. Artifacts:
-  `proof-artifacts/run-cxcHo3/proof.json`. Source-snapshot proof, not ZIP proof.
-- Fidelity scope: compiled CSS byte-identical to the prior build; Astra confirmed
-  unchanged markup/order, and browser checks cover chart values and source links.
-  Actual retained Caesars Forecast opened at port 58339 with its original Test
-  preview/admission qualification; CP-2G download SHA-256 unchanged.
-- ZIP not built or published. Chrome and Edge acceptance on the Windows work PC
-  remains pending; macOS passes do not satisfy that gate.
