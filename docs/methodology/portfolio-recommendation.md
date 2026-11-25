@@ -5,14 +5,16 @@ an analyst can check any proposal by hand.
 
 Status: approved by the owner on 2026-11-25 with the design it belongs to
 (`docs/rulings/2026-11-25-deliverables-and-recommendations.md`). Not built yet: no code computes
-any of this today. Where this document and the ruling differ, the ruling governs.
+any of this today. Where this document and the ruling differ, the ruling governs; for the rubric
+text, section 9 of the approved design governs.
 
 ## 1. Bottom line
 
 - A recommendation is proposed from two scores: a Credit Score for the issuer and a Valuation
   score for the issuer's best eligible instrument in that portfolio.
 - The credit analysis scores 17 rubric factors from 1 to 5, each with a one-line basis. Everything
-  after that is fixed arithmetic and table lookup: no judgement is added downstream.
+  after that is fixed arithmetic and table lookup on those scores, supplied prices and the
+  portfolio's reference files: no judgement is added downstream.
 - Every recommendation is shown as proposed until the analyst confirms it in the Credit Snapshot
   workbook. The analyst can change any score or recommendation.
 
@@ -66,8 +68,10 @@ Gaps in the rubric as written, open for the owner:
 - Market share: no level is written for a 10–30% share outside the top three.
 
 How a factor is scored: the credit analysis picks the level whose text fits the issuer's evidence
-and writes one line saying why. A factor with no evidence is left unscored and listed as a gap; it
-is never given a middle score by default.
+and writes one line saying why. A factor with no evidence is left unscored and listed as a gap.
+
+The scorecard also shows four items outside the 17: Management, Sector Outlook, Sponsor Quality
+and Credit Direction. They are written by the credit analysis and do not enter the Credit Score.
 
 ## 4. Credit Score roll-up
 
@@ -77,13 +81,15 @@ is never given a middle score by default.
 3. Round to a whole level; an exact half rounds toward the weaker score (2.5 becomes 3).
 4. Floor: if Liquidity or Maturity profile is scored 5, the Credit Score is no better than 4.
 
-Example: 15 factors scored, sum 39, mean 2.6, Credit Score 3 (Fair). If Liquidity were one of
-them at 5, the Credit Score would be 4 (Weak).
+Example 1: 15 factors scored, none of them a 5, sum 39: mean 2.6, Credit Score 3 (Fair).
+Example 2: 16 factors scored, sum 40, with Liquidity at 5: mean 2.5 rounds to 3, and the floor
+makes the Credit Score 4 (Weak).
 
 ## 5. Valuation score
 
 Scored per instrument, against the instruments of the same rating bucket in that portfolio's
-reference (section 8). Loans are compared by discount margin, bonds by spread. The measure is the
+reference (section 8). Loans are compared by discount margin, against the CLO book and the loan
+index holdings; bonds by spread, against the high-yield index holdings. The measure is the
 instrument's level less the bucket's median, in basis points; wider than the median is more
 attractive.
 
@@ -96,8 +102,7 @@ attractive.
 | −100 bp or less | 5 |
 
 - A portfolio's Valuation is that of its best eligible instrument (the lowest score).
-- With no price, or a bucket of fewer than five names, Valuation is left blank for the analyst and
-  no recommendation is proposed until it is filled.
+- With no price, or a bucket of fewer than five names, Valuation is left blank for the analyst.
 - Open: the approved bands do not say whether a difference of exactly +40 bp or −40 bp is a 3 or
   the neighbouring band. This is to be settled before the calculation is built.
 
@@ -127,8 +132,11 @@ hold, the reference they are measured against and their limits.
   limit is named beside it. A 4 or 5 from the table is unchanged.
 - The issuer's current weight in the portfolio or index is shown beside the recommendation.
 - A custom portfolio supplied when the run is started gets its own column by the same rules.
-- Each instrument in the capital structure also carries its own recommendation for the analyst to
-  set.
+- Each instrument in the capital structure also carries a proposed recommendation, which the
+  analyst can change. Open: the approved design does not give the rule for the per-instrument
+  proposal.
+- Open: the approved design does not define which instruments are eligible for a portfolio beyond
+  loans for the CLO and loan index and bonds for the high-yield index.
 
 ## 8. Reference data and as-of dates
 
@@ -139,8 +147,8 @@ hold, the reference they are measured against and their limits.
 | High-yield index | SSGA JNK daily holdings | Fetched by the app, or a file the analyst supplies |
 | Custom | Any portfolio the analyst supplies when starting the run | Analyst's file |
 
-Each reference is stored with its as-of date, and that date is printed on the workbook beside the
-figures that use it. A Valuation is only as current as its reference file and the prices supplied.
+Each reference is stored with its as-of date, and that date is printed on the workbook. A
+Valuation is only as current as its reference file and the prices supplied.
 
 ## 9. Proposed and confirmed
 
@@ -150,8 +158,8 @@ figures that use it. A Valuation is only as current as its reference file and th
 - The workbook's Matrix sheet holds this rubric, the valuation bands and the 5×5 table. The
   Snapshot's recommendation cells look up into it, so an analyst's edit to a score re-derives the
   proposal in Excel.
-- The app records no confirmation: a confirmed recommendation exists only in the analyst's copy of
-  the workbook.
+- Open: the approved design has the analyst confirm in the workbook and does not say whether the
+  app records that confirmation. As designed, it exists only in the analyst's copy of the file.
 
 ## 10. Limitations
 
@@ -162,4 +170,7 @@ figures that use it. A Valuation is only as current as its reference file and th
   the bucket itself is cheap or dear.
 - The layout of the SSGA holdings files has not been verified, nor that the app's host can reach
   ssga.com.
-- The two rubric gaps (section 3) and the band edges (section 5) are open.
+- The two rubric gaps (section 3), the band edges (section 5) and the per-instrument rule and
+  eligibility (section 7) are open.
+- The credit analysis already writes other scorecards and an overweight, neutral or underweight
+  view of its own. How those relate to this proposal is not settled; a reader may see both.

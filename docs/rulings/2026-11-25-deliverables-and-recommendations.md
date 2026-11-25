@@ -35,8 +35,8 @@ Words in quotation marks are the owner's own; everything else is the spec's reco
 
 ## Three further rulings in the owner's words (2026-11-25)
 
-- Forecast cells in the workbook's Model sheet are values, matching the app's model exactly, not
-  formulas: "Values". Historic cells are values copied exactly (spec section 7).
+- Forecast cells in the workbook's Model sheet are values, matching the app's model exactly:
+  "Values". Historic cells are values copied exactly (spec section 7).
 - Whether an add-back is realised or unrealised comes from CP-1D: "add back are covered in cp-1d".
   The amounts come from CP-1's EBITDA bridge (T4.17); the split comes from CP-1D's add-back
   register (T1D.1) and achievability table (T1D.2), joined on Add-Back ID. An add-back CP-1D marks
@@ -47,8 +47,8 @@ Words in quotation marks are the owner's own; everything else is the spec's reco
 ## Approved with the spec
 
 These were the coordinating session's proposals. The owner approved them as written when approving
-the spec; they are not the owner's own words, and the spec had listed the first four groups as open
-items (its section 6).
+the spec; they are not the owner's own words. The spec had listed the table, the bands, the two
+caps and the presets as open items for the owner (its section 6).
 
 - The 5×5 table (spec 4.3). Rows are the Credit Score, columns the Valuation, cells the
   recommendation (1 Strong OW, 2 Modest OW, 3 MW, 4 Modest UW, 5 Strong UW). Its rule: the average
@@ -64,7 +64,8 @@ items (its section 6).
   | 5 Stressed | 3 | 4 | 4 | 5 | 5 |
 
 - The valuation bands (spec 4.4). Per instrument, against the same-rating bucket of that
-  portfolio's reference: loans by discount margin, bonds by spread. Difference from the bucket
+  portfolio's reference: loans by discount margin (CLO book, loan index holdings), bonds by
+  spread (HY index holdings). Difference from the bucket
   median: ≥ +100 bp → 1; +40 to +100 → 2; within ±40 → 3; −40 to −100 → 4; ≤ −100 → 5. A
   portfolio's Valuation is that of its best eligible instrument. No price, or no bucket of at
   least five names, leaves Valuation blank for the analyst.
@@ -76,7 +77,8 @@ items (its section 6).
 - Advanced presets: Governance and ESG; Covenant Capacity; Portfolio Fit.
 - Custom routing cap: the sum of the chosen modules' estimates, with a ceiling of USD 50 per run.
 - The Model sheet's layout (spec section 7) and the full-module or alias-phase choice of custom
-  routing (spec section 8), both headed "proposal" in the spec.
+  routing (spec section 8), both headed "proposal" in the spec. Section 8 carries two changes to
+  existing rules, listed under Amends.
 
 The methodology an analyst can audit, with the rubric's level text, is
 `docs/methodology/portfolio-recommendation.md`.
@@ -90,11 +92,16 @@ The methodology an analyst can audit, with the rubric's level text, is
   proposed recommendation derived by ruled arithmetic from module-written scores through the
   approved table, always labelled proposed until the analyst confirms (R5, R6).
 - `AGENTS.md`, the reader bullet and the completion bullet: the issuer report gains a Deliverables
-  page of download tiles that shows no contents (R1). `AGENTS.md` did not name Export PDF, so no
-  wording was dropped there.
+  page of download tiles that shows no contents (R1). It joins the completion condition when it
+  is built (PR 5), not before. `AGENTS.md` did not name Export PDF, so no wording was dropped.
 - The Export PDF control and the Credit Snapshot PDF (built 2026-11-24 and restyled 2026-11-25,
   `VERIFICATION.md`): replaced by the Deliverables page and the workbook (R1, R3) when PR 5 lands.
-  The five purpose reports keep their print layout and are reached from Deliverables tiles.
+  The five purpose reports become Deliverables tiles that open the browser print dialog.
+- When custom routing is built (PR 7, spec section 8), and not before:
+  `2026-11-13-appendix-and-routing-scope.md` is amended so that a register it cut is restored for
+  a phase the analyst ticks; and the CP-8 bullet of `AGENTS.md` is refined so that a custom run is
+  compared only with an earlier custom run of the same module and phase selection. Neither text
+  is edited in PR 0.
 - Not amended: the cap sentence of `AGENTS.md` and the cap table of
   `2026-11-15-pathway-tiers-and-caps.md`. The two caps above are recorded here only. By that
   ruling a cap enters `PATHWAY_CAP_USD` and `RULED_CAPS_USD` by deliberate edits, which belong to
@@ -110,7 +117,7 @@ The methodology an analyst can audit, with the rubric's level text, is
   second analytical execution (spec section 7).
 - Source references stay off the Snapshot sheet and live on the workbook's Sources sheet, per
   `2026-11-11-reader-and-issuer-report.md`.
-- Reader-facing text shows no module ids. Desktop only. Accent blue.
+- Reader-facing text shows no module ids (spec section 8: "Reader words, no module IDs").
 - A paid proof run of CP-2's scorecard is a separate owner action (spec section 5).
 
 ## Left open
@@ -124,6 +131,16 @@ The methodology an analyst can audit, with the rubric's level text, is
 - The valuation bands do not say which band a difference of exactly +40 bp or −40 bp falls in
   ("within ±40" against "+40 to +100"). PR 2 needs this settled before it codes the bands.
 - The spec names only the ends of the Valuation scale (1 Very attractive, 5 Very unattractive).
+- The `AGENTS.md` exception names a recommendation derived "from module-written scores". The
+  Valuation score and the limit caps are not module-written: code computes them from supplied
+  prices and reference files (spec 4.4, 4.5). Whether the exception's wording should name them is
+  for the owner or coordinator before PR 2.
+- The spec has a proposed recommendation per instrument as well as per portfolio (section 2) and
+  gives no rule for the per-instrument one.
+- How this five-point recommendation sits beside the module-written ones (CP-2's T2.7 financial
+  profile scorecard, CP-3's 1–5 issuer scorecard, CP-6's Overweight / Neutral / Underweight) is
+  not stated in the spec.
+- Whether the app records the analyst's confirmation; the spec says only "in the workbook" (R5).
 - Not verified (spec section 6): the SSGA holdings files' columns; whether the app's host can reach
   ssga.com; the cost of the longer CP-2 instruction; that Excel renders the conditional formats
   identically on Windows and Mac.

@@ -11,16 +11,17 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
   2026-11-25: "Approve, start"). Added `docs/rulings/2026-11-25-deliverables-and-recommendations.md`
   and `docs/methodology/portfolio-recommendation.md`; amended four bullets of `AGENTS.md` (one
   permitted workbook, the proposed-recommendation exception, the Deliverables page in the reader
-  and completion bullets; the cap sentence untouched); one `METHODOLOGY-REVIEW.md` paragraph.
-- Checked: the rubric's 85 level cells, the 5×5 table and the valuation bands in the methodology
-  and the ruling compared with the spec by script and by a fresh reviewer; `tools/quality_gate.py`
-  exit 0 (no Python in scope); `check_live_gate` refuses the new ruling for all four
-  configurations (run directly: the test that sweeps `docs/rulings` is in
-  `tests/known-failures.txt`, with one other in `tests/model/test_gate.py`; both fail the same
-  way without this change); `tests/test_methodology_selection.py` and
-  `tests/test_package_react_windows.py` pass. No test pins the changed `AGENTS.md` text.
-- Open: two rubric gaps (Leverage 5–6x, Market share 10–30%) and the band a difference of exactly
-  ±40 bp falls in. `PRODUCT.md` still says no workbook is a deliverable, true of the build today.
+  and completion bullets; cap sentence untouched); one `METHODOLOGY-REVIEW.md` paragraph. Trimmed
+  here: the two oldest entries, both 2026-11-16.
+- Checked: the rubric's 85 level cells against the spec by script; `tools/quality_gate.py` exit 0
+  (no Python in scope); `check_live_gate` refuses the new ruling for all four configurations, run
+  directly (the test that sweeps `docs/rulings` and one other in `tests/model/test_gate.py` are in
+  `tests/known-failures.txt` and fail the same way without this change);
+  `tests/test_methodology_selection.py` and `tests/test_package_react_windows.py` pass. No test
+  pins the changed `AGENTS.md` text.
+- Review: one fresh reviewer, pass with fixes (6 Medium, 11 Low; no transcription error). Wording
+  fixed; the open points are listed in the ruling's Left open. `PRODUCT.md` still says no workbook
+  is a deliverable, true of the build today.
 - Not verified: anything the documents describe, none of which is built; the rubric text against
   the owner's image (not in the repository; taken from the spec's transcription); the SSGA file
   columns; the full suite.
