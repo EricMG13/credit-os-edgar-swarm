@@ -45,6 +45,39 @@
         "CP-2": 1
       },
       "notes": "The accepted CP-1A answer has map-table Relationship and Evidence cells longer than the 60-character guideline (the checker does not enforce it) and cannot be replaced after acceptance."
+    },
+    {
+      "issuer_id": "issuer-1012100",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "CP-0, CP-1 and CP-1A were already accepted at attempt 1 in the partial folder and I only submitted CP-2 (accepted at attempt 1, delivery written, exit 0); one defect I could not fix is that the accepted Financial foundation showed liquidity of USD 1,344.0 million and current-debt cover of 1.85x on the revolver alone, which CP-2 corrects to USD 1,399.3 million and 1.93x (reconciled to the issuer's USD 1.06 billion committed lines) in its own text and Gaps, since an accepted answer cannot be edited."
+    },
+    {
+      "issuer_id": "bmrn",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "Run finished (exit 0, delivery written); CP-0 was already accepted in the resumed folder, so its count of 1 is from the retained request, not submitted by this session. Defect seen but not fixed: CP-1's debt-stack row for the 2034 notes says guarantors are not stated, whereas the Q1 10-Q exhibit list shows a supplemental indenture dated 2026-04-27 with guarantors as parties; this is logged in CP-1A's conflict log and gaps and CP-1 cannot be replaced."
+    },
+    {
+      "issuer_id": "podd-1145197",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "Final launcher exit 0 with delivery written; defects seen but not fixable: the accepted Source readiness answer wrongly said no revenue or earnings guidance is in the files (the Q1 and Q2 10-Qs give a qualitative 2026 revenue expectation), corrected in the Fundamental credit answer, and the Q3 10-Q states the product-correction cost four ways without reconciling them."
     }
   ]
 }

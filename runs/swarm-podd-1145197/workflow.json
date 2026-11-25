@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "podd-1145197-2026-11-18-credit_snapshot-host",
+    "issuer_id": "podd-1145197",
+    "issuer_name": "Insulet Corp",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_podd-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_podd-20241231.htm.jsonl",
+      "sha256": "3ca21f0666b600732db05bddf666ad42bc06b5874422b7fd248a4fcdf642da5b"
+    },
+    "10-K_2025-12-31_podd-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_podd-20251231.htm.jsonl",
+      "sha256": "defd65468dd3fb9d515378a3d4acc7b0fdbed9f6dacd99e95f5e6f3e371c07e6"
+    },
+    "10-Q_2026-03-31_podd-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_podd-20260331.htm.jsonl",
+      "sha256": "759f5516864d1425d45378bbf20a62d6996a0c267acea0694a674988d355480c"
+    },
+    "10-Q_2026-06-30_podd-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_podd-20260630.htm.jsonl",
+      "sha256": "8d1ffeb777a43a02857e676da62d545a546c1d220bc08a2d7cd8e7e1ca5717c0"
+    },
+    "10-Q_2026-09-30_podd-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_podd-20260930.htm.jsonl",
+      "sha256": "49b21d6b40c12cfad0f5ab4652758a0060a1146d0e099962e233e2e4677340c8"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1145197-insulet-corp-podd.json",
+      "sha256": "a798b28601f5c1a3aedb1b1235d5a308e7f72ae40df8a1e89e7658e6757db5b1"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "9d411c4b0f56b3a12b1e5c1c2515b136b2bb107fa9194d3bd4ade7c06de8aacf"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "6d3a6ddce3558d146c9d1ccf1ce1cd052318b2b56b52ec1ca4e9707b76fd2853"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "8a6a3de5f623d0467fb7ef36ebb4290c04c81f30c10bd3f942b0ee513d5aaa33"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "4a479a46cd8fcf22a786931767f397017346e6ec522cca850be25fee4f3acf3c"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Insulet Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Insulet Corp — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

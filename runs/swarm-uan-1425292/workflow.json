@@ -1,0 +1,248 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "uan-1425292-2026-11-18-credit_snapshot-host",
+    "issuer_id": "uan-1425292",
+    "issuer_name": "Cvr Partners, Lp",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_uan.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_uan.htm.jsonl",
+      "sha256": "a8ffbee72816e72a9b7d7f5d55da8b05e505ce5038d958cbf2abfc69340754b0"
+    },
+    "10-K_2025-12-31_uan.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_uan.htm.jsonl",
+      "sha256": "40b0386cc0d66875097cce6cba266be3f27f4c3f9dc90627c5252ee2c535a09d"
+    },
+    "10-Q_2026-03-31_uan.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_uan.htm.jsonl",
+      "sha256": "8fd98743de703eece641ac27858c625290ea297709d360afe9c410ba0f5ca019"
+    },
+    "10-Q_2026-06-30_uan.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_uan.htm.jsonl",
+      "sha256": "91f6dc0f18cd2af6cbd20ab1b02d354a9a6cf3b48900d8c0d1208992e8034709"
+    },
+    "10-Q_2026-09-30_uan.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_uan.htm.jsonl",
+      "sha256": "caaee1c79ea368601dd3f3f7dffce008cd31287ffa69d09cf45fc3702893b0ac"
+    },
+    "EX99.1_2026-03-31_uan_exhibit991-uanq12026earnin-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_uan_exhibit991-uanq12026earnin-htm.htm.jsonl",
+      "sha256": "3991b672a09e2587d40a5f245c4eed4127da9a2111ba873b67603864ed217a7c"
+    },
+    "EX99.1_2026-06-30_uan_exhibit991-uanq22026earnin-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_uan_exhibit991-uanq22026earnin-htm.htm.jsonl",
+      "sha256": "69a4f9dbd52d6ca0024a9646a356a94e94a03f911dcffc582922e77b1ea705ca"
+    },
+    "EX99.1_2026-09-30_uan_d162480dex991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-09-30_uan_d162480dex991-htm.htm.jsonl",
+      "sha256": "59af803c9301c0fcdb9b7c63004285b8b6ef146d1ae47e23ac7282abb587f668"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1425292-cvr-partners-lp.json",
+      "sha256": "d4458f04ef6558f25a66a7507c3c64948f3d2249f0216c94964855adaf5795ab"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "7fde8b5a02512d8a067c6ac16790cdcd387c779f55657c57d548d37fc8e37221"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "1c2203feca11763dea2298b82c6d6c0e23eda96f3006ec1a7a9ffb26379f9a22"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "470d685578a9080c39f9e2c23d8da483c1d0a9cdd3b62e8609e1048ee3b49528"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "7874f2bf4e87011fb4158be117f6b6023785de0841030637cef2b96c0a5f0021"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Cvr Partners, Lp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Cvr Partners, Lp — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}
