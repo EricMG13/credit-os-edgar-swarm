@@ -219,11 +219,35 @@ it("names the next module in stage order and links to it", () => {
 it.each([
   ["holds only its Basis line", [text(3, "Basis: annual report, page 4")]],
   ["holds only a table", [table(3, ["Metric", "FY2024"], [["Cover", "3.1x"]])]],
-])("draws the bottom-line gap in place when the passage %s", (_, blocks) => {
+])("says what is true when the Bottom line passage %s, and keeps what it holds", (_, blocks) => {
   page([section("Findings", 2, 1), section("Bottom line", 3, 2, blocks)]);
   const header = screen.getByRole("region", { name: "Fundamental credit" });
-  expect(within(header).getByText(/The module's handoff has no such passage/)).toBeVisible();
-  expect(within(header).queryByText("Bottom line")).toBeNull();
+  expect(within(header).getByText("This passage holds no text.")).toBeVisible();
+  expect(within(header).queryByText(/no such passage/)).toBeNull();
+  const block = blocks[0];
+  if (block?.type === "table") expect(within(header).getByText("3.1x")).toBeVisible();
+  else
+    expect(
+      within(header).getByRole("button", { name: "Show sources for Bottom line" }),
+    ).toBeVisible();
+});
+
+it("states an unreadable handoff once, with its reason, and no passage gaps", () => {
+  page([], { parseError: "the front matter is not valid YAML" });
+  expect(
+    screen.getAllByText(/could not be read into sections: the front matter is not valid YAML/),
+  ).toHaveLength(1);
+  expect(screen.queryByText(/no such passage/)).toBeNull();
+});
+
+it("draws a rowless table in a passage as its stated gap, not an empty tile", () => {
+  page([
+    section("Findings", 2, 1),
+    section("Bottom line", 3, 2, [text(3, "Thin.")]),
+    section("Key findings", 3, 4, [table(5, ["Metric", "FY2024"], [])]),
+  ]);
+  const findings = screen.getByRole("region", { name: "Key findings" });
+  expect(within(findings).getByText("This table has no rows in the handoff.")).toBeVisible();
 });
 
 it("draws no empty well for a limitation that holds only its Basis line", () => {

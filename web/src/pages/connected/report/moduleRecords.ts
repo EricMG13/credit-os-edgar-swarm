@@ -169,7 +169,11 @@ const PERIOD_HEADER = /^(?:FY|H[12] |Q[1-4] |LTM |20\d\d)/;
 const MEASURES_HEADER = /^(?:item|items|metric|metrics|measure|line item|kpi|indicator)s?$/i;
 const BRIDGE = /bridge|waterfall|walk|reconciliation/i;
 const BRIDGE_ROW = /^(?:opening|closing|starting|ending)\b/i;
-const NOT_A_PEER = /\btotal\b|subtotal|aggregate|\bcontrol\b|not additive|combined/i;
+/** A row's own label, whole, that names a total; never a word inside another name ("Power & Control"). */
+const TOTAL_LABEL =
+  /^(?:total|subtotal|sum|group|consolidated|aggregate|combined)$|^(?:total|net|less)\s|\s(?:sub)?total$/i;
+/** The handoff's own mark that a row is no peer of the others. */
+const MARKED = /not additive|\baggregate control\b/i;
 
 /** A cell's number exactly as written, or null for text that is not one plain number. */
 function amount(cell: string) {
@@ -199,19 +203,47 @@ function largestOf(cells: string[], peers: string[]) {
   });
   // One figure has nothing to be compared with: it draws no bar; nor do years that look like amounts.
   if (values.length < 2 || cells.some((cell) => amount(cell) === null && !isGap(cell))) return null;
-  if (values.every(isYear)) return null;
+  if (values.every(isYear) || holdsUnlabelledTotal(values)) return null;
   const largest = Math.max(...values.map(Math.abs));
   return largest === 0 ? null : largest;
 }
 
-/** Lines of the rows that are no peers of the others, by their own words; a stated gap's reason
- * ("Not supplied: disclosed in aggregate") describes the missing figure, not the row. */
+const label = (cell: string) =>
+  cell
+    .trim()
+    .replace(/^\*\*(.*)\*\*$/, "$1")
+    .replace(/[:.]$/, "")
+    .trim();
+const bold = (cell: string) => /^\*\*.+\*\*$/.test(cell.trim());
+
+/** The rows that are no peers of the others: a first cell that is, whole, a total word, a bold
+ * row, or a row the module marks as not additive or an aggregate control. Never guessed from a
+ * word inside a name. */
 function notPeers(table: Table, columns: number[]) {
-  const says = (cell: string) => !isGap(cell) && NOT_A_PEER.test(cell);
-  return new Set(
+  const first = columns[0] ?? 0;
+  return new Map(
     table.rows
-      .filter(({ cells }) => columns.some((column) => says(cells[column] ?? "")))
-      .map(({ line }) => line),
+      .filter(({ cells }) => {
+        const name = cells[first] ?? "";
+        return (
+          TOTAL_LABEL.test(label(name)) ||
+          bold(name) ||
+          columns.some((column) => {
+            const cell = cells[column] ?? "";
+            return !isGap(cell) && MARKED.test(cell);
+          })
+        );
+      })
+      .map(({ line, cells }) => [line, label(cells[first] ?? "")]),
+  );
+}
+
+/** Whether one row of the column is the sum of the others: an unlabelled total, so no bars. */
+function holdsUnlabelledTotal(values: number[]) {
+  if (values.length < 3) return false;
+  const sum = values.reduce((total, value) => total + value, 0);
+  return values.some(
+    (value) => Math.abs(value - (sum - value)) <= Math.max(1, Math.abs(value) / 1000),
   );
 }
 
@@ -338,4 +370,10 @@ const STATED_GAP =
 /** The leading words of a stated gap ("Not supplied: …" → "Not supplied"), or null. */
 export function statedGap(cell: string) {
   return STATED_GAP.exec(cell.trim())?.[1] ?? null;
+}
+
+/** The labels of the rows a table's bars leave out, for the note under it; none without bars. */
+export function barExclusions(table: Table, title = "") {
+  if (!amountColumns(table, title).size) return [];
+  return [...notPeers(table, displayColumns(table.headers, false, table.rows)).values()];
 }

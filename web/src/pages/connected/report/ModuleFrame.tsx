@@ -33,6 +33,9 @@ import { readableTitle } from "./moduleRecords";
 
 const MISSING_PASSAGE = "Not established for this run. The module's handoff has no such passage.";
 
+const NO_TEXT = "This passage holds no text.";
+const NO_ROWS = "This table has no rows in the handoff.";
+
 export type FrameModule = { id: string; name: string; state: ModuleState };
 
 /** The page's section anchors, for the navigator's "On this page" entries. */
@@ -143,6 +146,56 @@ function Bottom({ children }: { children: ReactNode }) {
   );
 }
 
+/** What the header draws under its hairline: the bottom line, else what is true of it. */
+function HeaderBottom({
+  entry,
+  bottomLine,
+  hollow,
+  owed,
+  folder,
+}: {
+  entry?: OutputEntry;
+  bottomLine: BottomLineSource;
+  hollow?: Section;
+  owed: boolean;
+  folder: string;
+}) {
+  if (entry?.output.parseError) {
+    const reason = entry.output.parseError;
+    return (
+      <Bottom>
+        <GapNote>
+          This handoff could not be read into sections
+          {containsReference(reason) ? "." : `: ${readerText(reason)}`}{" "}
+          <Button href={evidencePath(folder, entry)} color="link-gray" size="sm">
+            Open Evidence
+          </Button>
+        </GapNote>
+      </Bottom>
+    );
+  }
+  if (entry && bottomLine)
+    return (
+      <Bottom>
+        <BottomLineText source={bottomLine} entry={entry} folder={folder} />
+      </Bottom>
+    );
+  if (entry && hollow)
+    return (
+      <Bottom>
+        <span className="text-caption text-text-tertiary">
+          <Anchor id={ANCHOR.bottomLine}>Bottom line</Anchor>
+        </span>
+        <HollowPassage section={hollow} title="Bottom line" entry={entry} folder={folder} />
+      </Bottom>
+    );
+  return owed ? (
+    <Bottom>
+      <GapNote>{MISSING_PASSAGE}</GapNote>
+    </Bottom>
+  ) : null;
+}
+
 function TitleRow({ module }: { module: FrameModule }) {
   const blocked = module.state === "Not assessable";
   return (
@@ -180,6 +233,7 @@ export function ModuleHeader({
   basis,
   about,
   confidence,
+  hollow,
 }: {
   module: FrameModule;
   entry?: OutputEntry;
@@ -189,6 +243,8 @@ export function ModuleHeader({
   folder: string;
   /** The basis of the module's figures as its handoff states it. */
   basis?: string;
+  /** The Bottom line passage when it holds no paragraph to read. */
+  hollow?: Section;
   /** What the module says the issuer is (Business & governance only). */
   about?: ReactNode;
   confidence?: ReactNode;
@@ -213,17 +269,13 @@ export function ModuleHeader({
             {confidence}
           </div>
         )}
-        {entry && bottomLine ? (
-          <Bottom>
-            <BottomLineText source={bottomLine} entry={entry} folder={folder} />
-          </Bottom>
-        ) : (
-          (owed || blocked) && (
-            <Bottom>
-              <GapNote>{MISSING_PASSAGE}</GapNote>
-            </Bottom>
-          )
-        )}
+        <HeaderBottom
+          entry={entry}
+          bottomLine={bottomLine}
+          hollow={hollow}
+          owed={owed || blocked}
+          folder={folder}
+        />
       </div>
     </Tile>
   );
@@ -259,6 +311,7 @@ function PassageTable({
   entry: OutputEntry;
   folder: string;
 }) {
+  if (!table.rows.length) return <GapNote>{NO_ROWS}</GapNote>;
   return (
     <PublishedTable
       table={table}
@@ -266,6 +319,47 @@ function PassageTable({
       traceAt={(line) => traceKey(entry, line)}
       rowHref={(line) => evidencePath(folder, entry, line)}
     />
+  );
+}
+
+/**
+ * A passage the module wrote with no paragraph to read: it says so, keeps the trace of the Basis
+ * it holds, and draws the tables it holds.
+ */
+export function HollowPassage({
+  section,
+  title,
+  entry,
+  folder,
+}: {
+  section: Section;
+  title: string;
+  entry: OutputEntry;
+  folder: string;
+}) {
+  return (
+    <div className="flex min-w-0 flex-col gap-3">
+      <GapNote>{NO_TEXT}</GapNote>
+      {section.blocks.map((block) =>
+        block.type === "text" ? (
+          <p
+            key={block.line}
+            className={cx(TRACE_HOST, "flex items-center gap-2 text-small text-text-secondary")}
+          >
+            Its basis is with the sources.
+            <HeldTrace trace={traceKey(entry, block.line)} label={`Show sources for ${title}`} />
+          </p>
+        ) : block.type === "table" ? (
+          <PassageTable
+            key={block.line}
+            table={block}
+            title={title}
+            entry={entry}
+            folder={folder}
+          />
+        ) : null,
+      )}
+    </div>
   );
 }
 
@@ -338,14 +432,6 @@ function KeyFindings({
   );
 }
 
-function PassageGap({ name, id, span }: { name: string; id: string; span: 5 | 7 | 12 }) {
-  return (
-    <Tile span={span} label={name} title={<Anchor id={id}>{name}</Anchor>}>
-      <GapNote>{MISSING_PASSAGE}</GapNote>
-    </Tile>
-  );
-}
-
 /**
  * Key findings as numbered claims beside contrary evidence on the counter surface; an owed passage
  * the handoff lacks is drawn as its gap in place.
@@ -353,46 +439,52 @@ function PassageGap({ name, id, span }: { name: string; id: string; span: 5 | 7 
 export function ModuleFindings({
   keyFindings,
   contrary,
+  hollow,
   missing,
   entry,
   folder,
 }: {
   keyFindings?: Section;
   contrary?: Section;
+  hollow: { findings?: Section; contrary?: Section };
   missing: readonly string[];
   entry: OutputEntry;
   folder: string;
 }) {
-  const findingsGap = missing.includes(KEY_FINDINGS);
-  const contraryGap = missing.includes(CONTRARY);
-  const left = Boolean(keyFindings) || findingsGap;
-  const right = Boolean(contrary) || contraryGap;
+  const left = keyFindings ?? hollow.findings ?? missing.includes(KEY_FINDINGS);
+  const right = contrary ?? hollow.contrary ?? missing.includes(CONTRARY);
   if (!left && !right) return null;
   const [leftSpan, rightSpan] = left && right ? ([7, 5] as const) : ([12, 12] as const);
+  const hollowOf = (section: Section | undefined, name: string) =>
+    section && <HollowPassage section={section} title={name} entry={entry} folder={folder} />;
   return (
     <>
-      {keyFindings ? (
+      {left && (
         <Tile
           span={leftSpan}
           label={KEY_FINDINGS}
           title={<Anchor id={ANCHOR.findings}>{KEY_FINDINGS}</Anchor>}
         >
-          <KeyFindings section={keyFindings} entry={entry} folder={folder} />
+          {keyFindings ? (
+            <KeyFindings section={keyFindings} entry={entry} folder={folder} />
+          ) : (
+            (hollowOf(hollow.findings, KEY_FINDINGS) ?? <GapNote>{MISSING_PASSAGE}</GapNote>)
+          )}
         </Tile>
-      ) : (
-        findingsGap && <PassageGap name={KEY_FINDINGS} id={ANCHOR.findings} span={leftSpan} />
       )}
-      {contrary ? (
+      {right && (
         <Tile
           span={rightSpan}
           label={CONTRARY}
           title={<Anchor id={ANCHOR.contrary}>{CONTRARY}</Anchor>}
-          tone="counter"
+          tone={contrary ? "counter" : "plain"}
         >
-          <PassageBlocks section={contrary} entry={entry} folder={folder} />
+          {contrary ? (
+            <PassageBlocks section={contrary} entry={entry} folder={folder} />
+          ) : (
+            (hollowOf(hollow.contrary, CONTRARY) ?? <GapNote>{MISSING_PASSAGE}</GapNote>)
+          )}
         </Tile>
-      ) : (
-        contraryGap && <PassageGap name={CONTRARY} id={ANCHOR.contrary} span={rightSpan} />
       )}
     </>
   );
@@ -482,8 +574,11 @@ export function ModuleLimitations({
   entry,
   folder,
   span,
+  hollow,
 }: {
   section?: Section;
+  /** The Limitations passage when it holds no paragraph to read. */
+  hollow?: Section;
   owed: boolean;
   gaps: readonly ChartGap[];
   entry: OutputEntry;
@@ -494,12 +589,16 @@ export function ModuleLimitations({
     (block): block is TextBlock => block.type === "text" && readable(block),
   );
   const tables = (section?.blocks ?? []).filter((block): block is Table => block.type === "table");
-  if (!paragraphs.length && !tables.length && !owed && !gaps.length) return null;
+  if (!paragraphs.length && !tables.length && !owed && !gaps.length && !hollow) return null;
   const title = "Limitations of this module";
   return (
     <Tile span={span} label={title} title={<Anchor id={ANCHOR.limitations}>{title}</Anchor>}>
       <p className="-mt-2 text-caption text-text-tertiary">As the module reports them</p>
-      {owed && !paragraphs.length && !tables.length && <GapNote>{MISSING_PASSAGE}</GapNote>}
+      {hollow ? (
+        <HollowPassage section={hollow} title={title} entry={entry} folder={folder} />
+      ) : (
+        owed && !paragraphs.length && !tables.length && <GapNote>{MISSING_PASSAGE}</GapNote>
+      )}
       <ul className="flex flex-col">
         {paragraphs.map((block) => (
           <GapWell

@@ -20,6 +20,7 @@ export type TextBlock = Extract<Block, { type: "text" }>;
 export const KEY_FINDINGS = "Key findings";
 export const CONTRARY = "Contrary evidence and what would change the view";
 const LIMITATIONS = "Limitations";
+const PASSAGE_NAMES = ["Bottom line", KEY_FINDINGS, CONTRARY, LIMITATIONS] as const;
 
 /** What a module's visuals are, so a lead can say which of them it draws itself. */
 export type FigureKind = "figures" | "events" | "maps";
@@ -177,19 +178,21 @@ export function moduleFrame(
   const found = findingBlocks(entry.sections, entry, figureTableLines).filter(
     (section) => roles.get(section.line) !== "drawing",
   );
-  // A passage with nothing to read (no paragraph but its Basis, no table) is drawn as its gap.
-  const passage = (name: string) =>
-    found.find(
-      (section) =>
-        section.heading === name &&
-        slotLines.has(section.line) &&
-        section.blocks.some(
-          (block) => block.type === "table" || (block.type === "text" && readable(block)),
-        ),
-    );
-  const named = ["Bottom line", KEY_FINDINGS, CONTRARY, LIMITATIONS].flatMap(
-    (name) => passage(name) ?? [],
-  );
+  const slot = (name: string) =>
+    found.find((section) => section.heading === name && slotLines.has(section.line));
+  // A passage the module wrote but with no paragraph to read (only its Basis, only a table) is
+  // hollow: drawn as what it holds, never as a passage the handoff lacks.
+  const hasText = (section: Section) =>
+    section.blocks.some((block) => block.type === "text" && readable(block));
+  const passage = (name: string) => {
+    const section = slot(name);
+    return section && hasText(section) ? section : undefined;
+  };
+  const hollow = (name: string) => {
+    const section = slot(name);
+    return section && !hasText(section) ? section : undefined;
+  };
+  const named = PASSAGE_NAMES.flatMap((name) => slot(name) ?? []);
   // Every passage slot is drawn as its passage or its gap; none is drawn a second time.
   const prose = found
     .filter((section) => !slotLines.has(section.line))
@@ -201,18 +204,22 @@ export function moduleFrame(
     .filter((section) => section.blocks.some((block) => charts.has(block.line)))
     .map((section) => section.heading);
   const bottomLine = bottomLineOf(entry, passage("Bottom line"));
-  // A Bottom line passage holding only a table is not a bottom line: the table is in the records.
-  const drawn = [...named.map(({ heading }) => heading), ...charted].filter(
-    (heading) => heading !== "Bottom line",
-  );
+  const drawn = [...named.map(({ heading }) => heading), ...charted];
   return {
     bottomLine,
     keyFindings: passage(KEY_FINDINGS),
     contrary: passage(CONTRARY),
     limitations: passage(LIMITATIONS),
+    hollow: Object.fromEntries(
+      PASSAGE_NAMES.flatMap((name) => {
+        const section = hollow(name);
+        return section ? [[name, section] as const] : [];
+      }),
+    ) as Partial<Record<(typeof PASSAGE_NAMES)[number], Section>>,
     prose,
     drawingGaps: drawingGaps(entry),
     basis: basisOf(entry),
     missing: missingPassages(entry, bottomLine ? [...drawn, "Bottom line"] : drawn),
+    parseError: entry.output.parseError,
   };
 }

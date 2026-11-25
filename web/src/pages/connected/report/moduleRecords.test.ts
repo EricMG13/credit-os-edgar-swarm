@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import type { OutputEntry, Section, Table } from "../publishedReport";
 import {
   amountColumns,
+  barExclusions,
   compactColumns,
   heldInEvidence,
   moduleRecords,
@@ -440,7 +441,6 @@ describe("bars only for a column of like amounts", () => {
   it.each([
     ["Subtotal", "Secured subtotal"],
     ["Total", "Total debt"],
-    ["Combined", "Notes, combined"],
     ["Not additive", "Memo: not additive"],
   ])("draws no bar for a %s row", (_, label) => {
     const item = table(
@@ -461,16 +461,20 @@ describe("bars only for a column of like amounts", () => {
     const debt = fixtureTable(ACCEPTED, "T4.18 Debt instruments");
     const columns = amountColumns(debt, "Debt instruments");
     expect(columns.has(3)).toBe(true);
-    // The aggregate financing adjustment (-188) is no instrument: it sets no scale and has no bar.
+    // The financing adjustment (-188) is a row the table does not mark as a total, so it is
+    // barred on the same scale, in the secondary tone for its sign; no row is guessed out.
     const adjustment = rowLine(debt, "Financing cost adjustment");
-    expect(columns.get(2)?.share("-188", adjustment)).toBeNull();
+    expect(columns.get(2)?.share("-188", adjustment)).toBeCloseTo(188 / 2727);
+    expect(columns.get(2)?.negative("-188")).toBe(true);
     expect(columns.get(2)?.share("2727", rowLine(debt, "2029 secured notes"))).toBe(1);
+    expect(barExclusions(debt, "Debt instruments")).toEqual([]);
     expect(columns.has(12)).toBe(false);
   });
 
   it("draws no bars in a bridge, by its title, its first column or its opening and closing rows", () => {
     const bridge = fixtureTable(ACCEPTED, "Chart data: EBITDA bridge");
-    expect(amountColumns(bridge).size).toBe(1);
+    // Untitled, its closing row is the sum of the others: an unlabelled total, so no bars either.
+    expect(amountColumns(bridge).size).toBe(0);
     expect(amountColumns(bridge, "EBITDA bridge").size).toBe(0);
     const walk = table(
       1,
@@ -666,4 +670,75 @@ describe("statedGap", () => {
       expect(statedGap(cell)).toBeNull();
     },
   );
+});
+
+describe("H1: bars leave out only rows the table itself marks as totals", () => {
+  it("bars every segment of the retained segment schedule, none of them a total", () => {
+    const segments = fixtureTable(ACCEPTED, "Segment schedule");
+    const sales = amountColumns(segments).get(2);
+    expect(sales?.share("3941", rowLine(segments, "Power & Control"))).toBe(1);
+    expect(sales?.share("3809", rowLine(segments, "Airframe"))).toBeCloseTo(3809 / 3941);
+    expect(barExclusions(segments)).toEqual([]);
+  });
+
+  it.each([
+    "Total",
+    "Subtotal",
+    "Sum",
+    "Group",
+    "Consolidated",
+    "Aggregate",
+    "Net debt",
+    "Total debt",
+    "Segment total",
+    "Less cash",
+    "**Notes**",
+  ])("leaves the row %s out of the scale and names it", (name) => {
+    const item = table(
+      1,
+      ["Item name", "Principal"],
+      [
+        ["Notes", "100"],
+        ["Loan", "50"],
+        [name, "400"],
+      ],
+    );
+    const bars = amountColumns(item).get(1);
+    expect(bars?.share("100", 3)).toBe(1);
+    expect(bars?.share("50", 4)).toBe(0.5);
+    expect(bars?.share("400", 5)).toBeNull();
+    expect(barExclusions(item)).toEqual([name.replaceAll("**", "")]);
+  });
+
+  it.each([
+    "Power & Control",
+    "Group A notes",
+    "Control systems",
+    "Netherlands notes",
+  ])("keeps %s as a peer: a word inside a name says nothing", (name) => {
+    const item = table(
+      1,
+      ["Item name", "Principal"],
+      [
+        [name, "100"],
+        ["Loan", "50"],
+        ["Bond", "20"],
+      ],
+    );
+    expect(amountColumns(item).get(1)?.share("100", 3)).toBe(1);
+    expect(barExclusions(item)).toEqual([]);
+  });
+
+  it("draws no bars where an unlabelled row is the sum of the others", () => {
+    const item = table(
+      1,
+      ["Item name", "Principal"],
+      [
+        ["Notes", "100"],
+        ["Loan", "50"],
+        ["All debt", "150"],
+      ],
+    );
+    expect(amountColumns(item).size).toBe(0);
+  });
 });

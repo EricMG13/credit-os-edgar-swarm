@@ -357,13 +357,12 @@ describe("records tables take the mockup's form", () => {
     const bar = row.querySelector('[style*="width"]');
     expect(bar).not.toBeNull();
     expect(bar?.closest("td")).toHaveClass("min-w-56");
-    expect(
-      screen.getByText("Bars: one scale per column; totals and aggregate rows have no bar."),
-    ).toBeVisible();
+    expect(screen.getByText(/^Bars: one scale per column\./)).toBeVisible();
     fireEvent.click(screen.getByRole("button", { name: "All columns" }));
     const adjustment = screen.getByRole("row", { name: /^Financing cost adjustment / });
     expect(within(adjustment).getByText("-188")).toBeInTheDocument();
-    expect(adjustment.querySelector('[style*="width"]')).toBeNull();
+    // The table marks no row as a total, so the adjustment is barred like the rest, by its size.
+    expect(adjustment.querySelector('[style*="width"]')).not.toBeNull();
     expect(container.querySelectorAll('[style*="width"]').length).toBeGreaterThan(1);
   });
 

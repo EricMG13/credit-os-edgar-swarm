@@ -79,7 +79,10 @@ function pageOf(run: PublishedRun, entry: OutputEntry) {
   });
   const gaps = chartGaps(entry);
   const limitations = Boolean(
-    frame.limitations || frame.missing.includes("Limitations") || gaps.length,
+    frame.limitations ||
+    frame.hollow.Limitations ||
+    frame.missing.includes("Limitations") ||
+    gaps.length,
   );
   const records = moduleRecords(entry);
   const hasRecords = records.tables.length > 0 || records.evidence.length > 0;
@@ -93,9 +96,15 @@ function pageSections({ frame, limitations, hasRecords }: Page) {
   const has = (passage: string, section: unknown) =>
     Boolean(section) || frame.missing.includes(passage);
   return [
-    ...(frame.bottomLine ? [{ id: ANCHOR.bottomLine, label: "Bottom line" }] : []),
-    ...(has(KEY_FINDINGS, frame.keyFindings) ? [{ id: ANCHOR.findings, label: KEY_FINDINGS }] : []),
-    ...(has(CONTRARY, frame.contrary) ? [{ id: ANCHOR.contrary, label: "Contrary evidence" }] : []),
+    ...(frame.bottomLine || frame.hollow["Bottom line"]
+      ? [{ id: ANCHOR.bottomLine, label: "Bottom line" }]
+      : []),
+    ...(has(KEY_FINDINGS, frame.keyFindings ?? frame.hollow[KEY_FINDINGS])
+      ? [{ id: ANCHOR.findings, label: KEY_FINDINGS }]
+      : []),
+    ...(has(CONTRARY, frame.contrary ?? frame.hollow[CONTRARY])
+      ? [{ id: ANCHOR.contrary, label: "Contrary evidence" }]
+      : []),
     ...frame.prose.map(({ section, title }) => ({
       id: ANCHOR.section(section.line),
       label: title,
@@ -109,9 +118,7 @@ function EmptyHandoff({ run, entry }: { run: PublishedRun; entry: OutputEntry })
   return (
     <Tile span={12} label="Handoff">
       <p className="text-text-secondary">
-        {entry.output.parseError
-          ? "This handoff could not be read into sections."
-          : "This handoff has no findings in this report format."}{" "}
+        This handoff has no findings in this report format.{" "}
         <Button href={evidencePath(run.folder, entry)} color="link-gray" size="sm">
           Open Evidence
         </Button>
@@ -122,6 +129,8 @@ function EmptyHandoff({ run, entry }: { run: PublishedRun; entry: OutputEntry })
 
 function isEmpty({ frame }: Page) {
   return (
+    !frame.parseError &&
+    !Object.keys(frame.hollow).length &&
     !frame.bottomLine &&
     !frame.keyFindings &&
     !frame.contrary &&
@@ -161,6 +170,7 @@ function ModulePage({
           entry={entry}
           bottomLine={frame.bottomLine}
           owed={frame.missing.includes("Bottom line")}
+          hollow={frame.hollow["Bottom line"]}
           folder={run.folder}
           basis={frame.basis}
           about={
@@ -194,6 +204,7 @@ function ModulePage({
         <ModuleFindings
           keyFindings={frame.keyFindings}
           contrary={frame.contrary}
+          hollow={{ findings: frame.hollow["Key findings"], contrary: frame.hollow[CONTRARY] }}
           missing={frame.missing}
           entry={entry}
           folder={run.folder}
@@ -202,6 +213,7 @@ function ModulePage({
         <ModuleRecords run={run} entry={entry} anchorId={ANCHOR.records} />
         <ModuleLimitations
           section={frame.limitations}
+          hollow={frame.hollow.Limitations}
           owed={frame.missing.includes("Limitations")}
           gaps={gaps}
           entry={entry}

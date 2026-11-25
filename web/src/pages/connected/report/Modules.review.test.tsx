@@ -168,7 +168,16 @@ it("8: draws one Key findings region for a passage that holds only its Basis lin
     bottom,
     section("Key findings", 3, 5, [text(6, "Basis: annual report, page 4")]),
   ]);
-  expect(screen.getAllByRole("region", { name: "Key findings" })).toHaveLength(1);
+  const regions = screen.getAllByRole("region", { name: "Key findings" });
+  expect(regions).toHaveLength(1);
+  // The passage exists and holds only its Basis: say so, and keep its trace.
+  expect(within(regions[0] as HTMLElement).getByText("This passage holds no text.")).toBeVisible();
+  expect(within(regions[0] as HTMLElement).queryByText(/no such passage/)).toBeNull();
+  expect(
+    within(regions[0] as HTMLElement).getByRole("button", {
+      name: "Show sources for Key findings",
+    }),
+  ).toBeVisible();
 });
 
 it("9: keeps drawing, after the lead, the kinds the lead does not draw", () => {

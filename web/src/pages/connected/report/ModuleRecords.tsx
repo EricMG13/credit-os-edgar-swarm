@@ -16,6 +16,7 @@ import { traceKey } from "../reportView";
 import { GapNote, Tile } from "./overview/Tile";
 import {
   amountColumns,
+  barExclusions,
   compactColumns,
   moduleRecords,
   numericColumns,
@@ -83,7 +84,11 @@ function gapChip(_column: number, cell: string) {
   );
 }
 
-const SCALE_NOTE = "Bars: one scale per column; totals and aggregate rows have no bar.";
+/** The note under a barred table: one scale per column, and the rows it leaves out by name. */
+function scaleNote(left: readonly string[]) {
+  const named = left.filter(Boolean).map((name) => readerText(name));
+  return `Bars: one scale per column.${named.length ? ` No bar: ${named.join(", ")}.` : ""}`;
+}
 
 /** How the chosen table is drawn: its columns (compact when wide), numerals, bars and one unit. */
 function tableForm(record: RecordTable, all: boolean) {
@@ -163,7 +168,11 @@ function RecordDrawing({
         wideBars
         drawCell={compact && !all ? gapChip : undefined}
       />
-      {drawnBars.size > 0 && <p className="text-caption text-text-tertiary">{SCALE_NOTE}</p>}
+      {drawnBars.size > 0 && (
+        <p className="text-caption text-text-tertiary">
+          {scaleNote(barExclusions(record.table, record.title))}
+        </p>
+      )}
     </div>
   );
 }
