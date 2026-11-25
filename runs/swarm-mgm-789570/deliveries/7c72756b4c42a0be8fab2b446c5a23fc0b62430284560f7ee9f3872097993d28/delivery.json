@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for MGM Resorts International as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "e31dfc4fc168e4fe304f7d5d7871b6e07ba9d929bd5757c9b653526e75b71c8e",
+    "CP-1.md": "21e5083e80e549198f0bf8949607ede30a9674ab2be003c15b216738b4c617b4",
+    "CP-1A.md": "d844b2fb49c586fb352a86746df657e9e700e27e47ab1c800d12187300eb2276",
+    "CP-2.md": "3a37f6237400fbcfdd94d3a9c95d5794375db3b5ebc25e4a6928071a57a9b492",
+    "coverage.json": "b561ba134ad8b7a750e739eb83d396bab1eddb1ca9b340ece6d62b398c71810b",
+    "view.json": "004a078b6402550022489a1a67dcaf0335c580f06d523587ab258feec12f780e",
+    "report-view.json": "eecbc58791f94176ed49fb877682b6ccf874b78ac4bfd872dc0a108bddde0e0d"
+  }
+}

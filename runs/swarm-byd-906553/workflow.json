@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "byd-906553-2026-11-18-credit_snapshot-host",
+    "issuer_id": "byd-906553",
+    "issuer_name": "Boyd Gaming Corp",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_byd_bgc20241008-10k.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_byd_bgc20241008-10k.htm.jsonl",
+      "sha256": "6942b68eed41d9a32a2c297d38367800ac4d1613ac80c98e29dc889f10b62410"
+    },
+    "10-K_2025-12-31_byd_bgc20251121-10k.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_byd_bgc20251121-10k.htm.jsonl",
+      "sha256": "ed6c93717bd02a6fc0254c0b5179399d3c0fdaf8a5790d541c7941d557bedff9"
+    },
+    "10-Q_2026-03-31_byd_bgc20260331-10q.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_byd_bgc20260331-10q.htm.jsonl",
+      "sha256": "71babd7c7d261b102e5e44085ba6b1b17a8a34121746392f5aa5edc883dc9d0b"
+    },
+    "10-Q_2026-06-30_byd_bgc20260602-10q.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_byd_bgc20260602-10q.htm.jsonl",
+      "sha256": "ab14d3952c9150af5e810bed6b7bad085f82cd8a75b40b5982af7951d70e57ac"
+    },
+    "10-Q_2026-09-30_byd_bgc20260930-10q.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_byd_bgc20260930-10q.htm.jsonl",
+      "sha256": "84dbf526ebb02ac251128639bb21c83ad7b8c354b5cd4a8cdd3439fee2a04dc6"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/906553-boyd-gaming-corp.json",
+      "sha256": "39322797b2c7df0e8f7a6ff809efae1a2993223ba2bb90d8059c27326a506b92"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "91f6548bef7c5e63d2112b437f63c53e9ad823edfc1a07591bf4820ed28cadf3"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "876879022ec3e2e5d21a6651ffb53b94d449d9cc1419c50d4fd0c5f16dcef6d8"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "323c5c3fbfa8e464120b449f9b25fb9b203851a66d3bc30d85e4333730debd13"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "ff9d69c37f5883d8cb1c3bed649340144194f3079a13a0d48b6f7c9f367fc811"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Boyd Gaming Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Boyd Gaming Corp — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

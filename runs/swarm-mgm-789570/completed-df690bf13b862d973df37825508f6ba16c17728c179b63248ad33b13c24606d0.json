@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for MGM Resorts International as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/40e38b500ef39f71622e69f05ffbf82cb6cddbcf869a77da997a922d0a833a5c/1.response.md",
+    "CP-1": "requests/CP-1/f931fcad4a56cc24eaff24551f6327cdf3431a3d6510c9818e4a238a9f5872d9/1.response.md",
+    "CP-1A": "requests/CP-1A/efecb6d914bd65165e5d666edab9ca1742ebcbdfb06f8c320fedb4e1e9d12685/1.response.md",
+    "CP-2": "requests/CP-2/0d900d6eebb151a3a8921818cc7736adae1d2f7711d0d026f7c4563f3ed5805e/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "0b842c952e778dc509b02267e32c91ffe27a0c60b352f8801711f9ae8b09912d",
+  "delivery_sha256": "7ef24820f8ac7dc4d30a30272500976ea4f83ef6a410d84c21756806106bddd5"
+}

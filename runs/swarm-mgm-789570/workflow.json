@@ -1,0 +1,248 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "mgm-789570-2026-11-18-credit_snapshot-host",
+    "issuer_id": "mgm-789570",
+    "issuer_name": "MGM Resorts International",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_mgm-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_mgm-20241231.htm.jsonl",
+      "sha256": "59c8cc25d2165eaa4e74befd591fc0ab3474ed3653a0c68e63b7eb22948ca12c"
+    },
+    "10-K_2025-12-31_mgm-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_mgm-20251231.htm.jsonl",
+      "sha256": "01c5521a31a1f1cf4be46055f2b52ad7dac22237be5afb86db01429752e03f3d"
+    },
+    "10-Q_2026-03-31_mgm-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_mgm-20260331.htm.jsonl",
+      "sha256": "c1b5970536b81fb169a2d2962bc85e2872d302e8fe66df6be5707a933b7c1649"
+    },
+    "10-Q_2026-06-30_mgm-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_mgm-20260630.htm.jsonl",
+      "sha256": "f4009d32aca3d867040d27a16fcc867d806ac1e92f644988fb4dc538a07812d8"
+    },
+    "10-Q_2026-09-30_mgm-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_mgm-20260930.htm.jsonl",
+      "sha256": "9090c99891c985470411913729b1d505331bbff29bbe7eb2c91686b8c946f4a1"
+    },
+    "EX-99.1_2026-04-29_mgmex991q12026earningrelea.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-04-29_mgmex991q12026earningrelea.htm.jsonl",
+      "sha256": "d362568a6f21f1087f733cbe373663615239039f69c973d7f33808eab9548b72"
+    },
+    "EX-99.1_2026-07-29_mgmex991q22026earningrelea.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-07-29_mgmex991q22026earningrelea.htm.jsonl",
+      "sha256": "f67b59f214e4ec238bf95f2f4e551980f64374a3fdc525bd36d013272478a091"
+    },
+    "EX-99.1_2026-10-28_mgmex991q32026earningrelea.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-10-28_mgmex991q32026earningrelea.htm.jsonl",
+      "sha256": "99834c9c402e1184fbfd5d237f661d6042ce0e3e190e549dd5452055c257611c"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/789570-mgm-resorts-international.json",
+      "sha256": "4df6409649094ad72fc5af4dde146edf7babd62888531b23d2cad496f13776f7"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "2bb55139d29b6fd057640227a81556794d495c27188c2e89b535529558fd32fe"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "6f26c1335c8886ff63ab3466c4e868711d07206ebe8b62caf2313b50dbfdc09c"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "81650f6e9a82748c39652399640660b86a6ea8d9beeb3e241acccc9a2c1d58a2"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "1f61091555742a0df8c61f27ba3de5832d6bc8f392ca93a5d14a3a7824570347"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for MGM Resorts International as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "MGM Resorts International — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

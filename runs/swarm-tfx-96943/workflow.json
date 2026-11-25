@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "tfx-96943-2026-11-18-credit_snapshot-host",
+    "issuer_id": "tfx-96943",
+    "issuer_name": "Teleflex Inc",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_tfx.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_tfx.htm.jsonl",
+      "sha256": "c7ca355ac9a894aec94427874e1c591385211de097514ece22017a538ff864f4"
+    },
+    "10-K_2025-12-31_tfx.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_tfx.htm.jsonl",
+      "sha256": "ca18a190930817b06ede82c7f4193e62cafac28c9522702a42328fcbb19a2665"
+    },
+    "10-Q_2026-03-31_tfx.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_tfx.htm.jsonl",
+      "sha256": "be5abfb11eaf8a5a52404eb0ce2061041e70f888a60268e9d565fe9a872e9d01"
+    },
+    "10-Q_2026-06-30_tfx.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_tfx.htm.jsonl",
+      "sha256": "435d79bd4ff37d7d4aca6c157f1e33bc6d3c083541e50d0f4b1d85d59cf20f07"
+    },
+    "10-Q_2026-09-30_tfx.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_tfx.htm.jsonl",
+      "sha256": "8f03d669e224d64bde8b5fb234b79af2024228b472eb63baca0684a5b3721f61"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/96943-teleflex-inc.json",
+      "sha256": "7d09fa295d456954d94864f0c9e97af4a0d47f8bc5bc1b88dd5819426a2f2526"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "d8b8f2ae756e5dd39819152c329bb47b758e9d41e62f98cc35da897be6751ffd"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "f8c34b763e8cfccc385ab089074697df5bf244aedf2e88b04924f1a38e94b847"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "4b330ff8fa59c5fa95c3d8496a45c4477a3ce12afd70347bab68e3d34fe602c6"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "2f8ffac519ea61d73412a70c1399517dd2ce4eb28ee6d16fc6136908f76be057"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Teleflex Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Teleflex Inc — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

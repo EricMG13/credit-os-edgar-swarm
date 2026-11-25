@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Teleflex Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "4b2cff7ffb62a314699dd33132796b2d821db75dc4d5cebaf9a79fc2ea5eed5d",
+    "CP-1.md": "3d2eb4300af7197b363e4a3e392ae61efb595520b2038ca3ba57675d14d7e4b0",
+    "CP-1A.md": "e1459887828b214ed5ac81a5e69ee6f980ecd1a98a8684f8dc45d45da4fcdac7",
+    "CP-2.md": "b902644f98ff45c6b69a82a9edac7105b3b16adfceed0fcd51c8d7b778f64fc6",
+    "coverage.json": "e66946d901fe2338f8b9485cc04a57c2184cb09a3ed078dcd7385f22f6c1cffc",
+    "view.json": "ab77bc5a6d980bb8e7108272f73e1416c9721544466c86971e581aa771b9b2e0",
+    "report-view.json": "f17ea8d5aff46dec6f48695755df94d7375b48ac13db2cb5756f6d51fb939e41"
+  }
+}

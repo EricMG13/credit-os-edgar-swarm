@@ -1,0 +1,50 @@
+{
+  "shard": "s02",
+  "partial": true,
+  "reports": [
+    {
+      "issuer_id": "cxt-25445",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "CP-0, CP-1 and CP-1A were already accepted on a first attempt when I resumed, and CP-2 was accepted on its first submission after I corrected its draft. The earlier handoffs cannot be edited, and I could not fix two things in them. The Business & governance handoff says the Antares Vision put and call terms are \"not disclosed\", but the Q3 10-Q says the Class B shares carry put and call features once converted, with only price, timing and settlement undisclosed. No earlier handoff notes the Antares Vision interest rate swap in the Q2 10-Q (USD 36.2 million notional at 2026-06-30). CP-2 states both points itself."
+    },
+    {
+      "issuer_id": "tfx-96943",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The supplied filings carry no 2026 covenant ratios or compliance figure, no letters of credit amount, no proxy statement and no executed agreements, so covenant headroom is not calculable and these are logged as gaps rather than fixed."
+    },
+    {
+      "issuer_id": "mgm-789570",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The sources disagree on whether a second USD 3.0 billion landlord shortfall guarantee exists (risk factors describe two, the commitments notes one), which cannot be resolved from the supplied documents and is logged as a conflict; separately, I mistakenly opened the first lines of a file in the shared scratchpad that belonged to another issuer (CP-1A-test.md), used none of it, and read nothing else of that issuer's."
+    },
+    {
+      "issuer_id": "byd-906553",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The accepted CP-1A answer has map-table Relationship and Evidence cells longer than the 60-character guideline (the checker does not enforce it) and cannot be replaced after acceptance."
+    }
+  ]
+}
