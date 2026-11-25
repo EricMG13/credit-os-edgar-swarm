@@ -125,6 +125,9 @@ function TableCell({ cell, row }: { cell: Cell; row?: boolean }) {
   );
 }
 
+/** Room above and below a trace control, so it is the only target in reach. */
+const TARGET_ROOM = "flex min-h-8 items-center max-[480px]:min-h-11";
+
 function ChartTableView({ title, table }: { title: string; table: ReturnType<typeof chartTable> }) {
   const traced = table.rows.some(({ end }) => end !== undefined);
   return (
@@ -170,7 +173,11 @@ function ChartTableView({ title, table }: { title: string; table: ReturnType<typ
                   <TableCell cell={cell} />
                 </td>
               ))}
-              {traced && <td className="px-3 py-2 align-top">{row.end}</td>}
+              {traced && (
+                <td className="px-3 py-1 align-top">
+                  <div className={TARGET_ROOM}>{row.end}</div>
+                </td>
+              )}
             </tr>
           ))}
         </tbody>
@@ -202,9 +209,11 @@ function ChartRow({
           {title}
         </span>
         {unit && <span className="text-small text-text-secondary">{unit}</span>}
-        <PublishedSource href={evidencePath(folder, entry, descriptor.table)} name={title}>
-          Source table
-        </PublishedSource>
+        <span className={TARGET_ROOM}>
+          <PublishedSource href={evidencePath(folder, entry, descriptor.table)} name={title}>
+            Source table
+          </PublishedSource>
+        </span>
       </div>
       {gap ? (
         <div className="gap-hatch grid min-w-0 gap-1 rounded-ds-sm border border-dashed border-border-gap p-3 text-gap-text">

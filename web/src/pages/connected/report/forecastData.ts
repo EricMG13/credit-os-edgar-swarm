@@ -395,7 +395,7 @@ export function maturitySchedule(view: ReportView) {
 }
 
 /** One stated figure of a funding-gap row: its column's header and its cell as written. */
-export type GapFigure = { header: string; text: string; value: number | null };
+type GapFigure = { header: string; text: string; value: number | null };
 
 export type FundingGap = {
   module: string;

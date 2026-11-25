@@ -37,7 +37,7 @@ function useMeasuredWidth(fallback: number) {
     if (!node) return;
     const observer = new ResizeObserver(([entry]) => {
       const next = Math.round(entry?.contentRect.width ?? 0);
-      if (next > 0) setWidth(Math.max(300, next));
+      if (next > 0) setWidth(next);
     });
     observer.observe(node);
     return () => {

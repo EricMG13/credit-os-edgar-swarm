@@ -319,3 +319,24 @@ it("names why a part cannot be drawn: no downside module, no liquidity for the c
     screen.getByText("The model publishes no accessible liquidity figure."),
   ).toBeInTheDocument();
 });
+
+it("draws every scenario name whole, wrapped onto more lines where the column is narrow", () => {
+  const long = "Cost, cash-interest and refinancing shock combined";
+  const entry = downside();
+  const scenarios = entry.sections.find(({ heading }) => heading === "T2DS.1 Scenarios");
+  const block = scenarios?.blocks[0];
+  if (block?.type !== "table") throw new Error("fixture");
+  const second = block.rows[1];
+  if (second) second.cells[1] = long;
+  breaks([entry]);
+  const drawing = within(screen.getByRole("group", { name: "Point-in-time stress" })).getByRole(
+    "img",
+  );
+  const names = [...drawing.querySelectorAll("text")]
+    .filter((text) => text.querySelector("tspan"))
+    .map((text) => [...text.querySelectorAll("tspan")].map((line) => line.textContent));
+  const drawn = names.find((lines) => lines[0]?.startsWith("Cost,"));
+  expect(drawn?.length).toBeGreaterThan(1);
+  expect(drawn?.join(" ")).toBe(long);
+  expect(drawing.textContent).not.toContain("…");
+});

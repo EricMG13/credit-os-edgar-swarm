@@ -306,7 +306,22 @@ const HEAD = 22;
 const NAMES = 104;
 const LABEL = 56;
 const GUTTER = 12;
+const LINE = 14;
 const lead = (text: string) => text.split(" (")[0] ?? text;
+
+/** A name broken into lines of at most `chars` characters, at spaces; a longer word is broken. */
+function wrapName(text: string, chars: number): string[] {
+  const lines: string[] = [];
+  for (const word of text.split(/\s+/u).filter(Boolean)) {
+    const last = lines.at(-1);
+    if (last !== undefined && last.length + 1 + word.length <= chars) {
+      lines[lines.length - 1] = `${last} ${word}`;
+      continue;
+    }
+    for (let at = 0; at < word.length; at += chars) lines.push(word.slice(at, at + chars));
+  }
+  return lines.length ? lines : [""];
+}
 
 /** The stress scenarios as one small multiple: a row per scenario, a panel per measure, each
  * panel one scale from zero shared by every scenario. Panels sit side by side where they fit and
@@ -323,7 +338,11 @@ function StressMultiple({
   // Stacked panels leave room for whole scenario names.
   const names = across === 1 ? Math.min(168, Math.round(width * 0.4)) : NAMES;
   const room = (width - names - GUTTER * across) / across;
-  const block = HEAD + cases.length * ROW + 8;
+  // Whole names, wrapped: a row grows to hold its name's lines.
+  const lines = cases.map((item) => wrapName(item.name, Math.max(4, Math.floor(names / 6.5))));
+  const heights = lines.map((name) => Math.max(ROW, name.length * LINE + 14));
+  const offsets = heights.map((_, row) => heights.slice(0, row).reduce((sum, h) => sum + h, 0));
+  const block = HEAD + heights.reduce((sum, h) => sum + h, 0) + 8;
   const height = Math.ceil(panels.length / across) * block;
   const reading = cases
     .map(
@@ -357,17 +376,23 @@ function StressMultiple({
                 cases.map((item, row) => (
                   <text
                     key={item.id}
-                    x="0"
-                    y={top + HEAD + row * ROW + 19}
+                    y={
+                      top +
+                      HEAD +
+                      (offsets[row] ?? 0) +
+                      ((heights[row] ?? ROW) - (lines[row]?.length ?? 1) * LINE) / 2 +
+                      11
+                    }
                     className={cx(
                       "text-caption",
                       item.control ? "fill-text-secondary" : "fill-text-primary",
                     )}
                   >
-                    <title>{item.name}</title>
-                    {item.name.length > names / 6.5
-                      ? `${item.name.slice(0, Math.floor(names / 6.5) - 1)}…`
-                      : item.name}
+                    {(lines[row] ?? []).map((line, at) => (
+                      <tspan key={at} x="0" dy={at ? LINE : 0}>
+                        {line}
+                      </tspan>
+                    ))}
                   </text>
                 ))}
               <line
@@ -378,7 +403,7 @@ function StressMultiple({
                 className="stroke-border-container"
               />
               {panel.cells.map((cell, row) => {
-                const y = top + HEAD + row * ROW + 6;
+                const y = top + HEAD + (offsets[row] ?? 0) + ((heights[row] ?? ROW) - 16) / 2;
                 if (cell.value === null)
                   return (
                     <text key={row} x={left} y={y + 13} className="fill-gap-text text-caption">

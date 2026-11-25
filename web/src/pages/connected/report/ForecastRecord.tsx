@@ -14,6 +14,9 @@ import { isDatedForecastPeriod } from "../visuals/scenarioPeriods";
 import { items, record, stringsIn, word } from "../visuals/visualData";
 import type { PublishedTraceContext } from "./PublishedTrace";
 
+/** Room above and below a trace control, so it is the only target in reach. */
+const TARGET_ROOM = "flex min-h-8 items-center max-[480px]:min-h-11";
+
 export type ForecastModel = ReturnType<typeof buildReportView>["models"][number];
 
 function pathDetails(
@@ -464,18 +467,22 @@ export function RecordedForecastAssumptions({
             <div className={TRACE_HOST}>
               <dt>EBITDA decline</dt>
               <dd>{percent(shock.ebitda_decline)}</dd>
-              {source?.("Downside EBITDA decline", {
-                case: "Downside shock",
-                inputPath: ["downside_shock", "ebitda_decline"],
-              })}
+              <div className={TARGET_ROOM}>
+                {source?.("Downside EBITDA decline", {
+                  case: "Downside shock",
+                  inputPath: ["downside_shock", "ebitda_decline"],
+                })}
+              </div>
             </div>
             <div className={TRACE_HOST}>
               <dt>Cash-interest increase</dt>
               <dd>{percent(shock.rate_increase)}</dd>
-              {source?.("Downside cash-interest increase", {
-                case: "Downside shock",
-                inputPath: ["downside_shock", "rate_increase"],
-              })}
+              <div className={TARGET_ROOM}>
+                {source?.("Downside cash-interest increase", {
+                  case: "Downside shock",
+                  inputPath: ["downside_shock", "rate_increase"],
+                })}
+              </div>
             </div>
           </dl>
         ) : (
@@ -502,9 +509,11 @@ export function RecordedForecastAssumptions({
                     </div>
                   ))}
                 </dl>
-                {source?.(`Facility ${String(index + 1)}`, {
-                  inputPath: ["facilities", String(index)],
-                })}
+                <div className={TARGET_ROOM}>
+                  {source?.(`Facility ${String(index + 1)}`, {
+                    inputPath: ["facilities", String(index)],
+                  })}
+                </div>
               </li>
             ))}
           </ul>

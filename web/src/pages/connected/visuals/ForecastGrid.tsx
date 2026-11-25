@@ -213,7 +213,9 @@ function GridBody({
           )}
           {source && (
             <td className="px-2 py-1">
-              <div className="flex justify-end">{source(row.label)}</div>
+              <div className="flex min-h-8 items-center justify-end max-[480px]:min-h-11">
+                {source(row.label)}
+              </div>
             </td>
           )}
         </tr>
