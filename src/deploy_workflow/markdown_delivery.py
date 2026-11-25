@@ -30,6 +30,7 @@ from deploy_vii.contracts import (
     View,
 )
 from deploy_vii.display import UnitClass
+from deploy_vii.period_order import order_periods
 from deploy_vii.registry import modules
 from deploy_vii.report_view import (
     Block,
@@ -518,36 +519,39 @@ def _token_decimals(token: str, chart_unit: str | None) -> int:
     return min(6, max(0, written - 2) if chart_unit == "%" else written)
 
 
-YEAR = re.compile(r"(?<![0-9])([0-9]{4})(?:-([0-9]{2})-[0-9]{2})?(?![0-9])")
-PART = re.compile(r"(?<![A-Za-z])([QH])([1-4])(?![0-9])")
+def _categories_in_order(
+    points: tuple[_ChartPoint, ...],
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """(the points' categories in the one period order, those of them it cannot place).
 
-
-def _period_key(label: str) -> tuple[str, int, int] | None:
-    """(granularity, year, part) of a period label: `FY2024` ("year", 2024, 0), `Q3 2024`
-    ("Q", 2024, 3), `H1 2024` ("H", 2024, 1), `2024-09-30` ("date", 2024, 9); None without a
-    year."""
-    year = YEAR.search(label)
-    if year is None:
-        return None
-    if year[2]:
-        return ("date", int(year[1]), int(year[2]))
-    part = PART.search(label)
-    return (part[1], int(year[1]), int(part[2])) if part else ("year", int(year[1]), 0)
+    `deploy_vii.period_order` decides: oldest fiscal year to latest, then YTD, LTM, pro forma and
+    forecasts; a category it cannot read as a period keeps its authored place after the others.
+    """
+    return order_periods(tuple(dict.fromkeys(p.category for p in points)), str)
 
 
 def _chronological(points: tuple[_ChartPoint, ...]) -> tuple[_ChartPoint, ...]:
-    """Oldest period first, so time reads left to right whatever order the table was written in.
+    """The points with their categories in period order, whatever order the table was written in.
 
-    Only the order of the points changes, never a value or label. The authored order stays unless
-    every category has a key, all of one granularity, and no two categories share one: a label
-    without a year, `Jun 2024` beside `Dec 2024`, or `FY2024` beside `Q1 2024` cannot be placed.
+    Only the order of the points changes, never a value or label, and no point is dropped; within
+    a category the authored order stays. Called only for a chart route's period (or maturity
+    year) categories; `_undated_note` states the categories that could not be placed.
     """
-    keys = {p.category: _period_key(p.category) for p in points}
-    known = {category: key for category, key in keys.items() if key is not None}
-    granularities = {key[0] for key in known.values()}
-    if len(known) < len(keys) or len(set(known.values())) < len(known) or len(granularities) > 1:
-        return points
-    return tuple(sorted(points, key=lambda p: known[p.category]))
+    place = {category: i for i, category in enumerate(_categories_in_order(points)[0])}
+    return tuple(sorted(points, key=lambda p: place[p.category]))
+
+
+def _undated_note(points: tuple[_ChartPoint, ...]) -> str:
+    """The sentence a figure's summary owes for categories drawn outside the period order; empty
+    when every category was placed."""
+    unplaced = _categories_in_order(points)[1]
+    if not unplaced:
+        return ""
+    return (
+        " Drawn last, in the order written, because no period could be read from the label: "
+        + ", ".join(unplaced)
+        + "."
+    )
 
 
 def _is_money(route: MarkdownRoute) -> bool:
@@ -1203,7 +1207,8 @@ def markdown_files(  # noqa: C901, PLR0912, PLR0915 - pre-existing complexity
                         summary=(
                             "Exact selected handoff/Model observations. Dates, definitions and "
                             "limitations remain in the source evidence; gaps are not zero."
-                        ),
+                        )
+                        + _undated_note(points),
                     )
                     figures.append(figure if unit else _unitless(figure))
                 blocks.append(

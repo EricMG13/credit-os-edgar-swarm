@@ -3772,6 +3772,48 @@ def test_cp1_chart_tables_become_the_report_chart_strip(tmp_path):
     assert figures[3].chart.marks[1].ref_id.startswith("G")
 
 
+def test_the_strip_draws_every_period_in_the_one_order_and_states_the_unplaced(tmp_path):
+    """Owner's ruling 2026-11-25, on the Markdown chart path: fiscal years oldest first, then LTM,
+    then pro forma, then forecasts; a label with no period is drawn last and stated. Synthetic."""
+    prepared, _, context = good_task(tmp_path, "CP-1", "credit_snapshot")
+    raw = answer(context, list(prepared.plan.layout.routes))
+    written = "| FY2023 | 3.75 | 3.00 | x | Synthetic. |\n| FY2024 | 2.80 | 2.25 | x | Synthetic. |"
+    mixed = "\n".join(
+        f"| {period} | {total} | {net} | x | Synthetic. |"
+        for period, total, net in (
+            ("FY2025E", "2.10", "1.60"),
+            ("PF FY2024", "2.60", "2.05"),
+            ("Run-rate", "2.50", "2.00"),
+            ("LTM Jun 2025", "2.70", "2.15"),
+            ("FY2024", "2.80", "2.25"),
+            ("FY2023", "3.75", "3.00"),
+        )
+    )
+    assert raw.count(written) == 1
+    figures = strip_of(prepared, raw.replace(written, mixed), tmp_path, "model-chart-strip").figures
+    leverage, cover = figures[0], figures[1]
+    total = [m for m in leverage.chart.marks if m.series == "Total debt / EBITDA"]
+    assert [(m.label, m.value) for m in total] == [
+        ("FY2023", Decimal("3.75")),
+        ("FY2024", Decimal("2.80")),
+        ("LTM Jun 2025", Decimal("2.70")),
+        ("PF FY2024", Decimal("2.60")),
+        ("FY2025E", Decimal("2.10")),
+        ("Run-rate", Decimal("2.50")),
+    ]
+    net = [m.value for m in leverage.chart.marks if m.series == "Net debt / EBITDA"]
+    assert net == [Decimal(v) for v in ("3.00", "2.25", "2.15", "2.05", "1.60", "2.00")]
+    assert leverage.summary == (
+        "Exact selected handoff/Model observations. Dates, definitions and limitations remain in "
+        "the source evidence; gaps are not zero. Drawn last, in the order written, because no "
+        "period could be read from the label: Run-rate."
+    )
+    assert cover.summary == (  # every period placed: nothing more is said
+        "Exact selected handoff/Model observations. Dates, definitions and limitations remain in "
+        "the source evidence; gaps are not zero."
+    )
+
+
 def test_an_all_gaps_non_usd_issuer_passes_with_no_chart_values(tmp_path, monkeypatch):
     prepared, task, context = good_task(tmp_path, "CP-1", "credit_snapshot")
     monkeypatch.setitem(
@@ -8089,13 +8131,29 @@ def test_each_stated_form_of_the_net_debt_period_is_accepted(period):
 
 
 @pytest.mark.parametrize(
+    "periods",
+    [
+        ("FY2024", "2025-06-30"),  # a fiscal year and an interim date order together
+        ("FY2023 / 2023-09-30", "FY2024", "LTM Jun 2025"),
+        ("2024-09-30 reported",),  # the date is read; the extra word no longer stops the order
+        ("PF FY2024", "FY2024 / 2024-09-30"),  # the reported row is the latest, not the pro forma
+        ("Q3 2025", "FY2024", "FY2025E"),
+    ],
+)
+def test_net_debt_periods_the_one_rule_orders_are_accepted_whatever_their_forms(periods):
+    """Owner's ruling 2026-11-25: every supplied period orders (LTM, PF, quarters, forecasts)."""
+    assert cpos_launch._net_debt_issues(_net_debt_text(*periods)) == ()
+
+
+@pytest.mark.parametrize(
     ("periods", "cell"),
     [
-        (("2024-09-30 reported",), "2024-09-30 reported"),
-        (("FY2024 (2024-09-30)",), "FY2024 (2024-09-30)"),
+        (("latest reported",), "latest reported"),
+        (("FY2024", "Run-rate", "FY2023"), "Run-rate"),
         (("2024-02-31",), "2024-02-31"),
-        (("FY2024", "2025-06-30"), "2025-06-30"),
         (("FY2024", "FY2024"), "FY2024"),
+        (("FY2024", "2025-06-30", "FY 2024"), "FY 2024"),  # a second spelling of one period
+        (("PF FY2024", "FY2025E"), "PF FY2024"),  # no reported row: neither is the latest
     ],
 )
 def test_a_net_debt_period_the_pack_cannot_order_is_refused_with_the_form_to_write(periods, cell):
