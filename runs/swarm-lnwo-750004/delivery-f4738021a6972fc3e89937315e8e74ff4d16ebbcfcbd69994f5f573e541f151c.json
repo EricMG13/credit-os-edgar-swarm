@@ -1,0 +1,210 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "lnwo-750004-2026-11-18-credit_snapshot-host",
+    "issuer_id": "lnwo-750004",
+    "issuer_name": "Light & Wonder, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "handoffs": {
+    "CP-0": {
+      "path": "requests/CP-0/a28105c5bd7bc3e0624c1305bb6336a185b05da124198d1b37ed89f3e2821d5e/1.response.md",
+      "sha256": "94c076ace30a3f58ac8ca03d25c8de7c888f378a89317fec00d8b791ab40c9c9"
+    },
+    "CP-1": {
+      "path": "requests/CP-1/c0d59e760626e2ad48de49a607eb76d3f4cd56e8f3150fb4eaa6a1ca4415cfc9/1.response.md",
+      "sha256": "f5489d03936c2fc963888ad4e02e55fa6c9e780d17116464dc21bec68896d8fc"
+    },
+    "CP-1A": {
+      "path": "requests/CP-1A/170ef4321d9d5c2642a6df5a8610f14dfef19821cad107163fea99c1b972caf1/1.response.md",
+      "sha256": "aaa78031591f993f10e51bd542e296fb32057615d5bb217b66376e47862d1600"
+    },
+    "CP-2": {
+      "path": "requests/CP-2/b6ad5767bf91f68fa6e52e7a79075c55d469d8af17a4153e244f1cd420920eca/1.response.md",
+      "sha256": "69659c13c1c2747222d0a97eab781a529a9ec2506b512bd89749f95139db404a"
+    }
+  },
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Light & Wonder, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Light & Wonder, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  }
+}

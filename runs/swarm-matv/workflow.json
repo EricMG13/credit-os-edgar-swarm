@@ -1,0 +1,244 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "matv-2026-11-05-credit_snapshot-host",
+    "issuer_id": "matv",
+    "issuer_name": "Mativ Holdings, Inc.",
+    "as_of": "2026-11-05",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2025-12-31_matv-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_matv-20251231.htm.jsonl",
+      "sha256": "0987bdd177918d1704e3f88d583ff72f6a39e66a94dd95882dba466d3888311c"
+    },
+    "10-Q_2026-03-31_matv-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_matv-20260331.htm.jsonl",
+      "sha256": "be2515741fe2f13e179c4c2e30c15996c434ad9db582dc94e1ef7a9b4954e68d"
+    },
+    "10-Q_2026-06-30_matv-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_matv-20260630.htm.jsonl",
+      "sha256": "7184a20d311477dd5cb1dfc9b30dba5f1ea74b357d6c5b8b24327bc29eea17ff"
+    },
+    "10-Q_2026-09-30_matv-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_matv-20260930.htm.jsonl",
+      "sha256": "cd05c1595b274a699b4cdcd913ff17f3c1b042cf31d245b0741f58eac17a20fb"
+    },
+    "EX-99.1_2026-05-06_ex991earningsrelease2026q1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-05-06_ex991earningsrelease2026q1.htm.jsonl",
+      "sha256": "9f2d35ab42751d0b53917904e34ca17dd018903790ffb5f1f2e30283805e8933"
+    },
+    "EX-99.1_2026-08-05_ex991earningsrelease2026q2.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-08-05_ex991earningsrelease2026q2.htm.jsonl",
+      "sha256": "6cdc4bf84d342bfc79bbfbfa3bbc0faf89dc1156b59bfb476359102520bc07e0"
+    },
+    "EX-99.1_2026-11-04_ex991earningsrelease2026q3.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-11-04_ex991earningsrelease2026q3.htm.jsonl",
+      "sha256": "1d8a4657f455e3276abc49c4e3ccf64e82f7d0ab6a0f632c1c495bd5b53fcf53"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1000623-mativ-holdings-inc-matv.json",
+      "sha256": "43cba5e2e4b206f93654450fc247b91671c4b4e4ab36f2ccb3891319991c5f21"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "6e9426879e0093e83f3589526eda47cb6bf3b82e44240c56867473732aa42c3b"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "43f358236cecfc7f960f8505c9289115a48dc9a78ee5f42b3dfe44abe2bd93c2"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "a13c90304daa56e2f26227abf80634db6cbf663f68198f8e85e7ba708b6dc3c6"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "fcfc5e4d1c15529e86e7b511c6dda68f2a196b7486d22a202118d1667c7a3292"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Mativ Holdings, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Mativ Holdings, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}
