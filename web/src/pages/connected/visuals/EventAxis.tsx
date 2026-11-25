@@ -273,7 +273,10 @@ function stack(
       const wanted = labelWidth(event, measure, cap);
       const options = choices(frame, wanted, plotPx, rule).map((choice) => ({
         ...choice,
-        max: choice.side === "inside" ? choice.max : Math.min(choice.max, wanted),
+        max:
+          choice.side === "inside" || !Number.isFinite(cap)
+            ? choice.max
+            : Math.min(choice.max, wanted),
         extent: extentOf(frame, choice.side, choice.label),
       }));
       const { row, option } = slot(rows, options);

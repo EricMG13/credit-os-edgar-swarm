@@ -255,7 +255,9 @@ it("widens the axis to an as-of date outside the events", () => {
   expect(document.querySelector("[data-axis-end='end']")).toHaveTextContent("2027-03-01");
 });
 
-it("keeps the table to six columns and stacks each row below 640px", () => {
+// Rewritten: the six-column table needs about 690px plus the tile's padding, so it stacks up to 800px
+// (it used to stack at 640px and pushed the page sideways between 641px and 770px).
+it("keeps the table to six columns and stacks each row at 800px and below", () => {
   draw(undefined, oneYear);
   const table = screen.getByRole("table", { name: "Published events" });
   expect(
@@ -263,7 +265,7 @@ it("keeps the table to six columns and stacks each row below 640px", () => {
       .getAllByRole("columnheader")
       .map((cell) => cell.textContent),
   ).toEqual(["Event", "Date", "Status", "Credit relevance", "Module", "Evidence trace"]);
-  expect(table.querySelector("tr[id]")).toHaveClass("max-[640px]:block");
+  expect(table.querySelector("tr[id]")).toHaveClass("max-[800px]:block");
   expect(table.closest("[tabindex]")).toBeNull();
   const bodyRows = within(table).getAllByRole("row").slice(1);
   expect(bodyRows).toHaveLength(3);

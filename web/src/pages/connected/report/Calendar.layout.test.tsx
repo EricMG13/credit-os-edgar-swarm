@@ -57,17 +57,30 @@ function draw(data: string[][], asOf?: string) {
   return within(screen.getByRole("group", { name: /^Events on a time axis/ }));
 }
 
-function mockPhone(matches: boolean) {
+/**
+ * A browser window of this width. Rewritten from a mock that matched only the 640px phone query:
+ * the axis now switches at 720px and the table disclosure at 641px, so queries are answered
+ * from the width itself.
+ */
+function mockViewport(width: number) {
   vi.stubGlobal(
     "matchMedia",
-    vi.fn((query: string) => ({
-      matches: matches && query.includes("640px"),
-      media: query,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    })),
+    vi.fn((query: string) => {
+      const limit = Number(/(\d+)px/.exec(query)?.[1]);
+      const matches = query.includes("max-width") ? width <= limit : width >= limit;
+      return {
+        matches,
+        media: query,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      };
+    }),
   );
 }
+
+const mockPhone = (matches: boolean) => {
+  mockViewport(matches ? 390 : 1440);
+};
 
 beforeEach(() => {
   mockPhone(false);
@@ -176,14 +189,36 @@ it("N6: names are measured from real text widths when the browser can measure th
   expect(wideFirst).not.toBe(wideSecond);
 });
 
-it("N7: ten events in one month and a final quarter take a handful of rows, not one each", () => {
+// Rewritten: the lane used to give up each label's date to fit ten events two days apart in
+// eight rows. A label now always keeps its date, so events whose marks overlap take a row each;
+// the "handful of rows" promise holds for events that are spread out.
+it("N7: ten events two days apart keep their dates and take at most a row each", () => {
   laidOutAt(1200);
   const axis = draw(withQuarter);
-  const tops = new Set(axis.getAllByRole("button").map((button) => button.style.top));
-  expect(tops.size).toBeLessThanOrEqual(8);
+  const buttons = axis.getAllByRole("button");
+  const tops = new Set(buttons.map((button) => button.style.top));
+  expect(tops.size).toBeLessThanOrEqual(buttons.length);
   expect(tops.size).toBeGreaterThan(1);
-  const lane = screen.getByRole("group", { name: "Scheduled lane" });
-  expect(Number.parseFloat(lane.style.height)).toBeLessThan(420);
+  buttons.forEach((button) => {
+    const date = /, (\d{4}-[\dQ-]+),/.exec(button.getAttribute("aria-label") ?? "")?.[1];
+    expect(button.querySelector("[data-event-label]")).toHaveTextContent(date ?? "no date");
+  });
+});
+
+it("N7: ten events spread across a year take a handful of rows", () => {
+  laidOutAt(1200);
+  const axis = draw(
+    Array.from({ length: 10 }, (_, at) =>
+      row(
+        `2026-${String(at + 1).padStart(2, "0")}-15`,
+        "day",
+        `Spread event ${String(at)}`,
+        "Scheduled",
+      ),
+    ),
+  );
+  const tops = new Set(axis.getAllByRole("button").map((button) => button.style.top));
+  expect(tops.size).toBeLessThanOrEqual(3);
 });
 
 it("N7: events whose labels do not collide share one row", () => {

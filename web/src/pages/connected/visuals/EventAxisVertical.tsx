@@ -184,6 +184,8 @@ export function VerticalAxis({
             }}
           />
         ))}
+        {/* Safari drops list semantics from an ol styled with list-style: none, so the role is kept. */}
+        {/* eslint-disable-next-line jsx-a11y/no-redundant-roles */}
         <ol
           role="list"
           aria-label="Events in date order"

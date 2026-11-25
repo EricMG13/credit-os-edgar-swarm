@@ -1,5 +1,5 @@
 import { Table as KitTable } from "@/components/application/table/table";
-import { useId } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode, type RefObject } from "react";
 import { Missing } from "@/components/gap/Missing";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import { cx } from "@/utils/cx";
@@ -263,11 +263,11 @@ function focusRow(id: string) {
   if (typeof row.scrollIntoView === "function") row.scrollIntoView({ block: "nearest" });
 }
 
-/** At 640px and below each row stacks as a block of label and value pairs; nothing scrolls. */
-const STACK = "max-[640px]:block";
+/** At 800px and below each row stacks as a block of label and value pairs; nothing scrolls. */
+const STACK = "max-[800px]:block";
 const CELL = cx(
-  "px-3 py-1.5 text-left align-top max-[640px]:justify-items-start max-[640px]:grid max-[640px]:grid-cols-[7.5rem_minmax(0,1fr)] max-[640px]:gap-x-3 max-[640px]:px-0 max-[640px]:py-1",
-  "max-[640px]:before:text-caption max-[640px]:before:text-text-tertiary max-[640px]:before:content-[attr(data-label)]",
+  "px-3 py-1.5 text-left align-top max-[800px]:justify-items-start max-[800px]:grid max-[800px]:grid-cols-[7.5rem_minmax(0,1fr)] max-[800px]:gap-x-3 max-[800px]:px-0 max-[800px]:py-1",
+  "max-[800px]:before:text-caption max-[800px]:before:text-text-tertiary max-[800px]:before:content-[attr(data-label)]",
 );
 
 function DateCell({ cells }: { cells: string[] }) {
@@ -289,7 +289,7 @@ function EventsTable({ rows, rowId }: { rows: CalendarRow[]; rowId: (index: numb
   return (
     <table className={cx("w-full border-collapse text-small", STACK)}>
       <caption className="sr-only">Published events</caption>
-      <thead className="max-[640px]:sr-only">
+      <thead className="max-[800px]:sr-only">
         <tr className="border-b-2 border-border-hairline">
           {TABLE_HEAD.map((heading) => (
             <th
@@ -308,12 +308,12 @@ function EventsTable({ rows, rowId }: { rows: CalendarRow[]; rowId: (index: numb
             key={index}
             id={rowId(index)}
             tabIndex={-1}
-            className="group/trace relative border-b border-border-hairline outline-hidden focus:ring-2 focus:ring-focus focus:ring-inset max-[640px]:block max-[640px]:px-3 max-[640px]:py-3"
+            className="group/trace relative border-b border-border-hairline outline-hidden focus:ring-2 focus:ring-focus focus:ring-inset max-[800px]:block max-[800px]:px-3 max-[800px]:py-3"
           >
             <th
               scope="row"
               data-label="Event"
-              className={cx(CELL, "font-medium max-[640px]:text-body")}
+              className={cx(CELL, "font-medium max-[800px]:text-body")}
             >
               {eventName(cells)}
             </th>
@@ -348,8 +348,51 @@ function axisReading(events: { date: string }[], total: number) {
   return first && last && first !== last ? `${count}, ${first} to ${last}` : count;
 }
 
+/** From this viewport width up the table behind the axis starts open; on a phone it starts closed. */
+const WIDE_QUERY = "(min-width: 641px)";
+
+/** The table behind the axis, in a disclosure: open on a desktop, closed on a phone. */
+function TableDisclosure({
+  detailsRef,
+  children,
+}: {
+  detailsRef: RefObject<HTMLDetailsElement | null>;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(
+    () => typeof window.matchMedia !== "function" || window.matchMedia(WIDE_QUERY).matches,
+  );
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const query = window.matchMedia(WIDE_QUERY);
+    const read = () => {
+      setOpen(query.matches);
+    };
+    read();
+    query.addEventListener("change", read);
+    return () => {
+      query.removeEventListener("change", read);
+    };
+  }, []);
+  return (
+    <details
+      ref={detailsRef}
+      open={open}
+      onToggle={(event) => {
+        setOpen(event.currentTarget.open);
+      }}
+    >
+      <summary className="mb-2 flex min-h-8 cursor-pointer items-center text-small font-medium text-text-link max-[480px]:min-h-11">
+        Table of events
+      </summary>
+      {children}
+    </details>
+  );
+}
+
 function CalendarFigure({ rows, asOf }: { rows: CalendarRow[]; asOf: string | null | undefined }) {
   const prefix = useId();
+  const table = useRef<HTMLDetailsElement>(null);
   const rowId = (index: number) => `${prefix}-row-${String(index)}`;
   const events = eventRecords({
     line: 0,
@@ -372,6 +415,7 @@ function CalendarFigure({ rows, asOf }: { rows: CalendarRow[]; asOf: string | nu
             asOf={time === null || !asOf ? null : { time, text: asOf }}
             rowId={rowId}
             onSelect={(index) => {
+              if (table.current) table.current.open = true;
               focusRow(rowId(index));
             }}
           />
@@ -384,7 +428,9 @@ function CalendarFigure({ rows, asOf }: { rows: CalendarRow[]; asOf: string | nu
         kicker="Behind the axis"
         title="Every event, in date order"
       >
-        <EventsTable rows={rows} rowId={rowId} />
+        <TableDisclosure detailsRef={table}>
+          <EventsTable rows={rows} rowId={rowId} />
+        </TableDisclosure>
       </Tile>
     </>
   );
