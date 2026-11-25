@@ -6,7 +6,9 @@ an analyst can check any proposal by hand.
 Status: approved by the owner on 2026-11-25 with the design it belongs to
 (`docs/rulings/2026-11-25-deliverables-and-recommendations.md`). Not built yet: no code computes
 any of this today. Where this document and the ruling differ, the ruling governs; for the rubric
-text, section 9 of the approved design governs.
+text, section 9 of the approved design governs. Four statements below are marked "This
+document's reading": the approved design does not state them, and they await the owner's
+confirmation.
 
 ## 1. Bottom line
 
@@ -71,12 +73,13 @@ How a factor is scored: the credit analysis picks the level whose text fits the 
 and writes one line saying why. A factor with no evidence is left unscored and listed as a gap.
 
 The scorecard also shows four items outside the 17: Management, Sector Outlook, Sponsor Quality
-and Credit Direction. They are written by the credit analysis and do not enter the Credit Score.
+and Credit Direction. They are written by the credit analysis. This document's reading: they do
+not enter the Credit Score.
 
 ## 4. Credit Score roll-up
 
 1. Take the factors that were scored. If fewer than 12 of the 17 are scored, there is no Credit
-   Score, and so no proposed recommendation.
+   Score. This document's reading: there is then no proposed recommendation either.
 2. Take their equal-weight mean.
 3. Round to a whole level; an exact half rounds toward the weaker score (2.5 becomes 3).
 4. Floor: if Liquidity or Maturity profile is scored 5, the Credit Score is no better than 4.
@@ -90,8 +93,8 @@ makes the Credit Score 4 (Weak).
 Scored per instrument, against the instruments of the same rating bucket in that portfolio's
 reference (section 8). Loans are compared by discount margin, against the CLO book and the loan
 index holdings; bonds by spread, against the high-yield index holdings. The measure is the
-instrument's level less the bucket's median, in basis points; wider than the median is more
-attractive.
+instrument's level less the bucket's median, in basis points. This document's reading: wider than
+the median is more attractive.
 
 | Instrument less bucket median | Valuation |
 | --- | ---: |
@@ -129,7 +132,7 @@ hold, the reference they are measured against and their limits.
 - No eligible instrument for a portfolio: that portfolio shows "n/a".
 - Limit cap: if adding the name would breach one of that portfolio's supplied limits (sector,
   rating bucket, CCC, price floor), the recommendation there is no better than 3 (MW), and the
-  limit is named beside it. A 4 or 5 from the table is unchanged.
+  limit is named beside it. This document's reading: a 4 or 5 from the table is unchanged.
 - The issuer's current weight in the portfolio or index is shown beside the recommendation.
 - A custom portfolio supplied when the run is started gets its own column by the same rules.
 - Each instrument in the capital structure also carries a proposed recommendation, which the
@@ -172,5 +175,5 @@ Valuation is only as current as its reference file and the prices supplied.
   ssga.com.
 - The two rubric gaps (section 3), the band edges (section 5) and the per-instrument rule and
   eligibility (section 7) are open.
-- The credit analysis already writes other scorecards and an overweight, neutral or underweight
-  view of its own. How those relate to this proposal is not settled; a reader may see both.
+- Other modules already write a 1–5 issuer scorecard and an overweight, neutral or underweight
+  view of their own. How those relate to this proposal is not settled; a reader may see both.

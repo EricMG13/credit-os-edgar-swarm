@@ -37,8 +37,8 @@ plans, staff roles, pauses and approval records are evidence, not inherited auth
   narrative sentences. The issuer library draws them only on its Evidence page and trace drawer
   (source references, file names, hashes, ids, registers, gap ledgers, run codes); every other page shows
   findings and one trace control per paragraph, row or figure, and text written for another module is
-  drawn nowhere. The exception is the Deliverables page, which is download tiles only and shows
-  no contents of the files.
+  drawn nowhere. The exception is the Deliverables page, which is tiles only (a file download, or
+  a purpose report opened in the print dialog) and shows no contents of the files.
 - Analytical modules own analysis and inter-module Markdown communication.
   Markdown handoffs are intermediate artifacts, not completion of the user task.
 - CP-8 runs last in a run with an earlier listed run of the same issuer and pathway and compares
@@ -62,7 +62,7 @@ plans, staff roles, pauses and approval records are evidence, not inherited auth
 - Completion requires the issuer library's Overview, Changes, Modules, Forecast and Evidence
   pages for the run populated from its actual module handoffs and checked against
   them, not just successful handoff generation. Once the Deliverables page is built,
-  completion also requires it: download tiles only, no contents shown. The HTML Model, charts and calculation
+  completion also requires that page (tiles only, no contents shown), not any workbook export. The HTML Model, charts and calculation
   JSON are parts of that issuer report; the separately delivered HTML report is retired.
   CP-OS owns this end-to-end completion condition, including delivery.
 - A presentation change needs a fidelity check, recorded in VERIFICATION.md with its scope.

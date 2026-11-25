@@ -3,7 +3,7 @@
 **Recommendation methodology, 2026-11-25 (owner; `docs/rulings/2026-11-25-deliverables-and-recommendations.md`):**
 an owner-supplied method, not selected from Deploy V or a later project, so it has no source
 revision. The selected methods already hold related scorecards and views, which stay as they are:
-CP-2's T2.7 financial profile scorecard, CP-3's anchored 1–5 issuer scorecard (T3.3) and CP-6's
+CP-2's T2.7 financial profile scorecard (not written in this transport), CP-3's anchored 1–5 issuer scorecard (T3.3) and CP-6's
 Overweight / Neutral / Underweight bias. How the new proposal relates to them is open.
 `docs/methodology/portfolio-recommendation.md` holds it: the owner's Risk Rubric (17 factors, five
 levels each, Probability of default dropped), an equal-weight Credit Score with a floor, valuation

@@ -20,8 +20,8 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
   `tests/test_methodology_selection.py` and `tests/test_package_react_windows.py` pass. No test
   pins the changed `AGENTS.md` text.
 - Review: one fresh reviewer, pass with fixes (6 Medium, 11 Low; no transcription error). Wording
-  fixed; the open points are listed in the ruling's Left open. `PRODUCT.md` still says no workbook
-  is a deliverable, true of the build today.
+  fixed; open points are in the ruling's Left open. Pre-merge review: 1 Medium (quote
+  attribution), 6 Low, all applied, including four mock-up cells corrected to the table (3 MW).
 - Not verified: anything the documents describe, none of which is built; the rubric text against
   the owner's image (not in the repository; taken from the spec's transcription); the SSGA file
   columns; the full suite.

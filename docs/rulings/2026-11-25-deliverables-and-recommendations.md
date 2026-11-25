@@ -11,7 +11,9 @@ nothing it describes is built yet: this record, the `AGENTS.md` amendments and
 Source: `docs/superpowers/specs/2026-11-25-deliverables-credit-snapshot.md`, with its mock-up
 `docs/superpowers/specs/2026-11-25-credit-snapshot-mockup.html`. The owner approved that spec on
 2026-11-25: "Approve, start". The rulings below are the spec's section 1 as the owner approved it.
-Words in quotation marks are the owner's own; everything else is the spec's record of the ruling.
+The owner's own words are quoted in three places only: "Approve, start" above, "look like an app
+but Excel canvas" in R2, and the three quotations in the next section. Every other quoted string
+in this record is a label or a phrase of the spec, and the rest is the spec's record of the ruling.
 
 ## Rulings (spec section 1)
 
@@ -33,7 +35,9 @@ Words in quotation marks are the owner's own; everything else is the spec's reco
 | R12 | New pathway Credit Screening: CP-0, CP-1, CP-L10 run with its original five screens (L10, L20, L23, L30, L40), plus CP-DR. |
 | R13 | Custom routing: the analyst picks modules from the full list within handoff rules, and for a module with aliases chooses the full module or an alias phase, each with an explanation. Specialised presets are also built but appear only under Advanced. |
 
-## Three further rulings in the owner's words (2026-11-25)
+## Three further rulings (2026-11-25)
+
+In each, only the quoted words are the owner's; the rest is the spec's account.
 
 - Forecast cells in the workbook's Model sheet are values, matching the app's model exactly:
   "Values". Historic cells are values copied exactly (spec section 7).
@@ -106,6 +110,9 @@ The methodology an analyst can audit, with the rubric's level text, is
   `2026-11-15-pathway-tiers-and-caps.md`. The two caps above are recorded here only. By that
   ruling a cap enters `PATHWAY_CAP_USD` and `RULED_CAPS_USD` by deliberate edits, which belong to
   the pathway PRs (6 and 7), after the in-flight change to the Lite, Full and Deep caps has merged.
+- Follow-up, not edited here: `PRODUCT.md` still says "No workbook is a deliverable". That is true
+  of the build until the workbook lands (PR 4), and another open PR edits that file; the line is
+  to be brought into step with this ruling then.
 - Not amended: the deactivation of the short credit snapshot (`short_snapshot`). Credit Screening
   (R12) is a new pathway; how it relates to that id is PR 6's to settle.
 
@@ -137,9 +144,10 @@ The methodology an analyst can audit, with the rubric's level text, is
   for the owner or coordinator before PR 2.
 - The spec has a proposed recommendation per instrument as well as per portfolio (section 2) and
   gives no rule for the per-instrument one.
-- How this five-point recommendation sits beside the module-written ones (CP-2's T2.7 financial
-  profile scorecard, CP-3's 1–5 issuer scorecard, CP-6's Overweight / Neutral / Underweight) is
-  not stated in the spec.
+- How this five-point recommendation sits beside the related ones is not stated in the spec:
+  CP-3's 1–5 issuer scorecard and CP-6's Overweight / Neutral / Underweight, which modules write,
+  and the CP-2 method's T2.7 financial profile scorecard, which CP-2 does not write in this
+  transport (`docs/reuse/selected-methods/CPOS_REGISTER_SCOPE.md`).
 - Whether the app records the analyst's confirmation; the spec says only "in the workbook" (R5).
 - Not verified (spec section 6): the SSGA holdings files' columns; whether the app's host can reach
   ssga.com; the cost of the longer CP-2 instruction; that Excel renders the conditional formats
