@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { OutputEntry, PublishedRun, Section, Snapshot } from "../../publishedReport";
 import type { ReportView } from "../../reportView";
 import { FigureRow } from "./FigureRow";
+import { outside, struck } from "./svgText.fixture";
 
 afterEach(cleanup);
 
@@ -444,71 +445,6 @@ describe("the true reason a figure is not drawn", () => {
   });
 });
 
-type Box = { left: number; right: number; top: number; bottom: number };
-const num = (element: Element, name: string) => Number(element.getAttribute(name));
-
-/** A text label's box, from its position, anchor and font size (monospace, 0.6 em a glyph). */
-function labelBox(text: Element): Box {
-  const ramp = { "text-caption": 12, "text-mono": 13, "text-small": 14 } as const;
-  const classes = (text.getAttribute("class") ?? "").split(/\s+/);
-  const size = Object.entries(ramp).find(([name]) => classes.includes(name))?.[1] ?? 12;
-  const width = text.textContent.length * size * 0.6;
-  const x = num(text, "x");
-  const y = num(text, "y");
-  const anchor = text.getAttribute("text-anchor") ?? "start";
-  const left = anchor === "middle" ? x - width / 2 : anchor === "end" ? x - width : x;
-  return { left, right: left + width, top: y - size * 0.8, bottom: y + size * 0.2 };
-}
-
-/** Whether a drawn line passes through a box (Liang-Barsky clipping). */
-function crosses(line: Element, box: Box) {
-  const [x1, y1, x2, y2] = ["x1", "y1", "x2", "y2"].map((name) => num(line, name)) as [
-    number,
-    number,
-    number,
-    number,
-  ];
-  let [from, to] = [0, 1];
-  const edges = [
-    [x1 - x2, x1 - box.left],
-    [x2 - x1, box.right - x1],
-    [y1 - y2, y1 - box.top],
-    [y2 - y1, box.bottom - y1],
-  ] as const;
-  for (const [p, q] of edges) {
-    if (p === 0) {
-      if (q < 0) return false;
-      continue;
-    }
-    const t = q / p;
-    if (p < 0) from = Math.max(from, t);
-    else to = Math.min(to, t);
-    if (from > to) return false;
-  }
-  return true;
-}
-
-/** The figure labels of a mark (not its axis ticks) that a connector or gridline strikes. */
-function struck(mark: Element, lines: string) {
-  const labels = [...mark.querySelectorAll("text:not([data-tick])")];
-  return labels.flatMap((text) =>
-    [...mark.querySelectorAll(lines)].some((line) => crosses(line, labelBox(text)))
-      ? [text.textContent]
-      : [],
-  );
-}
-
-/** The labels of a mark that reach outside its drawing. */
-function outside(mark: Element) {
-  const [, , width = 0, height = 0] = (mark.getAttribute("viewBox") ?? "").split(" ").map(Number);
-  return [...mark.querySelectorAll("text")].flatMap((text) => {
-    const box = labelBox(text);
-    return box.left < 0 || box.right > width || box.top < 0 || box.bottom > height
-      ? [text.textContent]
-      : [];
-  });
-}
-
 describe("mark labels sit clear of the lines", () => {
   const cases = [
     ["FY2023", "3.75", "3.00"],
@@ -633,7 +569,7 @@ describe("series marks place periods by time", () => {
 });
 
 describe("the figure rows' layout", () => {
-  it("draws every mark text on the type ramp, none at an arbitrary size", () => {
+  it("sizes every mark text by its font-size, at least the ramp's 12, never by a class", () => {
     draw(
       foundation(
         chart(
@@ -644,9 +580,14 @@ describe("the figure rows' layout", () => {
         ),
       ),
     );
-    for (const text of document.querySelectorAll("svg text"))
-      expect(text.getAttribute("class") ?? "").not.toMatch(/text-\[/);
+    const texts = [...document.querySelectorAll("svg text")];
+    expect(texts.length).toBeGreaterThan(0);
+    for (const text of texts) {
+      expect(text.getAttribute("class") ?? "").not.toMatch(/text-\[|text-caption|text-mono/);
+      expect(Number(text.getAttribute("font-size"))).toBeGreaterThanOrEqual(12);
+    }
   });
+
 
   it("lets the large tiles and their grid take their content height, not stretch", () => {
     draw(foundation(chart("leverage", LEVERAGE, ["FY2024", "4.00", "3.50", "x", "Stated."])));
