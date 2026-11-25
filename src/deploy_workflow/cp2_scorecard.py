@@ -7,7 +7,8 @@ and is never guessed. Nothing here computes an overall credit score.
 
 Three outcomes are kept apart: a handoff with neither register (`parse_scorecard` returns None: it
 was written before the registers existed), a register row left `Not scored` or `Not assessed` (a
-level or view of None inside a `Scorecard`), and a malformed register (`ScorecardError`).
+level or view of None inside a `Scorecard`), and a malformed register (`ScorecardError`). A
+register written where the issuer library's module page would not draw it is malformed.
 """
 
 from __future__ import annotations
@@ -65,8 +66,18 @@ LEVEL_TEXT_SOURCE = (
     "docs/superpowers/specs/2026-11-25-deliverables-credit-snapshot.md",
     "9. Risk Rubric level text (transcribed from the owner's rubric image, 2026-11-25)",
 )
-# A Basis cell that states no evidence.
-_NO_BASIS = frozenset({"", "-", "—", "–", "n/a"})
+# A Basis that says nothing when it is one of these alone (case, emphasis and closing punctuation
+# aside). `Not supplied: <reason>` says what is missing, so only an unscored row may give it.
+_NO_BASIS = frozenset({"none", "n/a", "n.a", "tbd", "not stated", "not supplied"})
+_NOT_SUPPLIED = "not supplied"
+# A heading the module page takes for a register, whose table it holds in Evidence instead of
+# drawing: `REGISTERS` of web/src/pages/connected/publishedReport.ts (a test holds the two equal).
+_PAGE_REGISTERS = re.compile(
+    "source assessment|confidence inputs|source context|period table|key located evidence|"
+    "conflicts and duplicates|register|ledger",
+    re.IGNORECASE,
+)
+_SECTION_START = re.compile(r"#{1,2} ")
 
 
 @dataclass(frozen=True)
@@ -129,11 +140,14 @@ _ASSESSMENT = _Register(
     ASSESSMENT_ID, ASSESSMENT_TITLE, ASSESSMENT_COLUMNS, ASSESSMENTS, NOT_ASSESSED
 )
 # How the two registers are headed and where: one sentence for the instructions and the repair.
+# `_misplaced` refuses what it rules out: the method's own appendix rule would nest the registers
+# where the module page does not draw them.
 PLACEMENT = (
     f"Head them exactly `{_SCORECARD.heading}` (columns `{' | '.join(SCORECARD_COLUMNS)}`, one "
     f"row per factor) and `{_ASSESSMENT.heading}` (columns `{' | '.join(ASSESSMENT_COLUMNS)}`, "
-    "one row per assessment), each a `###` section of `## Findings` after `### Limitations`, "
-    "beside your other registers and not nested under another heading."
+    "one row per assessment): each a `###` heading in `## Findings`, after `### Limitations`, "
+    "never nested as a `####` heading under the Analytical appendix heading or any other "
+    "heading, and headed by that heading alone (no `table-id` tag)."
 )
 _Rows = dict[str, tuple[str | None, str]]
 
@@ -143,25 +157,56 @@ def _name(cell: str) -> str:
     return " ".join(re.sub(r"[*_`]", "", cell).casefold().split())
 
 
-def _present(text: str, ident: str) -> bool:
+def _basis(cell: str, *, evidence: bool) -> str:
+    """The Basis as written, or "" for one that says nothing: no letter or digit, a placeholder
+    word alone, or, on a row with a level or view (``evidence``), the transport's `Not supplied`."""
+    said = _name(cell).rstrip(" .:;,!?")
+    nothing = said in _NO_BASIS or not any(character.isalnum() for character in said)
+    return "" if nothing or (evidence and said.startswith(_NOT_SUPPLIED)) else cell.strip()
+
+
+def _starts(lines: list[str], ident: str) -> list[int]:
+    """The lines a register starts at, as `register_table` finds them."""
     start = _register_start(ident)
-    return any(start.match(line) for line in _unfenced(text))
+    return [number for number, line in enumerate(lines) if start.match(line)]
+
+
+def _misplaced(lines: list[str], register: _Register) -> list[str]:
+    """Why the module page would not draw the register where it is written: the page draws the
+    table of a `###` section directly under `## Findings` whose heading names no register.
+    Nothing for a register that is absent or written twice (`register_table` says so)."""
+    ident, found = register.ident, _starts(lines, register.ident)
+    if len(found) != 1:
+        return []
+    line = lines[found[0]].strip()
+    if not line.startswith("### "):
+        return [f"{ident} must start at a `###` heading, `{register.heading}`, not at `{line}`."]
+    above = next((a.strip() for a in reversed(lines[: found[0]]) if _SECTION_START.match(a)), None)
+    if above != "## Findings":
+        where = f"under `{above}`" if above else "under no `##` heading"
+        return [f"{ident} must be in `## Findings`; it is {where}."]
+    words = _PAGE_REGISTERS.search(line)
+    if words:
+        heading = f"`{register.heading}`, without `{words[0]}`"
+        return [f"{ident}'s heading must be {heading}: it is `{line}`."]
+    return []
 
 
 def _read(text: str, register: _Register) -> tuple[_Rows, list[str]]:
-    """The register's rows by their ruled name (value None when left unset) and its faults."""
+    """The register's rows by their ruled name (value None when left unset) and its faults,
+    those of its placement first."""
     ident, (_, value_name, _) = register.ident, register.columns
+    faults = _misplaced(_unfenced(text), register)
     table = register_table(text, ident)
     if isinstance(table, str):
-        return {}, [f"{table[0].upper()}{table[1:]}."]
+        return {}, [*faults, f"{table[0].upper()}{table[1:]}."]
     header, rows = table
     if [_name(h) for h in header] != [_name(c) for c in register.columns]:
         columns = " | ".join(register.columns)
-        return {}, [f"{ident}'s columns must be exactly `{columns}`, in that order."]
+        return {}, [*faults, f"{ident}'s columns must be exactly `{columns}`, in that order."]
     names = {_name(name): name for name in register.rows}
     read: _Rows = {}
     seen: set[str] = set()
-    faults: list[str] = []
     for written, cell, basis_cell in rows:
         name = names.get(_name(written))
         if name is None:
@@ -182,11 +227,14 @@ def _read(text: str, register: _Register) -> tuple[_Rows, list[str]]:
             )
             continue
         value = allowed.get(_name(cell))
-        basis = "" if _name(basis_cell) in _NO_BASIS else basis_cell.strip()
-        if value is not None and not basis:
+        basis = _basis(basis_cell, evidence=value is not None)
+        if not basis:
             faults.append(
-                f"{ident} row `{name}`: Basis is empty; a row with a {value_name} states its "
-                "evidence in one line."
+                f"{ident} row `{name}`: Basis is empty; a `{register.unset}` row states in one "
+                "line what evidence is missing."
+                if value is None
+                else f"{ident} row `{name}`: Basis states no evidence; a row with a {value_name} "
+                "states the evidence it rests on in one line."
             )
             continue
         read[name] = (value, basis)
@@ -208,7 +256,8 @@ def scorecard_faults(text: str) -> tuple[str, ...]:
 def parse_scorecard(text: str) -> Scorecard | None:
     """The scorecard a CP-2 handoff carries; None for a handoff with neither register. Raises
     `ScorecardError` when one register is there without the other or either is malformed."""
-    if not any(_present(text, r.ident) for r in (_SCORECARD, _ASSESSMENT)):
+    lines = _unfenced(text)
+    if not any(_starts(lines, r.ident) for r in (_SCORECARD, _ASSESSMENT)):
         return None
     (levels, level_faults), (views, view_faults) = _read(text, _SCORECARD), _read(text, _ASSESSMENT)
     if level_faults or view_faults:

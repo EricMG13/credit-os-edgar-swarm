@@ -220,7 +220,8 @@ it("draws the four assessment cells with their views as written", () => {
 });
 
 it("holds the registers in Evidence when they are nested under the appendix heading", () => {
-  // Why CP-2 is told to write each as its own `###` section, not nested under another heading.
+  // Why CP-2 is told to write each as its own `###` heading in Findings, and why the launcher
+  // refuses the nested form (deploy_workflow.cp2_scorecard `_misplaced`).
   const scorecard = table(32, ["Factor", "Level", "Basis"], scorecardRows(mixedBasis));
   const appendix = section("Analytical appendix — complete canonical registers", 3, 20);
   const records = moduleRecords(entryOf(sectionsOf(scorecard, 4, [appendix])));

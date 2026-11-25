@@ -1677,12 +1677,12 @@ def test_the_lite_pathway_runs_end_to_end_to_a_verified_delivery_with_a_syntheti
 # short_snapshot 156,212 to 157,415 (+1,203).
 # 2026-11-25 (owner ruling R9, "CP-2 writes a scorecard table using the owner's Risk Rubric";
 # docs/superpowers/specs/2026-11-25-deliverables-credit-snapshot.md): CP-2's credit scorecard block
-# with the rubric's 17 rows adds 6,424 characters to CP-2's instructions in every pathway that runs
-# it. Only lite_credit_assessment passes its ceiling: 416,093 before, 422,517 after (+6,424), so its
-# ceiling rises by that growth, 421,292 to 427,716. The other ceilings hold and are unchanged.
+# with the rubric's 17 rows adds 6,546 characters to CP-2's instructions in every pathway that runs
+# it. Only lite_credit_assessment passes its ceiling: 416,093 before, 422,639 after (+6,546), so its
+# ceiling rises by that growth, 421,292 to 427,838. The other ceilings hold and are unchanged.
 INSTRUCTION_BUDGET = {
     "deep_credit_assessment": 1_903_059,
-    "lite_credit_assessment": 427_716,
+    "lite_credit_assessment": 427_838,
     "credit_snapshot": 1_485_996,
     "covenant_refinancing": 1_157_279,
     "distressed_restructuring": 1_188_321,
@@ -10227,22 +10227,39 @@ def test_cp2_is_asked_for_the_credit_scorecard_in_every_pathway_that_runs_it(tmp
     assert_rubric(rubric)
     assert "`### T2.13 - Credit scorecard` (columns `Factor | Level | Basis`" in block
     assert "`### T2.14 - Credit assessment` (columns `Assessment | View | Basis`" in block
-    assert "each a `###` section of `## Findings` after `### Limitations`" in block
+    assert "each a `###` heading in `## Findings`, after `### Limitations`, never nested as a" in (
+        block
+    )
+    assert "`####` heading under the Analytical appendix heading or any other heading" in block
+    assert "headed by that heading alone (no `table-id` tag)" in block
+    # VOICE_RULES gives a table that cites sources a `Source` column; these two have none.
+    assert "A table that cites sources has a column headed `Source`" in head
+    assert "These two tables have no `Source` column: Basis carries the reference." in block
     assert f"exactly these 17 rows, named exactly: {', '.join(CP2_FACTORS)}." in block
     assert "1 (strongest) to 5 (weakest)" in block
     assert "1 Excellent, 2 Strong, 3 Satisfactory, 4 Weak, 5 Poor" in block
     assert "write `Not scored` as its Level, list the factor in `## Gaps` and never guess" in block
+    assert "Write `Not assessed` as a View only when the sources and supplied handoffs hold no" in (
+        block
+    )
+    assert "evidence for it, and list it in `## Gaps`." in block
+    assert (
+        "Every row has a Basis: one line of the evidence the Level or View rests on or, for "
+        "`Not scored` and `Not assessed`, of what evidence is missing."
+    ) in block
     assert "Management, Sector Outlook and Sponsor Quality, each Positive, Neutral or Negative" in (
         block
     )
     assert "Credit Direction, Improving, Stable or Deteriorating" in block
-    assert "the only cell of these tables that may hold a source reference" in block
+    assert "Basis is the only cell of these tables that may hold a source reference." in block
     assert "Do not write an overall credit score, a total or an average." in block
     assert "not the method's T2.7 Financial Profile Scorecard, which stays unwritten" in block
     assert "is refused unless the module is blocked" in block
-    assert "house Risk Rubric (to be kept in `docs/methodology/portfolio-recommendation.md`)" in (
-        block
-    )
+    assert "Choose it by the house Risk Rubric, given in full below, which describes" in block
+    # No file is named for the rubric: the table is the whole of it, and a named file that is not
+    # supplied reads as a missing companion file.
+    assert "portfolio-recommendation" not in texts["CP-2"]
+    assert "docs/methodology" not in texts["CP-2"] and "docs/superpowers" not in texts["CP-2"]
     # The scope section CP-2 is sent still cuts T2.7, and names neither new register.
     scope = method.rpartition("Register scope in this transport:")[2]
     assert "T2.7 Financial Profile Scorecard" in scope
@@ -10258,16 +10275,18 @@ def assert_rubric(rubric: str) -> None:
     assert [line.split(" | ")[0] for line in lines[1:]] == [f"| {f}" for f in CP2_FACTORS]
     assert all(line.count(" | ") == 5 and line.endswith(" |") for line in lines[1:])
     assert lines[1] == RUBRIC_SCALE_ROW
-    assert lines[6] == (
-        "| Leverage | Low leverage (<3x), conservative structure | Moderate leverage (3–4x), "
-        "ample headroom | Elevated leverage (4–5x), stable but stretched | High leverage (>5x), "
-        "limited covenant cushion | Very high leverage (>6x), fragile structure or covenant "
-        "breach risk |"
-    )
-    assert lines[12] == (
-        "| Market share | Dominant market leader (>30%) | Top 3 competitor | Mid-tier, <10% "
-        "share | Small player, <5% share | Marginal presence or niche operator |"
-    )
+    # Leverage level 4 and Market share levels 2 and 3 are being reworded by owner ruling
+    # (2026-11-25, "fix") in the methodology PR, so only the cells that ruling leaves are pinned.
+    leverage = lines[6].split(" | ")
+    assert leverage[1:4] == [
+        "Low leverage (<3x), conservative structure",
+        "Moderate leverage (3–4x), ample headroom",
+        "Elevated leverage (4–5x), stable but stretched",
+    ]
+    assert leverage[5] == "Very high leverage (>6x), fragile structure or covenant breach risk |"
+    share = lines[12].split(" | ")
+    assert share[1] == "Dominant market leader (>30%)"
+    assert share[4:] == ["Small player, <5% share", "Marginal presence or niche operator |"]
     assert lines[16] == (
         "| Interest cover | EBITDA/Interest >4.0x | 3.0–4.0x | 2.0–3.0x | 1.0–2.0x | <1.0x "
         "(interest not covered) |"
@@ -10275,7 +10294,7 @@ def assert_rubric(rubric: str) -> None:
     assert lines[17].split(" | ")[3] == (
         "Neutral or balanced policy. Leverage 3.5–4.5x; some shareholder bias."
     )
-    for unsent in ("Gaps in the rubric", "5–6x", "10–30%", "read here as", "Probability of"):
+    for unsent in ("Gaps in the rubric", "read here as", "outside the top three", "Probability of"):
         assert unsent not in rubric, unsent
 
 
@@ -10327,7 +10346,7 @@ def test_a_complete_cp2_handoff_with_the_scorecard_passes_every_check(tmp_path):
         ("| Management | Neutral |", "| Management | Stable |", "T2.14 row `Management`: View"),
         ("| Credit Direction | Stable |", "| Credit Direction | Positive |", "`Credit Direction`"),
         # A scored row with no evidence.
-        ("| Scale | 3 | annual.txt, page 2 |", "| Scale | 3 | n/a |", "`Scale`: Basis is empty"),
+        ("| Scale | 3 | annual.txt, page 2 |", "| Scale | 3 | n/a |", "`Scale`: Basis states no"),
     ],
 )
 def test_a_cp2_handoff_with_a_faulty_scorecard_gets_a_targeted_repair(

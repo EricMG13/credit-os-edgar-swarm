@@ -739,14 +739,16 @@ _THREE, _DIRECTION = (
 @functools.cache
 def cp2_scorecard_block() -> str:
     """CP-2's credit scorecard instructions, with the Risk Rubric table read from its source (the
-    read fails loudly; the instructions never carry a partial rubric)."""
+    read fails loudly; the instructions never carry a partial rubric). The table is the whole
+    rubric and no file is named for it: a named file that is not supplied reads as missing."""
     return (
         f"Credit scorecard: also write the registers {scorecard.SCORECARD_ID} and "
-        f"{scorecard.ASSESSMENT_ID}. {scorecard.PLACEMENT} {scorecard.SCORECARD_ID} has exactly "
-        f"these {len(scorecard.FACTORS)} rows, named exactly: {', '.join(scorecard.FACTORS)}. "
+        f"{scorecard.ASSESSMENT_ID}. {scorecard.PLACEMENT} These two tables have no `Source` "
+        f"column: Basis carries the reference. {scorecard.SCORECARD_ID} has exactly these "
+        f"{len(scorecard.FACTORS)} rows, named exactly: {', '.join(scorecard.FACTORS)}. "
         f"Level is one digit from 1 (strongest) to 5 (weakest), without its name: {_LEVELS}. "
-        "Choose it by the house Risk Rubric (to be kept in "
-        f"`{scorecard.LEVEL_TEXT_DOCUMENT}`), which describes each factor at each level:\n"
+        "Choose it by the house Risk Rubric, given in full below, which describes each factor "
+        "at each level:\n"
         f"{scorecard.level_text()}\n"
         "Score a factor only on evidence in this run's sources and supplied handoffs; where "
         f"there is none write `{scorecard.NOT_SCORED}` as its Level, list the factor in `## Gaps` "
@@ -755,10 +757,11 @@ def cp2_scorecard_block() -> str:
         "Sponsor Quality on the supplied CP-1A handoff's `ownership_register`, T2D.4 Behavior "
         "Flag Register, T2D.5 Capital Allocation Risk Table and T2D.9 Sponsor Risk Assessment "
         f"Table. Write `{scorecard.NOT_ASSESSED}` as a View only when the sources and supplied "
-        "handoffs hold no evidence for it, and state the missing evidence in its Basis and in "
-        "`## Gaps`. Basis is one line of the evidence the Level or View rests on, and is the "
-        "only cell of these tables that may hold a source reference; every scored or assessed "
-        "row has one. Do not write an overall credit score, a total or an average. "
+        "handoffs hold no evidence for it, and list it in `## Gaps`. Every row has a Basis: one "
+        "line of the evidence the Level or View rests on or, for "
+        f"`{scorecard.NOT_SCORED}` and `{scorecard.NOT_ASSESSED}`, of what evidence is missing. "
+        "Basis is the only cell of these tables that may hold a source reference. Do not write "
+        "an overall credit score, a total or an average. "
         f"{scorecard.SCORECARD_ID} is not the method's T2.7 Financial Profile Scorecard, which "
         f"stays unwritten. A handoff without valid {scorecard.SCORECARD_ID} and "
         f"{scorecard.ASSESSMENT_ID} is refused unless the module is blocked.\n\n"

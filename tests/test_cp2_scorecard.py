@@ -6,6 +6,7 @@ Expected values are written by hand from the owner's ruling R9 (2026-11-25,
 read from the constants of the code under test.
 """
 
+import re
 from pathlib import Path
 
 import library_fixtures  # noqa: F401  (puts the issuer library's `credit_os` on the path)
@@ -163,13 +164,16 @@ def test_rows_written_in_another_order_are_returned_in_the_rulings_order():
 def test_an_unscored_factor_is_read_as_no_level_not_as_a_fault(words):
     rows = scorecard_rows()
     rows[2] = f"| Regulatory exposure | {words} | No evidence in this run |"
-    rows[3] = f"| Technology | {words} | — |"  # an unscored row owes no Basis
+    # The transport's own words for missing evidence state what is missing on an unscored row.
+    rows[3] = f"| Technology | {words} | Not supplied: no technology disclosure in the filing |"
     text = handoff(rows, ASSESSMENT_ROWS)
     assert scorecard_faults(text) == ()
     card = parse_scorecard(text)
     assert card is not None
     assert card.factors[2] == FactorScore("Regulatory exposure", None, "No evidence in this run")
-    assert card.factors[3] == FactorScore("Technology", None, "")
+    assert card.factors[3] == FactorScore(
+        "Technology", None, "Not supplied: no technology disclosure in the filing"
+    )
     scored = [f.level for f in card.factors if f.level is not None]
     assert scored == LEVELS[:2] + LEVELS[4:]
 
@@ -277,13 +281,66 @@ def test_inner_spacing_of_a_factor_name_is_collapsed():
     assert card is not None and card.factors[1].factor == "Market position"
 
 
-@pytest.mark.parametrize("basis", ["", " ", "-", "—", "–", "n/a", "N/A", "**-**"])
+# What a row may not give as its Basis: nothing, punctuation, or a word that stands for nothing.
+NO_BASIS = [
+    *("", " ", "-", "—", "–", ".", "...", "**-**", "?"),
+    *("n/a", "N/A", "N/a.", "n.a.", "N.A", "None", "none", "none.", "TBD", "tbd.", "**TBD**"),
+    *("Not stated", "not stated.", "Not supplied", "Not supplied.", "Not supplied:"),
+]
+
+
+@pytest.mark.parametrize("basis", [*NO_BASIS, "Not supplied: no evidence", "not supplied - none"])
 def test_a_scored_row_without_a_basis_is_a_fault(basis):
     rows = scorecard_rows()
     rows[5] = f"| Leverage | 4 | {basis} |"
     faults = faults_of(handoff(rows, ASSESSMENT_ROWS))
     assert len(faults) == 1
-    assert "T2.13" in faults[0] and "Leverage" in faults[0] and "Basis" in faults[0]
+    assert "T2.13 row `Leverage`: Basis states no evidence" in faults[0]
+    assert "a row with a Level states the evidence it rests on" in faults[0]
+
+
+@pytest.mark.parametrize("basis", [*NO_BASIS, "Not supplied: no evidence"])
+def test_an_assessed_row_without_a_basis_is_a_fault(basis):
+    rows = list(ASSESSMENT_ROWS)
+    rows[0] = f"| Management | Positive | {basis} |"
+    (fault,) = faults_of(handoff(scorecard_rows(), rows))
+    assert "T2.14 row `Management`: Basis states no evidence" in fault
+    assert "a row with a View states the evidence it rests on" in fault
+
+
+@pytest.mark.parametrize("basis", NO_BASIS)
+def test_an_unscored_or_unassessed_row_still_owes_a_basis_that_says_what_is_missing(basis):
+    rows = scorecard_rows()
+    rows[3] = f"| Technology | Not scored | {basis} |"
+    (fault,) = faults_of(handoff(rows, ASSESSMENT_ROWS))
+    assert fault == (
+        "T2.13 row `Technology`: Basis is empty; a `Not scored` row states in one line what "
+        "evidence is missing."
+    )
+    views = list(ASSESSMENT_ROWS)
+    views[2] = f"| Sponsor Quality | Not assessed | {basis} |"
+    (fault,) = faults_of(handoff(scorecard_rows(), views))
+    assert fault == (
+        "T2.14 row `Sponsor Quality`: Basis is empty; a `Not assessed` row states in one line "
+        "what evidence is missing."
+    )
+
+
+@pytest.mark.parametrize(
+    "basis",
+    [
+        "None of the three facilities matures before 2029",
+        "Not stated in the annual report, but the lender presentation gives 4.2x",
+        "N/A to the holding company; the operating group reports 3.1x cover",
+        "3.1x",
+        "TBD Holdings owns 62%",
+    ],
+)
+def test_a_basis_that_only_begins_like_a_placeholder_is_evidence(basis):
+    rows = scorecard_rows()
+    rows[5] = f"| Leverage | 4 | {basis} |"
+    card = parse_scorecard(handoff(rows, ASSESSMENT_ROWS))
+    assert card is not None and card.factors[5] == FactorScore("Leverage", 4, basis)
 
 
 @pytest.mark.parametrize(
@@ -346,7 +403,7 @@ def test_assessment_rows_missing_duplicated_extra_or_without_basis_are_faults():
     assert len(faults) == 4
     text = " ".join(faults)
     assert "Management" in text and "more than once" in text
-    assert "Sector Outlook" in text and "Basis" in text
+    assert "T2.14 row `Sector Outlook`: Basis states no evidence" in text
     assert "`Governance`" in text
     assert "Sponsor Quality" in text
     assert all("T2.14" in f for f in faults)
@@ -376,6 +433,7 @@ def test_other_columns_are_a_fault_that_states_the_columns(header):
     rows = ["| " + " | ".join(["x"] * width) + " |"]
     text = "\n".join(
         [
+            *("## Findings", "", "### Bottom line", "", "Synthetic.", ""),
             *("### T2.13 - Credit scorecard", "", header, "|" + "---|" * width, *rows, ""),
             *ASSESSMENT_HEAD,
             *ASSESSMENT_ROWS,
@@ -388,7 +446,11 @@ def test_other_columns_are_a_fault_that_states_the_columns(header):
 
 
 def test_a_register_with_no_table_or_written_twice_is_a_fault():
-    no_table = handoff(None, ASSESSMENT_ROWS) + "\n### T2.13 - Credit scorecard\n\nSee above.\n"
+    no_table = replaced(
+        "### T2.14 - Credit assessment",
+        "### T2.13 - Credit scorecard\n\nSee below.\n\n### T2.14 - Credit assessment",
+        handoff(None, ASSESSMENT_ROWS),
+    )
     (fault,) = faults_of(no_table)
     assert "T2.13" in fault and "no table" in fault
     twice = COMPLETE + "\n" + "\n".join([*SCORECARD_HEAD, *scorecard_rows(), ""])
@@ -413,12 +475,157 @@ def test_tables_inside_a_fenced_code_block_are_not_the_registers():
     assert cpos_launch.scorecard_issues("CP-2", fenced) != ()
 
 
-def test_a_table_id_tag_heads_a_register_as_a_heading_does():
-    text = COMPLETE.replace(
-        "### T2.13 - Credit scorecard", "### Credit scorecard\n\n<!-- table-id: T2.13 -->"
-    ).replace("### T2.14 - Credit assessment", "### **T2.14** Credit assessment")
-    card = parse_scorecard(text)
-    assert card is not None and [f.level for f in card.factors] == LEVELS
+# --- placement: a register is accepted only where the module page draws it ----------------------
+# The page (web/src/pages/connected/publishedReport.ts `sectionRole`, report/moduleRecords.ts
+# `kindOf`) draws the table of a `###` section directly under `## Findings` whose heading names
+# no register or ledger; anything else it lists as held in Evidence, or does not list.
+
+CANON = "### T2.13 - Credit scorecard"
+APPENDIX = "### Analytical appendix — complete canonical registers"
+
+
+def placed(scorecard_heading: list[str], *, after: str = "Findings") -> str:
+    """Synthetic: T2.14 where it belongs, then T2.13 headed and placed as given."""
+    card = [*scorecard_heading, "", *SCORECARD_HEAD[2:], *scorecard_rows(), ""]
+    lines = ["## Findings", "", "### Bottom line", "", "The synthetic issuer is leveraged.", ""]
+    lines += ["### Limitations", "", "- Synthetic data only.", ""]
+    lines += [*ASSESSMENT_HEAD, *ASSESSMENT_ROWS, ""]
+    lines += card if after == "Findings" else []
+    lines += ["## Calculations", "", "None.", ""]
+    lines += card if after == "Calculations" else []
+    lines += ["## Gaps", "", "None.", ""]
+    lines += card if after == "Gaps" else []
+    return "\n".join(lines)
+
+
+def test_the_canonical_placement_is_accepted():
+    for text in (
+        placed([CANON]),
+        # As the transport tells a module that writes the appendix heading: a `###` sibling of it.
+        placed([APPENDIX, "", "Complete registers follow.", "", CANON]),
+        placed(["### T2.13 — Credit scorecard"]),
+        placed(["### **T2.13** Credit scorecard"]),
+        placed(["### T2.13 - Credit scorecard (17 factors)"]),
+    ):
+        assert scorecard_faults(text) == ()
+        card = parse_scorecard(text)
+        assert card is not None and [f.level for f in card.factors] == LEVELS
+        assert cpos_launch.scorecard_issues("CP-2", text) == ()
+
+
+def misplaced(text: str) -> str:
+    """The one fault of a handoff whose T2.13 the page would not draw; the launcher refuses it."""
+    (fault,) = faults_of(text)
+    (issue,) = cpos_launch.scorecard_issues("CP-2", text)
+    assert fault in issue
+    return fault
+
+
+def test_a_register_nested_under_the_appendix_heading_is_refused():
+    fault = misplaced(placed([APPENDIX, "", "#### T2.13 - Credit scorecard"]))
+    assert fault == (
+        "T2.13 must start at a `###` heading, `### T2.13 - Credit scorecard`, not at "
+        "`#### T2.13 - Credit scorecard`."
+    )
+
+
+def test_a_register_headed_as_a_top_level_section_is_refused():
+    fault = misplaced(placed(["## T2.13 - Credit scorecard"]))
+    assert fault == (
+        "T2.13 must start at a `###` heading, `### T2.13 - Credit scorecard`, not at "
+        "`## T2.13 - Credit scorecard`."
+    )
+
+
+@pytest.mark.parametrize("section", ["Gaps", "Calculations"])
+def test_a_register_outside_findings_is_refused(section):
+    fault = misplaced(placed([CANON], after=section))
+    assert fault == f"T2.13 must be in `## Findings`; it is under `## {section}`."
+
+
+def test_a_register_before_any_section_is_refused():
+    card = [CANON, "", *SCORECARD_HEAD[2:], *scorecard_rows(), ""]
+    fault = misplaced("\n".join(card) + "\n" + handoff(None, ASSESSMENT_ROWS))
+    assert fault == "T2.13 must be in `## Findings`; it is under no `##` heading."
+
+
+def test_a_register_after_a_title_line_that_closes_findings_is_refused():
+    """The page takes a `#` line for the end of `## Findings`, so what follows is not drawn."""
+    fault = misplaced(placed(["# Appendix", "", CANON]))
+    assert fault == "T2.13 must be in `## Findings`; it is under `# Appendix`."
+
+
+@pytest.mark.parametrize(
+    "tagged",
+    [
+        ["<!-- table-id: T2.13 -->"],
+        ["<!-- table-id: cp2.T2.13 -->"],
+        ["### Credit scorecard", "", "<!-- table-id: T2.13 -->"],
+    ],
+)
+def test_a_register_headed_only_by_a_table_id_tag_is_refused(tagged):
+    fault = misplaced(placed(tagged))
+    assert fault == (
+        "T2.13 must start at a `###` heading, `### T2.13 - Credit scorecard`, not at "
+        f"`{tagged[-1]}`."
+    )
+
+
+@pytest.mark.parametrize(
+    ("heading", "words"),
+    [
+        ("### T2.13 - Credit scorecard register", "register"),
+        ("### T2.13 - Credit Scorecard Register", "Register"),
+        ("### T2.13 - Credit scorecard ledger", "ledger"),
+        ("### T2.13 - Credit scorecard and confidence inputs", "confidence inputs"),
+    ],
+)
+def test_a_heading_the_page_takes_for_a_register_is_refused(heading, words):
+    fault = misplaced(placed([heading]))
+    assert fault == (
+        f"T2.13's heading must be `### T2.13 - Credit scorecard`, without `{words}`: it is "
+        f"`{heading}`."
+    )
+
+
+def test_a_heading_and_a_tag_for_one_register_count_as_two():
+    """The tag is itself a register start (`method_scripts.register_table`), so the pair is the
+    existing two-registers fault; the repair's placement sentence says to drop the tag."""
+    fault = misplaced(placed([CANON, "", "<!-- table-id: T2.13 -->"]))
+    assert fault == "The handoff has 2 T2.13 registers."
+    (issue,) = cpos_launch.scorecard_issues("CP-2", placed([CANON, "", "<!-- table-id: T2.13 -->"]))
+    assert "headed by that heading alone (no `table-id` tag)" in issue
+
+
+def test_a_misplaced_register_still_has_its_rows_checked_in_the_same_round():
+    text = placed(["#### T2.13 - Credit scorecard"]).replace(
+        "| Leverage | 4 |", "| Leverage | 4/5 |"
+    )
+    faults = faults_of(text)
+    assert len(faults) == 2
+    assert "must start at a `###` heading" in faults[0]
+    assert "T2.13 row `Leverage`: Level `4/5` is not allowed" in faults[1]
+
+
+def test_the_heading_rule_is_the_module_pages_own():
+    """`_PAGE_REGISTERS` is `REGISTERS` of web/src/pages/connected/publishedReport.ts, which sends
+    a section so headed to Evidence; the two patterns are held together here."""
+    page = (ROOT / "web/src/pages/connected/publishedReport.ts").read_text(encoding="utf-8")
+    found = re.search(r"^const REGISTERS =\s*/(.+)/(\w*);$", page, re.MULTILINE)
+    assert found is not None
+    assert found[1] == cp2_scorecard._PAGE_REGISTERS.pattern
+    assert found[2] == "i" and cp2_scorecard._PAGE_REGISTERS.flags & re.IGNORECASE
+
+
+def test_the_placement_sentence_names_each_refused_placement():
+    sentence = cp2_scorecard.PLACEMENT
+    assert "`### T2.13 - Credit scorecard` (columns `Factor | Level | Basis`" in sentence
+    assert "`### T2.14 - Credit assessment` (columns `Assessment | View | Basis`" in sentence
+    assert "each a `###` heading in `## Findings`, after `### Limitations`" in sentence
+    assert (
+        "never nested as a `####` heading under the Analytical appendix heading or any other "
+        "heading, and headed by that heading alone (no `table-id` tag)."
+    ) in sentence
 
 
 def test_an_id_cited_in_a_cell_or_mid_heading_is_not_the_register():
