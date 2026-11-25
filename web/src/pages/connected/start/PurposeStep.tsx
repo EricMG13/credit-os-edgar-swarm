@@ -1,4 +1,5 @@
-import { Segmented } from "../../../components/kit/Segmented";
+import { Segmented } from "@/components/kit/Segmented";
+import { Well } from "../report/overview/Tile";
 import { PurposeCards } from "../../run/start/Purpose";
 import { PATHWAYS, drawnModules } from "../api";
 import {
@@ -38,10 +39,7 @@ export function PurposeFields({ view }: { view: IntakeView }) {
       {view.synthetic && (
         <p className="text-small text-text-secondary sm:col-span-2">{SYNTHETIC_LIMITS}</p>
       )}
-      <section
-        aria-label="Options"
-        className="flex flex-col gap-4 rounded-ds-md border border-border-hairline bg-surface-subtle p-4 sm:col-span-2"
-      >
+      <Well className="flex flex-col gap-4 p-4 sm:col-span-2">
         <h3 className="text-h4 font-medium text-text-primary">Options</h3>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <OptionControl
@@ -75,7 +73,7 @@ export function PurposeFields({ view }: { view: IntakeView }) {
             onChange={view.changeLevel}
           />
         </div>
-      </section>
+      </Well>
     </>
   );
 }

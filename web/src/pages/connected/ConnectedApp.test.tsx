@@ -3803,7 +3803,7 @@ describe("connected run start: the review sheet shows every input Submit sends",
     await fillInputs();
     steps.documents?.();
     await advanceToPurpose();
-    if (steps.advanced) pick("Run form level", "advanced");
+    if (steps.advanced) chooseControl("Run form level", "advanced");
     steps.purpose?.();
     advanceToContext();
     steps.more?.();
@@ -3901,7 +3901,7 @@ describe("connected run start: the review sheet shows every input Submit sends",
   it("V1 keeps the inputs it showed before: issuer, as-of date, analyst, pathway, case kind, cutoff", async () => {
     const { sheet } = await sheetAfter({
       purpose: () => {
-        pick("Case kind", "private");
+        chooseControl("Case kind", "private");
       },
       more: () => {
         pick("Research cutoff", "2026-09-30");
@@ -3939,7 +3939,7 @@ describe("connected run start: the review sheet shows every input Submit sends",
   it("V4 shows the run purpose, the form level, and the model, effort and turns below Advanced", async () => {
     const { sheet } = await sheetAfter({
       purpose: () => {
-        pick("Market view", "secondary");
+        chooseControl("Market view", "secondary");
       },
     });
     const purpose = part(sheet, "Purpose and modules");
@@ -4045,7 +4045,7 @@ describe("connected run start: the review sheet shows every input Submit sends",
   it("V13 shows a new issue's tenor and pricing talk", async () => {
     const { sheet } = await sheetAfter({
       purpose: () => {
-        pick("Market view", "primary");
+        chooseControl("Market view", "primary");
       },
       more: () => {
         addFacility({
