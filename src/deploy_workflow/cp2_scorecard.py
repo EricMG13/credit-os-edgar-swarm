@@ -1,6 +1,7 @@
 """CP-2's credit scorecard: the two registers it writes and how they are read.
 
-Owner ruling R9 (2026-11-25, `docs/superpowers/specs/2026-11-25-deliverables-credit-snapshot.md`):
+Owner ruling R9 (2026-11-25, `docs/superpowers/specs/2026-11-25-deliverables-credit-snapshot.md`;
+level text: `docs/methodology/portfolio-recommendation.md` § 3):
 CP-2 scores 17 factors from 1 (strongest) to 5 (weakest), each with a one-line basis, in `T2.13`,
 and gives four assessment cells in `T2.14`. A factor with no evidence in the run is `Not scored`
 and is never guessed. Nothing here computes an overall credit score.
@@ -57,15 +58,16 @@ ASSESSMENTS: dict[str, tuple[str, ...]] = {
 # evidence in the run (an issuer with no sponsor) is not guessed. Remove this one name, and its
 # use in `_ASSESSMENT`, to make all four views compulsory.
 NOT_ASSESSED = "Not assessed"
-# The one source of the house Risk Rubric's level text: this file and the `##` section of it that
-# holds the table `Factor | 1 | 2 | 3 | 4 | 5`. Repoint both to `LEVEL_TEXT_DOCUMENT` once that
-# document is merged (and the two packagers' file lists with them, which a test holds to this
-# path). The text is read from there by `level_text` and is never typed, copied or reworded here.
-LEVEL_TEXT_DOCUMENT = "docs/methodology/portfolio-recommendation.md"
+# The one source of the house Risk Rubric's level text (owner-approved methodology, 2026-11-25):
+# this document and its `##` section holding the table `# | Factor | 1 Excellent | ... | 5 Poor`.
+# `level_text` reads it; the text is never typed, copied or reworded here. Both packagers ship the
+# file, and a test holds their lists to this path.
 LEVEL_TEXT_SOURCE = (
-    "docs/superpowers/specs/2026-11-25-deliverables-credit-snapshot.md",
-    "9. Risk Rubric level text (transcribed from the owner's rubric image, 2026-11-25)",
+    "docs/methodology/portfolio-recommendation.md",
+    "3. The Risk Rubric: 17 factors",
 )
+_RUBRIC_HEADER = ["#", "Factor", *(f"{level} {name}" for level, name in LEVEL_NAMES.items())]
+_RULE = re.compile(r":?-{3,}:?")
 # A Basis that says nothing when it is one of these alone (case, emphasis and closing punctuation
 # aside). `Not supplied: <reason>` says what is missing, so only an unscored row may give it.
 _NO_BASIS = frozenset({"none", "n/a", "n.a", "tbd", "not stated", "not supplied"})
@@ -272,35 +274,40 @@ def parse_scorecard(text: str) -> Scorecard | None:
     )
 
 
+def _rubric_lines(document: str, heading: str) -> list[str]:
+    """The table lines of the one `## heading` section of ``document``."""
+    found = list(re.finditer(rf"^## {re.escape(heading)}[ \t]*$", document, re.MULTILINE))
+    if len(found) != 1:
+        raise ValueError(f"Risk Rubric: expected one section `## {heading}`, found {len(found)}")
+    section = re.split(r"^## ", document[found[0].end() :], maxsplit=1, flags=re.MULTILINE)[0]
+    return [line for line in section.splitlines() if line.startswith("|")]
+
+
 def rubric_table(document: str, heading: str = LEVEL_TEXT_SOURCE[1]) -> str:
     """The Risk Rubric table of ``document``: its header row and its 17 factor rows, each line
-    exactly as written. Raises unless the `## heading` section is there once and its first table
-    has the header `Factor | 1 | 2 | 3 | 4 | 5` and one row per factor, named and ordered as
-    `FACTORS`, with five level cells that all say something."""
-    parts = document.split(f"## {heading}\n")
-    if len(parts) != 2:
+    exactly as written (the separator row is left out). Raises unless the `## heading` section is
+    there once and its table has the header `# | Factor | 1 Excellent | ... | 5 Poor`, a separator
+    row, and one row per factor, numbered 1 to 17, named and ordered as `FACTORS`, with five level
+    cells that all say something."""
+    lines = _rubric_lines(document, heading)
+    cells = [[cell.strip() for cell in line.strip("|").split("|")] for line in lines]
+    if not cells or cells[0] != _RUBRIC_HEADER:
+        raise ValueError(f"Risk Rubric: the table's header must be `{' | '.join(_RUBRIC_HEADER)}`")
+    if len(cells) < 2 or not all(_RULE.fullmatch(cell) for cell in cells[1]):
+        raise ValueError("Risk Rubric: the table has no separator row under its header")
+    rows = cells[2:]
+    if [row[:2] for row in rows] != [[str(n), f] for n, f in enumerate(FACTORS, 1)]:
+        found = ", ".join(row[1] if len(row) > 1 else row[0] for row in rows) or "none"
         raise ValueError(
-            f"Risk Rubric: expected one section `## {heading}`, found {len(parts) - 1}"
+            f"Risk Rubric: the rows must be the {len(FACTORS)} factors in order, numbered 1 to "
+            f"{len(FACTORS)} ({', '.join(FACTORS)}); found {found}"
         )
-    section = re.split(r"^## ", parts[1], maxsplit=1, flags=re.MULTILINE)[0]
-    lines = [line for line in section.splitlines() if line.startswith("|")]
-    header, rows = lines[:1], lines[2:]
-    cells = [[cell.strip() for cell in line.strip("|").split("|")] for line in header + rows]
-    levels = [str(level) for level in LEVEL_NAMES]
-    if not cells or cells[0] != ["Factor", *levels]:
-        raise ValueError(f"Risk Rubric: the table's header must be `Factor | {' | '.join(levels)}`")
-    names = [row[0] for row in cells[1:]]
-    if names != list(FACTORS):
-        raise ValueError(
-            f"Risk Rubric: the rows must be the {len(FACTORS)} factors in order "
-            f"({', '.join(FACTORS)}); found {', '.join(names) or 'none'}"
-        )
-    for row in cells[1:]:
-        if len(row) != len(levels) + 1 or not all(row):
+    for row in rows:
+        if len(row) != len(_RUBRIC_HEADER) or not all(row):
             raise ValueError(
-                f"Risk Rubric: `{row[0]}` must have {len(levels)} level cells, none empty"
+                f"Risk Rubric: `{row[1]}` must have {len(LEVEL_NAMES)} level cells, none empty"
             )
-    return "\n".join(header + rows)
+    return "\n".join([lines[0], *lines[2:]])
 
 
 @cache

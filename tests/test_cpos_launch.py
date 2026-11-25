@@ -674,9 +674,10 @@ CP2_SCORECARD = [
     "| Credit Direction | Stable | annual.txt, page 2 |",
     "",
 ]
-# The Risk Rubric's Scale row, typed by hand from § 9 of the 2026-11-25 deliverables spec.
+# The Risk Rubric's Scale row, typed by hand from § 3 of
+# docs/methodology/portfolio-recommendation.md.
 RUBRIC_SCALE_ROW = (
-    "| Scale | EBITDA > $1bn — large, diversified issuer with global reach | $500m–$1bn — "
+    "| 1 | Scale | EBITDA > $1bn — large, diversified issuer with global reach | $500m–$1bn — "
     "strong mid-cap with solid market presence | $200m–$500m — medium-sized, regionally "
     "focused | $100m–$200m — small-scale, limited diversification | < $100m — niche or "
     "subscale, vulnerable to shocks |"
@@ -1713,14 +1714,14 @@ def test_the_lite_pathway_runs_end_to_end_to_a_verified_delivery_with_a_syntheti
 # the peer pack CP-1C now consumes), ceiling 1,485,996 to 1,667,319. The other seven pathways'
 # instructions are byte-identical and no other ceiling moved.
 # 2026-11-25 (owner ruling R9, "CP-2 writes a scorecard table using the owner's Risk Rubric";
-# docs/superpowers/specs/2026-11-25-deliverables-credit-snapshot.md): CP-2's credit scorecard block
-# with the rubric's 17 rows adds 6,546 characters to CP-2's instructions in every pathway that runs
-# it. Measured on this file's input before (base f6cebbd) and after: only lite_credit_assessment
-# passes its ceiling, 669,952 to 676,498 (+6,546), so its ceiling rises by that growth, 675,151 to
-# 681,697. The other ceilings hold and are unchanged.
+# docs/methodology/portfolio-recommendation.md § 3): CP-2's credit scorecard block with the rubric's
+# 17 rows adds 6,685 characters to CP-2's instructions in every pathway that runs it. Measured on
+# this file's input before (base 9e6c586) and after: only lite_credit_assessment passes its
+# ceiling, 669,952 to 676,637 (+6,685), so its ceiling rises by that growth, 675,151 to 681,836.
+# The other ceilings hold and are unchanged.
 INSTRUCTION_BUDGET = {
     "deep_credit_assessment": 1_903_059,
-    "lite_credit_assessment": 681_697,
+    "lite_credit_assessment": 681_836,
     "credit_snapshot": 1_667_319,
     "covenant_refinancing": 1_157_279,
     "distressed_restructuring": 1_188_321,
@@ -10283,7 +10284,7 @@ def test_cp2_is_asked_for_the_credit_scorecard_in_every_pathway_that_runs_it(tmp
     block = cpos_launch.cp2_scorecard_block()
     assert block.startswith(opening) and head.count(block) == 1
     # Everything but the rubric table stays short.
-    rubric = block[block.index("| Factor | 1 |") : block.index("Score a factor only")]
+    rubric = block[block.index("| # | Factor |") : block.index("Score a factor only")]
     assert len(block) - len(rubric) < 2_400
     assert_rubric(rubric)
     assert "`### T2.13 - Credit scorecard` (columns `Factor | Level | Basis`" in block
@@ -10328,43 +10329,45 @@ def test_cp2_is_asked_for_the_credit_scorecard_in_every_pathway_that_runs_it(tmp
 
 
 def assert_rubric(rubric: str) -> None:
-    """The Risk Rubric table as CP-2 is sent it. Cells typed by hand from the table in § 9 of
-    docs/superpowers/specs/2026-11-25-deliverables-credit-snapshot.md, never read through the
-    loader; the paragraph under that table (the rubric's two gaps) is not sent or resolved."""
+    """The Risk Rubric table as CP-2 is sent it. Cells typed by hand from the table in § 3 of
+    docs/methodology/portfolio-recommendation.md (the owner's three amended cells included), never
+    read through the loader; the paragraph under that table is not sent."""
     lines = rubric.rstrip("\n").split("\n")
-    assert lines[0] == "| Factor | 1 | 2 | 3 | 4 | 5 |"
-    assert [line.split(" | ")[0] for line in lines[1:]] == [f"| {f}" for f in CP2_FACTORS]
-    assert all(line.count(" | ") == 5 and line.endswith(" |") for line in lines[1:])
-    assert lines[1] == RUBRIC_SCALE_ROW
-    # Leverage level 4 and Market share levels 2 and 3 are being reworded by owner ruling
-    # (2026-11-25, "fix") in the methodology PR, so only the cells that ruling leaves are pinned.
-    leverage = lines[6].split(" | ")
-    assert leverage[1:4] == [
-        "Low leverage (<3x), conservative structure",
-        "Moderate leverage (3–4x), ample headroom",
-        "Elevated leverage (4–5x), stable but stretched",
+    assert lines[0] == "| # | Factor | 1 Excellent | 2 Strong | 3 Satisfactory | 4 Weak | 5 Poor |"
+    assert [line.split(" | ")[:2] for line in lines[1:]] == [
+        [f"| {n}", f] for n, f in enumerate(CP2_FACTORS, 1)
     ]
-    assert leverage[5] == "Very high leverage (>6x), fragile structure or covenant breach risk |"
-    share = lines[12].split(" | ")
-    assert share[1] == "Dominant market leader (>30%)"
-    assert share[4:] == ["Small player, <5% share", "Marginal presence or niche operator |"]
+    assert all(line.count(" | ") == 6 and line.endswith(" |") for line in lines[1:])
+    assert lines[1] == RUBRIC_SCALE_ROW
+    assert lines[6] == (
+        "| 6 | Leverage | Low leverage (<3x), conservative structure | Moderate leverage (3–4x), "
+        "ample headroom | Elevated leverage (4–5x), stable but stretched | High leverage (5–6x), "
+        "limited covenant cushion | Very high leverage (>6x), fragile structure or covenant "
+        "breach risk |"
+    )
+    assert lines[12] == (
+        "| 12 | Market share | Dominant market leader (>30%) | Top 3 competitor, or 10–30% share | "
+        "Mid-tier, 5–10% share | Small player, <5% share | Marginal presence or niche operator |"
+    )
     assert lines[16] == (
-        "| Interest cover | EBITDA/Interest >4.0x | 3.0–4.0x | 2.0–3.0x | 1.0–2.0x | <1.0x "
+        "| 16 | Interest cover | EBITDA/Interest >4.0x | 3.0–4.0x | 2.0–3.0x | 1.0–2.0x | <1.0x "
         "(interest not covered) |"
     )
-    assert lines[17].split(" | ")[3] == (
+    assert lines[17].split(" | ")[4] == (
         "Neutral or balanced policy. Leverage 3.5–4.5x; some shareholder bias."
     )
-    for unsent in ("Gaps in the rubric", "read here as", "outside the top three", "Probability of"):
-        assert unsent not in rubric, unsent
+    unsent = ("amended", "High leverage (>5x)", "Mid-tier, <10%", "Probability of", "image")
+    for words in unsent:
+        assert words not in rubric, words
 
 
 def test_the_rubrics_gaps_paragraph_is_in_no_modules_instructions(tmp_path):
     _, texts = all_instructions(tmp_path, "deep_credit_assessment")
     for module, text in texts.items():
-        for unsent in ("Gaps in the rubric as written", "read here as 4 for 5–6x"):
+        for unsent in ("Gaps in the rubric as written", "read here as 4 for 5–6x", 'was "High'):
             assert unsent not in text, (module, unsent)
     assert "Very high leverage (>6x)" in texts["CP-2"]
+    assert "High leverage (>5x)" not in texts["CP-2"]  # the cell the owner amended
 
 
 def test_sponsor_quality_names_registers_cp1a_writes_in_this_transport():

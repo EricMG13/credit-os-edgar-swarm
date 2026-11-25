@@ -9,7 +9,7 @@ from pathlib import Path
 
 APP = Path(__file__).resolve().parents[1]
 ROOT = APP.parents[1]
-RUBRIC_SOURCE = "docs/superpowers/specs/2026-11-25-deliverables-credit-snapshot.md"
+RUBRIC_SOURCE = "docs/methodology/portfolio-recommendation.md"
 CACHE = ROOT / "artifacts/issuer-library/runtime-cache"
 PINS = {
     "pydantic": "2.14.1",

@@ -27,10 +27,10 @@ SOURCE_PATHS = (
     "docs/QUALITY-GATE.md",
     "docs/design/design-system.md",
     "docs/design/screen-map.md",
+    "docs/methodology/portfolio-recommendation.md",  # CP-2's Risk Rubric table
     "docs/react-workflow.md",
     "docs/reuse/selected-methods",
     "docs/rulings",
-    "docs/superpowers/specs/2026-11-25-deliverables-credit-snapshot.md",  # CP-2's Risk Rubric table
     "docs/templates",
     "docs/visualisations",
     "prompts",

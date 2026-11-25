@@ -737,31 +737,36 @@ def test_the_constants_are_the_rulings():
 
 # --- the Risk Rubric table CP-2 is sent --------------------------------------------------------
 
-RUBRIC_HEADING = "9. Risk Rubric level text (transcribed from the owner's rubric image, 2026-11-25)"
-RUBRIC_HEAD = "| Factor | 1 | 2 | 3 | 4 | 5 |"
+RUBRIC_HEADING = "3. The Risk Rubric: 17 factors"
+RUBRIC_HEAD = "| # | Factor | 1 Excellent | 2 Strong | 3 Satisfactory | 4 Weak | 5 Poor |"
+RUBRIC_RULE = "| ---: | --- | --- | --- | --- | --- | --- |"
 
 
-def rubric_document(rows: list[str], head: str = RUBRIC_HEAD) -> str:
-    """Synthetic: a document with the rubric section between two others, as the spec holds it."""
+def rubric_document(rows: list[str], head: str = RUBRIC_HEAD, rule: str = RUBRIC_RULE) -> str:
+    """Synthetic: a document with the rubric section between two others, as the methodology
+    document holds it."""
     return "\n".join(
         [
-            *("# Synthetic", "", "## 8. Before", "", "| A | B |", "|---|---|", "| 1 | 2 |", ""),
+            *("# Synthetic", "", "## 2. Before", "", "| A | B |", "|---|---|", "| 1 | 2 |", ""),
             *(f"## {RUBRIC_HEADING}", "", "Levels: 1 Excellent to 5 Poor.", ""),
-            *(head, "|---|---|---|---|---|---|", *rows, ""),
-            *("Gaps in the rubric as written, for the owner: synthetic.", ""),
-            *("## 10. After", "", "| Factor | 1 |", "|---|---|", "| Scale | x |", ""),
+            *(head, rule, *rows, ""),
+            *("Two cells were amended on the owner's ruling: synthetic.", ""),
+            *("## 4. After", "", "| Factor | 1 |", "|---|---|", "| Scale | x |", ""),
         ]
     )
 
 
 def rubric_rows() -> list[str]:
-    return [f"| {factor} | one — a | two | $3–$4 | >four | <five |" for factor in RULED_FACTORS]
+    return [
+        f"| {number} | {factor} | one — a | two | $3–$4 | >four | <five |"
+        for number, factor in enumerate(RULED_FACTORS, 1)
+    ]
 
 
 def test_the_rubric_table_is_returned_line_for_line_without_its_surroundings():
     table = cp2_scorecard.rubric_table(rubric_document(rubric_rows()))
     assert table.split("\n") == [RUBRIC_HEAD, *rubric_rows()]
-    assert "Gaps in the rubric" not in table and "|---" not in table
+    assert "amended" not in table and "---" not in table
 
 
 def tampered(change) -> str:
@@ -785,6 +790,10 @@ def tampered(change) -> str:
             "17 factors in order",
         ),
         (
+            tampered(lambda rows: rows.__setitem__(3, rows[3].replace("| 4 |", "| 5 |"))),
+            "numbered 1 to 17",
+        ),
+        (
             tampered(lambda rows: rows.__setitem__(5, rows[5].replace("| two |", "|  |"))),
             "`Leverage` must have 5 level cells, none empty",
         ),
@@ -796,11 +805,22 @@ def tampered(change) -> str:
             tampered(lambda rows: rows.__setitem__(5, rows[5] + " six |")),
             "`Leverage` must have 5 level cells, none empty",
         ),
-        (rubric_document(rubric_rows(), "| Factor | 1 | 2 | 3 | 4 |"), "header must be"),
-        (rubric_document(rubric_rows(), "| Factor | 5 | 4 | 3 | 2 | 1 |"), "header must be"),
+        (
+            rubric_document(rubric_rows(), RUBRIC_HEAD.replace(" 5 Poor |", "")),
+            "header must be",
+        ),
+        (
+            rubric_document(rubric_rows(), RUBRIC_HEAD.replace("1 Excellent", "1")),
+            "header must be",
+        ),
+        (rubric_document(rubric_rows(), rule=rubric_rows()[0]), "no separator row"),
         (rubric_document([]), "17 factors in order"),
         (
-            rubric_document(rubric_rows()).replace(RUBRIC_HEADING, "9. Rubric"),
+            rubric_document(rubric_rows()).replace(RUBRIC_HEADING, "3. Rubric"),
+            "expected one section",
+        ),
+        (
+            rubric_document(rubric_rows()).replace(f"## {RUBRIC_HEADING}", f"### {RUBRIC_HEADING}"),
             "expected one section",
         ),
         (rubric_document(rubric_rows()) + f"\n## {RUBRIC_HEADING}\n", "expected one section"),
@@ -815,18 +835,19 @@ def test_a_tampered_rubric_is_refused_never_sent_in_part(document, complaint):
 
 def test_the_rubric_is_read_from_the_one_source_and_is_not_typed_in_code():
     path, heading = cp2_scorecard.LEVEL_TEXT_SOURCE
-    assert path == "docs/superpowers/specs/2026-11-25-deliverables-credit-snapshot.md"
+    assert path == "docs/methodology/portfolio-recommendation.md"
     assert heading == RUBRIC_HEADING
-    assert cp2_scorecard.LEVEL_TEXT_DOCUMENT == "docs/methodology/portfolio-recommendation.md"
     document = (ROOT / path).read_text(encoding="utf-8")
     table = cp2_scorecard.level_text()
     lines = table.split("\n")
     assert lines[0] == RUBRIC_HEAD and len(lines) == 18
     for line in lines:
         assert f"\n{line}\n" in document  # each line is the document's, byte for byte
-    # Cells typed by hand from the spec's table.
-    assert "| Scale | EBITDA > $1bn — large, diversified issuer with global reach | " in table
-    assert " | <1.0x (interest not covered) |" in lines[16]
+    # Cells typed by hand from the methodology document's table, the owner's amended cells too.
+    assert "| 1 | Scale | EBITDA > $1bn — large, diversified issuer with global reach | " in table
+    assert " | High leverage (5–6x), limited covenant cushion | " in lines[6]
+    assert " | Top 3 competitor, or 10–30% share | Mid-tier, 5–10% share | " in lines[12]
+    assert lines[16].endswith(" | <1.0x (interest not covered) |")
     for name in ("cp2_scorecard.py", "owners/cpos_launch_prompts.py", "owners/cpos_launch.py"):
         code = (ROOT / "src/deploy_workflow" / name).read_text(encoding="utf-8")
         for words in ("diversified issuer", "interest not covered", "shareholder bias"):
