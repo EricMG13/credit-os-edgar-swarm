@@ -1,0 +1,9 @@
+{
+  "issues": [
+    "Prose check 3 (no page locator), line 539: \"pages 7\" in section \"Gaps\" \u2014 name the document in words and move the page to the paragraph's Basis line.",
+    "Prose check 3 (no page locator), line 539: \"page 4\" in section \"Gaps\" \u2014 name the document in words and move the page to the paragraph's Basis line.",
+    "Prose check 10 (no pipeline wording), line 539: \"K_2025\" in section \"Gaps\" \u2014 write for the reader, not for the pipeline: name the document (for example the 2024 annual report), the module by its plain name or the analysis instead.",
+    "Prose check 10 (no pipeline wording), line 539: \"Q_2026\" in section \"Gaps\" \u2014 write for the reader, not for the pipeline: name the document (for example the 2024 annual report), the module by its plain name or the analysis instead."
+  ],
+  "response_sha256": "96cf00b8b13d909a0b9ac962eb3d08134d674195179f1ff1e678a59b58c27f3f"
+}

@@ -1,0 +1,264 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "cmc-22444-2026-11-18-credit_snapshot-host",
+    "issuer_id": "cmc-22444",
+    "issuer_name": "COMMERCIAL METALS Co",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-08-31_cmc.htm.jsonl": {
+      "path": "source-text/10-K_2024-08-31_cmc.htm.jsonl",
+      "sha256": "8d4b918ae5dfb9f103a90b6a498f9b473fc2884200199e013c27b12f54967ca8"
+    },
+    "10-K_2025-08-31_cmc.htm.jsonl": {
+      "path": "source-text/10-K_2025-08-31_cmc.htm.jsonl",
+      "sha256": "d925fb94e85a880b14ff8f2100f934eaf32d58443b3db315561ab0696f9679de"
+    },
+    "10-Q_2025-11-30_cmc.htm.jsonl": {
+      "path": "source-text/10-Q_2025-11-30_cmc.htm.jsonl",
+      "sha256": "328fcc682aa16787082e0972e0de6853f82c100000063f089113b06515594027"
+    },
+    "10-Q_2026-02-28_cmc.htm.jsonl": {
+      "path": "source-text/10-Q_2026-02-28_cmc.htm.jsonl",
+      "sha256": "4509039dd0524549949453395b9a583f3d6068fdf90595372c256252f9d01380"
+    },
+    "10-Q_2026-05-31_cmc.htm.jsonl": {
+      "path": "source-text/10-Q_2026-05-31_cmc.htm.jsonl",
+      "sha256": "d7c399e276f561642e056ef2918f65a8d1e9eeb24c4dca36c1c27a66a1ac0487"
+    },
+    "EX99.1_2025-11-30_cmc_cmc-11302025xdividendxex991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2025-11-30_cmc_cmc-11302025xdividendxex991-htm.htm.jsonl",
+      "sha256": "e91d934a56bf8de3bcdf3a023521ffcad782ae1af8cecefddfb10a419d20f2e1"
+    },
+    "EX99.1_2025-11-30_cmc_cmc-11302025xearningsrelea-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2025-11-30_cmc_cmc-11302025xearningsrelea-htm.htm.jsonl",
+      "sha256": "c464d6bd75644a8ac82e2a76bc0ccc9e87fde109e41b8ae1b2b43a461c51e55c"
+    },
+    "EX99.1_2026-02-28_cmc_cmc-2282026xdividendxex991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-02-28_cmc_cmc-2282026xdividendxex991-htm.htm.jsonl",
+      "sha256": "b97c5d8e72501a1ab2b9f66d28e1f7f333aef891d9c0c2af1962ad91e1cfb474"
+    },
+    "EX99.1_2026-02-28_cmc_cmc-2282026xearningsreleas-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-02-28_cmc_cmc-2282026xearningsreleas-htm.htm.jsonl",
+      "sha256": "e8df96a5865313aab01f3e04622ffe6edbe28c0e87a1820463f529536c51b99a"
+    },
+    "EX99.1_2026-02-28_cmc_d117730dex991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-02-28_cmc_d117730dex991-htm.htm.jsonl",
+      "sha256": "76aebdac8fc258d156cdd70ed41ba5d2acd3a214f37fc8972ed66a06958ccd3d"
+    },
+    "EX99.1_2026-05-31_cmc_cmc-5312026xdividendxex991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-05-31_cmc_cmc-5312026xdividendxex991-htm.htm.jsonl",
+      "sha256": "1b482b62b86f55c180a7c920b0ef50fa5e4855879cd2a843b51828ca2f2905da"
+    },
+    "EX99.1_2026-05-31_cmc_cmc-5312026xearningsreleas-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-05-31_cmc_cmc-5312026xearningsreleas-htm.htm.jsonl",
+      "sha256": "a6775657b6b5f16b89ccbb7c0378913ca2b1d83e5b23a07d20fa501ffdcebdc8"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/22444-commercial-metals-co.json",
+      "sha256": "95a6d0a54728a67e8299c8e0134c3e49c5b81151b4d5f60f57c4376fba8f2e57"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "730ceba6f0dda8e2fd86b1c3c1fc5ae54a618405e48eaae2f5616f256497b61a"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "2811b8e395e4b3104ae86116682b487edbef2c948b0ae9be71dbb5ce7c60dbf3"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "29c8f4218a634beda7f324c17e1eb96abc90f44f633853b3c6eb39bb9f95f277"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "3dce392baa47cbf9d9ec7385acece2ed7dbcb1dbbf177f92955396951606d0d6"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for COMMERCIAL METALS Co as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "COMMERCIAL METALS Co — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

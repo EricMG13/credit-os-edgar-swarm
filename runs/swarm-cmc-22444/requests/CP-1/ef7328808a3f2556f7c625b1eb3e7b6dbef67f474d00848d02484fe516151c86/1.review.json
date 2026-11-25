@@ -1,0 +1,11 @@
+{
+  "issues": [
+    "Invalid Markdown table header at line 270: the header has 5 cells and the separator row has 7 (\"| Period | Total debt / EBITDA | Net debt / EBITDA | Reporting unit | Basis and \")",
+    "Invalid Markdown table header at line 281: the header has 4 cells and the separator row has 5 (\"| Period | EBITDA / cash interest | Reporting unit | Basis and limitation |\")",
+    "Markdown table row does not match its header at line 367: the row has 6 cells and the header has 7",
+    "`### Chart data: debt stack` row needs 7 cells: 2035 Notes | 1 | No | 1,000.000 | 1.74 | Explicitly senior unsecured; uses LTM reported EBITDA",
+    "`### Chart data: EBITDA bridge` needs the table headed `| Step | Amount | Reporting unit | Basis and limitation |`.",
+    "`### Confidence inputs`: the `Confidence inputs` table has no row for Source gate, CRITICAL, MATERIAL, MINOR."
+  ],
+  "response_sha256": "106d9cb7d774eb58e493ddd9f3d5d2629ad21d98de1e43eb8b328981238dd51c"
+}
