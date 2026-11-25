@@ -740,6 +740,8 @@ function EverythingSubmitSends({
                   ["Current period", given(run.current_period)],
                   ["Prior period", given(run.prior_period)],
                   ["Research cutoff", given(run.cutoff)],
+                  // Sent only when the analyst set it; drawn only then.
+                  ["Date of your newest file", answers.newest_document_date],
                   // The service's own sentence, not an input: drawn only when it wrote one.
                   ["Changes", changes || undefined],
                   ...attachmentFacts(answers.context, review.attachmentNames),
