@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "ati-1018963-2026-11-18-credit_snapshot-host",
+    "issuer_id": "ati-1018963",
+    "issuer_name": "Ati Inc",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-29_ati_ati-20241229.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-29_ati_ati-20241229.htm.jsonl",
+      "sha256": "5129255a626b98f7addfdf609eb74e55b220dc6812a97d8d2e664b25268101e0"
+    },
+    "10-K_2025-12-28_ati_ati-20251228.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-28_ati_ati-20251228.htm.jsonl",
+      "sha256": "5d347abcfa7f23bf17cce990198026c6f76789751d8e82391f3d73b8889e6812"
+    },
+    "10-Q_2026-03-29_ati_ati-20260329.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-29_ati_ati-20260329.htm.jsonl",
+      "sha256": "5ffcd8d14437d458cf908cae774a27a1093a6470f770f7e1c7402d0a0d5fe7dc"
+    },
+    "10-Q_2026-06-28_ati_ati-20260628.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-28_ati_ati-20260628.htm.jsonl",
+      "sha256": "10832f623acc010f2bdcdc370490b828728a0a944d5d811800fe5849797a3b1e"
+    },
+    "10-Q_2026-09-27_ati_ati-20260927.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-27_ati_ati-20260927.htm.jsonl",
+      "sha256": "da8c601d00131a3f1ce69a17e0738bd7d88a2eb1e7b2c683f8a6d1f946a3cf87"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1018963-ati-inc.json",
+      "sha256": "0e44199d830b91680bb337d5c0dfb5a15c3e8dc5c3137a5ab12176d6e8975241"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "399f499f458d8068ef1a11407db08a03f759315dfe4591d47581d0597f479100"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "84c826ba378c91b8ab85b7ceaf3829dcb6e6679ddc543afc329833801480a0f3"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "cafd49ed519bb85d6609a88236ec42242953e17d1987da64de52105023b50b35"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "6b9f41dd197bb50c15df1dcbcf518883cf84ad58b796d5a3ad0e08ead9d709b4"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Ati Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Ati Inc — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

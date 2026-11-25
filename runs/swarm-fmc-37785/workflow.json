@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "fmc-37785-2026-11-18-credit_snapshot-host",
+    "issuer_id": "fmc-37785",
+    "issuer_name": "Fmc Corp",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_fmc-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_fmc-20241231.htm.jsonl",
+      "sha256": "67cdbc9c6437e04e4a1ded116c86871c4adad14c6ca87dd0ea7e1716bdbf6292"
+    },
+    "10-K_2025-12-31_fmc-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_fmc-20251231.htm.jsonl",
+      "sha256": "9fba7c3d426b8a0027c88d284abfc764a00d7f04d1f42b54c773411e6b06da05"
+    },
+    "10-Q_2026-03-31_fmc-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_fmc-20260331.htm.jsonl",
+      "sha256": "2f752a9b1f8513f4c88c9c6f9f5504acd569eaab2ae149c20cfd2441fcbb5ef5"
+    },
+    "10-Q_2026-06-30_fmc-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_fmc-20260630.htm.jsonl",
+      "sha256": "62893099f568170d0f4ddd2a706d163cc3533976661d5533fa1ac49fb1a5d5b4"
+    },
+    "10-Q_2026-09-30_fmc-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_fmc-20260930.htm.jsonl",
+      "sha256": "4672623a360464c9d716fd3baa73c78e0692e19e6bef2710b19c0154b1157e40"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/37785-fmc-corp-fmc.json",
+      "sha256": "936f2907e549a64b4789aefd4bf66849f485ef8c39a8d8d85ccd0c7178076fe4"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "234f1d23dfe839393060f144563b9578e8a315d85da3b8f40d8bf5bd280421f2"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "b444ae9e88f00ef12e6d2d7f437c09498133b07d3514bf5c9a6de07d9963e467"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "cf2f8eb5fb23d868604fffab37d5a269925cde9567e7aaef38087938df7d6267"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "3c1c771481cd049d5f151328b4063dcf8f7ed0d962185190af92e330b4c91618"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Fmc Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Fmc Corp — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

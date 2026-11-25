@@ -1,0 +1,68 @@
+[
+  {
+    "issuer_id": "trn-99780",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The filings print no 2026 cash interest paid and no maturity ladder after 2025-12-31, and the proxy statement and executed financing documents are not supplied, so those gaps are recorded in the handoffs and not fixable; CP-2 also corrected two earlier statements, because the 10-Q does state the divested partnerships' operating profit (USD 13.9m for Q3 2025, USD 35.9m for nine months 2025) and their year-end debt."
+  },
+  {
+    "issuer_id": "fmc-37785",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The run finished with exit 0 and the delivery was written. CP-0, CP-1 and CP-1A were already accepted at attempt 1 before this session, so I submitted only CP-2, which was accepted first time. The accepted CP-1A says the Project Foundation savings target was not supplied, but the Q3 2026 10-Q (page 79) prints USD 200 million of run-rate savings by end 2027; I corrected this in CP-2 (Gaps G8) because CP-1A cannot be edited."
+  },
+  {
+    "issuer_id": "issuer-915840",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "All four modules were accepted on the first submission; the unfixable limits are the absent covenant levels and merger agreement, which leave liquidity headroom and pro forma net debt and leverage for the Dream Finders merger unestablished and are recorded as gaps."
+  },
+  {
+    "issuer_id": "cohr",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Business & governance answer (which cannot be replaced) calls customer prepayments small using the USD 63 million year-end contract liabilities although the latest 10-Q shows USD 333 million (corrected in the Fundamental credit answer), and the sources themselves conflict on the August 2026 facility size (USD 945 million versus USD 950 million) and mislabel one borrowing quarter, while no covenant ratios, ratings or proxy statement were supplied."
+  },
+  {
+    "issuer_id": "ati-1018963",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Business & governance (CP-1A) answer reads the year-end backlog as falling (about USD 3.9 billion to 3.7 billion) and misses the 10-Q's USD 4.3 billion at 2026-09-27 against USD 3.6 billion a year earlier, which an accepted answer cannot be replaced to fix, so Fundamental credit (CP-2) states the correction in its own text and its source table."
+  },
+  {
+    "issuer_id": "cxw-1070985",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "Source defects I logged as gaps but could not fix: the Q3 2026 release's net leverage of (0.1)x has no stated definition and cannot be reproduced from printed debt and cash, no document prints full-year or trailing adjusted EBITDA so the FY2025 and LTM adjusted figures are house-built estimates, and fiscal 2025 is not recast to the new segments; each draft was also pre-checked offline with the repository's own checker functions before submission."
+  }
+]

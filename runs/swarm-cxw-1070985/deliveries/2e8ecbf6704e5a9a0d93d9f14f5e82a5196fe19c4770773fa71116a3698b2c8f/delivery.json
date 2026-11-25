@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for CoreCivic, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "4a591c10a6e4b4b5210b2358e4651eb5ab1a40470c147222b1f73110922f4b72",
+    "CP-1.md": "c5f0702830359b405d11fa35e70482af4f6565f0d45470f1e24f9c1ae7c2c21d",
+    "CP-1A.md": "0a69205018a5338de203096e5b2e1cc206a69cbb20de618ef81a2b88dfafe06a",
+    "CP-2.md": "42b19f423d3856437c02ad0693341ce40c6a23a865c65e275d0ba461b8e3ba5c",
+    "coverage.json": "7121355bad82dab20f1591cf85cd6e4487af5f6767b741003b0b889e3e2996b8",
+    "view.json": "c454ab81daa9d46e7e39cad4729dd212706710ea983fe4607b4c78807024d89e",
+    "report-view.json": "815bb2b91a814f9d8ffa639827003516cac2c5221ef3f5a92124f26b7dfee185"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Ati Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "d7d81635bb5ea1345070fe027d55bf7c57d17bd59c631890fdbacbca5f9246d0",
+    "CP-1.md": "6b953e1f277ab1b7f409507a1e8e1f711a02d744001df0e27ed4731c84039120",
+    "CP-1A.md": "85618019a77f8d5f66f2d46fe6888c5f8eaba38230d37f6e91b1dec45b701d21",
+    "CP-2.md": "700e8a64828933f3b15d9f513139f1b4d7acf0d4b5cda46d0116f2baaafa908d",
+    "coverage.json": "fea2f1b42f3c34da368d17742cabcc30af09f151d6e5d2a96f0b2fdae2566740",
+    "view.json": "e37200348c7c1d8aa08954a4bd33b520d4a0203672fbc29b9edde8a2da80ca2f",
+    "report-view.json": "e89ee011bb1a8e10b7dbe709284c00cf07c605fca588614c3ab09f4b41e5951f"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Beazer Homes Usa Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/ef4071845165c4a30e19d067d1e2bb6c43055aac05151185a75436eca90822f8/1.response.md",
+    "CP-1": "requests/CP-1/41fae71b8b7ef4eabd2d33bbfcda7c997f4a0e636eafa9c2ad58fa1608718784/1.response.md",
+    "CP-1A": "requests/CP-1A/3dbfeeee6b13d1f0cc6a38c3eb7f2c030dd7656ea7ebcc77e351a086f36539b7/1.response.md",
+    "CP-2": "requests/CP-2/b1ef568c37014a0924a6cb7dfbb88790e22f14e08180e4087445e81245a3abb7/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "1a85323fd54ceaf1fec807032f179099a8d21f33dc2d43da4576644e4ec6d120",
+  "delivery_sha256": "035d153bc5ad8fd6403925e0c46cfe4441447f1ecfa19277c68654c54b3d80cc"
+}

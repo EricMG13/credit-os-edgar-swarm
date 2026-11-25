@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Trinity Industries Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "8bef18195e5be960e8db0e338f7dc688fbb1053a7a44760af3609698f7abf4f6",
+    "CP-1.md": "ff2b87468d36f044c749afa6b4398ff7f220a0d1b88bed8dbf718ab7a0bfc9eb",
+    "CP-1A.md": "8833314061881ae128fe954e561fd6cec5a21bbccb7eabb55a9140e18c4799f1",
+    "CP-2.md": "1da0e829aaa8d8b0f6726ecb66bd39526c5673cd3d82f9563e06473ddba26dc8",
+    "coverage.json": "ffca180a80038159daead4e8ff3c3795d65f9eef72ee3020080f724f328d56e4",
+    "view.json": "00aea2e53b67726e06e1f905bfc5fac126081fe85b980904e93b0ddd80c0f65e",
+    "report-view.json": "795626704081d00c22b6457d7ca6c87e2d91ecdf2313603b6654ca3aa7ea08df"
+  }
+}

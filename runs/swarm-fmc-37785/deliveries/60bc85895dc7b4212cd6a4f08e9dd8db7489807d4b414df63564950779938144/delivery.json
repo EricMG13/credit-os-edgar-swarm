@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Fmc Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "558ab7d1686d1420e2a747b5a0a9241b4479536c1d7c96b3c86f96fa8f75ae2f",
+    "CP-1.md": "d3bbdbe205af6a1ea934adb3728e763685290af57ea7f4beb89c51aecd6ca451",
+    "CP-1A.md": "43ab8f680713d4383e4c6289b1d61cae32c3e4d8eada808cfcdc578bfeb5c91d",
+    "CP-2.md": "3e1d6abfc9b949b7cd648819d075dca47226e563920df6459da3d8b143ae6d58",
+    "coverage.json": "7f8e633a313b74c36b75875c2b438b3c01847aa03d2000a0cd815d4266139973",
+    "view.json": "fb27f271e037473977d4411a2389b46208074f916b1f876d8e39a939696b2d90",
+    "report-view.json": "ef79201c24ca60230d10c8515aa9f170dd7cfed4abce63d51c957fafe26fd7d5"
+  }
+}
