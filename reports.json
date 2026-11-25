@@ -1,0 +1,57 @@
+[
+  {
+    "issuer_id": "val",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "All four modules were accepted on the first attempt and delivery completed. One defect remains that I cannot fix: the automated checker does not enforce the 60-character limit on map text, and Valaris's October 2026 rig-sale pro forma cash is not stated by any source, so liquidity is shown as at 2026-09-30 only."
+  },
+  {
+    "issuer_id": "gtn",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The source set has no proxy statement, executed credit agreement or indentures, or ratings, so ownership percentages, board independence and covenant capacity stay \"not established\", and two source inconsistencies (the Q1 2026 10-Q covenant table differs from its own debt note by USD 6 million and USD 1 million; the 10-K gives both 15 and 16 August 2025 for the Atlanta CBS affiliation end) are logged but cannot be reconciled from the filings."
+  },
+  {
+    "issuer_id": "smg-825542",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Financial foundation and Business & governance answers describe the June 27, 2026 balance sheet as the seasonal peak, but the quarterly reports show liquidity was lowest at December 27, 2025 (USD 988.1 million) and receivables sold peaked at March 28, 2026 (USD 654.1 million), a defect I could not fix because an accepted answer cannot be replaced, so CP-2 states the correction in its own text."
+  },
+  {
+    "issuer_id": "fgpr-922358",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The executed indentures, credit agreement and partnership agreements, the covenant ratios and the first-quarter fiscal 2026 report were not supplied, and the run's \"q3-2026\" current-period label is earlier than the supplied audited FY2026 10-K, so covenant headroom is not calculable and the period label is unresolved. Two small inconsistencies in the filings are logged but not fixable: the 2020 exchanged notes are called secured in the 10-Ks and unsecured in the 10-Qs, and the retail-customer count was restated under a new method."
+  },
+  {
+    "issuer_id": "dxpe",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The source documents contain defects I could not fix: the annual report schedules the Secured Leverage Ratio maximum at 5.50x for the June and September 2026 tests while the later quarterly reports say less than 5.75x, its exhibit index dates term loan Amendments No. 3 and No. 4 as 2023-10-13 against the debt note's 2024-10-03 and 2025-12-16, and Item 1 prints 2025 operating margins of 16.6% and 8.5% for two segments that its segment note does not support (17.99% and 8.67%)."
+  }
+]
