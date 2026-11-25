@@ -10,26 +10,37 @@ forecast years; (2) every time-series chart has periods on the X axis. Desktop o
 Both test suites read `tests/fixtures/period-order-cases.json`, written by hand from the ruling.
 No other code in the repository parses a period label for ordering.
 
-A label is normalised (trimmed, upper-cased, apostrophes to spaces, runs of spaces to one) and
-read as a **class** and an optional **end**:
+A label is read **strictly**: it is normalised (trimmed, upper-cased; apostrophes, brackets,
+commas, full stops and colons to spaces; runs of spaces to one), the tokens below are taken out,
+and if any letter or digit is left the label is **unparseable**. `Base case 2026`,
+`Net debt 1500`, `Change vs FY2024` and `3M SOFR` are therefore not periods. The tokens give a
+**class** and an optional **end**:
 
-| Class (in order) | Recognised by |
+| Class (in order) | Marker |
 |---|---|
-| actual | no marker below |
+| actual | none of the markers below |
 | ytd | `YTD`, `PYTD`, or `3M`/`6M`/`9M` |
 | ltm | `LTM`, `TTM` |
 | pf | `PF`, `PRO FORMA`, `PRO-FORMA`, `PROFORMA` |
-| forecast | a year directly followed by `E` or `F` (`FY2025E`, `26E`), or the word `FORECAST`, `PROJECTED`, `BUDGET`, `GUIDANCE`, `OUTLOOK`, `ESTIMATE` or `ESTIMATED` |
+| forecast | `E`, `F`, `B` or `P` after the year (`FY2025E`, `26E`, `FY 2025 E`, `2026 (E)`); `NTM`; or the word `FORECAST`, `PROJECTED`, `PROJECTION`, `PROJ`, `BUDGET`, `GUIDANCE`, `OUTLOOK`, `ESTIMATE`, `ESTIMATED`, `EST`, `PLAN` or `TARGET` |
 
 The highest class present wins (`PF FY2025E` is a forecast, `Pro forma LTM Jun 2025` is PF).
 
-End, first match wins: an ISO date (a real calendar date, else the label is unparseable); else a
-year with a month name; a quarter (`Q3`, `3Q` → month 3n); a half (`H1`, `1H` → month 6n); a
-`3M`/`6M`/`9M` count; or the year alone (month 12). A year is four digits, a split year
-(`FY2024/25` → 2025; the second part must be the next year), or, when the label also has `FY`,
-a part, a month or a class marker, the last two-digit number (`FY24` → 2024). Fiscal labels are
-placed as if the fiscal year ends in the calendar year it names; a label that carries its own
-date (`FY2024 / 2024-09-30`) goes by that date.
+Other tokens: an ISO date (a real calendar date, else unparseable); one year, with an optional
+`FY`, `CY` or `FYE` before it and `A` after it; a quarter (`Q3`, `3Q`) or half (`H1`, `1H`),
+which may be glued to the year (`2024Q4`); a month name, with an optional day number beside it
+(the day is not used); and the qualifier words `ACTUAL`, `REPORTED`, `RESTATED`, `ADJ`,
+`ADJUSTED`, `AUDITED`, `UNAUDITED`, `AS`, `AT`, `TO`, `YEAR`, `QUARTER`, `HALF`, `PERIOD`,
+`ENDED`, `ENDING`, `END`. A year is four digits from 1900 to 2199; a split year (`FY2024/25`,
+`FY2023-24`, `2023/2024`: the second part must be the next year, which is the year read); or,
+when the label also has `FY`/`CY`, a part, a month or a class marker, the last two-digit number
+(`FY24` → 2024; 70 to 99 → 19yy).
+
+End, first match wins: the ISO date; else, with a year: the month named; the quarter (month
+3n); the half (month 6n); the `3M`/`6M`/`9M` count; or the year alone (month 12). Fiscal labels
+are placed as if the fiscal year ends in the calendar year it names; a label that carries its
+own date (`FY2024 / 2024-09-30`) goes by that date. A label with a class marker and no year is
+an undated period of its class (`LTM`, `LTM 30 Jun`, `Dec YTD`).
 
 Sort key: class, then end (year, month, day), then span (date or month, quarter, half, year),
 so on one end date the shorter period comes first. Within ytd, ltm and pf an undated label sorts
@@ -45,7 +56,8 @@ type and date, not from a label. `FinancialPeriod.period_type` gains `PF`.
 
 - **Strip charts S.1, S.2, S.3, S.5** (`financial_series.py`): every T4.14 period that carries a
   fact for the metric is plotted (FY, QUARTER, YTD, LTM, PF), in rule order; no four-quarter
-  requirement. A period without a fact for a metric is a gap for that point, not a reason to
+  requirement. A PF period plots only where a fact carries its column; the model host
+  builds no reported-history column for a PF period today, so a PF row is stated as a gap. A period without a fact for a metric is a gap for that point, not a reason to
   drop the chart.
 - **S.4 maturity wall**: X categories in maturity-date order.
 - **Markdown chart routes** (`markdown_delivery._chronological`), **issuer-library reader
@@ -56,7 +68,10 @@ type and date, not from a label. `FinancialPeriod.period_type` gains `PF`.
   quarters and forecasts order instead of being rejected. `chart_rows` still raises on an
   unparseable Period or two rows with one key. "Latest period" (`chart_row` and its TypeScript
   twin) is the last row in rule order among the actual, ytd and ltm classes: a pro forma or
-  forecast row is never reported as the latest reported figure.
+  forecast row is never reported as the latest reported figure. It is refused, as before
+  this change, when the actual rows mix ISO-dated and fiscal-labelled periods (`FY2025` beside
+  `2025-06-30`): which is later depends on the year end, and the rule does not guess for a
+  figure presented as the latest. Charts still draw both, by the rule.
 - **Forecast charts** (`forecastData.ts`, `scenarioPeriods.ts`): every actual, YTD, LTM and PF
   column of the grid is shown before the forecast years, not one latest actual; forecast
   periods are recognised by the rule, not by `FY\d{4}E` alone. Scenario comparison across cases
@@ -72,7 +87,8 @@ type and date, not from a label. `FinancialPeriod.period_type` gains `PF`.
 
 ## Excluded: X is rightly not time
 
-Cash bridge and EBITDA bridge steps (waterfalls), recovery waterfalls, peer ranges and peer
+Paired prior/current comparisons across several measures (X is the measure; the
+two periods are the legend), cash bridge and EBITDA bridge steps (waterfalls), recovery waterfalls, peer ranges and peer
 comparison bars, covenant bullets and limits, stack/row charts keyed by instrument or segment,
 the hedge timeline and calendar (continuous dates, already ordered), and the maturity wall's
 facility legend (its X is fixed by this work).
