@@ -178,7 +178,7 @@ export function limitReason(
   values: { current: Figure; proposed: Figure; limit: Figure },
   unit: string | null,
 ): string | null {
-  if (unit === null) return "The reporting unit is not stated.";
+  if (unit === null) return "This page could not read the reporting unit from the handoff.";
   const named = {
     limit: "Limit value",
     current: "Current exposure",
@@ -186,7 +186,8 @@ export function limitReason(
   } as const;
   for (const key of ["limit", "current", "proposed"] as const) {
     const item = values[key];
-    if (item.kind === "text") return `${named[key]} is not a number.`;
+    if (item.kind === "text")
+      return `This page could not read the ${named[key].toLowerCase()} as a number.`;
     if (item.kind === "gap" && key === "limit")
       return `${named[key]} is not supplied: ${item.reason.replace(/\.$/, "")}.`;
     if (item.kind === "number" && item.value < 0)
@@ -197,15 +198,30 @@ export function limitReason(
 
 export type Limits = { line: number; rows: Limit[] };
 
+const LIMIT_HEADERS = [
+  "Limit",
+  "Current exposure",
+  "Proposed exposure",
+  "Limit value",
+  "Reporting unit",
+];
+const WATCH_HEADERS = ["Event date", "Event", "Status"];
+
+/** Why a chart table is not drawn, in words: more than once, or not read at all. */
+function tableGap(entry: OutputEntry, headers: string[], what: string) {
+  const base = `This page could not read ${what} from the handoff`;
+  return locate(entry, headers).state === "duplicate"
+    ? `${base} because it appears more than once.`
+    : `${base}.`;
+}
+
+export const limitsGap = (entry: OutputEntry) =>
+  tableGap(entry, LIMIT_HEADERS, "the portfolio limits");
+export const watchGap = (entry: OutputEntry) => tableGap(entry, WATCH_HEADERS, "the watch items");
+
 /** The portfolio-limits chart table, found by its headers; null when absent, duplicated or empty. */
 export function limits(entry: OutputEntry): Limits | null {
-  const found = locate(entry, [
-    "Limit",
-    "Current exposure",
-    "Proposed exposure",
-    "Limit value",
-    "Reporting unit",
-  ]);
+  const found = locate(entry, LIMIT_HEADERS);
   if (found.state !== "found" || found.table.rows.length === 0) return null;
   const { table } = found;
   const rows = table.rows.map((row): Limit => {
@@ -243,7 +259,7 @@ const asWritten = (value: Said) => (value.kind === "text" ? value.text : saidTex
 
 /** The module's decision-and-watch events, dates as written; null when the table is absent. */
 export function watch(entry: OutputEntry): Watch | null {
-  const found = locate(entry, ["Event date", "Event", "Status"]);
+  const found = locate(entry, WATCH_HEADERS);
   if (found.state !== "found" || found.table.rows.length === 0) return null;
   const { table } = found;
   return {
@@ -251,8 +267,8 @@ export function watch(entry: OutputEntry): Watch | null {
     items: table.rows.map((row) => {
       const status = said(cellAt(table, row, "Status"));
       return {
-        date: asWritten(said(cellAt(table, row, "Event date"))) || "Date not stated",
-        event: asWritten(said(cellAt(table, row, "Event"))) || "Event not stated",
+        date: asWritten(said(cellAt(table, row, "Event date"))) || "Date not read",
+        event: asWritten(said(cellAt(table, row, "Event"))) || "Event not read",
         status: status.kind === "text" ? status.text : null,
         line: row.line,
       };

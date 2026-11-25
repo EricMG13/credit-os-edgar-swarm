@@ -42,7 +42,7 @@ export function valueOf(cell: string): Value {
   return {
     kind: "unreadable",
     text: reading.text,
-    reason: `The handoff states “${safe(reading.text)}” where a number was expected`,
+    reason: `This page could not read “${safe(reading.text)}” as a number`,
   };
 }
 
@@ -59,7 +59,7 @@ function countOf(cell: string): Count {
     reason:
       reading.kind === "gap"
         ? safe(reading.reason)
-        : `The handoff states “${safe(text)}” where a whole number of peers was expected`,
+        : `This page could not read “${safe(text)}” as a whole number of peers`,
   };
 }
 
@@ -201,6 +201,7 @@ export function readPeerBenchmark(entry: OutputEntry): PeerRead {
     gaps: [],
     outliers: tables.some(({ table }) => table.headers.some((header) => /outlier/i.test(header))),
   };
+  let absent = 0;
   const names = { percent: "percent metrics", multiples: "multiples" } as const;
   for (const kind of ["percent", "multiples"] as const) {
     const found = tables.filter(
@@ -209,18 +210,23 @@ export function readPeerBenchmark(entry: OutputEntry): PeerRead {
     const [one] = found;
     if (found.length > 1) {
       read.gaps.push(
-        `The peer range for ${names[kind]} appears more than once in this handoff, so none is drawn.`,
+        `This page could not read the peer range for ${names[kind]} from the handoff because it appears more than once.`,
       );
     } else if (!one) {
-      read.gaps.push(`The peer range for ${names[kind]} is not in this handoff.`);
+      absent += 1;
+      read.gaps.push(
+        `This page could not read the peer range for ${names[kind]} from the handoff.`,
+      );
     } else {
       const missing = REQUIRED.filter((name) => !one.table.headers.includes(name));
       if (missing.length)
         read.gaps.push(
-          `The peer range for ${names[kind]} lacks the column${missing.length > 1 ? "s" : ""} ${missing.join(", ")}.`,
+          `This page could not read the peer range for ${names[kind]} from the handoff because the table is not in a shape this page reads.`,
         );
       else if (!one.table.rows.length)
-        read.gaps.push(`The peer range for ${names[kind]} has no rows.`);
+        read.gaps.push(
+          `This page could not read a row of the peer range for ${names[kind]} from the handoff.`,
+        );
       else {
         const rows = readRows(one.table.headers, one.table.rows);
         read.tables.push({ kind, line: one.table.line, groups: groupByUnit(rows), rows });
@@ -228,8 +234,8 @@ export function readPeerBenchmark(entry: OutputEntry): PeerRead {
     }
   }
   // Neither range table, under either heading: one plain statement of that.
-  if (!read.tables.length && read.gaps.every((gap) => gap.endsWith("is not in this handoff.")))
-    read.gaps = ["No peer range table is in this handoff."];
+  if (!read.tables.length && absent === read.gaps.length)
+    read.gaps = ["This page could not read a peer range table from the handoff."];
   return read;
 }
 

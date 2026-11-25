@@ -114,15 +114,21 @@ export function readKeyFigures(entry: OutputEntry): KeyFigures {
   const found = allTables(entry).filter(({ table }) =>
     KEY_FIGURE_HEADERS.every((name) => table.headers.includes(name)),
   );
-  if (found.length === 0) return { state: "gap", reason: "No key figures are in this handoff." };
+  if (found.length === 0)
+    return { state: "gap", reason: "This page could not read the key figures from the handoff." };
   if (found.length > 1)
     return {
       state: "gap",
-      reason: "The handoff has more than one table of key figures, so none is drawn.",
+      reason:
+        "This page could not read the key figures from the handoff because they appear more than once.",
     };
   const [only] = found;
   const table = only?.table;
-  if (!table?.rows.length) return { state: "gap", reason: "The key figures table has no rows." };
+  if (!table?.rows.length)
+    return {
+      state: "gap",
+      reason: "This page could not read a row of the key figures from the handoff.",
+    };
   const at = (name: string) => table.headers.indexOf(name);
   const rows = table.rows.map((row) => ({
     measure: safeText(row.cells[at("Measure")] ?? ""),
@@ -187,7 +193,8 @@ export function readChangeScreen(entry: OutputEntry): ChangeScreen {
   if (candidates.length > 1 || !table)
     return {
       state: "gap",
-      reason: "The handoff's change screen is not in a shape this page reads, so none is drawn.",
+      reason:
+        "This page could not read the change screen from the handoff because the table is not in a shape this page reads.",
     };
   const at = (name: string) => table.headers.indexOf(name);
   const textAt = TEXT_HEADERS.map(at).find((index) => index >= 0) ?? -1;
@@ -204,6 +211,10 @@ export function readChangeScreen(entry: OutputEntry): ChangeScreen {
       line: row.line,
     };
   });
-  if (!items.length) return { state: "gap", reason: "The change screen has no rows." };
+  if (!items.length)
+    return {
+      state: "gap",
+      reason: "This page could not read a row of the change screen from the handoff.",
+    };
   return { state: "ready", line: table.line, items };
 }

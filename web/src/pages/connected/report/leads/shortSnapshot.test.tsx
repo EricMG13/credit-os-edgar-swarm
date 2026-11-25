@@ -108,16 +108,18 @@ describe("shortSnapshotData", () => {
   it("says the true condition, without naming any column, when the table is absent, repeated or empty", () => {
     expect(readKeyFigures(snapshot(null))).toMatchObject({ state: "gap" });
     const gap = readKeyFigures(snapshot(null));
-    expect(gap.state === "gap" && gap.reason).toBe("No key figures are in this handoff.");
+    expect(gap.state === "gap" && gap.reason).toBe(
+      "This page could not read the key figures from the handoff.",
+    );
     const twice = readKeyFigures(
       snapshot(FIGURES, [section("Key figures again", 30, table(31, HEAD, FIGURES))]),
     );
-    expect(twice.state === "gap" && twice.reason).toContain("more than one table of key figures");
+    expect(twice.state === "gap" && twice.reason).toContain("because they appear more than once");
     for (const result of [gap, twice, readKeyFigures(snapshot([]))])
       expect(JSON.stringify(result)).not.toMatch(/Measure|Value|Period|Source|column/);
     expect(readKeyFigures(snapshot([]))).toEqual({
       state: "gap",
-      reason: "The key figures table has no rows.",
+      reason: "This page could not read a row of the key figures from the handoff.",
     });
   });
 
@@ -263,7 +265,9 @@ describe("ShortSnapshotLead", () => {
 
   it("draws one plain gap tile when there is no key figures table", () => {
     render(<ShortSnapshotLead {...leadProps(snapshot(null))} />);
-    expect(screen.getByText(/No key figures are in this handoff\./)).toBeVisible();
+    expect(
+      screen.getByText(/This page could not read the key figures from the handoff\./),
+    ).toBeVisible();
     expect(document.querySelectorAll(".gap-hatch")).toHaveLength(1);
     expect(screen.queryByRole("img")).toBeNull();
   });
@@ -315,7 +319,11 @@ describe("ShortSnapshotLead", () => {
         )}
       />,
     );
-    expect(screen.getByText(/change screen is not in a shape this page reads/)).toBeVisible();
+    expect(
+      screen.getByText(
+        /the change screen from the handoff because the table is not in a shape this page reads/,
+      ),
+    ).toBeVisible();
     unmount();
     render(<ShortSnapshotLead {...leadProps(snapshot())} />);
     expect(screen.queryByRole("region", { name: "Change screen" })).toBeNull();

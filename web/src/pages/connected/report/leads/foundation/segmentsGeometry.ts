@@ -31,7 +31,7 @@ export type SegmentValue =
 /** A cell as the figure draws it; a period the schedule states nothing for is a gap, never zero. */
 export function segmentValue(values: readonly PeriodCell[], period: string): SegmentValue {
   const cell = values.find((value) => value.label === period)?.cell ?? null;
-  if (!cell) return { kind: "gap", text: `Not in the segment schedule for ${period}.` };
+  if (!cell) return { kind: "gap", text: `Not read from the handoff for ${period}.` };
   if (cell.kind === "number") return { kind: "number", value: cell.value, text: group(cell.text) };
   return { kind: cell.kind === "gap" ? "gap" : "words", text: safeText(cell.text) };
 }

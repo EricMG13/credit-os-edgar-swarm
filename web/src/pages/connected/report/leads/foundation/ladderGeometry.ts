@@ -40,7 +40,7 @@ const negated = (text: string) => (text.startsWith("-") ? text.slice(1) : `-${te
  */
 function sideOf(step: LadderStep, cell: PeriodCell | undefined, period: string): Side {
   const reading = cell?.cell;
-  if (!reading) return { gap: `Not stated for ${period}.` };
+  if (!reading) return { gap: `Not read from the handoff for ${period}.` };
   if (reading.kind !== "number") return { gap: safeText(reading.text) };
   if (step.sign !== "paid" || reading.value === 0)
     return { value: reading.value, text: group(reading.text) };
@@ -116,17 +116,14 @@ function and(labels: readonly string[]) {
   return `${labels.slice(0, -1).join(", ")} and ${labels.at(-1) ?? ""}`;
 }
 
-/** Notes under the figure: how it is drawn and, where some periods are not, which are. */
+/** Notes under the figure: where some periods are not drawn, which are. */
 export function ladderNotes(periods: LadderPeriods) {
   const others = periods.others.length
     ? [
         `Drawn: ${periods.current}. ${and(periods.others)} ${periods.others.length > 1 ? "are" : "is"} in the table view.`,
       ]
     : [];
-  return [
-    ...others,
-    "Each level is drawn from zero at its stated figure; a deduction hangs from the bar above it.",
-  ];
+  return others;
 }
 
 const KIND = {

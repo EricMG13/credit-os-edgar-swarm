@@ -134,7 +134,7 @@ describe("peerBenchmarkData: what the contract tables say", () => {
     const kinds = read.tables[0]?.rows.map((row) => row.drawing.kind);
     expect(kinds).toEqual(["conflict", "strip", "strip", "gap"]);
     expect(read.tables[0]?.rows[2]?.drawing).toMatchObject({ low: 0 });
-    expect(read.tables[0]?.rows[3]?.notes.join(" ")).toContain("where a number was expected");
+    expect(read.tables[0]?.rows[3]?.notes.join(" ")).toContain("could not read “");
   });
 
   it("groups rows by their stated unit so that one scale never spans two units", () => {
@@ -153,7 +153,9 @@ describe("peerBenchmarkData: what the contract tables say", () => {
   it("reports an absent, repeated, empty or column-short table in words and reads the other", () => {
     const missing = readPeerBenchmark(peers(PERCENT, null));
     expect(missing.tables).toHaveLength(1);
-    expect(missing.gaps).toEqual(["The peer range for multiples is not in this handoff."]);
+    expect(missing.gaps).toEqual([
+      "This page could not read the peer range for multiples from the handoff.",
+    ]);
     const twice = readPeerBenchmark(
       peers(PERCENT, MULTIPLES, [
         section(PEER_HEADINGS.percent, 50, table(51, HEAD, PERCENT)),
@@ -163,9 +165,13 @@ describe("peerBenchmarkData: what the contract tables say", () => {
     const short = peers(null, null, [
       section(PEER_HEADINGS.percent, 9, table(10, ["Metric", "Issuer"], [["a", "1"]])),
     ] as never);
-    expect(readPeerBenchmark(short).gaps[0]).toContain("lacks the columns Peer low");
+    expect(readPeerBenchmark(short).gaps[0]).toContain(
+      "the table is not in a shape this page reads",
+    );
     const empty = readPeerBenchmark(peers([], null));
-    expect(empty.gaps[0]).toBe("The peer range for percent metrics has no rows.");
+    expect(empty.gaps[0]).toBe(
+      "This page could not read a row of the peer range for percent metrics from the handoff.",
+    );
   });
 });
 
@@ -267,9 +273,13 @@ describe("PeerBenchmarkLead", () => {
     expect(text).not.toMatch(/CP-1C|\.xlsx|\.pdf|T1C/);
   });
 
-  it("notes that outliers and the peer table are not in this handoff, unless an outlier table exists", () => {
+  it("says the page could not read outliers or the peer table, unless an outlier table exists", () => {
     const { unmount } = render(<PeerBenchmarkLead {...leadProps(peers(PERCENT, MULTIPLES))} />);
-    expect(screen.getByText(/Outliers and the peer table are not in this handoff\./)).toBeVisible();
+    expect(
+      screen.getByText(
+        /This page could not read the outliers or the peer table from the handoff\./,
+      ),
+    ).toBeVisible();
     unmount();
     render(
       <PeerBenchmarkLead
@@ -280,12 +290,18 @@ describe("PeerBenchmarkLead", () => {
         )}
       />,
     );
-    expect(screen.queryByText(/Outliers and the peer table are not in this handoff\./)).toBeNull();
+    expect(
+      screen.queryByText(
+        /This page could not read the outliers or the peer table from the handoff\./,
+      ),
+    ).toBeNull();
   });
 
   it("with no range table at all draws one gap tile naming the true condition, never the bottom line", () => {
     render(<PeerBenchmarkLead {...leadProps(peers(null, null))} />);
-    expect(screen.getByText(/No peer range table is in this handoff\./)).toBeVisible();
+    expect(
+      screen.getByText(/This page could not read a peer range table from the handoff\./),
+    ).toBeVisible();
     // The module wrote "Peer data is limited." as its bottom line: that sentence is not the reason.
     expect(screen.queryByText(/Peer data is limited/)).toBeNull();
     expect(screen.queryByRole("img")).toBeNull();
@@ -301,8 +317,8 @@ describe("PeerBenchmarkLead", () => {
     ] as never);
     const cases: [ReturnType<typeof peers>, RegExp][] = [
       [twice, /appears more than once/],
-      [short, /lacks the columns Peer low/],
-      [peers([], null), /has no rows/],
+      [short, /the table is not in a shape this page reads/],
+      [peers([], null), /could not read a row of the peer range/],
     ];
     for (const [input, words] of cases) {
       const { unmount } = render(<PeerBenchmarkLead {...leadProps(input)} />);
@@ -328,7 +344,9 @@ describe("PeerBenchmarkLead", () => {
         read.tables.map((item) => item.kind),
         heading,
       ).toEqual(["multiples"]);
-      expect(read.gaps).toEqual(["The peer range for percent metrics is not in this handoff."]);
+      expect(read.gaps).toEqual([
+        "This page could not read the peer range for percent metrics from the handoff.",
+      ]);
     }
   });
 

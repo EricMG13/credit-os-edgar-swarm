@@ -350,6 +350,6 @@ describe("Net debt: other real handoffs and gap states", () => {
     const tile = draw(dropTable(cp1Entry(), "Net debt data"));
     expect(within(tile).queryByRole("img")).toBeNull();
     expect(within(tile).queryByRole("link")).toBeNull();
-    expect(tile.textContent).toContain("Net debt data is not in the handoff.");
+    expect(tile.textContent).toContain("This page could not read net debt data from the handoff.");
   });
 });

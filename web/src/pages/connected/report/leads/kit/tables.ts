@@ -105,7 +105,7 @@ export type Ordered<T> = { periods: { period: Period; item: T }[] } | { reason: 
 export function orderByPeriod<T>(items: readonly { cell: string; item: T }[]): Ordered<T> {
   const read = items.map(({ cell, item }) => ({ period: periodOf(cell), day: dayOf(cell), item }));
   const undated = items.find((_, at) => read[at]?.period === null);
-  if (undated) return { reason: `A period is not dated: ${periodLabel(undated.cell) || "blank"}.` };
+  if (undated) return { reason: `a period has no year: ${periodLabel(undated.cell) || "blank"}` };
   const dated = read as { period: Period; day: number | null; item: T }[];
   for (const [at, one] of dated.entries()) {
     const twice = dated
@@ -113,7 +113,7 @@ export function orderByPeriod<T>(items: readonly { cell: string; item: T }[]): O
       .find(
         (other) => other.period.form === one.period.form && other.period.year === one.period.year,
       );
-    if (twice) return { reason: `${one.period.label} is stated more than once.` };
+    if (twice) return { reason: `${one.period.label} appears more than once` };
   }
   const ordered = [...dated].sort(
     (a, b) =>
@@ -124,7 +124,7 @@ export function orderByPeriod<T>(items: readonly { cell: string; item: T }[]): O
 
 /** The rows of a period-rows table (`Chart data: …`, `Net debt data`), ordered by period; see `orderByPeriod`. */
 export function periodRows(table: Table, column = 0): Ordered<Row> {
-  if (table.rows.length === 0) return { reason: "No period is stated." };
+  if (table.rows.length === 0) return { reason: "it has no rows" };
   return orderByPeriod(table.rows.map((row) => ({ cell: row.cells[column] ?? "", item: row })));
 }
 
@@ -133,7 +133,7 @@ export function statementColumns(table: Table): Ordered<number> {
   const columns = table.headers.flatMap((header, at) =>
     at > 0 && periodOf(header) ? [{ cell: header.trim(), item: at }] : [],
   );
-  if (columns.length === 0) return { reason: "No period column is stated." };
+  if (columns.length === 0) return { reason: "it has no column named for a period" };
   return orderByPeriod(columns);
 }
 

@@ -8,28 +8,31 @@ const RESULTS = "Chart data: prior and current results";
 const KPIS = "Chart data: margin and KPI changes";
 const STEP_HEADERS = ["Step", "Amount", "Reporting unit", "Basis and limitation"];
 
-export const NO_UNIT = "The handoff does not state the unit of its earnings table.";
-const NO_RESULTS = "The handoff has no table of prior and current results.";
-const NO_KPIS = "The handoff has no table of margin and KPI changes.";
-const NO_MARGINS = "The handoff's earnings table has no margin row.";
+export const NO_UNIT = "This page could not read the unit of the earnings table from the handoff.";
+const NO_RESULTS =
+  "This page could not read the table of prior and current results from the handoff.";
+const NO_KPIS = "This page could not read the table of margin and KPI changes from the handoff.";
+const NO_MARGINS = "This page could not read a margin row from the handoff.";
 const NO_COLUMNS =
-  "The table of prior and current results lacks the measure, prior, current or unit column this page reads.";
-const NO_ROWS = "The table of prior and current results has no rows.";
-const NO_PAIRS = "The earnings table states no row with a figure for both periods.";
-export const NO_PERCENT = "The margin cells do not state a percent sign, so they are not drawn.";
+  "This page could not read the prior and current results from the handoff because the table is not in a shape this page reads.";
+const NO_ROWS = "This page could not read a row of prior and current results from the handoff.";
+const NO_PAIRS = "This page could not read a row with a figure for both periods from the handoff.";
+export const NO_PERCENT =
+  "This page could not read the margins from the handoff because their cells carry no percent sign.";
 export const TWICE_RESULTS =
-  "The handoff states the table of prior and current results more than once, so this page does not choose between them.";
+  "This page could not read the table of prior and current results from the handoff because it appears more than once.";
 export const TWICE_KPIS =
-  "The handoff states the table of margin and KPI changes more than once, so this page does not choose between them.";
+  "This page could not read the table of margin and KPI changes from the handoff because it appears more than once.";
 export const TWICE_EARNINGS =
-  "The handoff has more than one earnings table, so this page does not choose between them.";
+  "This page could not read the earnings table from the handoff because it appears more than once.";
 export const TWICE_BRIDGE =
-  "The handoff has more than one variance bridge table, so this page does not choose between them.";
+  "This page could not read the variance bridge from the handoff because it appears more than once.";
 export const FEW_PERIODS =
-  "The earnings table states fewer than two annual periods, so it has no prior and current to compare.";
+  "This page could not read two annual periods of the earnings table from the handoff.";
 export const MIXED_PERIODS =
-  "The earnings table's two latest annual periods are different kinds of period, so they are not compared.";
-export const SAME_YEAR = "The earnings table's two latest annual periods are the same year.";
+  "This page could not compare the two latest annual periods of the earnings table because they are different kinds of period.";
+export const SAME_YEAR =
+  "This page could not compare the two latest annual periods of the earnings table because they are the same year.";
 
 /** Handoff words for the page, or the Evidence pointer where they name a source or are empty. */
 const readable = (text: string) => safeText(text) || IN_EVIDENCE;
@@ -520,9 +523,9 @@ export type Bridge =
   | { kind: "bridge"; line: number; unit: string; steps: Step[]; notes: string[] }
   | { kind: "unreconciled"; line: number; message: string };
 
-const NOT_DRAWN = "The variance bridge is not drawn";
+const NOT_DRAWN = "This page could not read the variance bridge from the handoff";
 const NOT_A_BRIDGE =
-  "The variance bridge in this handoff does not add up, so it is not drawn as a bridge.";
+  "This page did not draw the variance bridge because its steps do not add up to its closing figure.";
 
 const isZero = (exact: string | null) => exact !== null && /^-?0(?:\.0+)?$/.test(exact);
 
@@ -541,7 +544,9 @@ export function bridge(entry: OutputEntry): Bridge | null {
   if (tables.length > 1) return refuse(TWICE_BRIDGE);
   const amounts = table.rows.map((row) => row.cells[1] ?? "");
   if (table.rows.length < 3)
-    return refuse(`${NOT_DRAWN}: it has no change steps between its opening and its closing.`);
+    return refuse(
+      `${NOT_DRAWN} because it has no change steps between its opening and its closing.`,
+    );
   const readings = amounts.map(readCell);
   const missing = readings.findIndex((reading) => reading.kind !== "number");
   const absent = readings[missing];
@@ -549,12 +554,12 @@ export function bridge(entry: OutputEntry): Bridge | null {
     const label = readable(table.rows[missing]?.cells[0] ?? "");
     return refuse(
       absent.kind === "gap"
-        ? `${NOT_DRAWN}: ${label} is not supplied (${readable(absent.reason)}).`
-        : `${NOT_DRAWN}: ${label} states no figure.`,
+        ? `${NOT_DRAWN} because ${label} is not supplied (${readable(absent.reason)}).`
+        : `${NOT_DRAWN} because ${label} has no figure this page reads.`,
     );
   }
   const units = new Set(table.rows.map((row) => (row.cells[2] ?? "").trim()));
-  if (units.size !== 1) return refuse(`${NOT_DRAWN}: its steps state different units.`);
+  if (units.size !== 1) return refuse(`${NOT_DRAWN} because its steps are in different units.`);
   const closing = amounts.at(-1) ?? "";
   const total = sum(amounts.slice(0, -1));
   if (!isZero(total === null ? null : difference(closing, total))) return refuse(NOT_A_BRIDGE);

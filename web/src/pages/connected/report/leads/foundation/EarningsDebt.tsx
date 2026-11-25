@@ -419,7 +419,9 @@ export function EarningsDebtTile({ lead }: { lead: LeadProps }) {
         {data.leverage ? (
           <Leverage leverage={data.leverage} basis={data.leverageBasis} />
         ) : (
-          <p className="text-caption text-gap-text">Total debt / EBITDA is not in the handoff.</p>
+          <p className="text-caption text-gap-text">
+            This page could not read total debt / EBITDA from the handoff.
+          </p>
         )}
       </div>
       {data.measures.length > 0 && data.absent.length > 0 && (

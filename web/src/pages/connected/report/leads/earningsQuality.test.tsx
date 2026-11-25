@@ -182,12 +182,12 @@ describe("earningsQualityData", () => {
     expect(odd.state === "ready" && odd.changes[0]?.support).toBeNull();
   });
 
-  it("a bridge that does not reconcile, a gap amount or words are gaps that list the stated steps", () => {
+  it("a bridge that does not add up, a gap amount or words are gaps that list the stated steps", () => {
     const off = readBridge(quality([...BRIDGE.slice(0, 4), ["Closing", "4200", "US$m", ""]]));
     expect(off).toMatchObject({ state: "gap" });
     if (off.state === "gap") {
-      expect(off.reason).toContain("do not reconcile");
-      expect(off.reason).toContain("states 4,200");
+      expect(off.reason).toContain("do not add up");
+      expect(off.reason).toContain("(4,200)");
       expect(off.reason).not.toMatch(/derived/);
       expect(off.stated).toHaveLength(5);
       expect(off.stated[1]).toEqual({ label: "Run-rate savings", text: "200 US$m" });
@@ -204,14 +204,16 @@ describe("earningsQualityData", () => {
     const words = readBridge(
       quality([BRIDGE[0] ?? [], ["Savings", "about 200", "US$m", ""], BRIDGE[4] ?? []]),
     );
-    expect(words.state === "gap" && words.reason).toContain("where an amount was expected");
+    expect(words.state === "gap" && words.reason).toContain(
+      "could not read “about 200” as an amount",
+    );
   });
 
   it("refuses units that differ, and no step table", () => {
     const mixed = readBridge(
       quality([...BRIDGE.slice(0, 3), ["Pro forma", "60", "EUR m", ""], BRIDGE[4] ?? []]),
     );
-    expect(mixed.state === "gap" && mixed.reason).toContain("not in one stated reporting unit");
+    expect(mixed.state === "gap" && mixed.reason).toContain("in one reporting unit");
     expect(readBridge(quality(null)).state).toBe("gap");
   });
 
@@ -365,10 +367,12 @@ describe("EarningsQualityLead", () => {
     expect(document.querySelectorAll("rect[data-split]")).toHaveLength(0);
     for (const label of ["Run-rate savings", "Integration costs", "Pro forma acquisition"])
       expect(outline(label)).toContain("stroke-chart-2");
-    expect(screen.getByText("Support is not stated per step.")).toBeVisible();
+    expect(
+      screen.getByText("This page could not read a support word for this step from the handoff."),
+    ).toBeVisible();
   });
 
-  it("matched steps carry their word and the others say support is not stated", () => {
+  it("matched steps carry their word and the others say support was not read", () => {
     render(
       <EarningsQualityLead
         {...leadProps(
@@ -378,18 +382,18 @@ describe("EarningsQualityLead", () => {
     );
     expect(segment("Supported")).not.toBeNull();
     expect(document.querySelectorAll("rect[data-split]")).toHaveLength(1);
-    expect(bar("Run-rate savings (support not stated)")).not.toBeNull();
+    expect(bar("Run-rate savings (support not read)")).not.toBeNull();
     expect(bar("Integration costs")).not.toBeNull();
   });
 
-  it("draws the gap with the stated steps listed when the bridge does not reconcile", () => {
+  it("draws the gap with the stated steps listed when the bridge does not add up", () => {
     render(
       <EarningsQualityLead
         {...leadProps(quality([...BRIDGE.slice(0, 4), ["Closing", "4200", "US$m", ""]]))}
       />,
     );
     const tile = screen.getByRole("region", { name: "Earnings quality" });
-    expect(within(tile).getByText(/do not reconcile/)).toBeVisible();
+    expect(within(tile).getByText(/do not add up/)).toBeVisible();
     expect(within(tile).getByText(/Run-rate savings 200 US\$m/)).toBeVisible();
     expect(tile.querySelector("svg")).toBeNull();
   });
@@ -433,7 +437,7 @@ describe("EarningsQualityLead", () => {
     const tile = screen.getByRole("region", { name: "Restated leverage" });
     expect(tile.querySelector('[data-measure="Total leverage"]')).toBeNull();
     expect(
-      within(tile).getByText(/Not drawn: on supported earnings EBITDA not stated/),
+      within(tile).getByText(/Not drawn: on supported earnings: EBITDA not stated/),
     ).toBeVisible();
     expect(tile.querySelector('[data-measure="Net leverage"]')).not.toBeNull();
   });
@@ -453,8 +457,12 @@ describe("EarningsQualityLead", () => {
 
   it("with no tables draws gap tiles in words; a blocked module draws nothing", () => {
     const { unmount } = render(<EarningsQualityLead {...leadProps(quality(null, null, null))} />);
-    expect(screen.getByText(/The handoff has no bridge table\./)).toBeVisible();
-    expect(screen.getByText(/no table of leverage on the statements/)).toBeVisible();
+    expect(
+      screen.getByText(/This page could not read the earnings quality bridge from the handoff\./),
+    ).toBeVisible();
+    expect(
+      screen.getByText(/This page could not read the leverage on the statements/),
+    ).toBeVisible();
     expect(document.querySelectorAll(".gap-hatch").length).toBeGreaterThan(0);
     unmount();
     const blocked = entry(
@@ -506,8 +514,8 @@ describe("EarningsQualityLead", () => {
     }
   });
 
-  it("declares that it draws none of the module's typed figures, events or maps", () => {
-    expect(EarningsQualityLead.draws).toEqual([]);
+  it("declares that it draws the module's bridge figure itself", () => {
+    expect(EarningsQualityLead.draws).toEqual(["figures"]);
   });
 
   it("draws a bridge with no add-backs and one with a deduction", () => {

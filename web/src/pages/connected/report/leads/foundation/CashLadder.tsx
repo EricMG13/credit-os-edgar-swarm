@@ -12,7 +12,7 @@ import {
 } from "./ladderGeometry";
 
 const LABEL = "Cash conversion";
-const NO_PERIOD = "The cash flow statement states no period for the ladder's rows.";
+const NO_PERIOD = "This page could not read a period for the ladder's rows from the handoff.";
 
 /**
  * Tile 2: the handoff's own cash ladder, from EBITDA (Adjusted) through cash interest and taxes,

@@ -43,7 +43,7 @@ function rowsOf(bridge: Bridge): WaterfallRow[] {
   const someStated = bridge.supportStated;
   const steps = bridge.changes.map((step): WaterfallRow => {
     const label =
-      someStated && step.support === null ? `${step.label} (support not stated)` : step.label;
+      someStated && step.support === null ? `${step.label} (support not read)` : step.label;
     const base = { kind: "step" as const, label, value: step.value, text: group(step.amount) };
     if (step.support === null) return base;
     const tone = TONES[step.support];
@@ -94,7 +94,9 @@ function BridgeTile({ props, bridge }: { props: LeadProps; bridge: Bridge }) {
       line={bridge.line}
       source="the earnings-quality bridge"
       notes={[
-        ...(!bridge.supportStated ? ["Support is not stated per step."] : []),
+        ...(!bridge.supportStated
+          ? ["This page could not read a support word for this step from the handoff."]
+          : []),
         ...bridge.notes,
       ]}
       table={{
@@ -258,7 +260,11 @@ function LeverageTile({ props }: { props: LeadProps }) {
         ),
       }}
     >
-      {pairs.length === 0 && <GapNote>No leverage multiple is stated on both bases.</GapNote>}
+      {pairs.length === 0 && (
+        <GapNote>
+          This page could not read a leverage multiple on both bases from the handoff.
+        </GapNote>
+      )}
       {leverage.measures.map((item) =>
         item.kind === "pair" ? (
           <Measured key={item.measure} fallback={460}>
@@ -303,5 +309,5 @@ export const EarningsQualityLead: FC<LeadProps> & {
     </LeadFrame>
   );
 };
-// This lead draws no typed figure, event lane or map of the module's own.
-EarningsQualityLead.draws = [];
+// The lead draws the module's bridge figure itself, with its own gap tile when it is absent.
+EarningsQualityLead.draws = ["figures"];

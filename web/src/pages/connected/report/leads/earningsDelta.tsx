@@ -22,7 +22,7 @@ import {
 import { group } from "./kit/numbers";
 import type { LeadProps } from "./types";
 
-const NO_BRIDGE = "No variance bridge in this handoff.";
+const NO_BRIDGE = "This page could not read the variance bridge from the handoff.";
 
 const RESULTS_NAME = "Prior and current results";
 const KPIS_NAME = "Margins and KPIs";
@@ -93,7 +93,7 @@ function GroupRows({
     <div className="flex min-w-0 flex-col gap-2">
       {caption && (
         <p className="text-caption text-text-tertiary">
-          {one.unitNotStated ? "unit not stated" : one.unit}
+          {one.unitNotStated ? "unit not read" : one.unit}
         </p>
       )}
       <Measured fallback={640}>
@@ -102,7 +102,7 @@ function GroupRows({
             rows={rows}
             width={width}
             periods={shared ?? { prior: "Prior period", current: "Current period" }}
-            unit={one.unitNotStated ? "unit not stated" : one.unit}
+            unit={one.unitNotStated ? "unit not read" : one.unit}
             legend={legend}
             {...(one.fromZero ? {} : { axisStart: "auto" as const })}
           />
@@ -225,7 +225,7 @@ function PairTile({
       line={figure.line}
       source={source}
       notes={[...figure.notes, ...(conflicted(figure) ? [DISAGREES] : [])]}
-      table={pairTable(figure, `${name}, every pair the handoff states`)}
+      table={pairTable(figure, `${name}, every pair`)}
     >
       {figure.groups.map((one, at) =>
         one.rows.length > 0 ? (
@@ -239,7 +239,9 @@ function PairTile({
           one.gaps.length > 0 && <GapList key={one.gaps[0]?.line} pairs={one.gaps} />
         ),
       )}
-      {!drawn && <GapNote>The handoff states no pair with both figures to draw.</GapNote>}
+      {!drawn && (
+        <GapNote>This page could not read a pair with both figures from the handoff.</GapNote>
+      )}
     </FigureTile>
   );
 }
@@ -261,7 +263,7 @@ function waterfallRows(bridge: Shown): WaterfallRow[] {
 /** Every step as the handoff states it: the amounts, no totals made here. */
 function bridgeTable(bridge: Shown): TableViewData {
   return {
-    caption: "Variance bridge, every step the handoff states",
+    caption: "Variance bridge, every step",
     headers: ["Step", "Role", `Amount${bridge.unit ? ` (${bridge.unit})` : ""}`],
     rows: bridge.steps.map((step) => [
       step.label,
@@ -288,7 +290,7 @@ function BridgeTile({ props, bridge }: { props: LeadProps; bridge: Shown }) {
         {(width) => (
           <Waterfall
             width={width}
-            unit={bridge.unit || "unit not stated"}
+            unit={bridge.unit || "unit not read"}
             axisStart="auto"
             rows={waterfallRows(bridge)}
             legend={{ level: "Opening", step: "Step", closing: "Closing" }}
@@ -352,4 +354,5 @@ export const EarningsDeltaLead: FC<LeadProps> & {
   );
 };
 
-EarningsDeltaLead.draws = [] as const;
+// The lead draws the variance bridge and both pair figures itself, each with its own gap tile.
+EarningsDeltaLead.draws = ["figures"] as const;

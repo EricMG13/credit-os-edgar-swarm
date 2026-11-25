@@ -29,7 +29,8 @@ const LOOKS = [
 type Look = (typeof LOOKS)[number];
 const lookOf = (at: number): Look => LOOKS[at % LOOKS.length] ?? LOOKS[0];
 
-const reasonOf = (text: string) => (text.trim() ? safeText(text) : "no figure in the model");
+const reasonOf = (text: string) =>
+  text.trim() ? safeText(text) : "this page could not read a figure";
 
 /** A case's marker at a point: its own shape, in its own colour. */
 function Marker({
@@ -285,7 +286,7 @@ function Legend({ path, gaps }: { path: Path; gaps: boolean }) {
             aria-hidden="true"
             className="gap-hatch size-3 flex-none rounded-[3px] border border-dashed border-border-gap"
           />
-          No figure in the model
+          No figure read
         </li>
       )}
     </ul>
@@ -344,8 +345,8 @@ function Content(props: LeadProps) {
       ) : (
         <GapTile span={8} label="Forward net leverage" kicker="Net leverage by case">
           {model
-            ? "The published model states no net leverage path."
-            : "No published model for this run."}
+            ? "This page could not read a net leverage path from the published model."
+            : "This page could not read a published model for this run."}
         </GapTile>
       )}
       <OpenForecast />

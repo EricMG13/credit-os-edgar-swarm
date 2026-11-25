@@ -34,20 +34,15 @@ const words = (text: string) => (citesSource(text) ? IN_EVIDENCE : safeText(text
 /** A sentence ends with one full stop, even when the handoff's words already carry it. */
 const sentence = (text: string) => (/[.!?]$/.test(text) ? text : `${text}.`);
 
-/** "A", "A and B", "A, B and C". */
-const listOf = (labels: readonly string[]) =>
-  labels.length > 1
-    ? `${labels.slice(0, -1).join(", ")} and ${labels.at(-1) ?? ""}`
-    : (labels[0] ?? "");
+/** The cell's own reason, in its words; null when it states none. */
+const reasonOf = (mark: WallMark) => (mark.cell?.reason ? words(mark.cell.reason) : null);
 
-const reasonOf = (mark: WallMark) => words(mark.cell?.reason ?? "no amount in the handoff");
-
-const amountText = (mark: WallMark) =>
-  mark.kind === "none"
-    ? "No row in the schedule"
-    : mark.kind === "gap"
-      ? `Not supplied: ${reasonOf(mark)}`
-      : (mark.text ?? "");
+const amountText = (mark: WallMark) => {
+  if (mark.kind === "none") return "No row read";
+  if (mark.kind !== "gap") return mark.text ?? "";
+  const reason = reasonOf(mark);
+  return reason ? `Not supplied: ${reason}` : "Not supplied";
+};
 
 function wallReading(marks: readonly WallMark[], unit: string) {
   const parts = marks.map(
@@ -273,12 +268,6 @@ function Grid({ layout }: { layout: WallLayout }) {
   );
 }
 
-/** The marks drawn at the 2 px minimum at this width, said under the figure. */
-function leastNote(layout: WallLayout) {
-  const least = layout.marks.filter((mark) => mark.least).map((mark) => mark.label);
-  return least.length ? `${listOf(least)} drawn at a 2 px minimum.` : null;
-}
-
 function Wall({
   slots,
   unit,
@@ -290,7 +279,6 @@ function Wall({
 }) {
   const layout = wallLayout(slots.dated, slots.undated, width);
   const Labels = layout.layout === "columns" ? ColumnLabels : RowLabels;
-  const least = leastNote(layout);
   return (
     <>
       <svg
@@ -310,7 +298,6 @@ function Wall({
           <Labels key={mark.label} mark={mark} layout={layout} />
         ))}
       </svg>
-      {least && <p className="mt-3 text-caption text-text-secondary">{least}</p>}
     </>
   );
 }
@@ -341,13 +328,14 @@ function MaturityFigure({ lead, source }: { lead: LeadProps; source: Ready }) {
   if (twice !== undefined)
     return (
       <GapTile span={5} label={LABEL} kicker={kicker}>
-        The maturity schedule states {words(twice)} more than once; the wall is not drawn.
+        This page could not read the maturity wall from the handoff because {words(twice)} appears
+        more than once.
       </GapTile>
     );
   if (!raw)
     return (
       <GapTile span={5} label={LABEL} kicker={kicker}>
-        The maturity schedule states no amount for any period.
+        This page could not read an amount for any period of the maturity wall from the handoff.
       </GapTile>
     );
   const label = (slot: WallSlot): WallSlot => ({ ...slot, label: words(slot.label) });
@@ -358,8 +346,10 @@ function MaturityFigure({ lead, source }: { lead: LeadProps; source: Ready }) {
       .filter((mark) => mark.kind !== "bar")
       .map((mark) =>
         mark.kind === "none"
-          ? `${mark.label}: no row in the schedule for this year.`
-          : sentence(`${mark.label}: ${reasonOf(mark)}`),
+          ? `${mark.label}: this page could not read a row for this year from the handoff.`
+          : sentence(
+              `${mark.label}: ${reasonOf(mark) ?? "this page could not read an amount from the handoff"}`,
+            ),
       ),
     ...basisNotes(source.table).filter((note) => !citesSource(note)),
   ];
@@ -397,7 +387,7 @@ export function MaturityTile({ lead }: { lead: LeadProps }) {
   if (source.state === "gap")
     return (
       <GapTile span={5} label={LABEL} kicker={LABEL}>
-        {source.reason}
+        This page could not read the debt maturities from the handoff.
       </GapTile>
     );
   return <MaturityFigure lead={lead} source={source} />;

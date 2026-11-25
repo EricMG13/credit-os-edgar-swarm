@@ -122,7 +122,7 @@
  *   FigureTile: the Table view button sits in the tile head beside the trace control
  *   (aria-expanded/aria-controls; the panel with the real <table> opens under the figure).
  *   TableView: the same button and panel, standalone. Link: `<Link href="#forecast">Open the
- *   forecast</Link>` at 32 px (44 px at 480 px and below). ScrollFigure: deprecated.
+ *   forecast</Link>` at 32 px (44 px at 480 px and below).
  */
 export { fittingTicks, niceAxis, type AxisTick, type NiceAxis } from "./axis";
 export {

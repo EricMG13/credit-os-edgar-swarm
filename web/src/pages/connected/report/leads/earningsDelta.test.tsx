@@ -174,11 +174,11 @@ describe("the prior and current results from the retained earnings table", () =>
     const empty = earningsDelta(entry("CP-1B", [], []));
     expect(empty.movers).toMatchObject({
       kind: "gap",
-      reason: "The handoff has no table of prior and current results.",
+      reason: "This page could not read the table of prior and current results from the handoff.",
     });
     expect(empty.kpis).toMatchObject({
       kind: "gap",
-      reason: "The handoff has no table of margin and KPI changes.",
+      reason: "This page could not read the table of margin and KPI changes from the handoff.",
     });
     expect(empty.bridge).toBeNull();
   });
@@ -466,7 +466,7 @@ describe("the variance bridge", () => {
     expect(result).toMatchObject({
       kind: "unreconciled",
       message:
-        "The variance bridge in this handoff does not add up, so it is not drawn as a bridge.",
+        "This page did not draw the variance bridge because its steps do not add up to its closing figure.",
     });
   });
   it("says a gap step is not supplied, with its stated reason, and does not call that a failure to add up", () => {
@@ -481,7 +481,8 @@ describe("the variance bridge", () => {
     );
     expect(result).toMatchObject({
       kind: "unreconciled",
-      message: "The variance bridge is not drawn: Disposals is not supplied (not split).",
+      message:
+        "This page could not read the variance bridge from the handoff because Disposals is not supplied (not split).",
     });
   });
   it("screens a gap reason that names a register", () => {
@@ -496,7 +497,7 @@ describe("the variance bridge", () => {
     );
     expect(result).toMatchObject({
       message:
-        "The variance bridge is not drawn: Disposals is not supplied (Detail is in Evidence.).",
+        "This page could not read the variance bridge from the handoff because Disposals is not supplied (Detail is in Evidence.).",
     });
   });
   it("is not a bridge with a gap amount, with two units, with no changes, or when two tables compete", () => {
@@ -584,7 +585,9 @@ describe("EarningsDeltaLead on the retained handoff", () => {
   it("draws the bridge's absence as the one gap tile, not a caption", () => {
     const { container } = lead(cp1bEntry());
     const gap = screen.getByRole("region", { name: "Variance bridge" });
-    expect(within(gap).getByText(/No variance bridge in this handoff\./)).toBeVisible();
+    expect(
+      within(gap).getByText(/This page could not read the variance bridge from the handoff\./),
+    ).toBeVisible();
     expect(within(gap).queryByRole("img")).toBeNull();
     expect(container.querySelector("section.gap-hatch")).toBeNull();
     expect(
@@ -723,7 +726,9 @@ describe("EarningsDeltaLead on the retained handoff", () => {
     );
     const gap = screen.getByRole("region", { name: RESULTS_NAME });
     expect(
-      within(gap).getByText(/The handoff does not state the unit of its earnings table\./),
+      within(gap).getByText(
+        /This page could not read the unit of the earnings table from the handoff\./,
+      ),
     ).toBeVisible();
     expect(within(gap).queryByRole("img")).toBeNull();
     expect(
@@ -736,8 +741,8 @@ describe("EarningsDeltaLead on the retained handoff", () => {
     const { container } = render(<EarningsDeltaLead {...props} />);
     expect(container).toBeEmptyDOMElement();
   });
-  it("lists no figure of its own as drawn by the frame", () => {
-    expect(EarningsDeltaLead.draws).toEqual([]);
+  it("lists the figures it draws itself, so the frame does not draw them again", () => {
+    expect(EarningsDeltaLead.draws).toEqual(["figures"]);
   });
 });
 
@@ -850,7 +855,9 @@ describe("EarningsDeltaLead on chart tables", () => {
     expect(row.textContent).toContain("1,299");
     expect(textOf(row, "reason").join(" ")).toContain("FY2024: Not supplied: not yet reported");
     expect(row.querySelector("[data-current]")).toBeNull();
-    expect(screen.getByText(/No variance bridge in this handoff\./)).toBeVisible();
+    expect(
+      screen.getByText(/This page could not read the variance bridge from the handoff\./),
+    ).toBeVisible();
   });
   it("puts a stated zero at the axis start, not off the chart", () => {
     const { container } = lead(
@@ -865,7 +872,11 @@ describe("EarningsDeltaLead on chart tables", () => {
   });
   it("reads the states of the margin table: absent, with a gap, all gaps", () => {
     lead(delta(results(MONEY)));
-    expect(screen.getByText(/The handoff has no table of margin and KPI changes\./)).toBeVisible();
+    expect(
+      screen.getByText(
+        /This page could not read the table of margin and KPI changes from the handoff\./,
+      ),
+    ).toBeVisible();
     cleanup();
     lead(
       delta(
@@ -884,7 +895,7 @@ describe("EarningsDeltaLead on chart tables", () => {
     );
     const tile = screen.getByRole("region", { name: "Margins and KPIs" });
     expect(
-      within(tile).getByText("The handoff states no pair with both figures to draw."),
+      within(tile).getByText("This page could not read a pair with both figures from the handoff."),
     ).toBeVisible();
     expect(
       within(within(tile).getByRole("list", { name: "Not supplied" })).getByText(
@@ -980,12 +991,12 @@ describe("EarningsDeltaLead with a variance bridge", () => {
     const own = screen.getByRole("region", { name: "Variance bridge" });
     expect(
       within(own).getByText(
-        /The variance bridge in this handoff does not add up, so it is not drawn as a bridge\./,
+        /did not draw the variance bridge because its steps do not add up to its closing figure\./,
       ),
     ).toBeVisible();
     expect(within(own).queryByRole("img")).toBeNull();
     const movers = screen.getByRole("region", { name: RESULTS_NAME });
-    expect(within(movers).queryByText(/does not add up/)).toBeNull();
+    expect(within(movers).queryByText(/add up/)).toBeNull();
     expect(within(movers).getByRole("img")).toBeInTheDocument();
   });
   it("says a missing step is not supplied, never that the steps do not add up", () => {
@@ -1002,10 +1013,10 @@ describe("EarningsDeltaLead with a variance bridge", () => {
     const own = screen.getByRole("region", { name: "Variance bridge" });
     expect(
       within(own).getByText(
-        /The variance bridge is not drawn: Disposals is not supplied \(not split\)\./,
+        /This page could not read the variance bridge from the handoff because Disposals is not supplied \(not split\)\./,
       ),
     ).toBeVisible();
-    expect(screen.queryByText(/does not add up/)).toBeNull();
+    expect(screen.queryByText(/add up/)).toBeNull();
   });
   it("says two bridge tables are two, in the gap tile", () => {
     lead(delta(steps(GOOD), steps(GOOD, "Chart data: other"), results(MONEY)));
@@ -1043,7 +1054,7 @@ describe("rows with no stated unit and screened text", () => {
   });
   it("draws each such row in its own drawing, captioned", () => {
     lead(delta(results(NO_UNIT_ROWS)));
-    expect(screen.getAllByText("unit not stated")).toHaveLength(2);
+    expect(screen.getAllByText("unit not read")).toHaveLength(2);
     expect(
       within(screen.getByRole("region", { name: RESULTS_NAME })).getAllByRole("img"),
     ).toHaveLength(2);
@@ -1100,10 +1111,18 @@ describe("EarningsDeltaLead gaps", () => {
   it("draws the three gap tiles, in the one gap pattern, for a handoff with no tables", () => {
     const { container } = lead(entry("CP-1B", [], []));
     expect(
-      screen.getByText(/The handoff has no table of prior and current results\./),
+      screen.getByText(
+        /This page could not read the table of prior and current results from the handoff\./,
+      ),
     ).toBeVisible();
-    expect(screen.getByText(/The handoff has no table of margin and KPI changes\./)).toBeVisible();
-    expect(screen.getByText(/No variance bridge in this handoff\./)).toBeVisible();
+    expect(
+      screen.getByText(
+        /This page could not read the table of margin and KPI changes from the handoff\./,
+      ),
+    ).toBeVisible();
+    expect(
+      screen.getByText(/This page could not read the variance bridge from the handoff\./),
+    ).toBeVisible();
     expect(screen.queryByRole("img")).toBeNull();
     expect(container.querySelector("section.gap-hatch")).toBeNull();
     expect(screen.getAllByRole("region")).toHaveLength(3);
@@ -1111,7 +1130,9 @@ describe("EarningsDeltaLead gaps", () => {
   it("says fewer than two annual periods in words, not that the table is missing", () => {
     lead(delta(earningsTable(["Line Item", "FY2024"], [["Revenue", "7940"]])));
     expect(screen.getAllByText(new RegExp(FEW_PERIODS.slice(0, 40)))).toHaveLength(2);
-    expect(screen.queryByText(/has no table of prior and current results/)).toBeNull();
+    expect(
+      screen.queryByText(/This page could not read the table of prior and current results/),
+    ).toBeNull();
   });
   it("says more than one earnings table in words", () => {
     const one = earningsTable(["Line Item", "FY2023", "FY2024"], [["Revenue", "6585", "7940"]]);

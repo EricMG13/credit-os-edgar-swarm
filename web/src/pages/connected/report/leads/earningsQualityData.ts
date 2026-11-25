@@ -109,8 +109,11 @@ const gapOf = (reason: string, stated: BridgeGap["stated"] = []): BridgeGap => (
 export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
   const table = stepTable(entry);
   if (table === "several")
-    return gapOf("The handoff has more than one table of steps, so no bridge is drawn.");
-  if (!table) return gapOf("The handoff has no bridge table.");
+    return gapOf(
+      "This page could not read the earnings quality bridge from the handoff because it appears more than once.",
+    );
+  if (!table)
+    return gapOf("This page could not read the earnings quality bridge from the handoff.");
   const unitAt = table.headers.indexOf("Reporting unit");
   const amountAt = table.headers.indexOf("Amount");
   const basisAt = table.headers.indexOf("Basis and limitation");
@@ -119,7 +122,8 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
     const unit = unitAt < 0 ? "" : safeText(row.cells[unitAt] ?? "");
     return { label: safeText(row.cells[0] ?? ""), text: unit ? `${cell} ${unit}` : cell };
   });
-  if (table.rows.length < 2) return gapOf("The bridge states fewer than two steps.", stated);
+  if (table.rows.length < 2)
+    return gapOf("This page could not read two steps of the bridge from the handoff.", stated);
   const units = new Set(
     table.rows.map((row) => (unitAt < 0 ? "" : (row.cells[unitAt] ?? "").trim())),
   );
@@ -127,8 +131,8 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
   if (units.size !== 1 || !unit)
     return gapOf(
       unitAt < 0
-        ? "The bridge states no reporting unit."
-        : "The bridge steps are not in one stated reporting unit.",
+        ? "This page could not read the reporting unit of the bridge from the handoff."
+        : "This page could not read the bridge steps in one reporting unit from the handoff.",
       stated,
     );
   const steps = table.rows.map((row) => ({
@@ -140,8 +144,8 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
   if (bad)
     return gapOf(
       bad.reading.kind === "gap"
-        ? `${bad.label} is not supplied: ${safeText(bad.reading.reason)}. The bridge cannot be drawn.`
-        : `${bad.label} states “${safeText(bad.reading.text)}” where an amount was expected. The bridge cannot be drawn.`,
+        ? `This page could not read the bridge from the handoff because ${bad.label} is not supplied: ${safeText(bad.reading.reason)}.`
+        : `This page could not read “${safeText(bad.reading.text)}” as an amount for ${bad.label}, so the bridge is not drawn.`,
       stated,
     );
   const read: Step[] = steps.map((step) => {
@@ -155,11 +159,12 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
   });
   const [opening, ...rest] = read;
   const closing = rest.pop();
-  if (!opening || !closing) return gapOf("The bridge states fewer than two steps.", stated);
+  if (!opening || !closing)
+    return gapOf("This page could not read two steps of the bridge from the handoff.", stated);
   const rebuilt = sum([opening.amount, ...rest.map((step) => step.amount)]);
   if (rebuilt === null || signOf(difference(closing.amount, rebuilt)) !== 0)
     return gapOf(
-      `The steps do not reconcile: ${opening.label} states ${group(opening.amount)} and ${closing.label} states ${group(closing.amount)}, which the steps between them do not bridge.`,
+      `This page did not draw the bridge because the steps between ${opening.label} (${group(opening.amount)}) and ${closing.label} (${group(closing.amount)}) do not add up.`,
       stated,
     );
   const names = assessmentByName(entry);
@@ -207,7 +212,7 @@ function multiple(cell: string) {
         reason:
           reading.kind === "gap"
             ? safeText(reading.reason)
-            : `the table states “${safeText(reading.text)}” where a multiple was expected`,
+            : `this page could not read “${safeText(reading.text)}” as a multiple`,
       } as const);
 }
 
@@ -223,7 +228,8 @@ export function readLeverage(entry: OutputEntry): Leverage {
   if (!table)
     return {
       state: "gap",
-      reason: "The handoff has no table of leverage on the statements and on supported earnings.",
+      reason:
+        "This page could not read the leverage on the statements and on supported earnings from the handoff.",
     };
   const rowOf = (basis: string) =>
     table.rows.filter((row) => norm(row.cells[0] ?? "").replace(/\s*\(cp-1\)$/, "") === basis);
@@ -235,7 +241,7 @@ export function readLeverage(entry: OutputEntry): Leverage {
     return {
       state: "gap",
       reason:
-        "The leverage table does not state one row each for the statements and for supported earnings.",
+        "This page could not read one row each for the statements and for supported earnings from the handoff.",
     };
   const measures = MEASURES.map((header): LeverageMeasure => {
     const at = table.headers.indexOf(header);
@@ -243,8 +249,8 @@ export function readLeverage(entry: OutputEntry): Leverage {
     const b = multiple(to.cells[at] ?? "");
     if (!a.ok || !b.ok) {
       const why = [
-        a.ok ? null : `on the statements ${a.reason}`,
-        b.ok ? null : `on supported earnings ${b.reason}`,
+        a.ok ? null : `on the statements: ${a.reason}`,
+        b.ok ? null : `on supported earnings: ${b.reason}`,
       ].filter((text) => text !== null);
       return { kind: "gap", measure: header, reason: why.join("; ") };
     }

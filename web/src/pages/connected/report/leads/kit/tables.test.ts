@@ -111,10 +111,10 @@ describe("period rows: every stated period, ordered by year, never by position",
   });
   it("makes a repeated year or an undated label a stated gap with the reason", () => {
     expect(labelsOf(periodRows(rows("FY2024", "FY2024 / 2024-09-30")))).toBe(
-      "FY2024 is stated more than once.",
+      "FY2024 appears more than once",
     );
-    expect(labelsOf(periodRows(rows("FY2024", "Current")))).toBe("A period is not dated: Current.");
-    expect(labelsOf(periodRows(rows()))).toBe("No period is stated.");
+    expect(labelsOf(periodRows(rows("FY2024", "Current")))).toBe("a period has no year: Current");
+    expect(labelsOf(periodRows(rows()))).toBe("it has no rows");
   });
   it("does not call two different kinds in one year a repeat", () => {
     expect(labelsOf(periodRows(rows("FY2024", "LTM Dec-2024")))).toEqual([
@@ -142,8 +142,8 @@ describe("statement columns", () => {
       ["FY2023", 2],
       ["FY2024", 1],
     ]);
-    expect(labels(columns())).toBe("No period column is stated.");
-    expect(labels(columns("FY2024", "FY2024"))).toBe("FY2024 is stated more than once.");
+    expect(labels(columns())).toBe("it has no column named for a period");
+    expect(labels(columns("FY2024", "FY2024"))).toBe("FY2024 appears more than once");
   });
 });
 

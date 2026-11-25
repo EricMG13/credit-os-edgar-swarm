@@ -76,12 +76,12 @@ describe("MaturityTile on the accepted handoff", () => {
     );
     expect(tile.querySelector("[data-axis-break]")).not.toBeNull();
   });
-  it("draws the two small years at the 2 px minimum and says so", () => {
+  it("draws the two small years at the 2 px minimum, with no note about it", () => {
     const tile = draw(cp1Entry());
     expect(num(bar(tile, "FY2026"), "height")).toBe(2);
     expect(num(bar(tile, "FY2027"), "height")).toBe(2);
     expect(num(bar(tile, "FY2025"), "height")).toBeGreaterThan(2);
-    expect(within(tile).getByText("FY2026 and FY2027 drawn at a 2 px minimum.")).toBeVisible();
+    expect(tile.textContent).not.toMatch(/2 px minimum/);
   });
   it("prints no bracket, no sum and no ranking (ruling i)", () => {
     const tile = draw(cp1Entry());
@@ -133,9 +133,7 @@ describe("MaturityTile on the other retained handoffs", () => {
         "Same schedule and exclusions; subordinated November 2027 maturity falls in FY2028.",
       ),
     ).toBeVisible();
-    expect(
-      within(tile).getByText("FY2025, FY2026 and FY2027 drawn at a 2 px minimum."),
-    ).toBeVisible();
+    expect(tile.textContent).not.toMatch(/2 px minimum/);
     expect(within(tile).getByRole("img").getAttribute("aria-label")).toBe(
       "Debt maturities, US$m: FY2025 93, FY2026 92, FY2027 92, FY2028 6,637, FY2029 4,768, Thereafter 12,637.",
     );
@@ -184,8 +182,12 @@ describe("MaturityTile states (synthetic, from the module contract)", () => {
         ["FY2027", "300"],
       ]),
     );
-    expect(gap(tile, "FY2026: No row in the schedule")).toBeDefined();
-    expect(within(tile).getByText("FY2026: no row in the schedule for this year.")).toBeVisible();
+    expect(gap(tile, "FY2026: No row read")).toBeDefined();
+    expect(
+      within(tile).getByText(
+        "FY2026: this page could not read a row for this year from the handoff.",
+      ),
+    ).toBeVisible();
     const slot = num(bar(tile, "FY2027"), "x") - num(bar(tile, "FY2025"), "x");
     expect(slot).toBeGreaterThan(0);
   });
@@ -218,17 +220,17 @@ describe("MaturityTile states (synthetic, from the module contract)", () => {
       ]),
     );
     expect(tile.textContent).toBe(
-      "Debt maturities · US$m · The maturity schedule states 2026 more than once; the wall is not drawn.",
+      "Debt maturities · US$m · This page could not read the maturity wall from the handoff because 2026 appears more than once.",
     );
     cleanup();
     tile = draw(wall([["FY2026", "Not supplied: x"]]));
     expect(tile.textContent).toBe(
-      "Debt maturities · US$m · The maturity schedule states no amount for any period.",
+      "Debt maturities · US$m · This page could not read an amount for any period of the maturity wall from the handoff.",
     );
     cleanup();
     tile = draw(wall([["FY2026", "1"]], []));
     expect(tile.textContent).toBe(
-      "Debt maturities · Financial foundation's handoff has no debt maturities table.",
+      "Debt maturities · This page could not read the debt maturities from the handoff.",
     );
     expect(tile.className).not.toMatch(/gap-hatch/);
   });

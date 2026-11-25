@@ -380,7 +380,7 @@ function Content(props: LeadProps) {
       ))}
       {!read.outliers && (
         <GapTile span={12} label="Outliers and the peer table" kicker="Outliers and the peer table">
-          Outliers and the peer table are not in this handoff.
+          This page could not read the outliers or the peer table from the handoff.
         </GapTile>
       )}
     </>

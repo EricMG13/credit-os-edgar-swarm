@@ -81,7 +81,7 @@ describe("readiness words", () => {
   it("draws any other word as written, with the neutral mark", () => {
     expect(readinessWord("Mostly ready")).toEqual({ word: "Mostly ready", mark: "other" });
     expect(readinessWord("PARTIAL")).toEqual({ word: "PARTIAL", mark: "other" });
-    expect(readinessWord("")).toEqual({ word: "Not stated", mark: "other" });
+    expect(readinessWord("")).toEqual({ word: "Not read", mark: "other" });
   });
 });
 
@@ -143,7 +143,7 @@ describe("sourceReadiness data", () => {
     if (result.kind !== "ready") throw new Error("expected rows");
     expect(result.rows.map(({ area, reason }) => [area, reason])).toEqual([
       ["Financial foundation", "Reason is in Evidence."],
-      ["Debt terms", "No limitation stated."],
+      ["Debt terms", "This page could not read a limitation for this area from the handoff."],
       ["Detail is in Evidence.", "Complete."],
     ]);
   });
@@ -332,10 +332,12 @@ describe("SourceReadinessLead", () => {
     expect(within(matrix()).getByText("Only the synthetic filing is available")).toBeVisible();
     expect(screen.queryByText("Filing p.1")).toBeNull();
   });
-  it("says in one gap tile that the key evidence located and the conflicts are not in the handoff", () => {
+  it("says in one gap tile that the key evidence located and the conflicts are not read from the handoff", () => {
     lead();
     const tile = screen.getByRole("region", { name: "Key evidence located and conflicts" });
-    expect(tile).toHaveTextContent(/Not in this handoff\./);
+    expect(tile).toHaveTextContent(
+      "This page could not read the key evidence located or the conflicts from the handoff.",
+    );
     expect(tile.className).not.toContain("border-dashed");
   });
   it("does not say so when the handoff has a table that could hold them", () => {
@@ -344,16 +346,18 @@ describe("SourceReadinessLead", () => {
         section("Located", 30, table(31, ["Item", "Evidence"], [["a", "b"]])),
       ]),
     );
-    expect(screen.queryByText(/Not in this handoff/)).toBeNull();
+    expect(screen.queryByText(/could not read the key evidence/)).toBeNull();
     expect(matrix()).toBeInTheDocument();
   });
   it("draws one plain gap tile when the table is absent", () => {
     lead(entry("CP-0", [], []));
     const tile = screen.getByRole("region", { name: "Readiness by area" });
-    expect(tile).toHaveTextContent("Source readiness states no readiness by area.");
+    expect(tile).toHaveTextContent(
+      "This page could not read the readiness by area from the handoff.",
+    );
     expect(tile.className).not.toContain("border-dashed");
     expect(screen.queryByRole("img")).toBeNull();
-    expect(screen.queryByText(/Not in this handoff/)).toBeNull();
+    expect(screen.queryByText(/could not read the key evidence/)).toBeNull();
   });
   it("draws nothing for a module the frame reports as unreadable", () => {
     const source = readiness(FIVE);

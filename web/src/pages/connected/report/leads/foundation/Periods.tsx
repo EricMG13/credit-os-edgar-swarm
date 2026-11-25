@@ -1,4 +1,3 @@
-import { GapNote } from "../../overview/Tile";
 import { FigureTile, GapTile } from "../kit/LeadFrame";
 import { GapSlot, Measured, NARROW, SIZE, textWidth, wrap } from "../kit/marks";
 import { safeText } from "../kit/reader";
@@ -30,7 +29,7 @@ function stateWords(period: StripPeriod): string {
     case "none":
       return "No figure";
     case "unstated":
-      return "Not stated";
+      return "Not shown";
   }
 }
 
@@ -251,23 +250,13 @@ function StripRows({ strip, width }: { strip: PeriodStrip; width: number }) {
 }
 
 function Strip({ strip, width }: { strip: PeriodStrip; width: number }) {
-  if (!fitsAxis(strip, width))
-    return (
-      <>
-        <StripRows strip={strip} width={width} />
-        {showsMatrix(strip) && (
-          <p className="mt-2 text-small text-text-secondary">
-            Which figure states which period is in the table view.
-          </p>
-        )}
-      </>
-    );
+  if (!fitsAxis(strip, width)) return <StripRows strip={strip} width={width} />;
   return (
     <>
       <StripAxis strip={strip} width={width} />
       {showsMatrix(strip) && (
         <p className="mt-2 text-small text-text-secondary">
-          A dash: the figure&apos;s table does not state the period.
+          A dash: the figure shows no value for the period.
         </p>
       )}
     </>
@@ -398,16 +387,6 @@ function tableOf(strip: PeriodStrip) {
   };
 }
 
-/** What the handoff does not carry, stated only where the periods show it: one or two annual periods. */
-function notCarried(strip: PeriodStrip) {
-  const stated = strip.axis.filter((period) => period.state.kind !== "unstated");
-  const annual = stated.every((period) => /^(?:FY|CY)?\s?\d{4}$/.test(period.label));
-  if (!annual || strip.apart.length > 0 || stated.length === 0 || stated.length > 2) return null;
-  return stated.length === 2
-    ? "A longer trend, last twelve months and a full debt stack are not in this handoff."
-    : "A second period, a longer trend, last twelve months and a full debt stack are not in this handoff.";
-}
-
 /** The stated gaps the matrix hatches, with their words: "Cash conversion and Net debt, FY2022: …". */
 function matrixGaps(strip: PeriodStrip) {
   if (!showsMatrix(strip)) return [];
@@ -430,25 +409,24 @@ function apartLine(strip: PeriodStrip) {
   const parts = strip.apart.map((period) =>
     period.figures.length
       ? `${period.label} (${listOf(period.figures)})`
-      : `${period.label} (no figure states a number for it)`,
+      : `${period.label} (no figure shows a number for it)`,
   );
-  return `Also stated, another kind of period, not on the axis: ${listOf(parts)}.`;
+  return `Other kinds of period: ${listOf(parts)}.`;
 }
 
 /** Tile 7 of the financial foundation: the periods the handoff states, and which the figures show. */
 export function PeriodsTile({ lead }: { lead: LeadProps }) {
   const strip = periodStrip(lead.entry);
-  const gaps = strip.gaps.map((gap) => safeText(`${gap.table}: ${gap.reason}`));
+  const gaps = strip.gaps.map((gap) => safeText(gap.reason));
   if (strip.axis.length === 0)
     return (
       <GapTile span={7} label={LABEL} kicker={LABEL}>
-        {["The figure tables state no period.", ...gaps].join(" ")}
+        {["This page could not read a period from the handoff.", ...gaps].join(" ")}
       </GapTile>
     );
   const shown = strip.shown.length
     ? `Figures show ${listOf(strip.shown)}.`
     : "No figure states a number for any period.";
-  const missing = notCarried(strip);
   const apart = apartLine(strip);
   const hatched = matrixGaps(strip);
   return (
@@ -479,7 +457,6 @@ export function PeriodsTile({ lead }: { lead: LeadProps }) {
         ))}
         {apart && <p>{apart}</p>}
       </div>
-      {missing && <GapNote>{missing}</GapNote>}
     </FigureTile>
   );
 }

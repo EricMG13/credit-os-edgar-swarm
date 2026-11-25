@@ -3,7 +3,7 @@
 // sizes written here.
 import { act, fireEvent, render, renderHook, screen, within } from "@testing-library/react";
 import { cp1Entry, leadProps } from "../fixtures/load";
-import { FigureTile, Link, ScrollFigure, TableView } from "./LeadFrame";
+import { FigureTile, Link, TableView } from "./LeadFrame";
 import { useFigureWidth, useOverflows } from "./useWidth";
 
 const TABLE = {
@@ -90,7 +90,7 @@ describe("FigureTile", () => {
   });
 });
 
-describe("TableView, Link and ScrollFigure", () => {
+describe("TableView and Link", () => {
   it("TableView standalone has the same button and panel", () => {
     render(<TableView {...TABLE} />);
     const button = screen.getByRole("button", { name: "Table view: EBITDA bridge, USD m" });
@@ -105,17 +105,6 @@ describe("TableView, Link and ScrollFigure", () => {
     expect(link.getAttribute("href")).toBe("#forecast");
     expect(link.className).toContain("min-h-8");
     expect(link.className).toContain("max-[480px]:min-h-11");
-  });
-
-  it("ScrollFigure (deprecated) is no tab stop while it cannot be seen to overflow", () => {
-    render(
-      // The deprecated box is tested until the last lead moves off it.
-      // eslint-disable-next-line @typescript-eslint/no-deprecated
-      <ScrollFigure label="Wide figure">
-        <svg />
-      </ScrollFigure>,
-    );
-    expect(screen.getByRole("group", { name: "Wide figure" }).hasAttribute("tabindex")).toBe(false);
   });
 });
 

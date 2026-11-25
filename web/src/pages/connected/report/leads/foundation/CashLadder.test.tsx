@@ -209,11 +209,9 @@ describe("cash ladder: the accepted CP-1, FY2024 bars and FY2023 beneath", () =>
     expect(tile.textContent).not.toMatch(/CP-1|T4\.5|C\d{2}/);
   });
 
-  it("notes how it is drawn, and no period list when both periods are drawn", () => {
+  it("carries no note on how it is drawn, and no period list when both periods are drawn", () => {
     const { tile } = draw(cp1Entry());
-    expect(tile.textContent).toContain(
-      "Each level is drawn from zero at its stated figure; a deduction hangs from the bar above it.",
-    );
+    expect(tile.textContent).not.toContain("Each level is drawn from zero");
     expect(tile.textContent).not.toContain("Drawn:");
   });
 });
@@ -348,14 +346,23 @@ describe("cash ladder: other real handoffs and mutations", () => {
   it("a step the handoff does not state is a gap row with the reason, not dropped", () => {
     const entry = setLabelled(cp1Entry(), CASH, "Capital expenditures", "Unit", "EUR millions");
     const { tile } = draw(entry);
-    expect(parts(tile, "reason")).toContain("Capital expenditures is stated in another unit.");
+    // The reason wraps over lines of the drawing, so compare it without the wrapped spaces.
+    const reasons = parts(tile, "reason").map((text) => text.replaceAll(" ", ""));
+    expect(reasons).toContain(
+      "This page could not read capital expenditures from the handoff because it is in another unit than the other rows.".replaceAll(
+        " ",
+        "",
+      ),
+    );
     expect(labels(tile)).toContain("Capital expenditures");
   });
 
   it("without a cash flow statement: the one gap tile with the true reason", () => {
     render(<CashLadderTile lead={leadProps(dropTable(cp1Entry(), CASH))} />);
     const tile = screen.getByRole("region", { name: "Cash conversion" });
-    expect(tile.textContent).toBe("Cash conversion · Cash flow statement is not in the handoff.");
+    expect(tile.textContent).toBe(
+      "Cash conversion · This page could not read the cash flow statement from the handoff.",
+    );
     expect(tile.querySelector("svg")).toBeNull();
   });
 });

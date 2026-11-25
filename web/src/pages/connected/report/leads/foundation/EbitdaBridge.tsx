@@ -13,7 +13,8 @@ const AsTall = ({ children }: { children: ReactNode }) => (
   <div className="contents lg:[&>section]:self-start">{children}</div>
 );
 
-const NOT_ADDING = "The bridge steps do not add up to the closing figure.";
+const NOT_ADDING =
+  "This page did not draw the bridge because its steps do not add up to the closing figure.";
 
 /**
  * Tile 4: the stated EBITDA bridge, opening through each stated step to the closing figure, on an
@@ -25,7 +26,8 @@ export function EbitdaBridgeTile({ lead }: { lead: LeadProps }) {
   if (!data)
     return (
       <GapTile span={6} label={LABEL} kicker={LABEL}>
-        {figureGap(lead.entry, "bridge") ?? "The EBITDA bridge is not in the handoff."}
+        {figureGap(lead.entry, "bridge") ??
+          "This page could not read the EBITDA bridge from the handoff."}
       </GapTile>
     );
   const common = {

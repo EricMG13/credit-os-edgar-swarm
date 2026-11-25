@@ -98,7 +98,11 @@ describe("statedPeriods: the periods the figures cover", () => {
       "Mutation.",
     ]);
     expect(statedPeriods(twice).gaps).toEqual([
-      { table: "Net debt data", reason: "FY2024 is stated more than once." },
+      {
+        table: "Net debt data",
+        reason:
+          "This page could not read the periods of net debt data from the handoff because FY2024 appears more than once.",
+      },
     ]);
     expect(statedPeriods(twice).labels).toEqual(["FY2023", "FY2024"]);
   });
@@ -223,7 +227,7 @@ describe("earningsAgainstDebt", () => {
     const gone = earningsAgainstDebt(dropTable(accepted, "Net debt data"));
     expect(gone?.measures.map((m) => m.key)).toEqual(["sales", "reportedEbitda", "adjustedEbitda"]);
     expect(gone?.absent).toEqual([
-      { label: "Gross debt", reason: "Gross debt is not in the handoff." },
+      { label: "Gross debt", reason: "This page could not read gross debt from the handoff." },
     ]);
   });
   it("keeps a stated gap as a gap: no change, never zero", () => {
@@ -263,11 +267,18 @@ describe("earningsAgainstDebt", () => {
         : table,
     );
     expect(earningsAgainstDebt(allGbp)?.absent).toEqual([
-      { label: "Gross debt", reason: "Gross debt is stated in another unit." },
+      {
+        label: "Gross debt",
+        reason:
+          "This page could not read gross debt from the handoff because it is in another unit than the other measures.",
+      },
     ]);
     const mixed = setCell(accepted, "Net debt data", 0, "Reporting unit", "GBPm");
     expect(earningsAgainstDebt(mixed)?.absent).toEqual([
-      { label: "Gross debt", reason: "Gross debt is not stated in one unit." },
+      {
+        label: "Gross debt",
+        reason: "This page could not read gross debt in one unit from the handoff.",
+      },
     ]);
   });
   it("names a repeated year as the reason a measure is not drawn", () => {
@@ -280,13 +291,21 @@ describe("earningsAgainstDebt", () => {
       "Mutation.",
     ]);
     expect(earningsAgainstDebt(twice)?.absent).toEqual([
-      { label: "Gross debt", reason: "Net debt data: FY2024 is stated more than once." },
+      {
+        label: "Gross debt",
+        reason:
+          "This page could not read the periods of net debt data from the handoff because FY2024 appears more than once.",
+      },
     ]);
   });
   it("draws an empty or gap-only table as stated: empty is a reason, gaps stay gaps", () => {
     const empty = earningsAgainstDebt(withRows(accepted, "Net debt data", []));
     expect(empty?.absent).toEqual([
-      { label: "Gross debt", reason: "Net debt data: No period is stated." },
+      {
+        label: "Gross debt",
+        reason:
+          "This page could not read the periods of net debt data from the handoff because it has no rows.",
+      },
     ]);
     const gapsOnly = earningsAgainstDebt(
       withRows(accepted, "Net debt data", [
@@ -449,7 +468,9 @@ describe("cashLadder: the handoff's own levels and deductions, as written", () =
       (s) => s.key === "afterDistributions",
     );
     expect(after?.stated).toBe(false);
-    expect(after?.absent).toBe("Not found in the cash flow statement or the KPI dashboard.");
+    expect(after?.absent).toBe(
+      "This page could not read cash flow after distributions in the cash flow statement or the KPI dashboard from the handoff.",
+    );
     expect(after?.values.map((v) => v.cell)).toEqual([null, null]);
   });
   it("refuses a KPI dashboard level in another unit, and one that matches twice", () => {
@@ -463,7 +484,7 @@ describe("cashLadder: the handoff's own levels and deductions, as written", () =
     const after = (entry: OutputEntry) =>
       cashLadder(entry)?.steps.find((s) => s.key === "afterDistributions");
     expect(after(euro)?.absent).toBe(
-      "DCF after cash dividends and equivalents is stated in another unit.",
+      "This page could not read DCF after cash dividends and equivalents from the handoff because it is in another unit than the other rows.",
     );
     const twice = addRow(distressed, "T4.10 KPI dashboard", [
       "Other",
@@ -474,7 +495,7 @@ describe("cashLadder: the handoff's own levels and deductions, as written", () =
       "-",
     ]);
     expect(after(twice)?.absent).toBe(
-      "Cash flow after distributions matches more than one row of the KPI dashboard.",
+      "This page could not read cash flow after distributions from the handoff because more than one row of the KPI dashboard matches it.",
     );
   });
   it("reads the single-period relative value ladder with its own label forms", () => {
@@ -532,7 +553,9 @@ describe("cashLadder: the handoff's own levels and deductions, as written", () =
     ]);
     const taxes = cashLadder(twice)?.steps.find((s) => s.key === "taxes");
     expect(taxes?.stated).toBe(false);
-    expect(taxes?.absent).toBe("Cash taxes paid matches more than one row of the statement.");
+    expect(taxes?.absent).toBe(
+      "This page could not read cash taxes paid from the handoff because more than one row of the statement matches it.",
+    );
     expect(taxes?.values.map((v) => v.cell)).toEqual([null, null]);
   });
   it("refuses a step in another unit", () => {
@@ -545,14 +568,16 @@ describe("cashLadder: the handoff's own levels and deductions, as written", () =
     );
     const capex = cashLadder(other)?.steps.find((s) => s.key === "capex");
     expect(capex?.stated).toBe(false);
-    expect(capex?.absent).toBe("Capital expenditures is stated in another unit.");
+    expect(capex?.absent).toBe(
+      "This page could not read capital expenditures from the handoff because it is in another unit than the other rows.",
+    );
   });
   it("keeps the ladder when the income statement is missing, with the EBITDA step absent", () => {
     const ladder = cashLadder(dropTable(accepted, "T4.4 Income statement"));
     expect(ladder?.steps[0]).toMatchObject({
       key: "ebitda",
       stated: false,
-      absent: "EBITDA (Adjusted): Income statement is not in the handoff.",
+      absent: "This page could not read the income statement from the handoff.",
     });
   });
   it("is absent when the cash flow statement is", () => {
@@ -933,10 +958,10 @@ describe("figureGap: why a figure is not drawn, true of this handoff", () => {
   });
   it("names an absent table, a repeated year, a twice-stated figure and units", () => {
     expect(figureGap(dropTable(accepted, "Segment schedule"), "segments")).toBe(
-      "The segment schedule is not in the handoff.",
+      "This page could not read the segment schedule from the handoff.",
     );
     expect(figureGap(dropTable(accepted, "T4.5 Cash flow statement"), "ladder")).toBe(
-      "Cash flow statement is not in the handoff.",
+      "This page could not read the cash flow statement from the handoff.",
     );
     const twice = addRow(accepted, "Net debt data", [
       "FY2024 / 2024-09-30",
@@ -946,7 +971,9 @@ describe("figureGap: why a figure is not drawn, true of this handoff", () => {
       "US$m",
       "-",
     ]);
-    expect(figureGap(twice, "netDebt")).toBe("Net debt data: FY2024 is stated more than once.");
+    expect(figureGap(twice, "netDebt")).toBe(
+      "This page could not read the periods of net debt data from the handoff because FY2024 appears more than once.",
+    );
     const segmentTwice = addRow(accepted, "Segment schedule", [
       "Airframe",
       "FY2024",
@@ -957,16 +984,16 @@ describe("figureGap: why a figure is not drawn, true of this handoff", () => {
       "-",
     ]);
     expect(figureGap(segmentTwice, "segments")).toBe(
-      "The segment schedule states Airframe net sales more than once for FY2024.",
+      "This page could not read the segment schedule from the handoff because Airframe net sales appears more than once for FY2024.",
     );
     expect(
       figureGap(
         setCell(accepted, "Chart data: EBITDA bridge", 0, "Reporting unit", "EURm"),
         "bridge",
       ),
-    ).toBe("The EBITDA bridge is not stated in one unit.");
+    ).toBe("This page could not read the EBITDA bridge in one unit from the handoff.");
     expect(figureGap(withRows(accepted, "Chart data: EBITDA bridge", []), "bridge")).toBe(
-      "The EBITDA bridge states fewer than an opening, a step and a closing.",
+      "This page could not read the EBITDA bridge from the handoff because it has fewer than three steps.",
     );
   });
   it("gives every measure's reason when no earnings measure is readable", () => {
@@ -978,8 +1005,8 @@ describe("figureGap: why a figure is not drawn, true of this handoff", () => {
     ])
       none = dropTable(none, heading);
     expect(figureGap(none, "earnings")).toBe(
-      "Revenue is not in the handoff. EBITDA (Reported): Income statement is not in the handoff. " +
-        "Adjusted EBITDA is not in the handoff. Gross debt is not in the handoff.",
+      "This page could not read revenue from the handoff. This page could not read the income statement from the handoff. " +
+        "This page could not read adjusted EBITDA from the handoff. This page could not read gross debt from the handoff.",
     );
   });
 });

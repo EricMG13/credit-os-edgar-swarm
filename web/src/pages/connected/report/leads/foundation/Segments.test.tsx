@@ -252,14 +252,16 @@ describe("SegmentsTile states (mutations of the accepted handoff; not a real han
   });
   it("draws the one gap pattern when the schedule is absent or states a figure twice", () => {
     let tile = draw(dropTable(cp1Entry(), SCHEDULE));
-    expect(tile.textContent).toBe("Segments · The segment schedule is not in the handoff.");
+    expect(tile.textContent).toBe(
+      "Segments · This page could not read the segment schedule from the handoff.",
+    );
     expect(tile.className).not.toMatch(/gap-hatch/);
     cleanup();
     tile = draw(
       addRow(cp1Entry(), SCHEDULE, ["Airframe", "FY2024", "1", "1", "USD millions", "-", "-"]),
     );
     expect(tile.textContent).toBe(
-      "Segments · The segment schedule states Airframe net sales more than once for FY2024.",
+      "Segments · This page could not read the segment schedule from the handoff because Airframe net sales appears more than once for FY2024.",
     );
   });
   it("draws the gap when no segment states an amount for the drawn period", () => {
@@ -269,7 +271,7 @@ describe("SegmentsTile states (mutations of the accepted handoff; not a real han
         data = setCell(data, SCHEDULE, row, column, "Not supplied: withheld");
     const tile = draw(data);
     expect(tile.textContent).toBe(
-      "Segments · US$m, FY2024 · The segment schedule states no amount for any business unit in FY2024.",
+      "Segments · US$m, FY2024 · This page could not read an amount for any business unit in FY2024 from the handoff.",
     );
   });
 });

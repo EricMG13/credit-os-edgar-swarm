@@ -34,7 +34,6 @@ const byData = (tile: HTMLElement, attr: string, value: string) =>
 const period = (tile: HTMLElement, label: string) => byData(tile, "period", label);
 const cell = (tile: HTMLElement, name: string) =>
   byData(tile, "cell", name)?.getAttribute("data-state");
-const TWO = "A longer trend, last twelve months and a full debt stack are not in this handoff.";
 
 /** The three-period mutation with FY2022's two stated figures (2646) made gaps too. */
 const allGapFy2022 = () => {
@@ -62,7 +61,7 @@ describe("PeriodsTile on the retained handoffs", () => {
     expect(period(tile, "FY2024")?.textContent).toBe("FY2024Latest, compared");
     expect(period(tile, "FY2023")?.textContent).toBe("FY2023Compared");
     expect(within(tile).getByText("Figures show FY2023 and FY2024.")).toBeVisible();
-    expect(within(tile).getByText(TWO)).toBeVisible();
+    expect(tile.textContent).not.toMatch(/not in this handoff|longer trend/);
     // Two periods: the strip says it all; no per-figure matrix.
     expect(tile.querySelector("[data-figure]")).toBeNull();
     expect(within(tile).getByRole("img").getAttribute("aria-label")).toBe(
@@ -74,16 +73,12 @@ describe("PeriodsTile on the retained handoffs", () => {
     expect(period(tile, "FY2024")?.querySelector('[data-mark="stated"]')).not.toBeNull();
     expect(tile.querySelector("[data-comparison]")).toBeNull();
     expect(within(tile).getByText("Figures show FY2024.")).toBeVisible();
-    expect(
-      within(tile).getByText(
-        "A second period, a longer trend, last twelve months and a full debt stack are not in this handoff.",
-      ),
-    ).toBeVisible();
+    expect(tile.textContent).not.toMatch(/not in this handoff|longer trend/);
   });
   it("reads the distressed draft as the accepted one", () => {
     const tile = draw(distressedCp1Entry());
     expect(within(tile).getByText("Figures show FY2023 and FY2024.")).toBeVisible();
-    expect(within(tile).getByText(TWO)).toBeVisible();
+    expect(tile.textContent).not.toMatch(/not in this handoff|longer trend/);
   });
   it("has one trace control and a table of each figure's periods from the button", () => {
     const tile = draw(cp1Entry());
@@ -125,7 +120,6 @@ describe("PeriodsTile beyond two periods (mutations; not a real handoff)", () =>
       ),
     ).toBeVisible();
     expect(within(tile).getByText("Figures show FY2022, FY2023 and FY2024.")).toBeVisible();
-    expect(within(tile).queryByText(TWO)).toBeNull();
   });
   it("draws a period stated only as gaps as the hatched slot with its reason", () => {
     const tile = draw(allGapFy2022());
@@ -145,12 +139,9 @@ describe("PeriodsTile beyond two periods (mutations; not a real handoff)", () =>
     const tile = draw(ltmCp1());
     expect(period(tile, "LTM Dec-2024")).toBeNull();
     expect(
-      within(tile).getByText(
-        "Also stated, another kind of period, not on the axis: LTM Dec-2024 (Earnings against debt).",
-      ),
+      within(tile).getByText("Other kinds of period: LTM Dec-2024 (Earnings against debt)."),
     ).toBeVisible();
     expect(within(tile).getByText("Figures show FY2023, FY2024 and LTM Dec-2024.")).toBeVisible();
-    expect(within(tile).queryByText(TWO)).toBeNull();
   });
   it("names a figure table whose periods cannot be read", () => {
     const twice = addRow(cp1Entry(), "Net debt data", [
@@ -162,11 +153,15 @@ describe("PeriodsTile beyond two periods (mutations; not a real handoff)", () =>
       "x",
     ]);
     const tile = draw(twice);
-    expect(within(tile).getByText("Net debt data: FY2024 is stated more than once.")).toBeVisible();
+    expect(
+      within(tile).getByText(
+        "This page could not read the periods of net debt data from the handoff because FY2024 appears more than once.",
+      ),
+    ).toBeVisible();
   });
   it("draws the one gap pattern when no figure table states a period", () => {
     const tile = draw(edited(cp1Entry(), () => null));
-    expect(tile.textContent).toBe("Periods · The figure tables state no period.");
+    expect(tile.textContent).toBe("Periods · This page could not read a period from the handoff.");
     expect(tile.className).not.toMatch(/gap-hatch/);
   });
 });

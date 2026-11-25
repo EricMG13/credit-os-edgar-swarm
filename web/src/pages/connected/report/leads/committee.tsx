@@ -10,6 +10,8 @@ import {
   ledgerCells,
   limits,
   watch,
+  watchGap,
+  limitsGap,
   stance,
   type Conditions,
   type Figure,
@@ -113,7 +115,8 @@ function ClampedText({
 /** A handoff cell as the ledger draws it: clamped words with the rest on demand, or its gap. */
 function SaidText({ value, lines, className }: { value: Said; lines: 1 | 2; className?: string }) {
   if (value.kind === "gap") return <p className={MINI_GAP}>{`Not supplied: ${value.reason}`}</p>;
-  if (value.kind === "empty") return <p className={MINI_GAP}>Not stated in the handoff.</p>;
+  if (value.kind === "empty")
+    return <p className={MINI_GAP}>This page could not read this from the handoff.</p>;
   if (value.kind === "evidence")
     return <p className="text-small text-text-secondary">{IN_EVIDENCE}</p>;
   return <ClampedText words={value.text} lines={lines} className={className} />;
@@ -198,8 +201,8 @@ function StanceTile(props: LeadProps) {
     return (
       <GapTile span={12} label="Committee stance" kicker="Committee stance">
         {found.state === "gap" && found.reason
-          ? `The handoff states no action bias: ${found.reason}.`
-          : "The handoff states no action bias."}
+          ? `This page could not read an action bias from the handoff: ${found.reason}.`
+          : "This page could not read an action bias from the handoff."}
       </GapTile>
     );
   const conditionRows =
@@ -216,7 +219,7 @@ function StanceTile(props: LeadProps) {
       line={stated.line}
       source="the committee stance"
       table={{
-        caption: "Action bias, confidence and conditions as the handoff states them",
+        caption: "Action bias, confidence and conditions",
         headers: ["Item", "Value"],
         rows: [
           ["Action bias", stated.word],
@@ -236,12 +239,11 @@ function StanceTile(props: LeadProps) {
               <ConfidenceMeter word={stated.confidence} />
             </p>
           ) : (
-            <p className="text-small text-gap-text">The handoff states no confidence.</p>
+            <p className="text-small text-gap-text">
+              This page could not read a confidence from the handoff.
+            </p>
           )}
         </div>
-        <p className="text-caption text-text-tertiary">
-          As written by the module; the stance is not a typed field.
-        </p>
         <ConditionList conditions={stated.conditions} />
       </div>
     </FigureTile>
@@ -275,7 +277,9 @@ function LedgerItem({ row }: { row: LedgerRow }) {
       </div>
       <div className="flex min-w-0 flex-col gap-1" data-cell="verdict">
         <p className={LABEL}>Verdict</p>
-        <p className={MINI_GAP}>No verdict is stated per claim.</p>
+        <p className={MINI_GAP}>
+          This page could not read a verdict for this claim from the handoff.
+        </p>
       </div>
     </li>
   );
@@ -288,10 +292,10 @@ function LedgerTile(props: LeadProps) {
   const rest = rows.slice(VISIBLE_ROWS);
   const gap =
     found.state === "none"
-      ? `The handoff lists no cross-examined claim${found.reason ? `: ${found.reason}` : ""}.`
+      ? `This page could not read a cross-examined claim from the handoff${found.reason ? `: ${found.reason}` : ""}.`
       : found.state === "duplicate"
-        ? "The handoff has more than one cross-examination table, so none is read."
-        : "The handoff has no cross-examination of the credit case.";
+        ? "This page could not read the cross-examination from the handoff because it appears more than once."
+        : "This page could not read the cross-examination of the credit case from the handoff.";
   if (found.state !== "rows")
     return (
       <GapTile span={7} label="Challenged points" kicker="Challenged points">
@@ -317,7 +321,10 @@ function LedgerTile(props: LeadProps) {
           "What would change the view",
           "Verdict",
         ],
-        rows: rows.map((row) => [...ledgerCells(row), "No verdict is stated per claim."]),
+        rows: rows.map((row) => [
+          ...ledgerCells(row),
+          "This page could not read a verdict for this claim from the handoff.",
+        ]),
       }}
     >
       <div className="flex min-w-0 flex-col gap-4">
@@ -371,7 +378,7 @@ function LimitBullet({ item }: { item: Limit }) {
     return (
       <li className="flex min-w-0 flex-col gap-2" data-limit={item.name}>
         <p className="text-small font-medium text-text-primary wrap-anywhere">{item.name}</p>
-        <GapNote>{reason ?? "The limit value is not a number."}</GapNote>
+        <GapNote>{reason ?? "This page could not read the limit value as a number."}</GapNote>
       </li>
     );
   const limit = { value: item.limit.value, text: shown(item.limit, unit) };
@@ -396,7 +403,12 @@ function LimitBullet({ item }: { item: Limit }) {
 
 function LimitsTile(props: LeadProps) {
   const found = limits(props.entry);
-  if (!found) return null;
+  if (!found)
+    return (
+      <GapTile span={12} label="Portfolio limits" kicker="Portfolio limits">
+        {limitsGap(props.entry)}
+      </GapTile>
+    );
   return (
     <FigureTile
       props={props}
@@ -436,7 +448,12 @@ const WATCH_ROWS = 8;
 /** The module's decision and watch events: a plain list, dates as written. */
 function WatchTile(props: LeadProps) {
   const found = watch(props.entry);
-  if (found === null) return null;
+  if (found === null)
+    return (
+      <GapTile span={12} label="Watch items" kicker="Watch items">
+        {watchGap(props.entry)}
+      </GapTile>
+    );
   const visible = found.items.slice(0, WATCH_ROWS);
   const rest = found.items.slice(WATCH_ROWS);
   const item = (entry: (typeof found.items)[number]) => (

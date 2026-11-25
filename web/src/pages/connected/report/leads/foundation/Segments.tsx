@@ -252,7 +252,8 @@ export function SegmentsTile({ lead }: { lead: LeadProps }) {
   if (!view || !periods)
     return (
       <GapTile span={6} label={LABEL} kicker={LABEL}>
-        {figureGap(lead.entry, "segments") ?? "The segment schedule states no period."}
+        {figureGap(lead.entry, "segments") ??
+          "This page could not read a period of the segment schedule from the handoff."}
       </GapTile>
     );
   const kicker = `${LABEL} · ${view.unit}, ${periods.drawn}`;
@@ -264,8 +265,8 @@ export function SegmentsTile({ lead }: { lead: LeadProps }) {
     return (
       <GapTile span={6} label={LABEL} kicker={kicker}>
         {view.segments.length
-          ? `The segment schedule states no amount for any business unit in ${periods.drawn}.`
-          : "The segment schedule lists no business unit."}
+          ? `This page could not read an amount for any business unit in ${periods.drawn} from the handoff.`
+          : "This page could not read a business unit of the segment schedule from the handoff."}
       </GapTile>
     );
   const apart = view.apart.map((segment) => apartLine(view, segment, periods));

@@ -37,7 +37,9 @@ it("draws one plain gap for an absent figure, in that figure's place", () => {
   render(<FoundationLead {...leadProps(dropTable(cp1Entry(), "Segment schedule"))} />);
   expect(regions()).toHaveLength(7);
   const segments = screen.getByRole("region", { name: "Segments" });
-  expect(segments.textContent).toBe("Segments · The segment schedule is not in the handoff.");
+  expect(segments.textContent).toBe(
+    "Segments · This page could not read the segment schedule from the handoff.",
+  );
   expect(segments.className).not.toMatch(/gap-hatch/);
 });
 
@@ -45,7 +47,7 @@ it("draws a single gap, not seven, when the handoff carries no figure at all", (
   render(<FoundationLead {...leadProps(edited(cp1Entry(), () => null))} />);
   expect(regions()).toEqual(["Financial foundation"]);
   expect(screen.getByRole("region").textContent).toBe(
-    "Financial foundation · Financial foundation states no figure this lead can draw.",
+    "Financial foundation · This page could not read a figure of the financial foundation from the handoff.",
   );
   expect(screen.queryAllByRole("img")).toHaveLength(0);
 });

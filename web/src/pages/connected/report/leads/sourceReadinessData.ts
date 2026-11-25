@@ -34,11 +34,11 @@ export function readinessWord(cell: string | undefined): Word {
   const key = text.toUpperCase().replace(/[\s-]+/g, "_");
   const known = Object.hasOwn(KNOWN, key) ? KNOWN[key] : undefined;
   if (known) return known;
-  return { word: safeText(text) || "Not stated", mark: "other" };
+  return { word: safeText(text) || "Not read", mark: "other" };
 }
 
 const REASON_IN_EVIDENCE = "Reason is in Evidence.";
-const NO_LIMITATION = "No limitation stated.";
+const NO_LIMITATION = "This page could not read a limitation for this area from the handoff.";
 
 export type ReadinessRow = {
   area: string;

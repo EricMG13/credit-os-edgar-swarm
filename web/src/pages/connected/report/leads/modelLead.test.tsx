@@ -220,8 +220,10 @@ describe("ModelLead", () => {
 
   it("says the true condition: no model at all, or a model without a net leverage row; the link stays", () => {
     const { unmount } = render(<ModelLead {...props([])} />);
-    expect(screen.getByText(/No published model for this run\./)).toBeVisible();
-    expect(screen.queryByText(/states no net leverage path/)).toBeNull();
+    expect(
+      screen.getByText(/This page could not read a published model for this run\./),
+    ).toBeVisible();
+    expect(screen.queryByText(/a net leverage path from the published model/)).toBeNull();
     expect(screen.getByRole("link", { name: "Open the forecast" })).toHaveAttribute(
       "href",
       "#forecast",
@@ -230,8 +232,10 @@ describe("ModelLead", () => {
     unmount();
     const noRow = { cashflow: { ...TWO.cashflow, rows: [] } };
     render(<ModelLead {...props([noRow])} />);
-    expect(screen.getByText(/The published model states no net leverage path\./)).toBeVisible();
-    expect(screen.queryByText(/No published model/)).toBeNull();
+    expect(
+      screen.getByText(/This page could not read a net leverage path from the published model\./),
+    ).toBeVisible();
+    expect(screen.queryByText(/a published model for this run/)).toBeNull();
     expect(screen.getByRole("link", { name: "Open the forecast" })).toBeVisible();
   });
 

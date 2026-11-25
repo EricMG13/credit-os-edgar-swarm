@@ -9,8 +9,9 @@ import {
 } from "./sourceReadinessData";
 import type { LeadProps } from "./types";
 
-export const ABSENT = "Source readiness states no readiness by area.";
-export const NOT_HERE = "Not in this handoff.";
+export const ABSENT = "This page could not read the readiness by area from the handoff.";
+export const NOT_HERE =
+  "This page could not read the key evidence located or the conflicts from the handoff.";
 
 // The state columns of the matrix, by their grid line at lg and above; the last two lines hold the
 // reason, and "other" has a column only when a row states a word the page does not know.
@@ -160,7 +161,7 @@ function Readiness(props: LeadProps) {
             line={result.line}
             source="the readiness table"
             table={{
-              caption: "Readiness by area, as the handoff states it",
+              caption: "Readiness by area",
               headers: [
                 "Area",
                 "Readiness",

@@ -12,7 +12,7 @@ import { SegmentsTile } from "./Segments";
 
 const FIGURES: readonly Figure[] = ["earnings", "ladder", "netDebt", "bridge", "segments"];
 
-/** True when the handoff carries no figure this lead can draw: every tile would be its gap. */
+/** True when this page can read no figure of the handoff: every tile would be its gap. */
 function nothingToDraw(props: LeadProps) {
   return (
     FIGURES.every((figure) => figureGap(props.entry, figure) !== null) &&
@@ -33,7 +33,7 @@ export function FoundationLead(props: LeadProps) {
     <LeadFrame props={props}>
       {nothingToDraw(props) ? (
         <GapTile span={12} label="Financial foundation" kicker="Financial foundation">
-          Financial foundation states no figure this lead can draw.
+          This page could not read a figure of the financial foundation from the handoff.
         </GapTile>
       ) : (
         <>

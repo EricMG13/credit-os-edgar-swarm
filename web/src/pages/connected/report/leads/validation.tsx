@@ -17,8 +17,6 @@ import {
   type Shape,
 } from "./validationData";
 
-const COUNT_CAPTION =
-  "Counted from the issues listed in this module's registers; the handoff does not state counts.";
 const WORD: Record<Shape, string> = {
   filled: "filled circle",
   half: "half-filled circle",
@@ -183,9 +181,9 @@ function PipRow({ group, hatch }: { group: Group; hatch: string }) {
 }
 
 function registerNote(name: string, state: string) {
-  if (state === "absent") return `The ${name} register is not in the handoff.`;
+  if (state === "absent") return `This page could not read the list of ${name} from the handoff.`;
   if (state === "duplicate")
-    return `The handoff has more than one ${name} register, so none is read.`;
+    return `This page could not read the list of ${name} from the handoff because it appears more than once.`;
   return null;
 }
 
@@ -200,10 +198,10 @@ function noIssues(found: Issues) {
       registerNote("gaps", gaps.state),
       registerNote("contradictions", contradictions.state),
     ].find((item) => item !== null);
-    return `No issues are listed in the ${gaps.state === "none" ? "gaps" : "contradictions"} register. ${note ?? ""}`.trim();
+    return `No ${gaps.state === "none" ? "gaps" : "contradictions"} are listed. ${note ?? ""}`.trim();
   }
-  const why = placeholders.length ? ` It states: ${placeholders.join("; ")}.` : "";
-  return `The handoff lists no issue register.${why}`;
+  const why = placeholders.length ? ` It reads: ${placeholders.join("; ")}.` : "";
+  return `This page could not read a list of gaps or contradictions from the handoff.${why}`;
 }
 
 /** The pips, or the sentence that says why there are none. */
@@ -224,8 +222,7 @@ function IssuePips({ found }: { found: Issues }) {
         ))}
       </ul>
       <p className="text-caption text-text-tertiary">
-        <span aria-hidden="true">● gap · ■ contradiction. </span>
-        {COUNT_CAPTION}
+        <span aria-hidden="true">● gap · ■ contradiction</span>
       </p>
       {notes.map((note) => (
         <p key={note} className="text-caption text-text-secondary">
@@ -255,7 +252,7 @@ function ClearanceTile(props: LeadProps) {
   if (verdict === null && integrity === null && noIssues(found) !== null)
     return (
       <GapTile span={8} label="Clearance" kicker="Clearance">
-        {`The handoff states no clearance status. ${noIssues(found) ?? ""}`.trim()}
+        {`This page could not read a clearance status from the handoff. ${noIssues(found) ?? ""}`.trim()}
       </GapTile>
     );
   const rows = [
@@ -281,7 +278,7 @@ function ClearanceTile(props: LeadProps) {
       }}
     >
       {verdict === null ? (
-        <GapNote>The handoff states no clearance status.</GapNote>
+        <GapNote>This page could not read a clearance status from the handoff.</GapNote>
       ) : verdict.source === "verdict" && verdict.status !== null ? (
         <div className="flex min-w-0 flex-col gap-2">
           <div className="flex min-w-0 items-center gap-3">
@@ -312,8 +309,8 @@ function ClearanceTile(props: LeadProps) {
         <div className="flex min-w-0 flex-col gap-1">
           <p className="text-lead text-text-primary text-pretty wrap-anywhere">{verdict.status}</p>
           <p className="text-caption text-text-tertiary">
-            No clearance status is drawn from the handoff; this is the module&apos;s opening
-            sentence.
+            This page could not read a clearance status from the handoff; its opening sentence is
+            shown.
           </p>
         </div>
       )}
@@ -353,7 +350,7 @@ function RemediationTile(props: LeadProps) {
       <GapTile span={4} label="Remediation" kicker="Remediation">
         {found.gaps.state === "none"
           ? "No gap actions are listed."
-          : "The handoff lists no integrity-gaps register."}
+          : "This page could not read the gap actions from the handoff."}
       </GapTile>
     );
   return (
@@ -414,7 +411,7 @@ function RemediationTile(props: LeadProps) {
                     ? `Action not supplied: ${issue.action.reason}`
                     : issue.action?.kind === "evidence"
                       ? IN_EVIDENCE
-                      : "Action not stated."}
+                      : "This page could not read an action for this gap from the handoff."}
                 </p>
               )}
               {Array.isArray(issue.affected) && issue.affected.length > 0 && (

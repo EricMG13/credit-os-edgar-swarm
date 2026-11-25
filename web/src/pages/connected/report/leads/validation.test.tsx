@@ -260,11 +260,7 @@ describe("ClearanceLead", () => {
     expect(
       within(tile).getByRole("img", { name: "Critical: 2 listed (1 gap, 1 contradiction)." }),
     ).toBeVisible();
-    expect(
-      within(tile).getByText(
-        "Counted from the issues listed in this module's registers; the handoff does not state counts.",
-      ),
-    ).toBeVisible();
+    expect(within(tile).queryByText(/Counted from/)).toBeNull();
     // The words in the handoff's order: gaps register first.
     const words = [...tile.querySelectorAll("ul[aria-label] > li")].map((item) =>
       item.textContent.replace(/\d+/, ""),
@@ -302,16 +298,20 @@ describe("ClearanceLead", () => {
     expect(items[2]).toContain("MaterialAction not supplied: owner not named");
     expect(tile.textContent).not.toMatch(/priority|first/i);
   });
-  it("says the handoff lists no issue register, with no pip and no zero, for the thin synthetic handoff", () => {
+  it("says the page could not read a list of issues, with no pip and no zero, for the thin synthetic handoff", () => {
     const { container } = render5(cp5Entry());
     expect(container.querySelectorAll("[data-pip]")).toHaveLength(0);
     expect(
-      screen.getByText("The handoff lists no issue register. It states: nothing to report."),
+      screen.getByText(
+        "This page could not read a list of gaps or contradictions from the handoff. It reads: nothing to report.",
+      ),
     ).toBeVisible();
     expect(screen.queryByText("No issues are listed.")).toBeNull();
     // The thin handoff still has its bottom line, drawn as the status fallback.
     expect(screen.getAllByText("The synthetic issuer shows one observed item.")[0]).toBeVisible();
-    expect(screen.getByText(/The handoff lists no integrity-gaps register\./)).toBeVisible();
+    expect(
+      screen.getByText(/This page could not read the gap actions from the handoff\./),
+    ).toBeVisible();
   });
   it("says no issues are listed only when both registers state none", () => {
     const empty = (headers: string[]) =>
@@ -330,10 +330,12 @@ describe("ClearanceLead", () => {
     expect(screen.getByText(/No gap actions are listed\./)).toBeVisible();
     expect(screen.getAllByText("Restricted")[0]).toBeVisible();
   });
-  it("draws counts from the one register present and says the other is not in the handoff", () => {
+  it("draws counts from the one register present and says the page could not read the other", () => {
     const { container } = render5(cp5(VERDICT, CONTRADICTIONS));
     expect(container.querySelectorAll("[data-pip]")).toHaveLength(2);
-    expect(screen.getByText("The gaps register is not in the handoff.")).toBeVisible();
+    expect(
+      screen.getByText("This page could not read the list of gaps from the handoff."),
+    ).toBeVisible();
   });
   it("shows a status that cites a source as a gap-free fallback, never the citation", () => {
     const { container } = render5(
@@ -464,8 +466,12 @@ describe("titles and what the lead draws", () => {
   });
   it("uses the one gap tile when the status, the issues and the actions are all absent", () => {
     render5(cp5());
-    expect(screen.getByText(/The handoff states no clearance status\./)).toBeVisible();
-    expect(screen.getByText(/The handoff lists no integrity-gaps register\./)).toBeVisible();
+    expect(
+      screen.getByText(/This page could not read a clearance status from the handoff\./),
+    ).toBeVisible();
+    expect(
+      screen.getByText(/This page could not read the gap actions from the handoff\./),
+    ).toBeVisible();
     expect(screen.queryByRole("img")).toBeNull();
   });
 });

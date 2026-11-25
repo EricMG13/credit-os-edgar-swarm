@@ -32,7 +32,15 @@ export type PeriodCell = { label: string; cell: Reading | null; line: number | n
 /** The two periods a comparison is drawn between, earlier first; null with fewer than two of one form. */
 export type Comparison = { from: string; to: string } | null;
 
-const NOT_IN = (what: string) => `${what} is not in the handoff.`;
+/** The one form of a gap: what this page could not read from the handoff, and the cause it found. */
+const inSentence = (what: string) =>
+  /^[A-Z][a-z]/.test(what) ? what.charAt(0).toLowerCase() + what.slice(1) : what;
+const NOT_IN = (what: string) => `This page could not read ${inSentence(what)} from the handoff.`;
+const BECAUSE = (what: string, cause: string) =>
+  `This page could not read ${inSentence(what)} from the handoff because ${cause}.`;
+const periodsGap = (table: string, cause: string) =>
+  BECAUSE(`the periods of ${inSentence(table)}`, cause);
+const NOT_A_SHAPE = "the table is not in a shape this page reads";
 
 /** The exact `to − from` of one measure on the comparison periods, when both are stated numbers. */
 function changeOf(values: readonly PeriodCell[], comparison: Comparison) {
@@ -54,7 +62,7 @@ function periodTable(entry: OutputEntry, heading: string, what: string): PeriodT
   const table = tableUnder(entry, heading);
   if (!table) return NOT_IN(what);
   const ordered = periodRows(table);
-  if ("reason" in ordered) return `${tableName(heading)}: ${ordered.reason}`;
+  if ("reason" in ordered) return periodsGap(tableName(heading), ordered.reason);
   const unitAt = columnOf(table, "Reporting unit");
   const units = new Set(ordered.periods.map(({ item }) => item.cells[unitAt] ?? ""));
   const [unit] = [...units];
@@ -81,9 +89,9 @@ type Statement = { table: Table; columns: { period: Period; at: number }[] };
 
 function statement(entry: OutputEntry, heading: string): Statement | string {
   const table = tableUnder(entry, heading);
-  if (!table) return NOT_IN(tableName(heading));
+  if (!table) return NOT_IN(`the ${inSentence(tableName(heading))}`);
   const ordered = statementColumns(table);
-  if ("reason" in ordered) return `${tableName(heading)}: ${ordered.reason}`;
+  if ("reason" in ordered) return periodsGap(tableName(heading), ordered.reason);
   return { table, columns: ordered.periods.map(({ period, item }) => ({ period, at: item })) };
 }
 
@@ -109,7 +117,7 @@ function statementRow(read: Statement, row: Row): StatementRow {
 function findRow(read: Statement, prefixes: readonly string[], what: string) {
   const row = rowStarting(read.table, prefixes);
   if (row === "none") return NOT_IN(what);
-  if (row === "several") return `${what} matches more than one row of the statement.`;
+  if (row === "several") return BECAUSE(what, "more than one row of the statement matches it");
   return statementRow(read, row);
 }
 
@@ -182,7 +190,7 @@ export function statedPeriods(entry: OutputEntry): StatedPeriods {
   const gaps: StatedPeriods["gaps"] = [];
   const add = (heading: string, read: Ordered<unknown>) => {
     const table = tableName(heading);
-    if ("reason" in read) gaps.push({ table, reason: read.reason });
+    if ("reason" in read) gaps.push({ table, reason: periodsGap(table, read.reason) });
     else tables.push({ table, labels: read.periods.map(({ period }) => period.label) });
   };
   const found = allTables(entry);
@@ -190,7 +198,10 @@ export function statedPeriods(entry: OutputEntry): StatedPeriods {
     const same = found.filter((item) => item.heading === heading);
     const [only] = same;
     if (same.length > 1)
-      gaps.push({ table: tableName(heading), reason: "The table is stated more than once." });
+      gaps.push({
+        table: tableName(heading),
+        reason: periodsGap(tableName(heading), "it appears more than once"),
+      });
     else if (only)
       add(
         heading,
@@ -260,13 +271,13 @@ function chartMeasure(entry: OutputEntry, heading: string, column: string, label
   if (typeof read === "string") return read;
   const values = columnCells(read, column);
   if (!values) return NOT_IN(label);
-  if (!read.unit) return `${label} is not stated in one unit.`;
+  if (!read.unit) return NOT_IN(`${label} in one unit`);
   return { label, values, unit: read.unit, line: read.table.line };
 }
 
 function reportedEbitda(entry: OutputEntry): Read {
   const read = statement(entry, "T4.4 Income statement");
-  if (typeof read === "string") return `EBITDA (Reported): ${read}`;
+  if (typeof read === "string") return read;
   const row = findRow(read, ["EBITDA (Reported)"], "EBITDA (Reported)");
   return typeof row === "string" ? row : { ...row, line: read.table.line };
 }
@@ -291,14 +302,16 @@ function readEarnings(entry: OutputEntry): EarningsAgainstDebt | string {
   const anchor = reads.map(({ read }) => read).find((read) => typeof read !== "string");
   if (!anchor)
     return reads.flatMap(({ read }) => (typeof read === "string" ? [read] : [])).join(" ");
-  if (!anchor.unit) return `${anchor.label} states no unit.`;
+  if (!anchor.unit) return NOT_IN(`the unit of ${anchor.label}`);
   const unit = anchor.unit;
   const ready = reads.flatMap(({ key, read }) =>
     typeof read !== "string" && read.unit === unit ? [{ key, read }] : [],
   );
   const absent = reads.flatMap(({ label, read }) => {
     if (typeof read === "string") return [{ label, reason: read }];
-    return read.unit === unit ? [] : [{ label, reason: `${label} is stated in another unit.` }];
+    return read.unit === unit
+      ? []
+      : [{ label, reason: BECAUSE(label, "it is in another unit than the other measures") }];
   });
   const lev = periodTable(entry, "Chart data: leverage", "Leverage");
   const levValues = typeof lev === "string" ? null : columnCells(lev, "Total debt / EBITDA");
@@ -492,13 +505,14 @@ const KPI_UNIT = /,\s*([^,]+)$/;
  * its Metric Name (one match), its unit is the name's trailing ", US$m", and the label drops it.
  */
 function kpiLevel(entry: OutputEntry, spec: LadderSpec): StatementRow | string {
-  const NONE = "Not found in the cash flow statement or the KPI dashboard.";
+  const NONE = NOT_IN(`${spec.name} in the cash flow statement or the KPI dashboard`);
   const read = statement(entry, "T4.10 KPI dashboard");
   const nameAt = typeof read === "string" ? -1 : columnOf(read.table, "Metric Name");
   if (typeof read === "string" || nameAt < 0) return NONE;
   const row = rowStarting(read.table, [...spec.prefixes, ...(spec.kpi ?? [])], nameAt);
   if (row === "none") return NONE;
-  if (row === "several") return `${spec.name} matches more than one row of the KPI dashboard.`;
+  if (row === "several")
+    return BECAUSE(spec.name, "more than one row of the KPI dashboard matches it");
   const name = (row.cells[nameAt] ?? "").trim();
   const unit = KPI_UNIT.exec(name)?.[1]?.trim();
   return {
@@ -510,7 +524,7 @@ function kpiLevel(entry: OutputEntry, spec: LadderSpec): StatementRow | string {
 
 /** One ladder row: the cash flow statement first; a level it lacks may come from the KPI dashboard. */
 function ladderRow(entry: OutputEntry, spec: LadderSpec, source: Statement | string) {
-  if (typeof source === "string") return `${spec.name}: ${source}`;
+  if (typeof source === "string") return source;
   const row = rowStarting(source.table, spec.prefixes);
   if (row === "none" && spec.kind === "level" && spec.key !== "ebitda")
     return kpiLevel(entry, spec);
@@ -530,12 +544,12 @@ function readLadder(entry: OutputEntry): CashLadder | string {
     anchor && typeof anchor !== "string"
       ? anchor.unit
       : (rows.map(({ read }) => read).find((read) => typeof read !== "string")?.unit ?? null);
-  if (!unit) return "The cash flow statement states no unit for the ladder's rows.";
+  if (!unit) return NOT_IN("a unit for the ladder's rows in the cash flow statement");
   const usable = rows.map(({ spec, read }) => ({
     spec,
     read:
       typeof read !== "string" && read.unit !== unit
-        ? `${read.label} is stated in another unit.`
+        ? BECAUSE(read.label, "it is in another unit than the other rows")
         : read,
   }));
   const periods = unionPeriods(
@@ -645,11 +659,10 @@ function liquidityTotal(entry: OutputEntry): NetDebtView["liquidityTotal"] {
 function readNetDebt(entry: OutputEntry): NetDebtView | string {
   const read = periodTable(entry, "Net debt data", "Net debt data");
   if (typeof read === "string") return read;
-  if (!read.unit) return "Net debt data is not stated in one unit.";
+  if (!read.unit) return NOT_IN("Net debt data in one unit");
   const at = (name: string) => columnOf(read.table, name);
   const [g, c, n] = [at("Gross debt"), at("Cash"), at("Net debt")];
-  if ([g, c, n].some((index) => index < 0))
-    return "Net debt data does not state gross debt, cash and net debt columns.";
+  if ([g, c, n].some((index) => index < 0)) return BECAUSE("net debt", NOT_A_SHAPE);
   const lev = periodTable(entry, "Chart data: leverage", "Leverage");
   const levAt = typeof lev === "string" ? -1 : columnOf(lev.table, "Net debt / EBITDA");
   const periods = read.rows.map(({ period, row }): NetDebtPeriod => {
@@ -742,16 +755,14 @@ export function bridgeKinds(bridge: EbitdaBridge): BridgeKind[] {
 /** See the exported reader below; a string is the reason the figure is not drawn. */
 function readBridge(entry: OutputEntry): EbitdaBridge | string {
   const table = tableUnder(entry, "Chart data: EBITDA bridge");
-  if (!table) return NOT_IN("The EBITDA bridge");
-  if (table.rows.length < 3)
-    return "The EBITDA bridge states fewer than an opening, a step and a closing.";
+  if (!table) return NOT_IN("the EBITDA bridge");
+  if (table.rows.length < 3) return BECAUSE("the EBITDA bridge", "it has fewer than three steps");
   const amount = columnOf(table, "Amount");
   const unitAt = columnOf(table, "Reporting unit");
   const units = new Set(table.rows.map((row) => row.cells[unitAt] ?? ""));
   const [unit] = [...units];
-  if (amount < 0 || unitAt < 0)
-    return "The EBITDA bridge states no Amount or Reporting unit column.";
-  if (units.size !== 1 || !unit) return "The EBITDA bridge is not stated in one unit.";
+  if (amount < 0 || unitAt < 0) return BECAUSE("the EBITDA bridge", NOT_A_SHAPE);
+  if (units.size !== 1 || !unit) return NOT_IN("the EBITDA bridge in one unit");
   const last = table.rows.length - 1;
   const steps = table.rows.map((row, at): BridgeStep => ({
     label: (row.cells[0] ?? "").trim(),
@@ -844,12 +855,12 @@ function longSchedule(table: Table, at: (name: string) => number): SegmentRead |
     at("Unit"),
   ];
   if ([nameAt, periodAt, salesAt, ebitdaAt, unitAt].some((index) => index < 0))
-    return "The segment schedule does not state business unit, net sales, EBITDA As Defined and unit columns.";
+    return BECAUSE("the segment schedule", NOT_A_SHAPE);
   const labels = [...new Set(table.rows.map((row) => (row.cells[periodAt] ?? "").trim()))];
   const ordered = orderByPeriod(labels.map((cell) => ({ cell, item: cell })));
   const units = new Set(table.rows.map((row) => row.cells[unitAt] ?? ""));
   const [unit] = [...units];
-  if ("reason" in ordered) return `Segment schedule: ${ordered.reason}`;
+  if ("reason" in ordered) return periodsGap("the segment schedule", ordered.reason);
   if (units.size !== 1 || !unit) return SEGMENT_UNITS;
   const cells = table.rows.flatMap((row): SegmentCell[] => {
     const name = (row.cells[nameAt] ?? "").trim();
@@ -872,7 +883,7 @@ function longSchedule(table: Table, at: (name: string) => number): SegmentRead |
 function wideSchedule(table: Table): SegmentRead | string {
   const columns = statementColumns(table);
   const unitAt = columnOf(table, "Unit");
-  if ("reason" in columns) return `Segment schedule: ${columns.reason}`;
+  if ("reason" in columns) return periodsGap("the segment schedule", columns.reason);
   if (unitAt < 0) return SEGMENT_UNITS;
   const read = table.rows.flatMap((row) => {
     const parsed = wideLabel((row.cells[0] ?? "").trim());
@@ -880,7 +891,7 @@ function wideSchedule(table: Table): SegmentRead | string {
   });
   const units = new Set(read.map(({ row }) => row.cells[unitAt] ?? ""));
   const [unit] = [...units];
-  if (read.length === 0) return "No row of the segment schedule names net sales or EBITDA.";
+  if (read.length === 0) return NOT_IN("a net sales or EBITDA row of the segment schedule");
   if (units.size !== 1 || !unit) return SEGMENT_UNITS;
   const cells = read.flatMap(({ row, name, measure }) =>
     columns.periods.map(({ period, item }): SegmentCell => ({
@@ -908,12 +919,12 @@ function wideSchedule(table: Table): SegmentRead | string {
 /** The schedule in either shape the handoffs write: a Period column, or one column per period. */
 function segmentSchedule(entry: OutputEntry): SegmentRead | string {
   const table = tableUnder(entry, "Segment schedule");
-  if (!table) return NOT_IN("The segment schedule");
+  if (!table) return NOT_IN("the segment schedule");
   const at = (name: string) => columnOf(table, name);
   return at("Period") >= 0 ? longSchedule(table, at) : wideSchedule(table);
 }
 
-const SEGMENT_UNITS = "The segment schedule is not stated in one unit.";
+const SEGMENT_UNITS = NOT_IN("the segment schedule in one unit");
 const isApart = (name: string) => /^unallocated|\bcorporate\b|\beliminations?\b/i.test(name);
 
 /** See the exported reader below; a string is the reason the figure is not drawn. */
@@ -929,7 +940,10 @@ function readSegments(entry: OutputEntry): SegmentView | string {
     const measure = /^[A-Z][a-z]/.test(label)
       ? label.charAt(0).toLowerCase() + label.slice(1)
       : label;
-    return `The segment schedule states ${twice.name} ${measure} more than once for ${twice.label}.`;
+    return BECAUSE(
+      "the segment schedule",
+      `${twice.name} ${measure} appears more than once for ${twice.label}`,
+    );
   }
   const names = [...new Set(read.cells.map((cell) => cell.name))];
   const series = (name: string, measure: SegmentCell["measure"]) =>
@@ -983,8 +997,8 @@ const READERS: Record<Figure, (entry: OutputEntry) => unknown> = {
 };
 
 /**
- * Why a figure's reader returns null, in words true of this handoff ("Net debt data: FY2024 is
- * stated more than once.", "The segment schedule is not in the handoff."), or null when it draws.
+ * Why a figure's reader returns null, in the one gap form ("This page could not read the periods
+ * of net debt data from the handoff because FY2024 appears more than once."), or null when it draws.
  */
 export function figureGap(entry: OutputEntry, figure: Figure): string | null {
   const read = READERS[figure](entry);

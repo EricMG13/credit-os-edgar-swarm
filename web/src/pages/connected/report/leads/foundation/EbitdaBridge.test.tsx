@@ -150,7 +150,9 @@ describe("EBITDA bridge: other handoffs and mutations", () => {
     const entry = setCell(cp1Entry(), BRIDGE, 2, "Amount", "218");
     const { tile, svg } = draw(entry);
     expect(svg).toBeNull();
-    expect(tile.textContent).toContain("The bridge steps do not add up to the closing figure.");
+    expect(tile.textContent).toContain(
+      "This page did not draw the bridge because its steps do not add up to the closing figure.",
+    );
     expect(within(tile).getByRole("heading", { level: 3 }).textContent).toBe(
       "Reported to adjusted EBITDA",
     );
@@ -205,7 +207,9 @@ describe("EBITDA bridge: other handoffs and mutations", () => {
   it("without the bridge table: the one gap tile with the true reason", () => {
     render(<EbitdaBridgeTile lead={leadProps(dropTable(cp1Entry(), BRIDGE))} />);
     const tile = screen.getByRole("region", { name: "EBITDA bridge" });
-    expect(tile.textContent).toBe("EBITDA bridge · The EBITDA bridge is not in the handoff.");
+    expect(tile.textContent).toBe(
+      "EBITDA bridge · This page could not read the EBITDA bridge from the handoff.",
+    );
   });
 
   it("in another unit per row: the gap tile says so", () => {
@@ -215,7 +219,7 @@ describe("EBITDA bridge: other handoffs and mutations", () => {
       />,
     );
     expect(screen.getByRole("region", { name: "EBITDA bridge" }).textContent).toContain(
-      "The EBITDA bridge is not stated in one unit.",
+      "This page could not read the EBITDA bridge in one unit from the handoff.",
     );
   });
 });
