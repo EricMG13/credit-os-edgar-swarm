@@ -664,8 +664,7 @@ describe("the figure rows' layout", () => {
       const tile = screen.getByRole("region", { name });
       const heading = within(tile).getByRole("heading", { level: 3, name });
       const row = heading.parentElement;
-      // One placement: the word follows the figure in the same row; the figure itself never breaks.
-      expect(row?.firstElementChild).toHaveClass("whitespace-nowrap");
+      expect(row).not.toHaveClass("flex-wrap");
       expect(heading).toHaveClass("min-w-0");
       const control = within(tile).getByRole("link", { name: `Source for ${name}` });
       expect(row).toContainElement(control);
