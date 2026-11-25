@@ -109,7 +109,12 @@ function Strip({ row, axis, width }: { row: PeerRow; axis: NiceAxis; width: numb
   }
   const x = (value: number) => axis.place(value, PAD, width - PAD);
   const top: Label[] = [
-    { text: `low ${withUnit(shown(row.low), unit)}`, x: x(drawing.low), anchor: "end", kind: "low" },
+    {
+      text: `low ${withUnit(shown(row.low), unit)}`,
+      x: x(drawing.low),
+      anchor: "end",
+      kind: "low",
+    },
     {
       text: `high ${withUnit(shown(row.high), unit)}`,
       x: x(drawing.high),
@@ -132,7 +137,10 @@ function Strip({ row, axis, width }: { row: PeerRow; axis: NiceAxis; width: numb
   const bandY = laneCount * LANE + 8;
   const centre = bandY + 8;
   const issuerSlot = issuerWords(row);
-  const slotWidth = Math.min(width - 2 * PAD, Math.max(150, textWidth(issuerSlot, SIZE.label) + 24));
+  const slotWidth = Math.min(
+    width - 2 * PAD,
+    Math.max(150, textWidth(issuerSlot, SIZE.label) + 24),
+  );
   const height =
     bandY + 16 + (drawing.issuer === null ? 12 + gapSlotHeight(slotWidth, 20, issuerSlot) + 6 : 34);
   const bandFrom = x(drawing.low);
@@ -297,41 +305,59 @@ function Group({ group, showUnit }: { group: PeerGroup; showUnit: boolean }) {
   );
 }
 
-function PeerTile({ props, table, wide }: { props: LeadProps; table: PeerTable; wide: boolean }) {
+const KIND_NAME = { percent: "percent metrics", multiples: "multiples" } as const;
+
+/** A stated cell as the table shows it: a number as written, a gap, words or a count as written. */
+const cellOf = (value: PeerRow["issuer"] | PeerRow["count"]) =>
+  "value" in value && value.kind === "number" && "written" in value && value.written
+    ? value.written
+    : safeText(value.text);
+
+function PeerTile({
+  props,
+  table,
+  span,
+}: {
+  props: LeadProps;
+  table: PeerTable;
+  span: 6 | 8 | 12;
+}) {
   const basis = [...new Set(table.rows.flatMap(({ basis: note }) => (note ? [note] : [])))];
-  const notes = [...table.rows.flatMap((row) => row.notes), ...basis];
+  const notes = [...new Set([...table.rows.flatMap((row) => row.notes), ...basis])];
+  const name = `Peer range, ${KIND_NAME[table.kind]}`;
+  const legend: LegendEntry[] = [
+    { kind: "bar", tone: "prior", text: "Peer low to peer high" },
+    { kind: "dot", text: "Issuer" },
+    ...(table.rows.some(
+      (row) =>
+        row.drawing.kind !== "strip" ||
+        row.issuer.kind !== "number" ||
+        row.median.kind !== "number",
+    )
+      ? [{ kind: "hatch" as const, text: "Not stated" }]
+      : []),
+  ];
   return (
     <FigureTile
       props={props}
-      span={wide ? 12 : 6}
-      label={`Peer range, ${table.kind === "percent" ? "percent metrics" : "multiples"}`}
-      kicker={table.kind === "percent" ? "Percent metrics" : "Multiples"}
-      title="Peer range"
+      span={span}
+      label={name}
+      kicker="One scale per unit"
+      title={name}
       line={table.line}
-      source={`the peer range, ${table.kind === "percent" ? "percent metrics" : "multiples"}`}
-      legend={[
-        { tone: "prior", text: "Peer low to peer high" },
-        { tone: "primary", text: "Issuer" },
-        ...(table.rows.some(
-          (row) =>
-            row.drawing.kind !== "strip" ||
-            row.issuer.kind !== "number" ||
-            row.median.kind !== "number",
-        )
-          ? [{ tone: "gap" as const, text: "Not supplied or conflicting" }]
-          : []),
-      ]}
+      source={name.toLowerCase()}
+      legend={legend}
       notes={notes}
       table={{
-        caption: `Peer range, ${table.kind === "percent" ? "percent metrics" : "multiples"}`,
+        caption: name,
         headers: ["Metric", "Issuer", "Peer low", "Peer median", "Peer high", "Peer count", "Unit"],
         rows: table.rows.map((row) => [
           row.metric,
-          safeText(row.issuer.text),
-          safeText(row.low.text),
-          safeText(row.median.text),
-          safeText(row.high.text),
-          safeText(row.count.text),
+          cellOf(row.issuer),
+          cellOf(row.low),
+          cellOf(row.median),
+          cellOf(row.high),
+          cellOf(row.count),
           safeText(row.unit),
         ]),
       }}
@@ -351,20 +377,21 @@ function PeerTile({ props, table, wide }: { props: LeadProps; table: PeerTable; 
 
 function Content(props: LeadProps) {
   const read = readPeerBenchmark(props.entry);
+  const drawn = read.tables.flatMap((table) => chartTitleOf(table.heading) ?? []);
   if (!read.tables.length)
     return (
-      <GapTile span={12} label="Peer range" kicker="Peer range">
-        {read.gaps.join(" ")}
-      </GapTile>
+      <>
+        <GapTile span={12} label="Peer range" kicker="Peer range">
+          {read.gaps.join(" ")}
+        </GapTile>
+        <UnreadFigures lead={props} drawn={drawn} />
+      </>
     );
-  const wide = read.tables.length === 1 && read.gaps.length === 0;
-  return (
-    <>
-      {read.tables.map((table) => (
-        <PeerTile key={table.kind} props={props} table={table} wide={wide} />
-      ))}
+  const both = read.tables.length > 1;
+  const aside = (
+    <div className="flex min-w-0 flex-col gap-4 lg:col-span-4">
       {read.gaps.map((gap) => (
-        <GapTile key={gap} span={6} label="Peer range not drawn" kicker="Peer range">
+        <GapTile key={gap} span={12} label="Peer range not drawn" kicker="Peer range">
           {gap}
         </GapTile>
       ))}
@@ -373,6 +400,21 @@ function Content(props: LeadProps) {
           This page could not read the outliers or the peer table.
         </GapTile>
       )}
+    </div>
+  );
+  return (
+    <>
+      {read.tables.map((table) => (
+        <PeerTile key={table.kind} props={props} table={table} span={both ? 6 : 8} />
+      ))}
+      {/* One chart drawn: the tiles that say what is not drawn stand beside it, not under a half-empty row. */}
+      {!both && (read.gaps.length > 0 || !read.outliers) && aside}
+      {both && !read.outliers && (
+        <GapTile span={12} label="Outliers and the peer table" kicker="Outliers and the peer table">
+          This page could not read the outliers or the peer table.
+        </GapTile>
+      )}
+      <UnreadFigures lead={props} drawn={drawn} />
     </>
   );
 }
