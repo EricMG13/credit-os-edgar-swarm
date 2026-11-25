@@ -14,9 +14,8 @@ import {
 import { Key } from "../overview/figureParts";
 import { Bento, Figure } from "../overview/Tile";
 import { withDraws } from "./draws";
-import { OtherCharts, sourceOf, writtenTable } from "./written";
-import { onlyGaps } from "./cp2a";
-import { GapCell, LaneTile, LeadFigure, LeadGap, statedGap, Trace } from "./parts";
+import { onlyGaps, OtherCharts, sourceOf, writtenTable } from "./written";
+import { GapCell, LaneTile, LeadFigure, LeadGap, statedGap, Trace, Beside } from "./parts";
 import {
   columnOf,
   eventsOf,
@@ -299,13 +298,10 @@ function HedgedTile({ entry, href, span }: { entry: OutputEntry; href: Href; spa
   );
 }
 
-/** The column beside a tall first tile: the page's shorter tiles stacked, so the two columns end near each other. */
-const COLUMN = "flex min-w-0 flex-col gap-4 lg:col-span-4";
-
 /** CP-2E: what a rate shock costs, how much of the floating debt is hedged, and the hedge terms. */
 export const MacroLead = withDraws(
   function MacroLead(props: LeadProps) {
-    const { entry } = props;
+    const { entry, run } = props;
     if (drawsNothing(entry)) return null;
     const evidence = leadHref(props);
     const href: Href = (line) => evidence(line);
@@ -324,6 +320,7 @@ export const MacroLead = withDraws(
         label="Hedge dates"
         title="Hedge dates"
         href={evidence}
+        asOf={run.asOf}
       />
     );
     const foreign = <ForeignShareTile fxGap={data?.fxGap} href={href} span={12} />;
@@ -335,11 +332,11 @@ export const MacroLead = withDraws(
         {first ? (
           <>
             {first}
-            <div className={COLUMN}>
+            <Beside>
               <HedgedTile entry={entry} href={href} span={12} />
               {foreign}
               {dates}
-            </div>
+            </Beside>
           </>
         ) : (
           <>
@@ -351,20 +348,20 @@ export const MacroLead = withDraws(
               reason="This page could not read the cash cost of each rate shock."
             />
             <HedgedTile entry={entry} href={href} span={8} />
-            <div className={COLUMN}>
+            <Beside>
               {foreign}
               {dates}
-            </div>
+            </Beside>
           </>
         )}
         {data?.retained && <RetainedCoverTile retained={data.retained} href={href} span={12} />}
         {data?.fx?.rows.length && (hedges || data.fxExposure) ? (
           <>
             <FxShocksTile table={data.fx} currency={data.currency} href={href} span={8} />
-            <div className={COLUMN}>
+            <Beside>
               {terms}
               {short && others}
-            </div>
+            </Beside>
             {!short && others}
           </>
         ) : (

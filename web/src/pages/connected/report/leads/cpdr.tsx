@@ -10,7 +10,7 @@ const SCENARIOS = "Causal synthesis and scenarios";
 /** CP-DR: what the research found, the scenarios it draws and the dates that matter. */
 export const ResearchLead = withDraws(
   function ResearchLead(props: LeadProps) {
-    const { entry } = props;
+    const { entry, run } = props;
     if (drawsNothing(entry)) return null;
     const href = leadHref(props);
     const answered = entry.sections.some((section) => section.heading === "Executive answer");
@@ -49,6 +49,7 @@ export const ResearchLead = withDraws(
           title="Research catalysts"
           href={href}
           absent="This page could not read dated research catalysts."
+          asOf={run.asOf}
         />
       </Bento>
     );

@@ -1,12 +1,10 @@
 import { unitLabel } from "../../publishedReport";
-import { Key } from "../overview/figureParts";
 import { Bento } from "../overview/Tile";
-import { Bridge, bridgeOf, stepTable, type Step } from "./bridge";
+import { Bridge, BridgeLegend, bridgeOf, stepTable, type Step } from "./bridge";
 import { withDraws } from "./draws";
-import { OtherCharts, rowBasis } from "./written";
-import { CompactGap, LaneTile, LeadFigure, LeadGap, Trace, type LeadTable } from "./parts";
+import { onlyGaps, OtherCharts, rowBasis } from "./written";
+import { CompactGap, LaneTile, LeadFigure, LeadGap, Trace, type LeadTable, Beside } from "./parts";
 import { chartOf, eventsOf, leadHref, drawsNothing } from "./read";
-import { onlyGaps } from "./cp2a";
 import type { LeadProps } from "./types";
 
 const TITLE = "Liquidity bridge";
@@ -55,14 +53,7 @@ function LiquidityBridge({
       label={TITLE}
       title={TITLE}
       basis={unit ? unitLabel(unit) : undefined}
-      legend={
-        !why && (
-          <>
-            <Key tone="primary">Opening and closing</Key>
-            <Key tone="secondary">Change</Key>
-          </>
-        )
-      }
+      legend={!why && <BridgeLegend />}
       trace={<Trace href={href(table.line)} name={TITLE} />}
       figure={
         why ? (
@@ -83,13 +74,10 @@ function LiquidityBridge({
   );
 }
 
-/** The column beside a tall first tile: the page's shorter tiles stacked, so the two columns end near each other. */
-const COLUMN = "flex min-w-0 flex-col gap-4 lg:col-span-4";
-
 /** CP-2D: does cash last, and until when. */
 export const LiquidityLead = withDraws(
   function LiquidityLead(props: LeadProps) {
-    const { entry } = props;
+    const { entry, run } = props;
     if (drawsNothing(entry)) return null;
     const href = leadHref(props);
     const drawn = Boolean(bridgeOf(chartOf(entry, TITLE)));
@@ -101,6 +89,7 @@ export const LiquidityLead = withDraws(
         title="Funding dates"
         href={href}
         absent="This page could not read dated financing events."
+        asOf={run.asOf}
       />
     );
     const others = <OtherCharts entry={entry} module="CP-2D" href={href} drawn={[TITLE]} />;
@@ -112,10 +101,10 @@ export const LiquidityLead = withDraws(
         <LiquidityBridge entry={entry} href={href} />
         {drawn ? (
           <>
-            <div className={COLUMN}>
+            <Beside>
               {dates}
               {short && others}
-            </div>
+            </Beside>
             {!short && others}
           </>
         ) : (

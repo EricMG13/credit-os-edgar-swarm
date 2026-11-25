@@ -3,9 +3,9 @@ import { downsideView, DownsideTile } from "../Downside";
 import { type OutputEntry } from "../../publishedReport";
 import { Bento } from "../overview/Tile";
 import { withDraws } from "./draws";
-import { OtherCharts } from "./written";
-import { LeadGap, Trace } from "./parts";
-import { chartsStartingWith, drawsNothing, leadHref } from "./read";
+import { onlyGaps, OtherCharts } from "./written";
+import { LeadGap, Trace, Beside } from "./parts";
+import { drawsNothing, leadHref } from "./read";
 import type { LeadProps } from "./types";
 
 const LADDER = "EBITDA break points";
@@ -25,19 +25,6 @@ function why(entry: OutputEntry, id: string, subject: string) {
   const found = underId(entry, id);
   return { reason: `This page could not read ${subject}.`, line: found?.line };
 }
-
-/**
- * Whether the module's other charts are all short tiles (a stated gap or a withheld table): such
- * tiles may stack in the column beside a lead's first figure; a drawn table takes its own row.
- */
-export function onlyGaps(entry: OutputEntry, drawn: readonly string[]) {
-  return chartsStartingWith(entry, "")
-    .filter(({ title }) => !drawn.includes(title))
-    .every(({ chart }) => chart.state !== "ready");
-}
-
-/** The column beside a tall first tile: the page's shorter tiles stacked, so the two columns end near each other. */
-const COLUMN = "flex min-w-0 flex-col gap-4 lg:col-span-4";
 
 /** CP-2A: how far EBITDA can fall before each limit, and every stress case side by side. */
 export const DownsideLead = withDraws(
@@ -75,10 +62,10 @@ export const DownsideLead = withDraws(
         {breaks ? (
           <>
             <BreakPointsTile data={breaks} href={href} span={8} />
-            <div className={COLUMN}>
+            <Beside>
               {second}
               {short && others}
-            </div>
+            </Beside>
             {!short && others}
           </>
         ) : (

@@ -9,7 +9,7 @@ import { figureShown, lastTwo, periodSeries, type Point, type Series } from "../
 import { Bento, Figure, Tile } from "../overview/Tile";
 import { Bullets, leadTests } from "./bullet";
 import { withDraws } from "./draws";
-import { GapCell, LeadGap, MapTile, Notes, Prose, statedGap, Trace } from "./parts";
+import { GapCell, LeadGap, MapTile, Notes, Prose, statedGap, Trace, Beside } from "./parts";
 import {
   IN_EVIDENCE,
   columnOf,
@@ -412,9 +412,6 @@ function HeadroomStat({ props }: { props: LeadProps }) {
   );
 }
 
-/** The column beside a tall first tile: the page's shorter tiles stacked, so the two columns end near each other. */
-const COLUMN = "flex min-w-0 flex-col gap-4 lg:col-span-4";
-
 /** CP-2: the credit view in one place: what supports it, what weakens it, and how risk travels. */
 export const CreditLead = withDraws(
   function CreditLead(props: LeadProps) {
@@ -462,10 +459,10 @@ export const CreditLead = withDraws(
       <Bento>
         <LedgerTile read={read} href={href} />
         {read ? (
-          <div className={COLUMN}>
+          <Beside>
             {measures}
             {map(4)}
-          </div>
+          </Beside>
         ) : (
           <>
             {measures}

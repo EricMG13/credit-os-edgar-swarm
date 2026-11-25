@@ -12,6 +12,7 @@ import {
   statedGap,
   Trace,
   type LeadTable,
+  Beside,
 } from "./parts";
 import { eventsOf, leadHref, mapOf, sectionParagraphs, drawsNothing } from "./read";
 import type { LeadProps } from "./types";
@@ -113,13 +114,10 @@ function RevenueMix({ entry, href }: { entry: LeadProps["entry"]; href: Href }) 
 const cellText = (cell: LeadTable["rows"][number]["cells"][number] | undefined) =>
   typeof cell === "string" ? cell : "";
 
-/** The column beside a tall first tile: the page's shorter tiles stacked, so the two columns end near each other. */
-const COLUMN = "flex min-w-0 flex-col gap-4 lg:col-span-4";
-
 /** CP-1A: what the business is, who controls it, and what the deal changed. */
 export const BusinessLead = withDraws(
   function BusinessLead(props: LeadProps) {
-    const { entry } = props;
+    const { entry, run } = props;
     if (drawsNothing(entry)) return null;
     const href = leadHref(props);
     const operating = mapOf(entry, "operating model to credit");
@@ -147,9 +145,10 @@ export const BusinessLead = withDraws(
         label="Issuer history"
         title="Issuer history"
         href={href}
+        asOf={run.asOf}
       />,
     ];
-    const column = <div className={COLUMN}>{shorter}</div>;
+    const column = <Beside>{shorter}</Beside>;
     // The first drawn map heads the page with the shorter tiles stacked beside it; a map that is
     // only a gap is one full row.
     return (

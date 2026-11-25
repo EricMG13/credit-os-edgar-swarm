@@ -101,6 +101,16 @@ export function ChartGap({
 }
 
 /**
+ * Whether the module's other charts are all short tiles (a stated gap or a withheld table): such
+ * tiles may stack in the column beside a lead's first figure; a drawn table takes its own row.
+ */
+export function onlyGaps(entry: OutputEntry, drawn: readonly string[]) {
+  return chartsStartingWith(entry, "")
+    .filter(({ title }) => !drawn.includes(title))
+    .every(({ chart }) => chart.state !== "ready");
+}
+
+/**
  * The module's charts a lead does not draw by name, in the handoff's order: a stated gap with its
  * reason, a table the store withheld with the page's reason and its trace, a published one as its
  * table. A lead that draws its module's figures draws these too, since the frame then draws none.

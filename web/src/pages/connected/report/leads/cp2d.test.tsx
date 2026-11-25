@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, expect, it } from "vitest";
-import type { OutputEntry } from "../../publishedReport";
+import { afterEach, expect, it, vi } from "vitest";
+import type { OutputEntry, PublishedRun } from "../../publishedReport";
 import { entry, table } from "../overview/rows.fixture";
 import { LiquidityLead } from "./cp2d";
 import { bottomLine, EVENT_HEADERS, leadProps, tableSection } from "./lead.fixture";
@@ -73,6 +73,8 @@ it("draws the bridge from opening to closing with each step as written, and its 
     expect(within(figure).getByText(text)).toBeInTheDocument();
   expect(within(figure).queryByText("+120")).toBeNull();
   expect(within(tile).getByText("US$m")).toBeVisible();
+  for (const word of ["Opening and closing", "Adds", "Uses"])
+    expect(within(tile).getByText(word)).toBeVisible();
   expect(within(tile).getByRole("heading")).toHaveTextContent(/^Liquidity bridge$/);
   // One basis on every row: one note under the figure, detached from no row.
   expect(within(tile).getByText("Synthetic.")).toBeVisible();
@@ -97,6 +99,10 @@ it("lists the funding dates earliest first and claims no runway the handoff does
       .getAllByRole("listitem")
       .map((item) => item.textContent),
   ).toEqual([expect.stringContaining("2025-03-31"), expect.stringContaining("2026")]);
+  expect(dates.closest("section, div[class*='col-span']")?.parentElement).toHaveClass(
+    "lg:col-span-4",
+    "self-start",
+  );
   // F1: the page reads no runway, so it says nothing about one; and no methodology note.
   expect(screen.queryByRole("region", { name: "Runway" })).toBeNull();
   expect(document.body.textContent).not.toMatch(/runway|methodology|Needs/i);
@@ -239,4 +245,43 @@ it("makes a bridge that is only a gap one full row, and the dates the next", () 
     /lg:col-span-12/,
   );
   expect(screen.getByRole("region", { name: "Funding dates" }).className).toMatch(/lg:col-span-12/);
+});
+
+it("draws a dated lane of three rows on an axis with the run's as-of date", () => {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      constructor(private readonly callback: ResizeObserverCallback) {}
+      observe(target: Element) {
+        this.callback(
+          [{ target, contentRect: { width: 1100 } } as unknown as ResizeObserverEntry],
+          this,
+        );
+      }
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+  const row = (date: string) => [
+    date,
+    "day",
+    "2024-11-07",
+    "Synthetic",
+    "Scheduled",
+    "p.1",
+    "Wall",
+  ];
+  const made = liquidity(BRIDGE, [
+    tableSection(
+      "Events: Financing",
+      table(31, EVENT_HEADERS, [row("2025-03-31"), row("2025-09-30"), row("2026-03-31")]),
+    ),
+  ]);
+  const props = {
+    ...leadProps(made),
+    run: { folder: "run", asOf: "2025-06-30" } as PublishedRun,
+  };
+  const { container } = render(<LiquidityLead {...props} />);
+  expect(container.querySelector("[data-as-of-rule='2025-06-30']")).not.toBeNull();
+  vi.unstubAllGlobals();
 });

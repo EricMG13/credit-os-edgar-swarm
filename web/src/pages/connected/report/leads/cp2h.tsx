@@ -3,8 +3,8 @@ import type { HeadroomTest } from "../overview/stressData";
 import { Bullets, leadTests, shown } from "./bullet";
 import { Bento, Figure } from "../overview/Tile";
 import { withDraws } from "./draws";
-import { OtherCharts, rowBasis, sourceOf, writtenTable } from "./written";
-import { LeadFigure, LeadGap, Trace } from "./parts";
+import { onlyGaps, OtherCharts, rowBasis, sourceOf, writtenTable } from "./written";
+import { LeadFigure, LeadGap, Trace, Beside } from "./parts";
 import {
   chartOf,
   columnOf,
@@ -16,7 +16,6 @@ import {
   drawsNothing,
 } from "./read";
 import type { Table } from "../../publishedReport";
-import { onlyGaps } from "./cp2a";
 import type { LeadProps } from "./types";
 
 const TRIGGERS = "Rating triggers";
@@ -262,9 +261,6 @@ function Register({ found, href, span }: { found: Table | undefined; href: Href;
   );
 }
 
-/** The column beside a tall first tile: the page's shorter tiles stacked, so the two columns end near each other. */
-const COLUMN = "flex min-w-0 flex-col gap-4 lg:col-span-4";
-
 /** CP-2H: where each agency's triggers stand, and the ratings now in force. */
 export const RatingsLead = withDraws(
   function RatingsLead(props: LeadProps) {
@@ -286,10 +282,10 @@ export const RatingsLead = withDraws(
     return (
       <Bento>
         <Triggers entry={entry} register={register} href={href} span={8} />
-        <div className={COLUMN}>
+        <Beside>
           <Register found={register} href={href} span={4} />
           {short && others}
-        </div>
+        </Beside>
         {!short && others}
       </Bento>
     );
