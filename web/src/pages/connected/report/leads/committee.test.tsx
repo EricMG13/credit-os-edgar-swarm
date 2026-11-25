@@ -2,7 +2,7 @@
 // register, T6A.4 "Bear cross-examination" and the portfolio-limits chart); not a real handoff.
 // No real CP-6 handoff is retained. The thin case uses the retained synthetic CP-6 fixture.
 // Every expected value below is written out by hand.
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import type { OutputEntry, Section } from "../../publishedReport";
 import { entry as buildEntry, table } from "../overview/rows.fixture";
@@ -194,8 +194,8 @@ describe("CommitteeLead", () => {
       "Refinance by 2027; Cover above 3x",
     ]);
   });
-  it("draws the gap when no action bias is stated", () => {
-    renderLead(cp6Entry());
+  it("draws the gap when no action bias is stated but the challenged points are", () => {
+    renderLead(cp6(tbl("T6A.4", LEDGER_HEADERS, claim(1))));
     expect(screen.getByText(/This page could not read an action bias\./)).toBeVisible();
   });
   it("draws one ledger row per claim with a verdict gap that is always the same designed words", () => {

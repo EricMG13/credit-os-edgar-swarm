@@ -235,7 +235,9 @@ describe("Earnings and debt: three or more periods, gaps and absences", () => {
     expect(lev.querySelector("[data-gap-reason]")?.textContent).toBe(
       "FY2022: Not supplied: outside the comparison scope",
     );
-    expect(lev.querySelector("[data-change]")?.textContent).toBe("+0.26x · worse");
+    expect(lev.querySelector("[data-change]")?.textContent).toBe(
+      "+0.26x · worse · FY2023 → FY2024",
+    );
     noAnalysis(tile);
   });
 
