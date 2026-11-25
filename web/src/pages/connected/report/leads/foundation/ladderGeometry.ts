@@ -31,20 +31,19 @@ export function ladderPeriods(data: CashLadder): LadderPeriods | null {
 
 type Side = { value: number; text: string } | { gap: string };
 
-const negated = (text: string) => (text.startsWith("-") ? text.slice(1) : `-${text}`);
-
 /**
  * One step in one period as the ladder draws it. A deduction the module writes as a positive
- * amount paid (cash interest, cash taxes) is drawn as the fall it is; every other figure keeps the
- * sign it is written with. A stated gap or words keep their own text; no cell, "Not stated for …".
+ * amount paid (cash interest, cash taxes) falls: its geometry is negative, its text is the figure
+ * as written, with no sign the module did not write. Every other figure keeps the sign it is
+ * written with. A stated gap or words keep their own text; no cell, "Not read for …".
  */
 function sideOf(step: LadderStep, cell: PeriodCell | undefined, period: string): Side {
   const reading = cell?.cell;
-  if (!reading) return { gap: `Not read from the handoff for ${period}.` };
+  if (!reading) return { gap: `This page could not read ${period} for this row.` };
   if (reading.kind !== "number") return { gap: safeText(reading.text) };
   if (step.sign !== "paid" || reading.value === 0)
     return { value: reading.value, text: group(reading.text) };
-  return { value: -reading.value, text: group(negated(reading.text)) };
+  return { value: -reading.value, text: group(reading.text) };
 }
 
 const cellAt = (step: LadderStep, period: string) =>

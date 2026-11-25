@@ -47,11 +47,11 @@ function openTable(tile: HTMLElement) {
 }
 
 /** Nothing the module did not write: no plug, no end level, no sum, no ratio. */
-function expectNoDerived(tile: HTMLElement) {
+function expectNoPlug(tile: HTMLElement) {
   const text = `${tile.textContent} ${tile.querySelector("svg")?.getAttribute("aria-label") ?? ""}`;
   for (const banned of [
     /not itemised/i,
-    /derived/i,
+    /deriv/i,
     /\+360/,
     /÷/,
     /Other items/i,
@@ -85,18 +85,47 @@ describe("cash ladder: the accepted CP-1, FY2024 bars and FY2023 beneath", () =>
       ["Discretionary cash flow after distributions", 0, -158],
       ["Acquisition of businesses, net of cash acquired", -158, -2505],
     ]);
-    expect(parts(tile, "value")).toEqual([
-      "4,173",
-      "−1,158",
-      "−539",
-      "2,045",
-      "−165",
-      "1,880",
-      "−2,038",
-      "−158",
-      "−2,347",
-    ]);
+    // The module's own signed figures print as written; the two "paid" rows are the next test.
+    const written = parts(tile, "value").filter((_, at) => at !== 1 && at !== 2);
+    expect(written).toEqual(["4,173", "2,045", "−165", "1,880", "−2,038", "−158", "−2,347"]);
     expect(labels(tile)).toContain("Repurchases of common stock");
+  });
+
+  // L9. The module writes cash interest and taxes as positive amounts paid ("1158"): the figure
+  // prints as written, the fall is geometry (the bar hangs left of the level above) and the row
+  // label already says "paid". The kit Waterfall adds a sign to every step (Waterfall.tsx
+  // valueText, line ~169: signedText(row.text, row.value)), which the module did not write, so
+  // this passes only once the mark takes an "as written" option; it is pinned as expected-to-fail.
+  it.fails("prints an amount the module wrote as paid without a sign it did not write", () => {
+    const { tile } = draw(cp1Entry());
+    expect(parts(tile, "value").slice(1, 3)).toEqual(["1,158", "539"]);
+    expect(parts(tile, "prior-value").slice(1, 3)).toEqual(["1,160", "260"]);
+  });
+
+  it("hangs a paid amount left of the level above although it writes no sign", () => {
+    const { all } = draw(cp1Entry());
+    const [, interest, taxes] = all("rect[data-bar]");
+    expect([num(interest, "data-from"), num(interest, "data-to")]).toEqual([4173, 3015]);
+    expect([num(taxes, "data-from"), num(taxes, "data-to")]).toEqual([3015, 2476]);
+    expect(num(interest, "x") + num(interest, "width")).toBeCloseTo(
+      num(all("rect[data-bar]")[0], "x") + num(all("rect[data-bar]")[0], "width"),
+      6,
+    );
+  });
+
+  it("says where the stated levels do not follow from the steps above, with no number", () => {
+    const { tile } = draw(cp1Entry());
+    // Hand: taxes end at 2,476 (4,173 − 1,158 − 539) and cash from operations is stated 2,045.
+    expect(tile.textContent).toContain(
+      "Levels as stated; the steps between them are not all stated.",
+    );
+    expect(tile.textContent).not.toMatch(/431|plug/);
+  });
+
+  it("does not say it where every level follows from the steps above it", () => {
+    const entry = setLabelled(cp1Entry(), CASH, "Net Cash from Operating Activities", "FY2024", "2476");
+    const { tile } = draw(entry);
+    expect(tile.textContent).not.toContain("Levels as stated");
   });
 
   it("is proportional: one scale for every bar, current and earlier", () => {
@@ -157,7 +186,7 @@ describe("cash ladder: the accepted CP-1, FY2024 bars and FY2023 beneath", () =>
 
   it("draws the stated repurchase gap as the hatched slot with its reason, never dropped", () => {
     const { tile } = draw(cp1Entry());
-    const reason = "Not supplied: source dash (FY2023 and FY2024)";
+    const reason = "— (FY2023 and FY2024)";
     expect(tile.querySelector(`[data-gap="${reason}"] rect`)).not.toBeNull();
     expect(parts(tile, "reason")).toEqual([reason]);
     expect(tile.querySelector('[data-step="Repurchases of common stock"]')).toBeNull();
@@ -174,7 +203,7 @@ describe("cash ladder: the accepted CP-1, FY2024 bars and FY2023 beneath", () =>
   it("reads every figure in its aria-label, the earlier in brackets", () => {
     const { svg } = draw(cp1Entry());
     expect(svg?.getAttribute("aria-label")).toBe(
-      "Cash conversion, US$m, FY2024, FY2023 in brackets: EBITDA (Adjusted) 4,173 (FY2023 3,395), less Cash Interest Paid 1,158 (FY2023 −1,160), less Cash taxes paid 539 (FY2023 −260), Net Cash from Operating Activities 2,045 (FY2023 1,375), less Capital expenditures 165 (FY2023 −139), Levered free cash flow 1,880 (FY2023 1,236), less Dividends and dividend equivalent payments 2,038 (FY2023 −38), Repurchases of common stock not stated: Not supplied: source dash (FY2023 and FY2024), Discretionary cash flow after distributions −158 (FY2023 1,198), less Acquisition of businesses, net of cash acquired 2,347 (FY2023 −762). Axis starts at −4,000.",
+      "Cash conversion, US$m, FY2024, FY2023 in brackets: EBITDA (Adjusted) 4,173 (FY2023 3,395), less Cash Interest Paid 1,158 (FY2023 −1,160), less Cash taxes paid 539 (FY2023 −260), Net Cash from Operating Activities 2,045 (FY2023 1,375), less Capital expenditures 165 (FY2023 −139), Levered free cash flow 1,880 (FY2023 1,236), less Dividends and dividend equivalent payments 2,038 (FY2023 −38), Repurchases of common stock not stated: — (FY2023 and FY2024), Discretionary cash flow after distributions −158 (FY2023 1,198), less Acquisition of businesses, net of cash acquired 2,347 (FY2023 −762). Axis starts at −4,000.",
     );
   });
 
@@ -191,8 +220,8 @@ describe("cash ladder: the accepted CP-1, FY2024 bars and FY2023 beneath", () =>
       ["Dividends and dividend equivalent payments", "−38", "−2,038", "Deduction, signed"],
       [
         "Repurchases of common stock",
-        "Not supplied: source dash",
-        "Not supplied: source dash",
+        "—",
+        "—",
         "Deduction, signed",
       ],
       ["Discretionary cash flow after distributions", "1,198", "−158", "Level"],
@@ -202,9 +231,9 @@ describe("cash ladder: the accepted CP-1, FY2024 bars and FY2023 beneath", () =>
 
   it("writes no plug, no end level, no sum and no source reference", () => {
     const { tile } = draw(cp1Entry());
-    expectNoDerived(tile);
+    expectNoPlug(tile);
     openTable(tile);
-    expectNoDerived(tile);
+    expectNoPlug(tile);
     expect(containsReference(tile.textContent)).toBe(false);
     expect(tile.textContent).not.toMatch(/CP-1|T4\.5|C\d{2}/);
   });
@@ -233,10 +262,10 @@ describe("cash ladder: other real handoffs and mutations", () => {
       ["Discretionary cash flow after dividends and equivalents", 0, -158],
       ["Acquisition of businesses, net of cash acquired", -158, -2505],
     ]);
-    expect(parts(tile, "reason")).toEqual(["Not supplied: source dash"]);
+    expect(parts(tile, "reason")).toEqual(["—"]);
     expect(parts(tile, "legend-text")).toEqual(["FY2024 level", "Deduction", "Not stated"]);
     expect(openTable(tile)[0]).toEqual(["Step", "FY2024", "Kind"]);
-    expectNoDerived(tile);
+    expectNoPlug(tile);
   });
 
   it("distressed: its tax label as written; the after-distributions level read from its KPI dashboard", () => {
@@ -258,17 +287,27 @@ describe("cash ladder: other real handoffs and mutations", () => {
       ["Acquisition of businesses, net of cash acquired", -158, -2505],
     ]);
     // Only the repurchase line is a stated gap; nothing is unplaced.
-    expect(parts(tile, "reason")).toEqual(["Not supplied: source dash (FY2023 and FY2024)"]);
+    expect(parts(tile, "reason")).toEqual(["— (FY2023 and FY2024)"]);
     expect(parts(tile, "unplaced")).toEqual([]);
-    expectNoDerived(tile);
+    expectNoPlug(tile);
   });
 
-  it("three periods: FY2024 bars only, the other periods named and in the table", () => {
-    const { tile, all } = draw(threePeriodCp1());
-    expect(all("[data-prior]")).toHaveLength(0);
-    expect(tile.textContent).toContain("Cash conversion · US$m, FY2024");
-    expect(tile.textContent).toContain("Drawn: FY2024. FY2022 and FY2023 are in the table view.");
-    expect(num(all("rect[data-bar]")[0], "data-to")).toBe(4173);
+  it("three periods: every stated period is drawn, latest first; an all-gap period is its gap line", () => {
+    const { tile } = draw(threePeriodCp1());
+    expect(tile.textContent).not.toContain("table view");
+    expect(tile.textContent).toContain("Cash conversion · US$m, FY2024, FY2023, FY2022");
+    const ladders = [...tile.querySelectorAll("[data-ladder]")];
+    expect(ladders.map((node) => node.getAttribute("data-ladder"))).toEqual(["FY2024", "FY2023"]);
+    const first = (period: string) =>
+      tile.querySelector(`[data-ladder="${period}"] rect[data-bar]`) ?? undefined;
+    expect(num(first("FY2024"), "data-to")).toBe(4173);
+    expect(num(first("FY2023"), "data-to")).toBe(3395);
+    // No earlier period beneath: each period is its own ladder.
+    expect(tile.querySelectorAll("[data-prior]")).toHaveLength(0);
+    // FY2022 states only a gap on every row: its reason once, as written, not an empty ladder.
+    expect(tile.querySelector("[data-ladder-gap=FY2022]")?.textContent).toBe(
+      "FY2022: Not supplied: outside the comparison scope",
+    );
     const rows = openTable(tile);
     expect(rows[0]).toEqual(["Step", "FY2022", "FY2023", "FY2024", "Kind"]);
     expect(rows[1]).toEqual([
