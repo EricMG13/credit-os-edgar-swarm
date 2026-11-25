@@ -296,7 +296,7 @@ it("draws the transmission map, or its gap, and nothing for a blocked module", (
   cleanup();
   render(<CreditLead {...leadProps(credit([], false))} />);
   expect(
-    screen.getByText("This page could not read a credit-risk transmission map from the handoff."),
+    screen.getByText("This page could not read a credit-risk transmission map."),
   ).toBeVisible();
   cleanup();
   const { container } = render(

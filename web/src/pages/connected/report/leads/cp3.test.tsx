@@ -101,9 +101,7 @@ it("draws the real run's recommendation table as text: prices, not yields, so no
   expect(within(secured).getByText("Requires More Work")).toBeInTheDocument();
   // Stated values are never labelled Not supplied; no column the module did not write is added.
   expect(within(secured).queryByText("Not supplied")).toBeNull();
-  expect(
-    within(tile).getByText("This page could not read a spread from the handoff."),
-  ).toBeVisible();
+  expect(within(tile).getByText("This page could not read a spread.")).toBeVisible();
   expect(within(row("Term loans (Tranches I, J, K, L)")).getByText("99.91%")).toBeInTheDocument();
   expect(tile.querySelectorAll("[data-bar]")).toHaveLength(0);
   expect(within(secured).getByRole("link", { name: /Source for Secured notes/ })).toHaveAttribute(
@@ -187,9 +185,7 @@ it("draws the relative value and portfolio fit passages and the peer gap", () =>
   ).toBeVisible();
   const peers = screen.getByRole("region", { name: "Relative value against peers" });
   // F1: the page says only what it checked.
-  expect(
-    within(peers).getByText("This page could not read peer levels from the handoff."),
-  ).toBeVisible();
+  expect(within(peers).getByText("This page could not read peer levels.")).toBeVisible();
   expect(peers.textContent).not.toMatch(/has no peer levels/);
   expect(peers.textContent).not.toMatch(/supplied at run start/);
 });
@@ -197,12 +193,10 @@ it("draws the relative value and portfolio fit passages and the peer gap", () =>
 it("states each gap when the module wrote neither table nor passage", () => {
   render(<SecurityLead {...props(handoff("## Findings\n\n### Bottom line\n\nNeutral.\n"))} />);
   const tile = screen.getByRole("region", { name: "Instrument decisions" });
-  expect(
-    within(tile).getByText("This page could not read an instrument table from the handoff."),
-  ).toBeVisible();
+  expect(within(tile).getByText("This page could not read an instrument table.")).toBeVisible();
   expect(
     within(screen.getByRole("region", { name: "Relative value" })).getByText(
-      "This page could not read a relative value passage from the handoff.",
+      "This page could not read a relative value passage.",
     ),
   ).toBeVisible();
   expect(document.body.textContent).not.toMatch(/The module wrote no/);

@@ -22,11 +22,11 @@ export const ResearchLead = withDraws(
           span={12}
           label={QUESTIONS}
           title={QUESTIONS}
-          reason="This page could not read a list of questions with their answers from the handoff."
+          reason="This page could not read a list of questions with their answers."
         >
           {answered && (
             <p className="text-caption text-text-secondary">
-              The handoff has an executive answer passage.
+              The answers are written as the executive answer passage.
             </p>
           )}
         </LeadGap>
@@ -39,7 +39,7 @@ export const ResearchLead = withDraws(
             span={8}
             label="Causal scenarios"
             title={SCENARIOS}
-            reason="This page could not read causal scenarios from the handoff."
+            reason="This page could not read causal scenarios."
           />
         )}
         {/* A third-rank list at span 8: it cannot fit beside the scenarios, so it takes the next row. */}
@@ -49,7 +49,7 @@ export const ResearchLead = withDraws(
           label="Research catalysts"
           title="Research catalysts"
           href={href}
-          absent="This page could not read dated research catalysts from the handoff."
+          absent="This page could not read dated research catalysts."
         />
       </Bento>
     );

@@ -30,8 +30,8 @@ function Headroom({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
         label={TITLE}
         title={TITLE}
         href={href}
-        unread="This page could not read the covenant headroom table the handoff has."
-        absent="This page could not read a covenant headroom table from the handoff."
+        unread="This page could not read the covenant headroom table."
+        absent="This page could not read a covenant headroom table."
       />
     );
   const { table, descriptor } = chart;
@@ -75,7 +75,7 @@ function Baskets({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
         span={6}
         label={label}
         title={label}
-        reason="This page could not read a basket and capacity register from the handoff."
+        reason="This page could not read a basket and capacity register."
       />
     );
   const name = columnOf(table, "Basket / Test");
@@ -129,7 +129,7 @@ export const LegalLead = withDraws(
             label={title}
             title={title}
             href={href}
-            absent={`This page could not read ${noun} from the handoff.`}
+            absent={`This page could not read ${noun}.`}
           />
         ))}
         <Baskets entry={entry} href={href} />

@@ -102,7 +102,7 @@ it("states the foreign-share gap, lists the hedge terms without sources and the 
   render(<MacroLead {...leadProps(h3())} />);
   const share = screen.getByRole("region", { name: "Foreign share" });
   expect(
-    within(share).getByText("This page could not read a foreign-currency share from the handoff."),
+    within(share).getByText("This page could not read a foreign-currency share."),
   ).toBeVisible();
   // Ruling vii: no note on what a run would need.
   expect(share.textContent).not.toMatch(/supplied at run start/);
@@ -200,9 +200,7 @@ it("gives the module's own FX limitation as the foreign-share gap", () => {
   expect(within(share).getByText("Currency split by entity was not disclosed.")).toBeVisible();
   const ladder = screen.getByRole("region", { name: "Rate sensitivity" });
   expect(
-    within(ladder).getByText(
-      "This page could not read a cash impact per rate shock step from the handoff.",
-    ),
+    within(ladder).getByText("This page could not read a cash impact per rate shock step."),
   ).toBeVisible();
 });
 

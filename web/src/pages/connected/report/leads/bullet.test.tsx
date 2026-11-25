@@ -113,7 +113,7 @@ it("gives the table view every cell as written, a gap as written, and one trace 
   expect(view.endHeading).toBe("Source");
 });
 
-it("shows stated figures that cannot be placed from zero as written, with no bar", () => {
+it("draws a stated negative current from zero to its value, with every stated figure as written", () => {
   const [test] =
     headroomTests(
       source(40, HEAD, [
@@ -131,15 +131,13 @@ it("shows stated figures that cannot be placed from zero as written, with no bar
     ) ?? [];
   render(<Bullets label="Covenant tests" tests={[read ?? test]} />);
   const item = screen.getByRole("listitem");
-  expect(within(item).getByText("-US$20m")).toBeVisible();
-  expect(within(item).getByText("US$100m")).toBeVisible();
-  expect(within(item).queryByRole("img")).toBeNull();
+  expect(within(item).getAllByText("-US$20m")[0]).toBeVisible();
+  expect(within(item).getAllByText("US$100m")[0]).toBeVisible();
+  const bar = within(item).getByRole("img");
+  expect(bar).toHaveAccessibleName(/-US\$20m against a threshold of US\$100m/);
   // Only the headroom is not supplied; the stated current and threshold are never marked so.
   expect(within(item).getAllByText("Not supplied")).toHaveLength(1);
   expect(within(item).getByText("Negative")).toBeVisible();
-  expect(
-    within(item).getByText("The stated values cannot be placed on a scale from zero."),
-  ).toBeVisible();
 });
 
 it("reads every drawn text of a test as a working page shows it, keeping the numbers", () => {
@@ -159,7 +157,7 @@ it("reads every drawn text of a test as a working page shows it, keeping the num
   );
   const [test] = read ?? [];
   expect(test).toMatchObject({
-    label: "In Evidence",
+    label: "A test named in Evidence",
     threshold: { text: "In Evidence", value: null, reason: "In Evidence" },
     current: { text: "4.2", value: 4.2 },
     headroom: "0.8x",

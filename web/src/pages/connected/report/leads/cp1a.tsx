@@ -17,7 +17,7 @@ function Transaction({ entry, href }: { entry: LeadProps["entry"]; href: Href })
         span={6}
         label={label}
         title={label}
-        reason="This page could not read a transaction summary from the handoff."
+        reason="This page could not read a transaction summary."
       />
     );
   return (
@@ -44,12 +44,7 @@ function RevenueMix({ entry, href }: { entry: LeadProps["entry"]; href: Href }) 
   const table = register ? writtenTable(sourceOf(register), href) : undefined;
   if (!register || !table)
     return (
-      <LeadGap
-        span={4}
-        label={MIX}
-        title={MIX}
-        reason="This page could not read a revenue mix from the handoff."
-      />
+      <LeadGap span={4} label={MIX} title={MIX} reason="This page could not read a revenue mix." />
     );
   return (
     <Tile
@@ -78,7 +73,7 @@ export const BusinessLead = withDraws(
           span={8}
           label="Operating model to credit"
           title="Operating model to credit"
-          absent="This page could not read an operating-model map from the handoff."
+          absent="This page could not read an operating-model map."
         />
         <RevenueMix entry={entry} href={href} />
         <MapTile
@@ -87,7 +82,7 @@ export const BusinessLead = withDraws(
           span={6}
           label="Ownership and control"
           title="Ownership and control"
-          absent="This page could not read an ownership and control map from the handoff."
+          absent="This page could not read an ownership and control map."
         />
         <Transaction entry={entry} href={href} />
         {/* Third rank: a half-width tile after the maps and the passage, sized to its rows. */}

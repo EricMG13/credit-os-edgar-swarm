@@ -193,7 +193,7 @@ export type Instruments = {
 };
 
 const NO_PAIR = "No pair of comparable last trades is supplied for this run.";
-const NO_SPREAD = "This page could not read a spread from the handoff.";
+const NO_SPREAD = "This page could not read a spread.";
 
 /**
  * The decision summary's instruments: a yield bar and a price bar only where the trade is

@@ -117,9 +117,7 @@ it("draws the value allocation of the first scenario as a waterfall, steps as wr
   // Ruling (a): the title is the subject; the scenario is its kicker.
   expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(/^Value allocation$/);
   // F1, G7: the fulcrum gap says only what the page checked, in the figure's place, not a note.
-  const fulcrum = within(tile).getByText(
-    "This page could not read a fulcrum class from the handoff.",
-  );
+  const fulcrum = within(tile).getByText("This page could not read a fulcrum class.");
   expect(fulcrum).toBeVisible();
   expect(fulcrum.closest("li")).toBeNull();
   expect(tile.textContent).not.toMatch(/does not state the fulcrum|methodology|Needs/);
@@ -216,9 +214,9 @@ it("draws the plan treatment as written, and the gaps when the module wrote none
     <RestructuringLead {...leadProps(handoff("## Findings\n\n### Bottom line\n\nThin.\n"))} />,
   );
   for (const [name, text] of [
-    ["Value allocation", "This page could not read a value allocation table from the handoff."],
-    ["Recovery by class", "This page could not read a recovery by class table from the handoff."],
-    ["Plan treatment", "This page could not read a plan treatment register from the handoff."],
+    ["Value allocation", "This page could not read a value allocation table."],
+    ["Recovery by class", "This page could not read a recovery by class table."],
+    ["Plan treatment", "This page could not read a plan treatment register."],
   ] as const)
     expect(within(screen.getByRole("region", { name })).getByText(text)).toBeVisible();
   // Ruling vii: no build note on the reader's page.

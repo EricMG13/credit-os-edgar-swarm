@@ -107,7 +107,7 @@ it("says why when the module wrote no bridge, and draws nothing for a blocked mo
   render(<LiquidityLead {...leadProps(none)} />);
   expect(
     within(screen.getByRole("region", { name: "Liquidity bridge" })).getByText(
-      "This page could not read a liquidity bridge from the handoff.",
+      "This page could not read a liquidity bridge.",
     ),
   ).toBeVisible();
   cleanup();
@@ -192,9 +192,7 @@ it("says only that it could not draw a withheld table whose own check passes", (
   // The handoff's bridge reconciles, yet no descriptor was published: the page says what it knows.
   render(<LiquidityLead {...leadProps(withheld(0, "900"))} />);
   const tile = screen.getByRole("region", { name: "Liquidity bridge" });
-  expect(
-    within(tile).getByText("This page could not draw the table the handoff has."),
-  ).toBeVisible();
+  expect(within(tile).getByText("This page could not draw this table.")).toBeVisible();
   expect(within(tile).queryByRole("img")).toBeNull();
 });
 

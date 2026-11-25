@@ -194,9 +194,9 @@ const NOT_SUPPLIED = /^Not supplied:\s*(\S.*)$/;
 const stated = (text: string) => text.trim() !== "" && !NOT_SUPPLIED.test(text.trim());
 
 /** Why the page could not read a table the handoff has; it names only what the page checked. */
-const UNREAD = "This page could not read the table the handoff has.";
+const UNREAD = "This page could not read this table.";
 /** Why the page draws no figure for a chart table the handoff has but the store did not publish. */
-export const WITHHELD = "This page could not draw the table the handoff has.";
+export const WITHHELD = "This page could not draw this table.";
 const ROW_UNREAD = "this page could not read every cell of the row";
 
 /** A row's stated gap reasons, once each, in the order written. */

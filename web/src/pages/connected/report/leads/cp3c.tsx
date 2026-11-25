@@ -269,8 +269,8 @@ function NeedFigure({
         label={TITLE}
         title={TITLE}
         href={href}
-        unread="This page could not read the refinancing need table the handoff has."
-        absent="This page could not read a refinancing need table from the handoff."
+        unread="This page could not read the refinancing need table."
+        absent="This page could not read a refinancing need table."
       />
     );
   const units = new Set(chart.table.rows.map((row) => row.at(-2) ?? ""));
@@ -350,7 +350,7 @@ function Paths({ entry, href }: { entry: LeadProps["entry"]; href: (line?: numbe
         span={12}
         label={label}
         title={label}
-        reason="This page could not read a liability-management path register from the handoff."
+        reason="This page could not read a liability-management path register."
       />
     );
   const columns = ["Path Type", ...PATH_FIELDS].map((name) => columnOf(table, name));

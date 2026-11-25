@@ -61,15 +61,11 @@ it("draws the gaps truthfully on the retained real T2DS.1 tables, where the read
     const real = fixtureEntry("CP-2A", retained("tdg_sol_high_2026_11_13", file));
     render(<DownsideLead {...leadProps(real)} />);
     const ladder = screen.getByRole("region", { name: "EBITDA break points" });
-    expect(
-      within(ladder).getByText("This page could not read break points from the handoff."),
-    ).toBeVisible();
+    expect(within(ladder).getByText("This page could not read break points.")).toBeVisible();
     expect(ladder.textContent).not.toMatch(/methodology|Needs/);
     const scenarios = screen.getByRole("region", { name: "Downside scenarios" });
     expect(
-      within(scenarios).getByText(
-        "This page could not read stressed metrics by scenario from the handoff.",
-      ),
+      within(scenarios).getByText("This page could not read stressed metrics by scenario."),
     ).toBeVisible();
     expect(screen.queryByRole("img")).toBeNull();
     expect(screen.queryByText("0")).toBeNull();
@@ -106,17 +102,13 @@ it("says it could not read the tables the real headings carry, and traces each o
   );
   render(<DownsideLead {...leadProps(made)} />);
   const ladder = screen.getByRole("region", { name: "EBITDA break points" });
-  expect(
-    within(ladder).getByText("This page could not read the break-point table the handoff has."),
-  ).toBeVisible();
+  expect(within(ladder).getByText("This page could not read the break-point table.")).toBeVisible();
   expect(
     within(ladder).getByRole("link", { name: "Source for EBITDA break points" }),
   ).toHaveAttribute("href", expect.stringMatching(/#evidence\/.*30/));
   const scenarios = screen.getByRole("region", { name: "Downside scenarios" });
   expect(
-    within(scenarios).getByText(
-      "This page could not read the stressed-metrics table the handoff has.",
-    ),
+    within(scenarios).getByText("This page could not read the stressed-metrics table."),
   ).toBeVisible();
   expect(document.body.textContent).not.toMatch(/prose|one column per scenario/);
 });
@@ -139,7 +131,7 @@ it("gives the store's own reason for a handoff it could not read, and words a wr
   cleanup();
   const other = entry("CP-2D", [], []);
   render(<DownsideLead {...leadProps(other)} />);
-  expect(screen.getByText("This page could not read break points from the handoff.")).toBeVisible();
+  expect(screen.getByText("This page could not read break points.")).toBeVisible();
 });
 
 it("puts each tile's own choice and its Figure / Table switch in one control row", () => {

@@ -123,7 +123,7 @@ it.each(["0", "0.10 (25%)"])(
     expect(within(tile()).queryByRole("img")).toBeNull();
     expect(
       within(tile()).getByText(
-        "This page could not read a unique control and named cases for these results from the handoff.",
+        "This page could not read a unique control and named cases for these results.",
       ),
     ).toBeVisible();
     fireEvent.click(within(tile()).getByRole("button", { name: "Table" }));

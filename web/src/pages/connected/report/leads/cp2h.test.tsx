@@ -151,15 +151,13 @@ it("says why when the triggers are a stated gap or the tables are absent", () =>
     ),
   ).toBeVisible();
   const register = screen.getByRole("region", { name: "Rating register" });
-  expect(
-    within(register).getByText("This page could not read a rating register from the handoff."),
-  ).toBeVisible();
+  expect(within(register).getByText("This page could not read a rating register.")).toBeVisible();
   expect(register.textContent).not.toMatch(/Built from the module's contract/);
   cleanup();
   render(<RatingsLead {...leadProps(ratings())} />);
   expect(
     within(screen.getByRole("region", { name: "Rating triggers" })).getByText(
-      "This page could not read rating triggers from the handoff.",
+      "This page could not read rating triggers.",
     ),
   ).toBeVisible();
 });

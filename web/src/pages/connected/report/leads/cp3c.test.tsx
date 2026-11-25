@@ -183,14 +183,12 @@ it("states the gaps when the module wrote neither table, and draws nothing when 
   render(<RefinancingLead {...leadProps(handoff("## Findings\n\n### Bottom line\n\nThin.\n"))} />);
   expect(
     within(screen.getByRole("region", { name: "Refinancing need" })).getByText(
-      "This page could not read a refinancing need table from the handoff.",
+      "This page could not read a refinancing need table.",
     ),
   ).toBeVisible();
   const paths = screen.getByRole("region", { name: "Liability-management paths" });
   expect(
-    within(paths).getByText(
-      "This page could not read a liability-management path register from the handoff.",
-    ),
+    within(paths).getByText("This page could not read a liability-management path register."),
   ).toBeVisible();
   expect(paths.textContent).not.toMatch(/Built from the module's contract/);
   expect(screen.queryByRole("list", { name: "Refinancing dates" })).toBeNull();
@@ -225,9 +223,7 @@ it("says the store withheld the need table, traces it and opens the table as wri
   });
   render(<RefinancingLead {...leadProps(withheld)} />);
   const tile = screen.getByRole("region", { name: "Refinancing need" });
-  expect(
-    within(tile).getByText("This page could not draw the table the handoff has."),
-  ).toBeVisible();
+  expect(within(tile).getByText("This page could not draw this table.")).toBeVisible();
   expect(within(tile).getByRole("link", { name: "Source for Refinancing need" })).toHaveAttribute(
     "href",
     expect.stringContaining("#evidence/"),

@@ -42,9 +42,7 @@ function LiquidityBridge({
         label={TITLE}
         title={TITLE}
         reason={
-          chart.state === "gap"
-            ? chart.reason
-            : "This page could not read a liquidity bridge from the handoff."
+          chart.state === "gap" ? chart.reason : "This page could not read a liquidity bridge."
         }
       />
     );
@@ -99,7 +97,7 @@ export const LiquidityLead = withDraws(
           label="Funding dates"
           title="Funding dates"
           href={href}
-          absent="This page could not read dated financing events from the handoff."
+          absent="This page could not read dated financing events."
         />
         <OtherCharts entry={entry} href={href} drawn={[TITLE]} />
       </Bento>

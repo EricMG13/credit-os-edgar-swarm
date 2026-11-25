@@ -33,7 +33,7 @@ function Passage({
         span={6}
         label={title}
         title={title}
-        reason={`This page could not read a ${title.toLowerCase()} passage from the handoff.`}
+        reason={`This page could not read a ${title.toLowerCase()} passage.`}
       />
     );
   return (
@@ -62,7 +62,7 @@ export const SecurityLead = withDraws(
             span={12}
             label={TITLE}
             title={TITLE}
-            reason="This page could not read an instrument table from the handoff."
+            reason="This page could not read an instrument table."
           />
         )}
         <Passage entry={entry} heading="Relative value" title="Relative value" href={href} />
@@ -72,7 +72,7 @@ export const SecurityLead = withDraws(
           span={6}
           label="Relative value against peers"
           title="Relative value against peers"
-          reason="This page could not read peer levels from the handoff."
+          reason="This page could not read peer levels."
         />
       </Bento>
     );

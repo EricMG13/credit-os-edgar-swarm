@@ -539,7 +539,7 @@ export function ForeignShareTile({
 }) {
   const reason = fxGap?.cells[3]
     ? readerCell(fxGap.cells[3])
-    : "This page could not read a foreign-currency share from the handoff.";
+    : "This page could not read a foreign-currency share.";
   return (
     <LeadGap
       span={span}

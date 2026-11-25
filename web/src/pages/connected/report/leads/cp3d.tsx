@@ -32,7 +32,7 @@ const COLUMNS = [
 const DAY = 86_400_000;
 /** The fewest points a date axis is drawn for; fewer are a list of figures. */
 const AXIS_FROM = 3;
-const CURVE_GAP = "This page could not read an issuer curve from the handoff.";
+const CURVE_GAP = "This page could not read an issuer curve.";
 
 /** A stated calendar date as a time, or null for any other text. */
 function dayOf(text: string) {
@@ -208,8 +208,8 @@ function YieldFigure({ entry, href }: { entry: LeadProps["entry"]; href: Href })
         label={TITLE}
         title={TITLE}
         href={href}
-        unread="This page could not read the yield against maturity table the handoff has."
-        absent="This page could not read a yield against maturity table from the handoff."
+        unread="This page could not read the yield against maturity table."
+        absent="This page could not read a yield against maturity table."
       />
     );
   const candidates = rows
@@ -296,7 +296,7 @@ function Implied({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
         span={4}
         label={label}
         title={label}
-        reason="This page could not read an implied risk register from the handoff."
+        reason="This page could not read an implied risk register."
       />
     );
   const security = table.headers.findIndex((header) => /^security/i.test(header.trim()));

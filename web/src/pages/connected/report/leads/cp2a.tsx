@@ -29,8 +29,8 @@ function why(entry: OutputEntry, id: string, subject: string, table: string) {
   if (stored && stored !== IN_EVIDENCE) return { reason: stored };
   const found = underId(entry, id);
   return found
-    ? { reason: `This page could not read the ${table} table the handoff has.`, line: found.line }
-    : { reason: `This page could not read ${subject} from the handoff.` };
+    ? { reason: `This page could not read the ${table} table.`, line: found.line }
+    : { reason: `This page could not read ${subject}.` };
 }
 
 /** CP-2A: how far EBITDA can fall before each limit, and every stress case side by side. */

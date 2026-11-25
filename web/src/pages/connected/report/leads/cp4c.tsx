@@ -37,7 +37,7 @@ type Entry = LeadProps["entry"];
 
 const TITLE = "Value allocation";
 const RECOVERY = "Recovery by class";
-const FULCRUM = "This page could not read a fulcrum class from the handoff.";
+const FULCRUM = "This page could not read a fulcrum class.";
 
 /** "Value allocation — scenario 1" → "Scenario 1"; the title itself when it names no scenario. */
 function scenarioName(title: string) {
@@ -55,7 +55,7 @@ function ValueAllocation({ entry, href }: { entry: Entry; href: Href }) {
         span={8}
         label={TITLE}
         title={TITLE}
-        reason="This page could not read a value allocation table from the handoff."
+        reason="This page could not read a value allocation table."
       />
     );
   const { chart } = current;
@@ -94,7 +94,7 @@ function ValueAllocation({ entry, href }: { entry: Entry; href: Href }) {
             <CompactGap>
               {chart.state === "gap"
                 ? chart.reason
-                : "This page could not read a value allocation table from the handoff."}
+                : "This page could not read a value allocation table."}
             </CompactGap>
           ) : read.why ? (
             <>
@@ -206,8 +206,8 @@ function RecoveryByClass({ entry, href }: { entry: Entry; href: Href }) {
         label={RECOVERY}
         title={RECOVERY}
         href={href}
-        unread="This page could not read the recovery by class table the handoff has."
-        absent="This page could not read a recovery by class table from the handoff."
+        unread="This page could not read the recovery by class table."
+        absent="This page could not read a recovery by class table."
       />
     );
   const unit = word(chart.descriptor.unit);
@@ -278,7 +278,7 @@ function PlanTreatment({ entry, href }: { entry: Entry; href: Href }) {
         span={12}
         label={label}
         title={label}
-        reason="This page could not read a plan treatment register from the handoff."
+        reason="This page could not read a plan treatment register."
       />
     );
   const path = columnOf(table, "path");

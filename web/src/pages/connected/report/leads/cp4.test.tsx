@@ -228,16 +228,13 @@ it("states the gaps when the module wrote no headroom table, map or basket regis
   render(<LegalLead {...leadProps(handoff("## Findings\n\n### Bottom line\n\nThin.\n"))} />);
   expect(
     within(screen.getByRole("region", { name: "Covenant headroom" })).getByText(
-      "This page could not read a covenant headroom table from the handoff.",
+      "This page could not read a covenant headroom table.",
     ),
   ).toBeVisible();
   for (const [name, text] of [
-    ["Legal entities", "This page could not read a legal entities map from the handoff."],
-    ["Intercreditor", "This page could not read an intercreditor map from the handoff."],
-    [
-      "Baskets and capacity",
-      "This page could not read a basket and capacity register from the handoff.",
-    ],
+    ["Legal entities", "This page could not read a legal entities map."],
+    ["Intercreditor", "This page could not read an intercreditor map."],
+    ["Baskets and capacity", "This page could not read a basket and capacity register."],
   ] as const)
     expect(within(screen.getByRole("region", { name })).getByText(text)).toBeVisible();
   expect(document.body.textContent).not.toMatch(/supplied at run start/);
@@ -248,9 +245,7 @@ it("says the store withheld the headroom table, traces it and opens the table as
   made.output.charts = [];
   render(<LegalLead {...leadProps(made)} />);
   const tile = screen.getByRole("region", { name: "Covenant headroom" });
-  expect(
-    within(tile).getByText("This page could not draw the table the handoff has."),
-  ).toBeVisible();
+  expect(within(tile).getByText("This page could not draw this table.")).toBeVisible();
   expect(within(tile).getByRole("link", { name: "Source for Covenant headroom" })).toHaveAttribute(
     "href",
     expect.stringContaining("#evidence/"),

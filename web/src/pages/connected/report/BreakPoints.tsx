@@ -263,9 +263,7 @@ export function BreakPointsTile({
       }))}
     />
   ) : (
-    <CompactGap>
-      This page could not read a fall in EBITDA for each break point from the handoff&apos;s table.
-    </CompactGap>
+    <CompactGap>This page could not read a fall in EBITDA for each break point.</CompactGap>
   );
   const trace = <Trace href={href(data.table.line)} name={TITLE} />;
   return (

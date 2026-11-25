@@ -158,9 +158,7 @@ it("lists an unquoted instrument with its reason and draws the issuer curve gap 
   expect(within(loan).getByText("No loan quote in the files")).toBeVisible();
   // G7: no raw "X: Not supplied: reason".
   expect(tile.textContent).not.toMatch(/: Not supplied: /);
-  expect(
-    within(tile).getByText("This page could not read an issuer curve from the handoff."),
-  ).toBeVisible();
+  expect(within(tile).getByText("This page could not read an issuer curve.")).toBeVisible();
   // Ruling vii: no method notes on the reader's page.
   expect(tile.textContent).not.toMatch(/No curve is drawn|methodology/);
 });
@@ -200,15 +198,11 @@ it("states the gaps when the module wrote neither table, and draws nothing when 
   render(<MarketLead {...leadProps(handoff("## Findings\n\n### Bottom line\n\nThin.\n"))} />);
   const figure = screen.getByRole("region", { name: "Yield against maturity" });
   expect(
-    within(figure).getByText(
-      "This page could not read a yield against maturity table from the handoff.",
-    ),
+    within(figure).getByText("This page could not read a yield against maturity table."),
   ).toBeVisible();
   const implied = screen.getByRole("region", { name: "Market-implied default" });
   expect(
-    within(implied).getByText(
-      "This page could not read an implied risk register from the handoff.",
-    ),
+    within(implied).getByText("This page could not read an implied risk register."),
   ).toBeVisible();
   expect(document.body.textContent).not.toMatch(/supplied at run start/);
   cleanup();

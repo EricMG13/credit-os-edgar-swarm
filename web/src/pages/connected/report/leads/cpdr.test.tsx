@@ -64,11 +64,11 @@ it("states why the question list is a gap, points to the executive answer and ne
   render(<ResearchLead {...leadProps(research(true))} />);
   const tile = screen.getByRole("region", { name: "Research questions and answers" });
   expect(
-    within(tile).getByText(
-      "This page could not read a list of questions with their answers from the handoff.",
-    ),
+    within(tile).getByText("This page could not read a list of questions with their answers."),
   ).toBeVisible();
-  expect(within(tile).getByText("The handoff has an executive answer passage.")).toBeVisible();
+  expect(
+    within(tile).getByText("The answers are written as the executive answer passage."),
+  ).toBeVisible();
   // Ruling vii: no note on where the method puts coverage.
   expect(tile.textContent).not.toMatch(/no fixed place|methodology/);
   expect(within(tile).queryByText("Answered")).toBeNull();
@@ -102,14 +102,10 @@ it("draws the causal scenarios as written and the catalysts earliest first", () 
 
 it("says what is missing when the handoff has no scenarios, catalysts or executive answer", () => {
   render(<ResearchLead {...leadProps(research(false))} />);
-  expect(
-    screen.getByText("This page could not read causal scenarios from the handoff."),
-  ).toBeVisible();
+  expect(screen.getByText("This page could not read causal scenarios.")).toBeVisible();
   const catalysts = screen.getByRole("region", { name: "Research catalysts" });
   expect(
-    within(catalysts).getByText(
-      "This page could not read dated research catalysts from the handoff.",
-    ),
+    within(catalysts).getByText("This page could not read dated research catalysts."),
   ).toBeVisible();
   expect(screen.queryByText(/executive answer passage/)).toBeNull();
 });

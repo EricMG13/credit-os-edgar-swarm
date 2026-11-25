@@ -34,7 +34,7 @@ function Triggers({ entry, href }: { entry: LeadProps["entry"]; href: (line?: nu
               ? "This page could not read a trigger, threshold and current value from the trigger table."
               : chart.state === "withheld"
                 ? WITHHELD
-                : "This page could not read rating triggers from the handoff."
+                : "This page could not read rating triggers."
         }
         trace={
           chart.state === "withheld" ? (
@@ -115,7 +115,7 @@ function Register({ entry, href }: { entry: LeadProps["entry"]; href: (line?: nu
         span={4}
         label={REGISTER}
         title={REGISTER}
-        reason="This page could not read a rating register from the handoff."
+        reason="This page could not read a rating register."
       />
     );
   const at = {

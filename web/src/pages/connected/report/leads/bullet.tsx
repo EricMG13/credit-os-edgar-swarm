@@ -72,7 +72,6 @@ function Term({ name, children }: { name: string; children: ReactNode }) {
 function BulletRow({ test, href }: { test: LeadTest; href?: string }) {
   const geometry = bulletGeometry(test);
   const ends = geometry ? [geometry.ticks[0], geometry.ticks.at(-1)] : [];
-  const numbers = test.current.value !== null && test.threshold.value !== null;
   return (
     <li className="flex min-w-0 flex-col gap-2 border-t border-border-hairline pt-3 first:border-t-0 first:pt-0">
       <span className="flex items-start justify-between gap-3">
@@ -105,7 +104,10 @@ function BulletRow({ test, href }: { test: LeadTest; href?: string }) {
       </span>
       {geometry ? (
         <div role="img" aria-label={reading(test)} className="flex flex-col gap-1">
-          <BarRow end={share(geometry.current)}>
+          <BarRow
+            start={Math.min(geometry.share.zero, geometry.share.current)}
+            end={Math.max(geometry.share.zero, geometry.share.current)}
+          >
             <span
               data-threshold
               className="absolute -inset-y-1 w-0.5 -translate-x-1/2 bg-text-primary"
@@ -121,13 +123,7 @@ function BulletRow({ test, href }: { test: LeadTest; href?: string }) {
             ))}
           </span>
         </div>
-      ) : (
-        numbers && (
-          <span className="text-caption text-text-secondary">
-            The stated values cannot be placed on a scale from zero.
-          </span>
-        )
-      )}
+      ) : null}
     </li>
   );
 }

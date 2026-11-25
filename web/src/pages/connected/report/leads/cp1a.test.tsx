@@ -94,9 +94,7 @@ it("draws the operating model map as the module wrote it, with a table view", ()
 it("states the revenue mix gap and draws ownership, the transaction passage and the history", () => {
   render(<BusinessLead {...leadProps(business({ op: OP, own: OWN, prose: true }))} />);
   const mix = screen.getByRole("region", { name: "Revenue mix" });
-  expect(
-    within(mix).getByText("This page could not read a revenue mix from the handoff."),
-  ).toBeVisible();
+  expect(within(mix).getByText("This page could not read a revenue mix.")).toBeVisible();
   expect(within(mix).queryByText("0")).toBeNull();
   const own = screen.getByRole("list", { name: "Ownership and control" });
   expect(within(own).getByText("Synthetic C")).toBeVisible();
@@ -125,17 +123,13 @@ it("says why when a map or the transaction passage is absent or gapped", () => {
   ).toBeVisible();
   expect(
     within(screen.getByRole("region", { name: "Transaction and new debt" })).getByText(
-      "This page could not read a transaction summary from the handoff.",
+      "This page could not read a transaction summary.",
     ),
   ).toBeVisible();
   cleanup();
   render(<BusinessLead {...leadProps(entry("CP-1A", [], []))} />);
-  expect(
-    screen.getByText("This page could not read an operating-model map from the handoff."),
-  ).toBeVisible();
-  expect(
-    screen.getByText("This page could not read an ownership and control map from the handoff."),
-  ).toBeVisible();
+  expect(screen.getByText("This page could not read an operating-model map.")).toBeVisible();
+  expect(screen.getByText("This page could not read an ownership and control map.")).toBeVisible();
 });
 
 it("draws nothing for a blocked module", () => {

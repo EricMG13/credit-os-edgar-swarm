@@ -415,7 +415,7 @@ function DriversTile({
         span={12}
         label={DRIVERS}
         title={DRIVERS}
-        reason="This page could not read forecast inputs from the handoff."
+        reason="This page could not read forecast inputs."
       />
     );
   const document = input.value;

@@ -157,7 +157,7 @@ function Column({
           ))}
         </ol>
       ) : (
-        <p className="text-small text-gap-text">The module lists none.</p>
+        <p className="text-small text-gap-text">None listed.</p>
       )}
     </div>
   );
@@ -193,7 +193,7 @@ function LedgerTile({
         span={8}
         label="Strengths and weaknesses"
         title="Strengths and weaknesses"
-        reason="This page could not read strengths and weaknesses from the handoff."
+        reason="This page could not read strengths and weaknesses."
       />
     );
   return (
@@ -268,16 +268,14 @@ function SeriesStat({
   if (!entry || reason || !series)
     return (
       <Stat name={name}>
-        <Reason>
-          {reason ?? `This page could not read ${name} from the ${FINANCIALS} handoff.`}
-        </Reason>
+        <Reason>{reason ?? `This page could not read ${name} from ${FINANCIALS}.`}</Reason>
       </Stat>
     );
   const { latest, prior } = lastTwo(series);
   if (!latest)
     return (
       <Stat name={name}>
-        <Reason>{`This page could not read ${name} from the ${FINANCIALS} handoff.`}</Reason>
+        <Reason>{`This page could not read ${name} from ${FINANCIALS}.`}</Reason>
       </Stat>
     );
   const shown = (cell: string) => withUnit(cell, series.unit);
@@ -337,16 +335,14 @@ function HeadroomStat({ props }: { props: LeadProps }) {
   if (source.state === "gap")
     return (
       <Stat name={name}>
-        <Reason>
-          {reason ?? `This page could not read covenant headroom from the ${COVENANTS} handoff.`}
-        </Reason>
+        <Reason>{reason ?? `This page could not read covenant headroom from ${COVENANTS}.`}</Reason>
       </Stat>
     );
   const first = leadTests(source.table, source.descriptor)?.[0];
   if (!first)
     return (
       <Stat name={name}>
-        <Reason>{`This page could not read a covenant test from the ${COVENANTS} handoff.`}</Reason>
+        <Reason>{`This page could not read a covenant test from ${COVENANTS}.`}</Reason>
       </Stat>
     );
   const column = source.table.headers.findIndex((header) => /^Basis and limitation$/i.test(header));
@@ -401,7 +397,7 @@ export const CreditLead = withDraws(
           span={12}
           label="Credit-risk transmission"
           title="Credit-risk transmission"
-          absent="This page could not read a credit-risk transmission map from the handoff."
+          absent="This page could not read a credit-risk transmission map."
         />
       </Bento>
     );

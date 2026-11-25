@@ -272,7 +272,7 @@ it("says only what it checked about a spread: the summary has no spread column",
   const view = securityView(dataset("1 Oct 2026", [basis("2026-10-01")]), "2026-10-02");
   if (!view) throw new Error("missing security review");
   render(<Securities data={view} href={(line) => `#evidence/5-${String(line)}`} />);
-  expect(screen.getByText("This page could not read a spread from the handoff.")).toBeVisible();
+  expect(screen.getByText("This page could not read a spread.")).toBeVisible();
   expect(screen.queryByRole("columnheader", { name: "Spread" })).toBeNull();
   expect(screen.queryByText(/No spread column/)).toBeNull();
   // Ruling vii: no note on what the method would need.

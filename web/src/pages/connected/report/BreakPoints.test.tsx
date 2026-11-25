@@ -164,9 +164,7 @@ it("states when the table does not establish a comparable ranking and keeps its 
   render(<BreakPoints data={data} href={() => "#evidence/1"} />);
   expect(within(tile()).queryByRole("img")).toBeNull();
   expect(
-    within(tile()).getByText(
-      "This page could not read a fall in EBITDA for each break point from the handoff's table.",
-    ),
+    within(tile()).getByText("This page could not read a fall in EBITDA for each break point."),
   ).toBeInTheDocument();
   fireEvent.click(within(tile()).getByRole("button", { name: "Table" }));
   expect(within(tile()).getByRole("cell", { name: "Not calculated: no base FCF" })).toBeVisible();

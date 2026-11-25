@@ -374,8 +374,7 @@ export function DownsideTile({
         className="wrap-anywhere"
         figure={
           <CompactGap>
-            This page could not read a unique control and named cases for these results from the
-            handoff.
+            This page could not read a unique control and named cases for these results.
           </CompactGap>
         }
         table={writtenTable(sourceOf(matrix), href)}

@@ -99,7 +99,7 @@ function SensitivityTile({ entry, href }: { entry: OutputEntry; href: Href }) {
         span={8}
         label={LADDER}
         title={LADDER}
-        reason="This page could not read a cash impact per rate shock step from the handoff."
+        reason="This page could not read a cash impact per rate shock step."
       />
     );
   const { drawn, words, currency } = sensitivityRows(table);
@@ -193,8 +193,8 @@ function HedgedTile({ entry, href }: { entry: OutputEntry; href: Href }) {
         title={HEDGED_TITLE}
         reason={
           table
-            ? "This page could not read hedged and unhedged floating-rate debt as two amounts in one currency from the handoff."
-            : "This page could not read a floating-rate exposure table from the handoff."
+            ? "This page could not read hedged and unhedged floating-rate debt as two amounts in one currency."
+            : "This page could not read a floating-rate exposure table."
         }
         trace={table && <Trace href={href(table.line)} name={HEDGED} />}
       />
