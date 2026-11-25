@@ -208,15 +208,24 @@ async function check(browser, target, width, found) {
   await page.goto(ORIGIN + target);
   await page.waitForLoadState("networkidle");
   await page.waitForTimeout(800);
-  const height = await page.evaluate(() => {
-    const main = document.querySelector("main");
-    return Math.max(
-      document.documentElement.scrollHeight,
-      (main?.scrollHeight ?? 0) + 120,
-    );
-  });
-  await page.setViewportSize({ width, height: Math.min(height, 15000) });
-  await page.waitForTimeout(400);
+  // The page scrolls inside <main>, so the viewport is grown to hold it. A box sized in viewport
+  // units grows with the viewport, so measure again until the height settles.
+  const tall = () =>
+    page.evaluate(() => {
+      const main = document.querySelector("main");
+      return Math.max(
+        document.documentElement.scrollHeight,
+        (main?.scrollHeight ?? 0) + 120,
+      );
+    });
+  let height = await tall();
+  for (let pass = 0; pass < 4; pass += 1) {
+    await page.setViewportSize({ width, height: Math.min(height, 15000) });
+    await page.waitForTimeout(300);
+    const next = await tall();
+    if (next <= height) break;
+    height = next;
+  }
   const seen = await page.evaluate(measure, width <= 480 ? 44 : 32);
   const kinds = new Map();
   for (const failure of seen) {
