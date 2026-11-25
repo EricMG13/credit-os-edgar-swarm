@@ -267,8 +267,7 @@ copied unchanged from S8 into `components/kit/Chip.tsx` (commit 7aa59c5); no kit
 
 ## 9. Verification
 
-Round 2, 2026-11-25, branch `claude/redesign-s9-start-run`, head 689bc68 before this spec
-commit. Synthetic mode only; no provider was called and no paid run was made (the "paid" shots
+Round 2, 2026-11-25, branch `claude/redesign-s9-start-run`, head f03e835. Synthetic mode only; no provider was called and no paid run was made (the "paid" shots
 are the page in live mode against the offline synthetic service, with every Submit request
 aborted, as `connected-proof.mjs` does).
 
@@ -292,7 +291,7 @@ aborted, as `connected-proof.mjs` does).
 | `npx eslint --max-warnings=0` on `connected/start`, `StartRun.tsx`, `run/start` | pass                                                                                                                                                                                                               |
 | `npm run lint` (repo)                                                           | one error, `report/stages.ts:19`, unchanged from the base commit, not in this package                                                                                                                              |
 | `npm run format:check`                                                          | pass                                                                                                                                                                                                               |
-| `npx vitest run` ConnectedApp, `connected/start`, `run/start`                   | 31 files, 709 tests pass (594 on the base commit 1265838, counted there the same way); every base test name is still present except two renamed rewrites (below)                                                   |
+| `npx vitest run` ConnectedApp, `connected/start`, `run/start`                   | 31 files, 710 tests pass (594 on the base commit 1265838, counted there the same way); every base test name is still present except two renamed rewrites (below)                                                   |
 | `npm run unused` (knip)                                                         | only `LeadProps` in `report/leads/types.ts` (not mine, pre-existing)                                                                                                                                               |
 | `npm run duplication`                                                           | 2.32 % (threshold 3; round 1 2.48 %). It was 3.46 % before the last commit: 2,500 of the 2,780 lines round 2 added were the request transcripts, which jscpd read as code                                          |
 | `npm run build`; `scripts/classes.mjs` on the build                             | pass; no problem reported                                                                                                                                                                                          |
@@ -323,7 +322,7 @@ Rewritten (layout or pinned wording; the behaviour each checks is kept):
 9. `ReviewStep.test`, `ReadinessRail.test`, `moduleReadiness.test`, `DocumentsStep.test`,
    `ContextStep.test`: this package's own round-1 tests, rewritten to the new blocks.
 
-Added: `invalidControls.test.tsx` (3), `loading.test.tsx` (1), `PurposeStep.test.tsx` (1),
+Added: `invalidControls.test.tsx` (4), `loading.test.tsx` (1), `PurposeStep.test.tsx` (1),
 `contextSummary.test.ts` (37), period-refusal cases in `plain.test.ts` (2), Q1 "Other limits"
 and the stages-said-once case in the rail tests, and the K9, K11 and dialog cases in
 `ReviewStep.test.tsx`.
@@ -371,5 +370,5 @@ What the PNGs showed, step by step:
 Defects found only by looking, and fixed: the grid row of the cost column stretched with the
 limits and pushed the stages down a screen; the tile repeated the rail's stages beside it at
 1440 and under it at 390; the paid Submit wrapped under its sentence (912 px); the upload link
-sat below its sentence's baseline. Found by the measurement: the drop zone's upload link and the
+sat below its sentence's baseline. Found by a Playwright probe of the invalid-control handling: with several invalid fields the last one was marked, because the browser runs microtasks between invalid events (fixed in f03e835, with a test that fails on the old code). The real drive was run once more on that head: 13 requests, identical. Found by the measurement: the drop zone's upload link and the
 row editors' Add buttons were under the target size.
