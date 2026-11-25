@@ -280,6 +280,68 @@ it("E3: an as-of on 1 January with a year event and a month event heads 2025 onc
   expect(error).not.toHaveBeenCalled();
 });
 
+// The rule sits in true date order: after every event dated before it, before every later one.
+function asOfOrder(asOf: string, data: string[][]) {
+  mockViewport(390);
+  render(<Calendar calendar={buildCalendar([handoff(data)], "current")} asOf={asOf} />);
+  const list = screen.getByRole("list", { name: "Events in date order" });
+  return Array.from(list.children).map(
+    (li) =>
+      li.querySelector("h4")?.textContent ??
+      (li.textContent.startsWith("As of") ? "As of" : li.querySelector(".text-small")?.textContent),
+  );
+}
+
+it("G1: an as-of after July events inside Q3 sits after both, under its own Sep heading", () => {
+  expect(
+    asOfOrder("2025-09-30", [
+      row("2025-Q3", "quarter", "Q3 results"),
+      row("2025-07-01", "day", "Coupon"),
+      row("2025-07-20", "day", "Call date"),
+    ]),
+  ).toEqual(["2025 Q3", "Q3 results", "Jul 2025", "Coupon", "Call date", "Sep 2025", "As of"]);
+});
+
+it("G1: an as-of between a July and a September event sits between them", () => {
+  const order = asOfOrder("2025-08-15", [
+    row("2025-Q3", "quarter", "Q3 results"),
+    row("2025-07-20", "day", "Call date"),
+    row("2025-09-10", "day", "Maturity"),
+  ]);
+  expect(order.indexOf("As of")).toBeGreaterThan(order.indexOf("Call date"));
+  expect(order.indexOf("As of")).toBeLessThan(order.indexOf("Maturity"));
+  expect(order).toEqual([
+    "2025 Q3",
+    "Q3 results",
+    "Jul 2025",
+    "Call date",
+    "Aug 2025",
+    "As of",
+    "Sep 2025",
+    "Maturity",
+  ]);
+});
+
+it("G1: an as-of inside a year event sits between the March and September events", () => {
+  const order = asOfOrder("2025-06-15", [
+    row("2025", "year", "Plan year"),
+    row("2025-03-01", "day", "Coupon"),
+    row("2025-09-01", "day", "Maturity"),
+  ]);
+  expect(order.indexOf("As of")).toBeGreaterThan(order.indexOf("Coupon"));
+  expect(order.indexOf("As of")).toBeLessThan(order.indexOf("Maturity"));
+  expect(order).toEqual([
+    "2025",
+    "Plan year",
+    "Mar 2025",
+    "Coupon",
+    "Jun 2025",
+    "As of",
+    "Sep 2025",
+    "Maturity",
+  ]);
+});
+
 it("E3: an as-of on 1 January with only a year event sits inside the year group", () => {
   const { rows, error } = asOfList("2025-01-01", [row("2025", "year", "Plan year")]);
   expect(rows).toEqual(["2025", "event", "As of"]);

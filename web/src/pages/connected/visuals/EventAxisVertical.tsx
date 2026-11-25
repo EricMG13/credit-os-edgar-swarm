@@ -52,18 +52,23 @@ type Stop = { time: number; group: Group } & (
 
 /**
  * The heading the as-of rule sits under: its month when an event already heads that month,
- * otherwise the narrowest quarter or year event period it falls in, otherwise its own month.
+ * otherwise the narrowest quarter or year event period it falls in, but only while no event in a
+ * later heading starts on or before it; otherwise its own month, so it keeps true date order.
  */
 function asOfGroup(stops: Stop[], asOf: AsOf): Group {
   const month = monthGroup(asOf.time);
   if (stops.some(({ group }) => group.key === month.key)) return month;
-  const containing = stops
-    .flatMap((stop) => (stop.kind === "event" ? [stop] : []))
+  const events = stops.flatMap((stop) => (stop.kind === "event" ? [stop] : []));
+  const [period] = events
     .filter(({ event }) => event.from <= asOf.time && asOf.time < endOf(event))
     .map(({ group }) => group)
     .filter(({ rank }) => rank < 2)
     .sort((a, b) => b.rank - a.rank);
-  return containing[0] ?? month;
+  if (!period) return month;
+  const passed = events.some(
+    ({ group, event }) => byGroup(period, group) < 0 && event.from <= asOf.time,
+  );
+  return passed ? month : period;
 }
 
 const byGroup = (a: Group, b: Group) =>
