@@ -55,6 +55,29 @@
         "CP-2": 1
       },
       "notes": "The accepted Financial foundation answer (CP-1) states in its debt-instruments table that the Canadian dollar facility borrowings were repaid in full in the first quarter of 2026, but the first-quarter statements show CAD 3,000 thousand still drawn at March 31, 2026 (nil by September 30), so I could not edit it and instead corrected it in the Gaps table of the Fundamental credit answer (CP-2)."
+    },
+    {
+      "issuer_id": "axon-1069183",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 0,
+        "CP-1": 0,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "Final launcher exit 0 (run finished, delivery written, no provider called); CP-0 and CP-1 were already accepted when I started, each with a single answer file, so I submitted none (0 here, 1 each earlier); known defect I could not fix because an accepted answer cannot be replaced: 20 of 22 rows in the two CP-1A map tables have a node or relationship text over the 60-character limit, which the automated check did not catch. Also, the default PATH put uv 0.11.32 ahead of the required 0.12.5, so I put /usr/local/bin first for each launcher run."
+    },
+    {
+      "issuer_id": "aap",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The launcher finished with exit 0 and delivery was written; it needed uv 0.12.5 (/usr/local/bin) first on PATH, the default 0.11.32 was refused. CP-0 was already accepted from the partial folder (attempt 1, not resubmitted here); CP-1, CP-1A and CP-2 were each accepted on the first launcher submission after an offline dry-run copy of the checks. Defect I could not fix: the Q3 2025 10-Q is not among the sources, so there is no 2025-10-04 balance sheet or prior-year interim store count. The host check also cannot order the form \"FY2025 / 2026-01-03\", so the FY2025 net-debt Period cells use the date alone."
     }
-  ]
+  ],
+  "partial": true
 }

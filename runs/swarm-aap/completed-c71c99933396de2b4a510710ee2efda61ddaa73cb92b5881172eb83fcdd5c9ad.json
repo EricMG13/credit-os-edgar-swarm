@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for ADVANCE AUTO PARTS INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/fc14fca51b07bf712b468d2d01f72687989a1e9947786dc5871facecc55ea396/1.response.md",
+    "CP-1": "requests/CP-1/e403816a0ff7f7f82384e183313bf627c78376c8c0b006caece2dea7555c6e82/1.response.md",
+    "CP-1A": "requests/CP-1A/1734abca966ea257853836c293b10b91ff5cfcd786cdbdb84e367b1957844005/1.response.md",
+    "CP-2": "requests/CP-2/7283c1115320dc91cb1efa381b5f8dfdbe83cec767ed471293bc4cae313510fc/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "1ba920b2a477b4604e22e60f461a9711ef8fa8f70e8441608508e6555910e20c",
+  "delivery_sha256": "d741dc45b84d0c711f597d2f32783809bb85b4c3774fd489045edca6e1e378d3"
+}

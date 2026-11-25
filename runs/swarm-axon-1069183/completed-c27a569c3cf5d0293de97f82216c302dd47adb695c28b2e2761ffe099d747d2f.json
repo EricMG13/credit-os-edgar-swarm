@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Axon Enterprise, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/845b55bf8823ebd49017ec8ec591ff2c121d5986434a727e10384e4899cce941/1.response.md",
+    "CP-1": "requests/CP-1/446a9d6d4a5e1703223e461a651c5cf6ac6997e674a53d13a9e3f6f6e274caf2/1.response.md",
+    "CP-1A": "requests/CP-1A/6d669aa23a4b6daf1c013bd5d526456f93a7a4ea0786df44f2aae07430a88339/1.response.md",
+    "CP-2": "requests/CP-2/867c86543db28708529440dbcf4e887ee2eb30ff71355b9d7fd60a0a55ec7472/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "0980b67a8634c05dc8421c732743b600e447c95c6f8e659e9f9b5320bc1610c7",
+  "delivery_sha256": "b8ae94e80b08ffe10de028c9dfe8272255db3926b2a0d237d88d521d31b57606"
+}
