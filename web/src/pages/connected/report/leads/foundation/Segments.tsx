@@ -109,7 +109,7 @@ function Row({ row, layout, name }: { row: MeasureRow; layout: SegmentLayout; na
       {row.lines.length > 0 && (
         <text
           data-part="reason"
-          fontSize="11"
+          fontSize="12"
           className={
             row.current.kind === "gap" ? "fill-gap-text font-body" : "fill-text-secondary font-body"
           }
@@ -137,7 +137,7 @@ function Row({ row, layout, name }: { row: MeasureRow; layout: SegmentLayout; na
             data-part="prior"
             x={(row.prior.x ?? layout.zero) + 5}
             y={row.y + row.height - 2}
-            fontSize="11"
+            fontSize="12"
             className="fill-text-tertiary font-mono"
           >
             {row.prior.text}

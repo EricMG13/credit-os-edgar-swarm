@@ -317,7 +317,7 @@ function MaturityFigure({ lead, source }: { lead: LeadProps; source: Ready }) {
   const raw = wallSlots(source.table, source.descriptor, unitOf(source.descriptor));
   const common = {
     props: lead,
-    span: 5 as const,
+    span: 6 as const,
     label: LABEL,
     kicker,
     title: LABEL,
@@ -327,14 +327,14 @@ function MaturityFigure({ lead, source }: { lead: LeadProps; source: Ready }) {
   // The wall keeps one row per period; a period stated twice would silently lose a row.
   if (twice !== undefined)
     return (
-      <GapTile span={5} label={LABEL} kicker={kicker}>
+      <GapTile span={6} label={LABEL} kicker={kicker}>
         This page could not read the maturity wall from the handoff because {words(twice)} appears
         more than once.
       </GapTile>
     );
   if (!raw)
     return (
-      <GapTile span={5} label={LABEL} kicker={kicker}>
+      <GapTile span={6} label={LABEL} kicker={kicker}>
         This page could not read an amount for any period of the maturity wall from the handoff.
       </GapTile>
     );
@@ -386,7 +386,7 @@ export function MaturityTile({ lead }: { lead: LeadProps }) {
   const source = figureSource(lead.view, "CP-1", "Debt maturities", "Financial foundation");
   if (source.state === "gap")
     return (
-      <GapTile span={5} label={LABEL} kicker={LABEL}>
+      <GapTile span={6} label={LABEL} kicker={LABEL}>
         This page could not read the debt maturities from the handoff.
       </GapTile>
     );

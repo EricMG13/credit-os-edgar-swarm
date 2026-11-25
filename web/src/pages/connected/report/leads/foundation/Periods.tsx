@@ -420,7 +420,7 @@ export function PeriodsTile({ lead }: { lead: LeadProps }) {
   const gaps = strip.gaps.map((gap) => safeText(gap.reason));
   if (strip.axis.length === 0)
     return (
-      <GapTile span={7} label={LABEL} kicker={LABEL}>
+      <GapTile span={6} label={LABEL} kicker={LABEL}>
         {["This page could not read a period from the handoff.", ...gaps].join(" ")}
       </GapTile>
     );
@@ -432,7 +432,7 @@ export function PeriodsTile({ lead }: { lead: LeadProps }) {
   return (
     <FigureTile
       props={lead}
-      span={7}
+      span={6}
       label={LABEL}
       kicker="Periods the figures cover"
       title={LABEL}

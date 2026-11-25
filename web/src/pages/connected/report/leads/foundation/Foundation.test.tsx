@@ -19,7 +19,7 @@ it("draws the seven tiles of the mockup, in its order and spans", () => {
   const spans = screen
     .getAllByRole("region")
     .map((region) => /lg:col-span-(\d+)/.exec(region.className)?.[1]);
-  expect(spans).toEqual(["12", "7", "5", "6", "6", "5", "7"]);
+  expect(spans).toEqual(["12", "7", "5", "6", "6", "6", "6"]);
 });
 
 it("keeps the periods tile as tall as its content, not stretched to the wall beside it", () => {

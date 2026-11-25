@@ -2,7 +2,7 @@
 export const NARROW = 520;
 
 /** Real text sizes in px (the viewBox is the measured width, so one unit is one pixel). */
-export const SIZE = { label: 12, value: 12, tick: 11 } as const;
+export const SIZE = { label: 12, value: 12, tick: 12 } as const;
 
 /** Line pitch for wrapped 12 px text. */
 export const LINE = 15;

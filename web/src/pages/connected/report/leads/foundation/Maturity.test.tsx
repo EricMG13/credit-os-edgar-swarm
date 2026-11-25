@@ -246,14 +246,17 @@ describe("wallLayout at the real widths", () => {
     ["FY2029", "4768"],
   ].map(([label = "", text = ""]) => ({ label, cell: cell(text) }));
   const undated: WallSlot[] = [{ label: "Thereafter", cell: cell("12637") }];
-  it("draws columns at 412 px (span 5 at 1128) with every label inside its slot", () => {
-    const layout = wallLayout(dated, undated, 412);
+  it("draws columns at 508 px (span 6 at 1128) with every label inside its slot", () => {
+    const layout = wallLayout(dated, undated, 508);
     expect(layout.layout).toBe("columns");
     const centres = layout.marks.map((mark) => mark.centre);
     const slot = (centres[1] ?? 0) - (centres[0] ?? 0);
-    // "FY2025" at 11 px and "6,637" at 12 px are under 46 px wide; the slot holds them.
+    // "FY2025" and "6,637" at 12 px are under 46 px wide; the slot holds them.
     expect(slot).toBeGreaterThanOrEqual(46);
-    expect(layout.marks.at(-1)?.centre ?? 0).toBeLessThan(412 - 30);
+    expect(layout.marks.at(-1)?.centre ?? 0).toBeLessThan(508 - 30);
+  });
+  it("draws rows at 412 px, where 12 px labels do not fit a column", () => {
+    expect(wallLayout(dated, undated, 412).layout).toBe("rows");
   });
   it("draws rows at 318 px (390 phone), one period per row, on one scale", () => {
     const layout = wallLayout(dated, undated, 318);
