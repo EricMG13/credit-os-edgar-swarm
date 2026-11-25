@@ -82,7 +82,7 @@ export function problemAttrs(problem: FieldProblem | undefined, field: FieldKey)
 export function FieldMessage({ problem, field }: { problem?: FieldProblem; field: FieldKey }) {
   if (problem?.field !== field) return null;
   return (
-    <p id={`error-${field}`} role="alert" className="text-sm text-error-primary">
+    <p id={`error-${field}`} role="alert" className="text-small text-error-primary">
       {problem.message}
     </p>
   );
@@ -147,7 +147,7 @@ export function SelectField({
     <div className="grid content-start gap-1">
       {select}
       {help && (
-        <p id={helpId} className="text-sm text-text-tertiary">
+        <p id={helpId} className="text-small text-text-tertiary">
           {help}
         </p>
       )}

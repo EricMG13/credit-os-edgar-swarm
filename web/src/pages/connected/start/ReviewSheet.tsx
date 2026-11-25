@@ -59,7 +59,7 @@ const SUMMARY = cx(
 /** Each term and its value; a fact whose value is `undefined` is left out. */
 function Facts({ rows }: { rows: readonly (readonly [string, string | number | undefined])[] }) {
   return (
-    <dl className="grid gap-4 text-sm sm:grid-cols-2">
+    <dl className="grid gap-4 text-small sm:grid-cols-2">
       {rows
         .filter(([, value]) => value !== undefined)
         .map(([term, value]) => (
@@ -138,7 +138,7 @@ function Block({
 /** A group's facts, then its inner groups; a group with neither reads as not given. */
 function GroupBody({ group, depth }: { group: InputGroup; depth: number }) {
   if (!group.facts.length && !group.groups.length)
-    return <p className="text-sm text-text-secondary">{NOT_GIVEN}</p>;
+    return <p className="text-small text-text-secondary">{NOT_GIVEN}</p>;
   return (
     <>
       {group.facts.length > 0 && <Facts rows={group.facts} />}
@@ -159,7 +159,7 @@ function Inputs({ group, depth }: { group: InputGroup; depth: number }) {
       aria-labelledby={titleId}
       className="grid gap-2 border-l border-border-hairline pl-3"
     >
-      <Heading id={titleId} className="text-sm font-semibold text-text-primary">
+      <Heading id={titleId} className="text-small font-medium text-text-primary">
         {group.title}
       </Heading>
       <GroupBody group={group} depth={depth + 1} />
@@ -180,10 +180,10 @@ function List({
   if (!items.length) return null;
   return (
     <>
-      <h5 className="text-sm font-semibold text-text-primary">{title}</h5>
+      <h5 className="text-small font-medium text-text-primary">{title}</h5>
       <ul
         className={cx(
-          "list-disc space-y-1 pl-5 text-sm text-text-secondary",
+          "list-disc space-y-1 pl-5 text-small text-text-secondary",
           columns && "sm:columns-2 sm:gap-6",
         )}
       >

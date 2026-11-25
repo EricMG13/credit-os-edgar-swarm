@@ -133,6 +133,16 @@ describe("Review and start", () => {
     );
   });
 
+  it("at the Basic level keeps model, effort and turns out of the decision, in the disclosure only", () => {
+    show();
+    const decision = screen.getByRole("region", { name: "Review and start" });
+    expect(decision).not.toHaveTextContent(/Turns per module|Model and effort|GPT/);
+    const inputs = screen.getByRole("region", { name: "What will run" });
+    expect(within(inputs).getByRole("group", { name: "Advanced choices" })).toHaveTextContent(
+      "Turns per module32",
+    );
+  });
+
   it("draws what leaves as a gap when the service says nothing about it, never as nothing", () => {
     show({ summary: { web_search: false } });
     const leaves = screen.getByRole("region", { name: "What leaves the building" });
