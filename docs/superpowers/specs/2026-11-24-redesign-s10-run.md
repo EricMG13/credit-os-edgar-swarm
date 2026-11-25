@@ -209,3 +209,16 @@ delivered edges out of the stage before, the bus, and the edge into the running 
 `lowerRows.test.tsx` is unchanged. Not verified in a browser: the Overview itself (this branch does
 not mount `PipelineRow`; S1 integrates it) — checked by DOM tests and on Run progress, which draws
 the same component with a blocked node.
+
+### Round 3 (P1–P10)
+
+One meter component (`runMeter.tsx`) serves the activity rows and both Run progress meters (names
+"Modules finished" and "Spend against cap", valuetext carries the reading, the cap is stated once, in
+the spend label). Stage columns are back to `lg` for every use (a stage of five nodes or fewer is one
+column, so no mid-word breaks from 1024). In flight only the path into each running module moves: its
+own branch and the bus segment from the trunk to it. Run progress puts title, modules meter, elapsed
+and spend in one band, the feed below in three columns from xl; the stop notice is one paragraph with
+its action inline. Feed heading y (built page, fixtures): in flight 699 at 1440x900 and 1280x800 (3+
+entries on screen), delivering 731, finished 727/743, each stopped state 823 at 1440 (notice + heading
+visible). The Overview pipeline was rendered at 1024 and 1440 with 14 and 21 modules through a
+temporary, uncommitted harness (this branch does not mount `PipelineRow`).

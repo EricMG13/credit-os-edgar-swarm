@@ -92,7 +92,7 @@ describe("Run progress layout", () => {
     );
     expect(meter).toHaveClass("border", "bg-surface-subtle");
     // The cap is in the meter's label once, not again beside it.
-    expect(document.body.textContent?.match(/USD 25\.00/g)).toHaveLength(1);
+    expect(document.body.textContent.match(/USD 25\.00/g)).toHaveLength(1);
     expect(within(region).getAllByRole("progressbar")).toHaveLength(1);
     expect(screen.queryByText("Synthetic test")).toBeNull();
   });
