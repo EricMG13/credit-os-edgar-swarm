@@ -88,6 +88,17 @@
         "CP-2": 1
       },
       "notes": "No defect left unfixed; earlier modules were not edited, and CP-2 states three corrections to them (CP-1 said venture guarantee exposure and the Element LA termination fee amount were not established, although the 10-Q gives USD 190.5 million of carve-out guarantees and the FY2025 10-K attributes a USD 39.7 million revenue increase to the fee; CP-1A read scheduled expiry rent as rollover upside)."
+    },
+    {
+      "issuer_id": "ncl-corp-ltd",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The 10-K's contingent 17 November 2026 revolver maturity (tied to the 2027 exchangeable notes, plus a 91-day test on senior notes above USD 400 million) is not restated in the Q3 10-Q and the third-amendment text is not supplied, so I flagged it as unverified (MATERIAL) rather than resolving it."
     }
   ],
   "partial": true

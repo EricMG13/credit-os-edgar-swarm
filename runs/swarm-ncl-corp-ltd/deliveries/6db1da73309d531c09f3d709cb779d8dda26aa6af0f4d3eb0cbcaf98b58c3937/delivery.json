@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for NCL CORP Ltd. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "1055e9519e35470bc3670f831c880800f864c3d0d43500faa9ec9b2f331925ff",
+    "CP-1.md": "57cd2825f073ae25fde93274c9db0cd98c7f605c04bc5ed6a212aa2ee454b772",
+    "CP-1A.md": "200dcee84ba1090897d838e8c55922990da749d2c8c67c47f7457c6c2c472e54",
+    "CP-2.md": "de6d552ef1915eea4fe6e1a1c99ce38f0193f2cf4ae46c91443292efb13f9085",
+    "coverage.json": "ccb505880c0d1a507d98c69c650cfff4ce6fdc97bd762ca8eedccd1dda6cf286",
+    "view.json": "6020ed5267789c5263085c7977e7483deeb0e9b460eb1b45469e4d2881df6954",
+    "report-view.json": "45bccfb3ca88daf7e0a04f666734f2e8ea3a325ac09cff381acfaf89fc94de04"
+  }
+}
