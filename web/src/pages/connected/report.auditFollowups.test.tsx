@@ -14,6 +14,7 @@ import {
   type Snapshot,
 } from "./publishedReport";
 import { buildReportView } from "./reportView";
+import { RunContext } from "@/pages/library/parts/RunContext";
 import { ModuleConfidence } from "./report/Confidence";
 import { ReportChanges } from "./report/Changes";
 
@@ -314,9 +315,15 @@ it("J3-015 states the confidence score denominator without changing its value", 
   const entry = outputEntries(snapshot, run, "current")[0];
   if (!entry) throw new Error("Missing confidence fixture");
   entry.output.confidence = { value: 73.25, band: "Medium" };
-  render(<ModuleConfidence snapshot={snapshot} run={run} entry={entry} entryIndex={0} />);
-  expect(screen.getByText("73.25")).toBeInTheDocument();
-  expect(screen.getByText("Medium · out of 100")).toBeInTheDocument();
+  render(
+    <RunContext.Provider value={{ traces: {}, open: () => undefined }}>
+      <ModuleConfidence confidence={entry.output.confidence} trace={null} />
+    </RunContext.Provider>,
+  );
+  const score = screen.getByRole("group", { name: "Confidence score" });
+  expect(within(score).getByText("73.25")).toBeInTheDocument();
+  expect(within(score).getByText("/ 100")).toBeInTheDocument();
+  expect(within(score).getByText("Medium")).toBeInTheDocument();
 });
 
 it("C5-025 ties each real table citation to its exact row", () => {

@@ -53,6 +53,40 @@ function viewOf(
 
 const CASH_PROXY = "Cash proxy (not issuer free cash flow)";
 
+const caseButtons = () =>
+  within(screen.getByRole("group", { name: "Case" })).getAllByRole("button");
+/** The selected case's cash proxy figure, drawn in the header under the case switch. */
+const caseFigure = () => screen.getByLabelText("Selected case cash proxy");
+/** The figure with its description and reason. */
+const caseCard = () => caseFigure().parentElement as HTMLElement;
+/** The case the figure names: "Cash proxy, <case> · <unit>". */
+const figureName = () =>
+  /^Cash proxy, (.*) · US\$m$/u.exec(within(caseFigure()).getByRole("term").textContent)?.[1] ?? "";
+/** Each case's figure, selected in turn with the case switch. */
+function eachCase<T>(read: (name: string) => T): T[] {
+  return caseButtons().map((button) => {
+    fireEvent.click(button);
+    return read(button.textContent);
+  });
+}
+const selectByName = (name: string) =>
+  fireEvent.click(caseButtons().find((button) => button.textContent === name) as HTMLElement);
+/** The name of the case whose cash proxy figure shows `figure`. */
+const caseShowing = (figure: string) => {
+  const [name] = eachCase((label) =>
+    within(caseFigure()).queryByText(figure) ? label : undefined,
+  ).filter((label) => label !== undefined);
+  if (!name) throw new Error(`No case figure shows ${figure}`);
+  return name;
+};
+// These models publish no net leverage, so each case's button is named with that notice.
+const selectCase = (name: string) =>
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Case" })).getByRole("button", {
+      name: name,
+    }),
+  );
+
 it("shows each same-label case's own columns and marks its own cash proxy row current", () => {
   const view = viewOf(
     ["Base case", "Upside", "Upside case"].flatMap((group) => [
@@ -65,30 +99,33 @@ it("shows each same-label case's own columns and marks its own cash proxy row cu
     },
   );
   render(<Forecast view={view} run={run} />);
-  const cards = within(screen.getByRole("radiogroup", { name: "Forecast case" }));
-  const names = cards.getAllByRole("radio").map((radio) => radio.closest("label")?.textContent);
+  const names = eachCase(figureName);
   expect(new Set(names).size).toBe(3);
-  const comparison = within(screen.getByRole("figure", { name: "Cash proxy by scenario" }));
-  fireEvent.click(comparison.getByRole("radio", { name: "Table" }));
+  const buttons = caseButtons();
+  expect(new Set(buttons.map((button) => button.textContent)).size).toBe(3);
 
   for (const [figure, own, peer, ownProxy] of [
-    ["22", ["202", "203"], ["304", "305"], "22.00"],
-    ["32", ["304", "305"], ["202", "203"], "32.00"],
+    ["22", ["202", "203"], ["304", "305"], "22"],
+    ["32", ["304", "305"], ["202", "203"], "32"],
   ] as const) {
-    const radio = cards
-      .getAllByRole("radio")
-      .find((input) => within(input.closest("label") as HTMLElement).queryByText(figure));
-    if (!radio) throw new Error(`No case card shows ${figure}`);
-    fireEvent.click(radio);
-    const statement = within(screen.getByRole("table", { name: "Cash flow model" }));
+    const name = caseShowing(figure);
+    selectByName(name);
+    expect(
+      within(screen.getByRole("group", { name: "Case" }))
+        .getAllByRole("button")
+        .filter((button) => button.getAttribute("aria-pressed") === "true"),
+    ).toHaveLength(1);
+    const statement = within(screen.getByRole("table", { name: "Forecast grid" }));
     for (const cell of own) expect(statement.getByRole("cell", { name: cell })).toBeInTheDocument();
     for (const cell of [...peer, "100", "101"])
       expect(statement.queryByRole("cell", { name: cell })).toBeNull();
-    const current = comparison
-      .getAllByRole("row")
-      .filter((row) => row.hasAttribute("aria-current"));
-    expect(current).toHaveLength(1);
-    expect(current[0]).toHaveTextContent(ownProxy);
+    // The selected case's own cash proxy, in the header figure and in the grid's row.
+    expect(figureName()).toBe(name);
+    expect(within(caseFigure()).getByText(ownProxy)).toBeInTheDocument();
+    const proxyRow = statement.getByRole("rowheader", { name: CASH_PROXY }).closest("tr");
+    expect(
+      within(proxyRow as HTMLElement).getByRole("cell", { name: ownProxy }),
+    ).toBeInTheDocument();
   }
 });
 
@@ -108,12 +145,8 @@ it("matches the selected case by raw group where the other grid is drawn as its 
     ),
   );
   render(<Forecast view={view} run={run} />);
-  const card = within(screen.getByRole("radiogroup", { name: "Forecast case" }))
-    .getAllByRole("radio")
-    .find((input) => within(input.closest("label") as HTMLElement).queryByText("22"));
-  if (!card) throw new Error("No case card shows 22");
-  fireEvent.click(card);
-  const statement = within(screen.getByRole("table", { name: "Cash flow model" }));
+  selectCase(caseShowing("22"));
+  const statement = within(screen.getByRole("table", { name: "Forecast grid" }));
   for (const cell of ["202", "203"])
     expect(statement.getByRole("cell", { name: cell })).toBeInTheDocument();
   for (const cell of ["100", "101"])
@@ -137,15 +170,15 @@ it("draws no period line on a case card that has only its placeholder column", (
     },
   );
   render(<Forecast view={view} run={run} />);
-  const cards = within(screen.getByRole("radiogroup", { name: "Forecast case" }));
-  const base = cards.getByRole("radio", { name: /^Base case/ }).closest("label");
-  const downside = cards.getByRole("radio", { name: /^Downside case/ }).closest("label");
-  expect(base).toHaveTextContent("FY2028E");
+  selectCase("Base case");
+  expect(caseCard()).toHaveTextContent("FY2028E");
+  selectCase("Downside case");
+  const downside = caseCard();
   expect(downside).toHaveTextContent("n.a.");
   expect(downside).toHaveTextContent(reason);
-  expect(
-    [...(downside?.querySelectorAll("span") ?? [])].map((span) => span.textContent),
-  ).not.toContain("Downside");
+  expect([...downside.querySelectorAll("span")].map((span) => span.textContent)).not.toContain(
+    "Downside",
+  );
 });
 
 it("draws no module code in a case name on the Forecast page", () => {
@@ -157,19 +190,32 @@ it("draws no module code in a case name on the Forecast page", () => {
     { [CASH_PROXY]: ["10", "7", "8"].map(value) },
   );
   const { container } = render(<Forecast view={view} run={run} />);
-  expect(screen.getAllByRole("radio", { name: /^Downside drivers/ })).toHaveLength(2);
+  expect(eachCase(figureName).filter((name) => name.startsWith("Downside drivers"))).toHaveLength(
+    2,
+  );
+  expect(
+    within(screen.getByRole("group", { name: "Case" }))
+      .getAllByRole("button")
+      .filter((button) => button.textContent.startsWith("Downside drivers")),
+  ).toHaveLength(2);
   expect(container.textContent).not.toMatch(/CP-/);
 });
 
-const cardNames = () =>
-  within(screen.getByRole("radiogroup", { name: "Forecast case" }))
-    .getAllByRole("radio")
-    .map((radio) => radio.closest("label")?.querySelector("span")?.textContent ?? "");
+const cardNames = () => eachCase(figureName);
 
-function showComparisonTable() {
-  const comparison = within(screen.getByRole("figure", { name: "Cash proxy by scenario" }));
-  fireEvent.click(comparison.getByRole("radio", { name: "Table" }));
-  return within(screen.getByRole("table", { name: "Scenario comparison" }));
+/** The main grid's one-year comparison: one column per case, named by the case. The main grid
+ * is drawn first; an other grid of a single case offers no comparison. */
+function showComparisonColumns() {
+  const [controls] = screen.getAllByRole("group", { name: "Grid columns" });
+  fireEvent.click(
+    within(controls as HTMLElement).getByRole("button", { name: "Compare one year" }),
+  );
+  const [, columns] = within(screen.getByRole("table", { name: "Forecast grid" })).getAllByRole(
+    "row",
+  );
+  return within(columns as HTMLElement)
+    .getAllByRole("columnheader")
+    .map((header) => header.textContent);
 }
 
 it("shows a case whose label no other case shares exactly as published", () => {
@@ -185,14 +231,8 @@ it("shows a case whose label no other case shares exactly as published", () => {
   render(<Forecast view={view} run={run} />);
   const published = [...groups].sort();
   expect(cardNames().sort()).toEqual(published);
-  expect(
-    showComparisonTable()
-      .getAllByRole("rowheader")
-      .map((header) => header.textContent)
-      .sort(),
-  ).toEqual(published);
-  fireEvent.change(screen.getByLabelText("Statement columns"), { target: { value: "compare" } });
-  const statement = within(screen.getByRole("table", { name: "Cash flow model" }));
+  expect(showComparisonColumns().sort()).toEqual(published);
+  const statement = within(screen.getByRole("table", { name: "Forecast grid" }));
   for (const group of groups)
     expect(statement.getByRole("columnheader", { name: group })).toBeInTheDocument();
 });
@@ -212,36 +252,23 @@ it("names two same-label cases apart, the same in the cards, statement, comparis
     ),
   );
   render(<Forecast view={view} run={run} />);
-  const cards = within(screen.getByRole("radiogroup", { name: "Forecast case" }));
-  const card = (figure: string) => {
-    const radio = cards
-      .getAllByRole("radio")
-      .find((input) => within(input.closest("label") as HTMLElement).queryByText(figure));
-    if (!radio) throw new Error(`No case card shows ${figure}`);
-    return radio;
-  };
-  const nameOn = (figure: string) =>
-    card(figure).closest("label")?.querySelector("span")?.textContent ?? "";
+  const nameOn = caseShowing;
   const upside = nameOn("22");
   const upsideCase = nameOn("32");
   expect(upside).not.toBe(upsideCase);
 
-  fireEvent.click(card("22"));
-  const main = within(screen.getByRole("table", { name: "Cash flow model" }));
-  expect(main.getByRole("columnheader", { name: upside })).toBeInTheDocument();
-  const trend = within(screen.getByRole("figure", { name: "Revenue" }));
-  fireEvent.click(trend.getByRole("radio", { name: "Table" }));
-  expect(trend.getAllByRole("rowheader").map((header) => header.textContent)).toEqual([upside]);
-  expect(
-    showComparisonTable()
-      .getAllByRole("rowheader")
-      .map((header) => header.textContent)
-      .sort(),
-  ).toEqual(["Base case", upside, upsideCase].sort());
+  selectCase(upside);
+  const main = within(screen.getByRole("table", { name: "Forecast grid" }));
+  expect(main.getByRole("columnheader", { name: `Forecast · ${upside}` })).toBeInTheDocument();
+  // The one-year comparison of the line items names the cases as the switch does; the other
+  // grid's case is its own statement.
+  expect(showComparisonColumns()).toEqual(["Base case", upside]);
+  expect(main.getByRole("rowheader", { name: "Revenue" })).toBeInTheDocument();
+  expect(cardNames().sort()).toEqual(["Base case", upside, upsideCase].sort());
 
-  fireEvent.click(card("32"));
+  selectCase(upsideCase);
   const other = within(screen.getByRole("table", { name: "Other forecast cases" }));
-  expect(other.getByRole("columnheader", { name: upsideCase })).toBeInTheDocument();
+  expect(other.getByRole("columnheader", { name: `Forecast · ${upsideCase}` })).toBeInTheDocument();
 
   // The raw group as reader text tells "Upside" apart; "Upside case" would only repeat the
   // label, so it takes a worded ordinal by raw-group order.
@@ -264,10 +291,50 @@ it("adds no module code or number to a name it generates", () => {
     "Downside drivers · second case",
   ]);
   for (const name of names) expect(name).not.toMatch(/CP-|\d/);
+  expect(showComparisonColumns().sort()).toEqual(names);
+});
+
+it("opens on the case the model marks as its base case, whatever order the cases are listed in", () => {
+  const columns = ["Upside: asset sale completed", "Base case", "Downside case"].map((group) => ({
+    label: "FY2025E",
+    group,
+  }));
+  render(
+    <Forecast
+      view={viewOf(columns, { [CASH_PROXY]: [value("150"), value("120"), value("90")] })}
+      run={run}
+    />,
+  );
+  const pressed = caseButtons().find((button) => button.getAttribute("aria-pressed") === "true");
+  expect(pressed).toHaveTextContent("Base case");
+  expect(caseFigure()).toHaveTextContent("120");
+});
+
+it("opens on the first listed case when the model marks none as base", () => {
+  const columns = ["Upside", "Downside case"].map((group) => ({ label: "FY2025E", group }));
+  render(
+    <Forecast view={viewOf(columns, { [CASH_PROXY]: [value("150"), value("90")] })} run={run} />,
+  );
+  expect(caseButtons()[0]).toHaveAttribute("aria-pressed", "true");
+});
+
+it("hatches no case when the page reads no net leverage row, and says why once, as the lead does", () => {
+  const columns = ["Base case", "Downside case"].map((group) => ({ label: "FY2025E", group }));
+  render(
+    <Forecast
+      view={viewOf(columns, {
+        [CASH_PROXY]: [value("120"), value("90")],
+        "Net leverage (covenant basis)": [value("2.1"), value("2.6")],
+        "Net leverage (gross)": [value("2.4"), value("2.9")],
+      })}
+      run={run}
+    />,
+  );
+  for (const button of caseButtons()) expect(button.getAttribute("aria-label")).toBeNull();
+  expect(screen.queryByText(/^Hatched/)).toBeNull();
   expect(
-    showComparisonTable()
-      .getAllByRole("rowheader")
-      .map((header) => header.textContent)
-      .sort(),
-  ).toEqual(names);
+    within(screen.getByRole("region", { name: "Net leverage path" })).getByText(
+      /^The model publishes 2 net leverage rows/,
+    ),
+  ).toBeInTheDocument();
 });

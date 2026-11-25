@@ -122,7 +122,7 @@ afterEach(() => {
 describe("report redrawing", () => {
   it("does not redraw the open tab when the source icons are highlighted", async () => {
     open("#modules/CP-1");
-    await screen.findByLabelText("Module");
+    await screen.findByRole("heading", { level: 2, name: "Financial foundation" });
     const built = vi.mocked(buildReportView).mock.calls.length;
     const drawn = vi.mocked(reportIdentity).mock.calls.length;
     fireEvent.click(screen.getByRole("switch", { name: "Highlight source icons" }));
@@ -136,7 +136,7 @@ describe("report redrawing", () => {
 
   it("draws a newly opened tab from the view already built for the report", async () => {
     open("#modules/CP-1");
-    await screen.findByLabelText("Module");
+    await screen.findByRole("heading", { level: 2, name: "Financial foundation" });
     const built = vi.mocked(buildReportView).mock.calls.length;
     const drawn = vi.mocked(reportIdentity).mock.calls.length;
     act(() => {
@@ -154,7 +154,7 @@ describe("report redrawing", () => {
 describe("report page changes", () => {
   it("opens the page for a new address at its top", async () => {
     open("#modules/CP-1");
-    await screen.findByLabelText("Module");
+    await screen.findByRole("heading", { level: 2, name: "Financial foundation" });
     const main = screen.getByRole("main");
     main.scrollTop = 1500;
     fireEvent.scroll(main);
@@ -169,7 +169,7 @@ describe("report page changes", () => {
 
   it("returns to the place the reader left when they go Back", async () => {
     open("#modules/CP-1");
-    await screen.findByLabelText("Module");
+    await screen.findByRole("heading", { level: 2, name: "Financial foundation" });
     const main = screen.getByRole("main");
     main.scrollTop = 1500;
     fireEvent.scroll(main);

@@ -344,27 +344,32 @@ it("places all four recorded cases between the conditional base qualification an
       run={{ folder: "run" } as PublishedRun}
     />,
   );
-  const choices = screen.getByRole("radiogroup", { name: "Forecast case" });
-  expect(within(choices).getAllByRole("radio")).toHaveLength(4);
-  expect(screen.getByRole("heading", { name: "Forecast cases" })).toBeInTheDocument();
+  // Every case is in the header's switch; the selected one's figure, description and reason
+  // are drawn under it.
+  const buttons = within(screen.getByRole("group", { name: "Case" })).getAllByRole("button");
+  expect(buttons).toHaveLength(4);
   expect(screen.queryByText("Two cases")).toBeNull();
-  expect(within(choices).getAllByText("Case description not recorded.")).toHaveLength(2);
-  const scope = screen.getByRole("region", { name: "Model scope and basis" });
-  const lead = screen.getAllByText("Base case is a conditional illustration.")[0];
-  expect(lead?.parentElement?.nextElementSibling).toContainElement(choices);
-  expect(within(choices).queryByText("Base case is a conditional illustration.")).toBeNull();
-  expect(choices.compareDocumentPosition(scope) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(scope.querySelector("details")).not.toHaveAttribute("open");
+  const cards = buttons.map((button) => {
+    fireEvent.click(button);
+    const card = screen.getByLabelText("Selected case cash proxy").parentElement as HTMLElement;
+    expect(card).toHaveTextContent(`Cash proxy, ${button.textContent} · `);
+    return card.textContent;
+  });
+  expect(cards.filter((text) => text.includes("Case description not recorded."))).toHaveLength(2);
+  // The conditional base qualification stands in the scope tile, ahead of the full scope list.
+  const tile = screen.getByRole("region", { name: "Scope and limits" });
+  const limit = within(tile).getByText("Base interest and forecast interest are not comparable.");
+  expect(within(tile).getByText("Base case is a conditional illustration.")).toBeInTheDocument();
   expect(
-    within(scope).getByText("Base interest and forecast interest are not comparable."),
-  ).toBeInTheDocument();
-  fireEvent.click(
-    within(screen.getByRole("figure", { name: "Cash proxy by scenario" })).getByRole("radio", {
-      name: "Table",
-    }),
-  );
-  const comparison = within(screen.getByRole("table", { name: "Scenario comparison" }));
-  expect(comparison.getAllByRole("rowheader").map((node) => node.textContent)).toEqual([
+    within(tile)
+      .getByText("Base case is a conditional illustration.")
+      .compareDocumentPosition(limit) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+  // No case's figure repeats it.
+  for (const card of cards) expect(card).not.toContain("Base case is a conditional illustration.");
+  // The full scope is a visible list, not behind a closed disclosure.
+  expect(limit.closest("details")).toBeNull();
+  expect(buttons.map((node) => node.textContent)).toEqual([
     "Base case",
     "Downside shock",
     "Upside case",
@@ -696,17 +701,27 @@ function forecastPage(cashflow: ReturnType<typeof casesModel>["cashflow"]) {
 
 it("tells the reader when the cases share no period, instead of drawing blank columns", () => {
   const { container, unmount } = forecastPage(disjointModel().cashflow);
-  const panel = within(screen.getByRole("region", { name: "Scenario comparison" }));
-  expect(panel.getByRole("note")).toHaveTextContent(NO_COMMON_PERIOD);
-  expect(screen.queryByRole("figure", { name: "Cash proxy by scenario" })).toBeNull();
-  expect(screen.queryByRole("table", { name: "Scenario comparison" })).toBeNull();
-  expect(container.textContent).not.toMatch(/omitted|left out|cannot be compared|Not published/i);
-  // Each case keeps its own figure on its card.
-  const cards = within(screen.getByRole("radiogroup", { name: "Forecast case" }));
-  expect(cards.getByRole("radio", { name: /^Base case/ }).closest("label")).toHaveTextContent("10");
-  expect(cards.getByRole("radio", { name: /^Downside case/ }).closest("label")).toHaveTextContent(
-    "5",
+  const grid = within(screen.getByRole("region", { name: "Forecast grid" }));
+  expect(grid.getByRole("status")).toHaveTextContent(NO_COMMON_PERIOD);
+  const figure = () => screen.getByLabelText("Selected case cash proxy");
+  expect(within(figure().parentElement as HTMLElement).getByRole("status")).toHaveTextContent(
+    NO_COMMON_PERIOD,
   );
+  // No comparison is offered in the grid.
+  expect(screen.queryByRole("button", { name: "Compare one year" })).toBeNull();
+  expect(container.textContent).not.toMatch(/omitted|left out|cannot be compared|Not published/i);
+  // Each case keeps its own figure, selected in the header's switch.
+  const caseItem = (name: string) => {
+    fireEvent.click(
+      within(screen.getByRole("group", { name: "Case" })).getByRole("button", {
+        name: name,
+      }),
+    );
+    expect(figure()).toHaveTextContent(`Cash proxy, ${name} · `);
+    return figure();
+  };
+  expect(within(caseItem("Base case")).getByText("10")).toBeInTheDocument();
+  expect(within(caseItem("Downside case")).getByText("5")).toBeInTheDocument();
   unmount();
 
   // The standalone comparison draws none either.
@@ -722,9 +737,10 @@ it("draws no line-item comparison and names no omitted period when the cases sha
   const lineItems = { ...cashflow, rows: cashflow.rows.filter(({ label }) => label === "Revenue") };
   const { container, unmount } = forecastPage(lineItems);
   expect(screen.queryByRole("radiogroup", { name: "Forecast case" })).toBeNull();
-  const trends = screen.getByText("Cash flow trends by line item").closest("details");
-  if (!trends) throw new Error("The trends section is missing");
-  expect(within(trends).getByRole("status")).toHaveTextContent(NO_COMMON_PERIOD);
+  expect(
+    within(screen.getByRole("region", { name: "Forecast grid" })).getByRole("status"),
+  ).toHaveTextContent(NO_COMMON_PERIOD);
+  expect(screen.queryByRole("button", { name: "Compare one year" })).toBeNull();
   expect(screen.queryByRole("figure", { name: "Revenue" })).toBeNull();
   expect(container.textContent).not.toMatch(/omitted|left out|cannot be compared/i);
   unmount();
@@ -766,8 +782,8 @@ it("names a module-coded raw group the same in every caller, with no module code
   // The statement, which draws the main grid without the other group.
   const statement = render(<ForecastStatement model={model} />);
   expect(
-    within(screen.getByRole("table", { name: "Cash flow model" })).getByRole("columnheader", {
-      name,
+    within(screen.getByRole("table", { name: "Forecast grid" })).getByRole("columnheader", {
+      name: `Forecast · ${name}`,
     }),
   ).toBeInTheDocument();
   expect(statement.container.textContent).not.toContain("CP-");
