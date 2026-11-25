@@ -756,7 +756,9 @@ function Published({ text = "" }: { text?: string }) {
 const FOLD_AFTER = 3;
 
 /** The row grid: its number, its date (never broken), its text. */
-const DATED_ROW = "grid grid-cols-[1.25rem_6.5rem_minmax(0,1fr)] gap-x-3";
+// In a narrow column the text goes under the date, so a long caption never pushes past the tile.
+const DATED_ROW =
+  "grid grid-cols-[1.25rem_minmax(0,1fr)] gap-x-3 gap-y-1 @[24rem]:grid-cols-[1.25rem_6.5rem_minmax(0,1fr)]";
 
 /**
  * Dated events, earliest first and numbered, each date at the precision the module states, with
@@ -804,7 +806,7 @@ export function DatedList({
         <span className="font-mono text-small whitespace-nowrap text-text-primary tabular-nums">
           {item.date}
         </span>
-        <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="col-start-2 flex min-w-0 flex-col gap-0.5 @[24rem]:col-start-3">
           <span className="flex items-start justify-between gap-2 text-small wrap-anywhere text-text-primary">
             {item.event}
             {href && <Trace href={href(item.line)} name={item.event} />}
@@ -822,7 +824,7 @@ export function DatedList({
     );
   };
   return (
-    <div className="flex max-w-3xl min-w-0 flex-col gap-2">
+    <div className="@container flex max-w-3xl min-w-0 flex-col gap-2">
       {first.length > 0 && (
         <ol aria-label={label} className="flex flex-col">
           {first.map((item, at) => row(item, at))}
@@ -845,7 +847,10 @@ export function DatedList({
           </p>
           <ul aria-label={`${label}, rows not placed by date`} className="flex flex-col">
             {unplaced.map((item) => (
-              <li key={item.line} className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-3 py-1.5">
+              <li
+                key={item.line}
+                className="grid grid-cols-1 gap-1 py-1.5 @[24rem]:grid-cols-[6.5rem_minmax(0,1fr)] @[24rem]:gap-3"
+              >
                 <span className="font-mono text-small break-words text-gap-text">{item.date}</span>
                 <span className="flex items-start justify-between gap-2 text-small wrap-anywhere text-text-primary">
                   {item.event}
