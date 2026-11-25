@@ -41,7 +41,7 @@ const EVIDENCE = {
   record: { hashes: [], instructions: [], calls: [], cap: null },
 };
 
-function snapshot(): Snapshot {
+function snapshot(extra: readonly object[] = []): Snapshot {
   const id = "northbridge-2026/outputs/CP-1.md";
   const text = (line: number) => ({
     type: "text",
@@ -96,6 +96,7 @@ function snapshot(): Snapshot {
           { heading: "Bottom line", level: 3, line: 10, blocks: [text(11)] },
           { heading: "Key findings", level: 3, line: 20, blocks: [text(21)] },
           { heading: "Limitations", level: 3, line: 30, blocks: [text(31)] },
+          ...extra,
         ],
       },
       models: [],
@@ -104,10 +105,10 @@ function snapshot(): Snapshot {
   } as unknown as Snapshot;
 }
 
-function open(hash: string) {
+function open(hash: string, extra: readonly object[] = []) {
   vi.stubGlobal(
     "fetch",
-    vi.fn(() => Promise.resolve(Response.json(snapshot()))),
+    vi.fn(() => Promise.resolve(Response.json(snapshot(extra)))),
   );
   window.history.replaceState(null, "", `/report/northbridge-2026${hash}`);
   render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
@@ -191,7 +192,38 @@ describe("report page changes", () => {
   });
 });
 
+const STATEMENT = {
+  heading: "Financials and credit metrics",
+  level: 3,
+  line: 40,
+  blocks: [
+    {
+      type: "table",
+      headers: ["Metric", "FY2026"],
+      line: 41,
+      rows: [{ line: 42, cells: ["Net debt", "1400"] }],
+    },
+  ],
+};
+
 describe("module records address", () => {
+  it("opens the records at their title when the address names them", async () => {
+    open("#modules/CP-1/records", [STATEMENT]);
+    await screen.findByRole("button", { name: "Hide records" });
+    await waitFor(() => {
+      expect(document.activeElement?.id).toBe("module-records");
+    }, SETTLE);
+  });
+
+  it("opens the records when the address moves to them within the module", async () => {
+    open("#modules/CP-1", [STATEMENT]);
+    await screen.findByRole("button", { name: "Show records" });
+    act(() => {
+      window.location.hash = "#modules/CP-1/records";
+    });
+    await screen.findByRole("button", { name: "Hide records" }, SETTLE);
+  });
+
   it("draws the module when the address names a table with an escape that is not UTF-8", async () => {
     open("#modules/CP-1/records/%E0");
     expect(

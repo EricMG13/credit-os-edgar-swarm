@@ -216,7 +216,8 @@ function Marker({
       data-event-category={category}
       data-event-precision={precision}
       data-active={lit}
-      className="flex size-6 items-center justify-center rounded-ds-full data-[active=true]:ring-2 data-[active=true]:ring-focus max-[480px]:pointer-events-none"
+      // 24 px mark, 32 px to a pointer: the touch area reaches 4 px past it.
+      className="relative flex size-6 items-center justify-center rounded-ds-full after:absolute after:-inset-1 data-[active=true]:ring-2 data-[active=true]:ring-focus max-[480px]:pointer-events-none"
       onClick={() => {
         focusRow(rowId);
       }}

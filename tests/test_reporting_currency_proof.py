@@ -408,6 +408,15 @@ def run_in(code: str, built: Built) -> None:
     assert loan["name"] == f"{code} term loan"
     assert Decimal(loan["years"][0]["interest"]) == Decimal(42)
     assert Decimal(exact["unallocated_debt"]["amount"]) == Decimal(700)
+    years = {case: exact["outputs"][case]["years"] for case in ("REFERENCE", "DOWNSIDE")}
+    assert [Decimal(y["interest"]["amount"]) for y in years["REFERENCE"]] == [Decimal(84)] * 3
+    # The downside case is EBITDA x 0.8 and interest x 1.1 on the same paths: cash proxy
+    # 252 - 92.4 - 105 - 42 = 12.6 in FY2025E, then 25.536 and 38.07216.
+    assert [Decimal(y["fcf"]["amount"]) for y in years["DOWNSIDE"]] == [
+        Decimal("12.6"),
+        Decimal("25.536"),
+        Decimal("38.07216"),
+    ]
     pages = built.pages
     assert all(figure in pages["Overview"] for figure in shown["overview"])
     for name in ("Modules", "CP-1"):
@@ -419,6 +428,9 @@ def run_in(code: str, built: Built) -> None:
     assert shown["unit"] in pages["Forecast"]
     assert all(row in pages["Forecast"] for row in FORECAST_ROWS)
     assert f"Cash proxy, Base case · {shown['forecast unit']} 118 FY2027E" in pages["Forecast"]
+    # Net leverage at FY2027E as drawn: base (1,400 - 344) / 359.92 = 2.93x; downside, closing
+    # cash 116.21 after three years of 20 distributions, (1,400 - 116.21) / 287.94 = 4.46x.
+    assert "2.93x A" in pages["Forecast"] and "4.46x B" in pages["Forecast"]
     names = ("Overview", "Modules", "Forecast", "CP-1", "CP-1 records", "CP-1 principal")
     for name in (*names, "CP-2D", "CP-3C", "CP-4C"):
         assert "US$" not in pages[name] and "$" not in pages[name].replace("US$", ""), name
@@ -460,6 +472,8 @@ def test_p3_delivery_and_the_library_carry_and_draw_the_not_calculable_total_the
     assert not any(re.search(r"\b1,?300\b", text) for text in files)
     partial = r"(?:£\s?|GBP )(?:0|1,300|700|600)m\b"
     assert not any(re.search(partial, t) for t in gbp_no_rate.pages.values())
+    # The pages print bare figures too; a bare 1,300 is the partial total whatever its unit.
+    assert not any(re.search(r"\b1,?300\b", t) for t in gbp_no_rate.pages.values())
     assert SHOWN["GBP"]["principal"] in gbp.pages["CP-1 principal"]  # with the rate: calculated
 
 

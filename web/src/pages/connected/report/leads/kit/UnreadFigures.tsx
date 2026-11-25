@@ -1,4 +1,5 @@
 import { unitLabel, type OutputEntry, type Table } from "../../../publishedReport";
+import { statedInProse } from "../read";
 import type { LeadProps } from "../types";
 import { FigureTile, GapTile } from "./LeadFrame";
 import { GapChip } from "./marks/GapSlot";
@@ -123,12 +124,17 @@ function Unread({ lead, title, table }: { lead: LeadProps; title: string; table:
  * title (case aside) is not in `drawn`, listing the stated rows as written (each cell under its
  * column's name, a stated gap as the hatched chip with its reason, the unit as the kicker). No
  * chart is drawn and nothing is summed; the basis column, which names sources, is left to
- * Evidence. Null when the lead draws every chart.
+ * Evidence. A section written as prose is left to the frame, which draws the module's words.
+ * Null when the lead draws every chart.
  */
 export function UnreadFigures({ lead, drawn }: { lead: LeadProps; drawn: readonly string[] }) {
   const done = new Set(drawn.map((title) => title.trim().toLowerCase()));
+  // A section the module wrote as prose is drawn by the frame with the module's own words.
   const unread = lead.entry.sections.filter(
-    ({ heading }) => heading.startsWith(PREFIX) && !done.has(titleOf(heading).toLowerCase()),
+    ({ heading }) =>
+      heading.startsWith(PREFIX) &&
+      !done.has(titleOf(heading).toLowerCase()) &&
+      !statedInProse(lead.entry, heading),
   );
   if (!unread.length) return null;
   return (

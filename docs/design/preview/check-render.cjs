@@ -98,9 +98,14 @@ function measure(minTarget) {
       style.display !== "none"
     );
   };
+  // A point is the control's when the control or its content is hit there, or the label that
+  // holds it (a label's whole box activates its input). A hit on any other ancestor is not.
   const inside = (el, x, y) => {
     const hit = document.elementFromPoint(x, y);
-    return Boolean(hit && (hit === el || el.contains(hit) || hit.contains(el)));
+    if (!hit) return false;
+    if (hit === el || el.contains(hit)) return true;
+    const label = hit.closest("label");
+    return Boolean(label && label.contains(el));
   };
 
   const page = document.documentElement;
@@ -140,8 +145,9 @@ function measure(minTarget) {
     if (!shown(el) || el.closest("p, li > span, td > span") !== null) continue;
     // A control a pointer cannot reach is no touch target (target size is about pointers).
     if (getComputedStyle(el).pointerEvents === "none") continue;
-    // A control inside a sideways-scrolled box is hit-tested where a reader scrolls it to.
-    el.scrollIntoView({ block: "nearest", inline: "nearest" });
+    // A control inside a sideways-scrolled box is hit-tested where a reader scrolls it to: in
+    // view, not flush against the box's clipped edge.
+    el.scrollIntoView({ block: "nearest", inline: "center" });
     const box = el.getBoundingClientRect();
     const x = box.left + box.width / 2;
     const y = box.top + box.height / 2;
@@ -149,9 +155,12 @@ function measure(minTarget) {
     const tall =
       box.height >= minTarget ||
       (inside(el, x, y - reach) && inside(el, x, y + reach));
-    if (!tall) {
+    const wide =
+      box.width >= minTarget ||
+      (inside(el, x - reach, y) && inside(el, x + reach, y));
+    if (!tall || !wide) {
       failures.push(
-        `target under ${minTarget}px (${Math.round(box.height)} tall): ${name(el)}`,
+        `target under ${minTarget}px (${Math.round(box.width)}x${Math.round(box.height)}): ${name(el)}`,
       );
     }
   }
@@ -230,7 +239,11 @@ async function check(browser, target, width, found) {
     if (next <= height) break;
     height = next;
   }
-  const seen = await page.evaluate(measure, width <= 480 ? 44 : 32);
+  // The screenshot comes first: the measure scrolls sideways-scrolled boxes to each control.
+  const file = `${target.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")}-${width}.png`;
+  await page.screenshot({ path: path.join(found.out, file) });
+  // A phone is narrower than 480px, as the pages' `max-[480px]` styles are.
+  const seen = await page.evaluate(measure, width < 480 ? 44 : 32);
   const kinds = new Map();
   for (const failure of seen) {
     const kind = failure.split(":")[0];
@@ -241,8 +254,6 @@ async function check(browser, target, width, found) {
     if (list.length > 6)
       failures.push(`${kind}: ${list.length - 6} more of this kind`);
   }
-  const file = `${target.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")}-${width}.png`;
-  await page.screenshot({ path: path.join(found.out, file) });
   await context.close();
   return { target, width, height, file, failures };
 }

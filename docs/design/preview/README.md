@@ -37,6 +37,6 @@ node docs/design/preview/check-render.cjs --out ~/shots --fixture my-cases.cjs "
 ```
 
 It fails on: the page scrolling sideways; a scroll box that is not named and focusable; cut text
-with no full text reachable; targets under 32px (44px at 480px and below); text under 12px,
+with no full text reachable; targets under 32px wide or tall (44px below 480px); text under 12px,
 including scaled chart text; chart labels that overlap or leave their figure; console errors.
 A finding from shared code outside your files is reported, not fixed in place.

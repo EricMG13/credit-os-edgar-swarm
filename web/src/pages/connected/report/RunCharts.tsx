@@ -222,7 +222,7 @@ function ChartRow({
             onClick={() => {
               setOpen(!open);
             }}
-            className={`ml-auto min-h-8 cursor-pointer rounded-ds-sm text-small text-text-link ${FOCUS}`}
+            className={`ml-auto min-h-8 cursor-pointer rounded-ds-sm text-small text-text-link max-[480px]:min-w-11 ${FOCUS}`}
           >
             Table
           </button>

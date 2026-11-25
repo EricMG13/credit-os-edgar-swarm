@@ -73,8 +73,12 @@ export function ChartFrame({
               setView(keys.has("table") ? "table" : "chart");
             }}
           >
-            <ButtonGroupItem id="chart">Chart</ButtonGroupItem>
-            <ButtonGroupItem id="table">Table</ButtonGroupItem>
+            <ButtonGroupItem id="chart" className="max-[480px]:min-h-11">
+              Chart
+            </ButtonGroupItem>
+            <ButtonGroupItem id="table" className="max-[480px]:min-h-11">
+              Table
+            </ButtonGroupItem>
           </ButtonGroup>
         </div>
       </div>

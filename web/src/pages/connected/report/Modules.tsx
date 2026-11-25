@@ -215,6 +215,8 @@ function ModulePage({
         />
         <ProseTiles prose={frame.prose} entry={entry} folder={run.folder} />
         <ModuleRecords
+          // A new address that names the records opens them on its table, as a first draw does.
+          key={records ? `records:${table ?? ""}` : "page"}
           run={run}
           entry={entry}
           anchorId={ANCHOR.records}

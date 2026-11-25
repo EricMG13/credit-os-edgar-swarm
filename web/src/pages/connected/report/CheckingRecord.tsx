@@ -17,7 +17,7 @@ export function CheckingRecord({ records }: { records: readonly ScriptCheckRecor
       aria-label="Checking record"
       // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
       tabIndex={0}
-      className="relative min-w-0 overflow-x-auto rounded-ds-md border border-border-hairline"
+      className="relative min-w-0 overflow-x-auto rounded-ds-md border border-border-hairline max-[480px]:p-2"
     >
       <table className="w-full border-collapse text-small">
         <caption className="px-3 pt-3 pb-2 text-left text-small font-medium text-text-primary">

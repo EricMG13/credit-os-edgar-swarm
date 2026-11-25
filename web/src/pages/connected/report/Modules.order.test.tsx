@@ -2,7 +2,14 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, expect, it } from "vitest";
 import type { OutputEntry, PublishedRun, Snapshot } from "../publishedReport";
 import type { buildReportView } from "../reportView";
+import { LEADS as credit } from "./leads/credit";
+import { LEADS as decision } from "./leads/decision";
+import { LEADS as financials } from "./leads/financials";
+import { LEADS as structure } from "./leads/structure";
 import { Modules } from "./Modules";
+
+/** Every module with a lead of its own. */
+const MODULE_CODES = Object.keys({ ...financials, ...credit, ...structure, ...decision });
 
 type View = ReturnType<typeof buildReportView>;
 type Sections = OutputEntry["sections"];
@@ -59,6 +66,10 @@ const FINANCIALS: Sections[number] = {
 };
 
 function renderModule(sections: Sections, module = "CP-2", records = false, table?: string) {
+  return render(moduleElement(sections, module, records, table));
+}
+
+function moduleElement(sections: Sections, module = "CP-2", records = false, table?: string) {
   const entry: OutputEntry = {
     selected: true,
     output: {
@@ -79,14 +90,14 @@ function renderModule(sections: Sections, module = "CP-2", records = false, tabl
     lead: undefined,
     models: [],
   };
-  return render(
+  return (
     <Modules
       view={view}
       run={{ folder: "case", issuer: "Issuer", asOf: "2026-10-31" } as PublishedRun}
       snapshot={{ chips: {} } as Snapshot}
       records={records}
       table={table}
-    />,
+    />
   );
 }
 
@@ -189,6 +200,55 @@ it("opens the records on the table the address names", () => {
   const records = screen.getByRole("region", { name: "Statements and records" });
   expect(within(records).getByText("Not supplied: not calculable")).toBeInTheDocument();
 });
+
+it("opens the records on the newly named table when the address changes within the module", () => {
+  const principal = {
+    heading: "Debt principal to carrying value",
+    level: 3,
+    line: 50,
+    blocks: [
+      {
+        type: "table" as const,
+        headers: ["Period", "Contractual principal", "Carrying value"],
+        line: 51,
+        rows: [{ line: 52, cells: ["FY2024", "Principal stated", "1400"] }],
+      },
+    ],
+  };
+  const sections = [passage("Bottom line", 4), FINANCIALS, principal];
+  const { rerender } = renderModule(sections, "CP-1");
+  expect(screen.getByRole("button", { name: "Show records" })).toBeInTheDocument();
+  rerender(moduleElement(sections, "CP-1", true, "financials and credit metrics"));
+  expect(screen.getByRole("button", { name: "Hide records" })).toBeInTheDocument();
+  expect(screen.queryByText("Principal stated")).toBeNull();
+  rerender(moduleElement(sections, "CP-1", true, "debt principal to carrying value"));
+  expect(screen.getByText("Principal stated")).toBeInTheDocument();
+});
+
+it.each(MODULE_CODES)(
+  "%s draws a drawing section written as prose once, in the module's words",
+  (module) => {
+    const words = "The issuer did not disclose the segment split, so no mix is drawn.";
+    for (const heading of ["Chart data: segment mix", "Events: segment mix", "Map: segment mix"]) {
+      const { container, unmount } = renderModule(
+        [
+          passage("Bottom line", 4),
+          {
+            heading,
+            level: 3,
+            line: 40,
+            blocks: [{ type: "text", line: 41, end: 41, text: words }],
+          },
+        ],
+        module,
+      );
+      const text = container.textContent;
+      expect(text.split(words)).toHaveLength(2);
+      expect(text).not.toMatch(/could not read segment mix/i);
+      unmount();
+    }
+  },
+);
 
 it("still draws the header and the way to Evidence when the handoff has no sections", () => {
   renderModule([]);

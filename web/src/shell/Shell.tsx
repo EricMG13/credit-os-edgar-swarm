@@ -69,7 +69,7 @@ export function Shell({
                     <a
                       href={href}
                       aria-current={isCurrent ? "page" : undefined}
-                      className={`flex min-h-9 items-center gap-2 rounded-ds-sm px-3 text-small font-medium outline-focus-ring max-[480px]:px-2 transition duration-100 ease-linear focus-visible:outline-2 focus-visible:outline-offset-2 max-[480px]:min-h-11 ${
+                      className={`flex min-h-9 items-center gap-2 rounded-ds-sm px-3 text-small font-medium outline-focus-ring max-[480px]:px-2 transition duration-100 ease-linear focus-visible:outline-2 focus-visible:outline-offset-2 max-[480px]:min-h-11 max-[480px]:min-w-11 max-[480px]:justify-center ${
                         isCurrent
                           ? "bg-surface-selected text-text-link"
                           : "text-text-secondary hover:bg-surface-subtle hover:text-text-primary"

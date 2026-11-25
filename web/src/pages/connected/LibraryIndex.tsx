@@ -241,7 +241,14 @@ export function ReportLibrary({ readOnly = false }: { readOnly?: boolean }) {
     <>
       <PageHeader
         title="Library"
-        actions={canStart && !empty && <Button href="/start">Start a run</Button>}
+        actions={
+          canStart &&
+          !empty && (
+            <Button href="/start" className="max-md:min-h-11">
+              Start a run
+            </Button>
+          )
+        }
       />
       <section className="mt-6 grid gap-4">
         {problem && (

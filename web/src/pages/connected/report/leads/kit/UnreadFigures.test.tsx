@@ -125,4 +125,23 @@ describe("UnreadFigures", () => {
       "This page could not read add-back share.",
     );
   });
+
+  it("leaves a chart section written as prose to the frame, which draws the module's words", () => {
+    const prose = entry(
+      "CP-1D",
+      [],
+      [
+        {
+          heading: "Chart data: add-back share",
+          level: 3,
+          line: 10,
+          blocks: [
+            { type: "text", line: 11, end: 11, text: "The issuer did not split add-backs." },
+          ],
+        },
+      ],
+    );
+    const { container } = render(<UnreadFigures lead={leadProps(prose)} drawn={[]} />);
+    expect(container.innerHTML).toBe("");
+  });
 });

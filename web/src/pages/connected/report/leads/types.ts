@@ -15,8 +15,9 @@ export interface LeadProps {
 export type LeadKind = "figures" | "events" | "maps";
 
 /**
- * A module's lead visual. `draws` lists the kinds it draws itself, gaps included: the page frame
- * draws every kind not listed, so each figure is drawn once.
+ * A module's lead visual. `draws` lists the kinds it draws itself: the page frame draws every kind
+ * not listed, so each figure is drawn once. A drawing section written as prose is the frame's in
+ * every case, so a lead draws no tile for it.
  */
 export type Lead = FC<LeadProps> & { draws?: readonly LeadKind[] };
 

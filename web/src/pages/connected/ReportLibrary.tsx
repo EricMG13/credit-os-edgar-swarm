@@ -38,6 +38,7 @@ import { ReportChanges, ComparisonTable } from "./report/Changes";
 import { Forecast } from "./report/Forecast";
 import { RunHistory } from "./report/History";
 import { DifferingRating, RatingChip, reportIdentity } from "./report/IdentityBand";
+import { ANCHOR } from "./report/ModuleFrame";
 import { Modules } from "./report/Modules";
 import { PublishedTraceProvider } from "./report/PublishedTrace";
 import { PortfolioBasisProvider } from "./report/PortfolioBasis";
@@ -132,12 +133,13 @@ function useReportPlace(root: RefObject<HTMLElement | null>, hash: string, ready
     if (previous !== null) left.current.set(previous, offset.current);
     const main = root.current?.closest("main");
     const back = left.current.get(id);
-    const section = {
-      "#overview/limitations": "overview-limitations",
-      "#overview/dates": "overview-dates",
-      "#forecast": "forecast-report-nav",
-      "#forecast/run-charts": "forecast-run-charts",
-    }[hash];
+    const section =
+      {
+        "#overview/limitations": "overview-limitations",
+        "#overview/dates": "overview-dates",
+        "#forecast": "forecast-report-nav",
+        "#forecast/run-charts": "forecast-run-charts",
+      }[hash] ?? (namesRecords(hash) ? ANCHOR.records : undefined);
     const target = section && document.getElementById(section);
     if (target && back === undefined) {
       target.focus({ preventScroll: true });
@@ -672,6 +674,12 @@ function moduleAddress(rest: string[]) {
   const output = at === 0 ? undefined : rest[0];
   if (at === -1) return { output, records: false };
   return { output, records: true, table: tableTitle(rest[at + 1]) };
+}
+
+/** True when the address is a module's and names its records. */
+function namesRecords(hash: string) {
+  const { tab, parts } = reportRoute(hash);
+  return tab === "modules" && moduleAddress(parts.slice(1)).records;
 }
 
 /** A table title from the address; an escape that is not UTF-8 names no table. */

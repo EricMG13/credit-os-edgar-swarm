@@ -177,8 +177,10 @@ on the well surface. Tooltip supporting text is `#D4D4D8`.
   start, never for a finding.
 - **Gaps:** one pattern (a plain tile or cell with the gap note). A gap says only what the page
   checked ("This page could not read the rating history.") or the module's own reason as written.
-  Reader words only: no "handoff", "the module", "register", "passage" outside Evidence. A
-  module-written word ("n.m.", "—") is drawn as written; a written dash is not a missing value.
+  Reader words only: no "handoff", register, id or file name outside Evidence. A lead does not
+  say "the module" (it is drawn on that module's own page); elsewhere "module" is the reader's
+  word for a part of the report, as on the Modules page. A module-written word ("n.m.", "—") is
+  drawn as written; a written dash is not a missing value.
 - **Type:** Geist 400/500/600 for text and headings; Geist Mono 400/500 with tabular numerals for
   figures, codes and axis labels. Ramp (size / line): display 44/48, h1 32/38, h2 24/30,
   h3 20/28, h4 18/26, lead 18/28, body 15/24, small 14/22, caption 12/16, metric 36/40,
@@ -190,7 +192,8 @@ on the well surface. Tooltip supporting text is `#D4D4D8`.
   accent tint and an underline.
 - **Motion:** one animation, a slow dash along delivered pipeline edges; off under reduced motion.
 - **Trace control:** one icon button, the same everywhere, per paragraph, row or figure: 32 px,
-  with a 44 px touch area on a phone. Every other control is at least 32 px, 44 px on a phone.
+  with a 44 px touch area on a phone. Every other control is at least 32 px wide and tall, 44 px
+  on a phone (narrower than 480 px, the pages' `max-[480px]` styles).
 
 ## Migration
 

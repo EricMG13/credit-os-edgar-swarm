@@ -560,7 +560,9 @@ export function PublishedTable({
       </tbody>
     </table>
   );
-  const frame = "relative min-w-0 overflow-x-auto rounded-ds-md border border-border-hairline";
+  // On a phone the inner room keeps a trace control's touch area inside the scroll box's clip.
+  const frame =
+    "relative min-w-0 overflow-x-auto rounded-ds-md border border-border-hairline max-[480px]:p-2";
   return wide ? (
     // A table that scrolls sideways is a named region the keyboard can focus to scroll it.
     // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
