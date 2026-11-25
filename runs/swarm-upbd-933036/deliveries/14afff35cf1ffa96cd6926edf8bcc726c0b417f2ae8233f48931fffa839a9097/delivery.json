@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Upbound Group, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "840d33c6147cbfc8aa6d8b7c09ea2fe6ee64f65695e801d0057610e8ddfdc1bb",
+    "CP-1.md": "0e34dc7da4c08318c9658524f5797f6007f001abad2555797cfec647d41fcaa5",
+    "CP-1A.md": "f9e1fad7cdb501fe28cba17eb8dc21cd3277a9600f1f8560193c683e6b39fece",
+    "CP-2.md": "c0c1962fee1144029d2e3e89019b7370eb68bfc46600011410b7a79cb661a3c6",
+    "coverage.json": "93e3d15a8878a5be6f9077273ebea62ae3846b2fe423d0be4224b62fd5665247",
+    "view.json": "7554639b52f3135a8366d73d185b8c4ce7afa1daf6ceb4fe15b560692eb629e7",
+    "report-view.json": "60a607a1842582212de3cce9c34127166a72e707fb28c94ebdb76b8b51a981aa"
+  }
+}

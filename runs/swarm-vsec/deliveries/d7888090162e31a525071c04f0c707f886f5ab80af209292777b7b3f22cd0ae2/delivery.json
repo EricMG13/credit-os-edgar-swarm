@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for VSE CORP as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "e8747ba23c9379b015b26cb84fddf7ec7fb975f4a8e2ff5cc5d87b7825587d8f",
+    "CP-1.md": "e8cad13c0a6493cccaaabaacdb4b908f9c1a7c8bc2bf8888d4bdd38349753f94",
+    "CP-1A.md": "36e20aef1e3221f889f8e2d5cb2f54d3cc60b633754e9182476fe6d517393bc0",
+    "CP-2.md": "103d2a83fa20e3f625029f501cbfbfa1938079e5a30fce8147f928df97cbdd4b",
+    "coverage.json": "5821791f098681b30be872a5c98250c02cb2295f25a8369c5d8d29865123718e",
+    "view.json": "91a5f0260809e67ec4bd05f7b63d8895e1f6b310dbd029dfce01a12302218c8a",
+    "report-view.json": "1122e0e1d985631b731e62a054e682fb7e12572247f03412bcb84190d2b136a9"
+  }
+}

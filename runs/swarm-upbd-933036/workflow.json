@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "upbd-933036-2026-11-18-credit_snapshot-host",
+    "issuer_id": "upbd-933036",
+    "issuer_name": "Upbound Group, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_upbd-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_upbd-20241231.htm.jsonl",
+      "sha256": "847d8e387bbe96e809a65f285905023b05f75bfac6edddc7169fa14b47b044b1"
+    },
+    "10-K_2025-12-31_upbd-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_upbd-20251231.htm.jsonl",
+      "sha256": "1824273fb806f41c4875d10cd154ece6b2dbaec7f6e86cf57b35d84ceb99bb39"
+    },
+    "10-Q_2026-03-31_upbd-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_upbd-20260331.htm.jsonl",
+      "sha256": "d3f5477f645a5cb1c982b169a084ec5c6465ef69f001c2d03730554a5ba37c6d"
+    },
+    "10-Q_2026-06-30_upbd-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_upbd-20260630.htm.jsonl",
+      "sha256": "adf2c4b11fe7c3ee06cdbde472d4021121cadeeea823c7b2dc967d7cc729639b"
+    },
+    "10-Q_2026-09-30_upbd-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_upbd-20260930.htm.jsonl",
+      "sha256": "9c6062c9a33842d7edc5c571fbb14f7dca7cbb308edd1e5c481370d1c40bf689"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/933036-upbound-group-inc-upbd.json",
+      "sha256": "fb04c80bf7c2db8e287d3a073e2c3a81f1fee7bed51608f875c8f13e8ff0cde3"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "ac35fe286de1df3b5c0ea8f39283d2db737e0c7b33a6c353fac5430fc95b28f9"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "1e77efb258e6d1dbf457c3e040fc756c3e96f6e56d88b44c661747d1c234e1c6"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "ae4bd966ef4eabb7f1cf9b2bd60eb4db78bba85a13190d5a1d48bb4c57fb8a0c"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "420a5a6d29e1c4a31d92b434086e7985949924259ef511ad507087fee353fc07"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Upbound Group, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Upbound Group, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

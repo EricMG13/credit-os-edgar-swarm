@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for CENTENE CORP as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/fd05415e0652bf69a3baa0636158921858e99ebced07722157a070d522b864da/1.response.md",
+    "CP-1": "requests/CP-1/c45a18c2816c42b48b898b2c51d8f86ee5089a1c99671e9973d42ee541ba2e90/1.response.md",
+    "CP-1A": "requests/CP-1A/d55954abdfc3dd3a85dbc8645862a9406583a88151feefd1b7d94c6f701b29d2/1.response.md",
+    "CP-2": "requests/CP-2/6e405b37a882b54a0f75c4911f5944031e1a6ff26b0d9b1cc95e600a536872e2/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "3873530f0dc714b236840e13ff58f355b98de8da74d1d1f220c92142b98f3f6e",
+  "delivery_sha256": "f80c56aad87e2c6517946db1e3491fc602cbdbe4c89361d6f78dab6c11c53803"
+}

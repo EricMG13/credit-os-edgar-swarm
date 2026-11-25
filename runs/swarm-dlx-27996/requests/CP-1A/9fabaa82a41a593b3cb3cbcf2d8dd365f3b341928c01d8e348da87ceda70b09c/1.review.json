@@ -1,0 +1,7 @@
+{
+  "issues": [
+    "Invalid Markdown table header at line 380: the header has 5 cells and the separator row has 4 (\"| Gap | Why it matters | Affected analysis | Consequence | Source |\")",
+    "Missing registers: transaction_summary, company_description, revenue_business_mix, ownership_register, operating_model, events_timeline, gaps_ledger, conflict_log. The method requires each of them and CP-OS does not cut them. Write each as its own register: a `###` heading that starts with its id (`### transaction_summary - <title>`, the id may be in bold or backticks) or a `<!-- table-id: ... transaction_summary -->` tag above its table. A register with nothing to report is still written, with one row `Not supplied: <reason>` (or the method's own placeholder row), never left out. A module that stops at its gate says so with `module_status: Blocked` in the front matter and writes the gate register only; it is not asked for the others."
+  ],
+  "response_sha256": "0e893eac66ef822d936ecfaa3f51828a532bf50bd7bed683959fb197b4b3476a"
+}

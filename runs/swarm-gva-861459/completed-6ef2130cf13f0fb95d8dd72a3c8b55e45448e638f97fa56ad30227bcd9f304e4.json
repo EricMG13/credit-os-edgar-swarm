@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Granite Construction Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/afded08e6b2961449e24c3f24094bca4bd2931d7e6fc7ab5f39900fc70c55a84/1.response.md",
+    "CP-1": "requests/CP-1/a786bb9346eef75a06534d58cff413de592ba40d5654724e6534727a4db8cf59/1.response.md",
+    "CP-1A": "requests/CP-1A/333bb80fd65be83852500594bcb392575cc7f80bf0cd27e4fe68bc406aab0367/1.response.md",
+    "CP-2": "requests/CP-2/1a3afc738f55a1d8daae35bd7170f391cf757fc7a099e7678c1744ed6980e069/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "29d625c0ceaa66ab58c7bf7636f19c1d8d94096d436113c27f61be1b1da4a757",
+  "delivery_sha256": "84800c9f2576dd3834c3341955e9edfdd0f192a7f535e062d07d900412413bea"
+}

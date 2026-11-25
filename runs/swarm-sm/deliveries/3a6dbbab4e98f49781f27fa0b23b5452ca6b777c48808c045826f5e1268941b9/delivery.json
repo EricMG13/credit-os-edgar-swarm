@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for SM Energy Co as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "b450d1108fa78476679986346bce4e700e48d4afa617227f2d4877af51c042b8",
+    "CP-1.md": "7da598ad0b99f8038cb5ff95b18f2fe4655abdb4b90301d034d27f66e6871d67",
+    "CP-1A.md": "209036a2d88bd2718ceb859cfed13e9e04ae5b261c847cf4d33b96a7469944a7",
+    "CP-2.md": "721c47844317301bd4f12d943a3457e73b8c907f647ef6a039dfb17b987b14f1",
+    "coverage.json": "32c2acc028121cfa918222fc493c7b8ce79bc3558edb7d944e98e640d60a5f3c",
+    "view.json": "0e93caf65645a209bb07164854c2cd1226d8deb0aa12a42c69cb88f5a89a4c95",
+    "report-view.json": "c03ca0a6a9421448edc4f4c38289b126cae2fd59ee18e9b016c0d180c3d18e84"
+  }
+}

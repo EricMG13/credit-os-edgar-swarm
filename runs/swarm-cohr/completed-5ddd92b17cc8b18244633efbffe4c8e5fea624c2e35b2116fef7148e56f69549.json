@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for COHERENT CORP. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/664fbf63079349e7a01dabe981290420d65f18e245671687ae42f5dfbe0f0cc6/1.response.md",
+    "CP-1": "requests/CP-1/ad34ae1e8a8f399badeb58fc8503fa70bcd594b8efa995db392335642b9095c9/1.response.md",
+    "CP-1A": "requests/CP-1A/3192bcf70a49d1a9615abf68de49cbe1c08c171bf425daae244bacdbdc212c66/1.response.md",
+    "CP-2": "requests/CP-2/9942a783e3e1d786f309a17aa2e4365236cea5f0649c517c3efba084ce4caf65/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "e9c75f93155d94646586a355d0b4345db943035674a9e432edeb5fdfb6976cce",
+  "delivery_sha256": "01060a0e56295813c0ef530d97dddd5d5bc6643e9f6db78429afa88b709b3947"
+}

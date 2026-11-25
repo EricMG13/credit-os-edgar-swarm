@@ -1,0 +1,94 @@
+{
+  "checks": [
+    {
+      "figure": "columns",
+      "module": "CP-2",
+      "reason": "every declared column is present",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.1",
+      "row": "columns",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "agreed",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "columns",
+      "module": "CP-2",
+      "reason": "every declared column is present",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.10",
+      "row": "columns",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "agreed",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "all",
+      "module": "CP-2",
+      "reason": "not required in this transport (register scope or routing rule)",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.11",
+      "row": "all",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "columns",
+      "module": "CP-2",
+      "reason": "every declared column is present",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.12",
+      "row": "columns",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "agreed",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "placeholders",
+      "module": "CP-2",
+      "reason": "not a full analytical run by the method's blocklist (an explicit gap is this transport's answer, so recorded only): row 1 `Threshold / Signal`: `Quarterly metal sales falling below the third-quarter level of 511.860 USD millions, or gold sold falling while price is flat; Quantitative threshold not available in provided materials.`; row 2 `Threshold / Signal`: `All-in sustaining cost per ounce rising toward the realized price, now 2050 against 4326, or Kisladag cost rising further; Quantitative threshold not available in provided materials.`; row 3 `Threshold / Signal`: `Free cash flow excluding Skouries and McIlvenna Bay turning negative from 202.1 USD millions for nine months, or consolidated free cash flow staying below -654.3; Quantitative threshold not available in provided materials.`; row 4 `Threshold / Signal`: `Cash below 396.828 USD millions or Credit Facility available balance below 274.7 USD millions; restricted cash of 71.898 is a debt service reserve; Quantitative threshold not available in provided materials.`; row 6 `Threshold / Signal`: `No extension or refinancing announced for the Credit Facility (matures 2029-03-01) or the Senior Notes (due 2029-09-01) as the third year approaches; quantitative threshold not available in provided materials`; row 8 `Threshold / Signal`: `Gold price falling toward all-in sustaining cost; a 52.61% fall would erase the third-quarter margin; Quantitative threshold not available in provided materials.`",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.12",
+      "row": "placeholders",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "noted",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "all",
+      "module": "CP-2",
+      "reason": "not required in this transport (register scope or routing rule)",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.7",
+      "row": "all",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    }
+  ],
+  "kind": "method-script-checks/1",
+  "module": "CP-2",
+  "response_sha256": "a6678809a4f21df2cb4f902312901b97d7173e7119e9ed69792511a020c43d4a",
+  "scripts": {
+    "docs/reuse/selected-methods/scripts/completeness_check.py": "a9841a74e4f851fd565c5f3cabc831835c4bc305ea40c28446790f8165d56056"
+  }
+}

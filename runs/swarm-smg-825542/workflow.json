@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "smg-825542-2026-11-18-credit_snapshot-host",
+    "issuer_id": "smg-825542",
+    "issuer_name": "Scotts Miracle-Gro Co",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-09-30_smg.htm.jsonl": {
+      "path": "source-text/10-K_2024-09-30_smg.htm.jsonl",
+      "sha256": "2468e93d0f1474c02e1478c780490aff860bbc4682adc9a8a378146055be8eac"
+    },
+    "10-K_2025-09-30_smg.htm.jsonl": {
+      "path": "source-text/10-K_2025-09-30_smg.htm.jsonl",
+      "sha256": "cabb870874034ee7db3114468e051989188b2ef3fa12522d4a68f29a655e3981"
+    },
+    "10-Q_2025-12-27_smg.htm.jsonl": {
+      "path": "source-text/10-Q_2025-12-27_smg.htm.jsonl",
+      "sha256": "e45bfbab2957af3af1c6839ca44e2979f2195ba8f0d893290e4a44c6dcb7f454"
+    },
+    "10-Q_2026-03-28_smg.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-28_smg.htm.jsonl",
+      "sha256": "715e408f9a75e3fe5ac91ca251c2c0c05f3ecf4d54a2b3652e95cf3cecfb00c6"
+    },
+    "10-Q_2026-06-27_smg.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-27_smg.htm.jsonl",
+      "sha256": "7eb6e57e86540fc16918dc4e92e3773c193b03aa5c7661c90d6dbf7ef171bbcb"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/825542-scotts-miracle-gro-co.json",
+      "sha256": "f8b065390e6e2f8fbb0e8b576157ef0ce3cda3126917549c511cabe7c6e7efb7"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "64bcf4dac0aac7645b8ef44601dfd08defded6d99f3e13976a9962e32e52f9cd"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "2f2fbb2faed9943a0e26c4eb4aed43089512eca381a6c1ad2bfd5d497ce9e0d0"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "c4ae783878a47576d9ed438f2c13c7f70eee629137bf63563d5c2affbccfd107"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "09bcb83f7f48dc1ae548f17be2765aa9686f6b80cd23a82b5928e78cd43c90c2"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Scotts Miracle-Gro Co as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Scotts Miracle-Gro Co — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

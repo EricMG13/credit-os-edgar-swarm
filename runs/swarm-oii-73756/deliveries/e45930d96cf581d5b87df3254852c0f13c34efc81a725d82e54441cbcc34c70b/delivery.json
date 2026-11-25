@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Oceaneering International Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "d26669e283129c5d4b6807c382eb4a11ab22c8972efa78e0b8447e59c31a05c3",
+    "CP-1.md": "9ac5c944efb387a4c6ca3983f0eec9d99e7d059a9d9ed186370efc17ef5d9e71",
+    "CP-1A.md": "707db8961b2dc0f4ca8bbe55d09afe4447981408d74f23f3fe317fd11be094f7",
+    "CP-2.md": "4e153777486e4288d7c442e1cdd003bc4a3f51855bb2747bec5e8e23bfea406d",
+    "coverage.json": "4fb253b21db4bf369500db75b054974f389b1c4e5c0a32e7e6bc330c200c7c15",
+    "view.json": "95ad40ae3a07c1c10dd60e9de00be48809e28ffdeaa0f03181e05d37f92c4228",
+    "report-view.json": "19056f6b2f0f06a300cf88176e93b52fc9cf0afe2c57c2429f8eaeadcb9e5056"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Deluxe Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/1d254d133d4e2c390201248eb22e675a7e13271973ce870dbb088f2ba7a14c53/2.response.md",
+    "CP-1": "requests/CP-1/41f6e8821238ad4461660ad02641eb5e122e79e6aba1699293635acc6f9085fd/2.response.md",
+    "CP-1A": "requests/CP-1A/9fabaa82a41a593b3cb3cbcf2d8dd365f3b341928c01d8e348da87ceda70b09c/2.response.md",
+    "CP-2": "requests/CP-2/27020b992b751ec68df1cb032ebd0ee4513b0a3327f405645bfb66749ae2ecf7/2.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "08f0abacc47f52387c63253c023335268fd4d9863216dda77142a41ca5865bb6",
+  "delivery_sha256": "2b2882a30c00985500257e58f5ca38ae6541a57ea8c903db09d955364415acdf"
+}

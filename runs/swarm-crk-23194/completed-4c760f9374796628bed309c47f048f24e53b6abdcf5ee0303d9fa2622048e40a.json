@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Comstock Resources Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/e4c3abf94646e9b447621fb9e3f43dd9e712ef0f0f362574616827605a4cb3b0/1.response.md",
+    "CP-1": "requests/CP-1/8a361c7af67a6cce64e8e13111fa9816ecada113c0d73a96f5019d492a3728e9/3.response.md",
+    "CP-1A": "requests/CP-1A/569b901e4f05b44c1b37add4e161d9c837e4a17dddd72d3bba1e58796e980c49/1.response.md",
+    "CP-2": "requests/CP-2/6fcc08ab807ae18cb0a656f3ddd81294b8cc3523091e2d24c2d82496bd158976/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "44298fd24a5d229d43b46edb4c88dc5b25abbe307b027038c9e2de0a00d905a3",
+  "delivery_sha256": "04eaac713b550baa1865cad0deaf69af4e51fec6388ebaa3087d7026444632fa"
+}

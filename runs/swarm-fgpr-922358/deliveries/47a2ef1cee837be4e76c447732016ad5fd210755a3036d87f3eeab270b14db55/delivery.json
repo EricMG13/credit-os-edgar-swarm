@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Ferrellgas Partners L P as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "9358f1ddfeb77f366974b66a4a875a1e217ed56897e548aa03e34e5d9dbc075c",
+    "CP-1.md": "7265854ffa7b7373d56bb1c32817449fd7ecf2acacd629fa29b97c7288d34aa3",
+    "CP-1A.md": "caafe1fdeba0149467a5e79897db8a5ea19280676e91d0c51e48a635fedc8ffd",
+    "CP-2.md": "c8fe69b4c5ab8da7ad2cdf0d6b0355ea7aef58632d8e219795bd3ed5d3895bfb",
+    "coverage.json": "1cff0e7c34cf6e23cca2ce0f7afd2bb275ce0c986d21fd36fdc4fe2e9cd4ec9b",
+    "view.json": "b95a1c65f854609dddfc094770fe861746467bce91f896169d5af50af810d6ca",
+    "report-view.json": "bb475c4baaff06788f9ea3652eb78e68dc9f9d0c0b035041bcfa63eeeb1deb84"
+  }
+}

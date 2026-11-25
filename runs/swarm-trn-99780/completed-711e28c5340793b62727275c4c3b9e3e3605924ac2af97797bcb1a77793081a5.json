@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Trinity Industries Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/291a40d2412b1ebd8776baebcf53319cb423b3f94f2654f08ac2bb630fc06af5/1.response.md",
+    "CP-1": "requests/CP-1/6a7f32d355c04c3a9cb24afe0ff0e2d02ca31c5e4274c069328c0aa5bbf2f5cb/1.response.md",
+    "CP-1A": "requests/CP-1A/0219405097c77f1ec7ebe0c3c0da29eee108b4ef423156cb801a5c73581ff72d/1.response.md",
+    "CP-2": "requests/CP-2/b6983ca4f4af08d6aca13f85785162efd31cac5d1b1f34a4f81b20dba4f075af/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "d1077cc126f4fc589b82e1a51931081e6d7a41fc47a423fa4554b01044cbea31",
+  "delivery_sha256": "920425009b848f305ccb8ca7f9e39dd7f067fd0ea24629060fe55d5e40315237"
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for SERVICE CORP INTERNATIONAL as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "317dc1a5f5e38380e0da4a42c1f04eef65b64d9eeb5f3c3118c72ca42cb12788",
+    "CP-1.md": "19cd0f9bf68072092a417281442d740342af2f4a2ea9944cd61f1f61119785c4",
+    "CP-1A.md": "8eaccbd6c5cb7cb7c1d934dbea3fe2e4746ff606ffc05d31a3ad1bf92a5c5048",
+    "CP-2.md": "4221e972adb2aef445725a4f6254658abbe753e6b70a6ed6688aa36a1a7d67b3",
+    "coverage.json": "c563f3b19fa0140f42e063127a33b7074a089444a9a274a3e6933c5e64d1cdcd",
+    "view.json": "741d96702ec8472a00c6729fbaa66f3e66ac3d68c0dd1443691d22f4cfe33c03",
+    "report-view.json": "84817178daaf1d8d83d9dc0a26402ceb8f22bd27610b9ce092b327e862495086"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Boyd Gaming Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/9328df62a54601cb620dcddbff311e4d8a8bf644f8e7db02e691d42151bfd593/1.response.md",
+    "CP-1": "requests/CP-1/419289d0bbab78a2cdfe4a3a9f06f17677047387f14eb30a0d28f6f791194518/1.response.md",
+    "CP-1A": "requests/CP-1A/924a79b3150f5eefc43d24413294590d66ee77a5bdaa381e6ffa2c6d84497e20/1.response.md",
+    "CP-2": "requests/CP-2/0325a4dd7b575b92c6aac9d1675860ea6f2b688246786f77ab6f4afa0de0fe9f/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "a5d0d26bf02a11df8942ceae50e933916a1489b1cdd824afead42049557541c5",
+  "delivery_sha256": "f9cf5f3c816e49ca959dd621f3d5aeae900603f820d077b5f05cb8291ba309ec"
+}

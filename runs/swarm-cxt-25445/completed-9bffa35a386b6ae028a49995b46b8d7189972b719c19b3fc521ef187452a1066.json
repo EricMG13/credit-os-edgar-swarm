@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Crane NXT, Co. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/37710bfd2de7d6fb8edcd48fa576c9188c113c15e23892293deed4c0f79084b1/1.response.md",
+    "CP-1": "requests/CP-1/e677cfb63837ec59cfee30795fe852ea18443f69adf43df205da9d4278f5597b/2.response.md",
+    "CP-1A": "requests/CP-1A/1c88ca5a1a6a05853481bae145ff9d3afccc7c301317d20454a3b70196efc97e/2.response.md",
+    "CP-2": "requests/CP-2/1602751c156a5d19aa7624c97539088795372bfd6f5b18b276fbd0700faf81d8/2.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "2674a625c042fbc36b9b628be73ccabef307feee7e5053ec5139e02bd2efbba1",
+  "delivery_sha256": "98b7fafe8128cda9cc6e5dfd4db9510071c1666daf3ff1c464ca36facf09c7c9"
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for CHS INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "65d7ae926eea08b1a1d51b5c839edac351dde3a8b8008dba76723e1db5de6107",
+    "CP-1.md": "d59c078ee0b846b80c7410fd178f98a4a1da59346dbd2ba69ddd92b397f7c0dc",
+    "CP-1A.md": "14d56375923c24c133a52a63246e9b0820cf998f09fab9309e2d5e1be0c92036",
+    "CP-2.md": "990d56fcd85ef82ec338f0304f1db9ffca486cefe69b122ee25dadd70f48a1d4",
+    "coverage.json": "b8d623eabde40bb33b7e6d575bcc49fe1b8c2b8399b3b5eda69da31c604f6f3b",
+    "view.json": "83f120f8482a08f728f0024cb0f1ca1302bf9ac181f44760468434d7101eb1f4",
+    "report-view.json": "18ffad0b3176c1dc88f9e481d5ebf7324ddfcec04ffe6586566d6030d6af3b21"
+  }
+}

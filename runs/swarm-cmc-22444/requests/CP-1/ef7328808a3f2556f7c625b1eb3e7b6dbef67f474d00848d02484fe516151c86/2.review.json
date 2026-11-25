@@ -1,0 +1,26 @@
+{
+  "issues": [
+    "`### Chart data: EBITDA bridge` FY2024 reported EBITDA (opening): a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` FY2024 asset impairments: a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` FY2024 unrealized gain on undesignated commodity hedges: a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` FY2024 adjusted EBITDA (closing): a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` FY2025 reported EBITDA (opening): a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` FY2025 asset impairments: a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` FY2025 unrealized gain on undesignated commodity hedges: a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` FY2025 adjusted EBITDA (closing): a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` Q1 2026 reported EBITDA (opening): a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` Q1 2026 unrealized loss on undesignated commodity hedges: a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` Q1 2026 adjusted EBITDA (closing): a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` Q2 2026 reported EBITDA (opening): a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` Q2 2026 unrealized gain on undesignated commodity hedges: a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` Q2 2026 adjusted EBITDA (closing): a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` Q3 2026 reported EBITDA (opening): a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` Q3 2026 unrealized gain on undesignated commodity hedges: a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` Q3 2026 adjusted EBITDA (closing): a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` LTM to 2026-05-31 reported EBITDA (opening): a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` LTM to 2026-05-31 asset impairments: a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` LTM to 2026-05-31 undesignated commodity hedge adjustment: a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`.",
+    "`### Chart data: EBITDA bridge` LTM to 2026-05-31 adjusted EBITDA (closing): a number in USD thousands cannot be charted as US$m; restate the figure in millions of the statement currency and write `US$m`."
+  ],
+  "response_sha256": "4e7c864e0788d46ca53046d6776ca1f16109bded980e6fc26eb6a768c2243dae"
+}

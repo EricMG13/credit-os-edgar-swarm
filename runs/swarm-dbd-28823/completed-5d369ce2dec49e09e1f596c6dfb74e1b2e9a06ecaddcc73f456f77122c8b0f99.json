@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for DIEBOLD NIXDORF, Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/00c8755b68b2e83596558cdb25db2cfa95dfaecb4be98289a5e7e6582728530d/2.response.md",
+    "CP-1": "requests/CP-1/ab26da9d1cfc179485b38508eef414b11a9be6ad23301a1c5e6dfd4535661daf/2.response.md",
+    "CP-1A": "requests/CP-1A/4dbdb0e1ef116b0d3ff48a5c4a1b30094a7a7af00f43cbbf1973a393b855d4c2/1.response.md",
+    "CP-2": "requests/CP-2/1a5884a6ea513a88c71623c244e8772a7ba0cb4c407b25b8e89f0d0c3fb11e61/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "4b1461863785ef65735ac91d964109e7b2675250f586481b912afc5536e42cc2",
+  "delivery_sha256": "11f908251d398dd6a91b470109cae1c2c52d52776ccbe4ba3abc4295cbef05bc"
+}

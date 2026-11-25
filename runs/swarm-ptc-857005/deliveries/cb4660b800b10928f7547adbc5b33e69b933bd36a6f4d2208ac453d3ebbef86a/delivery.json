@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Ptc Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "9cec6decb27f599a170cfa6362fd1a64bff0a2a039792519fc2fe4a373482eb4",
+    "CP-1.md": "0afb433d7c53e7f3ad3d1b57f197e3f98547ab2a9aebc8c7b8d7e7ac3a8131fc",
+    "CP-1A.md": "f19b2c397168cfbf2f475e75032d35ad5b9f5837b8da4648e15334df288c779a",
+    "CP-2.md": "146e8a8d5e1372b37c7b587e7459a20f43349d983f46b25e91205301aa42f8d0",
+    "coverage.json": "8b54fbdf092ad1375310ca86ad09e2a3160cde243fca0713b63ee433432ed2e4",
+    "view.json": "2f580662be7757726c6f68bf408f11b1631645f64422007642ec0e0c418a241d",
+    "report-view.json": "a14961b0c6bc56e9aeb90f383d16d3efd7c8d100b46a517cefce445a46b54857"
+  }
+}

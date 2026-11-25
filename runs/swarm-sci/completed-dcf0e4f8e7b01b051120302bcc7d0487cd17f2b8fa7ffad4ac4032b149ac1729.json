@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for SERVICE CORP INTERNATIONAL as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/26e8f8534d82071aed061b88a0431d22a0870435ea055c8d06ee9da75f17b7e7/1.response.md",
+    "CP-1": "requests/CP-1/95d31f1ac30c506300e1327304ab0ff528d03654a8850d4ad4f43ba11f578d11/1.response.md",
+    "CP-1A": "requests/CP-1A/f1b2dbb219c5d002a2f6a3b47c868fbc2b47e2178ccdb43b1a1ef0211856ec45/1.response.md",
+    "CP-2": "requests/CP-2/d47898424bdfeda52355e461ae3bd8b928034a4853f7c546430c6518e9eaafb0/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "f48501f5dc98dc4d5e91083ff988a9d94ce6034f408f2eee99c29b7e6eb1473d",
+  "delivery_sha256": "9058ecab8dc196b016ccfed37df9d0c6a0295bad283ff425bd7c5adbfa46ad51"
+}

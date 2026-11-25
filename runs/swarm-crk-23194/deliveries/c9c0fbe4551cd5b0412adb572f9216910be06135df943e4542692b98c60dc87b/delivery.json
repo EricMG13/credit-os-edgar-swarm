@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Comstock Resources Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "b25fbdcf8aa44f26c4bdad6e5bfae003c479d5ee736aae25e44c693a7549ffb4",
+    "CP-1.md": "fc243ffd47a4989fdd2efd8209d52c833e6b2ff0cbd1de3e940f5a4a5eafaedb",
+    "CP-1A.md": "4417440aa4cb1201ed2ed02da0ab25e347c8fcc22793405725e77c920fa17c56",
+    "CP-2.md": "959a54bc52b3a6fb4c41826cf14002961c524fe9352286c1d6f86209e7420be2",
+    "coverage.json": "636cd2b7555845311645ca9217b3f2cbac7a95f0c98ce147fc2037628a2d07af",
+    "view.json": "271a0454c5c4fd5ea624e48bce652f7142a013e14f46716a3d1c58ee96487049",
+    "report-view.json": "7c65f8fe0b3a3b68574b9177bcc70168490dee2d96010ec21768bcee80c92b20"
+  }
+}

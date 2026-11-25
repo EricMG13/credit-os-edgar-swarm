@@ -1,0 +1,6 @@
+{
+  "issues": [
+    "Use exactly these six H2 headings, once in this order: ## Request; ## Sources; ## Findings; ## Calculations; ## Gaps; ## Next module. All subsections must use ### or deeper, never ##. Received H2 headings: ('Request', 'Sources', 'Findings', 'Calculations', 'Next module')."
+  ],
+  "response_sha256": "ab5fa264642b4fa368af749856580a57b405f94970e901c6b4ca422976c1e476"
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Ati Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/425eb2573914a89864497a4ab4d0b51a473385acee564d9956b5edc7477f5e1a/1.response.md",
+    "CP-1": "requests/CP-1/2627ace7f8d0146382a34d957a78e230ed6e849765418d09d709dec9e6a22530/1.response.md",
+    "CP-1A": "requests/CP-1A/80cf58268df60a6d417bfe5da6492721301e120e2934b7a769b4fabdf5c3f24a/1.response.md",
+    "CP-2": "requests/CP-2/ea5a30528aa866071a96f856569ed4fb639cba0a08ed3e67bed92f51d01cf934/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "d6d61f102699ca93756c1d54dd99e9f929aa046fcbc14462d817adbe002ed6d4",
+  "delivery_sha256": "109d5c93f646c319733e2d493aa457c42e1c83255bc8844351119a6abed5f5bf"
+}

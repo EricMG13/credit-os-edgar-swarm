@@ -1,23 +1,26 @@
 # EDGAR swarm checkpoint for the Nov 18 issuer list
 
-This Nov 24 checkpoint combines the 16 source shards listed in `source-shards.json`.
-The ledger records 242 issuers, with 50 published, 192 pending and zero running.
-Offline verification recovered the retained Constellium and Thryv deliveries from shard 11.
-The 14 other interrupted claims returned to pending. Snap and PBF Holding retain their partial
-run folders. The library lists the 50 completed runs and their four handoffs per issuer.
+The ledger records 242 issuers: 127 published and 115 running. The controlling session holds the
+115 running claims while cloud shard sessions finish their analysis (`docs/swarm.md`,
+"Sub-session shards"). Those sessions never write this ledger.
 
-- `plan.json` is the resumable ledger. The source snapshots are pinned by commit.
-- `runs/` preserves the 52 retained run folders from the source shards.
-- `library/` contains the combined publication and downloads.
+- Nov 24: 50 published from the 16 source shards listed in `source-shards.json`.
+- Nov 25: the Mac run's crk-23194, cxt-25445, dbd-28823 and dlx-27996 passed the offline relaunch
+  check and were recorded. The 73 runs the Nov 24 cloud shards finished
+  (`claude/swarm-results-2026-11-24-s01` to `-s15`, tips of 2026-11-25 02:59 UTC) were copied
+  here and each passed the relaunch check twice (the first restores the filing copies) before
+  being recorded. The cloud copies of the four Mac issuers were not used.
+- Partial run folders kept: chdn, cmc-22444, pbf-holding-co-llc and snap-1564408.
 
-To restore the checkpoint in a fresh host session, use the exact `swarm-inputs-20261118`
-prerelease as described in the code repository's swarm runbook. Verify the release checksum
-and its input hashes. Extract its `inputs/` tree under the new run root. Copy this checkpoint's
-`runs/` into `ROOT/_engine/runs/` and its `plan.json` into `ROOT/swarm/plan.json`. Run the current
-`tools/swarm/prepare.py` against the restored inputs to refresh paths and check that the ledger
-reports 50 published and 192 pending. Use a dedicated worktree of this branch for batch saves.
+`plan.json` is the resumable ledger. `runs/` holds 131 run folders. `library/` holds the
+downloads; `library/data.js` (182 MiB) is over GitHub's 100 MiB limit and is left out. Rebuild it
+with `uv run python apps/issuer-library/update_library.py --workspace ROOT/_engine`.
 
-Run directories exclude raw filing copies and converted source text. The launcher restores
-those copies from the verified inputs when reopening a retained run. If the combined index
-outgrows GitHub's file limit, the workflow keeps the ledger, runs and downloads so the index
-can be rebuilt offline.
+To restore in a fresh host session, use the exact `swarm-inputs-20261118` prerelease as described
+in the code repository's swarm runbook. Verify the release checksum and its input hashes. Extract
+its `inputs/` tree under the new run root. Copy `runs/` into `ROOT/_engine/runs/` and `plan.json`
+into `ROOT/swarm/plan.json`, then run the current `tools/swarm/prepare.py` against the restored
+inputs to refresh paths.
+
+Run directories exclude raw filing copies and converted source text. The launcher restores those
+copies from the verified inputs when reopening a retained run.

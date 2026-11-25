@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Boyd Gaming Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "7c8473eaa37b75ce6dd6322228473b3ab21f4de6e4e4e8b5f7e68d8300c0a7cc",
+    "CP-1.md": "13e78cbc6b91762e869cd37ece1e1c677d16e338631a80c1e64aa44394483928",
+    "CP-1A.md": "fb028c050727f59300300df044b4f021c1723bb0e0a913c2d615bb01393e0c01",
+    "CP-2.md": "1a1b2c23fc7adeca6ea67650e394fcf1195f77fbff58f7d62c35e3eb16b9f3ff",
+    "coverage.json": "2ef782225cc8c5a415fc93868c462ccaed3d851d63f4d72fce10a9120692d34e",
+    "view.json": "6675a85bbeffeea1e38e5b88829a83e02ecbfc52250d9767de8870baf6f92e4c",
+    "report-view.json": "4cab1872184cade17d5589cb038c472cbd35a0a8843222b5c53f3eae516fa88b"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Lithia Motors Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/7d24773c52bedc49fe6da32bea93cd6b8e9d2a0979ffbda839985284dc64ee39/1.response.md",
+    "CP-1": "requests/CP-1/bd61a112d40aa12837f5aaf02bdf319b4211e17850b0be3cfa02ecea6198b67c/1.response.md",
+    "CP-1A": "requests/CP-1A/380f810f1095e52b7336c2b89d855c6e302f020a29d183093d63cee4bf13d7c8/1.response.md",
+    "CP-2": "requests/CP-2/0ac9c17183f8b106acfafd9a299d13b3afa11b9ffc9d74cde9b7db9c45d848dd/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "76c7a6a362de908f86a18659d719b6ff09e75d562e8a7e19e4d621f87e5446cc",
+  "delivery_sha256": "0ce34281920d10ab8ddb52f1b03e685b5be24fefce6fb95da3dc3fabfd64e73f"
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Hertz Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/c41688b330fa77ae0f1192eeb7d526c9e5ea68a3ea2ebeafc1faa854558a4508/1.response.md",
+    "CP-1": "requests/CP-1/b46a8cfb9868999958308d9fb02c3b85ecf8aa5043cb57c5fb5d61806c50d013/1.response.md",
+    "CP-1A": "requests/CP-1A/de2fbffcadcf01ca2968ee6e3f889e23143bb84576a6c171db82f3eb403bee5d/1.response.md",
+    "CP-2": "requests/CP-2/62f494689fd53f9f9b2233520c4e3bdb3e7e011dcf8a46c064ea23a803b3f066/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "a2b27c3280c61d33350ae41ecf79e948e5bccf18964293a6c4a0cfd663f19742",
+  "delivery_sha256": "86b7f14ca91f8159254ac9d37cfc8ebaf1d5f5dd17690469be777d4d350e04d0"
+}

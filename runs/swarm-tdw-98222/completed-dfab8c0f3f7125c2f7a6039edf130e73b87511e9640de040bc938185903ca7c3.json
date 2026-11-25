@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Tidewater Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/c6c6e70f79216e5ec1f16c0d5cde3d01acdf9a1517d8426539c8d20998a72b9a/1.response.md",
+    "CP-1": "requests/CP-1/dfca5637a630e4612d9eba91b1bd9f9b563a5b045318886c7a9cff18e41539e2/1.response.md",
+    "CP-1A": "requests/CP-1A/98168c66b21392a3f3546b4f7214b867959a86cc8fc41a6cc6089ee4cee76c48/1.response.md",
+    "CP-2": "requests/CP-2/cc9216172e17b310076aa24c9d885317027ae6d9298f3bfc8142f57cd4286de9/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "b3efbbfca6df0df27032437a654613ce60a26ddc93c72dc497812e038d1073cb",
+  "delivery_sha256": "602dd8505421a740cf754bc83a85076247483b618d3c7954300c9e33adb9ac99"
+}

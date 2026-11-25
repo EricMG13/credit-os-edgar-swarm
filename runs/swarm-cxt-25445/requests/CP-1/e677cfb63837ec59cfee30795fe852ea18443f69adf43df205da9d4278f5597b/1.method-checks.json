@@ -1,0 +1,81 @@
+{
+  "checks": [
+    {
+      "figure": "LTM: Revenue",
+      "module": "CP-1",
+      "reason": "`1,656.7m FY2025` is not a figure (value: '1,656.7m FY2025' is not a figure)",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Revenue",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "USD 1,854.9m",
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "LTM: EBITDA (Reported)",
+      "module": "CP-1",
+      "reason": "`353.3m FY2025` is not a figure (value: '353.3m FY2025' is not a figure)",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: EBITDA (Reported)",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "USD 373.4m",
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "LTM: Cash interest paid",
+      "module": "CP-1",
+      "reason": "`55.6m FY2025` is not a figure (value: '55.6m FY2025' is not a figure)",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Cash interest paid",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "USD 66.4m",
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "FFO / debt (2026-09-30)",
+      "module": "CP-1",
+      "reason": "T4.9 states no Numerator Value (missing, not zero)",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T4.9",
+      "row": "FFO / debt (2026-09-30)",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "Not calculable: FFO is not supplied",
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "all",
+      "module": "CP-1",
+      "reason": "its SKILL.md declares no completeness contract: SKILL.md has no `## Output profile` section",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "",
+      "row": "all",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    }
+  ],
+  "kind": "method-script-checks/1",
+  "module": "CP-1",
+  "response_sha256": "974224654bd3cbee2c6059cec8b4da2eb468e884212b28244b3d5c1ef086b654",
+  "scripts": {
+    "docs/reuse/selected-methods/scripts/completeness_check.py": "a9841a74e4f851fd565c5f3cabc831835c4bc305ea40c28446790f8165d56056",
+    "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py": "8f90ad05f99ffe09ea6f223cbd67827bb4ab36f4d243e12645eac628dbff9233"
+  }
+}

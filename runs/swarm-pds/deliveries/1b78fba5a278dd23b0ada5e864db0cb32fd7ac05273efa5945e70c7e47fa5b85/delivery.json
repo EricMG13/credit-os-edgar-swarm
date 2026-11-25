@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for PRECISION DRILLING Corp as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "9be738f2084e68411476825575a73029146cba1a1b3095a095bb83031669cd4c",
+    "CP-1.md": "73f4b0fdf17451b693d26577b651cb2294ed4088dee9a166bf75bad6a4ef7147",
+    "CP-1A.md": "335e2461485b8fd2be9eefd459a21d41ac8cb55a18a6d78ed23fd4d52d45fb25",
+    "CP-2.md": "75d10b6c5dd0aea8eef943505496e79c893bccea65aa1386de62a82555a99883",
+    "coverage.json": "3501fe8220cc1d8fc02361726060ccf6cc02aab182066faa1611d56f38235825",
+    "view.json": "4b0f359014f1a696fb8a6bd1db1ae121bd3a4f9a30ba8fffc0388efd03ed1313",
+    "report-view.json": "9a95e950f0b28ad08c34350fd540aca2fd0d83ea6e69e614aea37945a3f95e44"
+  }
+}

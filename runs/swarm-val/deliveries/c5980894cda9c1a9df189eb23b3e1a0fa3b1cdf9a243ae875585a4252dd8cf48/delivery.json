@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Valaris Ltd as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "1e761d9a63bbdc3b7947502d56fde61ed32ffc1cd5ab22ffd2de75b5fc7248e9",
+    "CP-1.md": "d029ac09759d646fecd8de3f2f3945417ea55b80d12f77a517e30cc08d652d8b",
+    "CP-1A.md": "b83a8d40bdeac3b2fb4539f19af1d08a3f17eded8eb49b5901b6ca0fd560e361",
+    "CP-2.md": "3481974d58b3d3aa40a91f10437a0d13a5f2152d551258b1f2b76fa64c155c25",
+    "coverage.json": "bb040d3b5fdc3885f850bc7db23ffcda0eefdc82cd4dc9fd11780044327fd20e",
+    "view.json": "56b11b0eaac8f267b41e015f0aa02661f28ca14817a1847be9f57039bd5fb60d",
+    "report-view.json": "8963548fca2aef02e5bbefcd96f410d115bc8a2e4a901a312b86cbef9ab676e1"
+  }
+}

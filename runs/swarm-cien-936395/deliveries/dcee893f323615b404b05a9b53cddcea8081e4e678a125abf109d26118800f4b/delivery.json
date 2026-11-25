@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Ciena Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "181ade4b9285d529a9c7dfffbcc936fbb28392c07897e44ca96b504fbaab9143",
+    "CP-1.md": "c186eaf66e3ee9834bf1a2ec090ae9322d296566e86c4edcae996ed326e6fa67",
+    "CP-1A.md": "d12a3727112c4c72fe481de4ade71e053b8c2a6afe385d138c7db385080d2a2b",
+    "CP-2.md": "baeebffed3bbde854c9badbe08164cf882e16c10842b0fc53d1f004d428d7991",
+    "coverage.json": "75ef5e7b95e76620b2aba8e4ce59edc76c2414a10a316c1714c4b28ed2db8f1a",
+    "view.json": "3843f07c85c1b6a04542cb50ce20624eb430d71572b8a13b4aedfddb76b85c28",
+    "report-view.json": "7f4222474a40dd994b6023f9ddf7d3b0b986e3a29f381ee7d8f285d2b9b34f00"
+  }
+}

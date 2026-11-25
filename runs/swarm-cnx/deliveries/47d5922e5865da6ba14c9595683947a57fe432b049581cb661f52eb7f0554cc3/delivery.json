@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for CNX Resources Corp as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "81ddf59b31695751047733a51ffba738295229f8c45996f750c682acd2712203",
+    "CP-1.md": "b595e19e9566c06574aeb455ac3d8a79d72ffa816f397fc3d5c3c42d0eb8a91a",
+    "CP-1A.md": "649e9d58e305e4b0a8f96e67bfd4e28670adba11b08cd8fb478ce800629d1989",
+    "CP-2.md": "0e341875a484edce85949eee9a4477f9403f67cc92de1b64b4dd9b2f3881b506",
+    "coverage.json": "a75fbf8e6465889d0d32d76d06512c33b5319431a41a317a370200a8d93e6b29",
+    "view.json": "4dbf0aa730077327f6a468155d65b6553078d3b161501abee04c6349c63f483c",
+    "report-view.json": "39ea7f8c8cdad55e0cf1b7a7323c50580a5e9ecaa7419a6ed0f25a71b789f4d4"
+  }
+}

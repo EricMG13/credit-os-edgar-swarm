@@ -1,0 +1,15 @@
+{
+  "issues": [
+    "List the current CP-1 handoff with its exact sha256.",
+    "Prose check 2 (no module code), line 97: \"CP-1\" in section \"Credit view\" \u2014 move it to the paragraph's Basis line.",
+    "Prose check 3 (no page locator), line 82: \"pages 4\" in section \"Credit view\" \u2014 name the document in words and move the page to the paragraph's Basis line.",
+    "Prose check 3 (no page locator), line 82: \"pages 3\" in section \"Credit view\" \u2014 name the document in words and move the page to the paragraph's Basis line.",
+    "Prose check 3 (no page locator), line 97: \"pages 4\" in section \"Credit view\" \u2014 name the document in words and move the page to the paragraph's Basis line.",
+    "Prose check 3 (no page locator), line 97: \"page 2\" in section \"Credit view\" \u2014 name the document in words and move the page to the paragraph's Basis line.",
+    "Prose check 10 (no pipeline wording), line 82: \"30_dlx_exhibit991110420268\" in section \"Credit view\" \u2014 write for the reader, not for the pipeline: name the document (for example the 2024 annual report), the module by its plain name or the analysis instead.",
+    "Prose check 10 (no pipeline wording), line 82: \"Q_2026\" in section \"Credit view\" \u2014 write for the reader, not for the pipeline: name the document (for example the 2024 annual report), the module by its plain name or the analysis instead.",
+    "Prose check 10 (no pipeline wording), line 97: \"Q_2026\" in section \"Credit view\" \u2014 write for the reader, not for the pipeline: name the document (for example the 2024 annual report), the module by its plain name or the analysis instead.",
+    "Prose check 10 (no pipeline wording), line 97: \"30_dlx_exhibit991110420268\" in section \"Credit view\" \u2014 write for the reader, not for the pipeline: name the document (for example the 2024 annual report), the module by its plain name or the analysis instead."
+  ],
+  "response_sha256": "ffeeaf5157f678f2e917cd0075fd07d0f3fd94659ae56ae44586360becfb7f2e"
+}

@@ -1,0 +1,6 @@
+{
+  "issues": [
+    "`### Chart data: EBITDA bridge`: every Amount must be a plain signed number (a gap is `Not supplied: <reason>` in every Amount, so no partial bridge is drawn)."
+  ],
+  "response_sha256": "807b8d445c5b96acffbb61d36ecd9205a54e386b2b5fcd3e5b4fcb9324c9def2"
+}

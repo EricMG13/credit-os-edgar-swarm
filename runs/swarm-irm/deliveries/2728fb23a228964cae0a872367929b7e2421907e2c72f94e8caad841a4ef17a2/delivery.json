@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for IRON MOUNTAIN INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "c3e5653a6207da59bd220f6b2a0e919c3a74cd02f78bfae5f272ce39a8846f61",
+    "CP-1.md": "938851c8cdf0a70b47149da020d2e985e94af39867880edf96e4a08f14b4f274",
+    "CP-1A.md": "a902fcbb4ff5a9c0d92b266f0010fc72416f2bfeb72a033703a51148d53bf4fb",
+    "CP-2.md": "a78684305b1111b249382aedfcfc9ee854d7dcdf87466f7423ad796988a83edf",
+    "coverage.json": "33e908e45e5dc7b21afd60881a61d34b1a1973a7f1a3baa5af98e6e35f0022c6",
+    "view.json": "e8767c56f1cc602f40b8913e6d2418a4ff4d35b67a4fbcafd694604d6bb853c5",
+    "report-view.json": "e647fa1fbfcce8c366ff6c88592a158c54eb302614046e2829d7c1c82a655e3c"
+  }
+}

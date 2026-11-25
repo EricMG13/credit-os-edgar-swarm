@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for PITNEY BOWES INC /DE/ as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "090bf861b27851454f2a06baa88ae5a35676b2466fdaee9dc52a64132283165e",
+    "CP-1.md": "ccf4d1d500f9ab95c15a9052be34781ed1b98fbdd8bdfaff441c7af129ca633a",
+    "CP-1A.md": "0e48b56835a7b8f7a0c50f107324da2ac3d818625bc38f1f6aba1b053bf42c9e",
+    "CP-2.md": "19e71706c86be688148f224575c1f36ee17c8988a44aff5ff64d70ffdd89e516",
+    "coverage.json": "839a11b7c6ce7d367f3ae49b81c7fa96b26b13709e4e6da80bd20a24f769454f",
+    "view.json": "0bb3084d26fce781b9caa18d89e2cc35dd270c6d7e74cb0c9c55b33b59880163",
+    "report-view.json": "060ccbdadc9004b1f2321695c20e70ae165a3fa6d43870d8ab0b1c6faac1a29b"
+  }
+}

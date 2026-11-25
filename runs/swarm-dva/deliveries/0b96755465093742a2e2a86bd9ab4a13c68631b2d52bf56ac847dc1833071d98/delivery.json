@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for DAVITA INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "06c234a75d769f7b838ecfadcba7d72d58e69a120ccb600d1a2593a5bd188b57",
+    "CP-1.md": "4e66dff59595ab9b75e2ff1aeeb1409538c1261d4887486fd7f94cecbbe8f282",
+    "CP-1A.md": "c43eed413d55805286641c412321855778060c338e389176f96bb21f82568d09",
+    "CP-2.md": "bb233206fb211fc19aeef5661281856ff84de1048be7926737e1e18087bbc2d2",
+    "coverage.json": "c645f75c7841a218da556d92fd0cd7acd3707bfc5f8a9368463633a7b2f19ac1",
+    "view.json": "38b8177fdbdd9cdbc76a9dfab04138eaead9ac9d6e1f3d7468ce8df2bf1e3229",
+    "report-view.json": "350c87d8c611ac0d82b80e1c426414c04bb4c64deea85e0dd5e127e07adef982"
+  }
+}

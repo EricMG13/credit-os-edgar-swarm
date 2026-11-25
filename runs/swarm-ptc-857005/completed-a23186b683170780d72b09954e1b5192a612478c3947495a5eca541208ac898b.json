@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Ptc Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/e5628b8cfec79ec051734479a6a792619e123e3a9a12767c3165d748d60f7649/1.response.md",
+    "CP-1": "requests/CP-1/151d945f2c5dae42010f065a18c01a9ad62eaf61c98426c1aca25286edd1fcd5/1.response.md",
+    "CP-1A": "requests/CP-1A/1d081bda9e7307cf81a75df13132fbdf5461ce6e5bfde8d769b25b3f7364b6c9/1.response.md",
+    "CP-2": "requests/CP-2/fcf2b86ca34ffbb2bed1b16507000510d3dbdb0a9d8e1978d7ab99178e9c9e2d/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "c5819944f0aba163e253bb5689c04348200cc24e95131618a809045ed3ce7ee5",
+  "delivery_sha256": "cb1f7ee21a1d39347cc777b38fbc4cfe06b97badd5013c3e349182f4dccbcd00"
+}

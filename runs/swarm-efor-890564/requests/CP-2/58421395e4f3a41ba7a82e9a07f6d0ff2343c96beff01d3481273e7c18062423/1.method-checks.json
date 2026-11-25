@@ -1,0 +1,94 @@
+{
+  "checks": [
+    {
+      "figure": "columns",
+      "module": "CP-2",
+      "reason": "every declared column is present",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.1",
+      "row": "columns",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "agreed",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "columns",
+      "module": "CP-2",
+      "reason": "every declared column is present",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.10",
+      "row": "columns",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "agreed",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "all",
+      "module": "CP-2",
+      "reason": "not required in this transport (register scope or routing rule)",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.11",
+      "row": "all",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "columns",
+      "module": "CP-2",
+      "reason": "every declared column is present",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.12",
+      "row": "columns",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "agreed",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "placeholders",
+      "module": "CP-2",
+      "reason": "not a full analytical run by the method's blocklist (an explicit gap is this transport's answer, so recorded only): row 1 `Threshold / Signal`: `Year-on-year revenue below prior year in any quarter, or Commercial consulting book-to-bill below 1.0; reference Q3 2026 revenue growth of 2.0% and book-to-bill of 0.9. Quantitative threshold not available in provided materials`; row 6 `Credit Impact`: `Refinancing at a weaker earnings base. Quantitative threshold not available in provided materials`; row 8 `Credit Impact`: `Lower backlog and Commercial revenue. Quantitative threshold not available in provided materials`",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.12",
+      "row": "placeholders",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "noted",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "all",
+      "module": "CP-2",
+      "reason": "not required in this transport (register scope or routing rule)",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T2.7",
+      "row": "all",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    }
+  ],
+  "kind": "method-script-checks/1",
+  "module": "CP-2",
+  "response_sha256": "ff60bf435a03d8c46eedd372c8aaa17f719a7715033871583e2f1e487599dd59",
+  "scripts": {
+    "docs/reuse/selected-methods/scripts/completeness_check.py": "a9841a74e4f851fd565c5f3cabc831835c4bc305ea40c28446790f8165d56056"
+  }
+}

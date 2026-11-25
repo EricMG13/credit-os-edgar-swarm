@@ -1,0 +1,7 @@
+{
+  "issues": [
+    "Invalid Markdown table header at line 56: the header has 4 cells and the separator row has 5 (\"| Logical source | Active content file | Representation | Use |\")",
+    "Invalid Markdown table header at line 69: the header has 4 cells and the separator row has 5 (\"| Source | Authority | Period / date | Coverage relevant to selected work |\")"
+  ],
+  "response_sha256": "cf61dd57ae8a898d97186e51ed264c04d0ec4ad3179ecd13bffe709fca656caa"
+}

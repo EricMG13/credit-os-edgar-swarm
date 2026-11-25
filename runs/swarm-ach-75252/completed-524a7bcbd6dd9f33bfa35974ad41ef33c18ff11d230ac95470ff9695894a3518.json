@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Accendra Health Inc/Va/ as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/410ee10f3919be9fef51d24e3477fd30544c229af5915c3b7021c84555c9a4ff/1.response.md",
+    "CP-1": "requests/CP-1/e8f70e3e7cb505d56df4e8b2879209c5c8eed720a96ee7afe7e0ccb92093daf6/1.response.md",
+    "CP-1A": "requests/CP-1A/35103ff35f7241280c704a832fc69564449e8b5387bc814fe31faea871f1f3f3/1.response.md",
+    "CP-2": "requests/CP-2/ab93e569561d381016c4812f63026d815542bf62ec40eb00700c9db54a9cf48c/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "2a9ed389c4f73741c39c4d32593d9f62c0defa283bb01e85f5fcbcb3e36e9621",
+  "delivery_sha256": "33d0ccba2475deb754c824fd645da215d001ce6b5cbdbc0c4c6bfc93542c227a"
+}

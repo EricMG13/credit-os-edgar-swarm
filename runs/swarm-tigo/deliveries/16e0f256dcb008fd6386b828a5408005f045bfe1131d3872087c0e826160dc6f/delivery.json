@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for MILLICOM INTERNATIONAL CELLULAR SA as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "feddc445c04747edb1b77c28793b2a836beb8190289c8edc129f0106940768a7",
+    "CP-1.md": "6e20ddd95bc1308c2bc09ebca0cc251a694b26f0523e71cc2390cf77e3992778",
+    "CP-1A.md": "688a1af3d16632aa056c26abe507cb50d17fd71014fb8f808af3fed67deef56b",
+    "CP-2.md": "c602ef3ece2b266a832bfe57c4ed61d86a095fb0a80d2a72a6199f604b43d778",
+    "coverage.json": "8441bcfc4ae5b07f374a6d8e2b73acb1c8eeb981fdfcd0295e227bb270d61766",
+    "view.json": "242f664a9d628bcd9267fe7d9609007243524d01d62e17faafeffdc2d19e41b5",
+    "report-view.json": "40a6e77173b40f0abce466552fbdb02c55de2098b488db2154c80fda37530baf"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Fmc Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/703458827bf731fd9b0216bf1c4d4c239721b01b339a097548102b83d4977def/1.response.md",
+    "CP-1": "requests/CP-1/a335db50736fcbabf2e593e5327da3d12e53fb2170942aac8518320953ac48e8/1.response.md",
+    "CP-1A": "requests/CP-1A/367a2576f53d431621e0c19509ae0213d1ef68c1376fec74d737ff1502245eb7/1.response.md",
+    "CP-2": "requests/CP-2/60cca15464a895f543579ab81b910e1dea618f7c0f5697121cc6e392ee288e54/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "8d4f69f088fe635dbc3d2c837f8996f2b3e3be03634dfde2bddf1135c8fb2efe",
+  "delivery_sha256": "5ea6764073206206a9c6dd6073d4b044ffb91889f84e8ddd623613b796e6c265"
+}

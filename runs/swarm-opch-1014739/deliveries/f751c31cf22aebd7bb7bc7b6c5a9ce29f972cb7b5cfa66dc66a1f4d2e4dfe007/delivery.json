@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Option Care Health, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "db92d4929c5ce69f47542b211bf123cbb3b95850dc17f499a075a8f31123686f",
+    "CP-1.md": "7725953372c1d07cce94514792bbc6bf72a17f117b3fc888d40372eebf3a8cf0",
+    "CP-1A.md": "1f9132504bb7bd8f427bfbc0bd4feaac09a6129b0cd8dd882d0396719c179d67",
+    "CP-2.md": "8241ba36387b00d483c661051b1f1a51b883f488a06e41b245cc226bf42cacc1",
+    "coverage.json": "11143fac4fb8447579c87151cd5a972f8cb74a26bd412fc093f31dccfdc76637",
+    "view.json": "b563c9cee7d1dd0c03165decdffe4bd682efe5ae9218f03eaaa31e5ee03f15e0",
+    "report-view.json": "9e45966ba21bf6e048a3cca4e09c6427a1ed7462292b1d85879828fd5be6d957"
+  }
+}
