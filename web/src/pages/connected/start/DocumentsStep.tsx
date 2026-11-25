@@ -159,6 +159,11 @@ export function DocumentFields({
           onDropFiles={view.addFiles}
           className="py-10"
         />
+        {view.selectionProblem && (
+          <p role="alert" className="text-small text-error-text">
+            {view.selectionProblem}
+          </p>
+        )}
         <input
           ref={folderInput}
           className="sr-only"

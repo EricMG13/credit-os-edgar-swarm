@@ -193,7 +193,10 @@ function useIntakeReviewState() {
   const [otherProblems, setOtherProblems] = useState<readonly string[]>([]);
   const [submitUncertain, setSubmitUncertain] = useState(false);
   const [lastReview, setLastReview] = useState<LastReview>();
+  const [selectionProblem, setSelectionProblem] = useState("");
   return {
+    selectionProblem,
+    setSelectionProblem,
     lastReview,
     setLastReview,
     review,
@@ -419,6 +422,8 @@ function IntakeForm({
     setSubmitUncertain,
     lastReview,
     setLastReview,
+    selectionProblem,
+    setSelectionProblem,
   } = reviewState;
   const { draftRef, reviewedRef, activeRef, focusedBeforeRef, submittedRef } = useIntakeSession();
   const { folderInput, moved, setMoved, changeNotice, setChangeNotice } = useIntakeViewState();
@@ -497,6 +502,7 @@ function IntakeForm({
         : null;
     setBusy(action);
     setError("");
+    setSelectionProblem("");
     setFieldError(undefined);
     setOtherProblems([]);
     try {
@@ -667,7 +673,9 @@ function IntakeForm({
       },
     );
     if (added.length > 0) setReading(undefined);
-    setError(problems.join(" "));
+    // The files refused at selection are said at the drop zone; any older notice is cleared.
+    setError("");
+    setSelectionProblem(problems.join(" "));
   }
 
   async function copyLatestWork() {
@@ -1261,6 +1269,7 @@ function IntakeForm({
     problem: fieldError,
     idNote: reviewIssuerNote(review, settledSlug),
     missing: missingAtLastReview(lastReview, run.pathway, issuerId),
+    selectionProblem,
     ...(lastReview?.pathway === run.pathway && lastReview.issuerId === issuerId
       ? { checked: lastReview }
       : {}),
