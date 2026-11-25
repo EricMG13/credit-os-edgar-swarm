@@ -151,9 +151,15 @@ function wordsOfIds(title: string) {
 }
 
 /** A dotted register code inside prose ("drawn from T4.18 rows"): machinery, not a word. */
-const DOTTED = String.raw`\b(?:TL|T|P)[A-Z0-9]{0,5}\.\d+(?:\.\d+)?\b`;
+/** A dotted token before a magnitude word ("P2.5 billion", "T1.5 m") is a number, not a code. */
+const DOTTED = String.raw`\b(?:TL|T|P)[A-Z0-9]{0,5}\.\d+(?:\.\d+)?\b(?!\s*(?:(?:billion|million|bn|m|turns|x)\b|%))`;
 const CODES = String.raw`${DOTTED}(?:\s*(?:,|and|&|/|or)\s*${DOTTED})*`;
-const INLINE_CODE = new RegExp(String.raw`\s?${DOTTED}`, "g");
+const ANY_CODE = new RegExp(DOTTED);
+/** A code that names the rows it qualifies ("drawn from T4.18 rows only") goes alone. */
+const LABEL_CODE = new RegExp(
+  String.raw`\s?${DOTTED}(?=\s+(?:rows?|lines?|entries|table|register|schedule)\b)`,
+  "g",
+);
 /** A code read as a possessive ("T4.18's annex") leaves no sentence: it marks the cut unclean. */
 const POSSESSIVE_CODE = new RegExp(String.raw`${DOTTED}['\u2019]s\b`, "g");
 /** A bracket that holds nothing but codes: it goes whole. */
@@ -165,25 +171,60 @@ const CITATION = new RegExp(
     String.raw`(?=\s*(?:[,;:.!?)]|$)|\s+(?:is|are|was|were|has|have|had|but|so|which|that)\b)`,
   "gi",
 );
-/** What a cut can leave that no sentence has: a dangling preposition, an empty bracket, a space
- * before punctuation, a stray possessive, or a sentence that opens on punctuation. */
+/** What a cut can leave that no sentence has: a dangling preposition or qualifier, a preposition
+ * before a conjunction or verb, an empty bracket, a space or a second mark after punctuation, a
+ * stray possessive, or a sentence that opens on punctuation. */
 const UNCLEAN =
-  /\b(?:in|per|see|from|of|by|at|to|and|or|with|on|under|cf)\s*(?=[,;:.!?)]|$)|\b(?:in|per|see|from|of|by|at|to|with|on|under)\s+(?:and|or|but|so|is|are|was|were)\b|\(\s*\)|\s[,;:.!?]|(?:^|\s)['\u2019]|^[,;:.]/i;
+  /\b(?:in|per|see|from|of|by|at|to|and|or|with|on|under|cf|not|no|nor|only|both|than|unlike|excluding|including|because|between)\s*(?=[,;:.!?)]|$)|\b(?:in|per|see|from|of|by|at|to|with|on|under)\s+(?:and|or|but|so|is|are|was|were)\b|\(\s*\)|\s[,;:.!?]|[,;:]\s*[.;:!?]|(?:^|\s)['\u2019]|^[,;:.]/gi;
+/** Whether the cut added a mark of a broken sentence the module's own text did not have. */
+const brokenBy = (cut: string, text: string) =>
+  [...cut.matchAll(UNCLEAN)].length > [...text.matchAll(UNCLEAN)].length;
+const IN_OR_FROM = /^[,\s]*(?:in|from)\b/i;
 
-/** Prose as the page draws it: without the source it cites and the register codes it names,
- * each with the words that cite it; empty where nothing readable, or no clean sentence, remains. */
+/** Whether a text names a dotted register code. */
+export const holdsCode = (text: string) => ANY_CODE.test(text);
+
+/** Prose as the page draws it: without the source it cites and the register codes it names, each
+ * with its bracket or the word that cites it. Empty, so the surface links to Evidence, where a
+ * code stands in the sentence itself, where more than one in/from citation is cut, or where the
+ * cut leaves no clean sentence. */
 export function proseWithoutMachinery(text: string) {
+  let located = 0;
   const codeless = text
     .replace(POSSESSIVE_CODE, "()")
     .replace(CODE_BRACKET, "")
-    .replace(CITATION, (_, lead?: string, trail?: string) => (lead || !trail ? "" : ","))
-    .replace(INLINE_CODE, "");
-  const cut = withoutReference(codeless)
+    .replace(CITATION, (match: string, lead?: string, trail?: string) => {
+      if (IN_OR_FROM.test(match)) located += 1;
+      return lead || !trail ? "" : ",";
+    })
+    .replace(LABEL_CODE, "");
+  if (located > 1 || holdsCode(codeless)) return "";
+  const { masked, unmask } = holdFigures(codeless);
+  const bare = withoutReference(masked)
     .replace(/\s{2,}/g, " ")
     .trim();
-  if (!cut || containsReference(cut) || (cut !== text.trim() && UNCLEAN.test(cut))) return "";
-  return readerText(cut);
+  if (!bare || containsReference(bare)) return "";
+  const cut = unmask(bare);
+  return brokenBy(cut, text) ? "" : readerText(cut);
 }
+
+/** A figure before a magnitude word ("P2.5 billion") reads to the page-citation test as a page. */
+const MAGNITUDE = /\b[A-Z]{1,2}\d+(?:\.\d+)?(?=\s*(?:(?:billion|million|bn|m|turns|x)\b|%))/g;
+const HELD = /\uE000(\d+)\uE001/g;
+
+/** The text with each such figure held aside behind a mark no reference test reads, and the way back. */
+function holdFigures(text: string) {
+  const figures: string[] = [];
+  const masked = text.replace(
+    MAGNITUDE,
+    (figure) => `\uE000${String(figures.push(figure) - 1)}\uE001`,
+  );
+  const unmask = (held: string) => held.replace(HELD, (_, at: string) => figures[Number(at)] ?? "");
+  return { masked, unmask };
+}
+
+/** Whether a text cites a source file or page, a figure before a magnitude word not counted. */
+export const citesSource = (text: string) => containsReference(holdFigures(text).masked);
 
 /** The title without its cited source: a parenthesised reference, then a trailing clause that
  * cites one, then any word that is one. */
@@ -204,10 +245,12 @@ function withoutReference(title: string) {
  * and the title's own words without the source it cites, which belongs in Evidence. */
 export function readableTitle(heading: string, untitled = "Untitled table") {
   const stripped = plainText(drawingTitle(heading)).replace(REGISTER_CODE, "");
-  // A title left after its code begins with a capital ("TDR.3 limitations" → "Limitations");
+  // A title left after its code begins with a capital ("TDR.3 limitations" → "Limitations") where
+  // its first word is all lower-case ("iPhone revenue" stays);
   // drawingTitle takes the code too, so the test reads the heading without its drawing prefix.
   const coded = wordsOfIds(
-    REGISTER_CODE.test(plainText(heading).replace(DRAWING_PREFIX, ""))
+    REGISTER_CODE.test(plainText(heading).replace(DRAWING_PREFIX, "")) &&
+      /^[a-z]+(?=\s|$)/.test(stripped)
       ? stripped.charAt(0).toUpperCase() + stripped.slice(1)
       : stripped,
   );
@@ -257,7 +300,7 @@ const BRIDGE_ROW = /^(?:opening|closing|starting|ending)\b/i;
 /** A row's own label, whole, that names a total; never a word inside another name ("Power &
  * Control"), nor "Net …" or "Less …", which begin names ("Net sales Americas", "Less than one year"). */
 const TOTAL_LABEL =
-  /^(?:total|subtotal|sum|group|consolidated|aggregate|combined)$|^(?:sub)?total\s|\s(?:sub)?total$/i;
+  /^(?:(?:sub-?)?totals?|sum|group|consolidated|aggregate|combined)$|^(?:sub-?)?totals?\s|\s(?:sub-?)?totals?$/i;
 /** The handoff's own mark that a row is no peer of the others. */
 const MARKED = /not additive|\baggregate control\b/i;
 
@@ -298,6 +341,8 @@ const label = (cell: string) =>
   cell
     .trim()
     .replace(/^\*\*(.*)\*\*$/, "$1")
+    // A footnote mark is the handoff's note on the row, not part of its name ("Total¹").
+    .replace(/[\u00b9\u00b2\u00b3\u2074-\u2079*\u2020\u2021]+$/u, "")
     .replace(/[:.]$/, "")
     .trim();
 const bold = (cell: string) => /^\*\*.+\*\*$/.test(cell.trim());
@@ -309,26 +354,29 @@ const rowName = (cells: string[], columns: number[]) =>
     .map((column) => cells[column] ?? "")
     .find((cell) => !isGap(cell) && amount(cell) === null) ?? "";
 
-/** The rows that are no peers of the others: a row whose name is, whole, a total word, a bold
- * row, a row the module marks as not additive or an aggregate control, and every row after such a
- * row, below the line. Never guessed from a word inside a name. */
+type Excluded = { name: string; reason: "total" | "marked" };
+
+/** The rows that are no peers of the others: a row whose name is, whole, a total word, or a bold
+ * row, and every row after the last of those, below the line; and a row the module marks as not
+ * additive or an aggregate control, which leaves out only itself. Rows between subtotals stay
+ * peers. Never guessed from a word inside a name. */
 function notPeers(table: Table, columns: number[]) {
-  const total = ({ cells }: Table["rows"][number]) => {
+  const named = ({ cells }: Table["rows"][number]) => {
     const name = rowName(cells, columns);
-    return (
-      TOTAL_LABEL.test(label(name)) ||
-      bold(name) ||
-      columns.some((column) => {
-        const cell = cells[column] ?? "";
-        return !isGap(cell) && MARKED.test(cell);
-      })
-    );
+    return TOTAL_LABEL.test(label(name)) || bold(name);
   };
-  const line = table.rows.findIndex(total);
+  const marked = ({ cells }: Table["rows"][number]) =>
+    columns.some((column) => {
+      const cell = cells[column] ?? "";
+      return !isGap(cell) && MARKED.test(cell);
+    });
+  const last = table.rows.map(named).lastIndexOf(true);
   return new Map(
-    table.rows
-      .filter((row, at) => line !== -1 && (at >= line || total(row)))
-      .map(({ line: at, cells }) => [at, label(rowName(cells, columns))]),
+    table.rows.flatMap((row, at): [number, Excluded][] => {
+      const name = label(rowName(row.cells, columns));
+      if (named(row) || (last !== -1 && at > last)) return [[row.line, { name, reason: "total" }]];
+      return marked(row) ? [[row.line, { name, reason: "marked" }]] : [];
+    }),
   );
 }
 
@@ -467,7 +515,25 @@ export function statedGap(cell: string) {
 }
 
 /** The labels of the rows a table's bars leave out, for the note under it; none without bars. */
-export function barExclusions(table: Table, title = "") {
+function excluded(table: Table, title: string) {
   if (!amountColumns(table, title).size) return [];
   return [...notPeers(table, displayColumns(table.headers, false, table.rows)).values()];
+}
+
+export function barExclusions(table: Table, title = "") {
+  return excluded(table, title).map(({ name }) => name);
+}
+
+const WHY = { total: "totals and rows below them", marked: "not additive" } as const;
+
+/** The line under a barred table: one scale per column, and the rows without a bar by reason. */
+export function scaleNote(table: Table, title = "") {
+  const left = excluded(table, title);
+  const parts = (["total", "marked"] as const).flatMap((reason) => {
+    const names = left
+      .filter((item) => item.reason === reason && item.name)
+      .map(({ name }) => readerText(name));
+    return names.length ? [` No bar (${WHY[reason]}): ${names.join(", ")}.`] : [];
+  });
+  return `Bars: one scale per column.${parts.join("")}`;
 }

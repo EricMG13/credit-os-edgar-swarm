@@ -1,13 +1,7 @@
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
-import {
-  blocked,
-  containsReference,
-  evidencePath,
-  type OutputEntry,
-  type Table,
-} from "../publishedReport";
+import { blocked, evidencePath, type OutputEntry, type Table } from "../publishedReport";
 import { namedRow, namedTable } from "../reportView";
-import { proseWithoutMachinery } from "./moduleRecords";
+import { citesSource, proseWithoutMachinery } from "./moduleRecords";
 import { PublishedSource } from "./PublishedTrace";
 
 /*
@@ -61,7 +55,7 @@ function sectorOf(entry: OutputEntry) {
   const registered =
     register && filled(register.row.cells[register.table.headers.indexOf("Sector")]);
   const sector = registered ?? profileCell(entry, "Sector and segments")?.text;
-  return sector === undefined || containsReference(sector)
+  return sector === undefined || citesSource(sector)
     ? undefined
     : proseWithoutMachinery(sector) || undefined;
 }
@@ -74,8 +68,7 @@ export function CompanyProfile({ entry, folder }: { entry: OutputEntry; folder: 
   if (!entry.selected) return <p className="pt-1 text-small text-text-tertiary">{ON_SELECTED}</p>;
   const described = describeCompany(entry);
   const sector = sectorOf(entry);
-  const shown =
-    described && !containsReference(described.text) && proseWithoutMachinery(described.text);
+  const shown = described && !citesSource(described.text) && proseWithoutMachinery(described.text);
   const referenced = described !== undefined && !shown;
   return (
     <div className="flex min-w-0 flex-col gap-1 pt-1">

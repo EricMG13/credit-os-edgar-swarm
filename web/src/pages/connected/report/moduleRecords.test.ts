@@ -10,6 +10,7 @@ import {
   moduleRecords,
   numericColumns,
   proseWithoutMachinery,
+  scaleNote,
   readableTitle,
   statedGap,
   unitColumn,
@@ -390,6 +391,9 @@ describe("readableTitle", () => {
     ["P2.1 Programme risks", "Programme risks"],
     ["TDR.3 limitations", "Limitations"],
     ["P3 - programme review", "Programme review"],
+    // Capitalised only where the first word is all lower-case.
+    ["T4.18 iPhone revenue", "iPhone revenue"],
+    ["TDR.3 eBay sales", "eBay sales"],
     // C4: a dotted code with a colon or dash straight after it.
     ["T4.18: Debt stack", "Debt stack"],
     ["T4.18—Debt stack", "Debt stack"],
@@ -461,6 +465,76 @@ describe("bars only for a column of like amounts", () => {
     expect(principal?.share("8702", control)).toBeNull();
     // Tranche J (3632) is the largest instrument once the control total is left out.
     expect(principal?.share("3632", rowLine(debt, "Tranche J"))).toBe(1);
+  });
+
+  it("D1: a marked row mid-table leaves only itself out; the rows after it keep their bars", () => {
+    const debt = fixtureTable(RELATIVE, "T4.18 Debt instruments");
+    const principal = amountColumns(debt).get(3);
+    const control = rowLine(debt, "Term loans — aggregate control, not additive");
+    const after = debt.rows.filter(
+      ({ line, cells }) => line > control && /^\d/.test(cells[3] ?? ""),
+    );
+    expect(after.length).toBeGreaterThan(5);
+    for (const { line, cells } of after)
+      expect(principal?.share(cells[3] ?? "", line)).not.toBeNull();
+    expect(barExclusions(debt)).toEqual(["Term loans — aggregate control, not additive"]);
+    expect(scaleNote(debt)).toBe(
+      "Bars: one scale per column. No bar (not additive): Term loans — aggregate control, not additive.",
+    );
+  });
+
+  it("D1: rows between subtotals stay peers on one scale; only rows after the last total go", () => {
+    const debt = table(
+      1,
+      ["Instrument", "Principal"],
+      [
+        ["Secured A", "500"],
+        ["Secured B", "1,000"],
+        ["Total secured", "1,500"],
+        ["Unsecured C", "2,000"],
+        ["Unsecured D", "700"],
+        ["Total unsecured", "2,700"],
+        ["Total debt", "4,200"],
+      ],
+    );
+    const bars = amountColumns(debt).get(1);
+    expect(bars?.share("500", 3)).toBe(0.25);
+    expect(bars?.share("1,000", 4)).toBe(0.5);
+    expect(bars?.share("1,500", 5)).toBeNull();
+    expect(bars?.share("2,000", 6)).toBe(1);
+    expect(bars?.share("700", 7)).toBe(0.35);
+    expect(bars?.share("2,700", 8)).toBeNull();
+    expect(bars?.share("4,200", 9)).toBeNull();
+    expect(scaleNote(debt)).toBe(
+      "Bars: one scale per column. No bar (totals and rows below them): Total secured, Total unsecured, Total debt.",
+    );
+  });
+
+  it.each([
+    ["Sub-total", "Sub-total"],
+    ["Totals", "Totals"],
+    ["Total\u00b9", "Total"],
+    ["Total*", "Total"],
+    ["Total\u2020", "Total"],
+    ["Subtotal\u00b2\u00b3", "Subtotal"],
+  ])("D2: draws %j as a total, named %j", (cell, name) => {
+    const debt = table(
+      1,
+      ["Instrument", "Principal"],
+      [
+        ["Revolver", "500"],
+        ["Term loan B", "1,000"],
+        [cell, "1,500"],
+        ["Senior notes", "2,100"],
+      ],
+    );
+    const bars = amountColumns(debt).get(1);
+    expect(bars?.share("500", 3)).toBe(0.5);
+    expect(bars?.share("1,000", 4)).toBe(1);
+    expect(bars?.share("1,500", 5)).toBeNull();
+    // Below the last total, so no peer either.
+    expect(bars?.share("2,100", 6)).toBeNull();
+    expect(barExclusions(debt)).toEqual([name, "Senior notes"]);
   });
 
   it.each([
@@ -814,6 +888,9 @@ describe("H1: bars leave out only rows the table itself marks as totals", () => 
     expect(bars?.share("(300)", 7)).toBeNull();
     expect(bars?.share("3,200", 8)).toBeNull();
     expect(barExclusions(ranked)).toEqual(["Total debt", "Cash", "Net debt"]);
+    expect(scaleNote(ranked)).toBe(
+      "Bars: one scale per column. No bar (totals and rows below them): Total debt, Cash, Net debt.",
+    );
   });
 
   it("C2: takes no gap mark in the rank column for a row's name", () => {
@@ -890,6 +967,9 @@ describe("C5: a cited register code goes with the words that govern it", () => {
     // A code that names the rows it qualifies goes alone; the sentence keeps its preposition.
     ["Relationships are drawn from T4.18 rows only.", "Relationships are drawn from rows only."],
     ["No series is drawn.", "No series is drawn."],
+    // D3: a dotted token before a magnitude word is a number.
+    ["P2.5 billion of notes mature in 2027.", "P2.5 billion of notes mature in 2027."],
+    ["T1.5m of fees were paid.", "T1.5m of fees were paid."],
   ])("draws %j as %j", (text, shown) => {
     expect(proseWithoutMachinery(text)).toBe(shown);
   });
@@ -898,6 +978,13 @@ describe("C5: a cited register code goes with the words that govern it", () => {
     "Detail is in (T4.18).",
     "The rates are those of T4.18's annex.",
     "Detail is in T4.18 and the notes.",
+    // D3: a code no citation governs, two in/from citations, or a dangling word left by the cut.
+    "Not supplied: T4.18 shows 6.5x; T4.19 shows 5.9x.",
+    "Leverage excluding T4.18 items is 5.0x.",
+    "Debt in T4.18 is gross; debt in T4.19 is net.",
+    "Not in T4.18",
+    "Per T4.18 the covenant is not met.",
+    "Not supplied: see T4.18.",
   ])("prints nothing where the cut leaves no clean sentence: %j", (text) => {
     expect(proseWithoutMachinery(text)).toBe("");
   });

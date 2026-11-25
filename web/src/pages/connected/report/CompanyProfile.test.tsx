@@ -163,3 +163,16 @@ it("C3: draws nothing on a blocked output: the frame states the blocked module",
   expect(screen.queryByText(/business description/i)).toBeNull();
   expect(screen.queryByText("Makes aircraft parts.")).toBeNull();
 });
+
+it.each([
+  ["Not supplied: T4.18 shows 6.5x; T4.19 shows 5.9x.", null],
+  ["Leverage excluding T4.18 items is 5.0x.", null],
+  ["Debt in T4.18 is gross; debt in T4.19 is net.", null],
+  ["Not in T4.18", null],
+  ["Per T4.18 the covenant is not met.", null],
+  ["P2.5 billion of notes mature in 2027.", "P2.5 billion of notes mature in 2027."],
+])("D3: draws the description %j as %j, else its place in Evidence", (written, shown) => {
+  draw([profile([["Business", written]])]);
+  expect(screen.getByText(shown ?? IN_EVIDENCE)).toBeVisible();
+  expect(document.body.textContent).not.toMatch(/T4\.1[89]/);
+});

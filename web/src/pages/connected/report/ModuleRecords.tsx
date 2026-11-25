@@ -19,11 +19,11 @@ import { traceKey } from "../reportView";
 import { GapNote, Tile } from "./overview/Tile";
 import {
   amountColumns,
-  barExclusions,
   compactColumns,
   moduleRecords,
   numericColumns,
   RECORD_KINDS,
+  scaleNote,
   statedGap,
   unitColumn,
   type AmountColumn,
@@ -88,11 +88,6 @@ function gapChip(_column: number, cell: string) {
 }
 
 /** The note under a barred table: one scale per column, and the rows it leaves out by name. */
-function scaleNote(left: readonly string[]) {
-  const named = left.filter(Boolean).map((name) => readerText(name));
-  return `Bars: one scale per column.${named.length ? ` No bar: ${named.join(", ")}.` : ""}`;
-}
-
 /** Columns that hold a source reference in every row that is not blank: each row would draw
  * only "In Evidence", so the column is left out and stated once under the table. */
 function referenceColumns(table: Table, columns: readonly number[]) {
@@ -288,9 +283,7 @@ function RecordDrawing({
         />
       )}
       {drawnBars.size > 0 && (
-        <p className="text-caption text-text-tertiary">
-          {scaleNote(barExclusions(record.table, record.title))}
-        </p>
+        <p className="text-caption text-text-tertiary">{scaleNote(record.table, record.title)}</p>
       )}
       {referenced.map((column) => (
         <p key={column} className="text-caption text-text-tertiary">

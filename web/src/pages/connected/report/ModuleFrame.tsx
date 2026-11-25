@@ -30,7 +30,7 @@ import {
   type BottomLineSource,
   type TextBlock,
 } from "./moduleFrame";
-import { proseWithoutMachinery, readableTitle } from "./moduleRecords";
+import { holdsCode, proseWithoutMachinery, readableTitle } from "./moduleRecords";
 
 const MISSING_PASSAGE = "Not established for this run. The module wrote no such passage.";
 
@@ -602,9 +602,10 @@ export function chartGaps(entry: OutputEntry): ChartGap[] {
 
 const GAP_WORD = /^(Not supplied|Not calculated|Not assessable|Not established|Withheld)\b/i;
 
-/** The module's reason as written; one that cites a source keeps its word and leaves the rest to Evidence. */
+/** The module's reason as written; one that cites a source or a register code keeps its word and
+ * leaves the rest to Evidence. */
 function gapReason(reason: string) {
-  if (!containsReference(reason)) return readerText(reason);
+  if (!containsReference(reason) && !holdsCode(reason)) return readerText(reason);
   // The module's own words without the clause that cites the source; the source is in Evidence.
   const kept = proseWithoutMachinery(reason).replace(/[\s,;:\u2013\u2014-]+$/, "");
   if (kept) return `${kept}.`.replace(/\.\.$/, ".");

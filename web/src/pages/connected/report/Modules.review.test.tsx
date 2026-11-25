@@ -641,3 +641,78 @@ it("C6: draws an entity the key does not state as a gap, like its other gap cell
   expect(within(header).getByText("Unit: Not supplied")).toHaveClass("border-dashed");
   expect(within(header).queryByText("Not stated:")).toBeNull();
 });
+
+// D3 on the two module-page surfaces: the module's words where they survive the cut whole, else
+// the surface's own way to Evidence. Expectations written by hand.
+const D3: [string, string | null, string][] = [
+  [
+    "Not supplied: T4.18 shows 6.5x; T4.19 shows 5.9x.",
+    null,
+    "Not supplied. The reason cites a source, shown in Evidence.",
+  ],
+  [
+    "Leverage excluding T4.18 items is 5.0x.",
+    null,
+    "Not established. The reason cites a source, shown in Evidence.",
+  ],
+  [
+    "Debt in T4.18 is gross; debt in T4.19 is net.",
+    null,
+    "Not established. The reason cites a source, shown in Evidence.",
+  ],
+  ["Not in T4.18", null, "Not established. The reason cites a source, shown in Evidence."],
+  [
+    "Per T4.18 the covenant is not met.",
+    null,
+    "Not established. The reason cites a source, shown in Evidence.",
+  ],
+  ["Not supplied: see T4.18.", null, "Not supplied. The reason cites a source, shown in Evidence."],
+  [
+    "P2.5 billion of notes mature in 2027.",
+    "P2.5 billion of notes mature in 2027.",
+    "P2.5 billion of notes mature in 2027.",
+  ],
+  [
+    "Relationships are drawn from T4.18 rows only.",
+    "Relationships are drawn from rows only.",
+    "Relationships are drawn from rows only.",
+  ],
+];
+
+it.each(D3)("D3: a drawing gap tile draws %j as %j", (written, shown) => {
+  page([findings, bottom, section("Map: transmission", 3, 20, [text(21, written)])]);
+  const tile = screen.getByRole("region", { name: "transmission" });
+  if (shown) expect(within(tile).getByText(shown)).toBeVisible();
+  else
+    expect(within(tile).getByRole("link", { name: "Read this passage in Evidence" })).toBeVisible();
+  expect(tile.textContent).not.toMatch(/T4\.1[89]/);
+});
+
+it.each(D3)("D3: a chart gap well draws %j, its reason as %j", (written, _, reason) => {
+  page([findings, bottom], {
+    extra: { chartGaps: [{ table: 31, title: "Leverage", gap: written }] },
+  });
+  const limits = screen.getByRole("region", { name: "Limitations of this module" });
+  expect(within(limits).getByText(reason)).toBeVisible();
+  expect(limits.textContent).not.toMatch(/T4\.1[89]/);
+});
+
+it("D: draws an entity cell holding only a dash as a gap named Entity", () => {
+  page(
+    [
+      findings,
+      bottom,
+      section("T4.2 Entity period key", 3, 10, [
+        table(
+          12,
+          ["Entity Name", "Fiscal Year End", "Reporting Currency"],
+          [["—", "September 30", "EUR"]],
+        ),
+      ]),
+    ],
+    { module: "CP-1", name: "Financial foundation" },
+  );
+  const header = screen.getByRole("region", { name: "Financial foundation" });
+  expect(within(header).getByText("Entity: —")).toHaveClass("border-dashed");
+  expect(within(header).queryByText("—:")).toBeNull();
+});

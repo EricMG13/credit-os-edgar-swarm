@@ -146,7 +146,8 @@ const BASIS_COLUMNS = [
 function basisPart(name: string, text: string | undefined): BasisPart | null {
   const cell = text?.trim() ?? "";
   if (!cell || containsReference(cell)) return null;
-  return { name, text: readerText(cell), gap: /^(?:not |withheld)/i.test(cell) };
+  // A cell holding only a dash states nothing: a gap like "Not stated" ("Entity: —").
+  return { name, text: readerText(cell), gap: /^(?:not |withheld)|^[\u2014\u2013-]$/i.test(cell) };
 }
 
 /** Currency and unit read as one part ("USD millions") where both are stated. */
