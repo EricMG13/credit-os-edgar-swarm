@@ -68,6 +68,7 @@ def snapshot(folder: Path) -> dict[str, str]:
         ("--balanced",),
         ("--high-modules", "CP-2"),
         ("--web-lookup", "on"),
+        ("--parallel-modules", "2"),
     ],
     ids=lambda e: e[0],
 )
@@ -411,3 +412,18 @@ def test_retain_from_that_is_not_a_finished_run_exits_2_with_one_line(tmp_path, 
     err = capsys.readouterr().err.strip().splitlines()
     assert len(err) == 1 and "--retain-from" in err[0]
     assert not (tmp_path / "second").exists()
+
+
+def test_a_retain_from_whose_manifest_is_not_a_plan_exits_2_with_one_line(tmp_path, capsys):
+    folder = tmp_path / "earlier"
+    folder.mkdir()
+    (folder / "workflow.json").write_text("{}")
+    assert main(layer1_argv(tmp_path, folder)) == 2
+    err = capsys.readouterr().err.strip().splitlines()
+    assert len(err) == 1 and "--retain-from" in err[0] and "workflow.json" in err[0]
+    assert not (tmp_path / "second").exists()
+
+
+def test_a_bad_parallel_variable_does_not_refuse_a_host_launch(tmp_path, capsys, monkeypatch):
+    monkeypatch.setenv("CREDIT_OS_PARALLEL_MODULES", "99")
+    assert main(host_argv(tmp_path, "--modules", "CP-1", "--prior", "none")) == ANSWER_NEEDED

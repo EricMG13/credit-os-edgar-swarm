@@ -31,6 +31,8 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
+from pydantic import ValidationError
+
 from deploy_vii.contracts import (
     DEACTIVATED_MESSAGE,
     DEACTIVATED_PATHWAYS,
@@ -112,7 +114,6 @@ from deploy_workflow.model.pricing import (
 from deploy_workflow.model.turn import MODEL_EFFORTS, dump_json
 from deploy_workflow.owners import cpos_forecast
 from deploy_workflow.owners.cpos import (
-    _require_live_route,
     MAX_MODULE_WIDTH,
     MODULE_WIDTH,
     WEB_SEARCH_GRANT,
@@ -120,6 +121,7 @@ from deploy_workflow.owners.cpos import (
     HandoffTask,
     RetainedHandoff,
     _recorded_delivery,
+    _require_live_route,
     run_handoffs,
     run_live_handoffs,
     web_search_ruled,
@@ -1093,6 +1095,11 @@ def _delivered_handoffs(earlier: Path) -> tuple[HandoffPlan, dict[str, bytes]]:
         receipt = _recorded_delivery(earlier)
     except OSError as error:
         raise LaunchRefused(f"--retain-from {earlier}: {error.strerror or error}") from error
+    except ValidationError as error:
+        raise LaunchRefused(
+            f"--retain-from {earlier}: workflow.json is not a valid plan "
+            f"({error.error_count()} problem(s))"
+        ) from error
     except ValueError as error:
         raise LaunchRefused(f"--retain-from {earlier}: {error}") from error
     if receipt is None:
@@ -2073,6 +2080,7 @@ def _refuse_host_options(args: argparse.Namespace) -> None:
             ("--high-modules", bool(args.high_modules)),
             ("--web-lookup", args.web_lookup != "default"),
             ("--web-host", bool(args.web_host)),
+            ("--parallel-modules", args.parallel_modules is not None),
         )
         if on
     ]
@@ -2289,7 +2297,7 @@ def main(argv: Sequence[str] | None = None, *, allow_live: bool = True) -> int:
     host = args.config == HOST
     try:
         _check_gates(args, allow_live=allow_live)
-        width = module_width(args.parallel_modules, os.environ)
+        width = 1 if host else module_width(args.parallel_modules, os.environ)
         if args.balanced and args.high_modules:
             raise LaunchRefused("--balanced and --high-modules cannot be combined")
         if args.balanced or args.high_modules:

@@ -1,6 +1,6 @@
-// EDGAR swarm, analysis only: one analyst per listed issuer takes it through CP-OS host mode to
-// CP-2. Nothing here writes the ledger, verifies or publishes; the controlling session does that
-// once every shard's analysis is in (docs/swarm.md, "Sub-session shards").
+// EDGAR swarm, analysis only: one analyst per listed issuer takes it through CP-OS host mode
+// (through CP-2, or the Layer 1 and CP-DR set). Nothing here writes the ledger, verifies or
+// publishes; the controlling session does that once every shard's analysis is in (docs/swarm.md, "Sub-session shards").
 //
 // Launch: Workflow({scriptPath: 'tools/swarm/analyse.workflow.js', args: {...}})
 //   args.root     root holding swarm/plan.json (from tools/swarm/prepare.py) and inputs/
@@ -11,7 +11,7 @@
 
 export const meta = {
   name: 'edgar-swarm-analyse',
-  description: 'Analysis only: one Sonnet analyst per listed issuer through CP-OS host mode to CP-2',
+  description: 'Analysis only: one Sonnet analyst per listed issuer through CP-OS host mode',
   phases: [{ title: 'Analyse', detail: 'one Sonnet analyst per issuer' }],
 }
 
@@ -35,20 +35,16 @@ const REPORT_SCHEMA = {
     exit_code: { type: 'integer' },
     attempts_by_module: {
       type: 'object',
-      properties: {
-        'CP-0': { type: 'integer' },
-        'CP-1': { type: 'integer' },
-        'CP-1A': { type: 'integer' },
-        'CP-2': { type: 'integer' },
-      },
-      required: ['CP-0', 'CP-1', 'CP-1A', 'CP-2'],
+      // Any module CP-OS asked: a retained module is left out, so no fixed list is required.
+      minProperties: 1,
+      additionalProperties: { type: 'integer', minimum: 1 },
     },
     notes: { type: 'string' },
   },
   required: ['issuer_id', 'exit_code', 'attempts_by_module', 'notes'],
 }
 
-const brief = (id) => `You answer CP-OS modules for one issuer (issuer id ${id}).
+const brief = (id) => `You answer the CP-OS modules asked of one issuer (issuer id ${id}).
 No provider is called; you are the model. Follow this order exactly.
 
 1. Read ${repo}/docs/templates/host-analyst-checklist.md and follow it for every answer.
@@ -63,7 +59,7 @@ No provider is called; you are the model. Follow this order exactly.
    ${root}/swarm/drafts/${id}/; do not read any other issuer's folder or draft; do not touch
    ${root}/swarm/${plan}. An accepted answer cannot be replaced.
 5. Reply with: issuer_id ${id}; exit_code, the last launcher exit code; attempts_by_module for
-   CP-0, CP-1, CP-1A and CP-2 (0 for a module never submitted); notes, one sentence on any defect
+   each module CP-OS asked you to answer (leave out a module it did not ask: a retained one); notes, one sentence on any defect
    you saw but could not fix.`
 
 phase('Analyse')

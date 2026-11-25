@@ -350,3 +350,14 @@ def test_a_named_plan_is_read_and_claimed_apart_from_plan_json(
     assert _statuses(other) == {"co0": "running"} and _statuses(plan) == {"co0": "pending"}
     assert ledger.main(["--root", str(tmp_path), "--plan", other.name, "status"]) == 0
     assert json.loads(capsys.readouterr().out.splitlines()[-1])["running"] == 1
+
+
+def test_done_accepts_the_modules_a_retained_run_asked_without_cp_0_cp_1_cp_1a(
+    tmp_path: Path,
+) -> None:
+    path = _plan(tmp_path, 1)
+    claimed = ledger.claim(tmp_path, 1)
+    asked = {"CP-1B": 1, "CP-DR": 1, "CP-1C": 1, "CP-1D": 1, "CP-2": 1}
+    ledger.done(tmp_path, "co0", asked, claim=claimed[0]["claims"])
+    issuer = json.loads(path.read_text())["issuers"][0]
+    assert issuer["status"] == "published" and issuer["attempts"] == 5

@@ -191,3 +191,52 @@ def test_layer1_dr_is_refused_with_plan_json_before_anything_is_written(inputs, 
     assert "plan.json" in capsys.readouterr().err
     assert not (inputs["root"] / "swarm").exists()
     assert prepare.main([*argv, *L1]) == 0
+
+
+def _publish(plan_file: Path, issuer_id: str) -> None:
+    plan = json.loads(plan_file.read_text(encoding="utf-8"))
+    for issuer in plan["issuers"]:
+        if issuer["issuer_id"] == issuer_id:
+            issuer["status"] = "published"
+    plan_file.write_text(json.dumps(plan), encoding="utf-8")
+
+
+def test_a_rerun_keeps_the_retain_decision_of_a_kept_entry(inputs):
+    run(inputs)
+    layer1(inputs)  # beta is not published in plan.json: no retain_from
+    swarm = inputs["root"] / "swarm"
+    _publish(swarm / "plan-layer1-dr.json", "beta")  # its eight-module run finished
+    _publish(swarm / "plan.json", "beta")  # a later through-cp2 pass publishes it
+    again = {i["issuer_id"]: i for i in layer1(inputs)["issuers"]}
+    assert again["beta"]["status"] == "published" and "retain_from" not in again["beta"]
+    # The reverse: a started run keeps its retain_from although plan.json no longer says published.
+    plan = json.loads((swarm / "plan.json").read_text(encoding="utf-8"))
+    plan["issuers"][0]["status"] = "pending"  # alph
+    (swarm / "plan.json").write_text(json.dumps(plan), encoding="utf-8")
+    _publish(swarm / "plan.json", "alph")
+    first = {i["issuer_id"]: i for i in layer1(inputs)["issuers"]}
+    assert "retain_from" in first["alph"]
+    folder = Path(first["alph"]["run_folder"])
+    folder.mkdir(parents=True)
+    (folder / "workflow.json").write_text("{}", encoding="utf-8")  # the launcher wrote a manifest
+    plan["issuers"][0]["status"] = "pending"
+    (swarm / "plan.json").write_text(json.dumps(plan), encoding="utf-8")
+    kept = {i["issuer_id"]: i for i in layer1(inputs)["issuers"]}
+    assert kept["alph"]["retain_from"] == first["alph"]["retain_from"]
+
+
+def test_a_pending_entry_without_a_manifest_decides_again_from_plan_json(inputs):
+    run(inputs)
+    layer1(inputs)
+    _publish(inputs["root"] / "swarm" / "plan.json", "alph")
+    assert "retain_from" in {i["issuer_id"]: i for i in layer1(inputs)["issuers"]}["alph"]
+
+
+def test_a_named_plan_of_the_other_set_is_refused_and_left_unchanged(inputs):
+    run(inputs)
+    layer1(inputs)
+    path = inputs["root"] / "swarm" / "plan-layer1-dr.json"
+    before = path.read_bytes()
+    with pytest.raises(ValueError, match="layer1-dr"):
+        prepare.prepare(**inputs, plan_name="plan-layer1-dr.json")
+    assert path.read_bytes() == before
