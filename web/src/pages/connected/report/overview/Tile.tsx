@@ -22,9 +22,38 @@ export function Bento({ children }: { children: ReactNode }) {
   return <div className="grid min-w-0 grid-cols-1 gap-4 lg:grid-cols-12">{children}</div>;
 }
 
+/** The small tile head: the 14 px (ramp `small`) heading and, at its right, a quiet caption and the trace. */
+function SmallHead({
+  as: Heading,
+  title,
+  kicker,
+  trace,
+}: {
+  as: "h2" | "h3";
+  title?: ReactNode;
+  kicker?: ReactNode;
+  trace?: ReactNode;
+}) {
+  return (
+    // The head never wraps: a long title wraps inside itself and the trace keeps its place.
+    <div className="flex items-start justify-between gap-3">
+      {title != null && (
+        <Heading className="flex min-w-0 items-center gap-2 text-small font-medium text-pretty text-text-primary">
+          {title}
+        </Heading>
+      )}
+      <div className="ml-auto flex flex-none items-center gap-3">
+        {kicker != null && <p className="text-caption text-text-tertiary">{kicker}</p>}
+        {trace}
+      </div>
+    </div>
+  );
+}
+
 /**
  * One bento tile: one fact with one visual. `title` states the reading; `kicker` is the small
- * label above it; `trace` is the tile's single source control.
+ * label above it; `trace` is the tile's single source control. `head="small"` draws the
+ * Overview's 14 px (`small`) head with the kicker as a quiet caption at its right; `as` sets its level.
  */
 export function Tile({
   span,
@@ -33,6 +62,8 @@ export function Tile({
   title,
   trace,
   tone = "plain",
+  head = "default",
+  as = "h3",
   className,
   children,
 }: {
@@ -43,9 +74,12 @@ export function Tile({
   title?: ReactNode;
   trace?: ReactNode;
   tone?: keyof typeof TONES;
+  head?: "default" | "small";
+  as?: "h2" | "h3";
   className?: string;
   children: ReactNode;
 }) {
+  const Heading = as;
   return (
     <section
       aria-label={label}
@@ -56,12 +90,17 @@ export function Tile({
         className,
       )}
     >
-      {(kicker ?? title ?? trace) != null && (
+      {head === "small" && (kicker ?? title ?? trace) != null && (
+        <SmallHead as={as} title={title} kicker={kicker} trace={trace} />
+      )}
+      {head === "default" && (kicker ?? title ?? trace) != null && (
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 flex-col gap-1">
             {kicker != null && <p className="text-caption text-text-tertiary">{kicker}</p>}
             {title != null && (
-              <h3 className="text-h4 font-medium text-balance text-text-primary">{title}</h3>
+              <Heading className="text-h4 font-medium text-balance text-text-primary">
+                {title}
+              </Heading>
             )}
           </div>
           {trace}

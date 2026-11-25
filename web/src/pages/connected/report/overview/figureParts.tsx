@@ -2,33 +2,8 @@ import type { ReactNode } from "react";
 import { cx } from "@/utils/cx";
 import { evidencePath, type OutputEntry } from "../../publishedReport";
 import { PublishedSource } from "../PublishedTrace";
+import { Reason } from "./reason";
 import { GapNote } from "./Tile";
-
-/** A figure tile's head: the reading, what it is measured in, and the tile's one source control. */
-export function FigureHead({
-  title,
-  basis,
-  legend,
-  source,
-}: {
-  title: string;
-  basis?: string;
-  legend?: ReactNode;
-  source?: ReactNode;
-}) {
-  return (
-    <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
-      <div className="flex min-w-0 flex-col gap-0.5">
-        <h3 className="text-small font-medium text-text-primary">{title}</h3>
-        {basis && <p className="text-caption font-normal text-text-tertiary">{basis}</p>}
-      </div>
-      <div className="flex flex-wrap items-center gap-4">
-        {legend}
-        {source}
-      </div>
-    </div>
-  );
-}
 
 export function FigureSourceControl({
   folder,
@@ -73,14 +48,24 @@ export function Key({ tone, children }: { tone: SwatchTone; children: ReactNode 
   );
 }
 
-/** The notes under a figure: what the handoff says about its own basis, set apart by a hairline. */
-export function FigureNotes({ notes }: { notes: readonly string[] }) {
+/**
+ * The notes under a figure: what the handoff says about its own basis, set apart by a hairline.
+ * Each is drawn through the reader rule; a note that cites a source becomes a link to Evidence
+ * (`href`), or says it is read there.
+ */
+export function FigureNotes({
+  notes,
+  href,
+}: {
+  notes: readonly string[];
+  href?: (line?: number) => string | undefined;
+}) {
   if (!notes.length) return null;
   return (
     <ul className="flex flex-col gap-1.5 border-t border-border-hairline pt-3 text-caption font-normal text-text-secondary">
       {notes.map((note) => (
         <li key={note} className="wrap-anywhere">
-          {note}
+          <Reason text={note} href={href?.()} />
         </li>
       ))}
     </ul>

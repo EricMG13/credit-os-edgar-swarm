@@ -131,6 +131,13 @@ For each branch as it reports done, the coordinator, on Fable:
    compares Overview, the CP-1 module page and Forecast with the mockups.
 4. Sends confirmed findings to the session; the session fixes and pushes; repeat until clean.
 
+### Reviewer model (owner, 2026-11-24)
+
+"Switch to opus xhigh reviewers after current tasks, and final fable review before merge."
+Review rounds launched from now on run on Opus at xhigh effort; rounds already running finish
+as launched. A branch that an Opus round passes then gets one final review on Fable before it
+is merged; findings from the final review go back to the session like any other.
+
 ## Phase 4: integration
 
 Merge order: S10, S2, S3, S4, S1, S5, S6, S7, S8, S9. After each merge: typecheck and the
@@ -165,3 +172,31 @@ this one lands; until then their places show the gap state.
 | Synthetic text hides layout problems with real sentences | Tests on the retained TransDigm fixtures; reviewers check long text and wrapping |
 | A session rebuilds on the old layout | Review item; the spec must list blocks from the screen map, not from the old page |
 | Start run regresses | Xhigh effort, request-body tests kept, reviewer assigned only to that |
+
+## Sessions (launched 2026-11-24)
+
+Coordinator: `session_01EB6ycPxKRUz49po8T6WMyS`, branch `claude/exciting-albattani-v1zoug`.
+
+| Id | Session | Branch |
+|---|---|---|
+| S1 | `session_01EB6ycR3VFeZsHNwPEvh7nA` | `claude/redesign-s1-overview` |
+| S2 | `session_01EB6ycQUfYfHKjGRF2tKdZ8` | `claude/redesign-s2-module-frame` |
+| S3 | `session_01EB6ycP8kCiqs7rNQv6KwEC` | `claude/redesign-s3-leads-a` |
+| S4 | `session_01EB6ycPBYdDv9SZUBw7Jo2j` | `claude/redesign-s4-leads-b` |
+| S5 | `session_01EB6ycQCe8XxBS2gjFigNsm` | `claude/redesign-s5-forecast` |
+| S6 | `session_01EB6ycRZbVLZBJgiCyqfuxa` | `claude/redesign-s6-changes-calendar` |
+| S7 | `session_01EB6ycTLXz8UohKUYgF2ewq` | `claude/redesign-s7-evidence` |
+| S8 | `session_01EB6ycP6P5K1yaBQpSXRf9K` | `claude/redesign-s8-library-coverage` |
+| S9 | `session_01EB6ycQcudmWEUV4y5xjsRW` | `claude/redesign-s9-start-run` |
+| S10 | `session_01EB6ycPNYufzfhRnFDveY6V` | `claude/redesign-s10-run` |
+
+## Rendered check and the three-round limit (owner, 2026-11-25)
+
+About half of the review findings were things only a real browser shows. Every session runs
+`docs/design/preview/check-render.cjs` (five widths, `--stress`, a fixture for its hard cases) and
+looks at the PNGs before it reports. Owner: "consider if more than 3 rounds and likely due no live
+browser. leave for local validation." So after a branch's third review round, findings that are
+rendering-only (layout, overlap, size, spacing) no longer hold the merge: they are listed in
+VERIFICATION.md under "For local validation" and the branch goes to the final review. Findings
+about what the page says (a false or hidden statement, a wrong count, a derived figure, machinery
+in page text, an unreachable control) still hold it at any round.

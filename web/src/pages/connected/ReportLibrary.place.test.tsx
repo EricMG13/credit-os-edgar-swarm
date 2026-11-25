@@ -11,7 +11,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
 import type { Snapshot } from "./publishedReport";
 import type * as Identity from "./report/IdentityBand";
-import { IdentityBand } from "./report/IdentityBand";
+import { reportIdentity } from "./report/IdentityBand";
 import type * as ReportView from "./reportView";
 import { buildReportView } from "./reportView";
 
@@ -22,7 +22,7 @@ vi.mock("./reportView", async (original) => {
 });
 vi.mock("./report/IdentityBand", async (original) => {
   const real = await original<typeof Identity>();
-  return { ...real, IdentityBand: vi.fn(real.IdentityBand) };
+  return { ...real, reportIdentity: vi.fn(real.reportIdentity) };
 });
 
 // The first render of the whole reader can pass the 1 s default on a busy machine.
@@ -124,12 +124,12 @@ describe("report redrawing", () => {
     open("#modules/CP-1");
     await screen.findByRole("heading", { level: 2, name: "Financial foundation" });
     const built = vi.mocked(buildReportView).mock.calls.length;
-    const drawn = vi.mocked(IdentityBand).mock.calls.length;
+    const drawn = vi.mocked(reportIdentity).mock.calls.length;
     fireEvent.click(screen.getByRole("switch", { name: "Highlight source icons" }));
     await waitFor(() => {
       expect(document.querySelector('[data-sources="on"]')).not.toBeNull();
     }, SETTLE);
-    expect(vi.mocked(IdentityBand).mock.calls).toHaveLength(drawn);
+    expect(vi.mocked(reportIdentity).mock.calls).toHaveLength(drawn);
     expect(vi.mocked(buildReportView).mock.calls).toHaveLength(built);
     fireEvent.click(screen.getByRole("switch", { name: "Highlight source icons" }));
   });
@@ -138,12 +138,12 @@ describe("report redrawing", () => {
     open("#modules/CP-1");
     await screen.findByRole("heading", { level: 2, name: "Financial foundation" });
     const built = vi.mocked(buildReportView).mock.calls.length;
-    const drawn = vi.mocked(IdentityBand).mock.calls.length;
+    const drawn = vi.mocked(reportIdentity).mock.calls.length;
     act(() => {
       window.location.hash = "#changes";
     });
     await waitFor(() => {
-      expect(vi.mocked(IdentityBand).mock.calls.length).toBeGreaterThan(drawn);
+      expect(vi.mocked(reportIdentity).mock.calls.length).toBeGreaterThan(drawn);
     }, SETTLE);
     expect(vi.mocked(buildReportView).mock.calls).toHaveLength(built);
   });
