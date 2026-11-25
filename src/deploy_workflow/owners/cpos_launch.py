@@ -31,8 +31,6 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
-from pydantic import ValidationError
-
 from deploy_vii.contracts import (
     DEACTIVATED_MESSAGE,
     DEACTIVATED_PATHWAYS,
@@ -114,14 +112,12 @@ from deploy_workflow.model.pricing import (
 from deploy_workflow.model.turn import MODEL_EFFORTS, dump_json
 from deploy_workflow.owners import cpos_forecast
 from deploy_workflow.owners.cpos import (
+    _require_live_route,
     MAX_MODULE_WIDTH,
     MODULE_WIDTH,
     WEB_SEARCH_GRANT,
     HandoffPlan,
     HandoffTask,
-    RetainedHandoff,
-    _recorded_delivery,
-    _require_live_route,
     run_handoffs,
     run_live_handoffs,
     web_search_ruled,
@@ -1042,7 +1038,6 @@ def prepare(  # noqa: PLR0913 - one keyword per run setting
     web_search: bool = False,
     workspace: Path | None = None,
     prior: str | None = None,
-    retain_from: Path | None = None,
 ) -> Prepared:
     """Check everything and write the manifest and instructions; a refusal writes nothing.
 
@@ -1058,10 +1053,7 @@ def prepare(  # noqa: PLR0913 - one keyword per run setting
 
     ``web_search`` is whether the run's ruling lists ``web-search``: the research module's calls
     then hold the search fee too, as the live loop holds it, so the cap is checked against the
-    same hold.
-
-    ``retain_from`` is an earlier finished run folder whose delivered handoffs are pinned instead of
-    asked again (`_retain_from`)."""
+    same hold."""
     if prior is not None and prior != NO_PRIOR and not _RUN_NAME.fullmatch(prior):
         raise LaunchRefused(f"--prior: {prior!r} is neither `none` nor the name of a run folder")
     modules = expand_modules(modules)
@@ -1078,80 +1070,12 @@ def prepare(  # noqa: PLR0913 - one keyword per run setting
             workspace=workspace,
             choice=prior,
             left_out=left_out,
-            retain_from=retain_from,
         )
 
     try:
         return attempt(None)
     except _Cp8DoesNotFit as unfit:
         return attempt(unfit.note)
-
-
-def _delivered_handoffs(earlier: Path) -> tuple[HandoffPlan, dict[str, bytes]]:
-    """The plan of a finished run folder and the handoff bytes its delivery holds, each checked
-    against the hash its receipt states."""
-    try:
-        plan_of_earlier = HandoffPlan.model_validate_json((earlier / "workflow.json").read_bytes())
-        receipt = _recorded_delivery(earlier)
-    except OSError as error:
-        raise LaunchRefused(f"--retain-from {earlier}: {error.strerror or error}") from error
-    except ValidationError as error:
-        raise LaunchRefused(
-            f"--retain-from {earlier}: workflow.json is not a valid plan "
-            f"({error.error_count()} problem(s))"
-        ) from error
-    except ValueError as error:
-        raise LaunchRefused(f"--retain-from {earlier}: {error}") from error
-    if receipt is None:
-        raise LaunchRefused(f"--retain-from {earlier}: the run is not finished (no delivery)")
-    files = json.loads(receipt.read_bytes())["files"]
-    found = {}
-    for module in plan_of_earlier.instructions:
-        raw = (receipt.parent / f"{module}.md").read_bytes() if f"{module}.md" in files else None
-        if raw is not None and _sha(raw) != files[f"{module}.md"]:
-            raise LaunchRefused(f"--retain-from {earlier}: {module}.md differs from its receipt")
-        if raw is not None:
-            found[module] = raw
-    return plan_of_earlier, found
-
-
-def _retain_from(
-    earlier: Path | None, ordered: Sequence[str]
-) -> tuple[dict[str, RetainedHandoff], dict[str, bytes]]:
-    """Nothing without ``earlier``; else the handoffs of the finished run folder ``earlier`` that
-    this run pins instead of asking: modules it delivered that are selected now, whose producers
-    here are the modules they had there, and whose producers are all retained too. The pins carry
-    the earlier run's source hashes and its producers' delivered hashes; CP-OS's own refusals
-    (`cpos_retained_sources`, `cpos_retained_stale`) decide whether they still fit."""
-    if earlier is None:
-        return {}, {}
-    if not (earlier / "workflow.json").is_file():
-        raise LaunchRefused(f"--retain-from {earlier}: not a run folder (no workflow.json)")
-    before, delivered = _delivered_handoffs(earlier)
-    old, new = dependencies(tuple(before.instructions)), dependencies(tuple(ordered))
-    keep = {m for m in ordered if m in delivered and old.get(m) == new[m]}
-    while dropped := {m for m in keep if not new[m] <= keep}:
-        keep -= dropped
-    if not keep:
-        raise LaunchRefused(f"--retain-from {earlier}: none of its handoffs fits this selection")
-    hashes = {name: pinned.sha256 for name, pinned in before.sources.items()}
-    kept = [m for m in ordered if m in keep]
-    pins = {
-        m: RetainedHandoff(
-            path=f"retained/{m}.md",
-            sha256=_sha(delivered[m]),
-            source_hashes=hashes,
-            upstream={p: _sha(delivered[p]) for p in new[m]},
-        )
-        for m in kept
-    }
-    return pins, {m: delivered[m] for m in kept}
-
-
-def _put_retained(directory: Path, contents: Mapping[str, bytes]) -> None:
-    """Copy the retained handoffs under the run folder, where their pins point."""
-    for module, content in contents.items():
-        _put(directory / "retained" / f"{module}.md", content)
 
 
 def _first_call_hold(
@@ -1184,7 +1108,6 @@ def _prepare(  # noqa: PLR0913, PLR0915 - `prepare`'s body: one keyword per sett
     workspace: Path | None,
     choice: str | None,
     left_out: str | None,
-    retain_from: Path | None = None,
 ) -> Prepared:
     """`prepare`; ``left_out`` is the note of a run planned without CP-8 because its call did not
     fit the cap."""
@@ -1301,7 +1224,6 @@ def _prepare(  # noqa: PLR0913, PLR0915 - `prepare`'s body: one keyword per sett
         if wanted and module in texts:
             head, mark, method = texts[module].partition(METHOD_MARK.encode())
             texts[module] = head + block.encode() + mark + method
-    retained, retained_bytes = _retain_from(retain_from, ordered)
     guesses, documents = _documents(covers)
     items = expectations(
         ordered,
@@ -1328,7 +1250,6 @@ def _prepare(  # noqa: PLR0913, PLR0915 - `prepare`'s body: one keyword per sett
             for m, text in texts.items()
         },
         layout=layout,
-        retained_handoffs=retained,
         publish_forecast=forecast,
         prior=prior,
         changes_note=note,
@@ -1361,7 +1282,6 @@ def _prepare(  # noqa: PLR0913, PLR0915 - `prepare`'s body: one keyword per sett
         _put(directory / relative, content)
     for module, text in texts.items():
         _put(directory / "instructions" / f"{module}.md", text)
-    _put_retained(directory, retained_bytes)
     _put(manifest, raw)
     return Prepared(
         directory,
@@ -2115,13 +2035,6 @@ def _parser() -> argparse.ArgumentParser:
         "`layer1-dr` = CP-0 CP-1 CP-1A CP-1B CP-DR CP-1C CP-1D CP-2; sets can be combined "
         "with more modules",
     )
-    parser.add_argument(
-        "--retain-from",
-        type=Path,
-        metavar="RUN_FOLDER",
-        help="a finished earlier run of this issuer: the modules it delivered that still fit this "
-        "selection are kept as they were, not asked again",
-    )
     parser.add_argument("--max-turns", type=int, default=32, help="model turns per module")
     parser.add_argument("--out", type=Path, help="run folder; default runs/<run id>")
     parser.add_argument("--live", action="store_true", help="make paid provider calls")
@@ -2317,7 +2230,6 @@ def main(argv: Sequence[str] | None = None, *, allow_live: bool = True) -> int:
             modules=args.modules,
             web_search=False if host else web_search_run(args.config, args.ruling),
             prior=args.prior,
-            retain_from=args.retain_from,
         )
         efforts = (
             _high_efforts(

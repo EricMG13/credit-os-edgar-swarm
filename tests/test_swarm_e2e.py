@@ -65,16 +65,14 @@ def ledger(root: Path, *argv: str) -> subprocess.CompletedProcess[str]:
     return uv(str(SWARM / "ledger.py"), "--root", str(root), *argv)
 
 
-def plan_of(root: Path, plan_name: str = "plan.json") -> dict[str, dict]:
-    plan = json.loads((root / "swarm" / plan_name).read_text())
+def plan_of(root: Path) -> dict[str, dict]:
+    plan = json.loads((root / "swarm/plan.json").read_text())
     return {i["issuer_id"]: i for i in plan["issuers"]}
 
 
-def launcher(
-    root: Path, issuer_id: str, plan_name: str = "plan.json"
-) -> subprocess.CompletedProcess[str]:
+def launcher(root: Path, issuer_id: str) -> subprocess.CompletedProcess[str]:
     """Run the command ``run_issuer.py`` prints for the issuer, exactly as an analyst would."""
-    printed = uv(str(SWARM / "run_issuer.py"), issuer_id, "--root", str(root), "--plan", plan_name)
+    printed = uv(str(SWARM / "run_issuer.py"), issuer_id, "--root", str(root))
     assert printed.returncode == 0, printed.stderr
     argv = shlex.split(printed.stdout)
     return subprocess.run(argv, cwd=REPO, capture_output=True, text=True, check=False)
@@ -93,20 +91,16 @@ def routes_for(issuer: dict, scratch: Path, modules: str = "through-cp2") -> lis
     )
 
 
-def drive(
-    root: Path, issuer_id: str, reject: dict[str, int], plan_name: str = "plan.json"
-) -> tuple[int, dict[str, int]]:
+def drive(root: Path, issuer_id: str, reject: dict[str, int]) -> tuple[int, dict[str, int]]:
     """Answer the launcher until it exits 0 or 1; ``reject[module]`` junk answers go first.
 
     Returns the final exit code and the launcher attempts each module took.
     """
-    issuer = plan_of(root, plan_name)[issuer_id]
-    routes = routes_for(
-        issuer, root / f"preview-{issuer_id}-{plan_name}", issuer.get("modules", "through-cp2")
-    )
+    issuer = plan_of(root)[issuer_id]
+    routes = routes_for(issuer, root / f"preview-{issuer_id}", issuer.get("modules", "through-cp2"))
     attempts: dict[str, int] = {}
     while True:
-        run = launcher(root, issuer_id, plan_name)
+        run = launcher(root, issuer_id)
         if run.returncode != ANSWER_NEEDED:
             return run.returncode, attempts
         asked, answer_path = asked_of(run.stdout)
@@ -244,43 +238,40 @@ def test_resubmissions_within_the_cap_publish_and_beyond_it_fail_then_second_pas
         shutil.rmtree(root, ignore_errors=True)
 
 
-def test_layer1_dr_plan_retains_a_published_issuer_and_asks_every_module_of_another():
+def test_layer1_dr_root_runs_all_eight_modules_and_the_library_lists_the_run():
     root = two_issuer_root()
-    second = "plan-layer1-dr.json"
     try:
-        claimed = json.loads(ledger(root, "next", "--n", "1").stdout)
-        code, attempts = drive(root, "alph", reject={})
-        assert code == 0
-        done = ledger(
-            root, "done", "alph", "--claim", str(claimed[0]["claims"]),
-            "--attempts-by-module", json.dumps(attempts),
-        )  # fmt: skip
-        assert done.returncode == 0, done.stderr
-        again = uv(
+        # A root of its own: replace the through-cp2 plan by the layer1-dr one (nothing run yet).
+        (root / "swarm/plan.json").unlink()
+        prepared = uv(
             str(SWARM / "prepare.py"),
             *("--approved", str(root / "in/approved.md"), "--packs", str(root / "in/packs")),
             *("--contexts", str(root / "in/contexts"), "--root", str(root)),
-            *("--set", "layer1-dr", "--plan", second),
+            *("--set", "layer1-dr"),
         )
-        assert again.returncode == 0, again.stderr
-        issuers = plan_of(root, second)
-        assert "retain_from" in issuers["alph"] and "retain_from" not in issuers["beta"]
-        # Written by hand: what each asks. alph keeps CP-0, CP-1 and CP-1A; beta asks all eight.
-        asked = {
-            "alph": ["CP-1B", "CP-DR", "CP-1C", "CP-1D", "CP-2"],
-            "beta": ["CP-0", "CP-1", "CP-1A", "CP-1B", "CP-DR", "CP-1C", "CP-1D", "CP-2"],
-        }
-        for issuer_id, modules in asked.items():
-            code, attempts = drive(root, issuer_id, {}, second)
-            assert code == 0 and list(attempts) == modules
-            folder = Path(issuers[issuer_id]["run_folder"])
-            before = files_under(folder)
-            check = uv(
-                *(str(SWARM / "run_issuer.py"), issuer_id, "--root", str(root)),
-                *("--plan", second, "verify"),
-            )
-            assert check.returncode == 0, check.stderr
-            assert files_under(folder) == before
-        assert plan_of(root)["alph"]["status"] == "published"  # plan.json is left alone.
+        assert prepared.returncode == 0, prepared.stderr
+        entry = plan_of(root)["alph"]
+        assert entry["modules"] == "layer1-dr" and entry["run_folder"].endswith("swarm-alph-l1")
+        code, attempts = drive(root, "alph", {})
+        # Written by hand: all eight modules of the set, each asked once.
+        assert code == 0
+        assert list(attempts) == [
+            "CP-0",
+            "CP-1",
+            "CP-1A",
+            "CP-1B",
+            "CP-DR",
+            "CP-1C",
+            "CP-1D",
+            "CP-2",
+        ]
+        folder = Path(entry["run_folder"])
+        before = files_under(folder)
+        check = uv(str(SWARM / "run_issuer.py"), "alph", "--root", str(root), "verify")
+        assert check.returncode == 0, check.stderr
+        assert files_under(folder) == before
+        library = build_library(root / "_engine", root / "_engine/library")
+        assert library.excluded == []
+        assert [r["id"] for r in library.runs] == ["swarm-alph-l1"]
     finally:
         shutil.rmtree(root, ignore_errors=True)

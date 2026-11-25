@@ -14,10 +14,9 @@ pack, no usable pack folder content, no context, an invalid context, an over-lon
 issuer ID is listed under ``skipped`` with the reason and registers nothing. A rerun keeps the
 ledger state for each unchanged issuer ID and refreshes its paths.
 
-``--set layer1-dr --plan plan-layer1-dr.json`` writes a second plan for the Layer 1 and CP-DR
-module set beside ``plan.json``: its run folders end ``-l1`` and an issuer that ``plan.json``
-records ``published`` names that run as ``retain_from``; a rerun keeps that decision once the entry
-is no longer pending or its run folder holds a manifest. The two sets never share a plan file.
+``--set layer1-dr`` plans the Layer 1 and CP-DR module set instead of ``through-cp2``: run folders
+end ``-l1`` and each entry names its set. Use it on a root of its own (the library lists one run
+per issuer there); a plan that already holds the other set is refused, nothing written.
 """
 
 from __future__ import annotations
@@ -36,7 +35,7 @@ from deploy_workflow.inbox import filing
 from deploy_workflow.inbox.layout import MAX_ISSUER_ID, ensure_layout
 
 SCHEMA = "swarm-plan/1"
-PLAN_NAME = "plan.json"  # A file under ``<root>/swarm/``.
+PLAN_RELATIVE = Path("swarm") / "plan.json"
 SETS = ("through-cp2", "layer1-dr")
 LAYER1_SUFFIX = "-l1"
 RUN_PREFIX = "swarm-"  # Run folders sit in ``<root>/_engine/runs``, where the library lists them.
@@ -140,53 +139,26 @@ def _load_plan(path: Path) -> dict[str, Any]:
     return plan
 
 
-def _published(path: Path) -> set[str]:
-    """The issuer IDs a plan file records ``published``; none when there is no such plan."""
-    return {i["issuer_id"] for i in _load_plan(path)["issuers"] if i.get("status") == "published"}
-
-
-def _refuse_mixed(earlier: list[dict[str, Any]], set_name: str, plan_name: str) -> None:
-    """Refuse a plan file that already holds entries of another set: the sets never share one."""
+def _refuse_mixed(earlier: list[dict[str, Any]], set_name: str) -> None:
+    """Refuse a plan that already holds entries of another set: one root plans one set."""
     if other := {i.get("modules", SETS[0]) for i in earlier} - {set_name}:
         raise ValueError(
-            f"{plan_name} holds {', '.join(sorted(other))} entries: "
-            f"--set {set_name} would mix two sets in one plan file"
+            f"{PLAN_RELATIVE} holds {', '.join(sorted(other))} entries: "
+            f"--set {set_name} would mix two sets on one root"
         )
 
 
-def _layer1(entry: dict[str, Any], set_name: str, published: bool, runs: Path) -> None:
-    """Make ``entry`` a layer1-dr entry: its own run folder and, for an issuer ``plan.json``
-    records published, the run to retain from. A started entry keeps its command: only a pending
-    one with no manifest decides again."""
-    issuer_id = entry["issuer_id"]
-    entry["modules"] = set_name
-    entry["run_folder"] = str(runs / f"{RUN_PREFIX}{issuer_id}{LAYER1_SUFFIX}")
-    if entry["status"] == "pending" and not (Path(entry["run_folder"]) / "workflow.json").is_file():
-        entry.pop("retain_from", None)
-        if published:
-            entry["retain_from"] = str(runs / f"{RUN_PREFIX}{issuer_id}")
-
-
-def prepare(  # noqa: PLR0913 -- the set and plan file are two more inputs beside the four paths.
-    approved: Path,
-    packs: Path,
-    contexts: Path,
-    root: Path,
-    *,
-    set_name: str = SETS[0],
-    plan_name: str = PLAN_NAME,
+def prepare(
+    approved: Path, packs: Path, contexts: Path, root: Path, *, set_name: str = SETS[0]
 ) -> dict[str, Any]:
     """Register the issuers and write the plan; return it."""
-    if set_name != SETS[0] and plan_name == PLAN_NAME:
-        raise ValueError(f"--set {set_name} needs its own --plan: {PLAN_NAME} holds {SETS[0]}")
     layout = ensure_layout(root)
     rows = parse_approved(approved.read_text(encoding="utf-8"))
     pack_dirs = _by_cik(packs, files=False)
     context_files = _by_cik(contexts, files=True)
-    plan_path = layout.root / "swarm" / plan_name
-    published = _published(layout.root / "swarm" / PLAN_NAME) if set_name != SETS[0] else set()
+    plan_path = layout.root / PLAN_RELATIVE
     earlier = _load_plan(plan_path)["issuers"]
-    _refuse_mixed(earlier, set_name, plan_name)
+    _refuse_mixed(earlier, set_name)
     previous = {i["cik"]: i for i in earlier}
     issuers: list[dict[str, Any]] = []
     skipped: list[dict[str, str]] = []
@@ -227,7 +199,8 @@ def prepare(  # noqa: PLR0913 -- the set and plan file are two more inputs besid
             "attempts": kept.get("attempts", 0),
         }
         if set_name != SETS[0]:
-            _layer1(entry, set_name, found["issuer_id"] in published, layout.runs)
+            entry["modules"] = set_name
+            entry["run_folder"] += LAYER1_SUFFIX
         issuers.append(entry)
 
     # Issuers in an earlier plan that this run no longer lists keep their record.
@@ -249,19 +222,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--contexts", type=Path, required=True)
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--set", dest="set_name", choices=SETS, default=SETS[0])
-    parser.add_argument(
-        "--plan", default=PLAN_NAME, help="plan file name under ROOT/swarm/ (default plan.json)"
-    )
     args = parser.parse_args(argv)
     try:
-        plan = prepare(
-            args.approved,
-            args.packs,
-            args.contexts,
-            args.root,
-            set_name=args.set_name,
-            plan_name=args.plan,
-        )
+        plan = prepare(args.approved, args.packs, args.contexts, args.root, set_name=args.set_name)
     except (ValueError, OSError) as error:
         print(f"prepare: {error}", file=sys.stderr)
         return 2

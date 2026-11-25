@@ -38,8 +38,7 @@ from typing import Any, cast
 from deploy_workflow import platform_io
 
 SCHEMA = "swarm-plan/1"
-PLAN_NAME = "plan.json"  # A file under ``<root>/swarm/``; ``--plan`` names another.
-PLAN_RELATIVE = Path("swarm") / PLAN_NAME
+PLAN_RELATIVE = Path("swarm") / "plan.json"
 STATUSES = ("pending", "running", "published", "failed", "skipped")
 MAX_RESUBMISSIONS = 2
 MAX_MODULE_ATTEMPTS = 1 + MAX_RESUBMISSIONS  # The first submission and the resubmissions.
@@ -57,8 +56,8 @@ def _utc_now() -> datetime:
     return datetime.now(UTC)
 
 
-def plan_path(root: Path, plan: str = PLAN_NAME) -> Path:
-    return root / PLAN_RELATIVE.parent / plan
+def plan_path(root: Path) -> Path:
+    return root / PLAN_RELATIVE
 
 
 @contextmanager
@@ -116,14 +115,13 @@ def _is_stale(issuer: dict[str, Any], now: datetime, stale_seconds: float) -> bo
     return (now - datetime.fromisoformat(claimed)).total_seconds() > stale_seconds
 
 
-def claim(  # noqa: PLR0913 -- the plan file is one more keyword beside the stale limit and clock.
+def claim(
     root: Path,
     n: int,
     *,
     failed: bool = False,
     stale_seconds: float = DEFAULT_STALE_SECONDS,
     clock: Clock = _utc_now,
-    plan_name: str = PLAN_NAME,
 ) -> list[dict[str, Any]]:
     """Mark up to ``n`` issuers ``running`` and return them.
 
@@ -133,7 +131,7 @@ def claim(  # noqa: PLR0913 -- the plan file is one more keyword beside the stal
     """
     if n < 1:
         raise LedgerError("--n must be at least 1")
-    path = plan_path(root, plan_name)
+    path = plan_path(root)
     with _locked(path):
         plan = _read(path)
         now = clock()
@@ -158,9 +156,8 @@ def _finish(  # noqa: PLR0913 -- claim generation and clock are required finish 
     changes: dict[str, Any],
     claim: int,
     clock: Clock,
-    plan_name: str,
 ) -> dict[str, Any]:
-    path = plan_path(root, plan_name)
+    path = plan_path(root)
     with _locked(path):
         plan = _read(path)
         issuer = _find(plan, issuer_id)
@@ -189,7 +186,6 @@ def done(  # noqa: PLR0913 -- run record and claim/exit evidence are separate in
     claim: int,
     exit_code: int = 0,
     clock: Clock = _utc_now,
-    plan_name: str = PLAN_NAME,
 ) -> dict[str, Any]:
     """Record the issuer ``published`` with the launcher attempts of each module."""
     if exit_code != 0:
@@ -216,7 +212,6 @@ def done(  # noqa: PLR0913 -- run record and claim/exit evidence are separate in
         },
         claim,
         clock,
-        plan_name,
     )
 
 
@@ -228,7 +223,6 @@ def fail(  # noqa: PLR0913 -- failure record keeps claim and execution evidence 
     claim: int,
     attempts_by_module: dict[str, int] | None = None,
     exit_code: int | None = None,
-    plan_name: str = PLAN_NAME,
 ) -> dict[str, Any]:
     """Record the issuer ``failed`` with its reason."""
     if not reason.strip():
@@ -237,25 +231,19 @@ def fail(  # noqa: PLR0913 -- failure record keeps claim and execution evidence 
     if attempts_by_module is not None:
         changes["attempts_by_module"] = attempts_by_module
         changes["attempts"] = sum(attempts_by_module.values())
-    return _finish(root, issuer_id, "failed", changes, claim, _utc_now, plan_name)
+    return _finish(root, issuer_id, "failed", changes, claim, _utc_now)
 
 
-def skip(  # noqa: PLR0913 -- the plan file is one more keyword beside claim and clock.
-    root: Path,
-    issuer_id: str,
-    reason: str,
-    *,
-    claim: int,
-    clock: Clock = _utc_now,
-    plan_name: str = PLAN_NAME,
+def skip(
+    root: Path, issuer_id: str, reason: str, *, claim: int, clock: Clock = _utc_now
 ) -> dict[str, Any]:
     """Record the issuer ``skipped`` with its reason."""
     if not reason.strip():
         raise LedgerError("a skip needs a reason")
-    return _finish(root, issuer_id, "skipped", {"reason": reason}, claim, clock, plan_name)
+    return _finish(root, issuer_id, "skipped", {"reason": reason}, claim, clock)
 
 
-def shard(root: Path, index: int, of: int, plan_name: str = PLAN_NAME) -> list[str]:
+def shard(root: Path, index: int, of: int) -> list[str]:
     """Keep shard ``index`` of ``of`` (a contiguous slice in plan order) and return its ids.
 
     Every ``pending`` or ``running`` issuer outside the slice becomes ``skipped`` with a reason
@@ -264,7 +252,7 @@ def shard(root: Path, index: int, of: int, plan_name: str = PLAN_NAME) -> list[s
     """
     if of < 1 or not 0 <= index < of:
         raise LedgerError(f"--index must be from 0 to {of - 1} and --of at least 1")
-    path = plan_path(root, plan_name)
+    path = plan_path(root)
     with _locked(path):
         plan = _read(path)
         issuers = plan["issuers"]
@@ -280,9 +268,9 @@ def shard(root: Path, index: int, of: int, plan_name: str = PLAN_NAME) -> list[s
     return [i["issuer_id"] for i in issuers[starts[index] : starts[index + 1]]]
 
 
-def status(root: Path, plan_name: str = PLAN_NAME) -> dict[str, int]:
+def status(root: Path) -> dict[str, int]:
     """The number of issuers in each status (every status listed, zero included)."""
-    plan = _read(plan_path(root, plan_name))
+    plan = _read(plan_path(root))
     counts = dict.fromkeys(STATUSES, 0)
     for issuer in plan["issuers"]:
         counts[issuer["status"]] += 1
@@ -305,9 +293,6 @@ def _attempts_arg(text: str) -> dict[str, int]:
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--root", type=Path, required=True)
-    parser.add_argument(
-        "--plan", default=PLAN_NAME, help="plan file name under ROOT/swarm/ (default plan.json)"
-    )
     sub = parser.add_subparsers(dest="command", required=True)
     nxt = sub.add_parser("next", help="claim pending issuers")
     nxt.add_argument("--n", type=int, required=True)
@@ -339,13 +324,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
         if args.command == "next":
-            taken = claim(
-                args.root,
-                args.n,
-                failed=args.failed,
-                stale_seconds=args.stale_seconds,
-                plan_name=args.plan,
-            )
+            taken = claim(args.root, args.n, failed=args.failed, stale_seconds=args.stale_seconds)
             keys = ("issuer_id", "name", "run_folder", "status", "claims")
             print(json.dumps([{k: i[k] for k in keys} for i in taken], indent=2))
         elif args.command == "done":
@@ -355,7 +334,6 @@ def main(argv: Sequence[str] | None = None) -> int:
                 _attempts_arg(args.attempts_by_module),
                 claim=args.claim,
                 exit_code=args.exit_code,
-                plan_name=args.plan,
             )
             print(f"{args.issuer_id}: published")
         elif args.command == "fail":
@@ -367,17 +345,16 @@ def main(argv: Sequence[str] | None = None) -> int:
                 claim=args.claim,
                 attempts_by_module=by_module,
                 exit_code=args.exit_code,
-                plan_name=args.plan,
             )
             print(f"{args.issuer_id}: failed")
         elif args.command == "skip":
-            skip(args.root, args.issuer_id, args.reason, claim=args.claim, plan_name=args.plan)
+            skip(args.root, args.issuer_id, args.reason, claim=args.claim)
             print(f"{args.issuer_id}: skipped")
         elif args.command == "shard":
-            kept = shard(args.root, args.index, args.of, args.plan)
-            print(json.dumps({"kept": kept, "status": status(args.root, args.plan)}, indent=2))
+            kept = shard(args.root, args.index, args.of)
+            print(json.dumps({"kept": kept, "status": status(args.root)}, indent=2))
         else:
-            print(json.dumps(status(args.root, args.plan)))
+            print(json.dumps(status(args.root)))
     except (LedgerError, OSError) as error:
         print(f"ledger: {error}", file=sys.stderr)
         return 2

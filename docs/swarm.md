@@ -56,23 +56,32 @@ passes only on exit 0 with no new file.
 
 ## Layer 1 and CP-DR extension
 
-A second plan takes every issuer through CP-0, CP-1, CP-1A, CP-1B, CP-DR, CP-1C, CP-1D and CP-2
-(the `layer1-dr` module set) in a new run folder, `swarm-<id>-l1`. The 187 published `through-cp2`
-runs, `plan.json` and its relaunch check stay as they are.
+Takes every issuer through CP-0, CP-1, CP-1A, CP-1B, CP-DR, CP-1C, CP-1D and CP-2 (the `layer1-dr`
+module set). Each run answers all eight modules itself: the library refuses a run that reuses
+modules of an earlier one, so nothing is retained from the `through-cp2` runs.
 
-1. Prepare it beside the first plan (same root; `--set layer1-dr` with `plan.json` is refused):
-   `uv run python tools/swarm/prepare.py --approved hy-list.md --packs packs/ --contexts contexts/ --root ROOT --set layer1-dr --plan plan-layer1-dr.json`
-2. Run the workflow with `args {root, repo, plan: 'plan-layer1-dr.json', ...}`; the ledger and
-   `run_issuer.py` take the same `--plan plan-layer1-dr.json`.
-3. `retain_from`: an issuer that `plan.json` records `published` gets
-   `"retain_from": ROOT/_engine/runs/swarm-<id>`, and its launcher command ends
-   `--retain-from <that run>`. CP-OS then keeps the earlier run's delivered CP-0, CP-1 and CP-1A
-   byte for byte (CP-2 is asked again: its instructions differ) and asks only CP-1B, CP-DR,
-   CP-1C, CP-1D and CP-2. It does so only if the earlier run's source hashes and the producers'
-   hashes still match, else it stops with `cpos_retained_sources` or `cpos_retained_stale` and
-   writes no request. An issuer not yet published has no `retain_from`: all eight modules are asked.
-4. Host mode makes no web lookup (`--config host` refuses `--web-lookup`), so CP-DR and CP-1C
-   state peer and web gaps instead of fetching them; no peer pack is supplied.
+It runs on a root of its own, so the library lists one run per issuer there (two runs of one issuer
+share a `run_id`, and the index would show the narrower one). Never copy the `through-cp2` run
+folders or `plan.json` into it:
+
+1. Restore only the verified inputs under a new root (as in "Sub-session shards", step 1).
+2. Prepare with the set: `uv run python tools/swarm/prepare.py --approved ROOT/inputs/hy-list.md --packs ROOT/inputs/packs/ --contexts ROOT/inputs/contexts/ --root ROOT --set layer1-dr`.
+   Run folders are `swarm-<id>-l1` and each plan entry carries `"modules": "layer1-dr"`; a plan that
+   already holds the other set is refused, nothing written.
+3. Run the workflow as before (`swarm.workflow.js` or `analyse.workflow.js`) and build the library there.
+
+`run_issuer.py` reads `modules` from the entry (an entry without it keeps the `through-cp2`
+command). Host mode makes no web lookup (`--config host` refuses `--web-lookup`), so CP-DR and CP-1C
+state peer and web gaps instead of fetching them; no peer pack is supplied. The analyst reports the
+attempts of each module it was asked.
+
+## Engine of the published runs
+
+The 187 published `through-cp2` runs were made before the merge of the PR #81 engine. Their
+relaunch check (`run_issuer.py ID verify`) passes only with the engine at `86ac1a2a`: the merged
+engine's CP-2 instructions and layout scope differ, so it refuses (writing nothing). The 55
+unfinished issuers and all extension runs use the merged engine. To fold pre-merge folders in or
+re-verify them, use a `git worktree` at `86ac1a2a`.
 
 ## Ledger statuses
 
