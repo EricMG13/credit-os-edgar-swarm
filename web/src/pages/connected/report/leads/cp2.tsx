@@ -9,7 +9,7 @@ import { figureShown, lastTwo, periodSeries, type Point, type Series } from "../
 import { Bento, Figure, Tile } from "../overview/Tile";
 import { Bullets, leadTests } from "./bullet";
 import { withDraws } from "./draws";
-import { GapCell, LeadGap, MapTile, Notes, Prose, statedGap, Trace, Beside } from "./parts";
+import { GapCell, LeadGap, MapTile, Notes, statedGap, Trace, Beside } from "./parts";
 import {
   IN_EVIDENCE,
   columnOf,
@@ -17,7 +17,6 @@ import {
   mapOf,
   readerCell,
   registerTable,
-  sectionParagraphs,
   drawsNothing,
 } from "./read";
 import type { LeadProps } from "./types";
@@ -181,44 +180,34 @@ function Column({
 
 const LEDGER = "Strengths and weaknesses";
 
-/** The ledger the page draws: the typed table, the materiality filter, the written passage, or none. */
+/** The ledger the page draws: the typed table, or the materiality filter, or none. */
 function ledgerOf(entry: LeadProps["entry"]) {
-  const ledger = typedLedger(entry) ?? filterLedger(entry);
-  if (ledger) return { ledger, paragraphs: [] };
-  const paragraphs = sectionParagraphs(entry, LEDGER);
-  return paragraphs.length ? { ledger: null, paragraphs } : null;
+  return typedLedger(entry) ?? filterLedger(entry) ?? null;
 }
 
 function LedgerTile({
-  read,
+  ledger,
   href,
 }: {
-  read: ReturnType<typeof ledgerOf>;
+  ledger: ReturnType<typeof ledgerOf>;
   href: (line?: number) => string;
 }) {
-  if (!read)
+  if (!ledger)
     return (
       <LeadGap
         span={12}
         label={LEDGER}
         title={LEDGER}
-        reason="This page could not read the strengths and weaknesses."
+        reason="This page could not read a ranked list of strengths and weaknesses."
       />
     );
-  const { ledger, paragraphs } = read;
   return (
     <Tile span={8} label={LEDGER} title={LEDGER} className="w-full self-start">
-      {ledger ? (
-        <>
-          <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2">
-            <Column title={ledger.words.strengths} items={ledger.strengths} href={href} />
-            <Column title={ledger.words.weaknesses} items={ledger.weaknesses} href={href} />
-          </div>
-          <Notes notes={ledger.unplaced.map((text) => `Not placed: ${text}`)} />
-        </>
-      ) : (
-        <Prose label={LEDGER} paragraphs={paragraphs} href={href} />
-      )}
+      <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2">
+        <Column title={ledger.words.strengths} items={ledger.strengths} href={href} />
+        <Column title={ledger.words.weaknesses} items={ledger.weaknesses} href={href} />
+      </div>
+      <Notes notes={ledger.unplaced.map((text) => `Not placed: ${text}`)} />
     </Tile>
   );
 }
@@ -457,7 +446,7 @@ export const CreditLead = withDraws(
     // only a gap is one full row, the measures and the map then beside each other.
     return (
       <Bento>
-        <LedgerTile read={read} href={href} />
+        <LedgerTile ledger={read} href={href} />
         {read ? (
           <Beside>
             {measures}

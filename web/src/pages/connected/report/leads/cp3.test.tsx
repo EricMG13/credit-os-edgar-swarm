@@ -171,18 +171,13 @@ it("withholds the bars when the run's date is before the last trades", () => {
   ).toBeInTheDocument();
 });
 
-it("draws the relative value and portfolio fit passages and the peer gap", () => {
+it("draws the peer gap and not the relative value or portfolio fit passages", () => {
   render(<SecurityLead {...props(handoff(REAL))} />);
-  expect(
-    within(screen.getByRole("region", { name: "Relative value" })).getByText(
-      "The secured notes trade above par while the subordinated notes trade below it.",
-    ),
-  ).toBeVisible();
-  expect(
-    within(screen.getByRole("region", { name: "Portfolio fit" })).getByText(
-      "No mandate was supplied, so fit cannot be tested.",
-    ),
-  ).toBeVisible();
+  // The module page frame draws those sections; the lead does not repeat them.
+  expect(document.body.textContent).not.toMatch(/trade above par while the subordinated/);
+  expect(document.body.textContent).not.toMatch(/No mandate was supplied/);
+  expect(screen.queryByRole("region", { name: "Relative value" })).toBeNull();
+  expect(screen.queryByRole("region", { name: "Portfolio fit" })).toBeNull();
   const peers = screen.getByRole("region", { name: "Relative value against peers" });
   // F1: the page says only what it checked.
   expect(within(peers).getByText("This page could not read peer levels.")).toBeVisible();
@@ -196,16 +191,6 @@ it("states each gap when the module wrote neither table nor passage", () => {
   // Review 4, Q8: the gap names the thing in the reader's words.
   expect(
     within(tile).getByText("This page could not read the instrument decisions."),
-  ).toBeVisible();
-  expect(
-    within(screen.getByRole("region", { name: "Relative value" })).getByText(
-      "This page could not read the relative value.",
-    ),
-  ).toBeVisible();
-  expect(
-    within(screen.getByRole("region", { name: "Portfolio fit" })).getByText(
-      "This page could not read the portfolio fit.",
-    ),
   ).toBeVisible();
   expect(document.body.textContent).not.toMatch(/passage|register|table\./);
   expect(document.body.textContent).not.toMatch(/The module wrote no/);
@@ -224,17 +209,10 @@ it("draws nothing for a blocked module", () => {
   expect(container).toBeEmptyDOMElement();
 });
 
-// Review 4, Q5: no hole beside the relative value: the shorter tiles stack in one column beside it.
-it("stacks the portfolio fit over the peer gap in one column beside the relative value", () => {
+it("gives the lone peer gap the full row", () => {
   render(<SecurityLead {...props(handoff(REAL))} />);
-  const value = screen.getByRole("region", { name: "Relative value" });
-  const fit = screen.getByRole("region", { name: "Portfolio fit" });
   const peers = screen.getByRole("region", { name: "Relative value against peers" });
-  expect(value).toHaveClass("lg:col-span-6");
-  const column = fit.parentElement;
-  expect(peers.parentElement).toBe(column);
-  expect(column).toHaveClass("lg:col-span-6", "self-start", "flex-col");
-  expect(column?.firstElementChild).toBe(fit);
+  expect(peers).toHaveClass("lg:col-span-12");
 });
 
 // Review 4, Q7: a last trade the page cannot read is the one gap cell, with its reason.

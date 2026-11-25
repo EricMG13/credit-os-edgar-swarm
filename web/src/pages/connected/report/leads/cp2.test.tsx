@@ -184,7 +184,7 @@ it("makes a ledger that is only a gap one full row, the measures and the map bes
   render(<CreditLead {...leadProps(credit([]))} />);
   const ledger = screen.getByRole("region", { name: "Strengths and weaknesses" });
   expect(
-    within(ledger).getByText("This page could not read the strengths and weaknesses."),
+    within(ledger).getByText("This page could not read a ranked list of strengths and weaknesses."),
   ).toBeVisible();
   expect(ledger.className).toMatch(/lg:col-span-12/);
   expect(screen.getByRole("region", { name: "Leverage, cover and headroom" }).className).toMatch(
@@ -226,7 +226,7 @@ it("falls back to the materiality filter by direction, keeping None supported in
   expect(within(weaknesses).getByText(/Dividends first/)).toBeVisible();
 });
 
-it("falls back to the written passage when no ledger table exists, with no build note", () => {
+it("draws a gap, not the written passage, when no ledger table exists", () => {
   const made = credit([
     {
       heading: "Strengths and weaknesses",
@@ -238,8 +238,11 @@ it("falls back to the written passage when no ledger table exists, with no build
     },
   ]);
   render(<CreditLead {...leadProps(made)} />);
-  expect(screen.getByText("The weaknesses are financial policy.")).toBeVisible();
-  expect(screen.queryByText(/A ranked ledger needs/)).toBeNull();
+  // The module page frame draws the written section; the lead does not repeat it.
+  expect(screen.queryByText("The weaknesses are financial policy.")).toBeNull();
+  expect(
+    screen.getByText("This page could not read a ranked list of strengths and weaknesses."),
+  ).toBeVisible();
   expect(screen.queryByRole("list", { name: "STRENGTH" })).toBeNull();
 });
 

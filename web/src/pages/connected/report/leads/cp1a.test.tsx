@@ -91,16 +91,16 @@ it("draws the operating model map as the module wrote it, with a table view", ()
   expect(within(tile).getByRole("cell", { name: "Synthetic B" })).toBeVisible();
 });
 
-it("states the revenue mix gap and draws ownership, the transaction passage and the history", () => {
+it("states the revenue mix gap and draws ownership and the history, never the transaction passage", () => {
   render(<BusinessLead {...leadProps(business({ op: OP, own: OWN, prose: true }))} />);
   const mix = screen.getByRole("region", { name: "Revenue mix" });
   expect(within(mix).getByText("This page could not read the revenue mix.")).toBeVisible();
   expect(within(mix).queryByText("0")).toBeNull();
   const own = screen.getByRole("list", { name: "Ownership and control" });
   expect(within(own).getByText("Synthetic C")).toBeVisible();
-  const deal = screen.getByRole("region", { name: "Transaction and new debt" });
-  expect(within(deal).getByText(/A USD 3,000 million secured issue/)).toBeVisible();
-  expect(deal.textContent).not.toMatch(/needs a typed table/);
+  // The module page frame draws the written section; the lead does not repeat it.
+  expect(screen.queryByRole("region", { name: "Transaction and new debt" })).toBeNull();
+  expect(document.body.textContent).not.toMatch(/A USD 3,000 million secured issue/);
   const dates = screen.getByRole("list", { name: "Issuer history" });
   expect(
     within(dates)
@@ -109,7 +109,7 @@ it("states the revenue mix gap and draws ownership, the transaction passage and 
   ).toEqual([expect.stringContaining("2025-03-31"), expect.stringContaining("2026")]);
 });
 
-it("says why when a map or the transaction passage is absent or gapped", () => {
+it("says why when a map is absent or gapped", () => {
   const gapped: OutputEntry = business({ own: OWN });
   gapped.output.maps = [
     { name: "ownership and control", table: 20, gap: null },
@@ -119,11 +119,6 @@ it("says why when a map or the transaction passage is absent or gapped", () => {
   expect(
     within(screen.getByRole("region", { name: "Operating model to credit" })).getByText(
       "No operating drivers stated",
-    ),
-  ).toBeVisible();
-  expect(
-    within(screen.getByRole("region", { name: "Transaction and new debt" })).getByText(
-      "This page could not read a transaction summary.",
     ),
   ).toBeVisible();
   cleanup();
@@ -254,7 +249,7 @@ it("draws the proof handoff's revenue mix cell by cell as written, a stated gap 
 });
 
 // Review 4, Q5: beside the tall operating-model map, the shorter tiles stack in one column.
-it("stacks the revenue mix, the transaction passage and the history beside the operating-model map", () => {
+it("stacks the revenue mix and the history beside the operating-model map", () => {
   render(<BusinessLead {...leadProps(business({ op: OP, own: OWN, prose: true }))} />);
   const map = screen.getByRole("region", { name: "Operating model to credit" });
   expect(map.className).toMatch(/lg:col-span-8/);
@@ -262,7 +257,6 @@ it("stacks the revenue mix, the transaction passage and the history beside the o
   expect(column).toHaveClass("lg:col-span-4", "flex-col");
   expect([...column.children].map((item) => item.getAttribute("aria-label"))).toEqual([
     "Revenue mix",
-    "Transaction and new debt",
     "Issuer history",
   ]);
   // A lone map after them takes the full row.

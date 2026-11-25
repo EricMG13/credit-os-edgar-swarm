@@ -1,5 +1,5 @@
 import { type Table } from "../../publishedReport";
-import { Bento, Tile } from "../overview/Tile";
+import { Bento } from "../overview/Tile";
 import { withDraws } from "./draws";
 import {
   GapCell,
@@ -8,36 +8,16 @@ import {
   LeadFigure,
   LeadGap,
   MapTile,
-  Prose,
   statedGap,
   Trace,
   type LeadTable,
   Beside,
 } from "./parts";
-import { eventsOf, leadHref, mapOf, sectionParagraphs, drawsNothing } from "./read";
+import { eventsOf, leadHref, mapOf, drawsNothing } from "./read";
 import type { LeadProps } from "./types";
 import { sourceOf, writtenTable } from "./written";
 
 type Href = (line?: number) => string;
-
-function Transaction({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
-  const label = "Transaction and new debt";
-  const paragraphs = sectionParagraphs(entry, "Transaction summary and new debt issues");
-  if (!paragraphs.length)
-    return (
-      <LeadGap
-        span={4}
-        label={label}
-        title={label}
-        reason="This page could not read a transaction summary."
-      />
-    );
-  return (
-    <Tile span={4} label={label} title={label} className="w-full self-start">
-      <Prose label={label} paragraphs={paragraphs} href={href} />
-    </Tile>
-  );
-}
 
 const MIX = "Revenue mix";
 
@@ -137,7 +117,6 @@ export const BusinessLead = withDraws(
     );
     const shorter = [
       <RevenueMix key="mix" entry={entry} href={href} />,
-      <Transaction key="deal" entry={entry} href={href} />,
       <LaneTile
         key="history"
         lane={eventsOf(entry, "Issuer history")}
