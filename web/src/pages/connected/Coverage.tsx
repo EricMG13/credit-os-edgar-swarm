@@ -8,7 +8,8 @@ import { Segmented } from "@/components/kit/Segmented";
 import { PageHeader } from "../../shell/PageHeader";
 import {
   commonPeriod,
-  factAt,
+  factsOf,
+  periodsOrdered,
   getCoverage,
   latestRun,
   matchIssuers,
@@ -116,12 +117,17 @@ function Dashboard({ data }: { data: Data }) {
     stated.find((item) => item === periodPick) ??
     (field ? commonPeriod(data, data.issuers, field.id) : null);
   // The bounds read one figure at one period in one reporting unit; Trend draws every period, so
-  // it applies none. An issuer stated in another unit is not compared, so a bound never removes it.
+  // it applies none. A bound removes an issuer only after comparing its figure: an issuer stated in
+  // another unit, or with no one figure for the period, was not compared and stays, listed apart.
   const [low, high] = [readBound(filters.min), readBound(filters.max)];
   const boundSet = view !== "trend" && (low.value !== null || high.value !== null);
+  // The unit is read from the issuers the other filters keep, not from every issuer.
+  const unbounded = matchIssuers(data, { ...filters, min: "", max: "" }, null).filter(
+    (issuer) => !onlyChosen || chosen.has(issuer.key),
+  );
   const bound =
     field && period !== null
-      ? boundUnit(data, data.issuers, field.id, period, unitPick)
+      ? boundUnit(data, unbounded, field.id, period, unitPick)
       : { units: [], unit: null, tied: [] };
   // Two units tie: the page does not choose, so the bound stays open until the reader does.
   const waiting = boundSet && bound.unit === null && bound.tied.length > 0;
@@ -132,32 +138,37 @@ function Dashboard({ data }: { data: Data }) {
     view === "trend" ? null : period,
     bound.unit,
   );
-  // A bound passes no issuer without a figure, but Rank lists those apart as not ranked, with the
-  // module's reason, so they stay in its list whatever the bounds are.
-  const unranked = (issuer: Issuer) => {
+  const shown = onlyChosen ? matched.filter((issuer) => chosen.has(issuer.key)) : matched;
+  /** What an issuer's newest run states for the chosen figure and period. */
+  const figureOf = (issuer: Issuer): { unit: string } | { reason: string } => {
     const run = latestRun(issuer);
-    return !run || !field || period === null || factAt(data, run.key, field.id, period)?.at == null;
+    const rows =
+      run && field && period !== null
+        ? factsOf(data, run.key, field.id).filter((fact) => fact.period === period)
+        : [];
+    const [one] = rows;
+    if (rows.length === 1 && one?.at != null) return { unit: one.unit ?? "" };
+    if (rows.length > 1) return { reason: "states it more than once" };
+    return { reason: rows.length === 1 ? "states a gap" : "states none" };
   };
-  const counted =
-    view === "rank" && (filters.min || filters.max)
-      ? matchIssuers(data, { ...filters, min: "", max: "" }, null).filter(
-          (issuer) => matched.includes(issuer) || unranked(issuer),
-        )
-      : matched;
-  const shown = onlyChosen ? counted.filter((issuer) => chosen.has(issuer.key)) : counted;
-  const statedUnit = (issuer: Issuer) => {
-    const run = latestRun(issuer);
-    const fact =
-      run && field && period !== null ? factAt(data, run.key, field.id, period) : undefined;
-    return fact?.at != null ? (fact.unit ?? "") : null;
+  const applied = boundSet && !waiting;
+  const comparedIn = (issuer: Issuer) => {
+    const found = figureOf(issuer);
+    return "unit" in found && found.unit === bound.unit;
   };
-  const notCompared =
-    boundSet && bound.unit !== null
-      ? shown.filter((issuer) => {
-          const unit = statedUnit(issuer);
-          return unit !== null && unit !== bound.unit;
-        })
-      : [];
+  const otherUnit = applied
+    ? shown.flatMap((issuer) => {
+        const found = figureOf(issuer);
+        return "unit" in found && found.unit !== bound.unit ? [{ issuer, unit: found.unit }] : [];
+      })
+    : [];
+  const noFigure = applied
+    ? shown.flatMap((issuer) => {
+        const found = figureOf(issuer);
+        return "reason" in found ? [{ issuer, reason: found.reason }] : [];
+      })
+    : [];
+  const compared = applied ? shown.filter(comparedIn).length : 0;
   const toggle = (key: string) => {
     setChosen((previous) => {
       const next = new Set(previous);
@@ -194,26 +205,43 @@ function Dashboard({ data }: { data: Data }) {
     },
   ].filter((item): item is NonNullable<typeof item> => Boolean(item));
   const phone = "max-[480px]:min-h-11";
+  const unordered = field !== undefined && !periodsOrdered(data, data.issuers, field.id);
   const periodChips = stated.length > 0 && (
-    <div role="group" aria-label="Period" className="flex flex-wrap items-center gap-2 pb-0.5">
-      <span aria-hidden="true" className="text-caption text-text-tertiary">
-        Period
-      </span>
-      {stated.map((item) => (
-        <Chip
-          key={item}
-          pressed={item === period}
-          onPress={() => {
-            setPeriodPick(item);
-          }}
-        >
-          {item}
-        </Chip>
-      ))}
-    </div>
+    <>
+      <div role="group" aria-label="Period" className="flex flex-wrap items-center gap-2 pb-0.5">
+        <span aria-hidden="true" className="text-caption text-text-tertiary">
+          Period
+        </span>
+        {stated.map((item) => (
+          <Chip
+            key={item}
+            pressed={item === period}
+            onPress={() => {
+              setPeriodPick(item);
+              setUnitPick(null);
+            }}
+          >
+            {item}
+          </Chip>
+        ))}
+      </div>
+      {unordered && (
+        <p className="w-full text-caption text-gap-text">
+          Periods are in the order the modules state them; this page could not put them in time
+          order.
+        </p>
+      )}
+    </>
   );
   const figureSelect = (
-    <Choice name="Figure" value={field?.id ?? ""} onChange={setFieldId}>
+    <Choice
+      name="Figure"
+      value={field?.id ?? ""}
+      onChange={(id) => {
+        setFieldId(id);
+        setUnitPick(null);
+      }}
+    >
       <FieldOptions fields={numbers} titles={titles} />
     </Choice>
   );
@@ -221,8 +249,8 @@ function Dashboard({ data }: { data: Data }) {
   const unitMark = (unit: string) =>
     unit === "x" || unit === "%" ? unit : unit === "" ? " (no unit stated)" : ` ${unit}`;
   const boundText =
-    field && period !== null && boundSet && bound.unit !== null
-      ? `${field.label} ${[low.value !== null && `≥ ${filters.min.trim()}${unitMark(bound.unit)}`, high.value !== null && `≤ ${filters.max.trim()}${unitMark(bound.unit)}`].filter(Boolean).join(", ")} · ${period}`
+    field && period !== null && applied
+      ? `${field.label} ${[low.value !== null && `≥ ${filters.min.trim()}${bound.unit === null ? "" : unitMark(bound.unit)}`, high.value !== null && `≤ ${filters.max.trim()}${bound.unit === null ? "" : unitMark(bound.unit)}`].filter(Boolean).join(", ")} · ${period}`
       : null;
   const badBounds = (["min", "max"] as const).filter((side) => readBound(filters[side]).invalid);
   const heading =
@@ -269,8 +297,15 @@ function Dashboard({ data }: { data: Data }) {
         </label>
         <p role="status" className="text-small text-text-secondary sm:ml-auto">
           {String(shown.length)} of {String(data.issuers.length)} issuers shown
-          {notCompared.length > 0 &&
-            ` · ${String(shown.length - notCompared.length)} compared, ${String(notCompared.length)} not compared (another unit)`}
+          {otherUnit.length + noFigure.length > 0 &&
+            [
+              ` · ${String(compared)} compared`,
+              otherUnit.length > 0 && `${String(otherUnit.length)} not compared (another unit)`,
+              noFigure.length > 0 &&
+                `${String(noFigure.length)} not compared (no figure for ${period ?? ""})`,
+            ]
+              .filter(Boolean)
+              .join(", ")}
         </p>
       </div>
 
@@ -544,13 +579,16 @@ function Dashboard({ data }: { data: Data }) {
         </section>
       )}
 
-      {notCompared.length > 0 && (
+      {otherUnit.length > 0 && (
         <p className="text-small text-gap-text">
           Not compared, stated in another unit:{" "}
-          {notCompared
-            .map((issuer) => `${issuer.name} (${unitName(statedUnit(issuer) ?? "")})`)
-            .join("; ")}
-          .
+          {otherUnit.map(({ issuer, unit }) => `${issuer.name} (${unitName(unit)})`).join("; ")}.
+        </p>
+      )}
+      {noFigure.length > 0 && (
+        <p className="text-small text-gap-text">
+          Not compared, no figure for {period}:{" "}
+          {noFigure.map(({ issuer, reason }) => `${issuer.name} (${reason})`).join("; ")}.
         </p>
       )}
       <h2 className="font-display text-h3 text-text-primary">{heading}</h2>

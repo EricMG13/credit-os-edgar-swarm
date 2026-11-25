@@ -605,3 +605,85 @@ it("keeps each figure's qualifying heading beside it when a period is stated twi
       .length,
   ).toBeGreaterThan(0);
 });
+
+describe("periods the page could not put in time order", () => {
+  const view = (rows: [string, number][]) => {
+    const base: Coverage = {
+      columns: [],
+      issuers: [
+        {
+          key: "a",
+          name: "Alpha",
+          sector: null,
+          runs: [
+            {
+              key: "a1",
+              folder: "a-run",
+              asOf: "2026-06-30",
+              pathway: null,
+              pathwayTitle: null,
+              cells: {},
+              other: [],
+            },
+          ],
+        },
+      ],
+      fields: [
+        { id: "f", module: "CP-1", group: "G", label: "Net debt", kind: "number", series: "period" },
+      ],
+      facts: rows.map(([period, at], line) => ({
+        field: "f",
+        issuer: "a",
+        run: "a1",
+        period,
+        row: null,
+        text: String(at),
+        at,
+        unit: "x",
+        line,
+        output: "a-run/CP-1.md",
+        sha256: "a".repeat(64),
+      })),
+    };
+    return render(<TrendView data={base} issuers={[...base.issuers]} field={base.fields[0]} />);
+  };
+  const SENTENCE =
+    "Periods are in the order the modules state them; this page could not put them in time order, so no line joins them.";
+
+  it("draws no line through rows written newest first, says so, and writes every figure with its period", () => {
+    const { container } = view([
+      ["LTM Jun 2026", 4.0],
+      ["LTM Dec 2025", 4.5],
+      ["LTM Jun 2025", 5.0],
+      ["LTM Dec 2024", 5.5],
+    ]);
+    expect(container.querySelectorAll("[data-segment]")).toHaveLength(0);
+    expect(screen.getByText(SENTENCE)).toBeVisible();
+    // Four dots stay, and every figure is written with its period, in the order stated.
+    expect(container.querySelectorAll("circle")).toHaveLength(4);
+    const written = container.querySelector("[data-written]");
+    expect(written?.textContent).toContain("LTM Dec 2024");
+    expect(written?.textContent).toContain("5.5x");
+    expect(written?.textContent).toContain("LTM Jun 2026");
+    expect(written?.textContent).not.toMatch(/latest/i);
+  });
+
+  it("draws lines and says nothing about order for periods it can order", () => {
+    const { container } = view([
+      ["FY2023", 4.0],
+      ["FY2024", 4.5],
+      ["FY2025", 5.0],
+    ]);
+    expect(container.querySelectorAll("[data-segment]").length).toBeGreaterThan(0);
+    expect(screen.queryByText(SENTENCE)).toBeNull();
+  });
+
+  it("treats mixed forms as unorderable", () => {
+    const { container } = view([
+      ["FY2025", 4.0],
+      ["LTM Dec 2025", 4.5],
+    ]);
+    expect(container.querySelectorAll("[data-segment]")).toHaveLength(0);
+    expect(screen.getByText(SENTENCE)).toBeVisible();
+  });
+});

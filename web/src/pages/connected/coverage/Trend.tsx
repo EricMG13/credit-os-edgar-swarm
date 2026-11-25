@@ -263,12 +263,15 @@ function Panel({
   scale,
   facts,
   unit,
+  ordered,
 }: {
   series: TrendSeries;
   periods: readonly string[];
   scale: Scale;
   facts: readonly Fact[];
   unit: string;
+  /** Whether the periods are in time order; when they are not, no line joins them. */
+  ordered: boolean;
 }) {
   const holder = useRef<HTMLDivElement>(null);
   const svg = useRef<SVGSVGElement>(null);
@@ -292,7 +295,7 @@ function Panel({
     const prev = dots[i - 1];
     const from = points[i - 1];
     const to = points[i];
-    return prev && from && to && prev.index === dot.index - 1 ? [[from, to]] : [];
+    return ordered && prev && from && to && prev.index === dot.index - 1 ? [[from, to]] : [];
   });
   const labelled = dots.length === 0 ? [] : [...new Set([0, dots.length - 1])];
   const texts = [
@@ -311,7 +314,8 @@ function Panel({
     dotRadius: DOT_R,
     labelled,
   });
-  const written = writtenDots(dots, layout.fallback);
+  // Unordered periods draw no line, so every figure is written with its period, as stated.
+  const written = ordered ? writtenDots(dots, layout.fallback) : [...dots];
   const at = (dot: Dot) => `${px(dot.index).toFixed(2)},${y(dot.fact.at).toFixed(2)}`;
   const zero = y(0).toFixed(2);
   const label = `${series.name}: ${dots.map((dot) => figure(dot.fact)).join(", ")} across ${dots
@@ -377,7 +381,7 @@ function Panel({
               strokeDasharray="2 2"
             />
           ))}
-          <Lines dots={dots} at={at} />
+          {ordered && <Lines dots={dots} at={at} />}
           {dots.map((dot) => (
             <circle
               key={dot.index}
@@ -400,7 +404,7 @@ function Panel({
           ))}
         </svg>
       </div>
-      <Written dots={written} list={dots.length < LINE_FROM} />
+      <Written dots={written} list={!ordered || dots.length < LINE_FROM} />
       {missing.length > 0 && (
         <ul
           aria-label="Periods not drawn"
@@ -580,7 +584,7 @@ export function TrendView({
   const factsFor = (run: CoverageRun) => factsOf(data, run.key, field.id);
   const unit =
     picked !== null && units.includes(picked) ? picked : openingUnit(units, issuers, factsFor);
-  const { periods, series } = trend(data, issuers, field.id, unit);
+  const { periods, ordered, series } = trend(data, issuers, field.id, unit);
   const scale = scaleOf(series);
   const drawn = new Set(series.map((item) => item.run.key));
   const absent = issuers.flatMap((issuer) => {
@@ -610,6 +614,12 @@ export function TrendView({
         issuers with different year ends sit at different points. Each figure is as its module
         wrote it; bases can differ between issuers.
       </p>
+      {!ordered && (
+        <p className="m-0 text-small text-gap-text">
+          Periods are in the order the modules state them; this page could not put them in time
+          order, so no line joins them.
+        </p>
+      )}
       {scale.low && scale.high && (
         <p className="m-0 text-small text-text-secondary">
           {`Same scale in every panel: lowest stated figure ${figure(scale.low)}, highest ${figure(scale.high)}`}
@@ -624,6 +634,7 @@ export function TrendView({
             scale={scale}
             facts={factsFor(item.run)}
             unit={unit}
+            ordered={ordered}
           />
         ))}
       </div>

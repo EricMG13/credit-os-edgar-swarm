@@ -269,16 +269,16 @@ test("a bound filters Modules and Find as well as Rank, shows as a removable chi
   fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
     target: { value: "5" },
   });
-  // Alpha states 4.6 and Beta states no figure: neither passes a bound of 5 on the Modules view.
-  expect(screen.getByText("0 of 2 issuers shown")).toBeInTheDocument();
+  // Alpha states 4.6x, below 5, and is removed. Beta states no figure: it was not compared, so it stays.
+  expect(
+    screen.getByText("1 of 2 issuers shown · 0 compared, 1 not compared (no figure for FY2025)"),
+  ).toBeInTheDocument();
   const chip = screen.getByRole("button", {
     name: "Remove filter Net debt / EBITDA ≥ 5x · FY2025",
   });
   fireEvent.click(screen.getByRole("button", { name: "Find" }));
-  expect(screen.getByText("0 of 2 issuers shown")).toBeInTheDocument();
   expect(chip).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Rank" }));
-  expect(screen.getByText("1 of 2 issuers shown")).toBeInTheDocument();
   expect(screen.getByText(/Not supplied: cash not stated/)).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: /Remove filter Net debt/ }));
   expect(screen.getByText("2 of 2 issuers shown")).toBeInTheDocument();
@@ -425,5 +425,210 @@ test("the bound chip names 'no unit stated' when that is the unit compared", asy
   });
   expect(
     screen.getByRole("button", { name: /Remove filter .*≥ 0 \(no unit stated\) · FY2025/ }),
+  ).toBeVisible();
+});
+
+type Row = { key: string; at: number | null; unit?: string; period?: string; sector?: string };
+
+/** One figure per row; a row with `at: null` is a stated gap. Issuers appear in first-row order. */
+function figures(rows: Row[]): Data {
+  const keys = [...new Set(rows.map((row) => row.key))];
+  return {
+    columns: data.columns,
+    issuers: keys.map((key) => ({
+      key,
+      name: key.toUpperCase(),
+      sector: rows.find((row) => row.key === key)?.sector ?? null,
+      runs: [
+        {
+          key: `${key}1`,
+          folder: `${key}-run`,
+          asOf: "2026-03-31",
+          pathway: null,
+          pathwayTitle: null,
+          cells: {},
+          other: [],
+        },
+      ],
+    })),
+    fields: [
+      {
+        id: "lev",
+        module: "CP-1",
+        group: "Leverage",
+        label: "Net debt / EBITDA",
+        kind: "number",
+        series: "period",
+      },
+    ],
+    facts: rows.map((row, line) => ({
+      field: "lev",
+      issuer: row.key,
+      run: `${row.key}1`,
+      period: row.period ?? "FY2025",
+      row: null,
+      text: row.at === null ? "Not supplied: none stated" : String(row.at),
+      at: row.at,
+      ...(row.unit === undefined ? {} : { unit: row.unit }),
+      ...(row.at === null ? { gap: true } : {}),
+      basis: "Reported.",
+      line,
+      output: `${row.key}-run/CP-1.md`,
+      sha256: SHA,
+    })),
+  };
+}
+
+const NINE: Row[] = [
+  { key: "a", at: 6, unit: "x" },
+  { key: "b", at: 7, unit: "x" },
+  { key: "c", at: 8, unit: "x" },
+  { key: "d", at: 9, unit: "x" },
+  { key: "e", at: 10, unit: "x" },
+  { key: "f", at: 2, unit: "x" },
+  { key: "g", at: 40, unit: "%" },
+  { key: "h", at: 3, unit: "%" },
+  { key: "i", at: 5, unit: "x", period: "FY2024" },
+];
+
+async function bounded(rows: Row[], bounds: { min?: string; max?: string }, view = "rank") {
+  answer(figures(rows));
+  window.history.replaceState(null, "", `/coverage?view=${view}`);
+  render(<Coverage />);
+  for (const [side, value] of Object.entries(bounds)) {
+    fireEvent.change(
+      await screen.findByRole("textbox", { name: side === "min" ? /At least/ : /At most/ }),
+      {
+        target: { value },
+      },
+    );
+  }
+}
+
+test("the count line counts only issuers actually compared, and names each way one was not", async () => {
+  await bounded(NINE, { min: "5" });
+  // 6, 7, 8, 9, 10 pass; 2 fails and goes; 40% and 3% are in another unit; I states FY2024 only.
+  expect(
+    screen.getByText(
+      "8 of 9 issuers shown · 5 compared, 2 not compared (another unit), 1 not compared (no figure for FY2025)",
+    ),
+  ).toBeInTheDocument();
+});
+
+test("a lower and an upper bound count the issuers that fall between them", async () => {
+  await bounded(NINE, { min: "5", max: "8" });
+  expect(
+    screen.getByText(
+      "6 of 9 issuers shown · 3 compared, 2 not compared (another unit), 1 not compared (no figure for FY2025)",
+    ),
+  ).toBeInTheDocument();
+});
+
+const FIVE: Row[] = [
+  { key: "a", at: 6, unit: "x" },
+  { key: "b", at: 7, unit: "x" },
+  { key: "c", at: 5, unit: "x" },
+  { key: "c", at: 9, unit: "x" },
+  { key: "d", at: null, unit: "x" },
+  { key: "e", at: 1, unit: "x" },
+];
+
+test("an issuer that states a period twice, or states a gap, stays under a bound with its own reason", async () => {
+  await bounded(FIVE, { min: "5" }, "matrix");
+  expect(
+    screen.getByText("4 of 5 issuers shown · 2 compared, 2 not compared (no figure for FY2025)"),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      "Not compared, no figure for FY2025: C (states it more than once); D (states a gap).",
+    ),
+  ).toBeInTheDocument();
+  // Modules and Find keep them as rows and passages, not only Rank.
+  expect(screen.getByRole("button", { name: "C" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "D" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "E" })).toBeNull();
+});
+
+test("a bound typed where no issuer states a figure still shows its chip and keeps every issuer", async () => {
+  await bounded(
+    [
+      { key: "a", at: null, unit: "x" },
+      { key: "b", at: null, unit: "x" },
+    ],
+    { min: "1" },
+    "matrix",
+  );
+  expect(
+    screen.getByRole("button", { name: "Remove filter Net debt / EBITDA ≥ 1 · FY2025" }),
+  ).toBeVisible();
+  expect(
+    screen.getByText("2 of 2 issuers shown · 0 compared, 2 not compared (no figure for FY2025)"),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText("Not compared, no figure for FY2025: A (states a gap); B (states a gap)."),
+  ).toBeInTheDocument();
+});
+
+test("a unit chosen for one period or figure is forgotten when the period changes", async () => {
+  answer(
+    figures([
+      { key: "a", at: 4, unit: "x" },
+      { key: "b", at: 400, unit: "%" },
+      { key: "a", at: 5, unit: "x", period: "FY2024" },
+      { key: "b", at: 500, unit: "%", period: "FY2024" },
+    ]),
+  );
+  render(<Coverage />);
+  fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
+    target: { value: "1" },
+  });
+  expect(screen.getByText("Choose a unit for the bound: % or x")).toBeVisible();
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Bound unit" })).getByRole("button", { name: "x" }),
+  );
+  expect(screen.queryByText(/Choose a unit/)).toBeNull();
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Period" })).getByRole("button", { name: "FY2024" }),
+  );
+  expect(screen.getByText("Choose a unit for the bound: % or x")).toBeVisible();
+});
+
+test("the bound's unit is read from the issuers the other filters keep", async () => {
+  answer(
+    figures([
+      { key: "a", at: 4, unit: "x", sector: "Retail" },
+      { key: "b", at: 400, unit: "%", sector: "Mining" },
+    ]),
+  );
+  render(<Coverage />);
+  fireEvent.change(await screen.findByRole("textbox", { name: /At least/ }), {
+    target: { value: "1" },
+  });
+  expect(screen.getByText("Choose a unit for the bound: % or x")).toBeVisible();
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Sector" })).getByRole("button", { name: "Retail" }),
+  );
+  expect(screen.queryByText(/Choose a unit/)).toBeNull();
+  expect(screen.getByRole("button", { name: /Remove filter .*≥ 1x · FY2025/ })).toBeVisible();
+});
+
+test("periods no rule can order open on the first stated and say so", async () => {
+  answer(
+    figures([
+      { key: "a", at: 4, unit: "x", period: "LTM Jun 2026" },
+      { key: "a", at: 4.5, unit: "x", period: "LTM Dec 2025" },
+    ]),
+  );
+  window.history.replaceState(null, "", "/coverage?view=rank");
+  render(<Coverage />);
+  expect(
+    within(await screen.findByRole("group", { name: "Period" })).getByRole("button", {
+      name: "LTM Jun 2026",
+    }),
+  ).toHaveAttribute("aria-pressed", "true");
+  expect(
+    screen.getByText(
+      "Periods are in the order the modules state them; this page could not put them in time order.",
+    ),
   ).toBeVisible();
 });
