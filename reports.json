@@ -53,5 +53,27 @@
       "CP-2": 1
     },
     "notes": "All four modules were accepted on the first submission and the final launcher exit was 0, but the accepted handoffs still carry source gaps that cannot be fixed here (no proxy statement, executed debt documents, ratings, or maturity schedule after the 2026 refinancings), and while looking for my own launcher output I inadvertently displayed the first lines of a shared-scratchpad log from another issuer's run (gt-42582) and used nothing from it."
+  },
+  {
+    "issuer_id": "moh",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "CP-0 was already accepted (attempt 1) in the resumed partial run, and CP-1, CP-1A and CP-2 were each accepted on their first submission; the unfixable defect is that the credit agreement, indentures and proxy statement are not supplied, so covenant headroom and holder percentages remain gaps, and the filing's USD 6 billion Florida premium for about 120,000 enrollees could not be reconciled with guidance."
+  },
+  {
+    "issuer_id": "dhc-1075415",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 0,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "CP-0 was already accepted in the resumed run folder and I did not resubmit it; CP-1 was accepted and cannot be replaced, but it carries the AlerisLife equity method investment at 2026-09-30 as \"Not supplied: printed as a dash\" although the 10-Q states a carrying value of $0 (10-Q 2026-09-30 page 9); also, another issuer's agent overwrote a shared scratchpad helper, so one page of that issuer's source text printed to me before I noticed, and I did not use it."
   }
 ]

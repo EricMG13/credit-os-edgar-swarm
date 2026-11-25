@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for MOLINA HEALTHCARE, INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "57b8dd20e06450d210222b8650df2a09323be6de9e27ed4de56c0d070f734c95",
+    "CP-1.md": "f1a68fee915e29e08fbd757d0503798f29f025e53ae5911447f9ef83e6e302ee",
+    "CP-1A.md": "11d9fab5b0952c7377a5faf44f15a5f60af807fe0c46cc0dc6bba39e654d68df",
+    "CP-2.md": "259962d10b5e157687a041717eca1af9aa245cb34177630c96dd64d50c12574f",
+    "coverage.json": "fb4318bdd49df90443542a171148b9a12c79559c0df772b9c749e8d923e176bc",
+    "view.json": "bfd7a7b8a886e89c9250d7ef01895783403a6089f43a21ddfead75adf37f6b5a",
+    "report-view.json": "a0b959ee83f4ac2637e4ea8b3ae71ed1a96aa59453ed168549e85ccc5eda30e6"
+  }
+}

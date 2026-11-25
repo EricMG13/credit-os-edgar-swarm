@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Diversified Healthcare Trust as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/fb9086bf7e32f9e4c666a20f017627a4ee80d3e0314822ee1233e7399fdae099/1.response.md",
+    "CP-1": "requests/CP-1/24fc39b4ddf5e9be34d0179c756c6879b756127b8eb99b3ca357343f008034d8/1.response.md",
+    "CP-1A": "requests/CP-1A/6d47f3c74c91919e48ecddfd578f80a259bfc869189c459f4287322b60b2db20/1.response.md",
+    "CP-2": "requests/CP-2/e6914ae18e9e336d9d31fda7bf3674731e1c3f1b55b999db2dbfe1a26a04ddd1/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "d84a544e3a6f2532bfcd037fd9191abeedee4ebdb66c5c6da3b999ca75e8e15e",
+  "delivery_sha256": "7fc55b204b1b5d4e804daf337e8a11480233e071a9d1f13a86ef9927656fea5d"
+}
