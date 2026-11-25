@@ -221,9 +221,9 @@ function Figure({
     <g>
       <rect
         x={(anchor === "end" ? x - size : x) - 2}
-        y={cy - 7}
+        y={cy - 10}
         width={size + 4}
-        height={14}
+        height={20}
         className="fill-surface-card"
       />
       <text
