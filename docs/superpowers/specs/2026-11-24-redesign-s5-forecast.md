@@ -361,3 +361,42 @@ Checks: tsc, eslint --max-warnings=0, prettier on every changed file; vitest on
 src/pages/connected, components/kit, styles: 2,067 tests, one timing failure under load in
 report.auditFollowups (passes alone); npm run build; npm run unused: only LeadProps (frozen).
 Not run: npm run gates, the Python tests that read the web build.
+
+### Round 3 (coordinator review of bb4dbe2: R1–R14 content, W1–W9 design)
+
+Fixed on this branch, tests first, at d59d78f, 510eceb, 710febc, cba2e1c and e95d8dc. Page
+length at 1440 on the real run, everything in its default state: 4,460px (was 7,017; base
+6,308; mockup 2,987); at 390, 9,974px (was 11,420; base 9,227).
+
+Layout changes from round 2: the lead, assumptions, scope and published model sit in a 12-column
+grid of their own, with what breaks and uses of cash in the right column spanning four rows;
+its last row is flexible, so the left tiles stack without bands. The page reads in the same
+order at every width. The forecast grid follows at full width, then the chart tables in two or
+three columns. The page opens on the case whose raw group is "Base case". The base page opened
+on `caseOptions[0]`, where groups not in `caseLabels` sorted first.
+
+Render check (docs/design/preview/check-render.cjs from ead118f, copied to the scratchpad and not
+committed) at 1440/1280/1024/768/390, plain, `--stress`, and `--fixture` (three cases with a long
+case name; the hard set; no model):
+- Plain, stress, long and hard: 37 findings each. 30 are trace controls inside the closed
+  "Recorded drivers" disclosure. The check counts closed `<details>` content as shown; with
+  every disclosure open and no 15,000px cap, none of these fails. The rest is shared code: the
+  breadcrumb "Library" (20px tall), "Run progress" (40px at 390) and the shell's Areas list
+  (an unnamed scroll box at 390).
+- No model: 1 finding, the shell's Areas list.
+- No chart label overlaps or leaves its figure. No text is under 12px, no text is cut, there is
+  no sideways page scroll and there are no console errors.
+
+A copy of the check that skips closed disclosures and scrolls each control into its own scroll
+box reports only the shared items.
+
+PNGs were looked at at every width: the case switch stacked at 390 with a long name, the lead
+chart's labels, the stress names, the grid and the chart tables.
+
+Checks:
+- tsc, eslint --max-warnings=0 and prettier on every changed file.
+- vitest on report and visuals (1,001 tests), and on connected and library (3,097 tests).
+- npm run build. npm run unused: only LeadProps, which is frozen.
+- On a merge with origin/claude/redesign-s1-overview (117d748): tsc is clean and 296 Forecast
+  tests pass.
+- Not run: npm run gates, and the Python tests that read the web build.
