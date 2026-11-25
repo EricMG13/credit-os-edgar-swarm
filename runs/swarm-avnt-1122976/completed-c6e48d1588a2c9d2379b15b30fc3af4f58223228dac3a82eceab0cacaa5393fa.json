@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Avient Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/c20df0a4f14c874e894675c5bee1f74bf616bb95991d0d692a784e3349f9b825/1.response.md",
+    "CP-1": "requests/CP-1/97abaa1a44c8589f8632b49788c7d1a0ca9b56c1eb0de4d5348d022e81920839/1.response.md",
+    "CP-1A": "requests/CP-1A/1c6d1bd69f0ac41be5772a67c23e35d24050db9e8bb491c561af248ccf62c9e8/1.response.md",
+    "CP-2": "requests/CP-2/78039801c969664dc22bacd66272cda6bde60218c604280b008f57da870f64e8/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "38141563762b5fe22e3ca301a78696bc6508d90359052b3ddadb080904cb4bd0",
+  "delivery_sha256": "e5f1b2c065e94dbde4ce47c26776f4ddd30dcb10c583e5613234225531611fd2"
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Avient Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "7f8c226f27e5b07e6b1cea118fb50a9aaca47218445b979468c11169d275f0e2",
+    "CP-1.md": "996dbb7276cf4471af60d98d2f2cd685214bd08765bd9cf2a0b4863f19edfa19",
+    "CP-1A.md": "7ac0951274629b8c79f89bbafea3b90f25904f03f31f3e2177937263a691c916",
+    "CP-2.md": "2e681b9e4d8ff27b0decae4b6a14dbd1f714d0381ce35ba68c17cafd9cfaeff7",
+    "coverage.json": "898069a5492e174bb8def473faa3489d6de95206f7a67c16b02ff08c4ceb6793",
+    "view.json": "a8408e1b5867797a108ab42efd5febcc5d7d6b4a3600a963b2f40e084ff57f4b",
+    "report-view.json": "da4b3337649cde15acbe1d86b98405630eec273ae9366773cf4eb85a7d19bded"
+  }
+}

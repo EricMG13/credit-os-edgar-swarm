@@ -42,5 +42,27 @@
       "CP-2": 1
     },
     "notes": "The five filings contain no credit agreement, indenture, covenant level, ABL borrowing base, proxy statement or issuer-defined EBITDA, so covenant headroom, board and holder data and issuer EBITDA are not established (CP-1 uses a house-derived EBITDA) and the delivery carries the launcher's \"automated checks only\" caveat."
+  },
+  {
+    "issuer_id": "sbac-1034054",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "Two source conflicts could not be resolved and are logged in the CP-1A conflict log (the REIT NOL balance, USD 343.8m in the FY2025 10-K against USD 298.5m in the Q3 10-Q, and the Millicom agreement date, Q3 against Q4 2024), and the outcome of the 2021-1C Tower Securities date on 2026-11-09 is not in the supplied filings. The default PATH carried uv 0.11.32 ahead of the required 0.12.5, so I put /usr/local/bin first to run the launcher."
+  },
+  {
+    "issuer_id": "avnt-1122976",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Source readiness (CP-0) records the 2024 annual report's filing date as not stated although the 2025 annual report states it was filed 2025-02-18, which CP-1A states as a correction because the accepted CP-0 cannot be edited. In addition, CP-0 and CP-1 were accepted on one attempt each in the earlier partial run and resumed unchanged. CP-1A and CP-2 were each accepted on their first submission, after a read-only pre-check of the draft with the repository's own acceptance functions. The shell's default uv was 0.11.32, so /usr/local/bin (uv 0.12.5) was put first on PATH for every launcher call."
   }
 ]

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Sba Communications Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "52a9c609065e1e20bb06337f781b0a048db21d450f055e612d2f637e7d23c0bb",
+    "CP-1.md": "b0a54b48ab59a30ed4bb728fc80bab5314337f18e8512543c72e1bcb17984e45",
+    "CP-1A.md": "2b664458c7f8e462eba503979d022918dbac01bc305752c1dc472913d35553d9",
+    "CP-2.md": "0824247eecec386eeb7fc94ae1d7340c9b0a8d47a20516de9669de94d7369164",
+    "coverage.json": "d08a13a2b789555efb628b6e33cb382a35bb7aa34b9ac9aa81118405314f66d4",
+    "view.json": "a652981e6cc4d1f920f21a140bcb50a6ef7003b70fe1f84106bd2868ad3ba8ca",
+    "report-view.json": "878a3b84f31ee7ea5e8bd4a3539a728b2972626708c13d427ee14c94558a6571"
+  }
+}
