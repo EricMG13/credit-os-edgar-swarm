@@ -1,9 +1,16 @@
-import { useId, type FC } from "react";
-import { GapPattern } from "../overview/figureParts";
-import { FigureTile, GapTile, LeadFrame, ScrollFigure } from "./kit/LeadFrame";
+import type { FC } from "react";
+import { FigureTile, GapTile, LeadFrame } from "./kit/LeadFrame";
+import {
+  GapSlot,
+  Measured,
+  SIZE,
+  fittingTicks,
+  niceAxis,
+  textWidth,
+  type NiceAxis,
+} from "./kit/marks";
 import { safeText } from "./kit/reader";
 import {
-  groupScale,
   readPeerBenchmark,
   withUnit,
   type PeerGroup,
@@ -18,30 +25,30 @@ import type { LeadProps } from "./types";
  * (CP-1C is blocked at the peer-data gate in every retained run), so this lead is unproven on a real run.
  */
 
-const WIDTH = 640;
-const LANE = 14;
-const GLYPH = 6.8;
-const span = (text: string) => text.length * GLYPH + 6;
+const LANE = 16;
+const PAD = 8;
 
 type Label = { text: string; x: number; anchor: "start" | "middle" | "end"; kind: string };
 
+/** Where a label of `width` px starts when it hangs from `x`, kept inside a figure `total` px wide. */
+function startOf(x: number, anchor: Label["anchor"], width: number, total: number) {
+  const from = anchor === "end" ? x - width : anchor === "middle" ? x - width / 2 : x;
+  return Math.min(Math.max(from, 0), Math.max(total - width, 0));
+}
+
 /** Greedy lanes: a label drops to the next line when it would overlap one already placed on this line. */
-function lanes(labels: Label[]) {
+function lanes(labels: Label[], total: number) {
   const placed: { from: number; to: number; lane: number }[] = [];
   return [...labels]
     .sort((a, b) => a.x - b.x)
     .map((label) => {
-      const width = span(label.text);
-      const from =
-        label.anchor === "end"
-          ? label.x - width
-          : label.anchor === "middle"
-            ? label.x - width / 2
-            : label.x;
+      const width = textWidth(label.text, SIZE.label);
+      const from = startOf(label.x, label.anchor, width, total);
       let lane = 0;
-      while (placed.some((p) => p.lane === lane && from < p.to && from + width > p.from)) lane += 1;
+      while (placed.some((p) => p.lane === lane && from < p.to + 6 && from + width > p.from - 6))
+        lane += 1;
       placed.push({ from, to: from + width, lane });
-      return { ...label, lane };
+      return { ...label, from, lane };
     });
 }
 
@@ -67,77 +74,51 @@ function reading(row: PeerRow) {
   return `${row.metric}: ${parts.join(", ")}. ${count}.`;
 }
 
-function GapSlot({
-  x,
-  y,
-  width,
-  text,
-  id,
-}: {
-  x: number;
-  y: number;
-  width: number;
-  text: string;
-  id: string;
-}) {
-  const card = span(text);
+/** The hatched slot with its words on a solid chip, so the words stay readable over the hatch. */
+function NotStated({ x, y, width, text }: { x: number; y: number; width: number; text: string }) {
+  const chip = textWidth(text, SIZE.label) + 10;
   return (
-    <>
+    <g>
+      <GapSlot x={x} y={y} width={width} height={20} reason={text} />
       <rect
-        data-gap={text}
-        x={x}
-        y={y}
-        width={width}
-        height="20"
-        rx="4"
-        fill={`url(#${id})`}
-        strokeDasharray="3 3"
-        className="stroke-border-gap"
-      />
-      <rect
-        x={x + width / 2 - card / 2 - 2}
+        x={x + Math.max(width, 8) / 2 - chip / 2}
         y={y + 2}
-        width={card + 4}
-        height="16"
+        width={chip}
+        height={16}
         rx="3"
         className="fill-surface-card"
       />
       <text
-        x={x + width / 2}
-        y={y + 14}
+        x={x + Math.max(width, 8) / 2}
+        y={y + 15}
         textAnchor="middle"
-        fontSize="11"
+        fontSize={SIZE.label}
         className="fill-gap-text font-body"
       >
         {text}
       </text>
-    </>
+    </g>
   );
 }
 
-function Strip({ row, scale }: { row: PeerRow; scale: ReturnType<typeof groupScale> }) {
-  const id = `peer-gap-${useId().replaceAll(":", "")}`;
+function Strip({ row, axis, width }: { row: PeerRow; axis: NiceAxis; width: number }) {
   const { drawing, unit } = row;
   if (drawing.kind !== "strip") {
     const text = drawing.kind === "conflict" ? "Stated values conflict" : "Peer range not supplied";
     return (
-      <ScrollFigure label="Peer range figure" size="wide">
-        <svg
-          viewBox={`0 0 ${String(WIDTH)} 36`}
-          width="100%"
-          role="img"
-          aria-label={reading(row)}
-          data-row={row.metric}
-        >
-          <defs>
-            <GapPattern id={id} />
-          </defs>
-          <GapSlot x={88} y={8} width={464} text={text} id={id} />
-        </svg>
-      </ScrollFigure>
+      <svg
+        viewBox={`0 0 ${String(width)} 28`}
+        width="100%"
+        role="img"
+        aria-label={reading(row)}
+        data-row={row.metric}
+        className="block"
+      >
+        <NotStated x={PAD} y={4} width={width - 2 * PAD} text={text} />
+      </svg>
     );
   }
-  const x = scale.x;
+  const x = (value: number) => axis.place(value, PAD, width - PAD);
   const top: Label[] = [
     { text: `low ${withUnit(row.low.text, unit)}`, x: x(drawing.low), anchor: "end", kind: "low" },
     {
@@ -157,38 +138,35 @@ function Strip({ row, scale }: { row: PeerRow; scale: ReturnType<typeof groupSca
           },
         ]),
   ];
-  const placed = lanes(top);
+  const placed = lanes(top, width);
   const laneCount = Math.max(...placed.map((label) => label.lane)) + 1;
-  const bandY = 8 + laneCount * LANE + 6;
+  const bandY = laneCount * LANE + 8;
   const centre = bandY + 8;
-  const height = bandY + 16 + 30;
+  const height = bandY + 16 + 34;
   const bandFrom = x(drawing.low);
   const bandTo = x(drawing.high);
   const issuerX = drawing.issuer === null ? null : x(drawing.issuer);
-  const tickLines = scale.ticks.map((tick) => (
-    <line
-      key={tick.label}
-      x1={tick.x}
-      x2={tick.x}
-      y1="2"
-      y2={height - 2}
-      className="stroke-border-hairline"
-    />
-  ));
-  const issuerAnchor =
-    issuerX === null ? "middle" : issuerX < 130 ? "start" : issuerX > 510 ? "end" : "middle";
+  const issuerText = `issuer ${withUnit(row.issuer.text, unit)}`;
+  const kept = fittingTicks(axis, PAD, width - PAD, (text) => textWidth(text, SIZE.tick));
   return (
     <svg
-      viewBox={`0 0 ${String(WIDTH)} ${String(height)}`}
+      viewBox={`0 0 ${String(width)} ${String(height)}`}
       width="100%"
       role="img"
       aria-label={reading(row)}
       data-row={row.metric}
+      className="block"
     >
-      <defs>
-        <GapPattern id={id} />
-      </defs>
-      {tickLines}
+      {kept.map((tick) => (
+        <line
+          key={tick.label}
+          x1={x(tick.value)}
+          x2={x(tick.value)}
+          y1="2"
+          y2={height - 2}
+          className="stroke-border-hairline"
+        />
+      ))}
       <rect
         data-band
         data-low={row.low.text}
@@ -215,10 +193,9 @@ function Strip({ row, scale }: { row: PeerRow; scale: ReturnType<typeof groupSca
         <text
           key={label.kind}
           data-label={label.kind}
-          x={label.x + (label.anchor === "end" ? -2 : label.anchor === "start" ? 2 : 0)}
-          y={8 + (label.lane + 1) * LANE - 3}
-          textAnchor={label.anchor}
-          fontSize="11"
+          x={label.from}
+          y={(label.lane + 1) * LANE}
+          fontSize={SIZE.label}
           className="fill-text-secondary font-mono"
         >
           {label.text}
@@ -235,74 +212,97 @@ function Strip({ row, scale }: { row: PeerRow; scale: ReturnType<typeof groupSca
             className="fill-chart-1 stroke-surface-card"
           />
           <text
-            x={issuerX}
+            x={startOf(issuerX, "middle", textWidth(issuerText, SIZE.label), width)}
             y={centre + 28}
-            textAnchor={issuerAnchor}
-            fontSize="12"
+            fontSize={SIZE.label}
             className="fill-text-primary font-mono"
           >
-            issuer {withUnit(row.issuer.text, unit)}
+            {issuerText}
           </text>
         </>
       )}
       {issuerX === null && (
-        <GapSlot x={88} y={centre + 14} width={150} text="Issuer not supplied" id={id} />
+        <NotStated x={PAD} y={centre + 12} width={150} text="Issuer not supplied" />
       )}
     </svg>
   );
 }
 
-function Axis({ scale, unit }: { scale: ReturnType<typeof groupScale>; unit: string }) {
+function Axis({ axis, width }: { axis: NiceAxis; width: number }) {
+  const kept = fittingTicks(axis, PAD, width - PAD, (text) => textWidth(text, SIZE.tick));
   return (
     <svg
-      viewBox={`0 0 ${String(WIDTH)} 22`}
+      viewBox={`0 0 ${String(width)} 22`}
       width="100%"
       aria-hidden="true"
       focusable="false"
       data-axis
+      className="block"
     >
-      {scale.ticks.map((tick) => (
-        <text
-          key={tick.label}
-          x={tick.x}
-          y="14"
-          textAnchor="middle"
-          fontSize="11"
-          className="fill-text-tertiary font-mono"
-        >
-          {/^[%x]$/i.test(unit) ? `${tick.label}${unit}` : tick.label}
-        </text>
-      ))}
+      {kept.map((tick) => {
+        const at = axis.place(tick.value, PAD, width - PAD);
+        const half = textWidth(tick.label, SIZE.tick) / 2;
+        return (
+          <text
+            key={tick.label}
+            x={Math.min(Math.max(at, half), width - half)}
+            y="14"
+            textAnchor="middle"
+            fontSize={SIZE.tick}
+            className="fill-text-tertiary font-mono"
+          >
+            {tick.label}
+          </text>
+        );
+      })}
     </svg>
   );
 }
 
 function Group({ group, showUnit }: { group: PeerGroup; showUnit: boolean }) {
-  const scale = groupScale(group);
+  const values = group.rows.flatMap(({ drawing }) =>
+    drawing.kind === "strip" ? [drawing.low, drawing.high, drawing.median, drawing.issuer] : [],
+  );
+  const suffix = /^[%x]$/i.test(group.unit) ? group.unit : "";
+  const axis = niceAxis(
+    values.filter((value) => value !== null),
+    { zero: true, suffix },
+  );
   return (
     <div className="flex min-w-0 flex-col gap-3">
       {showUnit && group.unit && (
         <p className="text-caption text-text-tertiary">Reporting unit: {safeText(group.unit)}</p>
       )}
-      <ol className="flex min-w-0 flex-col gap-4">
-        {group.rows.map((row) => (
-          <li key={`${row.metric}-${String(row.line)}`} className="flex min-w-0 flex-col gap-1">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
-              <h4 className="text-small font-medium text-text-primary">{row.metric}</h4>
-              <span className="font-mono text-caption text-text-secondary">{peersText(row)}</span>
-            </div>
-            {row.drawing.kind === "conflict" && (
-              <p className="text-caption text-gap-text">
-                The stated values conflict, so no range is drawn.
-              </p>
+      <Measured fallback={640}>
+        {(width) => (
+          <>
+            <ol className="flex min-w-0 flex-col gap-4">
+              {group.rows.map((row) => (
+                <li
+                  key={`${row.metric}-${String(row.line)}`}
+                  className="flex min-w-0 flex-col gap-1"
+                >
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
+                    <h4 className="text-small font-medium text-text-primary">{row.metric}</h4>
+                    <span className="font-mono text-caption text-text-secondary">
+                      {peersText(row)}
+                    </span>
+                  </div>
+                  {row.drawing.kind === "conflict" && (
+                    <p className="text-caption text-gap-text">
+                      The stated values conflict, so no range is drawn.
+                    </p>
+                  )}
+                  <Strip row={row} axis={axis} width={width} />
+                </li>
+              ))}
+            </ol>
+            {group.rows.some(({ drawing }) => drawing.kind === "strip") && (
+              <Axis axis={axis} width={width} />
             )}
-            <Strip row={row} scale={scale} />
-          </li>
-        ))}
-      </ol>
-      {group.rows.some(({ drawing }) => drawing.kind === "strip") && (
-        <Axis scale={scale} unit={group.unit} />
-      )}
+          </>
+        )}
+      </Measured>
     </div>
   );
 }

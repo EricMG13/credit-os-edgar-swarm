@@ -35,34 +35,6 @@ export const SAME_YEAR = "The earnings table's two latest annual periods are the
 const readable = (text: string) => safeText(text) || IN_EVIDENCE;
 
 // ---------------------------------------------------------------------------------------------
-// Axis
-
-export type Axis = { lo: number; hi: number; ticks: number[] };
-
-function niceStep(span: number, parts: number) {
-  const raw = span > 0 ? span / parts : 1;
-  const power = 10 ** Math.floor(Math.log10(raw));
-  const factor = raw / power;
-  return (factor <= 1 ? 1 : factor <= 2 ? 2 : factor <= 5 ? 5 : 10) * power;
-}
-
-/**
- * A round axis holding every value. `fromZero` always includes zero (a scale of amounts);
- * otherwise it is the round range around the values (a scale of levels, said to start where it does).
- */
-export function axisFor(values: readonly number[], fromZero: boolean): Axis {
-  const low = Math.min(...values, ...(fromZero ? [0] : []));
-  const high = Math.max(...values, ...(fromZero ? [0] : []));
-  const step = niceStep(high - low || Math.abs(high) / 10, 4);
-  const lo = Math.floor(low / step + 1e-9) * step;
-  const top = Math.ceil(high / step - 1e-9) * step;
-  const hi = top > lo ? top : lo + step;
-  const count = Math.round((hi - lo) / step);
-  const ticks = Array.from({ length: count + 1 }, (_, at) => Number((lo + at * step).toFixed(10)));
-  return { lo: Number(lo.toFixed(10)), hi: Number(hi.toFixed(10)), ticks };
-}
-
-// ---------------------------------------------------------------------------------------------
 // Figures as the module states them
 
 /** One cell of a pair: a figure, a stated gap with its reason, or words where a figure belongs. */
@@ -116,7 +88,10 @@ export type PairGroup = {
   gaps: Pair[];
   /** Pairs that state words where a figure belongs: in the table view only. */
   words: Pair[];
-  axis: Axis | null;
+  /** Rows and gaps together, in the handoff's own order: what the figure draws. */
+  drawn: Pair[];
+  /** Amounts share one scale from zero; levels (margins, KPIs) one scale cut where they sit. */
+  fromZero: boolean;
 };
 
 export type PairFigure =
@@ -285,11 +260,10 @@ const hasGap = (pair: Pair) => [pair.prior, pair.current].some((one) => one.kind
 
 /**
  * One unit's pairs, in the handoff's own order. `amounts` is a figure of amounts (one scale from
- * zero); otherwise levels (a scale around the values, said to start where it does).
+ * zero); otherwise levels (a scale cut where the values sit, said to start where it does).
  */
 function groupOf(unit: string, pairs: Pair[], amounts: boolean): PairGroup {
   const rows = pairs.filter(drawable);
-  const values = rows.flatMap((pair) => [pair.prior.value ?? 0, pair.current.value ?? 0]);
   const rest = pairs.filter((pair) => !drawable(pair));
   return {
     unit,
@@ -298,7 +272,8 @@ function groupOf(unit: string, pairs: Pair[], amounts: boolean): PairGroup {
     rows,
     gaps: rest.filter(hasGap),
     words: rest.filter((pair) => !hasGap(pair)),
-    axis: values.length > 0 ? axisFor(values, amounts) : null,
+    drawn: pairs.filter((pair) => drawable(pair) || hasGap(pair)),
+    fromZero: amounts,
   };
 }
 
@@ -538,15 +513,11 @@ export type Step = {
   role: "opening" | "change" | "closing";
   text: string;
   value: number;
-  /** Where a change step starts and ends on the axis; the totals are drawn from the axis start. */
-  from: number | null;
-  /** Where the step ends on the axis: drawing geometry only, never printed. */
-  level: number;
   line: number;
 };
 
 export type Bridge =
-  | { kind: "bridge"; line: number; unit: string; steps: Step[]; axis: Axis; notes: string[] }
+  | { kind: "bridge"; line: number; unit: string; steps: Step[]; notes: string[] }
   | { kind: "unreconciled"; line: number; message: string };
 
 const NOT_DRAWN = "The variance bridge is not drawn";
@@ -588,36 +559,17 @@ export function bridge(entry: OutputEntry): Bridge | null {
   const total = sum(amounts.slice(0, -1));
   if (!isZero(total === null ? null : difference(closing, total))) return refuse(NOT_A_BRIDGE);
   const unit = unitLabel([...units][0] ?? "");
-  let running = 0;
   const steps = table.rows.map((row, at): Step => {
     const reading = readCell(amounts[at] ?? "");
-    const value = reading.kind === "number" ? reading.value : 0;
-    const role = at === 0 ? "opening" : at === table.rows.length - 1 ? "closing" : "change";
-    const from = running;
-    running = role === "change" ? Number((running + value).toFixed(10)) : value;
     return {
       label: readable(row.cells[0] ?? ""),
-      role,
+      role: at === 0 ? "opening" : at === table.rows.length - 1 ? "closing" : "change",
       text: reading.text,
-      value,
-      from: role === "change" ? from : null,
-      level: running,
+      value: reading.kind === "number" ? reading.value : 0,
       line: row.line,
     };
   });
-  const levels = steps.map((step) => step.level);
-  const [low, high] = [Math.min(...levels), Math.max(...levels)];
-  // A scale of levels: when it would start above zero, room below the lowest total keeps that
-  // total a bar, not a sliver; the page says where the axis starts.
-  if (low > 0) levels.push(low - (high - low) / 2);
-  return {
-    kind: "bridge",
-    line: table.line,
-    unit,
-    steps,
-    axis: axisFor(levels, false),
-    notes: basisNotes(table),
-  };
+  return { kind: "bridge", line: table.line, unit, steps, notes: basisNotes(table) };
 }
 
 // ---------------------------------------------------------------------------------------------

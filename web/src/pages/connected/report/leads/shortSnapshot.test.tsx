@@ -1,7 +1,7 @@
 // Synthetic, built from the module contract (src/deploy_vii/methods/cpl10.md, the Key figures table
 // `Measure | Value | Period | Source`; src/deploy_vii/bindings/cpl10.py); not a real handoff —
 // unproven on a real run. CP-L10 has never run on a real case.
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { entry, section, table } from "../overview/rows.fixture";
 import { leadProps } from "./fixtures/load";
@@ -187,6 +187,7 @@ describe("no source reference in what is drawn", () => {
         )}
       />,
     );
+    fireEvent.click(screen.getAllByRole("button", { name: /Table view/ })[0] as HTMLElement);
     expect(document.body.textContent).not.toMatch(/TDG|10-K|page 45|C07|T4\.4/);
     expect(screen.getAllByText("Detail is in Evidence.").length).toBeGreaterThan(0);
   });
@@ -255,7 +256,8 @@ describe("ShortSnapshotLead", () => {
   it("gives the figure one trace control and a table view, and draws no source column or reference", () => {
     render(<ShortSnapshotLead {...leadProps(snapshot())} />);
     expect(screen.getAllByRole("link", { name: "Source for the key figures" })).toHaveLength(1);
-    expect(screen.getByText("Table view")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: /Table view/ }));
+    expect(screen.getByRole("table")).toBeVisible();
     expect(document.body.textContent).not.toMatch(/Canonical data foundation|CP-1|CP-L10/);
   });
 

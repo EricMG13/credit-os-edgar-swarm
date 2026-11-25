@@ -1,14 +1,30 @@
 // Synthetic, built from the module contract (src/deploy_workflow/owners/cpos_launch_tables.py
 // `_peer_range`, apps/issuer-library/credit_os/handoff_fields.py ROW_CHARTS "range"); not a real
 // handoff — unproven on a real run. CP-1C is blocked at the peer-data gate in every retained run.
-import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { entry, section, table } from "../overview/rows.fixture";
 import { leadProps } from "./fixtures/load";
 import { PeerBenchmarkLead } from "./peerBenchmark";
 import { PEER_HEADINGS, readPeerBenchmark, valueOf } from "./peerBenchmarkData";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+/** Measure every figure box as `width` px wide (jsdom has no layout). */
+function measuredAs(width: number) {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  );
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ width } as DOMRect);
+}
 
 const HEAD = [
   "Metric",
@@ -243,7 +259,10 @@ describe("PeerBenchmarkLead", () => {
   it("gives every figure one trace control and a table view, and no source reference", () => {
     render(<PeerBenchmarkLead {...leadProps(peers(PERCENT, MULTIPLES))} />);
     expect(screen.getAllByRole("link", { name: /Source for the peer range/ })).toHaveLength(2);
-    expect(screen.getAllByText("Table view")).toHaveLength(2);
+    const buttons = screen.getAllByRole("button", { name: /Table view/ });
+    expect(buttons).toHaveLength(2);
+    for (const button of buttons) fireEvent.click(button);
+    expect(screen.getAllByRole("table")).toHaveLength(2);
     const text = document.body.textContent;
     expect(text).not.toMatch(/CP-1C|\.xlsx|\.pdf|T1C/);
   });
@@ -361,5 +380,37 @@ describe("PeerBenchmarkLead", () => {
     // Both issuers state 10, but against different bands on different axes they sit at different places.
     expect(num(margin, "cx")).not.toBeCloseTo(num(spread, "cx"), 0);
     expect(screen.getByText("Reporting unit: pp")).toBeVisible();
+  });
+
+  it("draws at the measured width: at 390 px every label is inside the figure at 12 px or more", () => {
+    measuredAs(390);
+    const { container } = render(<PeerBenchmarkLead {...leadProps(peers(PERCENT, MULTIPLES))} />);
+    const strips = [...container.querySelectorAll("svg[data-row]")];
+    expect(strips.length).toBeGreaterThan(4);
+    for (const svg of strips) {
+      expect(svg.getAttribute("viewBox")).toMatch(/^0 0 390 /);
+      for (const text of svg.querySelectorAll("text")) {
+        expect(Number(text.getAttribute("font-size")), text.textContent).toBeGreaterThanOrEqual(11);
+        const start = Number(text.getAttribute("x"));
+        const anchor = text.getAttribute("text-anchor");
+        const width = text.textContent.length * 12 * 0.6;
+        const left =
+          anchor === "middle" ? start - width / 2 : anchor === "end" ? start - width : start;
+        expect(left, text.textContent).toBeGreaterThanOrEqual(-0.5);
+        expect(left + width, text.textContent).toBeLessThanOrEqual(390.5);
+      }
+    }
+    for (const axis of container.querySelectorAll("svg[data-axis]"))
+      expect(axis.getAttribute("viewBox")).toMatch(/^0 0 390 /);
+    // The labels of one strip never overlap: low, median and high each stand clear of the others.
+    const row = container.querySelector('[data-row="EBITDA margin"]');
+    const boxes = [...(row?.querySelectorAll("[data-label]") ?? [])].map((t) => ({
+      lane: t.getAttribute("y"),
+      from: Number(t.getAttribute("x")),
+      to: Number(t.getAttribute("x")) + t.textContent.length * 7.2,
+    }));
+    for (const [i, a] of boxes.entries())
+      for (const b of boxes.slice(i + 1))
+        if (a.lane === b.lane) expect(a.to <= b.from || b.to <= a.from).toBe(true);
   });
 });

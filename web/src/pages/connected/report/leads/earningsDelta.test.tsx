@@ -2,13 +2,12 @@
 // no chart tables. The chart-table and bridge cases are synthetic, built from the module contract
 // (src/deploy_workflow/owners/cpos_launch_tables.py, apps/issuer-library/credit_os/handoff_fields.py);
 // not a real handoff. Every expected value below is written out by hand.
-import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { OutputEntry } from "../../publishedReport";
 import { entry, section, table } from "../overview/rows.fixture";
 import { EarningsDeltaLead } from "./earningsDelta";
 import {
-  axisFor,
   bridge,
   earningsDelta,
   FEW_PERIODS,
@@ -64,35 +63,6 @@ function withEdit(change: (source: OutputEntry) => void) {
   return copy;
 }
 
-describe("axisFor", () => {
-  it("includes zero for amounts, with round ticks", () => {
-    expect(axisFor([6585, 7940, 3395], true)).toEqual({
-      lo: 0,
-      hi: 8000,
-      ticks: [0, 2000, 4000, 6000, 8000],
-    });
-  });
-  it("reaches below zero for a negative value, with zero a tick", () => {
-    const axis = axisFor([-158, 1198, 7940], true);
-    expect(axis.lo).toBe(-5000);
-    expect(axis.hi).toBe(10000);
-    expect(axis.ticks).toContain(0);
-  });
-  it("is the round range around the levels when not from zero", () => {
-    expect(axisFor([47.81, 48.02, 58.3, 58.8], false)).toEqual({
-      lo: 45,
-      hi: 60,
-      ticks: [45, 50, 55, 60],
-    });
-  });
-  it("still has a width when every value is the same", () => {
-    const axis = axisFor([3, 3], false);
-    expect(axis.hi).toBeGreaterThan(axis.lo);
-    expect(axis.lo).toBeLessThanOrEqual(3);
-    expect(axis.hi).toBeGreaterThanOrEqual(3);
-  });
-});
-
 const RETAINED_ORDER = [
   "Revenue",
   "COGS",
@@ -111,6 +81,14 @@ const RETAINED_ORDER = [
   "Levered FCF",
   "Discretionary cash flow",
   "Net income",
+];
+
+/** The retained table's order with its two split rows (gaps) where the handoff puts them. */
+const WITH_GAPS = [
+  ...RETAINED_ORDER.slice(0, 12),
+  "Maintenance capex",
+  "Growth capex",
+  ...RETAINED_ORDER.slice(12),
 ];
 
 describe("the prior and current results from the retained earnings table", () => {
@@ -170,7 +148,7 @@ describe("the prior and current results from the retained earnings table", () =>
       "+0.5 percentage points",
       "+0.22 percentage points, rounded",
     ]);
-    expect(only?.axis).toEqual({ lo: 45, hi: 60, ticks: [45, 50, 55, 60] });
+    expect(only?.fromZero).toBe(false);
   });
   it("draws nothing for money when the heading does not state the unit", () => {
     const edited = withEdit((source) => {
@@ -304,10 +282,9 @@ describe("pairs from the chart tables", () => {
       "Adjusted EBITDA",
       "Flat measure",
     ]);
-    expect(money?.axis).toEqual({ lo: 0, hi: 8000, ticks: [0, 2000, 4000, 6000, 8000] });
+    expect(money?.fromZero).toBe(true);
     expect(times?.rows[0]?.change).toMatchObject({ text: "+0.58x", basis: "derived", sign: 1 });
     expect(times?.rows[0]?.tone).toBe("better");
-    expect(times?.axis?.hi).toBeLessThan(8000);
   });
   it("keeps the handoff's order even when a later row moves more", () => {
     const { movers } = earningsDelta(
@@ -396,7 +373,6 @@ describe("pairs from the chart tables", () => {
       ["Revenue", 0, 250],
       ["Cash flow", -50, 30],
     ]);
-    expect(one?.axis?.lo).toBe(-100);
     expect(one?.rows[1]?.change?.text).toBe("+80");
   });
   it("uses the exact difference, marked, when a stated change disagrees in direction", () => {
@@ -476,13 +452,12 @@ describe("the variance bridge", () => {
     const result = bridge(delta(steps(GOOD)));
     if (result?.kind !== "bridge") throw new Error("expected a bridge");
     expect(result.unit).toBe("US$m");
-    expect(result.steps.map((step) => [step.role, step.value, step.level, step.from])).toEqual([
-      ["opening", 100, 100, null],
-      ["change", 20, 120, 100],
-      ["change", -5, 115, 120],
-      ["closing", 115, 115, null],
+    expect(result.steps.map((step) => [step.role, step.label, step.value])).toEqual([
+      ["opening", "Revenue FY2023", 100],
+      ["change", "Organic growth", 20],
+      ["change", "Disposals", -5],
+      ["closing", "Revenue FY2024", 115],
     ]);
-    expect(result.axis).toEqual({ lo: 90, hi: 120, ticks: [90, 100, 110, 120] });
   });
   it("is not drawn as a bridge when the steps do not add up, and says why", () => {
     const result = bridge(
@@ -544,17 +519,52 @@ describe("the variance bridge", () => {
 
 const lead = (source: OutputEntry) => render(<EarningsDeltaLead {...leadProps(source)} />);
 
-/** The strip of one drawn pair, by the measure's name. */
-const strip = (container: HTMLElement, label: string) =>
-  container.querySelector(`svg[data-pair="${label}"]`) as SVGSVGElement;
-const cx = (element: Element | null) => Number(element?.getAttribute("cx"));
-const spanOf = (svg: SVGSVGElement) =>
-  cx(svg.querySelector("[data-current]")) - cx(svg.querySelector("[data-prior]"));
 const RESULTS_NAME = "Prior and current results";
-const rowsOf = (tile: HTMLElement) =>
-  [...tile.querySelectorAll("details tbody tr")].map((row) =>
+
+/** The dumbbell row of one measure (the mark draws one SVG per unit; each row is a `g[data-row]`). */
+const rowMark = (container: HTMLElement, label: string) =>
+  container.querySelector(`g[data-row="${label}"]`)?.parentElement as unknown as SVGGElement;
+const cx = (element: Element | null) => Number(element?.getAttribute("cx"));
+const spanOf = (row: Element) =>
+  cx(row.querySelector("[data-current]")) - cx(row.querySelector("[data-prior]"));
+const textOf = (row: Element, part: string) =>
+  [...row.querySelectorAll(`[data-part="${part}"]`)].map((one) => one.textContent);
+
+/** Opens the tile's table view (a button in the tile head) and returns its rows. */
+function rowsOf(tile: HTMLElement) {
+  fireEvent.click(within(tile).getByRole("button", { name: /Table view/ }));
+  return [...tile.querySelectorAll("table tbody tr")].map((row) =>
     [...row.querySelectorAll("td")].map((cell) => cell.textContent),
   );
+}
+
+/** Every SVG text at its real size: the viewBox is the measured width, so font-size is pixels. */
+const smallest = (container: HTMLElement) =>
+  Math.min(
+    ...[...container.querySelectorAll("svg text")].map((text) =>
+      Number(text.getAttribute("font-size") ?? "12"),
+    ),
+  );
+
+/** A measured width for every figure: what `useFigureWidth` reads where there is a layout. */
+function measuredAt(width: number) {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+    width,
+  } as DOMRect);
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 describe("EarningsDeltaLead on the retained handoff", () => {
   it("titles each tile plainly, with no count, ranking or computed reading", () => {
@@ -576,9 +586,7 @@ describe("EarningsDeltaLead on the retained handoff", () => {
     const gap = screen.getByRole("region", { name: "Variance bridge" });
     expect(within(gap).getByText(/No variance bridge in this handoff\./)).toBeVisible();
     expect(within(gap).queryByRole("img")).toBeNull();
-    // No tile of the lead is a hatched tile: the gap pattern is the note inside a plain tile.
     expect(container.querySelector("section.gap-hatch")).toBeNull();
-    // The note is not a caption in the results tile.
     expect(
       within(screen.getByRole("region", { name: RESULTS_NAME })).queryByText(/No variance bridge/),
     ).toBeNull();
@@ -603,75 +611,79 @@ describe("EarningsDeltaLead on the retained handoff", () => {
       "lg:col-span-12",
     );
   });
-  it("lists all 17 pairs in the handoff's order, each strip to one scale: equal changes are equal widths", () => {
+  it("draws all 17 pairs on one shared scale, in the handoff's order, equal changes equal widths", () => {
     const { container } = lead(cp1bEntry());
-    const list = screen.getByRole("list", { name: `${RESULTS_NAME}, US$m` });
-    const items = within(list).getAllByRole("listitem");
-    expect(items).toHaveLength(17);
-    expect(items.map((item) => item.querySelector("svg")?.getAttribute("data-pair"))).toEqual(
-      RETAINED_ORDER,
+    const tile = screen.getByRole("region", { name: RESULTS_NAME });
+    // One drawing for the unit; the two split rows are in it as gap rows, in place.
+    expect(within(tile).getAllByRole("img")).toHaveLength(1);
+    const labels = [...tile.querySelectorAll("g[data-row]")].map((row) =>
+      row.getAttribute("data-row"),
     );
-    const revenue = spanOf(strip(container, "Revenue"));
-    const cash = spanOf(strip(container, "Discretionary cash flow"));
-    const ebitda = spanOf(strip(container, "Reported EBITDA"));
+    expect(labels).toEqual(WITH_GAPS);
+    const revenue = spanOf(rowMark(container, "Revenue"));
+    const cash = spanOf(rowMark(container, "Discretionary cash flow"));
+    const ebitda = spanOf(rowMark(container, "Reported EBITDA"));
     // 1355 up, 1356 down, 665 up: one scale means pixels follow amounts, sign included.
     expect(revenue / ebitda).toBeCloseTo(1355 / 665, 2);
     expect(cash / revenue).toBeCloseTo(-1356 / 1355, 2);
   });
-  it("sets prior as a ring and current as a dot at their values, from the axis", () => {
+  it("sets prior as a ring and current as a dot at their values", () => {
     const { container } = lead(cp1bEntry());
-    const revenue = strip(container, "Revenue");
-    const prior = revenue.querySelector("[data-prior]");
-    const current = revenue.querySelector("[data-current]");
-    expect(prior?.getAttribute("data-prior")).toBe("6585");
-    expect(current?.getAttribute("data-current")).toBe("7940");
-    // The scale is -5000 to 10000 over x 44 to 536 (the drawing's width less its padding).
-    expect(cx(prior)).toBeCloseTo(44 + ((6585 + 5000) / 15000) * 492, 6);
-    expect(cx(current)).toBeCloseTo(44 + ((7940 + 5000) / 15000) * 492, 6);
-    // The axis holds a negative: zero is marked as its own line.
-    expect(revenue.querySelector('[data-tick="0"]')?.getAttribute("class")).toContain(
-      "stroke-text-tertiary",
-    );
+    const revenue = rowMark(container, "Revenue");
+    expect(revenue.querySelector("[data-prior]")?.getAttribute("data-prior")).toBe("6585");
+    expect(revenue.querySelector("[data-current]")?.getAttribute("data-current")).toBe("7940");
+    // Linear in the amount: the same scale puts 0 left of both.
+    const zero = cx(rowMark(container, "Net income").querySelector("[data-prior]"));
+    const [a, b, c] = [
+      cx(revenue.querySelector("[data-prior]")),
+      cx(revenue.querySelector("[data-current]")),
+      zero,
+    ];
+    expect((b - a) / 1355).toBeCloseTo((a - c) / (6585 - 1299), 4);
   });
-  it("prints each change as the handoff states it, with an arrow and a word, and better or worse only where known", () => {
-    lead(cp1bEntry());
-    const list = screen.getByRole("list", { name: `${RESULTS_NAME}, US$m` });
-    const row = (name: string) => within(list).getByText(name).closest("li") as HTMLElement;
-    expect(within(row("Revenue")).getByText("+1,355")).toBeVisible();
-    expect(row("Revenue")).toHaveTextContent("up, better");
-    expect(row("Revenue")).toHaveTextContent("▲");
-    expect(within(row("Discretionary cash flow")).getByText("\u22121,356")).toBeVisible();
-    expect(row("Discretionary cash flow")).toHaveTextContent("down");
-    expect(row("Discretionary cash flow")).not.toHaveTextContent(/better|worse/);
-    expect(row("Gross profit")).not.toHaveTextContent(/better|worse/);
+  it("writes each change as the handoff states it beside its mark, with direction, and better or worse only where known", () => {
+    const { container } = lead(cp1bEntry());
+    const revenue = rowMark(container, "Revenue");
+    expect(textOf(revenue, "change")[0]).toContain("+1,355");
+    expect(revenue.textContent).toMatch(/up, better/);
+    // The change slot sits right of the marks, in the same row.
+    const change = revenue.querySelector('[data-part="change"]');
+    expect(Number(change?.getAttribute("x"))).toBeGreaterThan(
+      cx(revenue.querySelector("[data-current]")),
+    );
+    const cash = rowMark(container, "Discretionary cash flow");
+    expect(cash.textContent).toContain("−1,356");
+    expect(cash.textContent).toMatch(/down/);
+    expect(cash.textContent).not.toMatch(/better|worse/);
+    expect(rowMark(container, "Gross profit").textContent).not.toMatch(/better|worse/);
     // A figure the module states as reported is printed as stated, not tagged derived.
-    expect(within(row("Intangible amortization")).getByText("+22 reported")).toBeVisible();
-    expect(list).not.toHaveTextContent(/derived/);
+    expect(rowMark(container, "Intangible amortization").textContent).toContain("+22 reported");
+    expect(container.textContent).not.toMatch(/derived/);
   });
-  it("describes each strip with the figures in its aria-label", () => {
-    const { container } = lead(cp1bEntry());
-    expect(strip(container, "Revenue").getAttribute("aria-label")).toBe(
-      "Revenue, US$m: prior 6,585 (FY2023), current 7,940 (FY2024), up 1,355, better.",
+  it("describes the drawing with every figure in its aria-label", () => {
+    lead(cp1bEntry());
+    const label = within(screen.getByRole("region", { name: RESULTS_NAME }))
+      .getByRole("img")
+      .getAttribute("aria-label");
+    expect(label).toContain("US$m, FY2023 to FY2024:");
+    expect(label).toContain("Revenue 6,585 in FY2023 and 7,940 in FY2024, +1,355, up, better");
+    expect(label).toContain(
+      "Discretionary cash flow 1,198 in FY2023 and −158 in FY2024, −1,356, down",
     );
-    expect(strip(container, "Discretionary cash flow").getAttribute("aria-label")).toBe(
-      "Discretionary cash flow, US$m: prior 1,198 (FY2023), current \u2212158 (FY2024), down 1,356.",
-    );
   });
-  it("lists the pairs with a gap in place, hatched, with the handoff's reason", () => {
+  it("draws the pairs with a gap in place, hatched, with the handoff's reason", () => {
     const { container } = lead(cp1bEntry());
-    const gaps = screen.getByRole("list", { name: "Not supplied" });
-    expect(within(gaps).getAllByRole("listitem")).toHaveLength(2);
-    expect(within(gaps).getAllByText("Not supplied: no split")).toHaveLength(2);
-    expect(container.querySelector('[data-gap="Maintenance capex"]')).not.toBeNull();
-    expect(container.querySelector('svg[data-pair="Maintenance capex"]')).toBeNull();
+    const gap = rowMark(container, "Maintenance capex");
+    expect(gap.querySelectorAll("[data-gap]").length).toBeGreaterThan(0);
+    expect(textOf(gap, "reason").join(" ")).toContain("Not supplied: no split");
+    expect(gap.querySelector("[data-prior]")).toBeNull();
   });
-  it("draws every pair and carries every pair in the table view, in the handoff's order", () => {
+  it("carries every pair in the table view, in the handoff's order", () => {
     lead(cp1bEntry());
     const tile = screen.getByRole("region", { name: RESULTS_NAME });
-    expect(within(tile).queryByText(/more pairs in the table view/)).toBeNull();
     const rows = rowsOf(tile);
     expect(rows).toHaveLength(19);
-    expect(rows.slice(0, 17).map((row) => row[0])).toEqual(RETAINED_ORDER);
+    expect(rows.map((row) => row[0])).toEqual(WITH_GAPS);
     expect(rows.find((row) => row[0] === "Intangible amortization")).toEqual([
       "Intangible amortization",
       "US$m",
@@ -684,22 +696,18 @@ describe("EarningsDeltaLead on the retained handoff", () => {
     ]);
     expect(rows.find((row) => row[0] === "Maintenance capex")?.[3]).toBe("Not supplied: no split");
   });
-  it("draws the margins on a percent axis of their own, with the stated change in points", () => {
+  it("draws the margins on a percent scale of their own, cut where they sit and said so, with the stated change", () => {
     const { container } = lead(cp1bEntry());
     const tile = screen.getByRole("region", { name: "Margins and KPIs" });
-    expect(within(tile).getByText("58.3% → 58.8%")).toBeVisible();
-    expect(
-      within(within(tile).getByRole("list", { name: "Margins and KPIs, %" })).getAllByText(
-        "+0.5 percentage points",
-      ),
-    ).toHaveLength(1);
-    expect(within(tile).getByText(/axis starts at 45%, not zero/)).toBeVisible();
-    expect(strip(container, "Gross margin").getAttribute("aria-label")).toBe(
-      "Gross margin, %: prior 58.3% (FY2023), current 58.8% (FY2024), up 0.5 percentage points.",
+    const gross = rowMark(container, "Gross margin");
+    expect(gross.textContent).toContain("58.3%");
+    expect(gross.textContent).toContain("58.8%");
+    expect(gross.textContent).toContain("+0.5 percentage points");
+    expect(tile.textContent).toMatch(/Axis starts at 40, not at zero/);
+    expect(within(tile).getByRole("img").getAttribute("aria-label")).toContain(
+      "Gross margin 58.3% in FY2023 and 58.8% in FY2024, +0.5 percentage points, up",
     );
-    // 45 to 60 over 492: 0.5 points is 0.5/15 of the width.
-    expect(spanOf(strip(container, "Gross margin"))).toBeCloseTo((0.5 / 15) * 492, 6);
-    expect(within(tile).queryByText(/derived/)).toBeNull();
+    expect(tile.textContent).not.toMatch(/derived/);
   });
   it("has one trace control per figure and no source reference on the page", () => {
     const { container } = lead(cp1bEntry());
@@ -717,8 +725,10 @@ describe("EarningsDeltaLead on the retained handoff", () => {
     expect(
       within(gap).getByText(/The handoff does not state the unit of its earnings table\./),
     ).toBeVisible();
-    expect(screen.queryByRole("list", { name: new RegExp(RESULTS_NAME) })).toBeNull();
-    expect(screen.getByRole("region", { name: "Margins and KPIs" })).toBeInTheDocument();
+    expect(within(gap).queryByRole("img")).toBeNull();
+    expect(
+      within(screen.getByRole("region", { name: "Margins and KPIs" })).getByRole("img"),
+    ).toBeInTheDocument();
   });
   it("draws nothing for a blocked or unreadable module: the frame states it", () => {
     const source = cp1bEntry();
@@ -728,6 +738,42 @@ describe("EarningsDeltaLead on the retained handoff", () => {
   });
   it("lists no figure of its own as drawn by the frame", () => {
     expect(EarningsDeltaLead.draws).toEqual([]);
+  });
+});
+
+describe("EarningsDeltaLead at the measured width", () => {
+  it("draws at 1128 px with every SVG text at least 11 px, and no fixed-width box", () => {
+    measuredAt(1128);
+    const { container } = lead(cp1bEntry());
+    const svgs = [...container.querySelectorAll("svg[role='img']")];
+    expect(svgs.length).toBe(2);
+    for (const svg of svgs) {
+      expect(svg.getAttribute("viewBox")?.split(" ")[2]).toBe("1128");
+      expect(svg.getAttribute("data-layout")).toBe("wide");
+    }
+    expect(smallest(container)).toBeGreaterThanOrEqual(11);
+    // No figure sits in a scrolling or fixed-width box.
+    for (const svg of svgs) expect(svg.closest(".overflow-x-auto, [class*='min-w-[']")).toBeNull();
+  });
+  it("draws at 390 px in the narrow layout: one measure per row, text at least 11 px", () => {
+    measuredAt(390);
+    const { container } = lead(cp1bEntry());
+    const svgs = [...container.querySelectorAll("svg[role='img']")];
+    for (const svg of svgs) {
+      expect(svg.getAttribute("viewBox")?.split(" ")[2]).toBe("390");
+      expect(svg.getAttribute("data-layout")).toBe("narrow");
+    }
+    expect(smallest(container)).toBeGreaterThanOrEqual(11);
+    // The change figure is still drawn, in the row.
+    expect(textOf(rowMark(container, "Revenue"), "change").join(" ")).toContain("+1,355");
+    expect(container.innerHTML).not.toMatch(/Scroll sideways/);
+  });
+  it("draws the bridge at 390 px too", () => {
+    measuredAt(390);
+    const { container } = lead(delta(steps(BRIDGE_ROWS)));
+    const svg = container.querySelector("svg[role='img']");
+    expect(svg?.getAttribute("data-layout")).toBe("narrow");
+    expect(smallest(container)).toBeGreaterThanOrEqual(11);
   });
 });
 
@@ -741,69 +787,25 @@ describe("EarningsDeltaLead with an LTM period beside the two annual periods", (
   );
   it("still draws the two annual periods, names the LTM as its own period, and keeps it in the table view", () => {
     const { container } = lead(delta(ltm));
-    expect(strip(container, "Revenue").getAttribute("aria-label")).toBe(
-      "Revenue, US$m: prior 6,585 (FY2023), current 7,940 (FY2024), up 1,355, better.",
-    );
+    expect(rowMark(container, "Revenue").textContent).toContain("6,585");
+    expect(rowMark(container, "Revenue").textContent).toContain("7,940");
+    expect(rowMark(container, "Revenue").textContent).toContain("+1,355");
     const tile = screen.getByRole("region", { name: RESULTS_NAME });
     expect(
       within(tile).getByText(
         "Compared: FY2023 to FY2024. Also stated, in the table view only: LTM Dec-2024.",
       ),
     ).toBeVisible();
-    const head = [...tile.querySelectorAll("thead th")].map((cell) => cell.textContent);
+    const rows = rowsOf(tile);
+    const head = [...tile.querySelectorAll("table thead th")].map((cell) => cell.textContent);
     expect(head.at(-1)).toBe("LTM Dec-2024");
-    expect(rowsOf(tile)[0]?.at(-1)).toBe("8100");
+    expect(rows[0]?.at(-1)).toBe("8100");
     expect(container.textContent).not.toMatch(/states no .* chart data for two periods/);
   });
 });
 
-describe("the axis text", () => {
-  const axisTexts = (container: HTMLElement) =>
-    [...container.querySelectorAll("svg[aria-hidden='true']")]
-      .filter((svg) => svg.querySelector("text"))
-      .map((svg) => ({
-        width: Number((svg.getAttribute("viewBox") ?? "").split(" ")[2]),
-        texts: [...svg.querySelectorAll("text")].map((text) => ({
-          x: Number(text.getAttribute("x")),
-          label: text.textContent,
-          size: Number(text.getAttribute("font-size")),
-        })),
-      }));
-  it("keeps every tick label inside its drawing, at about 7 px a character", () => {
-    const { container } = lead(cp1bEntry());
-    const axes = axisTexts(container);
-    expect(axes).toHaveLength(2);
-    for (const { width, texts } of axes)
-      for (const { x, label } of texts) {
-        const half = (label.length * 7) / 2;
-        expect(x - half, label).toBeGreaterThanOrEqual(0);
-        expect(x + half, label).toBeLessThanOrEqual(width);
-      }
-    expect(axes[0]?.texts.map((text) => text.label)).toEqual([
-      "\u22125,000",
-      "0",
-      "5,000",
-      "10,000",
-    ]);
-  });
-  it("sets the tick text at about 11 px where the strip is about 580 px wide", () => {
-    const { container } = lead(cp1bEntry());
-    for (const { width, texts } of axisTexts(container)) {
-      expect(width).toBe(580);
-      for (const { size } of texts) expect(size).toBe(11);
-    }
-  });
-  it("draws the zero line and labels it 0 when the scale holds a negative", () => {
-    const { container } = lead(cp1bEntry());
-    const strip = container.querySelector('svg[data-pair="Discretionary cash flow"]');
-    const zero = strip?.querySelector('[data-tick="0"]');
-    expect(zero?.getAttribute("class")).toContain("stroke-text-tertiary");
-    expect(axisTexts(container)[0]?.texts.map((text) => text.label)).toContain("0");
-  });
-});
-
 describe("EarningsDeltaLead on chart tables", () => {
-  it("draws each unit on its own scale and labels a change the page made", () => {
+  it("draws each unit as its own drawing on its own scale and labels a change the page made", () => {
     const { container } = lead(
       delta(
         results([
@@ -812,54 +814,54 @@ describe("EarningsDeltaLead on chart tables", () => {
         ]),
       ),
     );
-    const money = screen.getByRole("list", { name: `${RESULTS_NAME}, US$m` });
-    const times = screen.getByRole("list", { name: `${RESULTS_NAME}, x` });
-    expect(within(money).getAllByRole("listitem")).toHaveLength(3);
-    expect(within(times).getAllByRole("listitem")).toHaveLength(1);
-    expect(strip(container, "Interest coverage").getAttribute("aria-label")).toBe(
-      "Interest coverage, x: prior 2.71x (FY2023), current 3.29x (FY2024), up 0.58x derived, better.",
+    const tile = screen.getByRole("region", { name: RESULTS_NAME });
+    expect(within(tile).getAllByRole("img")).toHaveLength(2);
+    const coverage = rowMark(container, "Interest coverage");
+    expect(coverage.textContent).toContain("2.71x");
+    expect(coverage.textContent).toContain("+0.58x");
+    expect(coverage.textContent).toMatch(/up, better, derived/);
+    // The 3.29x current is not on the money scale: it would sit at the very start of a scale to 8000.
+    const money = rowMark(container, "Revenue");
+    expect(cx(coverage.querySelector("[data-current]"))).toBeGreaterThan(
+      cx(money.querySelector("[data-prior]")) / 2,
     );
-    expect(times).toHaveTextContent("+0.58x");
-    expect(times).toHaveTextContent("derived");
-    // The 3.29x current is not on the money scale: it would sit at 14 on a scale to 8000.
-    expect(
-      cx(strip(container, "Interest coverage").querySelector("[data-current]")),
-    ).toBeGreaterThan(100);
-    // The title says nothing computed, whatever the units.
+    expect(screen.getAllByText("x").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: RESULTS_NAME })).toBeVisible();
   });
   it("says worse for a rise in leverage, as CP-1 does", () => {
     const { container } = lead(
       delta(results([["Total debt / EBITDA", "FY2023", "6.27", "FY2024", "6.53", "x", "x"]])),
     );
-    expect(strip(container, "Total debt / EBITDA").getAttribute("aria-label")).toBe(
-      "Total debt / EBITDA, x: prior 6.27x (FY2023), current 6.53x (FY2024), up 0.26x derived, worse.",
-    );
-    expect(screen.getByText("up", { exact: false, selector: "span" })).toBeInTheDocument();
-    expect(screen.getByText(/, worse/)).toBeVisible();
+    const row = rowMark(container, "Total debt / EBITDA");
+    expect(row.textContent).toContain("+0.26x");
+    expect(row.textContent).toMatch(/up, worse, derived/);
+    // The current dot is in the signal colour, with the word beside it.
+    expect(row.querySelector("[data-current]")?.getAttribute("class")).toContain("warning-mark");
   });
-  it("shows a flat pair as unchanged, with no arrow", () => {
-    lead(delta(results(MONEY)));
-    const row = within(screen.getByRole("list", { name: `${RESULTS_NAME}, US$m` }))
-      .getByText("Flat measure")
-      .closest("li") as HTMLElement;
-    expect(row).toHaveTextContent("unchanged");
-    expect(row).not.toHaveTextContent(/[▲▼]/);
-  });
-  it("lists the pair with a missing side as the gap, not a mark", () => {
+  it("shows a flat pair as unchanged, with no direction word", () => {
     const { container } = lead(delta(results(MONEY)));
-    expect(container.querySelector('svg[data-pair="Net income"]')).toBeNull();
-    const gaps = screen.getByRole("list", { name: "Not supplied" });
-    expect(within(gaps).getByText("Not supplied: not yet reported")).toBeVisible();
+    const row = rowMark(container, "Flat measure");
+    expect(row.textContent).toContain("unchanged");
+    expect(row.textContent).not.toMatch(/up|down|better|worse/);
+  });
+  it("draws the pair with a missing side as the hatched gap with the handoff's reason, never a number", () => {
+    const { container } = lead(delta(results(MONEY)));
+    const row = rowMark(container, "Net income");
+    expect(row.textContent).toContain("1,299");
+    expect(textOf(row, "reason").join(" ")).toContain("FY2024: Not supplied: not yet reported");
+    expect(row.querySelector("[data-current]")).toBeNull();
     expect(screen.getByText(/No variance bridge in this handoff\./)).toBeVisible();
   });
   it("puts a stated zero at the axis start, not off the chart", () => {
     const { container } = lead(
       delta(results([["Revenue", "FY2023", "0", "FY2024", "250", "US$m", "x"]])),
     );
-    const svg = strip(container, "Revenue");
-    expect(svg.querySelector("[data-prior]")?.getAttribute("data-prior")).toBe("0");
-    expect(cx(svg.querySelector("[data-prior]"))).toBe(44);
+    const row = rowMark(container, "Revenue");
+    expect(row.querySelector("[data-prior]")?.getAttribute("data-prior")).toBe("0");
+    expect(row.textContent).toContain("0");
+    expect(cx(row.querySelector("[data-prior]"))).toBeLessThan(
+      cx(row.querySelector("[data-current]")),
+    );
   });
   it("reads the states of the margin table: absent, with a gap, all gaps", () => {
     lead(delta(results(MONEY)));
@@ -913,64 +915,63 @@ describe("EarningsDeltaLead on chart tables", () => {
     expect(within(tile).queryByText(/jsonl/)).toBeNull();
   });
   it("draws two figures of different kinds of period without a change, and says so", () => {
-    lead(delta(results([["Revenue", "FY2024", "7940", "LTM Dec-2024", "8100", "US$m", "x"]])));
+    const { container } = lead(
+      delta(results([["Revenue", "FY2024", "7940", "LTM Dec-2024", "8100", "US$m", "x"]])),
+    );
     const tile = screen.getByRole("region", { name: RESULTS_NAME });
     expect(within(tile).getByText(/different kinds of period has no change figure/)).toBeVisible();
-    expect(within(tile).getByRole("img")).toHaveAttribute(
-      "aria-label",
-      "Revenue, US$m: prior 7,940 (FY2024), current 8,100 (LTM Dec-2024).",
-    );
-    expect(within(tile).queryByText(/▲|▼|derived/)).toBeNull();
+    const row = rowMark(container, "Revenue");
+    expect(row.textContent).toContain("7,940");
+    expect(row.textContent).toContain("8,100");
+    expect(textOf(row, "change")).toEqual([]);
+    expect(within(tile).queryByText(/derived/)).toBeNull();
   });
 });
 
+const BRIDGE_ROWS = [
+  ["Revenue FY2023", "100", "US$m", "Reported."],
+  ["Organic growth", "20", "US$m", "Reported."],
+  ["Disposal", "-10", "US$m", "Reported."],
+  ["Revenue FY2024", "110", "US$m", "Reported."],
+];
+
 describe("EarningsDeltaLead with a variance bridge", () => {
-  const GOOD = [
-    ["Revenue FY2023", "100", "US$m", "Reported."],
-    ["Organic growth", "20", "US$m", "Reported."],
-    ["Disposal", "-10", "US$m", "Reported."],
-    ["Revenue FY2024", "110", "US$m", "Reported."],
-  ];
+  const GOOD = BRIDGE_ROWS;
   it("draws the waterfall first, plainly titled, each step a bar from the running total", () => {
     const { container } = lead(delta(steps(GOOD), results(MONEY)));
     const tile = screen.getByRole("region", { name: "Variance bridge" });
     expect(within(tile).getByRole("heading", { name: "Variance bridge" })).toBeVisible();
     expect(within(tile).getByText("Prior to current, US$m")).toBeVisible();
     const bar = (label: string) =>
-      container.querySelector(`svg[data-step="${label}"] rect`) as SVGRectElement;
-    // Axis 90 to 120 over 492 (room below the lowest total, 100): a step of -10 is half of +20.
+      container.querySelector(`rect[data-label="${label}"]`) as SVGRectElement;
     expect(bar("Organic growth").getAttribute("data-from")).toBe("100");
     expect(bar("Organic growth").getAttribute("data-to")).toBe("120");
     expect(bar("Disposal").getAttribute("data-from")).toBe("120");
     expect(bar("Disposal").getAttribute("data-to")).toBe("110");
     const span = Number(bar("Organic growth").getAttribute("width"));
     expect(Number(bar("Disposal").getAttribute("width")) / span).toBeCloseTo(10 / 20, 6);
-    // Totals start at the axis start, which the page says is not zero.
-    expect(bar("Revenue FY2024").getAttribute("data-from")).toBe("90");
-    expect(within(tile).getByText(/The axis starts at 90, not zero/)).toBeVisible();
+    // The totals are drawn from a cut axis, which the figure says.
+    expect(tile.querySelector("[data-axis-break]")).not.toBeNull();
+    expect(within(tile).getByText(/Axis starts at 90, marked on the total bars/)).toBeVisible();
     expect(screen.queryByText(/No variance bridge/)).toBeNull();
   });
   it("names a negative step by its label as written, never as an add-back, and makes no running total", () => {
     const { container } = lead(delta(steps(GOOD)));
     const tile = screen.getByRole("region", { name: "Variance bridge" });
-    expect(
-      within(within(tile).getByRole("list", { name: "Variance bridge steps" })).getByText(
-        "\u221210",
-      ),
-    ).toBeVisible();
-    expect(container.querySelector('svg[data-step="Disposal"]')?.getAttribute("aria-label")).toBe(
-      "Disposal, down 10 US$m.",
-    );
+    expect(textOf(tile, "label")).toContain("Disposal");
+    expect(tile.textContent).toContain("−10");
     expect(tile).not.toHaveTextContent(/add-back|running total/i);
-    for (const svg of tile.querySelectorAll("svg[aria-label]"))
-      expect(svg.getAttribute("aria-label")).not.toMatch(/running total|add-back/i);
+    expect(container.querySelector("svg[role='img']")?.getAttribute("aria-label")).not.toMatch(
+      /add-back/i,
+    );
   });
   it("carries the steps as the handoff states them in the table view, with no total made here", () => {
     lead(delta(steps(GOOD)));
     const tile = screen.getByRole("region", { name: "Variance bridge" });
-    const head = [...tile.querySelectorAll("thead th")].map((cell) => cell.textContent);
+    const rows = rowsOf(tile);
+    const head = [...tile.querySelectorAll("table thead th")].map((cell) => cell.textContent);
     expect(head).toEqual(["Step", "Role", "Amount (US$m)"]);
-    expect(rowsOf(tile)[2]).toEqual(["Disposal", "Change", "\u221210"]);
+    expect(rows[2]).toEqual(["Disposal", "Change", "−10"]);
   });
   it("does not draw a bridge that does not add up, and says so in the gap tile", () => {
     lead(
@@ -982,10 +983,10 @@ describe("EarningsDeltaLead with a variance bridge", () => {
         /The variance bridge in this handoff does not add up, so it is not drawn as a bridge\./,
       ),
     ).toBeVisible();
-    expect(within(own).queryByRole("list")).toBeNull();
+    expect(within(own).queryByRole("img")).toBeNull();
     const movers = screen.getByRole("region", { name: RESULTS_NAME });
     expect(within(movers).queryByText(/does not add up/)).toBeNull();
-    expect(within(movers).getByRole("list", { name: `${RESULTS_NAME}, US$m` })).toBeInTheDocument();
+    expect(within(movers).getByRole("img")).toBeInTheDocument();
   });
   it("says a missing step is not supplied, never that the steps do not add up", () => {
     lead(
@@ -1030,8 +1031,6 @@ describe("rows with no stated unit and screened text", () => {
       ["Revenue"],
       ["Customers"],
     ]);
-    expect(movers.groups[0]?.axis?.hi).toBe(150);
-    expect(movers.groups[1]?.axis?.hi).toBe(150000);
   });
   it("keeps a stated unit's rows together beside rows with none", () => {
     const { movers } = earningsDelta(delta(results([...MONEY.slice(0, 2), ...NO_UNIT_ROWS])));
@@ -1042,12 +1041,12 @@ describe("rows with no stated unit and screened text", () => {
       ["", 1],
     ]);
   });
-  it("draws each such row on its own labelled scale", () => {
+  it("draws each such row in its own drawing, captioned", () => {
     lead(delta(results(NO_UNIT_ROWS)));
     expect(screen.getAllByText("unit not stated")).toHaveLength(2);
-    expect(screen.getAllByRole("list", { name: `${RESULTS_NAME}, unit not stated` })).toHaveLength(
-      2,
-    );
+    expect(
+      within(screen.getByRole("region", { name: RESULTS_NAME })).getAllByRole("img"),
+    ).toHaveLength(2);
   });
   it("screens words in a pair cell and drops a basis note that names a register", () => {
     const { container } = lead(

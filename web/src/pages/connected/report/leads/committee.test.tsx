@@ -2,12 +2,12 @@
 // register, T6A.4 "Bear cross-examination" and the portfolio-limits chart); not a real handoff.
 // No real CP-6 handoff is retained. The thin case uses the retained synthetic CP-6 fixture.
 // Every expected value below is written out by hand.
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import type { OutputEntry, Section } from "../../publishedReport";
 import { entry as buildEntry, table } from "../overview/rows.fixture";
 import { CommitteeLead } from "./committee";
-import { bulletMarks, ledger, limits, stance } from "./committeeData";
+import { ledger, limitReason, limits, stance } from "./committeeData";
 import { cp6Entry, leadProps } from "./fixtures/load";
 
 afterEach(cleanup);
@@ -173,49 +173,36 @@ describe("ledger", () => {
   });
 });
 
-describe("bulletMarks", () => {
+describe("limitReason", () => {
   const n = (text: string) => ({ kind: "number", text, value: Number(text) }) as const;
-  it("puts current, proposed and limit on one scale from zero", () => {
-    const marks = bulletMarks({ current: n("2.37"), proposed: n("2.40"), limit: n("2.50") });
-    if ("reason" in marks) throw new Error(marks.reason);
-    expect(marks.top).toBe(3);
-    expect(marks.ticks.map((tick) => tick.label)).toEqual(["0", "1", "2", "3"]);
-    const share = (x: number | null) => ((x ?? Number.NaN) - 8) / (400 - 8);
-    expect(share(marks.current)).toBeCloseTo(2.37 / 3, 9);
-    expect(share(marks.proposed)).toBeCloseTo(2.4 / 3, 9);
-    expect(share(marks.limit)).toBeCloseTo(2.5 / 3, 9);
+  const gap = { kind: "gap", reason: "no snapshot" } as const;
+  const words = { kind: "text", text: "about two" } as const;
+  it("takes numbers, zero as a stated value, and a gap in current or proposed (drawn in place)", () => {
+    expect(
+      limitReason({ current: n("2.37"), proposed: n("2.40"), limit: n("2.50") }, "% NAV"),
+    ).toBeNull();
+    expect(limitReason({ current: n("0"), proposed: n("0"), limit: n("5") }, "% NAV")).toBeNull();
+    expect(limitReason({ current: gap, proposed: gap, limit: n("5") }, "% NAV")).toBeNull();
   });
-  it("keeps zero as a stated value on the scale", () => {
-    const marks = bulletMarks({ current: n("0"), proposed: n("0"), limit: n("5") });
-    if ("reason" in marks) throw new Error(marks.reason);
-    expect(marks.current).toBe(8);
-    expect(marks.proposed).toBe(8);
-  });
-  it("draws no bullet for a gap, words or a negative value, and says why", () => {
-    const gap = { kind: "gap", reason: "no snapshot" } as const;
-    const words = { kind: "text", text: "about two" } as const;
-    expect(bulletMarks({ current: gap, proposed: n("1"), limit: n("2") })).toEqual({
-      reason: "Current exposure is not supplied: no snapshot.",
-    });
-    expect(bulletMarks({ current: n("1"), proposed: n("1"), limit: words })).toEqual({
-      reason: "Limit value is not a number.",
-    });
-    expect(bulletMarks({ current: n("1"), proposed: words, limit: n("2") })).toEqual({
-      reason: "Proposed exposure is not a number.",
-    });
-    expect(bulletMarks({ current: n("-1"), proposed: n("1"), limit: n("2") })).toEqual({
-      reason: "A negative exposure cannot be drawn on a scale from zero.",
-    });
-  });
-  it("leaves a proposed exposure that is not supplied out of the scale", () => {
-    const marks = bulletMarks({
-      current: n("3.73"),
-      proposed: { kind: "gap", reason: "no proposal" },
-      limit: n("5.00"),
-    });
-    if ("reason" in marks) throw new Error(marks.reason);
-    expect(marks.proposed).toBeNull();
-    expect(marks.ticks.map((tick) => tick.label)).toEqual(["0", "2", "4", "6"]);
+  it("gives no bullet for a limit that is a gap, for words, a negative value or no unit", () => {
+    expect(limitReason({ current: n("1"), proposed: n("1"), limit: gap }, "x")).toBe(
+      "Limit value is not supplied: no snapshot.",
+    );
+    expect(limitReason({ current: n("1"), proposed: n("1"), limit: words }, "x")).toBe(
+      "Limit value is not a number.",
+    );
+    expect(limitReason({ current: words, proposed: n("1"), limit: n("2") }, "x")).toBe(
+      "Current exposure is not a number.",
+    );
+    expect(limitReason({ current: n("1"), proposed: words, limit: n("2") }, "x")).toBe(
+      "Proposed exposure is not a number.",
+    );
+    expect(limitReason({ current: n("-1"), proposed: n("1"), limit: n("2") }, "x")).toBe(
+      "A negative exposure cannot be drawn on a scale from zero.",
+    );
+    expect(limitReason({ current: n("1"), proposed: n("1"), limit: n("2") }, null)).toBe(
+      "The reporting unit is not stated.",
+    );
   });
 });
 
@@ -231,9 +218,7 @@ describe("limits", () => {
     expect(limits(cp6())).toBeNull();
     expect(limits(cp6(LIMITS, LIMITS))).toBeNull();
     const noUnit = tbl("L", LIMIT_HEADERS, ["Max", "1", "1", "2", "Not supplied: unit", "n"]);
-    expect(limits(cp6(noUnit))?.rows[0]?.bullet).toEqual({
-      reason: "The reporting unit is not stated.",
-    });
+    expect(limits(cp6(noUnit))?.rows[0]?.reason).toBe("The reporting unit is not stated.");
   });
 });
 
@@ -336,20 +321,22 @@ describe("CommitteeLead", () => {
       screen.getByText(/The handoff has no cross-examination of the credit case\./),
     ).toBeVisible();
   });
-  it("draws each limit as a bullet in proportion, and the unsupplied proposal as a gap mark", () => {
+  it("draws each limit as the kit bullet in proportion, and the unsupplied proposal as a gap", () => {
     const { container } = renderLead(FULL());
     const tile = screen.getByRole("region", { name: "Portfolio limits" });
     const first = tile.querySelector('[data-limit="Max single issuer"]') as HTMLElement;
-    const bar = Number(first.querySelector('[data-mark="current"]')?.getAttribute("width"));
-    const limitX = Number(first.querySelector('[data-mark="limit"]')?.getAttribute("x1"));
-    expect(bar / (limitX - 8)).toBeCloseTo(2.37 / 2.5, 9);
-    expect(first.querySelector('[data-mark="proposed"]')).not.toBeNull();
+    const bar = first.querySelector('[data-bar="value"]') as Element;
+    const limit = first.querySelector('[data-mark="limit"]') as Element;
+    const proposed = first.querySelector('[data-mark="proposed"]') as Element;
+    const zero = Number(bar.getAttribute("x"));
+    const share = (x: number) => (x - zero) / (Number(limit.getAttribute("x1")) - zero);
+    expect(share(zero + Number(bar.getAttribute("width")))).toBeCloseTo(2.37 / 2.5, 6);
+    expect(share(Number(proposed.getAttribute("cx")))).toBeCloseTo(2.4 / 2.5, 6);
     expect(first.querySelector("svg")?.getAttribute("aria-label")).toBe(
-      "Max single issuer: current 2.37 % NAV, proposed 2.40 % NAV, limit 2.50 % NAV, on one scale from zero.",
+      "Max single issuer, % NAV: Current 2.37 % NAV; Proposed 2.40 % NAV; Limit 2.50 % NAV. Scale from zero.",
     );
     const second = tile.querySelector('[data-limit="Max unrated"]') as HTMLElement;
     expect(second.querySelector('[data-mark="proposed"]')).toBeNull();
-    expect(second.querySelector('[data-mark="proposed-gap"]')).not.toBeNull();
     expect(within(second).getByText("Proposed: Not supplied: no proposal")).toBeVisible();
     expect(container.querySelectorAll("[data-limit]")).toHaveLength(2);
   });
@@ -421,10 +408,12 @@ describe("a gap reason that names a source", () => {
     const { container } = renderLead(cp6(named));
     expect(screen.getByText("Proposed: Not supplied: Detail is in Evidence.")).toBeVisible();
     expect(container.textContent).not.toMatch(/Limits\.xlsx|CP-2|Funda/);
-    const table = container.querySelector("details table") as HTMLElement;
+    const tile = screen.getByRole("region", { name: "Portfolio limits" });
+    fireEvent.click(within(tile).getByRole("button", { name: /Table view/ }));
+    const table = tile.querySelector("table") as HTMLElement;
     expect(table.textContent).toContain("Not supplied: Detail is in Evidence.");
   });
-  it("is kept out of a whole-bullet gap too", () => {
+  it("is kept out of a gap in current, drawn in place, and of a gap in the limit", () => {
     const current = tbl("Chart data: portfolio limits", LIMIT_HEADERS, [
       "Max",
       "Not supplied: see Limits.xlsx for CP-2",
@@ -434,10 +423,20 @@ describe("a gap reason that names a source", () => {
       "n",
     ]);
     const { container } = renderLead(cp6(current));
-    expect(
-      screen.getByText("Current exposure is not supplied: Detail is in Evidence."),
-    ).toBeVisible();
+    expect(screen.getByText("Current: Not supplied: Detail is in Evidence.")).toBeVisible();
     expect(container.textContent).not.toMatch(/xlsx|CP-2/);
+    const limit = tbl("Chart data: portfolio limits", LIMIT_HEADERS, [
+      "Max",
+      "1",
+      "1",
+      "Not supplied: see Limits.xlsx for CP-2",
+      "% NAV",
+      "n",
+    ]);
+    cleanup();
+    const second = renderLead(cp6(limit));
+    expect(screen.getByText("Limit value is not supplied: Detail is in Evidence.")).toBeVisible();
+    expect(second.container.textContent).not.toMatch(/xlsx|CP-2/);
   });
 });
 
@@ -471,11 +470,13 @@ describe("layout, titles and what the lead draws", () => {
       ),
     );
     const bullet = container.querySelector("[data-limit]") as HTMLElement;
-    expect(within(bullet).getByText("Proposed: 12.6 % NAV (above the limit)")).toBeVisible();
+    expect(within(bullet).getByText("Proposed 12.6 % NAV, above the limit")).toBeVisible();
     expect(bullet.querySelector("svg")?.getAttribute("aria-label")).toContain(
-      "proposed 12.6 % NAV, above the limit",
+      "Proposed 12.6 % NAV, above the limit",
     );
-    expect(within(bullet).getByText("Current 11.0 % NAV")).toBeVisible();
+    expect(bullet.querySelector("svg")?.getAttribute("aria-label")).not.toContain(
+      "Current 11.0 % NAV, above",
+    );
   });
   it("says nothing of the limit when the exposure is within it or equal to it", () => {
     const { container } = renderLead(
@@ -508,5 +509,38 @@ describe("layout, titles and what the lead draws", () => {
   it("draws no watch tile when the handoff has no events table", () => {
     renderLead(cp6(bias("Neutral", "x", "Low")));
     expect(screen.queryByRole("region", { name: "Watch items" })).toBeNull();
+  });
+});
+
+describe("disclosures", () => {
+  it("makes every Show more summary a real target with a marker and the token focus ring", () => {
+    const long = "A long statement about the credit case. ".repeat(8).trim();
+    const { container } = renderLead(
+      cp6(
+        bias("Neutral", "a; b; c; d; e; f", "Low"),
+        tbl("T6A.4", LEDGER_HEADERS, claim(1, { for: long })),
+        tbl(
+          "Events: Decision and watch",
+          ["Event date", "Event", "Status"],
+          ...[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => [
+            `2026-0${String(n)}`,
+            `Event ${String(n)}`,
+            "Scheduled",
+          ]),
+        ),
+      ),
+    );
+    const summaries = [...container.querySelectorAll("details > summary")];
+    expect(summaries.map((summary) => summary.textContent)).toEqual([
+      "Show 2 more",
+      "Show 1 more",
+      "Show more",
+    ]);
+    for (const summary of summaries) {
+      expect(summary.className).toContain("min-h-8");
+      expect(summary.className).toContain("max-[480px]:min-h-11");
+      expect(summary.className).toContain("focus-visible:outline-2");
+      expect(summary.querySelector("svg")).not.toBeNull();
+    }
   });
 });

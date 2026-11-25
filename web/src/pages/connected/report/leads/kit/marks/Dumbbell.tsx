@@ -18,6 +18,12 @@ export type DumbbellRow = {
   note?: string;
   /** `worse` draws the current dot in the signal colour; the word must be in `note`. */
   tone?: MarkTone;
+  /**
+   * Which series the row belongs to: "primary" (the default) draws the current dot teal,
+   * "secondary" navy (`fill-chart-2`), so a second kind of measure on the same scale (debt beside
+   * earnings) reads apart; the page names it in its own legend. `tone: "worse"` still wins.
+   */
+  series?: "primary" | "secondary";
 };
 
 export type DumbbellProps = {
@@ -283,10 +289,17 @@ function Pair({ one, f, reason }: { one: Laid; f: Frame; reason: string }) {
       {known(current) && (
         <circle
           data-current={current.value}
+          {...(row.series ? { "data-series": row.series } : {})}
           cx={f.x(current.value)}
           cy={cy}
           r={flat ? 4 : 6}
-          className={row.tone === "worse" ? "fill-warning-mark" : "fill-chart-1"}
+          className={
+            row.tone === "worse"
+              ? "fill-warning-mark"
+              : row.series === "secondary"
+                ? "fill-chart-2"
+                : "fill-chart-1"
+          }
         />
       )}
       {known(prior) && close && ring}

@@ -300,19 +300,3 @@ export function readLeverage(entry: OutputEntry): Leverage {
   });
   return { state: "ready", line: table.line, measures };
 }
-
-/** Axis from zero for two multiples: round ends, and where each value sits. */
-export function leverageScale(values: number[]) {
-  const low = Math.min(0, ...values);
-  const top = Math.max(0, ...values);
-  const step = niceStep((top - low || 1) / 4);
-  const lo = Math.floor(low / step) * step;
-  const hi = Math.max(Math.ceil(top / step) * step, lo + step);
-  const x = (value: number) => 24 + ((value - lo) / (hi - lo)) * 440;
-  const digits = Math.max(0, -Math.floor(Math.log10(step)));
-  const ticks = Array.from({ length: Math.round((hi - lo) / step) + 1 }, (_, at) => {
-    const value = lo + at * step;
-    return { x: x(value), label: value.toFixed(digits) };
-  });
-  return { x, ticks };
-}

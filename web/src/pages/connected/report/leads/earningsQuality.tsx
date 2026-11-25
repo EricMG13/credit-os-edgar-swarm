@@ -3,7 +3,6 @@ import { GapNote } from "../overview/Tile";
 import {
   BRIDGE,
   bridgeGeometry,
-  leverageScale,
   readBridge,
   readLeverage,
   type Bridge,
@@ -11,6 +10,7 @@ import {
   type Support,
 } from "./earningsQualityData";
 import { FigureTile, GapTile, LeadFrame, ScrollFigure } from "./kit/LeadFrame";
+import { fittingTicks, Measured, niceAxis, SIZE, textWidth } from "./kit/marks";
 import { group } from "./kit/numbers";
 import type { LeadProps } from "./types";
 
@@ -201,76 +201,96 @@ function BridgeTile({ props, bridge }: { props: LeadProps; bridge: Bridge }) {
 
 const withX = (text: string) => `${group(text)}x`;
 
-/** Where a label centred on `x` can sit inside the drawing without leaving it. */
-const anchorAt = (x: number) => (x < 90 ? "start" : x > 400 ? "end" : "middle");
+/** Where a label of `width` px starts when centred on `x`, kept inside a figure `total` px wide. */
+const centredStart = (x: number, width: number, total: number) =>
+  Math.min(Math.max(x - width / 2, 0), Math.max(total - width, 0));
 
-function Pair({ item }: { item: Extract<LeverageMeasure, { kind: "pair" }> }) {
-  const scale = leverageScale([item.reported.value, item.restated.value]);
-  const a = scale.x(item.reported.value);
-  const b = scale.x(item.restated.value);
-  const close = Math.abs(a - b) < 120;
+const PAD = 10;
+
+function Pair({
+  item,
+  width,
+}: {
+  item: Extract<LeverageMeasure, { kind: "pair" }>;
+  width: number;
+}) {
+  const axis = niceAxis([item.reported.value, item.restated.value], { zero: true, suffix: "x" });
+  const x = (value: number) => axis.place(value, PAD, width - PAD);
+  const a = x(item.reported.value);
+  const b = x(item.restated.value);
+  const statements = `statements ${withX(item.reported.text)}`;
+  const supported = `supported ${withX(item.restated.text)}`;
+  // Each label hangs from its own mark, kept inside the figure; the second drops a line when the
+  // first would touch it.
+  const first = centredStart(a, textWidth(statements, SIZE.label), width);
+  const second = centredStart(b, textWidth(supported, SIZE.label), width);
+  const touching =
+    second < first + textWidth(statements, SIZE.label) + 8 &&
+    first < second + textWidth(supported, SIZE.label) + 8;
+  const kept = fittingTicks(axis, PAD, width - PAD, (text) => textWidth(text, SIZE.tick));
   const reading = `${item.measure}: ${withX(item.reported.text)} on the statements, ${withX(item.restated.text)} on supported earnings.`;
   return (
     <div className="flex min-w-0 flex-col gap-1">
       <h4 className="text-small font-medium text-text-primary">{item.measure}</h4>
       <svg
-        viewBox="0 0 490 100"
+        viewBox={`0 0 ${String(width)} ${touching ? 112 : 96}`}
         width="100%"
         role="img"
         aria-label={reading}
         data-measure={item.measure}
+        className="block"
       >
-        {scale.ticks.map((tick) => (
-          <g key={tick.label}>
-            <line x1={tick.x} x2={tick.x} y1="26" y2="42" className="stroke-border-hairline" />
-            <text
-              x={tick.x}
-              y="94"
-              textAnchor="middle"
-              fontSize="11"
-              className="fill-text-tertiary font-mono"
-            >
-              {tick.label}x
-            </text>
-          </g>
+        <text x={first} y="16" fontSize={SIZE.label} className="fill-text-secondary font-mono">
+          {statements}
+        </text>
+        {kept.map((tick) => (
+          <line
+            key={tick.label}
+            x1={x(tick.value)}
+            x2={x(tick.value)}
+            y1="26"
+            y2="50"
+            className="stroke-border-hairline"
+          />
         ))}
-        <line x1="24" x2="464" y1="34" y2="34" className="stroke-border-hairline" />
+        <line x1={PAD} x2={width - PAD} y1="38" y2="38" className="stroke-border-hairline" />
         <line
           data-gap-line
           x1={a}
           x2={b}
-          y1="34"
-          y2="34"
+          y1="38"
+          y2="38"
           strokeWidth="3"
           className="stroke-chart-1"
         />
         <circle
           data-reported={item.reported.text}
           cx={a}
-          cy="34"
+          cy="38"
           r="7"
           strokeWidth="2"
           className="fill-surface-card stroke-chart-3"
         />
-        <circle data-restated={item.restated.text} cx={b} cy="34" r="7" className="fill-chart-1" />
-        <text
-          x={a}
-          y="58"
-          textAnchor={anchorAt(a)}
-          fontSize="12"
-          className="fill-text-secondary font-mono"
-        >
-          statements {withX(item.reported.text)}
+        <circle data-restated={item.restated.text} cx={b} cy="38" r="7" className="fill-chart-1" />
+        <text x={second} y="68" fontSize={SIZE.label} className="fill-text-primary font-mono">
+          {supported}
         </text>
-        <text
-          x={b}
-          y={close ? 74 : 58}
-          textAnchor={anchorAt(b)}
-          fontSize="12"
-          className="fill-text-primary font-mono"
-        >
-          supported {withX(item.restated.text)}
-        </text>
+        {kept.map((tick) => {
+          const at = x(tick.value);
+          const half = textWidth(tick.label, SIZE.tick) / 2;
+          return (
+            <text
+              key={tick.label}
+              x={Math.min(Math.max(at, half), width - half)}
+              y={touching ? 104 : 88}
+              textAnchor="middle"
+              fontSize={SIZE.tick}
+              className="fill-text-tertiary font-mono"
+            >
+              {tick.label}
+            </text>
+          );
+        })}
       </svg>
     </div>
   );
@@ -311,7 +331,9 @@ function LeverageTile({ props }: { props: LeadProps }) {
       {pairs.length === 0 && <GapNote>No leverage multiple is stated on both bases.</GapNote>}
       {leverage.measures.map((item) =>
         item.kind === "pair" ? (
-          <Pair key={item.measure} item={item} />
+          <Measured key={item.measure} fallback={460}>
+            {(width) => <Pair item={item} width={width} />}
+          </Measured>
         ) : (
           <div key={item.measure} className="flex flex-col gap-1">
             <h4 className="text-small font-medium text-text-primary">{item.measure}</h4>

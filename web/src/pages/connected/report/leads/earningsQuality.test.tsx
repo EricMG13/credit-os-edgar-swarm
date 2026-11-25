@@ -1,14 +1,30 @@
 // Synthetic, built from the module contract (src/deploy_vii/bindings/cp1d.py and
 // src/deploy_workflow/owners/cp1d.py: T1D.2 assessment, the Step | Amount bridge, T1D.6 leverage);
 // not a real handoff — unproven on a real run. No CP-1D handoff has been retained.
-import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { entry, section, table } from "../overview/rows.fixture";
 import { bridgeGeometry, readBridge, readLeverage } from "./earningsQualityData";
 import { EarningsQualityLead } from "./earningsQuality";
 import { leadProps } from "./fixtures/load";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+/** Measure every figure box as `width` px wide (jsdom has no layout). */
+function measuredAs(width: number) {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  );
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ width } as DOMRect);
+}
 
 const STEPS = ["Step", "Amount", "Reporting unit", "Basis and limitation"];
 const BRIDGE = [
@@ -374,11 +390,11 @@ describe("EarningsQualityLead", () => {
     const a = attr(total?.querySelector("[data-reported]"), "cx");
     const b = attr(total?.querySelector("[data-restated]"), "cx");
     // The scale starts at zero: a mark's distance from the axis start is in proportion to its figure.
-    expect((a - 24) / (b - 24)).toBeCloseTo(6.1 / 7.4, 6);
+    expect((a - 10) / (b - 10)).toBeCloseTo(6.1 / 7.4, 6);
     const net = tile.querySelector('[data-measure="Net leverage"]');
     const c = attr(net?.querySelector("[data-reported]"), "cx");
     const d = attr(net?.querySelector("[data-restated]"), "cx");
-    expect((c - 24) / (d - 24)).toBeCloseTo(5.0 / 5.9, 6);
+    expect((c - 10) / (d - 10)).toBeCloseTo(5.0 / 5.9, 6);
     expect(total?.getAttribute("aria-label")).toBe(
       "Total leverage: 6.1x on the statements, 7.4x on supported earnings.",
     );
@@ -448,22 +464,34 @@ describe("EarningsQualityLead", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("keeps the supported-earnings label inside the drawing when the mark is at the right edge", () => {
-    render(
-      <EarningsQualityLead
-        {...leadProps(
-          quality(BRIDGE, ASSESSMENT, [
-            ["Statements (CP-1)", "", "", "", "1.0", "1.0"],
-            ["Supported", "", "", "", "5.9", "5.9"],
-          ]),
-        )}
-      />,
-    );
-    const label = [...document.querySelectorAll("text")].find((text) =>
-      /^supported 5\.9x$/.test(text.textContent),
-    );
-    expect(label?.getAttribute("text-anchor")).toBe("end");
-    expect(attr(label, "x")).toBeLessThanOrEqual(490);
+  it("keeps both leverage labels inside the drawing when the mark is at the right edge, at 460 and 390 px", () => {
+    for (const total of [null, 390]) {
+      if (total) measuredAs(total);
+      const { unmount } = render(
+        <EarningsQualityLead
+          {...leadProps(
+            quality(BRIDGE, ASSESSMENT, [
+              ["Statements (CP-1)", "", "", "", "1.0", "1.0"],
+              ["Supported", "", "", "", "5.9", "5.9"],
+            ]),
+          )}
+        />,
+      );
+      const svg = document.querySelector('svg[data-measure="Total leverage"]');
+      const drawn = Number(svg?.getAttribute("viewBox")?.split(" ")[2]);
+      if (total) expect(drawn).toBe(total);
+      for (const text of svg?.querySelectorAll("text") ?? []) {
+        expect(Number(text.getAttribute("font-size"))).toBeGreaterThanOrEqual(11);
+        const width = text.textContent.length * 7.2;
+        const left =
+          text.getAttribute("text-anchor") === "middle"
+            ? attr(text, "x") - width / 2
+            : attr(text, "x");
+        expect(left, text.textContent).toBeGreaterThanOrEqual(-0.5);
+        expect(left + width, text.textContent).toBeLessThanOrEqual(drawn + 0.5);
+      }
+      unmount();
+    }
   });
 
   it("declares that it draws none of the module's typed figures, events or maps", () => {

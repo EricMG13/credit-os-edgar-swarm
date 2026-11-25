@@ -1,13 +1,29 @@
 // The model is faked in the shape `forwardPath` reads (overview/StressRow.test.tsx); no retained real
 // published model is used. The lead reads only the model's net leverage row: Synthetic, built from the
 // published-model contract (overview/stressData.ts `forwardPath`); not a real run.
-import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { entry } from "../overview/rows.fixture";
 import { leadProps } from "./fixtures/load";
 import { ModelLead } from "./modelLead";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
+
+/** Measure every figure box as `width` px wide (jsdom has no layout). */
+function measuredAs(width: number) {
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  );
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ width } as DOMRect);
+}
 
 const cell = (display: string, exact: string | null) =>
   exact === null
@@ -68,13 +84,14 @@ const module_ = entry("CP-MODEL", [], [{ heading: "Findings", level: 2, line: 3,
 const props = (models: unknown[]) => leadProps(module_, models);
 const num = (element: Element | null | undefined, name: string) =>
   Number(element?.getAttribute(name));
-const ZERO = 250;
+const zeroOf = (container: Element) => num(container.querySelector("svg[data-zero]"), "data-zero");
 
 describe("ModelLead", () => {
   it("draws each case from zero in proportion, and joins only neighbouring periods that both have a figure", () => {
     const { container } = render(<ModelLead {...props([TWO])} />);
     const point = (name: string) => container.querySelector(`[data-point="${name}"]`);
-    const height = (name: string) => ZERO - num(point(name), "data-cy");
+    const zero = zeroOf(container);
+    const height = (name: string) => zero - num(point(name), "data-cy");
     expect(height("Downside case FY2026E") / height("Downside case FY2025E")).toBeCloseTo(
       3.5 / 2.5,
       6,
@@ -88,17 +105,18 @@ describe("ModelLead", () => {
 
   it("marks a case's gap on that case's own line, not as a full-height column, and never as zero", () => {
     const { container } = render(<ModelLead {...props([TWO])} />);
-    const marks = container.querySelectorAll("[data-gap]");
+    const marks = container.querySelectorAll("[data-gap-mark]");
     expect(marks).toHaveLength(1);
-    const mark = container.querySelector('[data-gap="Base case FY2026E"]');
+    const mark = container.querySelector(
+      '[data-gap-mark="Base case FY2026E"] rect[stroke-dasharray]',
+    );
     expect(mark).not.toBeNull();
     // A small slot: nowhere near the plot's full height (216), and not at the zero line.
     expect(num(mark, "height")).toBeLessThan(30);
-    expect(num(mark, "y") + num(mark, "height") / 2).toBeLessThan(ZERO - 20);
+    expect(num(mark, "y") + num(mark, "height") / 2).toBeLessThan(zeroOf(container) - 20);
     // It sits at the height of the base case's own stated neighbour, in that case's colour.
     const neighbour = num(container.querySelector('[data-point="Base case FY2025E"]'), "data-cy");
     expect(num(mark, "y") + num(mark, "height") / 2).toBeCloseTo(neighbour, 6);
-    expect(mark?.getAttribute("class")).toContain("stroke-chart-1");
     expect(container.querySelector('[data-point="Base case FY2026E"]')).toBeNull();
     expect(
       screen.getByText("Base case, FY2026E: the inputs do not state this period."),
@@ -124,8 +142,8 @@ describe("ModelLead", () => {
         ])}
       />,
     );
-    expect(container.querySelectorAll("[data-gap]")).toHaveLength(1);
-    expect(container.querySelector('[data-gap="Downside FY2027E"]')).not.toBeNull();
+    expect(container.querySelectorAll("[data-gap-mark]")).toHaveLength(1);
+    expect(container.querySelector('[data-gap-mark="Downside FY2027E"]')).not.toBeNull();
     expect(container.querySelector('[data-point="Base case FY2027E"]')).not.toBeNull();
     expect(container.querySelector('[data-line="Downside"]')).not.toBeNull();
   });
@@ -181,7 +199,10 @@ describe("ModelLead", () => {
     render(<ModelLead {...props([TWO])} />);
     expect(screen.getByText("Arithmetic over stated inputs; not analytical review.")).toBeVisible();
     expect(screen.getByRole("link", { name: "Source for the forward path" })).toBeVisible();
-    expect(screen.getByText("Table view")).toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: /Table view/ }));
+    expect(
+      within(screen.getByRole("region", { name: "Forward net leverage" })).getByRole("table"),
+    ).toBeVisible();
     expect(document.body.textContent).not.toMatch(/CP-MODEL|CP-2G/);
   });
 
@@ -235,8 +256,10 @@ describe("ModelLead", () => {
         ])}
       />,
     );
-    expect(num(container.querySelector('[data-point="Base case FY2025E"]'), "data-cy")).toBe(ZERO);
-    expect(container.querySelectorAll("[data-gap]")).toHaveLength(0);
+    expect(num(container.querySelector('[data-point="Base case FY2025E"]'), "data-cy")).toBe(
+      zeroOf(container),
+    );
+    expect(container.querySelectorAll("[data-gap-mark]")).toHaveLength(0);
   });
 
   it("keeps overlapping end labels apart", () => {
@@ -280,5 +303,36 @@ describe("ModelLead", () => {
 
   it("declares that it draws none of the module's typed figures, events or maps", () => {
     expect(ModelLead.draws).toEqual([]);
+  });
+
+  it("draws at the measured width: a 390 px phone gets the narrow viewBox, real text sizes and labels inside it", () => {
+    measuredAs(390);
+    const three = model({
+      "Base case": [
+        ["5.10x", "5.1"],
+        ["4.60x", "4.6"],
+        ["4.10x", "4.1"],
+      ],
+      "Downside case": [
+        ["5.50x", "5.5"],
+        ["6.00x", "6.0"],
+        ["n.a.", null],
+      ],
+    });
+    const { container } = render(<ModelLead {...props([three])} />);
+    const svg = container.querySelector("svg[data-zero]");
+    expect(svg?.getAttribute("viewBox")).toMatch(/^0 0 390 /);
+    expect(svg?.getAttribute("data-layout")).toBe("narrow");
+    for (const text of svg?.querySelectorAll("text") ?? [])
+      expect(Number(text.getAttribute("font-size")), text.textContent).toBeGreaterThanOrEqual(11);
+    // Nothing is drawn past the right edge, end labels included (7.2 px a character at 12 px).
+    for (const label of svg?.querySelectorAll("[data-case-label]") ?? []) {
+      const widest = Math.max(
+        ...[...label.querySelectorAll("tspan")].map((t) => t.textContent.length),
+      );
+      expect(num(label, "x") + widest * 7.2).toBeLessThanOrEqual(390);
+    }
+    for (const point of svg?.querySelectorAll("[data-point]") ?? [])
+      expect(num(point, "data-cx")).toBeLessThanOrEqual(390);
   });
 });

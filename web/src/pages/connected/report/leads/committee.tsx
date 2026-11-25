@@ -1,10 +1,11 @@
-import { useId } from "react";
+import { ChevronDown } from "@untitledui/icons";
+import { useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { cx } from "@/utils/cx";
 import { GapPattern } from "../overview/figureParts";
 import { GapNote } from "../overview/Tile";
 import { FigureTile, GapTile, LeadFrame } from "./kit/LeadFrame";
+import { Bullet, Measured, type BulletSide } from "./kit/marks";
 import {
-  BULLET,
   ledger,
   ledgerCells,
   limits,
@@ -26,34 +27,96 @@ const LINE = 56;
 const MINI_GAP =
   "gap-hatch rounded-ds-xs border border-dashed border-border-gap px-2 py-1 text-caption text-gap-text text-pretty wrap-anywhere";
 
-/** A handoff cell as the ledger draws it: clamped words with the rest on demand, or its gap. */
-function SaidText({ value, lines, className }: { value: Said; lines: 1 | 2; className?: string }) {
-  if (value.kind === "gap") return <p className={MINI_GAP}>{`Not supplied: ${value.reason}`}</p>;
-  if (value.kind === "empty") return <p className={MINI_GAP}>Not stated in the handoff.</p>;
-  const words = value.kind === "text" ? value.text : IN_EVIDENCE;
-  const long = value.kind === "text" && words.length > LINE * lines;
+/** 32 px targets, 44 px at 480 px and below, the token focus ring (the kit's table button follows these). */
+const TARGET =
+  "min-h-8 max-[480px]:min-h-11 outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2";
+
+/** A disclosure for the rest of a list or text: a marked summary at a real target size. */
+function More({
+  label,
+  className,
+  children,
+}: {
+  label: string;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <details className={cx("group min-w-0", className)}>
+      <summary
+        className={cx(
+          TARGET,
+          "flex w-fit cursor-pointer list-none items-center gap-1 rounded-ds-xs text-caption font-medium text-text-link [&::-webkit-details-marker]:hidden",
+        )}
+      >
+        {label}
+        <ChevronDown
+          aria-hidden="true"
+          className="size-4 transition-transform group-open:rotate-180"
+        />
+      </summary>
+      {children}
+    </details>
+  );
+}
+
+/**
+ * Words clamped to `lines`, with the rest on demand when they overflow: measured where the browser
+ * lays text out, by length (about `LINE` characters a line) where it does not (no layout).
+ */
+function ClampedText({
+  words,
+  lines,
+  className,
+}: {
+  words: string;
+  lines: 1 | 2;
+  className?: string;
+}) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  const [long, setLong] = useState(words.length > LINE * lines);
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return undefined;
+    const measure = () => {
+      if (node.clientHeight > 0) setLong(node.scrollHeight > node.clientHeight + 1);
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const watcher = new ResizeObserver(measure);
+    watcher.observe(node);
+    return () => {
+      watcher.disconnect();
+    };
+  }, [words]);
   return (
     <div className="flex min-w-0 flex-col gap-1">
       <p
+        ref={ref}
         className={cx(
           "text-small text-text-primary text-pretty wrap-anywhere",
           lines === 1 ? "line-clamp-1" : "line-clamp-2",
-          value.kind === "evidence" && "text-text-secondary",
           className,
         )}
       >
         {words}
       </p>
       {long && (
-        <details className="text-caption text-text-secondary">
-          <summary className="flex min-h-8 w-fit cursor-pointer items-center text-text-link">
-            Show more
-          </summary>
+        <More label="Show more" className="text-caption text-text-secondary">
           <p className="text-pretty wrap-anywhere">{words}</p>
-        </details>
+        </More>
       )}
     </div>
   );
+}
+
+/** A handoff cell as the ledger draws it: clamped words with the rest on demand, or its gap. */
+function SaidText({ value, lines, className }: { value: Said; lines: 1 | 2; className?: string }) {
+  if (value.kind === "gap") return <p className={MINI_GAP}>{`Not supplied: ${value.reason}`}</p>;
+  if (value.kind === "empty") return <p className={MINI_GAP}>Not stated in the handoff.</p>;
+  if (value.kind === "evidence")
+    return <p className="text-small text-text-secondary">{IN_EVIDENCE}</p>;
+  return <ClampedText words={value.text} lines={lines} className={className} />;
 }
 
 const CONFIDENCE_LEVEL: Record<string, number> = { low: 1, medium: 2, high: 3 };
@@ -118,14 +181,11 @@ function ConditionList({ conditions }: { conditions: Conditions }) {
         {shown.map(item)}
       </ul>
       {rest.length > 0 && (
-        <details className="text-small text-text-secondary">
-          <summary className="flex min-h-8 w-fit cursor-pointer items-center text-caption text-text-link">
-            {`Show ${String(rest.length)} more`}
-          </summary>
+        <More label={`Show ${String(rest.length)} more`} className="text-small text-text-secondary">
           <ul className="flex list-disc flex-col gap-1 pl-5">
             {rest.map((value, at) => item(value, at + shown.length))}
           </ul>
-        </details>
+        </More>
       )}
     </div>
   );
@@ -270,10 +330,9 @@ function LedgerTile(props: LeadProps) {
           ))}
         </ol>
         {rest.length > 0 && (
-          <details className="min-w-0">
-            <summary className="flex min-h-8 w-fit cursor-pointer items-center text-caption font-medium text-text-link">
-              {`Show ${String(rest.length)} more ${rest.length === 1 ? "point" : "points"}`}
-            </summary>
+          <More
+            label={`Show ${String(rest.length)} more ${rest.length === 1 ? "point" : "points"}`}
+          >
             <ol
               start={VISIBLE_ROWS + 1}
               className="mt-4 flex min-w-0 flex-col gap-4"
@@ -283,7 +342,7 @@ function LedgerTile(props: LeadProps) {
                 <LedgerItem key={row.line} row={row} />
               ))}
             </ol>
-          </details>
+          </More>
         )}
       </div>
     </FigureTile>
@@ -297,87 +356,40 @@ const shown = (item: Figure, unit: string) =>
       ? `Not supplied: ${item.reason}`
       : item.text;
 
-/** One bullet: the exposure to its stated value as a bar, the proposed as a ring, the limit as a rule. */
+/** A stated figure for the kit bullet, or the module's reason it is not stated. */
+const side = (item: Figure, unit: string): BulletSide =>
+  item.kind === "number"
+    ? { value: item.value, text: shown(item, unit) }
+    : item.kind === "gap"
+      ? { gap: `Not supplied: ${item.reason}` }
+      : { gap: item.text };
+
+/** One limit as the kit bullet: current as a bar, proposed as a ring, the limit as a rule. */
 function LimitBullet({ item }: { item: Limit }) {
-  const hatch = useId();
-  const { bullet, unit } = item;
-  if ("reason" in bullet)
+  const { unit, reason } = item;
+  if (reason !== null || unit === null || item.limit.kind !== "number")
     return (
       <li className="flex min-w-0 flex-col gap-2" data-limit={item.name}>
         <p className="text-small font-medium text-text-primary wrap-anywhere">{item.name}</p>
-        <GapNote>{bullet.reason}</GapNote>
+        <GapNote>{reason ?? "The limit value is not a number."}</GapNote>
       </li>
     );
-  const label = [
-    `${item.name}: current ${shown(item.current, unit ?? "")}${bullet.currentAbove ? ", above the limit" : ""}`,
-    `proposed ${item.proposed.kind === "number" ? shown(item.proposed, unit ?? "") : "not supplied"}${bullet.proposedAbove ? ", above the limit" : ""}`,
-    `limit ${shown(item.limit, unit ?? "")}`,
-    "on one scale from zero.",
-  ].join(", ");
+  const limit = { value: item.limit.value, text: shown(item.limit, unit) };
   return (
-    <li className="flex min-w-0 flex-col gap-1.5" data-limit={item.name}>
-      <p className="text-small font-medium text-text-primary wrap-anywhere">{item.name}</p>
-      <svg viewBox="0 0 408 40" width="100%" role="img" aria-label={label} className="block">
-        <defs>
-          <GapPattern id={hatch} />
-        </defs>
-        <rect
-          x={BULLET.left}
-          y="12"
-          width={BULLET.right - BULLET.left}
-          height="16"
-          rx="3"
-          className="fill-surface-subtle"
-        />
-        <rect
-          data-mark="current"
-          x={BULLET.left}
-          y="15"
-          width={bullet.current - BULLET.left}
-          height="10"
-          rx="2"
-          className="fill-chart-1"
-        />
-        {bullet.proposed !== null ? (
-          <circle
-            data-mark="proposed"
-            cx={bullet.proposed}
-            cy="20"
-            r="6"
-            strokeWidth="2.5"
-            className="fill-surface-card stroke-chart-2"
-          />
-        ) : (
-          <rect
-            data-mark="proposed-gap"
-            x={BULLET.right - 40}
-            y="12"
-            width="40"
-            height="16"
-            rx="3"
-            strokeWidth="1"
-            fill={`url(#${hatch})`}
-            className="stroke-border-gap"
+    <li className="min-w-0" data-limit={item.name}>
+      <Measured fallback={520}>
+        {(width) => (
+          <Bullet
+            width={width}
+            name={item.name}
+            unit={unit}
+            value={side(item.current, unit)}
+            proposed={side(item.proposed, unit)}
+            limit={limit}
+            names={{ value: "Current", proposed: "Proposed", limit: "Limit" }}
           />
         )}
-        <line
-          data-mark="limit"
-          x1={bullet.limit}
-          x2={bullet.limit}
-          y1="4"
-          y2="36"
-          strokeWidth="3"
-          className="stroke-text-primary"
-        />
-      </svg>
-      <p className="flex flex-wrap gap-x-4 gap-y-0.5 font-mono text-caption text-text-secondary tabular-nums">
-        <span>{`Current ${shown(item.current, unit ?? "")}${bullet.currentAbove ? " (above the limit)" : ""}`}</span>
-        <span className={cx(item.proposed.kind !== "number" && "text-gap-text")}>
-          {`Proposed: ${shown(item.proposed, unit ?? "")}${bullet.proposedAbove ? " (above the limit)" : ""}`}
-        </span>
-        <span>{`Limit ${shown(item.limit, unit ?? "")}`}</span>
-      </p>
-      <p className="text-caption text-text-tertiary">{`Scale from 0 to ${bullet.ticks.at(-1)?.label ?? ""} ${unit ?? ""}`}</p>
+      </Measured>
     </li>
   );
 }
@@ -390,7 +402,7 @@ function LimitsTile(props: LeadProps) {
       props={props}
       span={12}
       label="Portfolio limits"
-      kicker="Portfolio limits"
+      kicker="Exposure against each limit"
       title="Portfolio limits"
       line={found.line}
       source="the portfolio limits"
@@ -453,12 +465,9 @@ function WatchTile(props: LeadProps) {
     >
       <ul className="flex min-w-0 flex-col gap-3">{visible.map(item)}</ul>
       {rest.length > 0 && (
-        <details className="min-w-0">
-          <summary className="flex min-h-8 w-fit cursor-pointer items-center text-caption font-medium text-text-link">
-            {`Show ${String(rest.length)} more`}
-          </summary>
+        <More label={`Show ${String(rest.length)} more`}>
           <ul className="mt-3 flex min-w-0 flex-col gap-3">{rest.map(item)}</ul>
-        </details>
+        </More>
       )}
     </FigureTile>
   );

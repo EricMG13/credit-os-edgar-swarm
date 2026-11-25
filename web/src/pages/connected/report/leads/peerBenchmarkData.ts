@@ -1,5 +1,4 @@
 import type { OutputEntry } from "../../publishedReport";
-import { ticks } from "../../visuals/visualData";
 import { safeText as safe } from "./kit/reader";
 import { difference, readCell, signOf } from "./kit/numbers";
 import { allTables } from "./kit/tables";
@@ -232,21 +231,6 @@ export function readPeerBenchmark(entry: OutputEntry): PeerRead {
   if (!read.tables.length && read.gaps.every((gap) => gap.endsWith("is not in this handoff.")))
     read.gaps = ["No peer range table is in this handoff."];
   return read;
-}
-
-const AXIS = { left: 88, right: 552 } as const;
-
-/** One shared axis from zero for the rows of a unit; only rows with a drawable strip place values on it. */
-export function groupScale(group: PeerGroup) {
-  const values = group.rows.flatMap(({ drawing }) =>
-    drawing.kind === "strip" ? [drawing.low, drawing.high, drawing.median, drawing.issuer] : [],
-  );
-  const scale = ticks(values);
-  const lo = scale[0]?.value ?? 0;
-  const hi = scale.at(-1)?.value ?? 1;
-  const x = (value: number) =>
-    AXIS.left + ((value - lo) / (hi - lo || 1)) * (AXIS.right - AXIS.left);
-  return { x, ticks: scale.map((tick) => ({ label: tick.label, x: x(tick.value) })) };
 }
 
 /** A figure with its unit as the module states it: `%` and `x` attach, any other unit follows. */

@@ -1,5 +1,5 @@
 import { readParagraph, type OutputEntry } from "../../publishedReport";
-import { difference, readCell, signOf } from "./kit/numbers";
+import { readCell } from "./kit/numbers";
 import { safeText } from "./kit/reader";
 import { cellAt, locate, said, saidText, type Said } from "./validationData";
 
@@ -159,85 +159,6 @@ function figure(cell: string | undefined): Figure {
   return { kind: "text", text: safeText(reading.text) };
 }
 
-export const BULLET = { left: 8, right: 400 } as const;
-
-export type Bullet = {
-  /** The scale's top: a round number at or above every stated value; the scale starts at zero. */
-  top: number;
-  ticks: { label: string; x: number }[];
-  current: number;
-  /** The proposed exposure's place, or null where it is not supplied. */
-  proposed: number | null;
-  limit: number;
-  /** Stated against stated: true only when the figure is above the limit value. */
-  currentAbove: boolean;
-  proposedAbove: boolean;
-};
-
-const above = (value: Figure, limit: Figure) =>
-  value.kind === "number" &&
-  limit.kind === "number" &&
-  signOf(difference(value.text, limit.text)) === 1;
-
-function niceStep(span: number) {
-  const raw = span / 4;
-  const power = 10 ** Math.floor(Math.log10(raw));
-  const factor = raw / power;
-  return (factor <= 1 ? 1 : factor <= 2 ? 2 : factor <= 5 ? 5 : 10) * power;
-}
-
-const trimmed = (value: number) => String(Number(value.toPrecision(12)));
-
-/**
- * Current and proposed exposure marked against the limit on one scale from zero. A gap, a word or
- * a negative value in current or limit gives no bullet (`reason`); a proposed exposure that is
- * not supplied is left out and drawn as the gap mark.
- */
-export function bulletMarks(values: {
-  current: Figure;
-  proposed: Figure;
-  limit: Figure;
-}): Bullet | { reason: string } {
-  const { current, proposed, limit } = values;
-  const named = {
-    current: "Current exposure",
-    proposed: "Proposed exposure",
-    limit: "Limit value",
-  };
-  for (const key of ["current", "limit"] as const) {
-    const item = values[key];
-    if (item.kind === "gap")
-      return { reason: `${named[key]} is not supplied: ${item.reason.replace(/\.$/, "")}.` };
-    if (item.kind === "text") return { reason: `${named[key]} is not a number.` };
-  }
-  if (proposed.kind === "text") return { reason: `${named.proposed} is not a number.` };
-  if (current.kind !== "number" || limit.kind !== "number") return { reason: "Not a number." };
-  const stated = [
-    current.value,
-    limit.value,
-    ...(proposed.kind === "number" ? [proposed.value] : []),
-  ];
-  if (stated.some((value) => value < 0))
-    return { reason: "A negative exposure cannot be drawn on a scale from zero." };
-  const max = Math.max(...stated);
-  const step = max > 0 ? niceStep(max) : 1;
-  const top = Math.max(Math.ceil(max / step) * step, step);
-  const x = (value: number) => BULLET.left + (value / top) * (BULLET.right - BULLET.left);
-  const count = Math.round(top / step);
-  return {
-    top,
-    ticks: Array.from({ length: count + 1 }, (_, at) => ({
-      label: trimmed(at * step),
-      x: x(at * step),
-    })),
-    current: x(current.value),
-    proposed: proposed.kind === "number" ? x(proposed.value) : null,
-    limit: x(limit.value),
-    currentAbove: above(current, limit),
-    proposedAbove: above(proposed, limit),
-  };
-}
-
 export type Limit = {
   name: string;
   unit: string | null;
@@ -245,8 +166,34 @@ export type Limit = {
   proposed: Figure;
   limit: Figure;
   line: number;
-  bullet: Bullet | { reason: string };
+  /** Why no bullet can be drawn for this limit; null when the kit bullet takes it as it stands. */
+  reason: string | null;
 };
+
+/**
+ * A bullet needs a stated limit and a number or a stated gap for current and proposed, all on one
+ * scale from zero in one stated unit. A gap in current or proposed is drawn in place by the mark.
+ */
+export function limitReason(
+  values: { current: Figure; proposed: Figure; limit: Figure },
+  unit: string | null,
+): string | null {
+  if (unit === null) return "The reporting unit is not stated.";
+  const named = {
+    limit: "Limit value",
+    current: "Current exposure",
+    proposed: "Proposed exposure",
+  } as const;
+  for (const key of ["limit", "current", "proposed"] as const) {
+    const item = values[key];
+    if (item.kind === "text") return `${named[key]} is not a number.`;
+    if (item.kind === "gap" && key === "limit")
+      return `${named[key]} is not supplied: ${item.reason.replace(/\.$/, "")}.`;
+    if (item.kind === "number" && item.value < 0)
+      return "A negative exposure cannot be drawn on a scale from zero.";
+  }
+  return null;
+}
 
 export type Limits = { line: number; rows: Limit[] };
 
@@ -268,15 +215,13 @@ export function limits(entry: OutputEntry): Limits | null {
       proposed: figure(cellAt(table, row, "Proposed exposure")),
       limit: figure(cellAt(table, row, "Limit value")),
     };
+    const text = unit.kind === "text" ? unit.text : null;
     return {
       name: saidText(said(cellAt(table, row, "Limit"))) || "A limit",
-      unit: unit.kind === "text" ? unit.text : null,
+      unit: text,
       ...values,
       line: row.line,
-      bullet:
-        unit.kind === "text"
-          ? bulletMarks(values)
-          : { reason: "The reporting unit is not stated." },
+      reason: limitReason(values, text),
     };
   });
   return { line: table.line, rows };

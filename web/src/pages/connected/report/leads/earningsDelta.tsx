@@ -1,22 +1,26 @@
 import type { FC } from "react";
-import { cx } from "@/utils/cx";
 import { GapBar } from "../overview/marks";
+import { GapNote } from "../overview/Tile";
 import {
   earningsDelta,
   withMark,
-  type Axis,
   type Bridge,
-  type Change,
   type Pair,
   type PairFigure,
   type PairGroup,
   type Side,
-  type Step,
 } from "./earningsDeltaData";
-import { Derived, FigureTile, GapTile, LeadFrame, type TableViewData } from "./kit/LeadFrame";
+import { FigureTile, GapTile, LeadFrame, type TableViewData } from "./kit/LeadFrame";
+import {
+  Dumbbell,
+  Measured,
+  Waterfall,
+  type DumbbellRow,
+  type DumbbellSide,
+  type WaterfallRow,
+} from "./kit/marks";
 import { group } from "./kit/numbers";
 import type { LeadProps } from "./types";
-import { GapNote } from "../overview/Tile";
 
 const NO_BRIDGE = "No variance bridge in this handoff.";
 
@@ -24,256 +28,86 @@ const RESULTS_NAME = "Prior and current results";
 const KPIS_NAME = "Margins and KPIs";
 const BRIDGE_NAME = "Variance bridge";
 
-// The strip is about 580 px wide in the tile at 1440 px, so one drawing unit is about one pixel there
-// and 11-unit tick text is about 11 px. PAD leaves room for the widest tick label at each end.
-const W = 580;
-const PAD = 44;
-const MID = 14;
-const MINUS = "−";
-
 const word = (sign: number) => (sign > 0 ? "up" : sign < 0 ? "down" : "unchanged");
-const arrow = (sign: number) => (sign > 0 ? "▲" : sign < 0 ? "▼" : "");
-const unsigned = (text: string) => text.replace(/^[+−-]/, "");
-
-/** Where a value falls along a strip of the shared axis. */
-const place = (axis: Axis) => (value: number) =>
-  PAD + ((value - axis.lo) / (axis.hi - axis.lo)) * (W - 2 * PAD);
-
-const mark = (value: number, unit: string) => withMark(String(value), unit);
-
-// A row is label, strip and change side by side where the tile is wide; stacked where it is narrow.
-const ROW_WIDE =
-  "grid grid-cols-1 gap-y-1 sm:grid-cols-[minmax(9rem,11rem)_minmax(0,1fr)_minmax(6rem,9rem)] sm:items-center sm:gap-x-4";
-const STRIP_WIDE = "sm:col-start-2 sm:row-start-1";
-
-function Grid({ axis, place: x }: { axis: Axis; place: (value: number) => number }) {
-  return (
-    <>
-      {axis.ticks.map((tick) => (
-        <line
-          key={tick}
-          data-tick={tick}
-          x1={x(tick)}
-          x2={x(tick)}
-          y1="0"
-          y2="28"
-          className={tick === 0 ? "stroke-text-tertiary" : "stroke-border-hairline"}
-        />
-      ))}
-    </>
-  );
-}
-
-/** The ticks of a shared axis, once under the rows that share it. */
-function AxisRow({ axis, unit, stack }: { axis: Axis; unit: string; stack: boolean }) {
-  const x = place(axis);
-  return (
-    <div className={cx(!stack && ROW_WIDE, "pt-1")}>
-      <svg
-        viewBox={`0 0 ${String(W)} 20`}
-        width="100%"
-        aria-hidden="true"
-        className={cx("block min-w-[220px]", !stack && STRIP_WIDE)}
-      >
-        {axis.ticks.map((tick) => (
-          <text
-            key={tick}
-            x={x(tick)}
-            y="14"
-            textAnchor="middle"
-            fontSize="11"
-            className="fill-text-tertiary font-mono"
-          >
-            {mark(tick, unit)}
-          </text>
-        ))}
-      </svg>
-    </div>
-  );
-}
-
-const TONE_TEXT = { better: "text-success-text", worse: "text-warning-text" } as const;
-
-/** Direction as an arrow and a word; better or worse only where the owner's table knows the measure. */
-function Moved({ change, tone }: { change: Change; tone: Pair["tone"] }) {
-  return (
-    <span className="flex flex-col items-end gap-0.5 text-right">
-      <span className="font-mono text-small font-medium text-text-primary tabular-nums">
-        {change.sign === 0 ? "unchanged" : change.text}
-        {change.basis === "derived" && change.sign !== 0 && <Derived />}
-      </span>
-      {change.sign !== 0 && (
-        <span className="text-caption text-text-secondary">
-          <span aria-hidden="true">{arrow(change.sign)} </span>
-          {word(change.sign)}
-          {(tone === "better" || tone === "worse") && (
-            <span className={cx("font-medium", TONE_TEXT[tone])}>{`, ${tone}`}</span>
-          )}
-        </span>
-      )}
-    </span>
-  );
-}
 
 function sideText(one: Side, unit: string) {
   return one.kind === "number" ? withMark(one.text, unit) : one.text;
 }
 
-function pairReading(pair: Pair, unit: string) {
-  const { prior, current, change } = pair;
-  const at = (period: string | null) => (period ? ` (${period})` : "");
-  const moved = !change
-    ? ""
-    : change.sign === 0
-      ? ", unchanged"
-      : `, ${word(change.sign)} ${unsigned(change.text)}${change.basis === "derived" ? " derived" : ""}${pair.tone === "better" || pair.tone === "worse" ? `, ${pair.tone}` : ""}`;
-  return `${pair.label}${unit ? `, ${unit}` : ""}: prior ${sideText(prior, unit)}${at(pair.priorPeriod)}, current ${sideText(current, unit)}${at(pair.currentPeriod)}${moved}.`;
+/** A side as the dumbbell takes it: a stated figure, or the handoff's words where none is. */
+function dumbbellSide(one: Side, unit: string): DumbbellSide {
+  return one.kind === "number" && one.value !== null
+    ? { value: one.value, text: sideText(one, unit) }
+    : { gap: one.text };
 }
 
-function DumbbellRow({
-  pair,
-  axis,
-  unit,
-  stack,
-}: {
-  pair: Pair;
-  axis: Axis;
-  unit: string;
-  stack: boolean;
-}) {
-  const x = place(axis);
-  const [from, to] = [pair.prior.value ?? 0, pair.current.value ?? 0];
-  const flat = from === to;
-  const worse = pair.tone === "worse";
-  const heading = (
-    <span className="flex min-w-0 flex-col gap-0.5">
-      <span className="text-small font-medium wrap-anywhere text-text-primary">{pair.label}</span>
-      <span className="font-mono text-caption text-text-secondary tabular-nums">
-        {sideText(pair.prior, unit)} {"→"} {sideText(pair.current, unit)}
-        {pair.priorPeriod && pair.currentPeriod && (
-          <span className="font-body text-text-tertiary">{` · ${pair.priorPeriod} to ${pair.currentPeriod}`}</span>
-        )}
-      </span>
-    </span>
-  );
-  const strip = (
-    <svg
-      viewBox={`0 0 ${String(W)} 28`}
-      width="100%"
-      role="img"
-      aria-label={pairReading(pair, unit)}
-      data-pair={pair.label}
-      className={cx("block min-w-[220px]", !stack && STRIP_WIDE)}
-    >
-      <Grid axis={axis} place={x} />
-      {!flat && (
-        <line
-          x1={x(from)}
-          x2={x(to)}
-          y1={MID}
-          y2={MID}
-          strokeWidth="2"
-          className="stroke-chart-3"
-        />
-      )}
-      <circle
-        data-prior={from}
-        cx={x(from)}
-        cy={MID}
-        r={flat ? 8 : 5}
-        strokeWidth="2"
-        className="fill-surface-card stroke-chart-3"
-      />
-      <circle
-        data-current={to}
-        cx={x(to)}
-        cy={MID}
-        r={flat ? 4 : 6}
-        className={worse ? "fill-warning-mark" : "fill-chart-1"}
-      />
-    </svg>
-  );
-  const moved = pair.change && <Moved change={pair.change} tone={pair.tone} />;
-  if (stack)
-    return (
-      <li className="flex flex-col gap-1 border-b border-border-hairline py-2 last:border-b-0">
-        <span className="flex items-start justify-between gap-3">
-          {heading}
-          {moved}
-        </span>
-        {strip}
-      </li>
-    );
-  return (
-    <li className={cx(ROW_WIDE, "border-b border-border-hairline py-2 last:border-b-0")}>
-      <span className="sm:row-start-1">{heading}</span>
-      {moved && <span className="sm:col-start-3 sm:row-start-1">{moved}</span>}
-      {strip}
-    </li>
-  );
-}
-
-/** A pair the handoff leaves a gap in: listed in place, hatched, with its own reason. */
-function GapRow({ pair }: { pair: Pair }) {
-  const reasons = [pair.prior, pair.current].flatMap((one) =>
-    one.kind === "gap"
+/** The change slot: the change as stated (or the exact difference, said so), its direction, and better or worse. */
+function dumbbellRow(pair: Pair, unit: string, shared: boolean): DumbbellRow {
+  const { change } = pair;
+  const moved =
+    change && change.sign !== 0
       ? [
-          `${/^Not \w+/.exec(one.text)?.[0] ?? "Not supplied"}: ${one.reason ?? "Detail is in Evidence."}`,
-        ]
-      : [],
-  );
-  return (
-    <li
-      data-gap={pair.label}
-      className="flex flex-col gap-1 border-b border-border-hairline py-2 last:border-b-0"
-    >
-      <span className="text-small font-medium wrap-anywhere text-text-primary">{pair.label}</span>
-      <GapBar />
-      <span className="text-caption text-gap-text">{[...new Set(reasons)].join(" · ")}</span>
-    </li>
-  );
+          word(change.sign),
+          ...(pair.tone === "better" || pair.tone === "worse" ? [pair.tone] : []),
+          ...(change.basis === "derived" ? ["derived"] : []),
+        ].join(", ")
+      : "";
+  const periods =
+    !shared && pair.priorPeriod && pair.currentPeriod
+      ? `${pair.priorPeriod} to ${pair.currentPeriod}`
+      : "";
+  const note = [moved, periods].filter(Boolean).join(" · ");
+  return {
+    label: pair.label,
+    prior: dumbbellSide(pair.prior, unit),
+    current: dumbbellSide(pair.current, unit),
+    ...(change ? { change: change.sign === 0 ? "unchanged" : change.text } : {}),
+    ...(note ? { note } : {}),
+    ...(pair.tone === "worse" ? { tone: "worse" as const } : {}),
+  };
+}
+
+/** The two period names every pair of the group shares, or null where they differ or are not stated. */
+function sharedPeriods(pairs: readonly Pair[]) {
+  const [first] = pairs;
+  const [prior, current] = [first?.priorPeriod, first?.currentPeriod];
+  return prior &&
+    current &&
+    pairs.every((pair) => pair.priorPeriod === prior && pair.currentPeriod === current)
+    ? { prior, current }
+    : null;
 }
 
 function GroupRows({
   group: one,
-  label,
-  stack,
+  caption,
+  legend,
 }: {
   group: PairGroup;
-  label: string;
-  stack: boolean;
+  caption: boolean;
+  legend: boolean;
 }) {
-  const { axis } = one;
-  const truncated = (axis?.lo ?? 0) > 0;
+  const shared = sharedPeriods(one.drawn);
+  const rows = one.drawn.map((pair) => dumbbellRow(pair, one.unit, shared !== null));
   return (
-    <div className="flex flex-col gap-1">
-      {(one.unit || one.unitNotStated || truncated) && (
+    <div className="flex min-w-0 flex-col gap-2">
+      {caption && (
         <p className="text-caption text-text-tertiary">
-          {[
-            one.unitNotStated ? "unit not stated" : one.unit,
-            axis && truncated ? `axis starts at ${mark(axis.lo, one.unit)}, not zero` : "",
-          ]
-            .filter(Boolean)
-            .join(" · ")}
+          {one.unitNotStated ? "unit not stated" : one.unit}
         </p>
       )}
-      {axis && (
-        <>
-          <ol aria-label={label} className="flex flex-col">
-            {one.rows.map((pair) => (
-              <DumbbellRow key={pair.line} pair={pair} axis={axis} unit={one.unit} stack={stack} />
-            ))}
-          </ol>
-          <AxisRow axis={axis} unit={one.unit} stack={stack} />
-        </>
-      )}
-      {one.gaps.length > 0 && (
-        <ul aria-label="Not supplied" className="flex flex-col">
-          {one.gaps.map((pair) => (
-            <GapRow key={pair.line} pair={pair} />
-          ))}
-        </ul>
-      )}
+      <Measured fallback={640}>
+        {(width) => (
+          <Dumbbell
+            rows={rows}
+            width={width}
+            periods={shared ?? { prior: "Prior period", current: "Current period" }}
+            unit={one.unitNotStated ? "unit not stated" : one.unit}
+            legend={legend}
+            {...(one.fromZero ? {} : { axisStart: "auto" as const })}
+          />
+        )}
+      </Measured>
     </div>
   );
 }
@@ -282,19 +116,21 @@ type Ready = Extract<PairFigure, { kind: "ready" }>;
 
 function pairTable(figure: Ready, caption: string): TableViewData {
   const rows = figure.groups.flatMap((one) =>
-    [...one.rows, ...one.gaps, ...one.words].map((pair) => [
-      pair.label,
-      one.unit,
-      pair.priorPeriod ?? "",
-      sideText(pair.prior, one.unit),
-      pair.currentPeriod ?? "",
-      sideText(pair.current, one.unit),
-      pair.change ? (pair.change.sign === 0 ? "unchanged" : pair.change.text) : "",
-      pair.change ? pair.change.basis : "",
-      ...figure.otherPeriods.map(
-        (name) => pair.others.find((other) => other.period === name)?.text ?? "",
-      ),
-    ]),
+    [...one.rows, ...one.gaps, ...one.words]
+      .sort((a, b) => a.line - b.line)
+      .map((pair) => [
+        pair.label,
+        one.unit,
+        pair.priorPeriod ?? "",
+        sideText(pair.prior, one.unit),
+        pair.currentPeriod ?? "",
+        sideText(pair.current, one.unit),
+        pair.change ? (pair.change.sign === 0 ? "unchanged" : pair.change.text) : "",
+        pair.change ? pair.change.basis : "",
+        ...figure.otherPeriods.map(
+          (name) => pair.others.find((other) => other.period === name)?.text ?? "",
+        ),
+      ]),
   );
   return {
     caption,
@@ -335,24 +171,50 @@ function kickerOf(figure: Ready) {
   return figure.groups.length === 1 && only?.unit ? `${shared}, ${only.unit}` : shared;
 }
 
+/** Pairs the handoff leaves a gap in, when no pair of the group has both figures: listed, hatched, with the reason. */
+function GapList({ pairs }: { pairs: readonly Pair[] }) {
+  return (
+    <ul aria-label="Not supplied" className="flex flex-col">
+      {pairs.map((pair) => (
+        <li
+          key={pair.line}
+          data-gap={pair.label}
+          className="flex flex-col gap-1 border-b border-border-hairline py-2 last:border-b-0"
+        >
+          <span className="text-small font-medium wrap-anywhere text-text-primary">
+            {pair.label}
+          </span>
+          <GapBar />
+          <span className="text-caption text-gap-text">
+            {[
+              ...new Set(
+                [pair.prior, pair.current]
+                  .filter((one) => one.kind === "gap")
+                  .map((one) => one.text),
+              ),
+            ].join(" · ")}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function PairTile({
   props,
   figure,
   name,
   span,
-  stack,
-  notes,
   source,
 }: {
   props: LeadProps;
   figure: Ready;
   name: string;
   span: 4 | 8 | 12;
-  stack: boolean;
-  notes: readonly string[];
   source: string;
 }) {
   const drawn = figure.groups.some((one) => one.rows.length > 0);
+  const captions = figure.groups.length > 1 || figure.groups.some((one) => one.unitNotStated);
   return (
     <FigureTile
       props={props}
@@ -362,25 +224,21 @@ function PairTile({
       title={name}
       line={figure.line}
       source={source}
-      legend={
-        drawn
-          ? [
-              { tone: "prior", text: "Prior period" },
-              { tone: "primary", text: "Current period" },
-            ]
-          : []
-      }
-      notes={[...notes, ...figure.notes, ...(conflicted(figure) ? [DISAGREES] : [])]}
+      notes={[...figure.notes, ...(conflicted(figure) ? [DISAGREES] : [])]}
       table={pairTable(figure, `${name}, every pair the handoff states`)}
     >
-      {figure.groups.map((one) => (
-        <GroupRows
-          key={one.rows[0]?.line ?? one.gaps[0]?.line ?? one.words[0]?.line ?? one.unit}
-          group={one}
-          stack={stack}
-          label={`${name}${one.unitNotStated ? ", unit not stated" : one.unit ? `, ${one.unit}` : ""}`}
-        />
-      ))}
+      {figure.groups.map((one, at) =>
+        one.rows.length > 0 ? (
+          <GroupRows
+            key={one.drawn[0]?.line ?? one.unit}
+            group={one}
+            caption={captions}
+            legend={at === 0}
+          />
+        ) : (
+          one.gaps.length > 0 && <GapList key={one.gaps[0]?.line} pairs={one.gaps} />
+        ),
+      )}
       {!drawn && <GapNote>The handoff states no pair with both figures to draw.</GapNote>}
     </FigureTile>
   );
@@ -388,78 +246,20 @@ function PairTile({
 
 // ---------------------------------------------------------------------------------------------
 
-/** The step as the reader hears it: its name as written and its amount, never a running total. */
-function stepReading(step: Step, unit: string) {
-  const amount = `${withMark(step.text, unit)}${unit ? ` ${unit}` : ""}`;
-  if (step.role !== "change")
-    return `${step.label}, ${step.role === "opening" ? "opening" : "closing"} ${amount}.`;
-  if (step.value === 0) return `${step.label}, no change.`;
-  return `${step.label}, ${step.value > 0 ? "up" : "down"} ${group(String(Math.abs(step.value)))}${unit ? ` ${unit}` : ""}.`;
-}
+type Shown = Extract<Bridge, { kind: "bridge" }>;
 
-function StepRow({ step, axis, unit }: { step: Step; axis: Axis; unit: string }) {
-  const x = place(axis);
-  const base = Math.min(Math.max(0, axis.lo), axis.hi);
-  const [a, b] = step.from === null ? [base, step.level] : [step.from, step.level];
-  const left = Math.min(x(a), x(b));
-  const width = Math.max(2, Math.abs(x(b) - x(a)));
-  const sign = step.value > 0 ? 1 : step.value < 0 ? -1 : 0;
-  return (
-    <li className={cx(ROW_WIDE, "border-b border-border-hairline py-2 last:border-b-0")}>
-      <span className="text-small font-medium wrap-anywhere text-text-primary sm:row-start-1">
-        {step.label}
-      </span>
-      <span className="text-right sm:col-start-3 sm:row-start-1">
-        {step.role === "change" ? (
-          <Moved
-            change={{
-              text: `${sign < 0 ? MINUS : sign > 0 ? "+" : ""}${group(String(Math.abs(step.value)))}`,
-              basis: "stated",
-              sign,
-              magnitude: Math.abs(step.value),
-              conflict: false,
-            }}
-            tone="none"
-          />
-        ) : (
-          <span className="font-mono text-small font-medium text-text-primary tabular-nums">
-            {withMark(step.text, unit)}
-          </span>
-        )}
-      </span>
-      <svg
-        viewBox={`0 0 ${String(W)} 28`}
-        width="100%"
-        role="img"
-        aria-label={stepReading(step, unit)}
-        data-step={step.label}
-        className={cx("block min-w-[220px]", STRIP_WIDE)}
-      >
-        <Grid axis={axis} place={x} />
-        <rect
-          data-role={step.role}
-          data-from={a}
-          data-to={b}
-          x={left}
-          y="6"
-          width={width}
-          height="16"
-          rx="2"
-          className={
-            step.role === "opening"
-              ? "fill-chart-3"
-              : step.role === "closing"
-                ? "fill-chart-1"
-                : "fill-chart-2"
-          }
-        />
-      </svg>
-    </li>
-  );
+/** Every step as the handoff states it, in its order; the module's own opening and closing are the totals. */
+function waterfallRows(bridge: Shown): WaterfallRow[] {
+  return bridge.steps.map((step) => ({
+    kind: step.role === "opening" ? "level" : step.role === "closing" ? "closing" : "step",
+    label: step.label,
+    value: step.value,
+    text: group(step.text),
+  }));
 }
 
 /** Every step as the handoff states it: the amounts, no totals made here. */
-function bridgeTable(bridge: Extract<Bridge, { kind: "bridge" }>): TableViewData {
+function bridgeTable(bridge: Shown): TableViewData {
   return {
     caption: "Variance bridge, every step the handoff states",
     headers: ["Step", "Role", `Amount${bridge.unit ? ` (${bridge.unit})` : ""}`],
@@ -471,14 +271,7 @@ function bridgeTable(bridge: Extract<Bridge, { kind: "bridge" }>): TableViewData
   };
 }
 
-function BridgeTile({
-  props,
-  bridge,
-}: {
-  props: LeadProps;
-  bridge: Extract<Bridge, { kind: "bridge" }>;
-}) {
-  const truncated = bridge.axis.lo > 0;
+function BridgeTile({ props, bridge }: { props: LeadProps; bridge: Shown }) {
   return (
     <FigureTile
       props={props}
@@ -488,27 +281,20 @@ function BridgeTile({
       title={BRIDGE_NAME}
       line={bridge.line}
       source="the variance bridge"
-      legend={[
-        { tone: "prior", text: "Opening" },
-        { tone: "secondary", text: "Step" },
-        { tone: "primary", text: "Closing" },
-      ]}
-      notes={[
-        ...(truncated
-          ? [
-              `The axis starts at ${mark(bridge.axis.lo, bridge.unit)}, not zero; each total is drawn from there.`,
-            ]
-          : []),
-        ...bridge.notes,
-      ]}
+      notes={bridge.notes}
       table={bridgeTable(bridge)}
     >
-      <ol aria-label="Variance bridge steps" className="flex flex-col">
-        {bridge.steps.map((step) => (
-          <StepRow key={step.line} step={step} axis={bridge.axis} unit={bridge.unit} />
-        ))}
-      </ol>
-      <AxisRow axis={bridge.axis} unit={bridge.unit} stack={false} />
+      <Measured fallback={640}>
+        {(width) => (
+          <Waterfall
+            width={width}
+            unit={bridge.unit || "unit not stated"}
+            axisStart="auto"
+            rows={waterfallRows(bridge)}
+            legend={{ level: "Opening", step: "Step", closing: "Closing" }}
+          />
+        )}
+      </Measured>
     </FigureTile>
   );
 }
@@ -542,23 +328,22 @@ export const EarningsDeltaLead: FC<LeadProps> & {
           figure={movers}
           name={RESULTS_NAME}
           span={beside ? 8 : 12}
-          stack={false}
-          notes={[]}
           source="the prior and current results"
         />
       ) : (
         <Gap name={RESULTS_NAME}>{movers.reason}</Gap>
       )}
       {kpis.kind === "ready" ? (
-        <PairTile
-          props={props}
-          figure={kpis}
-          name={KPIS_NAME}
-          span={beside ? 4 : 12}
-          stack={beside}
-          notes={[]}
-          source="the margin and KPI changes"
-        />
+        // Beside the tall results, the margins take their own height: no empty white under them.
+        <div className={beside ? "min-w-0 self-start lg:col-span-4" : "min-w-0 lg:col-span-12"}>
+          <PairTile
+            props={props}
+            figure={kpis}
+            name={KPIS_NAME}
+            span={beside ? 4 : 12}
+            source="the margin and KPI changes"
+          />
+        </div>
       ) : (
         <Gap name={KPIS_NAME}>{kpis.reason}</Gap>
       )}

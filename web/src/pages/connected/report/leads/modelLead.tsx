@@ -1,10 +1,8 @@
-import { ArrowRight } from "@untitledui/icons";
-import { useId, type FC } from "react";
-import { Button } from "@/components/base/buttons/button";
-import { GapPattern } from "../overview/figureParts";
+import type { FC } from "react";
 import { forwardPath, pathGeometry, PATH } from "../overview/stressData";
 import { Tile } from "../overview/Tile";
-import { FigureTile, GapTile, LeadFrame } from "./kit/LeadFrame";
+import { FigureTile, GapTile, LeadFrame, Link } from "./kit/LeadFrame";
+import { GapSlot, LINE, Measured, NARROW, SIZE, textWidth, wrap } from "./kit/marks";
 import { safeText } from "./kit/reader";
 import type { LeadProps } from "./types";
 
@@ -19,9 +17,8 @@ import type { LeadProps } from "./types";
 
 type Path = NonNullable<ReturnType<typeof forwardPath>>;
 
-const PLOT = { width: 640, height: 300, left: 60, right: 470, top: 34, base: 250 } as const;
-const LABEL_WIDTH = 16;
-
+const TOP = 18;
+const BASE = 218;
 /** One look per case: a colour, a dash and a marker shape, so no two cases share any of them. */
 const LOOKS = [
   { stroke: "stroke-chart-1", fill: "fill-chart-1", dash: "", shape: "circle" },
@@ -65,61 +62,54 @@ function Marker({
   return <polygon points={points} {...common} />;
 }
 
-/** `name` broken into lines of at most `width` characters at spaces. */
-function wrap(name: string, width: number) {
-  const lines: string[] = [];
-  for (const word of name.split(/\s+/)) {
-    const last = lines.at(-1);
-    if (last !== undefined && `${last} ${word}`.length <= width)
-      lines[lines.length - 1] = `${last} ${word}`;
-    else lines.push(word);
-  }
-  return lines;
-}
-
 /** End labels in order of height, each at least its own height clear of the one above. */
 function spread<T extends { y: number; lines: string[] }>(ends: T[]) {
   const placed: (T & { top: number })[] = [];
   for (const end of ends) {
     const above = placed.at(-1);
-    const floor = above ? above.top + above.lines.length * 14 + 6 : -Infinity;
-    placed.push({ ...end, top: Math.max(end.y - 4, floor) });
+    const floor = above ? above.top + above.lines.length * LINE + 6 : -Infinity;
+    placed.push({ ...end, top: Math.max(end.y - 6, floor) });
   }
   return placed;
 }
 
-function PathFigure({ path }: { path: Path }) {
-  const id = `model-gap-${useId().replaceAll(":", "")}`;
+function PathFigure({ path, width }: { path: Path; width: number }) {
+  const narrow = width < NARROW;
   const geometry = pathGeometry(path.cases);
+  // End labels sit in a right margin: names wrapped to fit it, then the model's own text for the end.
+  const margin = narrow
+    ? 84
+    : Math.min(170, Math.max(96, ...path.cases.map(({ group }) => textWidth(group) + 22)));
+  const left = 46;
+  const right = Math.max(left + 60, width - margin);
   const xs = geometry.periods.map(({ x }) => x);
   const [from = 0] = xs;
   const to = xs.at(-1) ?? from;
   const x = (value: number) =>
-    to === from
-      ? (PLOT.left + PLOT.right) / 2
-      : PLOT.left + ((value - from) / (to - from)) * (PLOT.right - PLOT.left);
-  const y = (value: number) =>
-    PLOT.top + ((value - PATH.top) / (PATH.base - PATH.top)) * (PLOT.base - PLOT.top);
+    to === from ? (left + right) / 2 : left + ((value - from) / (to - from)) * (right - left);
+  const y = (value: number) => TOP + ((value - PATH.top) / (PATH.base - PATH.top)) * (BASE - TOP);
   const slots = path.cases.map((item, at) => {
     const line = geometry.lines[at] ?? [];
-    const cells = geometry.periods.map(({ period }) => {
+    const cells = geometry.periods.map(({ period, x: px }) => {
       const point = line.find((candidate) => candidate.period === period);
       return {
         period,
-        x: x(geometry.periods.find((candidate) => candidate.period === period)?.x ?? from),
+        x: x(px),
         display: point?.display ?? "",
+        reason: reasonOf(point?.reason ?? ""),
         figure: point?.y == null ? null : { x: x(point.x), y: y(point.y) },
       };
     });
     return { group: item.group, look: lookOf(at), cells };
   });
+  const labelWidth = width - right - 14;
   const ends = slots
     .map(({ group, cells }, at) => {
       const last = cells.filter((cell) => cell.figure).at(-1);
       return last?.figure
         ? {
             at,
-            lines: [...wrap(group, LABEL_WIDTH), last.display],
+            lines: [...wrap(group, labelWidth), last.display],
             x: last.figure.x,
             y: last.figure.y,
           }
@@ -128,37 +118,42 @@ function PathFigure({ path }: { path: Path }) {
     .filter((end) => end !== null)
     .sort((a, b) => a.y - b.y);
   const endLabels = spread(ends);
-  const every = geometry.periods.length > 9 ? 2 : 1;
+  // Period labels, every second or third one when they would touch.
+  const widest = Math.max(...geometry.periods.map(({ period }) => textWidth(period, SIZE.tick)));
+  const pitch =
+    geometry.periods.length > 1 ? (right - left) / (geometry.periods.length - 1) : right;
+  const every = Math.max(1, Math.ceil((widest + 10) / pitch));
   const reading = path.cases
     .map(
       ({ group, points }) =>
         `${group}: ${points.map((point) => `${point.period} ${point.value === null ? "no figure" : point.display}`).join(", ")}`,
     )
     .join(". ");
+  const height = BASE + 36;
   return (
     <svg
-      viewBox={`0 0 ${String(PLOT.width)} ${String(PLOT.height)}`}
+      viewBox={`0 0 ${String(width)} ${String(height)}`}
       width="100%"
       role="img"
       aria-label={`${path.measure}, from zero. ${reading}.`}
+      data-layout={narrow ? "narrow" : "wide"}
+      data-zero={BASE}
+      className="block"
     >
-      <defs>
-        <GapPattern id={id} />
-      </defs>
       {geometry.ticks.map((tick) => (
         <g key={tick.label}>
           <line
-            x1={PLOT.left}
-            x2={PLOT.right + 8}
+            x1={left}
+            x2={right + 6}
             y1={y(tick.y)}
             y2={y(tick.y)}
             className="stroke-border-hairline"
           />
           <text
-            x={PLOT.left - 8}
+            x={left - 8}
             y={y(tick.y) + 4}
             textAnchor="end"
-            fontSize="11"
+            fontSize={SIZE.tick}
             className="fill-text-tertiary font-mono"
           >
             {tick.label}x
@@ -208,18 +203,15 @@ function PathFigure({ path }: { path: Path }) {
             cells.slice(index + 1).find((other) => other.figure);
           return near?.figure
             ? [
-                <rect
-                  key={`${group}-${cell.period}-gap`}
-                  data-gap={`${group} ${cell.period}`}
-                  x={cell.x - 13}
-                  y={near.figure.y - 8}
-                  width="26"
-                  height="16"
-                  rx="4"
-                  fill={`url(#${id})`}
-                  strokeDasharray="3 3"
-                  className={look.stroke}
-                />,
+                <g key={`${group}-${cell.period}-gap`} data-gap-mark={`${group} ${cell.period}`}>
+                  <GapSlot
+                    x={cell.x - 13}
+                    y={near.figure.y - 8}
+                    width={26}
+                    height={16}
+                    reason={cell.reason}
+                  />
+                </g>,
               ]
             : [];
         }),
@@ -230,14 +222,14 @@ function PathFigure({ path }: { path: Path }) {
           data-case-label={slots[end.at]?.group}
           x={end.x + 14}
           y={end.top + 10}
-          fontSize="12"
+          fontSize={SIZE.label}
           className="fill-text-secondary font-body"
         >
           {end.lines.map((line, index) => (
             <tspan
               key={line}
               x={end.x + 14}
-              dy={index === 0 ? 0 : 14}
+              dy={index === 0 ? 0 : LINE}
               className={index === end.lines.length - 1 ? "fill-text-primary font-mono" : undefined}
             >
               {line}
@@ -250,9 +242,9 @@ function PathFigure({ path }: { path: Path }) {
           <text
             key={period}
             x={x(px)}
-            y={PLOT.base + 24}
+            y={BASE + 24}
             textAnchor="middle"
-            fontSize="11"
+            fontSize={SIZE.tick}
             className="fill-text-tertiary font-body"
           >
             {period}
@@ -328,7 +320,7 @@ function ForwardTile({ props, path }: { props: LeadProps; path: Path }) {
       }}
     >
       <Legend path={path} gaps={gaps.length > 0} />
-      <PathFigure path={path} />
+      <Measured fallback={640}>{(width) => <PathFigure path={path} width={width} />}</Measured>
     </FigureTile>
   );
 }
@@ -337,11 +329,7 @@ function ForwardTile({ props, path }: { props: LeadProps; path: Path }) {
 function OpenForecast() {
   return (
     <Tile span={4} label="Open the forecast" className="self-start">
-      <div>
-        <Button color="link-gray" size="sm" href="#forecast" iconTrailing={ArrowRight}>
-          Open the forecast
-        </Button>
-      </div>
+      <Link href="#forecast">Open the forecast</Link>
     </Tile>
   );
 }
