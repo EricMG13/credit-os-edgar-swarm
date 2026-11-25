@@ -75,5 +75,16 @@
       "CP-2": 1
     },
     "notes": "CP-0 was already accepted in the resumed run folder and I did not resubmit it; CP-1 was accepted and cannot be replaced, but it carries the AlerisLife equity method investment at 2026-09-30 as \"Not supplied: printed as a dash\" although the 10-Q states a carrying value of $0 (10-Q 2026-09-30 page 9); also, another issuer's agent overwrote a shared scratchpad helper, so one page of that issuer's source text printed to me before I noticed, and I did not use it."
+  },
+  {
+    "issuer_id": "kbr",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "No defect left unfixed in CP-2; the answer states (in Gaps, since earlier handoffs cannot be edited) that CP-1A treats the 16,000-employee figure as the group when it is the post-separation KBR (the 10-K gives about 36,000), that its 86.8% joint-venture distribution conversion includes USD 34 million declared in fiscal 2025, and that CP-1's USD 1,046 million liquidity counts USD 77 million of restricted cash."
   }
 ]

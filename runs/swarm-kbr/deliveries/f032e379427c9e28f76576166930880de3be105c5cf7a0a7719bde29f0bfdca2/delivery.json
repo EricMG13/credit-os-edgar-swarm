@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for KBR, INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "e616293eafcb43da4831bdfdcf61c971de11bc31d47eb12cc9d5e3ce89293028",
+    "CP-1.md": "7ed6be6a5376b7217c64ab422a7c28b08a6155044e801aaea06fd51389b15448",
+    "CP-1A.md": "41e497a9960c8cfce7c566e31a921db3535ad28edba2005119149101a1a3fcf5",
+    "CP-2.md": "886624b1d651c71b2c795293df8a772cee99f6ff1f667f961b4fe57b873cd3c3",
+    "coverage.json": "beede5fd8c5993a1c0a380cbc6da72df5a18e78f2de66b2994d2dd57a3464958",
+    "view.json": "d1b755a3f9f8970bfd47670e581dd5d1b2e9c0bda97a53f69fae9900f87ec4c8",
+    "report-view.json": "743c588ff6fec3d833c4705297259cb7de147d8d061b36f964d627703add0924"
+  }
+}
