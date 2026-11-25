@@ -290,18 +290,17 @@ describe("connected library and report design", () => {
     ).toBeInTheDocument();
 
     window.location.hash = "#modules/CP-1";
-    const modulePicker = await screen.findByLabelText("Module");
-    expect(modulePicker).toHaveValue("CP-1");
-    const sectionPicker = screen.getByLabelText("Jump to section");
-    const firstSection = sectionPicker
-      .querySelector("option:not([value=''])")
-      ?.getAttribute("value");
-    expect(firstSection).toBeTruthy();
-    const firstSectionTarget = document.getElementById(firstSection ?? "");
-    if (!firstSectionTarget) throw new Error("First module section is missing");
-    firstSectionTarget.scrollIntoView = vi.fn();
-    fireEvent.change(sectionPicker, { target: { value: firstSection } });
-    expect(document.activeElement).toBe(firstSectionTarget);
+    // The module page: its navigator marks the open module, and the event table is in the records.
+    const nav = await screen.findByRole("navigation", { name: "Modules in this run" });
+    expect(within(nav).getByRole("link", { name: /^Financial foundation, / })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("heading", { level: 2, name: "Financial foundation" })).toBeVisible();
+    expect(screen.queryByLabelText("Jump to section")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Show records" }));
+    expect(screen.getByRole("heading", { level: 4, name: "Scheduled" })).toBeInTheDocument();
+    expect(screen.getAllByText("Refinancing maturity").length).toBeGreaterThan(0);
   });
 });
 
@@ -479,6 +478,9 @@ describe.each(CODED_VIEWS)("module codes in handoff text on %s", (hash, marker) 
     window.history.replaceState(null, "", `/report/northbridge-2026${hash}`);
     render(<ConnectedApp path="/report/northbridge-2026" mode="synthetic" />);
     await screen.findByRole("heading", { level: 1, name: "Northbridge" });
+    // The module page keeps its tables in the records region, closed until it is opened.
+    if (hash === "#modules")
+      fireEvent.click(await screen.findByRole("button", { name: "Show records" }));
     expect(document.body.textContent).toContain(marker);
     expect(document.body.textContent).not.toMatch(/\(CP-[A-Za-z0-9]+\)/);
   });
