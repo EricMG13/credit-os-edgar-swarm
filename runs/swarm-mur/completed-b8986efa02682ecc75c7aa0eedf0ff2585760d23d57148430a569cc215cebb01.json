@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for MURPHY OIL CORP as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/afeb4fdb2b9b186a403970817dabab91cde19ee309b7c950167813bda6a2a870/1.response.md",
+    "CP-1": "requests/CP-1/0f22ca632e8502aa881034a22ca6a726e4e57328902f60e96944549af8e275ba/1.response.md",
+    "CP-1A": "requests/CP-1A/1ffd25fa2d06337557210833483171b5e758e1628f274c1cc4416fef0c885de2/1.response.md",
+    "CP-2": "requests/CP-2/e107b2221fda5c2135074903d4ffce6dd70402fa19b1ce7c9969ee8fd2f00eeb/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "546c0e8c9e75f05db96ab62b737aa6b4ea6ac645d09acf73dc7b2fe48f27f3d0",
+  "delivery_sha256": "e93ac4dae4c48b9564ba0d7f124b71a2d6d0477e1c01a7618f442b3c0669abce"
+}

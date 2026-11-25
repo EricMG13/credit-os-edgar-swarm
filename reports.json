@@ -1,0 +1,57 @@
+[
+  {
+    "issuer_id": "oii-73756",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Source readiness answer (CP-0) understates the equity price evidence in the sources (it omits the USD 33.15 close on 2026-02-13 and the Q4 2025 buyback prices of about USD 24) and cannot be replaced, so the later Business & governance answer (CP-1A) records the correction in its conflict log and Gaps."
+  },
+  {
+    "issuer_id": "mur",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "Source defects I could not fix from the supplied documents are logged as open conflicts and gaps: the 2042 notes coupon (5.125%, 5.875% and 6.375% across documents), the 2025 segment-note revenue totals against the statement of operations (about USD 2.4 million), and the 2025 repurchase cost with excise tax (USD 100.8 million in the annual report against USD 100.9 million in the quarterly reports), plus the missing proxy statement, executed indentures, credit agreement and ratings."
+  },
+  {
+    "issuer_id": "ptc-857005",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The CP-2 method's required closing line \"CP-2 Completed. Top Risk\" conflicts with the rule against module codes in reader sentences (I wrote \"Top risk:\" instead), and the issuer states no EBITDA or covenant levels, so leverage rests on derived EBITDA that still includes the divested businesses; neither could be fixed without editing the repository."
+  },
+  {
+    "issuer_id": "cien-936395",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "All four modules were accepted on the first attempt and the delivery was built; the one defect I saw but could not fix, because an accepted answer cannot be replaced, is that the Relationship cells of the two maps in the Business & governance handoff run well past the 60-character limit the instructions give for map text, which the launcher does not check."
+  },
+  {
+    "issuer_id": "entg",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "Unfixed source defects: the 10-K note tables are captioned \"in thousands\" but print millions, the covenant ratio is \"secured net leverage\" in the 10-K but \"first lien net leverage 5.20x\" in the 10-Qs, the 10-K signature date (2026-02-10) differs from its filing date (2026-02-11), and CP-1's \"no rank stated\" note for secured debt is refined in CP-2 by the exhibit-index intercreditor agreement (not supplied). Separately, the scratchpad held a leftover launcher printout from another issuer (cien) that I opened by mistake and did not use."
+  }
+]
