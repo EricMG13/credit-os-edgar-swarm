@@ -1,33 +1,39 @@
+import { useId, useState } from "react";
 import { cx } from "@/utils/cx";
-import { DotStrip } from "../../overview/marks";
 import { Figure, Well } from "../../overview/Tile";
 import { FigureTile, GapTile } from "../kit/LeadFrame";
 import { GapSlot, LINE, SIZE, useFigureWidth } from "../kit/marks";
-import { Grid, TickLabels } from "../kit/marks/parts";
+import { Grid, HALO, HALO_CLASS, TickLabels } from "../kit/marks/parts";
 import { safeText } from "../kit/reader";
 import type { LeadProps } from "../types";
 import { figureGap, netDebtView, type NetDebtView, type ProForma } from "./foundationData";
 import {
-  ADJUSTMENT_ORDER,
-  adjacent,
-  adjustmentFacts,
+  adjustmentsTable,
   barsLayout,
   barsReading,
   liquidityLines,
   netDebtTable,
-  proFormaOf,
+  proFormaBars,
+  stripDrawn,
   stripEntries,
   stripGaps,
-  stripMarks,
+  stripLayout,
+  stripList,
   stripReading,
   type LiquidityLine,
   type NetBar,
   type Stated,
+  type StripEntry,
+  type StripRow,
 } from "./netDebtGeometry";
 
 const LABEL = "Net debt";
-/** Below this measured width the overview DotStrip's fixed text would shrink under 11 px. */
-const STRIP_WIDTH = 408;
+
+const MARK_FILL = {
+  prior: "fill-chart-3",
+  current: "fill-chart-1",
+  proForma: "fill-warning-mark",
+} as const;
 
 const NET_FILL = {
   prior: "fill-chart-3",
@@ -135,7 +141,7 @@ function BarRow({ bar, left }: { bar: NetBar; left: number }) {
   );
 }
 
-function Bars({ view, proForma }: { view: NetDebtView; proForma: ProForma | null }) {
+function Bars({ view, proForma }: { view: NetDebtView; proForma: readonly ProForma[] }) {
   const [ref, width] = useFigureWidth(412);
   const layout = barsLayout(view, proForma, width);
   return (
@@ -154,8 +160,8 @@ function Bars({ view, proForma }: { view: NetDebtView; proForma: ProForma | null
           strong={0}
           bands={layout.bars.map((bar) => [bar.barY - 3, bar.barY + 19] as const)}
         />
-        {layout.bars.map((bar) => (
-          <BarRow key={bar.label} bar={bar} left={layout.left} />
+        {layout.bars.map((bar, at) => (
+          <BarRow key={`${bar.label}-${String(at)}`} bar={bar} left={layout.left} />
         ))}
         <TickLabels ticks={layout.ticks} x={layout.x} y={layout.plotBottom + 16} width={width} />
       </svg>
@@ -163,79 +169,259 @@ function Bars({ view, proForma }: { view: NetDebtView; proForma: ProForma | null
   );
 }
 
-/** Net debt / EBITDA: the overview DotStrip, FY → FY → pro forma, or the figures where it cannot fit. */
-function Strip({ view, proForma }: { view: NetDebtView; proForma: ProForma | null }) {
+/** One strip row: its label, its mark (or the hatched slot and the reason on a plate), its figure. */
+function StripRowMark({ row }: { row: StripRow }) {
+  const { entry } = row;
+  return (
+    <g data-row={entry.label}>
+      <text
+        data-part="label"
+        x="0"
+        y={row.labelY}
+        fontSize={SIZE.label}
+        className={cx(
+          "font-body",
+          HALO_CLASS,
+          entry.proForma ? "fill-warning-text font-medium" : "fill-text-primary",
+        )}
+        {...HALO}
+      >
+        {row.label.map((line, at) => (
+          <tspan key={`${String(at)}-${line}`} x="0" y={row.labelY + at * LINE}>
+            {line}
+          </tspan>
+        ))}
+      </text>
+      {row.x !== null && row.value !== null && (
+        <>
+          <circle
+            data-mark={entry.label}
+            data-value={row.value}
+            cx={row.x}
+            cy={row.centre}
+            r="5"
+            className={MARK_FILL[row.tone]}
+          />
+          <text
+            data-part="value"
+            x={row.x + 11}
+            y={row.centre + 4}
+            fontSize={SIZE.value}
+            className={cx("fill-text-primary font-mono", HALO_CLASS)}
+            {...HALO}
+          >
+            {row.valueText}
+          </text>
+        </>
+      )}
+      {row.gap && (
+        <>
+          <GapSlot
+            x={row.gap.x}
+            y={row.centre - 7}
+            width={row.gap.width}
+            height={14}
+            reason={row.gap.reason}
+          />
+          <rect
+            x={row.gap.textX - 3}
+            y={row.centre - LINE + 3}
+            width={Math.max(...row.gap.lines.map((line) => line.length)) * SIZE.label * 0.6 + 6}
+            height={row.gap.lines.length * LINE + 2}
+            rx="3"
+            className="fill-surface-card"
+          />
+          <text
+            data-part="reason"
+            x={row.gap.textX}
+            y={row.centre + 4}
+            fontSize={SIZE.label}
+            className="fill-gap-text font-body"
+          >
+            {row.gap.lines.map((line, at) => (
+              <tspan
+                key={`${String(at)}-${line}`}
+                x={row.gap?.textX}
+                y={row.centre + 4 + at * LINE}
+              >
+                {line}
+              </tspan>
+            ))}
+          </text>
+        </>
+      )}
+    </g>
+  );
+}
+
+/** The rows of net debt / EBITDA on one axis: the periods joined, then a labelled mark per adjustment. */
+function StripFigure({ entries, width }: { entries: readonly StripEntry[]; width: number }) {
+  const layout = stripLayout(entries, width);
+  return (
+    <svg
+      data-strip=""
+      viewBox={`0 0 ${String(width)} ${String(layout.height)}`}
+      width="100%"
+      role="img"
+      aria-label={stripReading(entries)}
+      className="block"
+    >
+      <Grid
+        ticks={layout.ticks}
+        x={layout.x}
+        strong={null}
+        bands={[[layout.plotTop, layout.plotBottom]]}
+      />
+      {layout.reference && (
+        <line
+          data-reference=""
+          x1={layout.reference.x}
+          x2={layout.reference.x}
+          y1={layout.reference.top}
+          y2={layout.plotBottom}
+          strokeWidth="1.5"
+          strokeDasharray="4 3"
+          className="stroke-text-tertiary"
+        />
+      )}
+      {layout.joins.map(({ from, to }) => {
+        const [a, b] = [layout.rows[from], layout.rows[to]];
+        return a?.x != null && b?.x != null ? (
+          <line
+            key={`${String(from)}-${String(to)}`}
+            data-join=""
+            x1={a.x}
+            y1={a.centre}
+            x2={b.x}
+            y2={b.centre}
+            strokeWidth="2"
+            className="stroke-chart-3"
+          />
+        ) : null;
+      })}
+      {layout.rows.map((row) => (
+        <StripRowMark key={row.entry.label} row={row} />
+      ))}
+      <TickLabels ticks={layout.ticks} x={layout.x} y={layout.plotBottom + 16} width={width} />
+    </svg>
+  );
+}
+
+/**
+ * Net debt / EBITDA on its own scale: each reported period and each stated adjustment's pro forma
+ * as a labelled mark in handoff order; the stated figures as a list where fewer than two can be
+ * set against each other.
+ */
+function Strip({ view }: { view: NetDebtView }) {
   const [ref, width] = useFigureWidth(412);
-  const entries = stripEntries(view, proForma);
-  const marks = stripMarks(entries);
-  if (!marks.length && entries.every((entry) => entry.cell === null)) return null;
-  const drawn = marks.length > 1 && adjacent(entries) && width >= STRIP_WIDTH;
-  const pro = entries.some((entry) => entry.proForma && entry.cell?.kind === "number");
-  const reading = stripReading(entries);
+  const entries = stripEntries(view);
+  const list = stripList(entries);
+  if (!list.length && entries.every((entry) => entry.cell === null)) return null;
   return (
     <div ref={ref} className="flex w-full min-w-0 flex-col gap-1.5">
       <h4 className="text-caption font-medium text-text-primary">
         Net debt / EBITDA
         <span className="font-normal text-text-tertiary"> · own scale</span>
       </h4>
-      {drawn ? (
-        // The pro forma mark takes the signal colour, with its word "Pro forma" as its row's label.
-        <DotStrip marks={marks} tone={pro ? "worse" : "none"} suffix="x" label={reading} />
+      {stripDrawn(entries) ? (
+        <StripFigure entries={entries} width={width} />
       ) : (
-        <ul aria-label={reading} className="flex flex-wrap gap-x-4 gap-y-1 text-small">
-          {marks.map((mark) => (
-            <li key={mark.label} className="flex items-baseline gap-1.5">
-              <span
-                className={cx(
-                  "text-caption",
-                  mark.label === "Pro forma"
-                    ? "font-medium text-warning-text"
-                    : "text-text-secondary",
-                )}
-              >
-                {mark.label}
-              </span>
-              <Figure>{mark.text}</Figure>
-            </li>
+        <>
+          <ul
+            aria-label={stripReading(entries)}
+            className="flex flex-wrap gap-x-4 gap-y-1 text-small"
+          >
+            {list.map((mark) => (
+              <li key={mark.label} className="flex items-baseline gap-1.5">
+                <span className="text-caption text-text-secondary">{mark.label}</span>
+                <Figure>{mark.text}</Figure>
+              </li>
+            ))}
+          </ul>
+          {stripGaps(entries).map((gap) => (
+            <p key={gap} className="text-caption wrap-anywhere text-gap-text">
+              {gap}
+            </p>
           ))}
-        </ul>
+        </>
       )}
-      {stripGaps(entries).map((gap) => (
-        <p key={gap} className="text-caption wrap-anywhere text-gap-text">
-          {gap}
-        </p>
-      ))}
     </div>
   );
 }
 
-/** Every stated adjustment, in handoff order, as written: none is chosen or ranked. */
-function Adjustments({ items }: { items: readonly ProForma[] }) {
+/** A table cell: a stated figure in mono; a gap or words in a small chip holding the module's words. */
+function AdjustmentCell({ text, gap }: { text: string; gap: boolean }) {
+  return gap && text !== "—" ? (
+    <span
+      data-gap-chip=""
+      className="inline-block rounded-ds-xs border border-border-gap bg-surface-card px-1.5 py-0.5 text-caption wrap-anywhere text-gap-text"
+    >
+      {text}
+    </span>
+  ) : (
+    <span>{text}</span>
+  );
+}
+
+/**
+ * The stated adjustments, every one in handoff order, as a compact headed table behind an
+ * "Adjustments" button (32 px, 44 px at 480 px and below; the token focus ring): none is chosen.
+ */
+function Adjustments({ view }: { view: NetDebtView }) {
+  const [open, setOpen] = useState(false);
+  const id = `adjustments-${useId().replace(/[^\w-]/g, "")}`;
+  const table = adjustmentsTable(view);
   return (
-    <div className="flex flex-col gap-1.5">
-      <h4 className="text-caption font-medium text-text-primary">
-        Stated adjustments
-        <span className="font-normal text-text-tertiary">{` · ${ADJUSTMENT_ORDER}`}</span>
-      </h4>
-      <ul data-adjustments className="flex flex-col gap-1.5">
-        {items.map((item) => {
-          const [date, ...figures] = adjustmentFacts(item);
-          return (
-            <li key={item.line} className="flex flex-col text-caption wrap-anywhere">
-              <span className="text-text-primary">{safeText(item.event)}</span>
-              <span className="text-text-secondary">
-                {date}
-                {figures.map((figure, at) => (
-                  <span key={`${String(at)}-${figure}`}>
-                    {" · "}
-                    <Figure>{figure}</Figure>
-                  </span>
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => {
+          setOpen((was) => !was);
+        }}
+        className="inline-flex min-h-8 cursor-pointer items-center gap-1.5 self-start rounded-ds-sm border border-border-subtle bg-surface-card px-2.5 text-caption font-medium whitespace-nowrap text-text-secondary outline-focus-ring transition duration-100 ease-linear hover:bg-surface-subtle hover:text-text-primary focus-visible:outline-2 focus-visible:outline-offset-2 max-[480px]:min-h-11"
+      >
+        Adjustments
+        <span aria-hidden="true" className={cx("text-text-tertiary", open && "rotate-180")}>
+          ▾
+        </span>
+      </button>
+      <div id={id} data-adjustments="" hidden={!open} className="w-full min-w-0 overflow-x-auto">
+        <table className="w-full min-w-max border-collapse text-caption">
+          <caption className="sr-only">{table.caption}</caption>
+          <thead>
+            <tr>
+              {table.headers.map((header) => (
+                <th
+                  key={header}
+                  scope="col"
+                  className="border-b border-border-hairline px-2 py-1.5 text-left font-medium text-text-tertiary"
+                >
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {table.rows.map((row, at) => (
+              <tr key={`${row[0]?.text ?? ""}-${String(at)}`}>
+                {row.map((cell, column) => (
+                  <td
+                    key={table.headers[column] ?? String(column)}
+                    className={cx(
+                      "border-b border-border-hairline px-2 py-1.5 align-top",
+                      column >= 2 && !cell.gap ? "text-right font-mono tabular-nums" : "text-left",
+                    )}
+                  >
+                    <AdjustmentCell {...cell} />
+                  </td>
                 ))}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -296,7 +482,7 @@ function Liquidity({ view }: { view: NetDebtView }) {
   );
 }
 
-function legendOf(view: NetDebtView, proForma: ProForma | null) {
+function legendOf(view: NetDebtView, proForma: readonly ProForma[]) {
   const labels = view.periods.map((p) => p.label);
   const earlier = labels.slice(0, -1);
   const latest = labels.at(-1);
@@ -305,7 +491,7 @@ function legendOf(view: NetDebtView, proForma: ProForma | null) {
     ...(earlier.length ? [{ tone: "prior" as const, text: `${earlier.join(", ")} net debt` }] : []),
     ...(latest ? [{ tone: "primary" as const, text: `${latest} net debt` }] : []),
     { tone: "undated" as const, text: "Cash, to gross debt" },
-    ...(proForma ? [{ tone: "signal" as const, text: "Pro forma net debt" }] : []),
+    ...(proForma.length ? [{ tone: "signal" as const, text: "Pro forma net debt" }] : []),
     ...(gap ? [{ tone: "gap" as const, text: "Not stated" }] : []),
   ];
 }
@@ -319,8 +505,7 @@ export function NetDebtTile({ lead }: { lead: LeadProps }) {
         {figureGap(lead.entry, "netDebt") ?? ""}
       </GapTile>
     );
-  const proForma = proFormaOf(view);
-  const listed = proForma ? view.adjustments.length > 1 : view.adjustments.length > 0;
+  const proForma = proFormaBars(view);
   const none = view.noAdjustmentsWords;
   return (
     <FigureTile
@@ -335,13 +520,13 @@ export function NetDebtTile({ lead }: { lead: LeadProps }) {
       table={netDebtTable(view)}
     >
       <Bars view={view} proForma={proForma} />
-      {listed && <Adjustments items={view.adjustments} />}
+      <Strip view={view} />
+      {view.adjustments.length > 0 && <Adjustments view={view} />}
       {view.noAdjustments && none && (
         <p data-no-adjustments className="text-caption wrap-anywhere text-text-secondary">
           {[`${safeText(none.event)}.`, none.basis ?? ""].join(" ").trim()}
         </p>
       )}
-      <Strip view={view} proForma={proForma} />
       <Liquidity view={view} />
     </FigureTile>
   );

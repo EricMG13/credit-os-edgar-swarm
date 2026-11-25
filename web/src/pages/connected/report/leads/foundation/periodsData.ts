@@ -16,6 +16,13 @@ import {
 // gaps (with their words), only words, or nothing. Nothing is assumed: a period is "stated" only
 // where a cell states a number for it.
 
+/** A cell the module writes as "source dash" is drawn as "—"; every other cell as written. */
+export const dashed = (text: string) =>
+  /^Not (?:supplied|calculated):\s*source dash\.?$/i.test(text.trim()) ? "—" : text;
+
+/** Handoff words for the page: a "source dash" as "—", a cited source left to Evidence. */
+export const written = (text: string) => dashed(safeText(text));
+
 /** How one figure (or the lead) states one period. */
 export type PeriodState =
   { kind: "figures" } | { kind: "gap"; reasons: string[] } | { kind: "words" } | { kind: "none" };
@@ -190,4 +197,24 @@ export function periodStrip(entry: OutputEntry): PeriodStrip {
     gaps: stated.gaps,
     line: found[0]?.line ?? null,
   };
+}
+
+/**
+ * The caption line that stands in for the Periods tile when the figures state at most two periods,
+ * each of the annual kind with numbers in every figure and no stated gap: "Each figure in its
+ * stated period: FY2023, FY2024". Null when the full strip is needed (three or more periods, a
+ * period of another kind, a period stated only or partly as gaps, or a table whose periods cannot
+ * be read).
+ */
+export function periodsCaption(entry: OutputEntry): string | null {
+  const strip = periodStrip(entry);
+  const plain =
+    strip.axis.length > 0 &&
+    strip.axis.length <= 2 &&
+    strip.apart.length === 0 &&
+    strip.gaps.length === 0 &&
+    strip.axis.every((period) => period.state.kind === "figures" && !period.partly);
+  return plain
+    ? `Each figure in its stated period: ${strip.axis.map((p) => p.label).join(", ")}`
+    : null;
 }

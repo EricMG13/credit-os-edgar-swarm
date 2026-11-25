@@ -26,7 +26,7 @@ import type {
 // the one computed figure is a measure's exact change between the comparison periods (ruling i).
 
 /** What a cell the table does not state for a period is called: never zero, never blank. */
-const NOT_IN_TABLE = "not read from the handoff";
+const NOT_IN_TABLE = "not read";
 
 /** The owner's table names these measures; reported EBITDA it does not, so it gets direction only. */
 const TONE_KEY: Record<EarningsMeasure["key"], string> = {

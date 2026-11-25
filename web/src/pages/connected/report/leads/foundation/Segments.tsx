@@ -253,7 +253,7 @@ export function SegmentsTile({ lead }: { lead: LeadProps }) {
     return (
       <GapTile span={6} label={LABEL} kicker={LABEL}>
         {figureGap(lead.entry, "segments") ??
-          "This page could not read a period of the segment schedule from the handoff."}
+          "This page could not read a period of the segment schedule."}
       </GapTile>
     );
   const kicker = `${LABEL} · ${view.unit}, ${periods.drawn}`;
@@ -265,8 +265,8 @@ export function SegmentsTile({ lead }: { lead: LeadProps }) {
     return (
       <GapTile span={6} label={LABEL} kicker={kicker}>
         {view.segments.length
-          ? `This page could not read an amount for any business unit in ${periods.drawn} from the handoff.`
-          : "This page could not read a business unit of the segment schedule from the handoff."}
+          ? `This page could not read an amount for any business unit in ${periods.drawn}.`
+          : "This page could not read a business unit of the segment schedule."}
       </GapTile>
     );
   const apart = view.apart.map((segment) => apartLine(view, segment, periods));

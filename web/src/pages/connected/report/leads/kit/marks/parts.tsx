@@ -1,15 +1,41 @@
 import type { AxisTick } from "./axis";
-import { GapSlot } from "./GapSlot";
+import { MarkSwatch, SWATCH, type LegendColour, type LegendKind } from "./Legend";
 import { SIZE, textWidth } from "./text";
 
-/** The swatch kinds a mark's legend can show; each is drawn as the mark itself is. */
+/** The swatch kinds a mark's in-figure legend can show; each is drawn as the mark itself is (`MarkSwatch`). */
 type LegendTone =
-  "level" | "step" | "closing" | "gap" | "prior" | "current" | "worse" | "limit" | "proposed";
+  | "level"
+  | "step"
+  | "closing"
+  | "gap"
+  | "prior"
+  | "current"
+  | "worse"
+  | "limit"
+  | "proposed"
+  | "increase"
+  | "decrease"
+  | "slim";
 
 export type LegendItem = { tone: LegendTone; text: string };
 
 const ROW = 18;
-const SWATCH = 12;
+
+/** Each in-figure legend tone as the one legend's kind and colour. */
+const SWATCHES: Record<LegendTone, { kind: LegendKind; tone?: LegendColour }> = {
+  level: { kind: "bar", tone: "primary" },
+  closing: { kind: "bar", tone: "secondary" },
+  step: { kind: "bar", tone: "increase" },
+  increase: { kind: "bar", tone: "increase" },
+  decrease: { kind: "bar", tone: "decrease" },
+  gap: { kind: "hatch" },
+  prior: { kind: "ring", tone: "prior" },
+  current: { kind: "dot", tone: "primary" },
+  worse: { kind: "dot", tone: "worse" },
+  limit: { kind: "line", tone: "neutral" },
+  proposed: { kind: "ring", tone: "secondary" },
+  slim: { kind: "slim", tone: "prior" },
+};
 
 function flow(items: readonly LegendItem[], width: number) {
   let x = 0;
@@ -33,66 +59,24 @@ export function legendHeight(items: readonly LegendItem[], width: number) {
 }
 
 function Swatch({ tone, x, y }: { tone: LegendTone; x: number; y: number }) {
-  const middle = y + 5;
-  switch (tone) {
-    case "level":
-      return <rect x={x} y={y} width={SWATCH} height="10" rx="2" className="fill-chart-1" />;
-    case "closing":
-      return <rect x={x} y={y} width={SWATCH} height="10" rx="2" className="fill-chart-2" />;
-    case "step":
-      return (
-        <rect
-          x={x + 0.75}
-          y={y + 0.75}
-          width={SWATCH - 1.5}
-          height="8.5"
-          rx="2"
-          strokeWidth="1.5"
-          className="fill-surface-card stroke-chart-2"
-        />
-      );
-    case "gap":
-      return <GapSlot x={x} y={y} width={SWATCH} height={10} />;
-    case "prior":
-      return (
-        <circle
-          cx={x + 6}
-          cy={middle}
-          r="4"
-          strokeWidth="2"
-          className="fill-surface-card stroke-chart-3"
-        />
-      );
-    case "current":
-      return <circle cx={x + 6} cy={middle} r="5" className="fill-chart-1" />;
-    case "worse":
-      return <circle cx={x + 6} cy={middle} r="5" className="fill-warning-mark" />;
-    case "limit":
-      return (
-        <line
-          x1={x + 6}
-          x2={x + 6}
-          y1={y - 1}
-          y2={y + 11}
-          strokeWidth="2"
-          className="stroke-text-primary"
-        />
-      );
-    case "proposed":
-      return (
-        <circle
-          cx={x + 6}
-          cy={middle}
-          r="4"
-          strokeWidth="2"
-          className="fill-surface-card stroke-chart-2"
-        />
-      );
-  }
+  if (tone === "limit")
+    return (
+      <line
+        data-swatch="limit"
+        x1={x + 6}
+        x2={x + 6}
+        y1={y - 1}
+        y2={y + 11}
+        strokeWidth="2"
+        className="stroke-text-primary"
+      />
+    );
+  const { kind, tone: colour } = SWATCHES[tone];
+  return <MarkSwatch kind={kind} x={x} y={y - 1} {...(colour ? { tone: colour } : {})} />;
 }
 
-/** A mark's legend at the top of its SVG, wrapping at `width`. */
-export function Legend({ items, width }: { items: readonly LegendItem[]; width: number }) {
+/** A mark's legend at the top of its SVG, wrapping at `width`; the same swatches as `Legend`. */
+export function SvgLegend({ items, width }: { items: readonly LegendItem[]; width: number }) {
   if (!items.length) return null;
   return (
     <g data-part="legend">
@@ -205,3 +189,9 @@ export const HALO = {
 } as const;
 /** The class that colours `HALO`. */
 export const HALO_CLASS = "stroke-surface-card";
+
+/**
+ * The in-figure legend under its earlier name (the same component as `SvgLegend`), kept so
+ * existing callers keep working; a tile head uses the kit's HTML `Legend` from `kit/marks`.
+ */
+export const Legend = SvgLegend;

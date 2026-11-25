@@ -460,10 +460,43 @@ describe("Bullet", () => {
     const zero = num(bar, "x");
     expect(num(bar, "width") / 9).toBeCloseTo((rule - zero) / 12, 6);
     expect((ring - zero) / 6).toBeCloseTo((rule - zero) / 12, 6);
-    expect(container.textContent).not.toContain("above the limit");
   });
 
-  it("writes the word for a figure beyond the limit, not colour alone", () => {
+  it("draws current, proposed and limit as stated marks, with no judgement of its own", () => {
+    // The reviewer's input (L3): a minimum buffer whose figures sit above the limit, and a proposed
+    // exposure above a maximum. The mark cannot know which a limit is, so it says neither.
+    for (const [name, current, proposed, rule] of [
+      ["Min liquidity buffer", "6.0", "7.5", "5.0"],
+      ["Single-name exposure", "9.5%", "12.6%", "12.0%"],
+    ] as const) {
+      const { container, unmount } = render(
+        <Bullet
+          name={name}
+          width={WIDE}
+          value={{ value: Number.parseFloat(current), text: current }}
+          proposed={{ value: Number.parseFloat(proposed), text: proposed }}
+          limit={{ value: Number.parseFloat(rule), text: rule }}
+        />,
+      );
+      const text = `${container.textContent} ${svgOf(container).getAttribute("aria-label") ?? ""}`;
+      for (const word of ["above", "below", "beyond", "breach", "within", "exceed"])
+        expect(text.toLowerCase()).not.toContain(word);
+      expect(
+        [...container.querySelectorAll('[data-part="value"]')].map((t) => t.textContent),
+      ).toEqual([`Current ${current}`, `Proposed ${proposed}`]);
+      expect(container.querySelector('[data-part="limit"]')?.textContent).toBe(`Limit ${rule}`);
+      expect(container.querySelector('[data-bar="beyond"]')).toBeNull();
+      expect(
+        container.querySelector('[data-mark="proposed"]')?.getAttribute("class"),
+      ).not.toContain("warning");
+      expect(svgOf(container).getAttribute("aria-label")).toBe(
+        `${name}: Current ${current}; Proposed ${proposed}; Limit ${rule}. Scale from zero.`,
+      );
+      unmount();
+    }
+  });
+
+  it("prints the row's own status cell as written, and nothing without one", () => {
     const { container } = render(
       <Bullet
         name="Single-name exposure"
@@ -471,32 +504,110 @@ describe("Bullet", () => {
         value={{ value: 9.5, text: "9.5%" }}
         proposed={{ value: 12.6, text: "12.6%" }}
         limit={limit}
+        status="Breach on proposal [E3]"
       />,
     );
-    expect(container.textContent).toContain("Proposed 12.6%, above the limit");
-    expect(container.querySelector('[data-mark="proposed"]')?.getAttribute("class")).toContain(
-      "stroke-warning-mark",
+    expect(container.querySelector('[data-part="status"]')?.textContent).toBe("Breach on proposal");
+    expect(svgOf(container).getAttribute("aria-label")).toContain(
+      "Limit 12.0%; Breach on proposal.",
     );
-    const over = render(
+    const none = render(
+      <Bullet name="Exposure" width={WIDE} value={{ value: 9, text: "9.0%" }} limit={limit} />,
+    );
+    expect(none.container.querySelector('[data-part="status"]')).toBeNull();
+    const sourced = render(
       <Bullet
-        name="Sector"
+        name="Exposure"
         width={WIDE}
-        value={{ value: 21.5, text: "21.5%" }}
-        limit={{ value: 20, text: "20.0%" }}
+        value={{ value: 9, text: "9.0%" }}
+        limit={limit}
+        status="Per TDG_10-K.htm page 45"
       />,
     );
-    expect(over.container.textContent).toContain("Current 21.5%, above the limit");
-    expect(over.container.querySelector('[data-bar="beyond"]')).not.toBeNull();
-    const floor = render(
+    expect(sourced.container.querySelector('[data-part="status"]')?.textContent).toBe(
+      "Detail is in Evidence.",
+    );
+  });
+
+  it("writes every figure outside the bar, on the line under the scale, on every row", () => {
+    for (const current of [1, 6, 11.5]) {
+      const { container, unmount } = render(
+        <Bullet
+          name="Exposure"
+          width={WIDE}
+          value={{ value: current, text: `${String(current)}%` }}
+          proposed={{ value: 12.6, text: "12.6%" }}
+          limit={limit}
+        />,
+      );
+      const bar = container.querySelector('[data-bar="value"]') as Element;
+      const below = num(bar, "y") + num(bar, "height");
+      for (const text of container.querySelectorAll('[data-part="value"]'))
+        expect(num(text, "y")).toBeGreaterThan(below + 20);
+      expect(container.querySelector(".fill-surface-card[data-part]")).toBeNull();
+      unmount();
+    }
+  });
+
+  it("starts the bars of several bullets at one x and runs the track to the edge at 390", () => {
+    const xs = ["CCC bucket", "Single-name exposure and its connected parties"].map((name) => {
+      const { container, unmount } = render(
+        <Bullet
+          name={name}
+          width={WIDE}
+          plotLeft={300}
+          value={{ value: 3, text: "3%" }}
+          limit={limit}
+        />,
+      );
+      const left = num(container.querySelector('[data-bar="value"]') as Element, "x");
+      unmount();
+      return left;
+    });
+    expect(xs).toEqual([300, 300]);
+    const phone = render(
       <Bullet
-        name="Cover"
-        width={WIDE}
-        limitKind="min"
-        value={{ value: 1.8, text: "1.8x" }}
-        limit={{ value: 2, text: "2.0x" }}
+        name="Single-name exposure"
+        width={390}
+        value={{ value: 11.5, text: "11.5%" }}
+        limit={limit}
       />,
     );
-    expect(floor.container.textContent).toContain("Current 1.8x, below the limit");
+    const track = phone.container.querySelector('[data-part="track"]') as Element;
+    expect(num(track, "x") + num(track, "width")).toBeGreaterThanOrEqual(390 - 8);
+  });
+
+  it("prints a missing proposed figure once, with its reason", () => {
+    const { container } = render(
+      <Bullet
+        name="Exposure"
+        width={WIDE}
+        value={{ value: 9, text: "9.0%" }}
+        proposed={{ gap: "Not supplied: no proposal" }}
+        limit={limit}
+      />,
+    );
+    const reasons = [...container.querySelectorAll('[data-part="reason"]')].map(
+      (t) => t.textContent,
+    );
+    expect(reasons).toEqual(["Proposed: no proposal"]);
+    expect(container.textContent).not.toContain("Not supplied: no proposal");
+  });
+
+  it("draws its legend with a ring for the proposed figure when asked", () => {
+    const { container } = render(
+      <Bullet
+        name="Exposure"
+        width={WIDE}
+        legend
+        value={{ value: 9, text: "9.0%" }}
+        proposed={{ value: 6, text: "6.0%" }}
+        limit={limit}
+      />,
+    );
+    const legend = container.querySelector('[data-part="legend"]') as Element;
+    expect(legend.querySelector('[data-swatch="ring"]')).not.toBeNull();
+    expect(legend.textContent).toBe("CurrentProposedLimit");
   });
 
   it("draws a value the module did not state as the hatched slot with its reason", () => {
@@ -511,7 +622,7 @@ describe("Bullet", () => {
     expect(container.querySelector('[data-gap="Not supplied: no portfolio file"]')).not.toBeNull();
     expect(container.querySelector('[data-bar="value"]')).toBeNull();
     expect(container.querySelector('[data-part="reason"]')?.textContent).toBe(
-      "Current: Not supplied: no portfolio file",
+      "Current: no portfolio file",
     );
   });
 

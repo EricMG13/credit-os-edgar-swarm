@@ -415,16 +415,12 @@ export function EarningsDebtTile({ lead }: { lead: LeadProps }) {
       table={earningsTable(data)}
     >
       <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_408px]">
-        {data.measures.length ? (
-          <Money data={data} />
-        ) : (
-          <GapNote>{absentText(data)}</GapNote>
-        )}
+        {data.measures.length ? <Money data={data} /> : <GapNote>{absentText(data)}</GapNote>}
         {data.leverage ? (
           <Leverage leverage={data.leverage} basis={data.leverageBasis} />
         ) : (
           <p className="text-caption text-gap-text">
-            This page could not read total debt / EBITDA from the handoff.
+            This page could not read total debt / EBITDA.
           </p>
         )}
       </div>

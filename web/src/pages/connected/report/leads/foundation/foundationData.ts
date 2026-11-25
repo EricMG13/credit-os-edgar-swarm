@@ -30,12 +30,12 @@ export type PeriodCell = { label: string; cell: Reading | null; line: number | n
 /** The two periods a comparison is drawn between, earlier first; null with fewer than two of one form. */
 type Comparison = { from: string; to: string } | null;
 
-/** The one form of a gap: what this page could not read from the handoff, and the cause it found. */
+/** The one form of a gap: what this page could not read, and the cause it found. */
 const inSentence = (what: string) =>
   /^[A-Z][a-z]/.test(what) ? what.charAt(0).toLowerCase() + what.slice(1) : what;
-const NOT_IN = (what: string) => `This page could not read ${inSentence(what)} from the handoff.`;
+const NOT_IN = (what: string) => `This page could not read ${inSentence(what)}.`;
 const BECAUSE = (what: string, cause: string) =>
-  `This page could not read ${inSentence(what)} from the handoff because ${cause}.`;
+  `This page could not read ${inSentence(what)} because ${cause}.`;
 const periodsGap = (table: string, cause: string) =>
   BECAUSE(`the periods of ${inSentence(table)}`, cause);
 const NOT_A_SHAPE = "the table is not in a shape this page reads";
@@ -179,6 +179,7 @@ const ROW_TABLES = [
   "Net debt data",
   "Chart data: leverage",
   "Chart data: liquidity",
+  "Chart data: interest cover",
 ] as const;
 const STATEMENTS = ["T4.4 Income statement", "T4.5 Cash flow statement"] as const;
 
@@ -718,25 +719,31 @@ export type BridgeStep = {
   label: string;
   cell: Reading;
   line: number;
-  kind: "opening" | "change" | "closing";
+  /** A subtotal is a stated intermediate level ("Subtotal before other items"): drawn as a level. */
+  kind: "opening" | "change" | "subtotal" | "closing";
 };
 
 export type EbitdaBridge = {
   unit: string;
   steps: BridgeStep[];
   /**
-   * True when the opening plus every change equals the closing exactly. An internal check for
-   * whether the bridge can be drawn; the sum itself is never returned or printed.
+   * True when every amount is a stated number and each level (a subtotal, the closing) equals the
+   * level before it plus the changes between them, exactly. An internal check for whether the
+   * bridge can be drawn; no sum is ever returned or printed.
    */
   reconciles: boolean;
+  /** True when a run of stated numbers between two levels does not add up to the later level. */
+  breaks: boolean;
   tableLine: number;
 };
 
 /**
- * How a step reads in the legend: the opening and closing amounts, a stated change that raises or
- * lowers the amount ("decrease" for `Disposal −10`, never an add-back), a stated zero, or a gap.
+ * How a step reads in the legend: the opening and closing amounts, a stated subtotal, a stated
+ * change that raises or lowers the amount ("decrease" for `Disposal −10`, never an add-back), a
+ * stated zero, or a gap.
  */
-export type BridgeKind = "opening" | "increase" | "decrease" | "no change" | "gap" | "closing";
+export type BridgeKind =
+  "opening" | "subtotal" | "increase" | "decrease" | "no change" | "gap" | "closing";
 
 export function bridgeKind(step: BridgeStep): BridgeKind {
   if (step.kind !== "change") return step.kind;
@@ -750,6 +757,39 @@ export function bridgeKinds(bridge: EbitdaBridge): BridgeKind[] {
   return [...new Set(bridge.steps.map(bridgeKind))];
 }
 
+/** A row whose whole label is a subtotal or total ("Subtotal before other items", "Total add-backs"). */
+const SUBTOTAL = /^(?:sub-?\s?total|total)\b/i;
+
+/**
+ * Each run from one level (the opening, a subtotal) to the next (a subtotal, the closing): does
+ * the level plus the run's changes equal the next level, exactly? Null for a run with a gap.
+ */
+function bridgeRuns(steps: readonly BridgeStep[]): (boolean | null)[] {
+  const runs: (boolean | null)[] = [];
+  let running: string | null = null;
+  for (const step of steps) {
+    const text = step.cell.kind === "number" ? step.cell.text : null;
+    if (step.kind === "change") {
+      running = running === null || text === null ? null : sum([running, text]);
+      continue;
+    }
+    if (step.kind !== "opening")
+      runs.push(running === null || text === null ? null : signOf(difference(running, text)) === 0);
+    running = text;
+  }
+  return runs;
+}
+
+/**
+ * The cells of an all-gap figure in the module's own words: the stated gap once when every cell
+ * states the same, else each row's label with its own.
+ */
+function gapWords(cells: readonly { label: string; text: string }[]) {
+  const texts = [...new Set(cells.map((cell) => safeText(cell.text)))];
+  if (texts.length === 1) return texts[0] ?? "";
+  return cells.map((cell) => `${safeText(cell.label)}: ${safeText(cell.text)}`).join("; ");
+}
+
 /** See the exported reader below; a string is the reason the figure is not drawn. */
 function readBridge(entry: OutputEntry): EbitdaBridge | string {
   const table = tableUnder(entry, "Chart data: EBITDA bridge");
@@ -757,22 +797,35 @@ function readBridge(entry: OutputEntry): EbitdaBridge | string {
   if (table.rows.length < 3) return BECAUSE("the EBITDA bridge", "it has fewer than three steps");
   const amount = columnOf(table, "Amount");
   const unitAt = columnOf(table, "Reporting unit");
-  const units = new Set(table.rows.map((row) => row.cells[unitAt] ?? ""));
-  const [unit] = [...units];
   if (amount < 0 || unitAt < 0) return BECAUSE("the EBITDA bridge", NOT_A_SHAPE);
-  if (units.size !== 1 || !unit) return NOT_IN("the EBITDA bridge in one unit");
   const last = table.rows.length - 1;
-  const steps = table.rows.map((row, at): BridgeStep => ({
-    label: (row.cells[0] ?? "").trim(),
-    cell: readCell(row.cells[amount] ?? ""),
-    line: row.line,
-    kind: at === 0 ? "opening" : at === last ? "closing" : "change",
-  }));
-  const total = sum(steps.slice(0, -1).map((step) => step.cell.text));
-  const closing = steps.at(-1)?.cell;
-  const reconciles =
-    closing?.kind === "number" && total !== null && signOf(difference(total, closing.text)) === 0;
-  return { unit: unitLabel(unit), steps, reconciles, tableLine: table.line };
+  const steps = table.rows.map((row, at): BridgeStep => {
+    const label = (row.cells[0] ?? "").trim();
+    const middle = SUBTOTAL.test(label) ? "subtotal" : "change";
+    return {
+      label,
+      cell: readCell(row.cells[amount] ?? ""),
+      line: row.line,
+      kind: at === 0 ? "opening" : at === last ? "closing" : middle,
+    };
+  });
+  if (steps.every((step) => step.cell.kind === "gap"))
+    return gapWords(steps.map((step) => ({ label: step.label, text: step.cell.text })));
+  const units = new Set(
+    table.rows.flatMap((row, at) =>
+      steps[at]?.cell.kind === "gap" ? [] : [(row.cells[unitAt] ?? "").trim()],
+    ),
+  );
+  const [unit] = [...units];
+  if (units.size !== 1 || !unit) return NOT_IN("the EBITDA bridge in one unit");
+  const runs = bridgeRuns(steps);
+  return {
+    unit: unitLabel(unit),
+    steps,
+    reconciles: runs.every((run) => run === true),
+    breaks: runs.includes(false),
+    tableLine: table.line,
+  };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -969,6 +1022,156 @@ function readSegments(entry: OutputEntry): SegmentView | string {
 }
 
 // ---------------------------------------------------------------------------------------------
+// Tiles 8 and 9: interest cover and the debt stack
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * The module's own notes under a chart table: each line of the section's text, sources left out
+ * (`basisText`); a `Basis:` line is the source reference and stays in Evidence.
+ */
+function sectionNotes(entry: OutputEntry, heading: string): string[] {
+  const sections = entry.sections.filter((section) => section.heading === heading);
+  const [only] = sections;
+  if (sections.length !== 1 || !only) return [];
+  const lines = only.blocks.flatMap((block) =>
+    block.type === "text" ? block.text.split("\n") : [],
+  );
+  const notes = lines.flatMap((line) => {
+    if (!line.trim() || /^\s*Basis:/i.test(line)) return [];
+    const words = basisText(line);
+    return words && words !== IN_EVIDENCE ? [words] : [];
+  });
+  return [...new Set(notes)];
+}
+
+export type InterestCover = {
+  /** The measure as the table's column names it ("EBITDA / cash interest"). */
+  label: string;
+  unit: string;
+  /** Every stated period, in time order. */
+  periods: Period[];
+  values: PeriodCell[];
+  /** The Basis and limitation words per period, sources left out. */
+  bases: (string | null)[];
+  notes: string[];
+  tableLine: number;
+};
+
+const COVER = "Chart data: interest cover";
+const COVER_COLUMN = "EBITDA / cash interest";
+
+/** See the exported reader below; a string is the reason the figure is not drawn. */
+function readCover(entry: OutputEntry): InterestCover | string {
+  const read = periodTable(entry, COVER, "interest cover");
+  if (typeof read === "string") return read;
+  const values = columnCells(read, COVER_COLUMN);
+  if (!values) return BECAUSE("interest cover", NOT_A_SHAPE);
+  if (values.every((value) => value.cell?.kind === "gap"))
+    return gapWords(values.map((value) => ({ label: value.label, text: value.cell?.text ?? "" })));
+  if (!read.unit) return NOT_IN("interest cover in one unit");
+  const basisAt = columnOf(read.table, "Basis and limitation");
+  return {
+    label: read.table.headers[columnOf(read.table, COVER_COLUMN)] ?? COVER_COLUMN,
+    unit: read.unit,
+    periods: read.rows.map(({ period }) => period),
+    values,
+    bases: read.rows.map(({ row }) => (basisAt < 0 ? null : basisText(row.cells[basisAt] ?? ""))),
+    notes: sectionNotes(entry, COVER),
+    tableLine: read.table.line,
+  };
+}
+
+/** One facility of the debt stack, every cell as written. */
+export type StackFacility = {
+  facility: string;
+  /** The stated ranking: a whole number from 1, never falling down the rows. */
+  ranking: number;
+  /** The Secured cell as written ("Yes", "No"). */
+  secured: string;
+  amount: Reading;
+  /** The Cumulative leverage cell as written. */
+  leverage: Reading;
+  basis: string | null;
+  line: number;
+};
+
+export type DebtStack = {
+  unit: string;
+  /** The facilities in the module's order (its ranking order); same-rank order is as written. */
+  facilities: StackFacility[];
+  notes: string[];
+  tableLine: number;
+};
+
+const STACK_TABLE = "Chart data: debt stack";
+const STACK_HEADERS = [
+  "Facility",
+  "Ranking",
+  "Secured",
+  "Amount",
+  "Cumulative leverage",
+  "Reporting unit",
+] as const;
+const RANKING = /^[1-9]\d*$/;
+
+/** See the exported reader below; a string is the reason the figure is not drawn. */
+function readStack(entry: OutputEntry): DebtStack | string {
+  const table = tableUnder(entry, STACK_TABLE);
+  if (!table) return NOT_IN("the debt stack");
+  const [name, rank, secured, amount, leverage, unitAt] = STACK_HEADERS.map((header) =>
+    columnOf(table, header),
+  );
+  if ([name, rank, secured, amount, leverage, unitAt].some((at) => at === undefined || at < 0))
+    return BECAUSE("the debt stack", NOT_A_SHAPE);
+  const cell = (row: Row, at: number | undefined) => (row.cells[at ?? -1] ?? "").trim();
+  if (table.rows.length === 0) return BECAUSE("the debt stack", "it has no rows");
+  const amounts = table.rows.map((row) => readCell(cell(row, amount)));
+  if (amounts.every((reading) => reading.kind === "gap"))
+    return gapWords(
+      table.rows.map((row, at) => ({ label: cell(row, name), text: amounts[at]?.text ?? "" })),
+    );
+  const ranks = table.rows.map((row) => cell(row, rank));
+  const inOrder = ranks.every(
+    (text, at) => RANKING.test(text) && (at === 0 || Number(ranks[at - 1]) <= Number(text)),
+  );
+  if (!inOrder)
+    return BECAUSE(
+      "the debt stack",
+      "a ranking is not a whole number from 1 that never falls down the rows",
+    );
+  const units = new Set(
+    table.rows.flatMap((row, at) => (amounts[at]?.kind === "gap" ? [] : [cell(row, unitAt)])),
+  );
+  const [unit] = [...units];
+  if (units.size !== 1 || !unit) return NOT_IN("the debt stack in one unit");
+  const basisAt = columnOf(table, "Basis and limitation");
+  return {
+    unit: unitLabel(unit),
+    facilities: table.rows.map((row, at): StackFacility => ({
+      facility: cell(row, name),
+      ranking: Number(ranks[at]),
+      secured: cell(row, secured),
+      amount: amounts[at] ?? readCell(""),
+      leverage: readCell(cell(row, leverage)),
+      basis: basisAt < 0 ? null : basisText(cell(row, basisAt)),
+      line: row.line,
+    })),
+    notes: sectionNotes(entry, STACK_TABLE),
+    tableLine: table.line,
+  };
+}
+
+/**
+ * Whether the periods tile is drawn: when the figures state three or more periods, a period that
+ * is not a fiscal or calendar year, or a table whose periods cannot be read. Two annual periods
+ * (or one) are named in the first tile's head instead.
+ */
+export function showPeriodsTile(entry: OutputEntry): boolean {
+  const periods = statedPeriods(entry);
+  return periods.labels.length >= 3 || periods.gaps.length > 0 || periods.kind === "other";
+}
+
+// ---------------------------------------------------------------------------------------------
 // The readers, and why a figure is not drawn
 // ---------------------------------------------------------------------------------------------
 
@@ -984,19 +1187,26 @@ export const netDebtView = (entry: OutputEntry) => ready(readNetDebt(entry));
 export const ebitdaBridge = (entry: OutputEntry) => ready(readBridge(entry));
 /** Net sales and EBITDA per segment as written, every stated period; corporate lines apart; no sum, no ratio. */
 export const segmentView = (entry: OutputEntry) => ready(readSegments(entry));
+/** EBITDA / cash interest for every stated period, in time order, each cell as written. */
+export const interestCover = (entry: OutputEntry) => ready(readCover(entry));
+/** The debt stack in the module's ranking order: amounts and cumulative leverage as written. */
+export const debtStack = (entry: OutputEntry) => ready(readStack(entry));
 
-export type Figure = "earnings" | "ladder" | "netDebt" | "bridge" | "segments";
+export type Figure = "earnings" | "ladder" | "netDebt" | "bridge" | "segments" | "cover" | "stack";
 const READERS: Record<Figure, (entry: OutputEntry) => unknown> = {
   earnings: readEarnings,
   ladder: readLadder,
   netDebt: readNetDebt,
   bridge: readBridge,
   segments: readSegments,
+  cover: readCover,
+  stack: readStack,
 };
 
 /**
  * Why a figure's reader returns null, in the one gap form ("This page could not read the periods
- * of net debt data from the handoff because FY2024 appears more than once."), or null when it draws.
+ * of net debt data because FY2024 appears more than once."), or the module's own reason for an
+ * all-gap figure; null when it draws.
  */
 export function figureGap(entry: OutputEntry, figure: Figure): string | null {
   const read = READERS[figure](entry);

@@ -19,7 +19,7 @@ import {
 } from "../fixtures/mutations";
 import { readCell } from "../kit/numbers";
 import { PeriodsTile } from "./Periods";
-import { periodStrip, stateOf } from "./periodsData";
+import { periodStrip, periodsCaption, stateOf } from "./periodsData";
 
 afterEach(cleanup);
 
@@ -155,13 +155,13 @@ describe("PeriodsTile beyond two periods (mutations; not a real handoff)", () =>
     const tile = draw(twice);
     expect(
       within(tile).getByText(
-        "This page could not read the periods of net debt data from the handoff because FY2024 appears more than once.",
+        "This page could not read the periods of net debt data because FY2024 appears more than once.",
       ),
     ).toBeVisible();
   });
   it("draws the one gap pattern when no figure table states a period", () => {
     const tile = draw(edited(cp1Entry(), () => null));
-    expect(tile.textContent).toBe("Periods · This page could not read a period from the handoff.");
+    expect(tile.textContent).toBe("Periods · This page could not read a period.");
     expect(tile.className).not.toMatch(/gap-hatch/);
   });
 });
@@ -191,7 +191,8 @@ describe("periodStrip", () => {
       ["FY2023", "unstated"],
       ["FY2024", "figures"],
     ]);
-    expect(strip.comparison).toEqual({ from: "FY2021", to: "FY2024" });
+    // Three years apart: no comparison is named (a change is only between years one apart).
+    expect(strip.comparison).toBeNull();
   });
   it("draws a period list too long for the axis as rows, one period per row", () => {
     const years = Array.from({ length: 14 }, (_, at) => `FY${String(2011 + at)}`);
@@ -215,5 +216,25 @@ describe("periodStrip", () => {
     });
     expect(stateOf([readCell("pending"), null])).toEqual({ kind: "words" });
     expect(stateOf([null])).toEqual({ kind: "none" });
+  });
+});
+
+describe("periodsCaption: the line that replaces the tile for plain periods", () => {
+  it("names the stated periods of the accepted handoff and of the one-period draft", () => {
+    expect(periodsCaption(cp1Entry())).toBe("Each figure in its stated period: FY2023, FY2024");
+    expect(periodsCaption(relativeValueCp1Entry())).toBe(
+      "Each figure in its stated period: FY2024",
+    );
+    expect(periodsCaption(distressedCp1Entry())).toBe(
+      "Each figure in its stated period: FY2023, FY2024",
+    );
+  });
+  it("is null where the full strip is needed: three periods, another kind, or a gap period", () => {
+    expect(periodsCaption(threePeriodCp1())).toBeNull();
+    expect(periodsCaption(ltmCp1())).toBeNull();
+    expect(periodsCaption(allGapFy2022())).toBeNull();
+  });
+  it("says nothing without a period", () => {
+    expect(periodsCaption(entry("CP-1", [], []))).toBeNull();
   });
 });

@@ -4,6 +4,10 @@ export const NARROW = 520;
 /** Real text sizes in px (the viewBox is the measured width, so one unit is one pixel). */
 export const SIZE = { label: 12, value: 12, tick: 12 } as const;
 
+/** The two bar heights of every lead mark: a bar (a value, a level, a step) and a slim bar (a prior period, a thin strip). */
+export const BAR = 16;
+export const SLIM = 5;
+
 /** Line pitch for wrapped 12 px text. */
 export const LINE = 15;
 

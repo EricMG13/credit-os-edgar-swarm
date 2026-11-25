@@ -221,6 +221,7 @@ export function FigureTile({
   legend = [],
   notes = [],
   table,
+  caption,
   children,
 }: {
   props: LeadProps;
@@ -233,6 +234,8 @@ export function FigureTile({
   legend?: { tone: KeyTone; text: string }[];
   notes?: readonly string[];
   table?: TableViewData;
+  /** A short line in the tile head under the kicker (which periods are drawn, a basis). */
+  caption?: ReactNode;
   children: ReactNode;
 }) {
   const disclosure = useDisclosure();
@@ -240,7 +243,18 @@ export function FigureTile({
     <Tile
       span={span}
       label={label}
-      kicker={kicker}
+      kicker={
+        caption == null ? (
+          kicker
+        ) : (
+          <>
+            {kicker}
+            <span data-part="caption" className="mt-0.5 block font-normal text-text-secondary">
+              {caption}
+            </span>
+          </>
+        )
+      }
       title={title}
       trace={
         <div className="flex flex-none items-center gap-2">

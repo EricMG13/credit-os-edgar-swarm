@@ -2,7 +2,7 @@ import { cx } from "@/utils/cx";
 import type { MarkTone } from "../../../overview/marks";
 import { fittingTicks, niceAxis, type NiceAxis } from "./axis";
 import { GapSlot } from "./GapSlot";
-import { AxisNote, Grid, Legend, TickLabels, legendHeight, type LegendItem } from "./parts";
+import { AxisNote, Grid, SvgLegend, TickLabels, legendHeight, type LegendItem } from "./parts";
 import { LINE, NARROW, SIZE, textWidth, wrap } from "./text";
 
 /** One side of a pair: a stated figure, or the module's reason it is not stated. */
@@ -426,7 +426,7 @@ export function Dumbbell({
       data-layout={f.narrow ? "narrow" : "wide"}
       className="block"
     >
-      <Legend items={items} width={width} />
+      <SvgLegend items={items} width={width} />
       <Grid
         ticks={kept}
         x={f.x}

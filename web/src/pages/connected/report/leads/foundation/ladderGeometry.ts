@@ -6,28 +6,39 @@ import {
   type WaterfallRow,
 } from "../kit/marks";
 import { group } from "../kit/numbers";
-import { safeText } from "../kit/reader";
 import type { CashLadder, LadderStep, PeriodCell } from "./foundationData";
+import { written } from "./periodsData";
 
 // The cash ladder as the kit Waterfall draws it: the handoff's own stated levels and deductions in
 // the data's order, each figure as written. No plug, no end level, no sum is made here; the
 // Waterfall places a deduction from the bar above it only where both are stated, and draws each
 // level from zero at its stated value, so a level the deductions above do not reach shows as written.
 
-/** The period drawn as bars, the one drawn beneath (two periods only), and those left to the table. */
+/**
+ * The ladders drawn: `current` (with `prior` beneath it when exactly two periods are compared) and
+ * `others`, each further stated period drawn as a ladder of its own, latest first.
+ */
 export type LadderPeriods = { current: string; prior: string | null; others: string[] };
 
 /**
- * One period: bars only. Two compared periods: the later as bars, the earlier beneath. Three or
- * more (or two that are not compared): the latest as bars, every other period in the table view.
+ * One period: bars only. Two compared periods: the later as bars, the earlier beneath. Any other
+ * set: every stated period is drawn, the latest first, each as its own ladder.
  */
 export function ladderPeriods(data: CashLadder): LadderPeriods | null {
   const labels = data.periods.map((period) => period.label);
   const current = data.comparison?.to ?? labels.at(-1);
   if (current === undefined) return null;
   const prior = labels.length === 2 && data.comparison ? data.comparison.from : null;
-  return { current, prior, others: labels.filter((label) => label !== current && label !== prior) };
+  const others = labels.filter((label) => label !== current && label !== prior).reverse();
+  return { current, prior, others };
 }
+
+/** One ladder's periods: a period on its own, nothing beneath it. */
+export const alone = (period: string): LadderPeriods => ({
+  current: period,
+  prior: null,
+  others: [],
+});
 
 type Side = { value: number; text: string } | { gap: string };
 
@@ -40,7 +51,7 @@ type Side = { value: number; text: string } | { gap: string };
 function sideOf(step: LadderStep, cell: PeriodCell | undefined, period: string): Side {
   const reading = cell?.cell;
   if (!reading) return { gap: `This page could not read ${period} for this row.` };
-  if (reading.kind !== "number") return { gap: safeText(reading.text) };
+  if (reading.kind !== "number") return { gap: written(reading.text) };
   if (step.sign !== "paid" || reading.value === 0)
     return { value: reading.value, text: group(reading.text) };
   return { value: -reading.value, text: group(reading.text) };
@@ -56,10 +67,10 @@ const priorOf = (side: Side, period: string): WaterfallPrior =>
 /** Each step as a Waterfall row: a level or a deduction as written, or a gap with its reason. */
 export function ladderRows(data: CashLadder, periods: LadderPeriods): WaterfallRow[] {
   return data.steps.map((step): WaterfallRow => {
-    const label = safeText(step.label);
+    const label = written(step.label);
     const role = step.kind === "level" ? "level" : "step";
     if (!step.stated)
-      return { kind: "gap", label, reason: safeText(step.absent ?? "Not stated."), of: role };
+      return { kind: "gap", label, reason: written(step.absent ?? "Not stated."), of: role };
     const current = sideOf(step, cellAt(step, periods.current), periods.current);
     const prior =
       periods.prior === null ? null : sideOf(step, cellAt(step, periods.prior), periods.prior);
@@ -89,6 +100,8 @@ export function ladderRows(data: CashLadder, periods: LadderPeriods): WaterfallR
 
 /** The kicker: what the figure is in and which periods are drawn. */
 export function ladderKicker(data: CashLadder, periods: LadderPeriods) {
+  if (periods.others.length)
+    return `Cash conversion · ${data.unit}, ${[periods.current, ...periods.others].join(", ")}`;
   const beneath = periods.prior ? `; ${periods.prior} beneath` : "";
   return `Cash conversion · ${data.unit}, ${periods.current}${beneath}`;
 }
@@ -110,20 +123,40 @@ export function ladderReading(
   return `Cash conversion, ${data.unit}, ${periods.current}${beneath}: ${reading.slice(head.length)}`;
 }
 
-function and(labels: readonly string[]) {
-  if (labels.length < 2) return labels.join("");
-  return `${labels.slice(0, -1).join(", ")} and ${labels.at(-1) ?? ""}`;
+/** The words at a break: a stated level the steps above it do not reach. */
+export const LEVELS_AS_STATED = "Levels as stated; the steps between them are not all stated.";
+
+/**
+ * True when some stated level is not where the stated steps above it end (or the steps between
+ * two levels are not all stated). Nothing is printed from the comparison: only the words above.
+ */
+export function levelsBreak(rows: readonly WaterfallRow[]) {
+  let running: number | null = null;
+  let stepped = false;
+  for (const row of rows) {
+    if (row.kind === "gap") {
+      running = null;
+      stepped = false;
+    } else if (row.kind === "step") {
+      if (running !== null) running += row.value;
+      stepped = true;
+    } else {
+      if (stepped && running !== null && Math.abs(running - row.value) > 1e-9) return true;
+      running = row.value;
+      stepped = false;
+    }
+  }
+  return false;
 }
 
-/** Notes under the figure: where some periods are not drawn, which are. */
-export function ladderNotes(periods: LadderPeriods) {
-  const others = periods.others.length
-    ? [
-        `Drawn: ${periods.current}. ${and(periods.others)} ${periods.others.length > 1 ? "are" : "is"} in the table view.`,
-      ]
-    : [];
-  return others;
-}
+/** True when every row of a period is a stated gap: it is written as its reason, not drawn. */
+export const allGaps = (rows: readonly WaterfallRow[]) =>
+  rows.length > 0 && rows.every((row) => row.kind === "gap");
+
+/** The distinct reasons of an all-gap period, in order, as written. */
+export const gapReasons = (rows: readonly WaterfallRow[]) => [
+  ...new Set(rows.flatMap((row) => (row.kind === "gap" ? [row.reason] : []))),
+];
 
 const KIND = {
   level: "Level",
@@ -132,10 +165,10 @@ const KIND = {
 } as const;
 
 function cellText(step: LadderStep, cell: PeriodCell | undefined) {
-  if (!step.stated) return safeText(step.absent ?? "Not stated.");
+  if (!step.stated) return written(step.absent ?? "Not stated.");
   const reading = cell?.cell;
   if (!reading) return "Not stated";
-  return reading.kind === "number" ? group(reading.text) : safeText(reading.text);
+  return reading.kind === "number" ? group(reading.text) : written(reading.text);
 }
 
 /** The table view: every step and every stated period, as the module wrote them. */
@@ -144,7 +177,7 @@ export function ladderTable(data: CashLadder): TableViewData {
     caption: `Cash conversion, ${data.unit}`,
     headers: ["Step", ...data.periods.map((period) => period.label), "Kind"],
     rows: data.steps.map((step) => [
-      safeText(step.label),
+      written(step.label),
       ...data.periods.map((period) => cellText(step, cellAt(step, period.label))),
       step.kind === "level" ? KIND.level : KIND[step.sign ?? "signed"],
     ]),

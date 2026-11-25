@@ -1,13 +1,13 @@
 import { cx } from "@/utils/cx";
 import { fittingTicks, niceAxis, type AxisTick, type NiceAxis } from "./axis";
 import { GapSlot } from "./GapSlot";
-import { LINE, NARROW, SIZE, signedText, textWidth, wrap } from "./text";
+import { BAR, LINE, NARROW, SIZE, SLIM, signedText, textWidth, wrap } from "./text";
 import {
   AxisNote,
   Grid,
   HALO,
   HALO_CLASS,
-  Legend,
+  SvgLegend,
   TickLabels,
   legendHeight,
   type LegendItem,
@@ -47,6 +47,12 @@ export type WaterfallRow =
       text: string;
       prior?: WaterfallPrior;
       split?: readonly WaterfallSplit[];
+      /**
+       * A step's tone, by default from its sign: `increase` (a teal outline on a teal tint) for a
+       * rise, `decrease` (the signal outline on its tint) for a fall; a zero step has none. The
+       * sign and the legend's word carry the direction; the tone is secondary.
+       */
+      tone?: "increase" | "decrease";
     }
   | {
       kind: "gap";
@@ -69,16 +75,19 @@ export type WaterfallProps = {
   axisStart?: number | "auto";
   /** The figure's accessible reading; by default every row with its figure, and the axis start. */
   label?: string;
-  /** Legend words, drawn above the mark for the kinds given; `prior` names the earlier period. */
+  /**
+   * Legend words, drawn above the mark for the kinds given; `prior` names the earlier period. Steps
+   * are named by their tone, "Increase" and "Decrease" (where such a step is drawn), whenever a
+   * legend is given; `step` is accepted for compatibility and not drawn.
+   */
   legend?: { level?: string; step?: string; closing?: string; gap?: string; prior?: string };
 };
 
-const BAR = 16;
 const GAP = 14;
-const SLOT = 12;
-/** The prior line under a row: a 5 px bar and its 11 px figure. */
+const SLOT = BAR;
+/** The prior line under a row: a slim bar and its figure. */
 const PRIOR_LINE = 14;
-const PRIOR_BAR = 5;
+const PRIOR_BAR = SLIM;
 /** Below a prior line the rows sit closer: the line itself already parts them. */
 const PRIOR_GAP = 8;
 
@@ -400,10 +409,11 @@ function Bar({ one, f, base, cut }: { one: Laid; f: Frame; base: number; cut: bo
         height={total ? BAR : BAR - 1.5}
         rx="2"
         strokeWidth={total ? undefined : 1.5}
+        {...(row.kind === "step" ? { "data-tone": stepTone(row) ?? "none" } : {})}
         className={cx(
           row.kind === "level" && "fill-chart-1",
           row.kind === "closing" && "fill-chart-2",
-          row.kind === "step" && "fill-surface-card stroke-chart-2",
+          row.kind === "step" && STEP_TONE[stepTone(row) ?? "none"],
         )}
       />
       {row.kind === "step" && one.from !== null && row.split && (
@@ -424,6 +434,16 @@ function Bar({ one, f, base, cut }: { one: Laid; f: Frame; base: number; cut: bo
     </g>
   );
 }
+
+/** A step's tone: as given, else from its sign; a zero step has none. */
+const stepTone = (row: { value: number; tone?: "increase" | "decrease" }) =>
+  row.tone ?? (row.value > 0 ? "increase" : row.value < 0 ? "decrease" : undefined);
+
+const STEP_TONE = {
+  increase: "fill-surface-selected stroke-chart-1",
+  decrease: "fill-warning-fill stroke-warning-mark",
+  none: "fill-surface-card stroke-chart-2",
+} as const;
 
 const SPLIT_TONE = {
   primary: "fill-chart-1",
@@ -462,10 +482,10 @@ function SplitSegments({
             data-from={start}
             data-to={end}
             x={left}
-            y={y + 2.25}
+            y={y}
             width={Math.max(right - left, 1)}
-            height={BAR - 4.5}
-            rx="1"
+            height={BAR}
+            rx="2"
             className={SPLIT_TONE[part.tone]}
           />
         );
@@ -519,7 +539,13 @@ function PriorMark({ one, f, base }: { one: Laid; f: Frame; base: number }) {
   if (prior.kind === "gap")
     return (
       <g>
-        <GapSlot x={f.plotLeft} y={priorY + 3} width={16} height={7} reason={prior.reason} />
+        <GapSlot
+          x={f.plotLeft}
+          y={priorY + 3}
+          width={16}
+          height={PRIOR_BAR}
+          reason={prior.reason}
+        />
         <PriorText lines={one.priorText} x={f.plotLeft + 22} y={baseline} part="prior-reason" />
       </g>
     );
@@ -666,54 +692,21 @@ function clearTicks(kept: readonly AxisTick[], x: (value: number) => number, wid
   return kept.slice(0, 1);
 }
 
-function legendItems(legend: WaterfallProps["legend"], hasGap: boolean): LegendItem[] {
+function legendItems(
+  legend: WaterfallProps["legend"],
+  rows: readonly WaterfallRow[],
+): LegendItem[] {
   if (!legend) return [];
+  const tones = new Set(rows.flatMap((row) => (row.kind === "step" ? [stepTone(row)] : [])));
   const named: [LegendItem["tone"], string | undefined][] = [
     ["level", legend.level],
-    ["step", legend.step],
+    ["increase", tones.has("increase") ? "Increase" : undefined],
+    ["decrease", tones.has("decrease") ? "Decrease" : undefined],
     ["closing", legend.closing],
-    ["gap", hasGap ? (legend.gap ?? "Not stated") : undefined],
+    ["gap", rows.some((row) => row.kind === "gap") ? (legend.gap ?? "Not stated") : undefined],
+    ["slim", rows.some((row) => row.prior) ? legend.prior : undefined],
   ];
   return named.flatMap(([tone, text]) => (text ? [{ tone, text }] : []));
-}
-
-// The legend's flow (parts.tsx `Legend`: 18 px rows, a 12 px swatch, 6 px to the words, 16 px
-// after them), followed here to place the prior key after the last item; parts.tsx has no thin-bar
-// swatch to name the prior bar with.
-const LEGEND_ROW = 18;
-const keySize = (text: string) => 12 + 6 + textWidth(text) + 16;
-
-function priorKeySpot(items: readonly LegendItem[], text: string, width: number) {
-  let [x, y] = [0, 0];
-  for (const size of [...items.map((item) => keySize(item.text)), keySize(text)]) {
-    if (x > 0 && x + size > width) [x, y] = [0, y + LEGEND_ROW];
-    x += size;
-  }
-  return { x: x - keySize(text), y };
-}
-
-function PriorKey({ spot, text }: { spot: { x: number; y: number }; text: string }) {
-  return (
-    <g data-part="legend">
-      <rect
-        x={spot.x}
-        y={spot.y + 5}
-        width="12"
-        height={PRIOR_BAR}
-        rx="1"
-        className="fill-chart-3"
-      />
-      <text
-        data-part="legend-text"
-        x={spot.x + 18}
-        y={spot.y + 13}
-        fontSize={SIZE.label}
-        className="fill-text-secondary font-body"
-      >
-        {text}
-      </text>
-    </g>
-  );
 }
 
 /**
@@ -727,18 +720,8 @@ export function Waterfall({ rows: given, unit, width, axisStart, label, legend }
   const placed = place(rows);
   const priors = placePrior(rows);
   const f = frame(placed, priors, axis, width);
-  const items = legendItems(
-    legend,
-    rows.some((row) => row.kind === "gap"),
-  );
-  const priorKey =
-    legend?.prior && priors.some((one) => one !== null)
-      ? { text: legend.prior, spot: priorKeySpot(items, legend.prior, width) }
-      : null;
-  const legendBlock = Math.max(
-    legendHeight(items, width),
-    priorKey ? priorKey.spot.y + LEGEND_ROW : 0,
-  );
+  const items = legendItems(legend, rows);
+  const legendBlock = legendHeight(items, width);
   const laid = lay(placed, priors, f, legendBlock + 8);
   const plotTop = legendBlock + 4;
   const last = laid.at(-1);
@@ -763,8 +746,7 @@ export function Waterfall({ rows: given, unit, width, axisStart, label, legend }
       data-layout={f.narrow ? "narrow" : "wide"}
       className="block"
     >
-      <Legend items={items} width={width} />
-      {priorKey && <PriorKey spot={priorKey.spot} text={priorKey.text} />}
+      <SvgLegend items={items} width={width} />
       <Grid
         ticks={kept}
         x={f.x}

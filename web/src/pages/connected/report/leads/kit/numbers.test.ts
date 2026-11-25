@@ -16,6 +16,33 @@ describe("readCell", () => {
     expect(readCell("Not calculable: negative signed prior base").kind).toBe("gap");
     expect(numberOf("Not supplied: no split")).toBeNull();
   });
+  it("reads an accounting negative as the negative number, keeping the cell as written", () => {
+    expect(readCell("(12.3)")).toEqual({
+      kind: "number",
+      text: "-12.3",
+      value: -12.3,
+      written: "(12.3)",
+    });
+    expect(readCell(" (1,160) ")).toEqual({
+      kind: "number",
+      text: "-1160",
+      value: -1160,
+      written: "(1,160)",
+    });
+    expect(numberOf("(2.0)")).toBe(-2);
+    expect(group("(1,160)")).toBe("−1,160");
+    expect(difference("(10)", "5")).toBe("-15");
+    // Not a plain number in brackets: words as written.
+    for (const cell of ["(-3)", "(12.3)x", "(n.m.)", "(1,16)", "()"])
+      expect(readCell(cell), cell).toEqual({ kind: "text", text: cell });
+  });
+  it.each(["n.m.", "n.a.", "NM", "—", "–", "N/A"])(
+    "keeps %s as the words written: never a gap, never zero",
+    (cell) => {
+      expect(readCell(cell)).toEqual({ kind: "text", text: cell });
+      expect(numberOf(cell)).toBeNull();
+    },
+  );
   it("leaves other words as text: percentages with words, empty cells", () => {
     expect(readCell("20.6% reported").kind).toBe("text");
     expect(readCell("").kind).toBe("text");

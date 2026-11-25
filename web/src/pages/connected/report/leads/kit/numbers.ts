@@ -1,19 +1,35 @@
 import { exactDifference } from "../../../signal";
 
-/** One cell of a handoff table, read without ever turning a gap into a number. */
+/**
+ * One cell of a handoff table, read without ever turning a gap into a number. A number's `text` is
+ * plain (no grouping, a hyphen minus) for arithmetic; `written`, present only when the cell writes
+ * the number another way than grouping or the minus glyph (an accounting negative, `(12.3)`), is
+ * the cell as written, to print.
+ */
 export type Reading =
-  | { kind: "number"; text: string; value: number }
+  | { kind: "number"; text: string; value: number; written?: string }
   | { kind: "gap"; text: string; reason: string }
   | { kind: "text"; text: string };
 
 const PLAIN = /^-?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/;
+/** An accounting negative: a plain unsigned number in brackets, `(12.3)`, `(1,160)`. */
+const BRACKETED = /^\((\d+(?:,\d{3})*(?:\.\d+)?)\)$/;
 const STATED_GAP = /^Not (?:supplied|calculable|calculated|applicable):\s*(\S.*)$/;
 
-/** A cell as the module wrote it: a plain number, a stated gap with its reason, or other words. */
+/**
+ * A cell as written: a plain number (an accounting negative `(12.3)` is −12.3), a stated gap with
+ * its reason, or other words (`n.m.`, `n.a.`, `NM`, `—` stay words as written: never a gap, never
+ * zero).
+ */
 export function readCell(cell: string): Reading {
   const text = cell.trim().replaceAll("−", "-");
   const gap = STATED_GAP.exec(text)?.[1];
   if (gap !== undefined) return { kind: "gap", text: cell.trim(), reason: gap };
+  const bracketed = BRACKETED.exec(text)?.[1];
+  if (bracketed !== undefined && PLAIN.test(bracketed)) {
+    const plain = `-${bracketed.replaceAll(",", "")}`;
+    return { kind: "number", text: plain, value: Number(plain), written: cell.trim() };
+  }
   if (PLAIN.test(text))
     return {
       kind: "number",

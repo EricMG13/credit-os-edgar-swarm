@@ -6,6 +6,8 @@ import type { Table } from "../../../publishedReport";
 import { cp1Entry } from "../fixtures/load";
 import {
   comparisonOf,
+  isUnordered,
+  UNORDERED_SENTENCE,
   normalLabel,
   orderByPeriod,
   periodColumns,
@@ -36,6 +38,9 @@ const columns = (...headers: string[]): Table => ({
 });
 const labelsOf = (read: ReturnType<typeof periodRows>) =>
   "reason" in read ? read.reason : read.periods.map(({ period }) => period.label);
+/** The handoff-order labels of an unordered read, or what else it is. */
+const statedOf = (read: ReturnType<typeof periodRows>) =>
+  isUnordered(read) ? read.stated.map(({ label }) => label) : labelsOf(read);
 
 describe("table lookup in the retained CP-1 handoff", () => {
   it("finds a table by its section heading, and by its headers when the heading is not stated", () => {
@@ -70,6 +75,7 @@ describe("periodOf", () => {
       year: 2024,
       form: "LTMDEC",
       kind: "other",
+      end: 12,
     });
     expect(periodOf("Q3 2025")).toMatchObject({ year: 2025, form: "Q3", kind: "other" });
     expect(periodOf("2025-06-30")).toMatchObject({ year: 2025, kind: "other" });
@@ -113,7 +119,7 @@ describe("period rows: every stated period, ordered by year, never by position",
     expect(labelsOf(periodRows(rows("FY2024", "FY2024 / 2024-09-30")))).toBe(
       "FY2024 appears more than once",
     );
-    expect(labelsOf(periodRows(rows("FY2024", "Current")))).toBe("a period has no year: Current");
+    expect(labelsOf(periodRows(rows("FY2024", "Current")))).toBe(UNORDERED_SENTENCE);
     expect(labelsOf(periodRows(rows()))).toBe("it has no rows");
   });
   it("does not call two different kinds in one year a repeat", () => {
@@ -121,6 +127,77 @@ describe("period rows: every stated period, ordered by year, never by position",
       "FY2024",
       "LTM Dec-2024",
     ]);
+  });
+});
+
+describe("time order inside a year (review L8)", () => {
+  it("puts Q1 before Q2 when the handoff lists Q2 first", () => {
+    expect(labelsOf(periodRows(rows("FY2023", "FY2024", "Q2 2025", "Q1 2025")))).toEqual([
+      "FY2023",
+      "FY2024",
+      "Q1 2025",
+      "Q2 2025",
+    ]);
+    expect(labelsOf(periodRows(rows("Q4 2024", "Q3 2024", "Q2 2024", "Q1 2024")))).toEqual([
+      "Q1 2024",
+      "Q2 2024",
+      "Q3 2024",
+      "Q4 2024",
+    ]);
+    expect(labelsOf(periodRows(rows("H2 2024", "H1 2024")))).toEqual(["H1 2024", "H2 2024"]);
+  });
+  it("orders LTM ends of one year by the end month", () => {
+    expect(labelsOf(periodRows(rows("LTM Sep-2024", "LTM Mar-2024", "LTM Jun-2024")))).toEqual([
+      "LTM Mar-2024",
+      "LTM Jun-2024",
+      "LTM Sep-2024",
+    ]);
+  });
+  it("reads two-digit years: FY24 and FY23, Q1 25 and Q1-25", () => {
+    expect(labelsOf(periodRows(rows("FY24", "FY23")))).toEqual(["FY23", "FY24"]);
+    expect(periodOf("FY24")).toEqual({ label: "FY24", year: 2024, form: "FY", kind: "annual" });
+    expect(periodOf("Q1 25")).toEqual({
+      label: "Q1 25",
+      year: 2025,
+      form: "Q1",
+      kind: "other",
+      quarter: 1,
+    });
+    expect(periodOf("Q1-25")).toMatchObject({ year: 2025, form: "Q1", quarter: 1 });
+    expect(periodOf("1Q25")).toMatchObject({ year: 2025, form: "Q1", quarter: 1 });
+    expect(periodOf("LTM Mar-25")).toMatchObject({ year: 2025, form: "LTMMAR", end: 3 });
+    expect(periodOf("FY99")).toMatchObject({ year: 1999 });
+    expect(periodOf("H2 2024")).toMatchObject({ form: "H2", half: 2 });
+    // A two-digit number is a year only in a label that names a period by its words.
+    expect(periodOf("Top 10")).toBeNull();
+    expect(periodOf("Last 12 months")).toBeNull();
+  });
+  it("keeps an LTM period beside the annual ones in the handoff's order and still compares FY", () => {
+    const read = periodRows(rows("FY2023", "FY2024", "LTM Dec-2024"));
+    expect(labelsOf(read)).toEqual(["FY2023", "FY2024", "LTM Dec-2024"]);
+    expect(comparisonOf(read)).toEqual({ from: "FY2023", to: "FY2024" });
+    // A stated year-end date puts an annual period on the calendar beside an LTM end.
+    expect(
+      labelsOf(periodRows(rows("LTM Dec-2024", "FY2024 / 2024-09-30", "FY2023 / 2023-09-30"))),
+    ).toEqual(["FY2023", "FY2024", "LTM Dec-2024"]);
+  });
+  it("cannot order a set with an undated label or a year whose order is unknown", () => {
+    for (const labels of [
+      ["FY2024", "Current"],
+      ["Q1 2025", "YTD 2025"],
+      ["Thereafter", "FY2025"],
+    ]) {
+      const read = periodRows(rows(...labels));
+      expect(isUnordered(read), labels.join()).toBe(true);
+      expect(statedOf(read)).toEqual(labels);
+      expect("reason" in read ? read.reason : "").toBe(UNORDERED_SENTENCE);
+      expect(comparisonOf(read)).toBeNull();
+    }
+    expect(UNORDERED_SENTENCE).toBe(
+      "Periods are in the order stated; this page could not put them in time order.",
+    );
+    // Different years order whatever the label: YTD 2025 after FY2024 is told by the year.
+    expect(labelsOf(periodRows(rows("YTD 2025", "FY2024")))).toEqual(["FY2024", "YTD 2025"]);
   });
 });
 
@@ -168,6 +245,13 @@ describe("unionPeriods and comparisonOf", () => {
       from: "FY2023",
       to: "FY2024",
     });
+  });
+  it("compares only periods exactly one year apart, and no set with a period naming no year", () => {
+    expect(comparisonOf([p("FY2022"), p("FY2024")])).toBeNull();
+    expect(comparisonOf([p("FY2023"), null, p("FY2024")])).toBeNull();
+    expect(comparisonOf([p("FY23"), p("FY24")])).toEqual({ from: "FY23", to: "FY24" });
+    expect(comparisonOf([p("Q1 2024"), p("Q2 2025"), p("Q1 2025")])).toBeNull();
+    expect(comparisonOf({ reason: "x" })).toBeNull();
   });
   it("draws no comparison with one period or with two of different kinds", () => {
     expect(comparisonOf([p("FY2024")])).toBeNull();

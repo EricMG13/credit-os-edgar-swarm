@@ -27,12 +27,15 @@ import {
   bridgeKind,
   bridgeKinds,
   cashLadder,
+  debtStack,
   earningsAgainstDebt,
   ebitdaBridge,
   figureGap,
+  interestCover,
   NO_ADJUSTMENT,
   netDebtView,
   segmentView,
+  showPeriodsTile,
   statedPeriods,
   type PeriodCell,
 } from "./foundationData";
@@ -65,6 +68,7 @@ describe("statedPeriods: the periods the figures cover", () => {
       "Net debt data",
       "Leverage",
       "Liquidity",
+      "Interest cover",
       "Income statement",
       "Cash flow statement",
       "Segment schedule",
@@ -101,7 +105,7 @@ describe("statedPeriods: the periods the figures cover", () => {
       {
         table: "Net debt data",
         reason:
-          "This page could not read the periods of net debt data from the handoff because FY2024 appears more than once.",
+          "This page could not read the periods of net debt data because FY2024 appears more than once.",
       },
     ]);
     expect(statedPeriods(twice).labels).toEqual(["FY2023", "FY2024"]);
@@ -227,7 +231,7 @@ describe("earningsAgainstDebt", () => {
     const gone = earningsAgainstDebt(dropTable(accepted, "Net debt data"));
     expect(gone?.measures.map((m) => m.key)).toEqual(["sales", "reportedEbitda", "adjustedEbitda"]);
     expect(gone?.absent).toEqual([
-      { label: "Gross debt", reason: "This page could not read gross debt from the handoff." },
+      { label: "Gross debt", reason: "This page could not read gross debt." },
     ]);
   });
   it("keeps a stated gap as a gap: no change, never zero", () => {
@@ -270,14 +274,14 @@ describe("earningsAgainstDebt", () => {
       {
         label: "Gross debt",
         reason:
-          "This page could not read gross debt from the handoff because it is in another unit than the other measures.",
+          "This page could not read gross debt because it is in another unit than the other measures.",
       },
     ]);
     const mixed = setCell(accepted, "Net debt data", 0, "Reporting unit", "GBPm");
     expect(earningsAgainstDebt(mixed)?.absent).toEqual([
       {
         label: "Gross debt",
-        reason: "This page could not read gross debt in one unit from the handoff.",
+        reason: "This page could not read gross debt in one unit.",
       },
     ]);
   });
@@ -294,7 +298,7 @@ describe("earningsAgainstDebt", () => {
       {
         label: "Gross debt",
         reason:
-          "This page could not read the periods of net debt data from the handoff because FY2024 appears more than once.",
+          "This page could not read the periods of net debt data because FY2024 appears more than once.",
       },
     ]);
   });
@@ -303,8 +307,7 @@ describe("earningsAgainstDebt", () => {
     expect(empty?.absent).toEqual([
       {
         label: "Gross debt",
-        reason:
-          "This page could not read the periods of net debt data from the handoff because it has no rows.",
+        reason: "This page could not read the periods of net debt data because it has no rows.",
       },
     ]);
     const gapsOnly = earningsAgainstDebt(
@@ -469,7 +472,7 @@ describe("cashLadder: the handoff's own levels and deductions, as written", () =
     );
     expect(after?.stated).toBe(false);
     expect(after?.absent).toBe(
-      "This page could not read cash flow after distributions in the cash flow statement or the KPI dashboard from the handoff.",
+      "This page could not read cash flow after distributions in the cash flow statement or the KPI dashboard.",
     );
     expect(after?.values.map((v) => v.cell)).toEqual([null, null]);
   });
@@ -484,7 +487,7 @@ describe("cashLadder: the handoff's own levels and deductions, as written", () =
     const after = (entry: OutputEntry) =>
       cashLadder(entry)?.steps.find((s) => s.key === "afterDistributions");
     expect(after(euro)?.absent).toBe(
-      "This page could not read DCF after cash dividends and equivalents from the handoff because it is in another unit than the other rows.",
+      "This page could not read DCF after cash dividends and equivalents because it is in another unit than the other rows.",
     );
     const twice = addRow(distressed, "T4.10 KPI dashboard", [
       "Other",
@@ -495,7 +498,7 @@ describe("cashLadder: the handoff's own levels and deductions, as written", () =
       "-",
     ]);
     expect(after(twice)?.absent).toBe(
-      "This page could not read cash flow after distributions from the handoff because more than one row of the KPI dashboard matches it.",
+      "This page could not read cash flow after distributions because more than one row of the KPI dashboard matches it.",
     );
   });
   it("reads the single-period relative value ladder with its own label forms", () => {
@@ -554,7 +557,7 @@ describe("cashLadder: the handoff's own levels and deductions, as written", () =
     const taxes = cashLadder(twice)?.steps.find((s) => s.key === "taxes");
     expect(taxes?.stated).toBe(false);
     expect(taxes?.absent).toBe(
-      "This page could not read cash taxes paid from the handoff because more than one row of the statement matches it.",
+      "This page could not read cash taxes paid because more than one row of the statement matches it.",
     );
     expect(taxes?.values.map((v) => v.cell)).toEqual([null, null]);
   });
@@ -569,7 +572,7 @@ describe("cashLadder: the handoff's own levels and deductions, as written", () =
     const capex = cashLadder(other)?.steps.find((s) => s.key === "capex");
     expect(capex?.stated).toBe(false);
     expect(capex?.absent).toBe(
-      "This page could not read capital expenditures from the handoff because it is in another unit than the other rows.",
+      "This page could not read capital expenditures because it is in another unit than the other rows.",
     );
   });
   it("keeps the ladder when the income statement is missing, with the EBITDA step absent", () => {
@@ -577,7 +580,7 @@ describe("cashLadder: the handoff's own levels and deductions, as written", () =
     expect(ladder?.steps[0]).toMatchObject({
       key: "ebitda",
       stated: false,
-      absent: "This page could not read the income statement from the handoff.",
+      absent: "This page could not read the income statement.",
     });
   });
   it("is absent when the cash flow statement is", () => {
@@ -839,6 +842,306 @@ describe("ebitdaBridge", () => {
 
 // ------------------------------------------------------------------------------------------------
 
+const BRIDGE = "Chart data: EBITDA bridge";
+
+describe("ebitdaBridge: subtotals and an all-gap bridge", () => {
+  // Coordinator input L12: 3,813 + 70 + 217 + 58 = 4,158 (the subtotal); 4,158 + 15 = 4,173.
+  const withSubtotal = withRows(accepted, BRIDGE, [
+    ["EBITDA (Reported)", "3813", "US$m", "x"],
+    ["Acquisition transaction and integration-related expenses", "70", "US$m", "x"],
+    ["Stock comp", "217", "US$m", "x"],
+    ["Refinancing", "58", "US$m", "x"],
+    ["Subtotal before other items", "4158", "US$m", "x"],
+    ["Other, net", "15", "US$m", "x"],
+    ["EBITDA (Adjusted)", "4173", "US$m", "x"],
+  ]);
+  it("reads a subtotal row as a level, not a step, and reconciles each run exactly", () => {
+    const bridge = ebitdaBridge(withSubtotal);
+    expect(bridge?.steps.map((s) => [s.kind, s.label])).toEqual([
+      ["opening", "EBITDA (Reported)"],
+      ["change", "Acquisition transaction and integration-related expenses"],
+      ["change", "Stock comp"],
+      ["change", "Refinancing"],
+      ["subtotal", "Subtotal before other items"],
+      ["change", "Other, net"],
+      ["closing", "EBITDA (Adjusted)"],
+    ]);
+    expect(bridge && bridgeKinds(bridge)).toEqual(["opening", "increase", "subtotal", "closing"]);
+    expect(bridge?.reconciles).toBe(true);
+    expect(bridge?.breaks).toBe(false);
+  });
+  it("knows the subtotal words whole and in any case, and nothing else", () => {
+    for (const label of ["Subtotal", "SUBTOTAL", "Sub-total", "Total", "Total add-backs"]) {
+      const entry = withRows(accepted, BRIDGE, [
+        ["EBITDA (Reported)", "100", "US$m", "x"],
+        ["A", "10", "US$m", "x"],
+        [label, "110", "US$m", "x"],
+        ["EBITDA (Adjusted)", "110", "US$m", "x"],
+      ]);
+      expect(ebitdaBridge(entry)?.steps[2]?.kind, label).toBe("subtotal");
+    }
+    for (const label of ["Totally different", "Other total", "Subtotaling"]) {
+      const entry = withRows(accepted, BRIDGE, [
+        ["EBITDA (Reported)", "100", "US$m", "x"],
+        [label, "10", "US$m", "x"],
+        ["EBITDA (Adjusted)", "110", "US$m", "x"],
+      ]);
+      expect(ebitdaBridge(entry)?.steps[1]?.kind, label).toBe("change");
+    }
+  });
+  it("breaks when the run before the subtotal or after it does not add up", () => {
+    const before = setCell(withSubtotal, BRIDGE, 4, "Amount", "4159");
+    expect(ebitdaBridge(before)?.breaks).toBe(true);
+    expect(ebitdaBridge(before)?.reconciles).toBe(false);
+    const after = setCell(withSubtotal, BRIDGE, 6, "Amount", "4174");
+    expect(ebitdaBridge(after)?.breaks).toBe(true);
+  });
+  it("adds decimals exactly (0.1 + 0.2 = 0.3, not 0.30000000000000004)", () => {
+    const entry = withRows(accepted, BRIDGE, [
+      ["EBITDA (Reported)", "0.1", "US$m", "x"],
+      ["A", "0.2", "US$m", "x"],
+      ["Subtotal", "0.3", "US$m", "x"],
+      ["B", "-0.3", "US$m", "x"],
+      ["EBITDA (Adjusted)", "0", "US$m", "x"],
+    ]);
+    expect(ebitdaBridge(entry)?.reconciles).toBe(true);
+  });
+  it("cannot check a run with a gap and does not call it broken; other runs are still checked", () => {
+    const gap = setCell(withSubtotal, BRIDGE, 2, "Amount", "Not supplied: not itemised");
+    expect(ebitdaBridge(gap)?.reconciles).toBe(false);
+    expect(ebitdaBridge(gap)?.breaks).toBe(false);
+    expect(ebitdaBridge(setCell(gap, BRIDGE, 6, "Amount", "4999"))?.breaks).toBe(true);
+  });
+  it("an all-gap bridge is not drawn: its gap is the module's own reason, once", () => {
+    const REASON = "Not supplied: no reconciliation in the filing read";
+    const allGap = withRows(accepted, BRIDGE, [
+      ["EBITDA (Reported)", REASON, "US$m", "x"],
+      ["Add-backs", REASON, "US$m", "x"],
+      ["EBITDA (Adjusted)", REASON, "US$m", "x"],
+    ]);
+    expect(ebitdaBridge(allGap)).toBeNull();
+    expect(figureGap(allGap, "bridge")).toBe(REASON);
+    const mixed = setCell(allGap, BRIDGE, 2, "Amount", "Not calculable: no adjusted figure");
+    expect(figureGap(mixed, "bridge")).toBe(
+      "EBITDA (Reported): Not supplied: no reconciliation in the filing read; Add-backs: Not supplied: no reconciliation in the filing read; EBITDA (Adjusted): Not calculable: no adjusted figure",
+    );
+  });
+});
+
+// ------------------------------------------------------------------------------------------------
+
+const COVER = "Chart data: interest cover";
+const RATIO = "EBITDA / cash interest";
+
+describe("interestCover: EBITDA / cash interest for every stated period", () => {
+  it("reads the accepted FY2023 2.71 and FY2024 3.29 in year order, x, with the module's words", () => {
+    const cover = interestCover(accepted);
+    expect(cover?.label).toBe("EBITDA / cash interest");
+    expect(cover?.unit).toBe("x");
+    expect(cells(cover?.values)).toEqual([
+      ["FY2023", "2.71"],
+      ["FY2024", "3.29"],
+    ]);
+    expect(cover?.bases).toEqual([
+      "Reported EBITDA / net cash interest paid.",
+      "Same identity and annual duration; cash paid is not accrued interest expense.",
+    ]);
+    expect(cover?.notes).toEqual([
+      "Coverage is historical and uses net cash interest paid rather than a forward coupon run rate.",
+    ]);
+    expect(cover?.tableLine).toBe(329);
+    expect(cover && "change" in cover).toBe(false);
+  });
+  it("reads the one period of the relative value handoff; a calculation id is left out", () => {
+    const cover = interestCover(relative);
+    expect(cells(cover?.values)).toEqual([["FY2024", "3.29"]]);
+    expect(cover?.bases).toEqual([
+      "Reported EBITDA divided by cash interest paid, net; Net cash interest is not gross contractual coupon cost.",
+    ]);
+    expect(cover?.notes).toEqual([
+      "The denominator is the issuer’s net cash payment, not accrued net interest expense.",
+    ]);
+  });
+  it("reads the distressed and draft handoffs: the same two stated figures", () => {
+    for (const entry of [distressed, draft1])
+      expect(cells(interestCover(entry)?.values)).toEqual([
+        ["FY2023", "2.71"],
+        ["FY2024", "3.29"],
+      ]);
+  });
+  it("reads three periods by year whatever the row order, a stated gap in place, zero a value", () => {
+    let entry = addRow(accepted, COVER, ["FY2022 / 2022-09-30", "0", "x", "Test row."]);
+    expect(cells(interestCover(entry)?.values)).toEqual([
+      ["FY2022", "0"],
+      ["FY2023", "2.71"],
+      ["FY2024", "3.29"],
+    ]);
+    entry = setCell(entry, COVER, 0, RATIO, "Not supplied: cash interest not split");
+    expect(cells(interestCover(entry)?.values)).toEqual([
+      ["FY2022", "0"],
+      ["FY2023", "gap: cash interest not split"],
+      ["FY2024", "3.29"],
+    ]);
+  });
+  it("reads a negative ratio and words as written, never as a gap", () => {
+    const entry = setCell(setCell(accepted, COVER, 0, RATIO, "-0.4"), COVER, 1, RATIO, "n.m.");
+    expect(cells(interestCover(entry)?.values)).toEqual([
+      ["FY2023", "-0.4"],
+      ["FY2024", "text: n.m."],
+    ]);
+  });
+  it("is a gap with the page's reason: no table, a repeated year, another unit, no column", () => {
+    expect(figureGap(dropTable(accepted, COVER), "cover")).toBe(
+      "This page could not read interest cover.",
+    );
+    const twice = addRow(accepted, COVER, ["FY2024", "3.3", "x", "-"]);
+    expect(figureGap(twice, "cover")).toBe(
+      "This page could not read the periods of interest cover because FY2024 appears more than once.",
+    );
+    expect(figureGap(setCell(accepted, COVER, 0, "Reporting unit", "%"), "cover")).toBe(
+      "This page could not read interest cover in one unit.",
+    );
+    const renamed = edited(accepted, (table, heading) =>
+      heading === COVER
+        ? { ...table, headers: ["Period", "Cover", "Reporting unit", "Basis and limitation"] }
+        : table,
+    );
+    expect(figureGap(renamed, "cover")).toBe(
+      "This page could not read interest cover because the table is not in a shape this page reads.",
+    );
+    expect(figureGap(withRows(accepted, COVER, []), "cover")).toBe(
+      "This page could not read the periods of interest cover because it has no rows.",
+    );
+  });
+  it("an all-gap cover is the module's own reason, not a drawing", () => {
+    const allGap = withRows(accepted, COVER, [
+      ["FY2023", "Not supplied: cash interest not stated", "x", "-"],
+      ["FY2024", "Not supplied: cash interest not stated", "x", "-"],
+    ]);
+    expect(interestCover(allGap)).toBeNull();
+    expect(figureGap(allGap, "cover")).toBe("Not supplied: cash interest not stated");
+  });
+});
+
+// ------------------------------------------------------------------------------------------------
+
+const STACK = "Chart data: debt stack";
+const facilities = (entry: OutputEntry) =>
+  debtStack(entry)?.facilities.map((f) => [
+    f.facility,
+    f.ranking,
+    f.secured,
+    shown(f.amount),
+    shown(f.leverage),
+  ]);
+
+describe("debtStack: the facilities in the module's ranking order, as written", () => {
+  it("reads the six secured notes of the accepted handoff with cumulative leverage as written", () => {
+    expect(debtStack(accepted)?.unit).toBe("US$m");
+    expect(facilities(accepted)).toEqual([
+      ["2028 secured notes", 1, "Yes", "2100", "0.55"],
+      ["2029 secured notes", 1, "Yes", "2750", "1.27"],
+      ["2030 secured notes", 1, "Yes", "1450", "1.65"],
+      ["2031 secured notes", 1, "Yes", "1000", "1.91"],
+      ["2032 secured notes", 1, "Yes", "2200", "2.49"],
+      ["2033 secured notes", 1, "Yes", "1500", "2.88"],
+    ]);
+    expect(debtStack(accepted)?.notes).toEqual([
+      "Only notes with both affirmative security descriptions and relative payment rank established are included; omitted instruments prevent this from representing a complete capital structure or recovery waterfall.",
+    ]);
+    expect(debtStack(accepted)?.tableLine).toBe(408);
+  });
+  it("reads the relative value stack: ten facilities, two rankings, the module's order kept", () => {
+    expect(facilities(relative)).toEqual([
+      ["Senior secured term loans, all outstanding tranches", 1, "Yes", "8702", "5.17"],
+      ["2028 secured notes", 1, "Yes", "2100", "5.17"],
+      ["2029 secured notes", 1, "Yes", "2750", "5.17"],
+      ["2030 secured notes", 1, "Yes", "1450", "5.17"],
+      ["2031 secured notes", 1, "Yes", "1000", "5.17"],
+      ["2032 secured notes", 1, "Yes", "2200", "5.17"],
+      ["2033 secured notes", 1, "Yes", "1500", "5.17"],
+      ["2027 senior subordinated notes", 2, "No", "2650", "6.37"],
+      ["Lower-coupon 2029 senior subordinated notes", 2, "No", "1200", "6.37"],
+      ["Higher-coupon 2029 senior subordinated notes", 2, "No", "750", "6.37"],
+    ]);
+  });
+  it("reads the distressed stack's own carrying amounts", () => {
+    expect(facilities(distressed)?.map((row) => row[3])).toEqual([
+      "8642",
+      "2077",
+      "2727",
+      "1438",
+      "984",
+      "2180",
+      "1486",
+      "2641",
+      "1194",
+      "746",
+    ]);
+  });
+  it("keeps a stated gap amount in place with its reason, and a stated zero as a value", () => {
+    let entry = setCell(
+      accepted,
+      STACK,
+      2,
+      "Amount",
+      "Not supplied: principal not in the note read",
+    );
+    entry = setCell(entry, STACK, 3, "Amount", "0");
+    expect(facilities(entry)?.slice(1, 4)).toEqual([
+      ["2029 secured notes", 1, "Yes", "2750", "1.27"],
+      ["2030 secured notes", 1, "Yes", "gap: principal not in the note read", "1.65"],
+      ["2031 secured notes", 1, "Yes", "0", "1.91"],
+    ]);
+  });
+  it("is a gap when a ranking falls down the rows or is not a whole number from 1", () => {
+    const REASON =
+      "This page could not read the debt stack because a ranking is not a whole number from 1 that never falls down the rows.";
+    expect(figureGap(setCell(relative, STACK, 9, "Ranking", "1"), "stack")).toBe(REASON);
+    expect(figureGap(setCell(accepted, STACK, 0, "Ranking", "0"), "stack")).toBe(REASON);
+    expect(figureGap(setCell(accepted, STACK, 0, "Ranking", "1.5"), "stack")).toBe(REASON);
+    expect(figureGap(setCell(accepted, STACK, 0, "Ranking", "first"), "stack")).toBe(REASON);
+  });
+  it("is a gap with the page's reason: no table, no rows, another unit, a missing column", () => {
+    expect(figureGap(dropTable(accepted, STACK), "stack")).toBe(
+      "This page could not read the debt stack.",
+    );
+    expect(figureGap(withRows(accepted, STACK, []), "stack")).toBe(
+      "This page could not read the debt stack because it has no rows.",
+    );
+    expect(figureGap(setCell(accepted, STACK, 0, "Reporting unit", "EURm"), "stack")).toBe(
+      "This page could not read the debt stack in one unit.",
+    );
+    const noSecured = edited(accepted, (table, heading) =>
+      heading === STACK
+        ? { ...table, headers: table.headers.map((h) => (h === "Secured" ? "Security" : h)) }
+        : table,
+    );
+    expect(figureGap(noSecured, "stack")).toBe(
+      "This page could not read the debt stack because the table is not in a shape this page reads.",
+    );
+  });
+  it("an all-gap stack is the module's own reason", () => {
+    const gap = "Not supplied: debt note not in the filing read";
+    const allGap = withRows(accepted, STACK, [[gap, gap, gap, gap, gap, "US$m", "x"]]);
+    expect(debtStack(allGap)).toBeNull();
+    expect(figureGap(allGap, "stack")).toBe(gap);
+  });
+});
+
+describe("showPeriodsTile", () => {
+  it("is false for two annual periods or one, true for three, another kind or a period gap", () => {
+    expect(showPeriodsTile(accepted)).toBe(false);
+    expect(showPeriodsTile(relative)).toBe(false);
+    expect(showPeriodsTile(distressed)).toBe(false);
+    expect(showPeriodsTile(threePeriodCp1())).toBe(true);
+    expect(showPeriodsTile(ltmCp1())).toBe(true);
+    expect(showPeriodsTile(addRow(accepted, COVER, ["FY2024", "3.3", "x", "-"]))).toBe(true);
+  });
+});
+
+// ------------------------------------------------------------------------------------------------
+
 type View = NonNullable<ReturnType<typeof segmentView>>;
 const segmentRows = (view: View | null, part: "segments" | "apart" = "segments") =>
   view?.[part].map((s) => [
@@ -953,15 +1256,23 @@ describe("segmentView: net sales and EBITDA per segment as written, no sum, no r
 describe("figureGap: why a figure is not drawn, true of this handoff", () => {
   it("is null for every figure of the three real handoffs", () => {
     for (const entry of [accepted, relative, distressed])
-      for (const figure of ["earnings", "ladder", "netDebt", "bridge", "segments"] as const)
+      for (const figure of [
+        "earnings",
+        "ladder",
+        "netDebt",
+        "bridge",
+        "segments",
+        "cover",
+        "stack",
+      ] as const)
         expect(figureGap(entry, figure), figure).toBeNull();
   });
   it("names an absent table, a repeated year, a twice-stated figure and units", () => {
     expect(figureGap(dropTable(accepted, "Segment schedule"), "segments")).toBe(
-      "This page could not read the segment schedule from the handoff.",
+      "This page could not read the segment schedule.",
     );
     expect(figureGap(dropTable(accepted, "T4.5 Cash flow statement"), "ladder")).toBe(
-      "This page could not read the cash flow statement from the handoff.",
+      "This page could not read the cash flow statement.",
     );
     const twice = addRow(accepted, "Net debt data", [
       "FY2024 / 2024-09-30",
@@ -972,7 +1283,7 @@ describe("figureGap: why a figure is not drawn, true of this handoff", () => {
       "-",
     ]);
     expect(figureGap(twice, "netDebt")).toBe(
-      "This page could not read the periods of net debt data from the handoff because FY2024 appears more than once.",
+      "This page could not read the periods of net debt data because FY2024 appears more than once.",
     );
     const segmentTwice = addRow(accepted, "Segment schedule", [
       "Airframe",
@@ -984,16 +1295,16 @@ describe("figureGap: why a figure is not drawn, true of this handoff", () => {
       "-",
     ]);
     expect(figureGap(segmentTwice, "segments")).toBe(
-      "This page could not read the segment schedule from the handoff because Airframe net sales appears more than once for FY2024.",
+      "This page could not read the segment schedule because Airframe net sales appears more than once for FY2024.",
     );
     expect(
       figureGap(
         setCell(accepted, "Chart data: EBITDA bridge", 0, "Reporting unit", "EURm"),
         "bridge",
       ),
-    ).toBe("This page could not read the EBITDA bridge in one unit from the handoff.");
+    ).toBe("This page could not read the EBITDA bridge in one unit.");
     expect(figureGap(withRows(accepted, "Chart data: EBITDA bridge", []), "bridge")).toBe(
-      "This page could not read the EBITDA bridge from the handoff because it has fewer than three steps.",
+      "This page could not read the EBITDA bridge because it has fewer than three steps.",
     );
   });
   it("gives every measure's reason when no earnings measure is readable", () => {
@@ -1005,8 +1316,8 @@ describe("figureGap: why a figure is not drawn, true of this handoff", () => {
     ])
       none = dropTable(none, heading);
     expect(figureGap(none, "earnings")).toBe(
-      "This page could not read revenue from the handoff. This page could not read the income statement from the handoff. " +
-        "This page could not read adjusted EBITDA from the handoff. This page could not read gross debt from the handoff.",
+      "This page could not read revenue. This page could not read the income statement. " +
+        "This page could not read adjusted EBITDA. This page could not read gross debt.",
     );
   });
 });

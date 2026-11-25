@@ -3,7 +3,15 @@ import { GapNote } from "../../overview/Tile";
 import { FigureTile, GapTile } from "../kit/LeadFrame";
 import { Measured, Waterfall } from "../kit/marks";
 import type { LeadProps } from "../types";
-import { bridgeDrawn, bridgeReading, bridgeRows, bridgeTable, stepWord } from "./bridgeGeometry";
+import {
+  bridgeDrawn,
+  bridgeReading,
+  bridgeRows,
+  bridgeTable,
+  levelWord,
+  notAdding,
+  stepWord,
+} from "./bridgeGeometry";
 import { ebitdaBridge, figureGap } from "./foundationData";
 
 const LABEL = "EBITDA bridge";
@@ -13,21 +21,18 @@ const AsTall = ({ children }: { children: ReactNode }) => (
   <div className="contents lg:[&>section]:self-start">{children}</div>
 );
 
-const NOT_ADDING =
-  "This page did not draw the bridge because its steps do not add up to the closing figure.";
-
 /**
- * Tile 4: the stated EBITDA bridge, opening through each stated step to the closing figure, on an
- * axis cut where the values sit high (marked on the totals). A bridge whose stated amounts do not
- * add up is not drawn as a bridge; its amounts stay in the table view.
+ * Tile 4: the stated EBITDA bridge, opening through each stated step (a stated subtotal drawn as a
+ * level) to the closing figure, on an axis cut where the values sit high (marked on the totals).
+ * A bridge whose stated amounts do not add up is not drawn as a bridge; its amounts stay in the
+ * table view. A bridge whose every amount is a stated gap is the gap tile with the module's words.
  */
 export function EbitdaBridgeTile({ lead }: { lead: LeadProps }) {
   const data = ebitdaBridge(lead.entry);
   if (!data)
     return (
       <GapTile span={6} label={LABEL} kicker={LABEL}>
-        {figureGap(lead.entry, "bridge") ??
-          "This page could not read the EBITDA bridge from the handoff."}
+        {figureGap(lead.entry, "bridge") ?? "This page could not read the EBITDA bridge."}
       </GapTile>
     );
   const common = {
@@ -44,7 +49,7 @@ export function EbitdaBridgeTile({ lead }: { lead: LeadProps }) {
     return (
       <AsTall>
         <FigureTile {...common}>
-          <GapNote>{NOT_ADDING}</GapNote>
+          <GapNote>{notAdding(data)}</GapNote>
         </FigureTile>
       </AsTall>
     );
@@ -62,7 +67,7 @@ export function EbitdaBridgeTile({ lead }: { lead: LeadProps }) {
               axisStart="auto"
               label={bridgeReading(rows, data.unit)}
               legend={{
-                level: "Opening",
+                level: levelWord(data),
                 closing: "Closing",
                 gap: "Not stated",
                 ...(step ? { step } : {}),

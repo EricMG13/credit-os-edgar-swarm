@@ -123,7 +123,15 @@ describe("cash ladder: the accepted CP-1, FY2024 bars and FY2023 beneath", () =>
   });
 
   it("does not say it where every level follows from the steps above it", () => {
-    const entry = setLabelled(cp1Entry(), CASH, "Net Cash from Operating Activities", "FY2024", "2476");
+    // Hand: 4,173 − 1,158 − 539 = 2,476 (cash from operations); 2,476 − 165 = 2,311 (free cash flow).
+    let entry = setLabelled(
+      cp1Entry(),
+      CASH,
+      "Net Cash from Operating Activities",
+      "FY2024",
+      "2476",
+    );
+    entry = setLabelled(entry, CASH, "Levered free cash flow", "FY2024", "2311");
     const { tile } = draw(entry);
     expect(tile.textContent).not.toContain("Levels as stated");
   });
@@ -178,7 +186,7 @@ describe("cash ladder: the accepted CP-1, FY2024 bars and FY2023 beneath", () =>
     ]);
     expect(parts(tile, "legend-text")).toEqual([
       "FY2024 level",
-      "Deduction",
+      "Decrease",
       "Not stated",
       "FY2023",
     ]);
@@ -203,7 +211,7 @@ describe("cash ladder: the accepted CP-1, FY2024 bars and FY2023 beneath", () =>
   it("reads every figure in its aria-label, the earlier in brackets", () => {
     const { svg } = draw(cp1Entry());
     expect(svg?.getAttribute("aria-label")).toBe(
-      "Cash conversion, US$m, FY2024, FY2023 in brackets: EBITDA (Adjusted) 4,173 (FY2023 3,395), less Cash Interest Paid 1,158 (FY2023 −1,160), less Cash taxes paid 539 (FY2023 −260), Net Cash from Operating Activities 2,045 (FY2023 1,375), less Capital expenditures 165 (FY2023 −139), Levered free cash flow 1,880 (FY2023 1,236), less Dividends and dividend equivalent payments 2,038 (FY2023 −38), Repurchases of common stock not stated: — (FY2023 and FY2024), Discretionary cash flow after distributions −158 (FY2023 1,198), less Acquisition of businesses, net of cash acquired 2,347 (FY2023 −762). Axis starts at −4,000.",
+      "Cash conversion, US$m, FY2024, FY2023 in brackets: EBITDA (Adjusted) 4,173 (FY2023 3,395), less Cash Interest Paid 1,158 (FY2023 1,160), less Cash taxes paid 539 (FY2023 260), Net Cash from Operating Activities 2,045 (FY2023 1,375), less Capital expenditures 165 (FY2023 −139), Levered free cash flow 1,880 (FY2023 1,236), less Dividends and dividend equivalent payments 2,038 (FY2023 −38), Repurchases of common stock not stated: — (FY2023 and FY2024), Discretionary cash flow after distributions −158 (FY2023 1,198), less Acquisition of businesses, net of cash acquired 2,347 (FY2023 −762). Axis starts at −4,000.",
     );
   });
 
@@ -218,12 +226,7 @@ describe("cash ladder: the accepted CP-1, FY2024 bars and FY2023 beneath", () =>
       ["Capital expenditures", "−139", "−165", "Deduction, signed"],
       ["Levered free cash flow", "1,236", "1,880", "Level"],
       ["Dividends and dividend equivalent payments", "−38", "−2,038", "Deduction, signed"],
-      [
-        "Repurchases of common stock",
-        "—",
-        "—",
-        "Deduction, signed",
-      ],
+      ["Repurchases of common stock", "—", "—", "Deduction, signed"],
       ["Discretionary cash flow after distributions", "1,198", "−158", "Level"],
       ["Acquisition of businesses, net of cash acquired", "−762", "−2,347", "Deduction, signed"],
     ]);
@@ -263,7 +266,7 @@ describe("cash ladder: other real handoffs and mutations", () => {
       ["Acquisition of businesses, net of cash acquired", -158, -2505],
     ]);
     expect(parts(tile, "reason")).toEqual(["—"]);
-    expect(parts(tile, "legend-text")).toEqual(["FY2024 level", "Deduction", "Not stated"]);
+    expect(parts(tile, "legend-text")).toEqual(["FY2024 level", "Decrease", "Not stated"]);
     expect(openTable(tile)[0]).toEqual(["Step", "FY2024", "Kind"]);
     expectNoPlug(tile);
   });
@@ -372,13 +375,13 @@ describe("cash ladder: other real handoffs and mutations", () => {
     expect(tile.textContent).not.toContain("−0");
   });
 
-  it("a negative amount paid (a net refund) is drawn as the rise it is, signed +", () => {
+  it("a negative amount paid (a net refund) is drawn as the rise it is, its figure as written", () => {
     const entry = setLabelled(cp1Entry(), CASH, "Cash taxes paid", "FY2024", "-20");
     const { tile } = draw(entry);
     const taxes = tile.querySelector('[data-step="Cash taxes paid"]') ?? undefined;
     // Hand: 3,015 + 20 = 3,035.
     expect([num(taxes, "data-from"), num(taxes, "data-to")]).toEqual([3015, 3035]);
-    expect(parts(tile, "value")[2]).toBe("+20");
+    expect(parts(tile, "value")[2]).toBe("−20");
     expect(openTable(tile)[3]).toEqual(["Cash taxes paid", "260", "−20", "Deduction, as paid"]);
   });
 
@@ -388,7 +391,7 @@ describe("cash ladder: other real handoffs and mutations", () => {
     // The reason wraps over lines of the drawing, so compare it without the wrapped spaces.
     const reasons = parts(tile, "reason").map((text) => text.replaceAll(" ", ""));
     expect(reasons).toContain(
-      "This page could not read capital expenditures from the handoff because it is in another unit than the other rows.".replaceAll(
+      "This page could not read capital expenditures because it is in another unit than the other rows.".replaceAll(
         " ",
         "",
       ),
@@ -400,7 +403,7 @@ describe("cash ladder: other real handoffs and mutations", () => {
     render(<CashLadderTile lead={leadProps(dropTable(cp1Entry(), CASH))} />);
     const tile = screen.getByRole("region", { name: "Cash conversion" });
     expect(tile.textContent).toBe(
-      "Cash conversion · This page could not read the cash flow statement from the handoff.",
+      "Cash conversion · This page could not read the cash flow statement.",
     );
     expect(tile.querySelector("svg")).toBeNull();
   });

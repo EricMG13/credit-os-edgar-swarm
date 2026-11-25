@@ -5,21 +5,29 @@ import { safeText } from "../kit/reader";
 import { bridgeKind, bridgeKinds, type BridgeKind, type EbitdaBridge } from "./foundationData";
 
 // The EBITDA bridge as the kit Waterfall draws it: the stated steps in order, each labelled as
-// written and signed; a step that is not a number is the gap row with its own words. No total of
-// the changes, no largest step, no "add-back" word: a step is an increase or a decrease.
+// written and signed; a stated subtotal is a level drawn from the axis start like the totals; a
+// step that is not a number is the gap row with its own words. No total of the changes, no largest
+// step, no "add-back" word: a step is an increase or a decrease.
 
 /**
- * Whether the bridge is drawn: not when every step is a stated number and they do not add up to
- * the closing figure. With a stated gap the Waterfall draws what is known and writes the rest.
+ * Whether the bridge is drawn: not when a run of stated numbers between two levels (the opening,
+ * a subtotal, the closing) does not add up to the later level. With a stated gap the Waterfall
+ * draws what is known and writes the rest.
  */
-export const bridgeDrawn = (data: EbitdaBridge) =>
-  data.reconciles || data.steps.some((step) => step.cell.kind !== "number");
+export const bridgeDrawn = (data: EbitdaBridge) => !data.breaks;
+
+const ROW_KIND = {
+  opening: "level",
+  subtotal: "level",
+  closing: "closing",
+  change: "step",
+} as const;
 
 /** Each step as a Waterfall row. */
 export function bridgeRows(data: EbitdaBridge): WaterfallRow[] {
   return data.steps.map((step): WaterfallRow => {
     const label = safeText(step.label);
-    const kind = step.kind === "opening" ? "level" : step.kind === "closing" ? "closing" : "step";
+    const kind = ROW_KIND[step.kind];
     if (step.cell.kind !== "number")
       return {
         kind: "gap",
@@ -33,6 +41,7 @@ export function bridgeRows(data: EbitdaBridge): WaterfallRow[] {
 
 const WORD: Record<BridgeKind, string> = {
   opening: "Opening",
+  subtotal: "Subtotal",
   increase: "Increase",
   decrease: "Decrease",
   "no change": "No change",
@@ -58,6 +67,18 @@ export function bridgeReading(rows: readonly WaterfallRow[], unit: string) {
   const reading = waterfallReading(rows, unit, waterfallAxis(rows, "auto"));
   return `EBITDA bridge, ${reading.slice("Waterfall, ".length)}`;
 }
+
+/** The legend's word for the bars drawn from the axis start before the closing. */
+export const levelWord = (data: EbitdaBridge) =>
+  data.steps.some((step) => step.kind === "subtotal") ? "Opening and subtotal" : "Opening";
+
+/** Why a bridge that does not add up is not drawn, naming the levels it states. */
+export const notAdding = (data: EbitdaBridge) =>
+  `This page did not draw the bridge because its steps do not add up to ${
+    data.steps.some((step) => step.kind === "subtotal")
+      ? "the subtotal and closing figures it states"
+      : "the closing figure"
+  }.`;
 
 /** A step's amount as the table states it: a change signed, a total grouped, a gap as written. */
 function amountText(step: EbitdaBridge["steps"][number]) {

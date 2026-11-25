@@ -421,7 +421,7 @@ export function PeriodsTile({ lead }: { lead: LeadProps }) {
   if (strip.axis.length === 0)
     return (
       <GapTile span={6} label={LABEL} kicker={LABEL}>
-        {["This page could not read a period from the handoff.", ...gaps].join(" ")}
+        {["This page could not read a period.", ...gaps].join(" ")}
       </GapTile>
     );
   const shown = strip.shown.length

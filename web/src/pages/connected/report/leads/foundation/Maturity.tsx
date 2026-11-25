@@ -1,10 +1,19 @@
-import { basisNotes, figureSource, unitOf, type FigureSource } from "../../overview/figureData";
+import { items } from "../../../visuals/visualData";
+import {
+  basisNotes,
+  columnAt,
+  figureSource,
+  readCell,
+  unitOf,
+  type FigureSource,
+} from "../../overview/figureData";
 import { wallSlots } from "../../overview/structureData";
 import { FigureTile, GapTile, Link } from "../kit/LeadFrame";
 import { GapSlot, Measured, SIZE } from "../kit/marks";
 import { IN_EVIDENCE, namesSource, safeText } from "../kit/reader";
 import { unitLabel } from "../../../publishedReport";
 import type { LeadProps } from "../types";
+import { dashed } from "./periodsData";
 import {
   GAP_WORDS,
   wallLayout,
@@ -29,10 +38,49 @@ const FILING = /\b(?:Form\s+)?10-?[KQ]\b|\bannual report\b|\bprospectus\b/i;
 export const citesSource = (text: string) => namesSource(text) || FILING.test(text);
 
 /** Handoff words for the page, or "Detail is in Evidence." when they cite a source. */
-const words = (text: string) => (citesSource(text) ? IN_EVIDENCE : safeText(text));
+const words = (text: string) => dashed(citesSource(text) ? IN_EVIDENCE : safeText(text));
 
 /** A sentence ends with one full stop, even when the handoff's words already carry it. */
 const sentence = (text: string) => (/[.!?]$/.test(text) ? text : `${text}.`);
+
+/** A sentence ends with one full stop, unless it is the dash. */
+const closed = (text: string) => (text === "—" ? text : sentence(text));
+
+/**
+ * The amount column's own words when every period states a gap with a reason and none states an
+ * amount: each distinct reason once, with its periods where they differ. Null when any cell
+ * states no reason (or an amount): the page's own wording is used then.
+ */
+function everyReason(source: Ready, unit: string) {
+  const column = columnAt(source.table, items(source.descriptor.columns)[0]);
+  if (column === null || column === 0 || !source.table.rows.length) return null;
+  const texts = source.table.rows.map((row) => row[column] ?? "");
+  const groups = new Map<string, string[]>();
+  for (const [at, row] of source.table.rows.entries()) {
+    const text = texts[at] ?? "";
+    const cell = readCell(text, texts, unit);
+    if (cell.value !== null || cell.reason === null || !/^Not (?:supplied|calculated):/.test(text))
+      return null;
+    const reason = words(text.trim());
+    groups.set(reason, [...(groups.get(reason) ?? []), words(row[0] ?? "")]);
+  }
+  if (groups.size === 1) return closed([...groups.keys()].join(""));
+  return [...groups].map(([reason, labels]) => `${labels.join(", ")}: ${closed(reason)}`).join(" ");
+}
+
+/** A repeated lead-in of a note is said once: later notes keep only what they add. */
+function furtherNotes(notes: readonly string[]) {
+  const said = new Set<string>();
+  const out: string[] = [];
+  for (const note of notes) {
+    const [head = "", ...rest] = note.split("; ");
+    const repeated = said.has(head.replace(/\.$/, ""));
+    const kept = repeated && rest.length ? rest.join("; ") : note;
+    if (!out.includes(kept)) out.push(kept);
+    said.add(note.replace(/\.$/, ""));
+  }
+  return out;
+}
 
 /** The cell's own reason, in its words; null when it states none. */
 const reasonOf = (mark: WallMark) => (mark.cell?.reason ? words(mark.cell.reason) : null);
@@ -328,14 +376,14 @@ function MaturityFigure({ lead, source }: { lead: LeadProps; source: Ready }) {
   if (twice !== undefined)
     return (
       <GapTile span={6} label={LABEL} kicker={kicker}>
-        This page could not read the maturity wall from the handoff because {words(twice)} appears
-        more than once.
+        This page could not read the maturity wall because {words(twice)} appears more than once.
       </GapTile>
     );
   if (!raw)
     return (
       <GapTile span={6} label={LABEL} kicker={kicker}>
-        This page could not read an amount for any period of the maturity wall from the handoff.
+        {everyReason(source, unitOf(source.descriptor)) ??
+          "This page could not read an amount for any period of the maturity wall."}
       </GapTile>
     );
   const label = (slot: WallSlot): WallSlot => ({ ...slot, label: words(slot.label) });
@@ -346,12 +394,10 @@ function MaturityFigure({ lead, source }: { lead: LeadProps; source: Ready }) {
       .filter((mark) => mark.kind !== "bar")
       .map((mark) =>
         mark.kind === "none"
-          ? `${mark.label}: this page could not read a row for this year from the handoff.`
-          : sentence(
-              `${mark.label}: ${reasonOf(mark) ?? "this page could not read an amount from the handoff"}`,
-            ),
+          ? `${mark.label}: this page could not read a row for this year.`
+          : sentence(`${mark.label}: ${reasonOf(mark) ?? "this page could not read an amount"}`),
       ),
-    ...basisNotes(source.table).filter((note) => !citesSource(note)),
+    ...furtherNotes(basisNotes(source.table).filter((note) => !citesSource(note))),
   ];
   const legend = [
     { tone: "primary" as const, text: "Dated period" },
@@ -387,7 +433,7 @@ export function MaturityTile({ lead }: { lead: LeadProps }) {
   if (source.state === "gap")
     return (
       <GapTile span={6} label={LABEL} kicker={LABEL}>
-        This page could not read the debt maturities from the handoff.
+        This page could not read the debt maturities.
       </GapTile>
     );
   return <MaturityFigure lead={lead} source={source} />;

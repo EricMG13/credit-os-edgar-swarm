@@ -1,11 +1,12 @@
-import { cx } from "@/utils/cx";
+import { readCell } from "../numbers";
+import { reasonText, safeText } from "../reader";
 import { fittingTicks, niceAxis } from "./axis";
 import { GapSlot } from "./GapSlot";
-import { TickLabels } from "./parts";
-import { LINE, NARROW, SIZE, textWidth, wrap } from "./text";
+import { SvgLegend, TickLabels, legendHeight, type LegendItem } from "./parts";
+import { BAR, LINE, NARROW, SIZE, textWidth, wrap } from "./text";
 
 export type BulletFigure = { value: number; text: string };
-/** A figure, or the module's reason it is not stated. */
+/** A figure, or the stated reason it is not given. */
 export type BulletSide = BulletFigure | { gap: string };
 
 export type BulletProps = {
@@ -16,12 +17,22 @@ export type BulletProps = {
   proposed?: BulletSide;
   /** The measured width in px; below 520 the narrow layout is drawn. */
   width: number;
-  /** `max` (the default): a figure above the limit is beyond it; `min`: one below it is. */
-  limitKind?: "max" | "min";
-  /** The word for a figure beyond the limit; by default "above the limit" / "below the limit". */
-  beyond?: string;
-  /** Names for the parts, as the handoff's columns call them. */
+  /**
+   * The status or compliance cell of the measure's row, printed as written (through `safeText`)
+   * in the figures line; nothing is printed without one. The mark itself judges nothing.
+   */
+  status?: string | null;
+  /** Names for the parts, as the handoff's columns call them (default Current, Limit, Proposed). */
   names?: { value?: string; limit?: string; proposed?: string };
+  /**
+   * Where the track starts (wide), so several bullets of one figure start their bars at one x:
+   * `plotLeft` wins over `labelWidth` (the name column's width); by default the name's width,
+   * at most 28 % of the figure.
+   */
+  plotLeft?: number;
+  labelWidth?: number;
+  /** Draw the legend (current bar, proposed ring, limit rule) above the mark; off by default. */
+  legend?: boolean;
   /** What the figures are in, for the reading. */
   unit?: string;
   label?: string;
@@ -34,163 +45,174 @@ const stated = (side: BulletSide | undefined): side is BulletFigure =>
 const finite = <T extends BulletSide | undefined>(side: T): T | { gap: string } =>
   stated(side) && !Number.isFinite(side.value) ? { gap: side.text } : side;
 
-const BAND = 14;
+/** A gap side's reason once: "Not supplied: no proposal" is drawn "no proposal" after its part's name. */
+const gapReason = (gap: string) => {
+  const reading = readCell(gap);
+  return reasonText(reading.kind === "gap" ? reading.reason : gap);
+};
 
-function isBeyond(figure: BulletSide | undefined, limit: number, kind: "max" | "min") {
-  if (!stated(figure)) return false;
-  return kind === "max" ? figure.value > limit : figure.value < limit;
-}
+type Names = { value: string; limit: string; proposed: string };
 
-/** The default reading: the value, the proposed, the limit, and the word for one beyond it. */
-function bulletReading(props: BulletProps) {
-  const { name, value, limit, proposed, unit, limitKind = "max" } = props;
-  const word = props.beyond ?? (limitKind === "max" ? "above the limit" : "below the limit");
-  const names = { value: "Current", limit: "Limit", proposed: "Proposed", ...props.names };
-  const part = (label: string, side: BulletSide) =>
+/** The figures line: each part's figure or reason, in order, then the status as written. */
+function figureLines(
+  value: BulletSide,
+  proposed: BulletSide | undefined,
+  names: Names,
+  status: string,
+) {
+  const part = (name: string, side: BulletSide) =>
     stated(side)
-      ? `${label} ${side.text}${isBeyond(side, limit.value, limitKind) ? `, ${word}` : ""}`
-      : `${label} not stated: ${side.gap}`;
-  const parts = [
+      ? { text: `${name} ${side.text}`, kind: "figure" as const }
+      : { text: `${name}: ${gapReason(side.gap)}`, kind: "reason" as const };
+  return [
     part(names.value, value),
     ...(proposed ? [part(names.proposed, proposed)] : []),
+    ...(status ? [{ text: status, kind: "status" as const }] : []),
+  ];
+}
+
+/** The default reading: the value, the proposed, the limit and the status, as stated. */
+function bulletReading(
+  props: BulletProps,
+  value: BulletSide,
+  proposed: BulletSide | undefined,
+  names: Names,
+  status: string,
+) {
+  const { name, limit, unit } = props;
+  const parts = [
+    ...figureLines(value, proposed, names, "").map((line) => line.text),
     `${names.limit} ${limit.text}`,
+    ...(status ? [status] : []),
   ];
   return `${name}${unit ? `, ${unit}` : ""}: ${parts.join("; ")}. Scale from zero.`;
 }
 
-/**
- * The lead bullet: one measure's value as a bar against its limit (a rule) and, where stated, the
- * proposed figure (a ring), on one scale from zero. A figure beyond the limit carries the word,
- * never colour alone; a value the module did not state is the hatched slot with its reason.
- */
-type Spot = { x: number; anchor: "start" | "end"; inside: boolean } | null;
+type Placed = { text: string; kind: "figure" | "reason" | "status"; x: number; y: number };
 
-/**
- * Where the value's figure goes: beside the bar's end when no other mark is in the way; inside
- * the bar's end when the bar is long enough and the limit is not under the text; otherwise not on
- * the mark (`null`: it is written in the line under the scale).
- */
-function valueSpot(end: number, zero: number, others: readonly number[], size: number): Spot {
-  const after = others.filter((at) => at > end + 1).map((at) => at - end);
-  if (!after.length || Math.min(...after) >= size + 14)
-    return { x: end + 6, anchor: "start", inside: false };
-  const under = others.some((at) => at >= end - size - 12 && at <= end + 1);
-  if (end - zero >= size + 12 && !under) return { x: end - 6, anchor: "end", inside: true };
-  return null;
+/** The figures line flowed from `left`, each part whole where it fits, wrapping inside `right`. */
+function flowLines(lines: ReturnType<typeof figureLines>, left: number, right: number, y: number) {
+  const placed: Placed[] = [];
+  let [x, row] = [left, 0];
+  for (const line of lines) {
+    for (const text of wrap(line.text, right - left)) {
+      const size = textWidth(text);
+      if (x > left && x + size > right) [x, row] = [left, row + 1];
+      placed.push({ text, kind: line.kind, x, y: y + row * LINE });
+      x += size + 18;
+    }
+  }
+  return { placed, rows: placed.length ? row + 1 : 0 };
 }
 
+const PART_CLASS = {
+  figure: "fill-text-primary font-body",
+  reason: "fill-gap-text font-body",
+  status: "fill-text-secondary font-body",
+} as const;
+
+/**
+ * The lead bullet: one measure's current figure as a bar, its limit as a rule and, where stated,
+ * the proposed figure as a ring, all on one scale from zero, each with its figure as stated. The
+ * figures are written outside the marks, in one line under the scale, the same on every row; the
+ * mark draws no comparison and no judgement of its own: a status is the row's own cell, printed
+ * as written. A current figure that is not stated is the hatched slot with its reason.
+ */
 export function Bullet(props: BulletProps) {
-  const { name, limit, width, limitKind = "max" } = props;
+  const { name, limit, width } = props;
   const value = finite(props.value);
   const proposed = finite(props.proposed);
-  const word = props.beyond ?? (limitKind === "max" ? "above the limit" : "below the limit");
-  const names = { value: "Current", limit: "Limit", proposed: "Proposed", ...props.names };
+  const names: Names = { value: "Current", limit: "Limit", proposed: "Proposed", ...props.names };
+  const status = props.status ? safeText(props.status) : "";
   const narrow = width < NARROW;
   const figures = [value, limit, proposed].filter(stated).map((one) => one.value);
   const axis = niceAxis(figures, { zero: true });
-  const nameWidth = narrow ? width : Math.min(textWidth(name) + 16, Math.round(width * 0.28));
-  const nameLines = wrap(name, nameWidth - (narrow ? 0 : 12));
-  const plotLeft = narrow ? 1 : nameWidth;
-  const valueSize = stated(value) ? textWidth(value.text, SIZE.value) : 0;
-  const plotRight = width - valueSize - 14;
+  const nameWidth = narrow
+    ? width
+    : (props.labelWidth ?? Math.min(textWidth(name) + 16, Math.round(width * 0.28)));
+  const plotLeft = narrow ? 1 : Math.max(0, Math.min(props.plotLeft ?? nameWidth, width - 80));
+  const nameLines = wrap(name, (narrow ? width : plotLeft) - (narrow ? 0 : 12));
+  // The track runs to the figure's edge; the ring's radius is all it keeps back.
+  const plotRight = width - 7;
   const x = (figure: number) => axis.place(figure, plotLeft, plotRight);
-  const top = narrow ? nameLines.length * LINE + 4 : 0;
+  const items: LegendItem[] = props.legend
+    ? [
+        { tone: "level", text: names.value },
+        ...(proposed ? [{ tone: "proposed" as const, text: names.proposed }] : []),
+        { tone: "limit", text: names.limit },
+      ]
+    : [];
+  const legendBlock = legendHeight(items, width) + (items.length ? 6 : 0);
+  const top = legendBlock + (narrow ? nameLines.length * LINE + 4 : 0);
   const bandY = top + 20;
-  const mid = bandY + BAND / 2;
+  const mid = bandY + BAR / 2;
   const zero = x(0);
   const limitX = x(limit.value);
   const proposedX = stated(proposed) ? x(proposed.value) : null;
   const end = stated(value) ? x(value.value) : zero;
-  const valueBeyond = isBeyond(value, limit.value, limitKind);
-  const proposedBeyond = isBeyond(proposed, limit.value, limitKind);
-  const spot = stated(value)
-    ? valueSpot(end, zero, [limitX, ...(proposedX === null ? [] : [proposedX - 6])], valueSize)
-    : null;
-  const lines: { text: string; gap: boolean }[] = [
-    ...(stated(value) && (!spot || valueBeyond)
-      ? [{ text: `${names.value} ${value.text}${valueBeyond ? `, ${word}` : ""}`, gap: false }]
-      : []),
-    ...(stated(value) ? [] : [{ text: `${names.value}: ${value.gap}`, gap: true }]),
-    ...(stated(proposed)
-      ? [
-          {
-            text: `${names.proposed} ${proposed.text}${proposedBeyond ? `, ${word}` : ""}`,
-            gap: false,
-          },
-        ]
-      : proposed
-        ? [{ text: `${names.proposed}: ${proposed.gap}`, gap: true }]
-        : []),
-  ];
-  const below = lines.flatMap((line) =>
-    wrap(line.text, width - plotLeft).map((text) => ({ text, gap: line.gap })),
+  const ticksY = bandY + BAR + 4;
+  const flowed = flowLines(
+    figureLines(value, proposed, names, status),
+    plotLeft,
+    width,
+    ticksY + 36,
   );
-  const ticksY = bandY + BAND + 4;
-  const belowY = ticksY + 36;
-  const height = belowY + Math.max(0, below.length - 1) * LINE + (below.length ? 6 : -10);
+  const height = ticksY + 36 + Math.max(0, flowed.rows - 1) * LINE + (flowed.rows ? 6 : -10);
   const limitText = `${names.limit} ${limit.text}`;
   const half = textWidth(limitText) / 2;
   const limitAnchor = limitX - half < plotLeft ? "start" : limitX + half > width ? "end" : "middle";
   const kept = fittingTicks(axis, plotLeft, plotRight, (text) => textWidth(text, SIZE.tick));
+  const nameY = narrow ? legendBlock + 12 : mid + 4;
   return (
     <svg
       viewBox={`0 0 ${String(width)} ${String(height)}`}
       width="100%"
       role="img"
-      aria-label={props.label ?? bulletReading(props)}
+      aria-label={props.label ?? bulletReading(props, value, proposed, names, status)}
       data-layout={narrow ? "narrow" : "wide"}
+      data-plot-left={plotLeft}
       className="block"
     >
+      <SvgLegend items={items} width={width} />
       <text
         data-part="label"
         x="0"
-        y={narrow ? 12 : mid + 4}
+        y={nameY}
         fontSize={SIZE.label}
         className="fill-text-primary font-body font-medium"
       >
         {nameLines.map((line, at) => (
-          <tspan key={`${String(at)}-${line}`} x="0" y={(narrow ? 12 : mid + 4) + at * LINE}>
+          <tspan key={`${String(at)}-${line}`} x="0" y={nameY + at * LINE}>
             {line}
           </tspan>
         ))}
       </text>
       <rect
+        data-part="track"
         x={plotLeft}
         y={bandY}
         width={plotRight - plotLeft}
-        height={BAND}
+        height={BAR}
         rx="2"
         className="fill-surface-subtle"
       />
       {stated(value) ? (
-        <>
-          <rect
-            data-bar="value"
-            data-value={value.value}
-            x={Math.min(zero, end)}
-            y={bandY + 2}
-            width={Math.max(Math.abs(end - zero), 1)}
-            height={BAND - 4}
-            rx="2"
-            className="fill-chart-1"
-          />
-          {valueBeyond && (
-            <rect
-              data-bar="beyond"
-              x={Math.min(limitX, end)}
-              y={bandY + 2}
-              width={Math.abs(end - limitX)}
-              height={BAND - 4}
-              className="fill-warning-mark"
-            />
-          )}
-        </>
+        <rect
+          data-bar="value"
+          data-value={value.value}
+          x={Math.min(zero, end)}
+          y={bandY}
+          width={Math.max(Math.abs(end - zero), 1)}
+          height={BAR}
+          rx="2"
+          className="fill-chart-1"
+        />
       ) : (
         <GapSlot
           x={plotLeft}
-          y={bandY + 2}
+          y={bandY}
           width={plotRight - plotLeft}
-          height={BAND - 4}
+          height={BAR}
           reason={value.gap}
         />
       )}
@@ -200,7 +222,7 @@ export function Bullet(props: BulletProps) {
         x1={limitX}
         x2={limitX}
         y1={bandY - 3}
-        y2={bandY + BAND + 3}
+        y2={bandY + BAR + 3}
         strokeWidth="2"
         className="stroke-text-primary"
       />
@@ -222,26 +244,8 @@ export function Bullet(props: BulletProps) {
           cy={mid}
           r="5"
           strokeWidth="2"
-          className={cx(
-            "fill-surface-card",
-            proposedBeyond ? "stroke-warning-mark" : "stroke-chart-2",
-          )}
+          className="fill-surface-card stroke-chart-2"
         />
-      )}
-      {stated(value) && spot && (
-        <text
-          data-part="value"
-          x={spot.x}
-          y={mid + 4}
-          textAnchor={spot.anchor}
-          fontSize={SIZE.value}
-          className={cx(
-            "font-mono font-medium",
-            spot.inside ? "fill-surface-card" : "fill-text-primary",
-          )}
-        >
-          {value.text}
-        </text>
       )}
       <g data-part="scale">
         {kept.map((tick) => (
@@ -256,14 +260,14 @@ export function Bullet(props: BulletProps) {
         ))}
         <TickLabels ticks={kept} x={x} y={ticksY + 16} width={width} />
       </g>
-      {below.map((line, at) => (
+      {flowed.placed.map((line, at) => (
         <text
           key={`${String(at)}-${line.text}`}
-          data-part={line.gap ? "reason" : "below"}
-          x={plotLeft}
-          y={belowY + at * LINE}
+          data-part={line.kind === "figure" ? "value" : line.kind}
+          x={line.x}
+          y={line.y}
           fontSize={SIZE.label}
-          className={cx("font-body", line.gap ? "fill-gap-text" : "fill-text-secondary")}
+          className={PART_CLASS[line.kind]}
         >
           {line.text}
         </text>

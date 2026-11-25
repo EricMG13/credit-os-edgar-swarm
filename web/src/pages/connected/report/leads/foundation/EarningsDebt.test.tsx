@@ -249,11 +249,8 @@ describe("Earnings and debt: three or more periods, gaps and absences", () => {
       tile
         .querySelector('[data-gap-point="EBITDA (Reported) LTM Dec-2024"] [data-gap]')
         ?.getAttribute("data-gap"),
-    ).toBe("LTM Dec-2024: not read from the handoff");
-    expect(reasonsOf(tile)).toEqual([
-      "LTM Dec-2024: not read from the handoff",
-      "LTM Dec-2024: not read from the handoff",
-    ]);
+    ).toBe("LTM Dec-2024: not read");
+    expect(reasonsOf(tile)).toEqual(["LTM Dec-2024: not read", "LTM Dec-2024: not read"]);
     expect(tile.textContent).not.toContain("not stated in this table");
     noAnalysis(tile);
   });
@@ -291,7 +288,7 @@ describe("Earnings and debt: three or more periods, gaps and absences", () => {
     const tile = draw(dropTable(cp1Entry(), "Net debt data"));
     expect(tile.querySelector('[data-row="Gross debt"]')).toBeNull();
     expect(tile.querySelector("[data-absent]")?.textContent).toBe(
-      "This page could not read gross debt from the handoff.",
+      "This page could not read gross debt.",
     );
     expect(tile.textContent).not.toContain("FY2024 gross debt");
   });
@@ -307,8 +304,8 @@ describe("Earnings and debt: three or more periods, gaps and absences", () => {
     const tile = draw(none);
     expect(within(tile).queryByRole("img")).toBeNull();
     expect(within(tile).queryByRole("link")).toBeNull();
-    expect(tile.textContent).toContain("This page could not read revenue from the handoff.");
-    expect(tile.textContent).toContain("This page could not read gross debt from the handoff.");
+    expect(tile.textContent).toContain("This page could not read revenue.");
+    expect(tile.textContent).toContain("This page could not read gross debt.");
   });
 
   it("says an identical gap sentence once when several measures are absent for the same reason", () => {
@@ -319,7 +316,7 @@ describe("Earnings and debt: three or more periods, gaps and absences", () => {
       "T4.4 Income statement",
     ])
       none = dropTable(none, heading);
-    const text = draw(none).textContent ?? "";
+    const text = draw(none).textContent;
     const sentences = text.match(/This page could not read [^.]*\./g) ?? [];
     expect(sentences.length).toBeGreaterThan(0);
     expect(new Set(sentences).size).toBe(sentences.length);

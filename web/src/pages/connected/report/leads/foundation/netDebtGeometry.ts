@@ -1,8 +1,9 @@
-import type { Mark } from "../../overview/marks";
 import { LINE, SIZE, fittingTicks, niceAxis, textWidth, wrap } from "../kit/marks";
 import { group, type Reading } from "../kit/numbers";
-import { safeText } from "../kit/reader";
 import type { LiquidityPeriod, NetDebtPeriod, NetDebtView, ProForma } from "./foundationData";
+import { written } from "./periodsData";
+
+const safeText = written;
 
 // The words and positions of the net debt tile. Every figure drawn is one the handoff states; the
 // bars place stated numbers and never make them add up; nothing here prints a sum or an equation.
@@ -17,15 +18,17 @@ const ratioWords = (cell: Reading | null) =>
 /** A date as written, the stated gap with its reason included; null when the cell is empty. */
 const dateWords = (cell: Reading) => (cell.text.trim() ? safeText(cell.text) : null);
 
+/** The most pro forma net debt bars the figure draws; more are the strip's marks and the table. */
+const MOST_BARS = 2;
+
 /**
- * The adjustment the pro forma bar draws: only when exactly one adjustment states a pro forma net
- * debt, and it states its amount. With several, none is chosen (by size or otherwise): they are
- * listed in handoff order.
+ * The adjustments drawn as pro forma net debt bars: those that state a pro forma net debt, in
+ * handoff order, only when there are at most two. With more, none is chosen (by size or
+ * otherwise): the periods are the bars and every adjustment is a mark on the strip.
  */
-export function proFormaOf(view: NetDebtView): ProForma | null {
+export function proFormaBars(view: NetDebtView): ProForma[] {
   const priced = view.adjustments.filter((item) => item.netDebt.kind === "number");
-  const [only] = priced;
-  return priced.length === 1 && only?.amount.kind === "number" ? only : null;
+  return priced.length <= MOST_BARS ? priced : [];
 }
 
 /** "Net 16,278 · cash 3,472 · gross debt 19,750"; a stated gap as written, once when all share it. */
@@ -50,19 +53,6 @@ function proFormaReading(item: ProForma) {
     ...(date ? [date] : []),
     `amount ${words(item.amount)}`,
   ].join(" · ");
-}
-
-/** The order the list writes an adjustment's stated facts in, named once in its heading. */
-export const ADJUSTMENT_ORDER = "date · amount · pro forma net debt · pro forma net leverage";
-
-/** One adjustment's stated facts, for the list, in `ADJUSTMENT_ORDER`: every one, as written. */
-export function adjustmentFacts(item: ProForma) {
-  return [
-    dateWords(item.date) ?? "date not stated",
-    words(item.amount),
-    words(item.netDebt),
-    ratioWords(item.leverage),
-  ];
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -103,7 +93,7 @@ function spanOf(x: (v: number) => number, from: number, to: number): Span {
 }
 
 /** The net debt bars at `width`, on one scale from zero (through it for a net cash position). */
-export function barsLayout(view: NetDebtView, proForma: ProForma | null, width: number) {
+export function barsLayout(view: NetDebtView, proForma: readonly ProForma[], width: number) {
   const beside = width >= BESIDE;
   const left = beside ? LABEL_WIDTH : 0;
   const segmented = (p: NetDebtPeriod) => {
@@ -112,7 +102,7 @@ export function barsLayout(view: NetDebtView, proForma: ProForma | null, width: 
   };
   const positions = [
     ...view.periods.flatMap((p) => [value(p.net), value(p.gross), segmented(p)]),
-    proForma ? value(proForma.netDebt) : null,
+    ...proForma.map((item) => value(item.netDebt)),
   ].filter((v): v is number => v !== null);
   const axis = niceAxis(positions, { zero: true });
   // The last tick's label is centred on its line, inside the figure.
@@ -151,35 +141,37 @@ export function barsLayout(view: NetDebtView, proForma: ProForma | null, width: 
       periodReading(p),
     );
   });
-  const pf = proForma ? value(proForma.netDebt) : null;
   const base = view.periods.at(-1);
   const reported = base ? value(base.net) : null;
-  const inside =
-    pf !== null && reported !== null && reported !== 0 && Math.sign(reported) === Math.sign(pf)
-      ? Math.abs(reported) < Math.abs(pf)
-      : false;
-  const proBar =
-    proForma && pf !== null
-      ? take(
-          {
-            label: "Pro forma",
-            kind: "proForma",
-            net: { ...spanOf(x, 0, pf), value: pf },
-            netGap: null,
-            cash: null,
-            cashGap: null,
-            gross: null,
-            seam: inside && reported !== null ? x(reported) : null,
-          },
-          proFormaReading(proForma),
-        )
-      : null;
+  const proBars = proForma.flatMap((item) => {
+    const pf = value(item.netDebt);
+    if (pf === null) return [];
+    const inside =
+      reported !== null && reported !== 0 && Math.sign(reported) === Math.sign(pf)
+        ? Math.abs(reported) < Math.abs(pf)
+        : false;
+    return [
+      take(
+        {
+          label: "Pro forma",
+          kind: "proForma",
+          net: { ...spanOf(x, 0, pf), value: pf },
+          netGap: null,
+          cash: null,
+          cashGap: null,
+          gross: null,
+          seam: inside && reported !== null ? x(reported) : null,
+        },
+        proFormaReading(item),
+      ),
+    ];
+  });
   const plotBottom = y - ROW_GAP;
   const ticks = fittingTicks(axis, left, right, (text) => textWidth(text, SIZE.tick));
   return {
     beside,
     left,
-    bars: proBar ? [...bars, proBar] : bars,
+    bars: [...bars, ...proBars],
     axis,
     x,
     ticks,
@@ -194,28 +186,32 @@ export function barsLayout(view: NetDebtView, proForma: ProForma | null, width: 
 
 export type StripEntry = { label: string; cell: Reading | null; proForma: boolean };
 
-/** Net debt / EBITDA per period, then the drawn pro forma's, as stated. */
-export function stripEntries(view: NetDebtView, proForma: ProForma | null): StripEntry[] {
+/**
+ * Net debt / EBITDA per period, then each stated adjustment's pro forma net leverage in handoff
+ * order, each named; none is chosen or ranked.
+ */
+export function stripEntries(view: NetDebtView): StripEntry[] {
   return [
     ...view.periods.map((p) => ({ label: p.label, cell: p.leverage, proForma: false })),
-    ...(proForma ? [{ label: "Pro forma", cell: proForma.leverage, proForma: true }] : []),
+    ...view.adjustments.map((item) => ({
+      label: `Pro forma · ${safeText(item.event)}`,
+      cell: item.leverage,
+      proForma: true,
+    })),
   ];
 }
 
-export const stripMarks = (entries: readonly StripEntry[]): Mark[] =>
+/** True when the strip has at least two stated ratios to set against each other. */
+export const stripDrawn = (entries: readonly StripEntry[]) =>
+  entries.filter((entry) => entry.cell?.kind === "number").length > 1;
+
+/** The stated ratios as a plain list: where the strip has fewer than two to set against each other. */
+export const stripList = (entries: readonly StripEntry[]) =>
   entries.flatMap((entry) =>
     entry.cell?.kind === "number"
-      ? [{ label: entry.label, value: entry.cell.value, text: `${group(entry.cell.text)}x` }]
+      ? [{ label: entry.label, text: `${group(entry.cell.text)}x` }]
       : [],
   );
-
-/** True when the stated figures are adjacent: the strip never joins across an unstated period. */
-export function adjacent(entries: readonly StripEntry[]) {
-  const stated = entries.flatMap((entry, at) => (entry.cell?.kind === "number" ? [at] : []));
-  const [first] = stated;
-  const last = stated.at(-1);
-  return first === undefined || last === undefined || last - first + 1 === stated.length;
-}
 
 export const stripGaps = (entries: readonly StripEntry[]) =>
   entries.flatMap((entry) =>
@@ -224,9 +220,108 @@ export const stripGaps = (entries: readonly StripEntry[]) =>
 
 export function stripReading(entries: readonly StripEntry[]) {
   const parts = entries.map(
-    (entry) => `${entry.proForma ? "pro forma" : entry.label} ${ratioWords(entry.cell)}`,
+    (entry) => `${entry.label.replace(/^Pro forma · /, "pro forma ")} ${ratioWords(entry.cell)}`,
   );
   return `Net debt / EBITDA on its own scale: ${parts.join(", ")}.`;
+}
+
+const STRIP_ROW = 26;
+const DOT = 5;
+const SLOT = 40;
+
+export type StripRow = {
+  entry: StripEntry;
+  /** The row's label lines: beside the mark for a period, above it for a pro forma. */
+  label: string[];
+  labelBeside: boolean;
+  labelY: number;
+  top: number;
+  centre: number;
+  /** The mark's x, null where the ratio is not a number. */
+  x: number | null;
+  value: number | null;
+  valueText: string | null;
+  /** A stated gap: the hatched slot and the reason beside it on a plate. */
+  gap: { x: number; width: number; reason: string; lines: string[]; textX: number } | null;
+  /** The earlier of two reported periods draws in the prior colour; the latest in the current. */
+  tone: "prior" | "current" | "proForma";
+};
+
+export type StripLayout = {
+  rows: StripRow[];
+  height: number;
+  ticks: { value: number; label: string }[];
+  x: (value: number) => number;
+  plotTop: number;
+  plotBottom: number;
+  /** Consecutive reported periods that both state a ratio are joined, in order. */
+  joins: { from: number; to: number }[];
+  /** The latest reported ratio's x, a hairline down the pro forma rows (null with none). */
+  reference: { x: number; top: number } | null;
+};
+
+/** The strip's rows at `width` px: one row per stated entry, on one scale, nothing overlapping. */
+export function stripLayout(entries: readonly StripEntry[], width: number): StripLayout {
+  const numbers = entries.flatMap((entry) =>
+    entry.cell?.kind === "number" ? [entry.cell.value] : [],
+  );
+  const axis = niceAxis(numbers, { zero: false, suffix: "x" });
+  const texts = entries.map((entry) =>
+    entry.cell?.kind === "number" ? `${group(entry.cell.text)}x` : "",
+  );
+  const periods = entries.filter((entry) => !entry.proForma);
+  const left = periods.length
+    ? Math.max(...periods.map((entry) => textWidth(entry.label, SIZE.label))) + 12
+    : 8;
+  const right = width - Math.max(...texts.map((text) => textWidth(text, SIZE.value))) - DOT - 14;
+  const x = (value: number) => axis.place(value, left, right);
+  const lastPeriod = periods.length - 1;
+  let top = 4;
+  const rows = entries.map((entry, at): StripRow => {
+    const beside = !entry.proForma;
+    const label = beside ? [entry.label] : wrap(entry.label, width, SIZE.label);
+    const block = beside ? 0 : label.length * LINE + 2;
+    const reading = entry.cell;
+    const isNumber = reading?.kind === "number";
+    const reason = !isNumber ? ratioWords(reading) : "";
+    const lines = !isNumber ? wrap(reason, Math.max(80, width - left - SLOT - 14), SIZE.label) : [];
+    const height = block + Math.max(STRIP_ROW, lines.length * LINE + 10);
+    const centre = top + block + STRIP_ROW / 2;
+    const row: StripRow = {
+      entry,
+      label,
+      labelBeside: beside,
+      labelY: beside ? centre + 4 : top + 12,
+      top,
+      centre,
+      x: isNumber ? x(reading.value) : null,
+      value: isNumber ? reading.value : null,
+      valueText: isNumber ? (texts[at] ?? null) : null,
+      gap: isNumber ? null : { x: left, width: SLOT, reason, lines, textX: left + SLOT + 8 },
+      tone: entry.proForma ? "proForma" : at === lastPeriod ? "current" : "prior",
+    };
+    top += height;
+    return row;
+  });
+  const joins = rows.flatMap((row, at) => {
+    const next = rows[at + 1];
+    return next && !row.entry.proForma && !next.entry.proForma && row.x !== null && next.x !== null
+      ? [{ from: at, to: at + 1 }]
+      : [];
+  });
+  const latest = rows.filter((row) => !row.entry.proForma && row.x !== null).at(-1);
+  const firstPro = rows.find((row) => row.entry.proForma);
+  const plotBottom = top;
+  return {
+    rows,
+    height: plotBottom + 22,
+    ticks: fittingTicks(axis, left, right, (text) => textWidth(text, SIZE.tick)),
+    x,
+    plotTop: 2,
+    plotBottom,
+    joins,
+    reference: latest?.x != null && firstPro ? { x: latest.x, top: firstPro.top } : null,
+  };
 }
 
 /** A stated figure as written, and whether it is a number (a gap or words is drawn in the gap ink). */
@@ -263,9 +358,9 @@ export function liquidityLines(view: NetDebtView): LiquidityLine[] {
 }
 
 /** The bars' reading: every period's stated figures and the drawn pro forma's. */
-export function barsReading(view: NetDebtView, proForma: ProForma | null) {
+export function barsReading(view: NetDebtView, proForma: readonly ProForma[]) {
   const periods = view.periods.map((p) => `${p.label} ${periodReading(p)}`);
-  const pro = proForma ? [`pro forma ${proFormaReading(proForma)}`] : [];
+  const pro = proForma.map((item) => `pro forma ${proFormaReading(item)}`);
   return `Net debt, ${view.unit}, on one scale from zero: ${[...periods, ...pro].join("; ")}.`;
 }
 
@@ -304,5 +399,33 @@ export function netDebtTable(view: NetDebtView) {
         ratioWords(item.leverage),
       ]),
     ],
+  };
+}
+
+/** One cell of the Adjustments table: its text as written, and whether it is a stated gap or words. */
+export type AdjustmentCell = { text: string; gap: boolean };
+
+const cellOf = (cell: Reading): AdjustmentCell => ({
+  text: words(cell),
+  gap: cell.kind !== "number",
+});
+
+/** The compact Adjustments table: headed columns, every stated adjustment in handoff order. */
+export function adjustmentsTable(view: NetDebtView) {
+  return {
+    caption: "Stated adjustments",
+    headers: ["Adjustment", "Date", "Amount", "Pro forma net debt", "Pro forma net leverage"],
+    rows: view.adjustments.map((item): AdjustmentCell[] => [
+      { text: safeText(item.event), gap: false },
+      dateWords(item.date) === null
+        ? { text: "Not stated", gap: true }
+        : {
+            text: dateWords(item.date) ?? "",
+            gap: /^Not (?:supplied|calculated)/i.test(item.date.text),
+          },
+      cellOf(item.amount),
+      cellOf(item.netDebt),
+      { ...cellOf(item.leverage), text: ratioWords(item.leverage) },
+    ]),
   };
 }
