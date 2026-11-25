@@ -143,7 +143,7 @@ function readRegister(entry: OutputEntry, headers: string[], kind: Issue["kind"]
   };
 }
 
-export type Group = { severity: Severity; issues: Issue[] };
+type Group = { severity: Severity; issues: Issue[] };
 
 export type Issues = {
   gaps: Register;

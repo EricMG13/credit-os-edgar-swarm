@@ -1,6 +1,6 @@
 import { cx } from "@/utils/cx";
 import { tone } from "../../../signal";
-import { MiniSlope, Slope } from "../../overview/marks";
+import { Slope } from "../../overview/marks";
 import { Figure, GapNote } from "../../overview/Tile";
 import { FigureTile, GapTile } from "../kit/LeadFrame";
 import { Dumbbell, GapSlot, LINE, SIZE, useFigureWidth, type LegendEntry } from "../kit/marks";
@@ -31,8 +31,6 @@ import {
 
 const LABEL = "Earnings and debt";
 const KICKER = "Earnings against debt and leverage";
-/** Below this measured width the overview Slope's fixed text would shrink under 11 px. */
-const SLOPE_WIDTH = 400;
 
 const FILL = { primary: "fill-chart-1", secondary: "fill-chart-2" } as const;
 const STROKE = { primary: "stroke-chart-1", secondary: "stroke-chart-2" } as const;
@@ -311,7 +309,6 @@ function Leverage({
   basis: string | null;
   comparison: EarningsAgainstDebt["comparison"];
 }) {
-  const [ref, width] = useFigureWidth(408);
   const marks = leverageMarks(leverage);
   const moved = leverageChange(leverage, comparison);
   const word = leverageWord(moved);
@@ -321,30 +318,21 @@ function Leverage({
   const drawn = marks.length > 1 && contiguous(leverage.values);
   const reading = leverageReading(leverage, comparison);
   return (
-    <div ref={ref} data-leverage className="flex w-full min-w-0 flex-col gap-2">
+    <div data-leverage className="flex w-full min-w-0 flex-col gap-2">
       <p className="text-caption font-medium text-text-primary">
         {leverage.label}
         <span className="font-normal text-text-tertiary"> · own scale</span>
       </p>
-      {drawn && width >= SLOPE_WIDTH && (
-        <Slope marks={marks} tone={slopeTone} suffix="x" label={reading} />
-      )}
-      {(!drawn || width < SLOPE_WIDTH) && (
-        <div className="flex flex-col gap-2">
-          <ul aria-label={reading} className="flex flex-wrap gap-x-4 gap-y-1 text-small">
-            {marks.map((mark) => (
-              <li key={mark.label} className="flex items-baseline gap-1.5">
-                <span className="text-caption text-text-secondary">{mark.label}</span>
-                <Figure>{mark.text}</Figure>
-              </li>
-            ))}
-          </ul>
-          {drawn && marks.length > 1 && (
-            <div className="max-w-60">
-              <MiniSlope marks={marks} tone={slopeTone} label={reading} />
-            </div>
-          )}
-        </div>
+      {drawn && <Slope marks={marks} tone={slopeTone} suffix="x" label={reading} />}
+      {!drawn && (
+        <ul aria-label={reading} className="flex flex-wrap gap-x-4 gap-y-1 text-small">
+          {marks.map((mark) => (
+            <li key={mark.label} className="flex items-baseline gap-1.5">
+              <span className="text-caption text-text-secondary">{mark.label}</span>
+              <Figure>{mark.text}</Figure>
+            </li>
+          ))}
+        </ul>
       )}
       {moved !== null && (
         <p data-change className="text-small text-text-secondary">

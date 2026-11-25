@@ -20,7 +20,7 @@ const NO_PAIRS = "This page could not read a money row in the earnings table.";
 export const NO_PERCENT = "This page could not read the margins: a cell has no percent sign.";
 export const TWICE_RESULTS =
   "This page could not read the prior and current results: the table is stated more than once.";
-export const TWICE_KPIS =
+const TWICE_KPIS =
   "This page could not read the margin and KPI changes: the table is stated more than once.";
 export const TWICE_EARNINGS =
   "This page could not read the earnings table: more than one is stated.";
@@ -29,7 +29,7 @@ export const TWICE_BRIDGE =
 export const FEW_PERIODS = "This page could not read two annual periods in the earnings table.";
 export const MIXED_PERIODS =
   "This page did not compare the earnings table's two latest annual periods: they are different kinds of period.";
-export const SAME_YEAR =
+const SAME_YEAR =
   "This page did not compare the earnings table's two latest annual periods: they are the same year.";
 export const NO_BRIDGE = "This page could not read the variance bridge.";
 
@@ -51,7 +51,7 @@ export type Side = {
   reason: string | null;
 };
 
-export type Change = {
+type Change = {
   /** The change in the unit's own words with its sign (`+1,355`, `−0.5 percentage points`), or the stated cell as written. */
   text: string;
   /** `stated`: the module wrote the change; `computed`: the exact difference of the same kind of period a year apart. */

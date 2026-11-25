@@ -15,7 +15,7 @@ import { allTables, tableWith } from "./kit/tables";
 /** A text a working page may draw: no source reference, module codes as names. */
 const norm = (text: string) => text.trim().replace(/\s+/g, " ").toLowerCase();
 
-export type Support = "Supported" | "Partly supported" | "Not supported" | "Insufficient evidence";
+type Support = "Supported" | "Partly supported" | "Not supported" | "Insufficient evidence";
 const SUPPORT_WORDS: Support[] = [
   "Supported",
   "Partly supported",
@@ -218,7 +218,7 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
 /** One basis of a leverage measure: the stated multiple, or the words / reason the table states instead. */
 export type Side = { value: number; text: string } | { gap: string; written: string };
 
-export type LeverageMeasure = { measure: string; reported: Side; restated: Side };
+type LeverageMeasure = { measure: string; reported: Side; restated: Side };
 
 /** A multiple as the table writes it: a number with or without a trailing `x`, else words or a gap as written. */
 function sideOf(cell: string): Side {

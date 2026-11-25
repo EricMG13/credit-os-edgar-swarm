@@ -56,7 +56,7 @@ const at = (values: readonly PeriodCell[], label: string) =>
  * (kit `changeBetween`: the same kind of period exactly one year apart, one unit, both figures
  * numbers), else null: the stated figures stand with their periods and no change.
  */
-export function printedChange(
+function printedChange(
   values: readonly PeriodCell[],
   comparison: EarningsAgainstDebt["comparison"],
   unit: string,
