@@ -9,7 +9,7 @@ export const STACK = {
   head: "bg-surface-subtle text-text-secondary max-md:sr-only",
   body: "max-md:block",
   row: "border-t border-border-hairline align-top max-md:grid max-md:gap-1.5 max-md:p-4",
-  cell: "px-4 py-3 max-md:p-0 max-md:before:mb-0.5 max-md:before:block max-md:before:text-caption max-md:before:text-text-tertiary max-md:before:content-[attr(data-label)]",
+  cell: "px-4 py-3 wrap-anywhere max-md:p-0 max-md:before:mb-0.5 max-md:before:block max-md:before:text-caption max-md:before:text-text-tertiary max-md:before:content-[attr(data-label)]",
 } as const;
 
 /**

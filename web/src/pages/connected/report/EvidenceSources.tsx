@@ -18,22 +18,29 @@ import { Tile } from "./overview/Tile";
 export type SourceGroup = { label: string; rows: PublishedRun["evidence"]["sources"] };
 type SourceRow = SourceGroup["rows"][number];
 
-type Citation = { sha: string | null; label: string; entry: OutputEntry; line: number };
+type Citation = {
+  sha: string | null;
+  label: string;
+  reason: string | null;
+  entry: OutputEntry;
+  line: number;
+};
 
-const NO_FILE = /without a source key/i;
-const NOT_IN_INVENTORY = /not in the .*inventory/i;
+const NO_REASON = "No reason recorded";
 
 /**
  * What the designated handoffs cite, from the given entries only (the snapshot holds other runs'
- * chips, and alternate handoffs are not the delivered ones): each file's citations keyed by file
- * name, and apart from them the citations that give a page but name no file or name a file that is
- * not in the inventory, as the chip's own reason records it. A page is shown as attested where the
- * bridge attests one and otherwise as the citation's own label, as written.
+ * chips, and alternate handoffs are not the delivered ones). A citation that names a supplied file
+ * belongs to that file's row; one that names no file but starts its label with a supplied file's
+ * name is that file's ambiguous citation. Every other citation is kept apart, grouped by the
+ * reason the chip recorded, as written, in the order first met. A page is shown as attested where
+ * the bridge attests one and otherwise as the citation's own label.
  */
-export function citationsByFile(snapshot: Snapshot, entries: OutputEntry[]) {
+export function citationsByFile(snapshot: Snapshot, entries: OutputEntry[], names: Set<string>) {
   const byId = new Map(entries.map((entry) => [entry.output.id, entry]));
   const byFile = new Map<string, Citation[]>();
-  const unmatched = { noFile: [] as Citation[], notInInventory: [] as Citation[] };
+  const fileless: Citation[] = [];
+  const unmatched = new Map<string, Citation[]>();
   for (const [key, chips] of Object.entries(snapshot.chips)) {
     const cut = key.lastIndexOf(":");
     const entry = byId.get(key.slice(0, cut));
@@ -42,24 +49,43 @@ export function citationsByFile(snapshot: Snapshot, entries: OutputEntry[]) {
     const folder = entry.output.id.split("/")[0] ?? "";
     for (const chip of chips) {
       const label = citedSourcePages(folder, chip) ?? chip.label ?? "Cited, no page recorded";
-      const cited = { sha: chip.sha256, label, entry, line };
-      if (chip.file) byFile.set(chip.file, [...(byFile.get(chip.file) ?? []), cited]);
-      else if (NO_FILE.test(chip.reason ?? "")) unmatched.noFile.push(cited);
-      else if (NOT_IN_INVENTORY.test(chip.reason ?? "")) unmatched.notInInventory.push(cited);
+      const cited = { sha: chip.sha256, label, reason: chip.reason, entry, line };
+      if (chip.file && names.has(chip.file))
+        byFile.set(chip.file, [...(byFile.get(chip.file) ?? []), cited]);
+      else {
+        const named =
+          chip.file === null && [...names].some((name) => chip.label?.startsWith(`${name} `));
+        if (named) fileless.push({ ...cited, label: chip.label ?? label });
+        else {
+          const why = chip.reason ?? NO_REASON;
+          unmatched.set(why, [...(unmatched.get(why) ?? []), cited]);
+        }
+      }
     }
   }
-  return { byFile, ...unmatched };
+  return { byFile, fileless, unmatched };
 }
 
 type Cited = ReturnType<typeof citationsByFile>;
 
-/** The citations of one source: same name, and the same hash where both record one; a different hash is kept and said. */
+/** The citations of one source: same name, and the same hash where both record one; a different hash and an ambiguous name are kept and said. */
 function citationsOf(cited: Cited, source: SourceRow) {
-  return (cited.byFile.get(source.name) ?? []).map(({ sha, label }) => ({
-    label,
-    sha,
-    kind: !source.sha256 ? "unhashed" : !sha || sha === source.sha256 ? "same" : "different",
-  }));
+  return [
+    ...(cited.byFile.get(source.name) ?? []).map(({ sha, label }) => ({
+      label,
+      sha,
+      kind: !source.sha256 ? "unhashed" : !sha || sha === source.sha256 ? "same" : "different",
+      note: null as string | null,
+    })),
+    ...cited.fileless
+      .filter(({ label }) => label.startsWith(`${source.name} `))
+      .map(({ label, reason }) => ({
+        label,
+        sha: null,
+        kind: "ambiguous",
+        note: `Cited ambiguously: ${reason ?? NO_REASON}`,
+      })),
+  ];
 }
 
 function UsedBy({
@@ -171,7 +197,7 @@ function SourceTable({
                   >
                     {citations.length > 0 ? (
                       <ul className="grid gap-1.5">
-                        {citations.map(({ label, sha, kind }, index) => (
+                        {citations.map(({ label, sha, kind, note }, index) => (
                           <li key={`${String(index)}-${label}`} className="grid gap-0.5">
                             {kind === "different" ? (
                               <>
@@ -183,6 +209,9 @@ function SourceTable({
                             ) : (
                               <>
                                 <span>{label}</span>
+                                {note !== null && (
+                                  <span className="text-caption text-text-tertiary">{note}</span>
+                                )}
                                 {kind === "unhashed" && (
                                   <span className="text-caption text-text-tertiary">
                                     Matched by file name; the source has no hash
@@ -230,29 +259,18 @@ function SourceTable({
 }
 
 function UnmatchedCitations({ cited, folder }: { cited: Cited; folder: string }) {
-  const rows = [
-    {
-      list: cited.noFile,
-      words: (n: number) =>
-        `${String(n)} ${n === 1 ? "citation gives" : "citations give"} a page and ${n === 1 ? "names" : "name"} no file`,
-    },
-    {
-      list: cited.notInInventory,
-      words: (n: number) =>
-        `${String(n)} ${n === 1 ? "citation names" : "citations name"} a file that is not in the source inventory`,
-    },
-  ].filter(({ list }) => list.length > 0);
+  const rows = [...cited.unmatched];
   if (rows.length === 0) return null;
   return (
     <ul
       aria-label="Citations not matched to a supplied file"
       className="grid gap-1 rounded-ds-sm bg-surface-subtle p-3 text-small text-text-secondary"
     >
-      {rows.map(({ list, words }) => {
+      {rows.map(([reason, list]) => {
         const first = list[0];
         return (
-          <li key={words(1)} className="flex flex-wrap items-center gap-x-3">
-            <span>{words(list.length)}</span>
+          <li key={reason} className="flex flex-wrap items-center gap-x-3">
+            <span>{`${String(list.length)} · ${reason}`}</span>
             {first && (
               <a
                 href={evidencePath(folder, first.entry, first.line)}
@@ -293,6 +311,7 @@ export function EvidenceSources({
   const cited = citationsByFile(
     snapshot,
     entries.filter((entry) => entry.selected && (!module || entry.output.module === module)),
+    new Set(sourceGroups.flatMap(({ rows }) => rows.map(({ name }) => name))),
   );
   return (
     <Tile

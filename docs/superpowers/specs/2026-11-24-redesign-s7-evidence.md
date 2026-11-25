@@ -318,3 +318,31 @@ re-lands after it, so the old hrefs also work, but they open the Record tab at i
 - Forecast.tsx:249 "View model records in Evidence", Forecast.tsx:431 "Model notes and limitations",
   Forecast.tsx:548 the qualification trace control, LegacyForecast.tsx:571 and :1020: `#evidence/record/notes`.
 - Changes.tsx:414 "Review comparison evidence": `#evidence/record/comparison`.
+
+## Coordinator review 3e69902: fourth pass (Y1, Y2, wrapping)
+
+- Y1 Sources no longer matches reasons by pattern. Every chip of a designated handoff that is not attached to a
+  supplied file (no file, or a file the run does not hold) is listed under "Citations not matched to a supplied
+  file", one line per recorded reason as written (`54 · page cited without a source key`), with an exact count and a
+  link to the first line; a chip with no reason is counted under "No reason recorded". A chip that names no file but
+  whose label starts with a supplied file's name (the Basis route writes `<file> p.N · ambiguous`) is shown on that
+  file's row as "Cited ambiguously: <reason>" and so does not read "No citation names this file". Ambiguity found by
+  a key word rather than a file name (`key.word`) names no candidate file and stays in the list. Tested with every
+  reason the backend writes. Chips for rows that cite no page ("the row cites no page or register", "the cell says Not
+  supplied") are chips too, so they are counted as recorded (270 and 103 on the synthetic run).
+- Y2 "Search evidence" leads Evidence, above the tabs. A typed query replaces the page with matches grouped as Handoff
+  lines, Sources and Gaps, each with a count, in document order, capped at 50 per group with the cap stated; a status
+  region announces the counts or "No match for …"; clearing returns the current tab. Plain case-insensitive substring
+  of every word; no ranking or fuzzy matching. Handoff lines: designated handoffs' headings, paragraphs and table
+  rows (a row matches on its cells together). Sources: file name, type, date, hash and group label. Gaps: title and
+  module, as on the Gaps tab (alternate handoffs' gaps included and named). Not searched, and said on the page:
+  script check outcomes, the run record and the text of the source files (the report holds only the passages the
+  handoffs cite).
+- Wrapping: `wrap-anywhere` on the shared stacked-table cell class and on the Trace tab's citation label and passage.
+- `check-render.cjs` (copied from the coordinator branch) on summary, sources, gaps, checks, record and one trace
+  address at 1440 and 390, plain, `--stress`, a fixture (200-character file name, 400-character unbroken excerpt, an
+  ambiguous citation, gaps worded "HIGH", "Critical" and others, an unused file) and both together. Nothing in
+  Evidence's own files fails. What it still reports is not mine: the shell nav (`ul`, not focusable at 390),
+  `Record.tsx` (summary rows 24 px, "Download instructions" 36 px, "Return to Forecast" 20 px), and the derivation
+  tree's `summary` rows (34 px at 390) in `library/parts/DerivationTree.tsx`, whose `ROW` class needs
+  `min-h-8 max-[480px]:min-h-11`.

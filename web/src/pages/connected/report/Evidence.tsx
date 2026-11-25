@@ -2,7 +2,7 @@ import { Button } from "@/components/base/buttons/button";
 import { Segmented } from "@/components/kit/Segmented";
 import { StatsStrip } from "@/components/kit/StatsStrip";
 import { citedSourcePages, sourceCitationNote } from "../sourceFiles";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { moduleName, type Mode } from "../api";
 import { field } from "../layout";
 import {
@@ -34,6 +34,8 @@ import { Disclosure } from "./evidenceKit";
 import { EvidenceSources, type SourceGroup } from "./EvidenceSources";
 import { Bento, Tile } from "./overview/Tile";
 import { TraceSplit } from "./TraceSplit";
+import { searchEvidence } from "./evidenceSearch";
+import { EvidenceSearchField, EvidenceSearchResults, EvidenceSearchStatus } from "./EvidenceSearch";
 
 export { hasRecordedGap } from "./EvidenceGaps";
 
@@ -231,7 +233,7 @@ function EvidenceCitation({
   const pages = citedSourcePages(outputId.split("/")[0] ?? "", chip);
   return (
     <li className="border-t border-border-hairline py-3 text-small text-text-secondary">
-      <p className="font-medium text-text-primary">{chip.label}</p>
+      <p className="font-medium wrap-anywhere text-text-primary">{chip.label}</p>
       {(chip.file || chip.source) && <p className="wrap-anywhere">{chip.file ?? chip.source}</p>}
       {note && <p>{note}</p>}
       {chip.excerpt && (
@@ -240,7 +242,7 @@ function EvidenceCitation({
           aria-label={`Passage from ${chip.label ?? "the cited source"}`}
           // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
           tabIndex={0}
-          className="mt-1 max-h-60 overflow-y-auto border-l-2 border-border-hairline pl-3"
+          className="mt-1 max-h-60 overflow-y-auto border-l-2 border-border-hairline pl-3 wrap-anywhere"
         >
           {chip.excerpt}
         </blockquote>
@@ -370,11 +372,13 @@ function EvidenceNavigation({
   tab,
   selectedModule,
   checks,
+  search,
 }: {
   entries: OutputEntry[];
   tab: EvidenceTab;
   selectedModule?: string;
   checks: ScriptCheckRecord[];
+  search: ReactNode;
 }) {
   const outcomes = checks
     .filter((record) => !selectedModule || record.module === selectedModule)
@@ -406,6 +410,7 @@ function EvidenceNavigation({
   return (
     <>
       <h2 className="font-display text-h2">Evidence</h2>
+      {search}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <Segmented label="Evidence sections" current={tabRoute(tab)} segments={segments} />
         <label className="grid gap-1 text-small">
@@ -621,6 +626,8 @@ export function ReportEvidence({
     recordTarget,
   } = evidenceRoute(entries, target, checks.length > 0);
   useLandOnRecordTarget(tab === "Record" ? recordTarget : undefined);
+  const [query, setQuery] = useState("");
+  const found = searchEvidence(query, entries, run);
   const { evidence } = run;
   const sourceGroups: SourceGroup[] = [
     { label: "Used by a module", rows: evidence.sources },
@@ -649,110 +656,120 @@ export function ReportEvidence({
         tab={tab}
         selectedModule={selectedModule}
         checks={checks}
-      />
-      <Bento>
-        {tab === "Summary" && (
-          <>
-            <EvidenceSummary
-              entries={entries}
-              module={module}
-              sourceGroups={sourceGroups}
-              checks={checks}
-              snapshot={snapshot}
-            />
-            <GapSummary run={run} entries={entries} module={module} />
-          </>
-        )}
-        {entry && line !== undefined && (
-          <TraceSplit
-            snapshot={snapshot}
-            run={run}
-            entry={entry}
-            line={line}
-            index={selectedIndex}
-          />
-        )}
-        {entry && <EvidenceHandoff snapshot={snapshot} run={run} entry={entry} line={line} />}
-        {tab === "Trace" && invalidTraceAddress && (
-          <section
-            role="alert"
-            className="grid min-w-0 gap-2 rounded-ds-lg border border-warning-edge bg-warning-fill p-5 sm:p-6 lg:col-span-12"
-          >
-            <h3 className="text-h4 font-medium text-warning-text">Evidence link unavailable</h3>
-            <p className="text-text-secondary">
-              This link does not match a saved handoff in this report. Go to Summary and choose a
-              handoff from the list.
-            </p>
-          </section>
-        )}
-        {tab === "Sources" && (
-          <EvidenceSources
-            sourceGroups={sourceGroups}
-            module={module}
-            modules={[...new Set(entries.map((item) => item.output.module))]}
-            entries={entries}
-            snapshot={snapshot}
-            folder={run.folder}
-          />
-        )}
-        {tab === "Trace" && !entry && !invalidTraceAddress && (
-          <Tile span={12} label="Choose something to trace">
-            <p className="text-text-secondary">
-              Open a handoff below, or select the source icon beside a finding, row or figure and
-              choose Open in Evidence.
-            </p>
-          </Tile>
-        )}
-        {tab === "Record" && (
-          <Disclosure
-            id="evidence-record-run"
-            title="Show the run record"
-            hint="calls, cap, spend and models; the comparison note when the run has one"
-            open={
-              recordTarget === "run" ||
-              recordTarget === "comparison" ||
-              Boolean(run.changes?.note || run.changes?.problem)
-            }
-          >
-            <ReportRecord run={run} entries={entries} module={module} mode={mode} />
-          </Disclosure>
-        )}
-        {showHandoffs(tab, entry, invalidTraceAddress) && (
-          <EvidenceHandoffs entries={entries} module={module} run={run} />
-        )}
-        {(tab === "Summary" || tab === "Record") && (
-          <div
-            id={tab === "Record" ? "evidence-record-files" : undefined}
-            tabIndex={tab === "Record" ? -1 : undefined}
-            className="min-w-0 outline-none lg:col-span-12"
-          >
-            {downloads}
+        search={
+          <div className="grid min-w-0 gap-2">
+            <EvidenceSearchField value={query} onChange={setQuery} />
+            <EvidenceSearchStatus query={query} found={found} />
           </div>
-        )}
-        {tab === "Record" && (!module || module === "CP-2G") && models.length > 0 && (
-          <Disclosure
-            id="evidence-record-notes"
-            title="Show model notes, limitations and assumption registers"
-            hint={`${String(models.length)} ${models.length === 1 ? "model" : "models"}, as recorded for the forecast`}
-            open={recordTarget === "notes"}
-          >
-            <RecordedModelQualifications models={models} />
-            {models.map((model) => (
-              <AssumptionRegister
-                key={model.id}
-                model={model}
+        }
+      />
+      {query.trim() ? (
+        <EvidenceSearchResults found={found} />
+      ) : (
+        <Bento>
+          {tab === "Summary" && (
+            <>
+              <EvidenceSummary
                 entries={entries}
-                folder={run.folder}
+                module={module}
+                sourceGroups={sourceGroups}
+                checks={checks}
+                snapshot={snapshot}
               />
-            ))}
-          </Disclosure>
-        )}
-        {tab === "Trace" && !entry && (!module || module === "CP-8") && comparison && (
-          <div className="min-w-0 lg:col-span-12">{comparison}</div>
-        )}
-        {tab === "Gaps" && <EvidenceGaps run={run} entries={entries} module={module} />}
-        {tab === "Script checks" && <ScriptChecks records={checks} module={module} />}
-      </Bento>
+              <GapSummary run={run} entries={entries} module={module} />
+            </>
+          )}
+          {entry && line !== undefined && (
+            <TraceSplit
+              snapshot={snapshot}
+              run={run}
+              entry={entry}
+              line={line}
+              index={selectedIndex}
+            />
+          )}
+          {entry && <EvidenceHandoff snapshot={snapshot} run={run} entry={entry} line={line} />}
+          {tab === "Trace" && invalidTraceAddress && (
+            <section
+              role="alert"
+              className="grid min-w-0 gap-2 rounded-ds-lg border border-warning-edge bg-warning-fill p-5 sm:p-6 lg:col-span-12"
+            >
+              <h3 className="text-h4 font-medium text-warning-text">Evidence link unavailable</h3>
+              <p className="text-text-secondary">
+                This link does not match a saved handoff in this report. Go to Summary and choose a
+                handoff from the list.
+              </p>
+            </section>
+          )}
+          {tab === "Sources" && (
+            <EvidenceSources
+              sourceGroups={sourceGroups}
+              module={module}
+              modules={[...new Set(entries.map((item) => item.output.module))]}
+              entries={entries}
+              snapshot={snapshot}
+              folder={run.folder}
+            />
+          )}
+          {tab === "Trace" && !entry && !invalidTraceAddress && (
+            <Tile span={12} label="Choose something to trace">
+              <p className="text-text-secondary">
+                Open a handoff below, or select the source icon beside a finding, row or figure and
+                choose Open in Evidence.
+              </p>
+            </Tile>
+          )}
+          {tab === "Record" && (
+            <Disclosure
+              id="evidence-record-run"
+              title="Show the run record"
+              hint="calls, cap, spend and models; the comparison note when the run has one"
+              open={
+                recordTarget === "run" ||
+                recordTarget === "comparison" ||
+                Boolean(run.changes?.note || run.changes?.problem)
+              }
+            >
+              <ReportRecord run={run} entries={entries} module={module} mode={mode} />
+            </Disclosure>
+          )}
+          {showHandoffs(tab, entry, invalidTraceAddress) && (
+            <EvidenceHandoffs entries={entries} module={module} run={run} />
+          )}
+          {(tab === "Summary" || tab === "Record") && (
+            <div
+              id={tab === "Record" ? "evidence-record-files" : undefined}
+              tabIndex={tab === "Record" ? -1 : undefined}
+              className="min-w-0 outline-none lg:col-span-12"
+            >
+              {downloads}
+            </div>
+          )}
+          {tab === "Record" && (!module || module === "CP-2G") && models.length > 0 && (
+            <Disclosure
+              id="evidence-record-notes"
+              title="Show model notes, limitations and assumption registers"
+              hint={`${String(models.length)} ${models.length === 1 ? "model" : "models"}, as recorded for the forecast`}
+              open={recordTarget === "notes"}
+            >
+              <RecordedModelQualifications models={models} />
+              {models.map((model) => (
+                <AssumptionRegister
+                  key={model.id}
+                  model={model}
+                  entries={entries}
+                  folder={run.folder}
+                />
+              ))}
+            </Disclosure>
+          )}
+          {tab === "Trace" && !entry && (!module || module === "CP-8") && comparison && (
+            <div className="min-w-0 lg:col-span-12">{comparison}</div>
+          )}
+          {tab === "Gaps" && <EvidenceGaps run={run} entries={entries} module={module} />}
+          {tab === "Script checks" && <ScriptChecks records={checks} module={module} />}
+        </Bento>
+      )}
     </div>
   );
 }

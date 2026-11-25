@@ -53,9 +53,13 @@ const groups: SourceGroup[] = [
 ];
 
 it("collects what each file is cited as, from the chips that name it, with where each sits", () => {
-  const cited = citationsByFile(snapshot({ "case/CP-1.md:5": [chip({})] }), [h1]);
+  const cited = citationsByFile(
+    snapshot({ "case/CP-1.md:5": [chip({})] }),
+    [h1],
+    new Set(["Issuer.txt"]),
+  );
   expect(cited.byFile.get("Issuer.txt")).toEqual([
-    { sha, label: "Cited pages 2–3", entry: h1, line: 5 },
+    { sha, label: "Cited pages 2–3", reason: null, entry: h1, line: 5 },
   ]);
 });
 
@@ -248,10 +252,82 @@ it("counts only the designated handoffs' citations", () => {
   expect(screen.getAllByText("No citation names this file").length).toBeGreaterThan(0);
 });
 
-const gapChip = (reason: string, label: string) =>
-  chip({ file: null, source: null, sha256: null, pageHref: null, href: null, label, reason });
+const gapChip = (reason: string | null, label: string, file: string | null = null) =>
+  chip({ file, source: null, sha256: null, pageHref: null, href: null, label, reason });
 
-it("counts the citations that name no file or a file not in the inventory, with a link to the first of each", () => {
+const REASONS = [
+  "page cited without a source key",
+  "the Basis file is not in the Source readiness inventory",
+  "key not in inventory",
+  "no inventory",
+  "source name not a file name",
+  "two inventory keys hold this file with different hashes",
+  "the cited number is not a page",
+  "Basis item not recognised",
+  "the row cites no page or register",
+  "the cell says Not supplied",
+];
+
+it("lists every citation not attached to a supplied file by its recorded reason, as written, with an exact count and the first line", () => {
+  const chips: Record<string, ReturnType<typeof gapChip>[]> = {};
+  REASONS.forEach((reason, index) => {
+    // reason number k is recorded k + 1 times, on lines 10 * k + 1 …
+    for (let n = 0; n <= index; n += 1) {
+      const line = 10 * (index + 1) + n;
+      chips[`case/CP-1.md:${String(line)}`] = [gapChip(reason, `label ${String(index)}`)];
+    }
+  });
+  render(
+    <EvidenceSources
+      folder="case"
+      entries={[h1]}
+      sourceGroups={groups}
+      modules={["CP-1"]}
+      snapshot={snapshot(chips)}
+    />,
+  );
+  const list = within(
+    screen.getByRole("list", { name: "Citations not matched to a supplied file" }),
+  );
+  REASONS.forEach((reason, index) => {
+    expect(list.getByText(`${String(index + 1)} · ${reason}`)).toBeVisible();
+  });
+  const hrefs = list.getAllByRole("link").map((link) => link.getAttribute("href"));
+  expect(hrefs).toEqual(
+    REASONS.map(
+      (_, index) =>
+        `/report/case#evidence/case%2FCP-1.md~${"a".repeat(64)}-${String(10 * (index + 1))}`,
+    ),
+  );
+});
+
+it("counts a citation with no recorded reason under its own words", () => {
+  render(
+    <EvidenceSources
+      folder="case"
+      entries={[h1]}
+      sourceGroups={groups}
+      modules={["CP-1"]}
+      snapshot={snapshot({ "case/CP-1.md:7": [gapChip(null, "p.3")] })}
+    />,
+  );
+  expect(screen.getByText("1 · No reason recorded")).toBeVisible();
+});
+
+it("lists a citation that names a file the run does not hold, apart from the source rows", () => {
+  render(
+    <EvidenceSources
+      folder="case"
+      entries={[h1]}
+      sourceGroups={groups}
+      modules={["CP-1"]}
+      snapshot={snapshot({ "case/CP-1.md:7": [chip({ file: "Stranger.pdf", reason: null })] })}
+    />,
+  );
+  expect(screen.getByText("1 · No reason recorded")).toBeVisible();
+});
+
+it("shows an ambiguous citation on the file it names, not as no citation, and not in the unmatched list", () => {
   render(
     <EvidenceSources
       folder="case"
@@ -260,31 +336,22 @@ it("counts the citations that name no file or a file not in the inventory, with 
       modules={["CP-1"]}
       snapshot={snapshot({
         "case/CP-1.md:7": [
-          gapChip("page cited without a source key", "p.1 · no key"),
-          gapChip("page cited without a source key", "p.2 · no key"),
-        ],
-        "case/CP-1.md:9": [
           gapChip(
-            "the Basis file is not in the Source readiness inventory",
-            "annual.txt p.2 · not in inventory",
+            "two inventory keys hold this file with different hashes",
+            "Issuer.txt p.2 · ambiguous",
           ),
-          gapChip("the row cites no page or register", "no page"),
         ],
       })}
     />,
   );
-  const list = within(
-    screen.getByRole("list", { name: "Citations not matched to a supplied file" }),
-  );
-  expect(list.getByText("2 citations give a page and name no file")).toBeVisible();
+  const used = within(screen.getByRole("table", { name: "Used by a module" }));
   expect(
-    list.getByText("1 citation names a file that is not in the source inventory"),
+    used.getByText("Cited ambiguously: two inventory keys hold this file with different hashes"),
   ).toBeVisible();
-  const links = list.getAllByRole("link");
-  expect(links.map((link) => link.getAttribute("href"))).toEqual([
-    `/report/case#evidence/case%2FCP-1.md~${"a".repeat(64)}-7`,
-    `/report/case#evidence/case%2FCP-1.md~${"a".repeat(64)}-9`,
-  ]);
+  expect(used.queryByText("No citation names this file")).toBeNull();
+  expect(
+    screen.queryByRole("list", { name: "Citations not matched to a supplied file" }),
+  ).toBeNull();
 });
 
 it("draws no such line when every citation names a file", () => {
