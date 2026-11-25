@@ -750,6 +750,15 @@ def cp2_scorecard_block() -> str:
         "Choose it by the house Risk Rubric, given in full below, which describes each factor "
         "at each level:\n"
         f"{scorecard.level_text()}\n"
+        # Owner, 2026-11-25: Scale "must be in any currency reported by the issuer"; the rate
+        # rule is ruling 2026-11-16-reporting-currency-from-sources.md's for a facility.
+        "Scale's thresholds are USD amounts, and Scale is scored in the currency CP-1's "
+        "statements report in: for another currency, convert each threshold into it with "
+        "calculate at the FX rate the source materials state for the reporting (for example "
+        "$1bn at 0.92 EUR per USD is EUR 920m), never a rate looked up or derived, and compare "
+        "the latest LTM reported EBITDA in the CP-1 handoff (the latest fiscal year where it "
+        "gives no LTM); Basis gives the EBITDA, the converted threshold and the rate. With no "
+        f"stated rate, Scale is `{scorecard.NOT_SCORED}` and listed in `## Gaps`. "
         "Score a factor only on evidence in this run's sources and supplied handoffs; where "
         f"there is none write `{scorecard.NOT_SCORED}` as its Level, list the factor in `## Gaps` "
         f"and never guess. {scorecard.ASSESSMENT_ID} has exactly four rows: Management, Sector "

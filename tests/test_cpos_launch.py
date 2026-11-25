@@ -1714,14 +1714,15 @@ def test_the_lite_pathway_runs_end_to_end_to_a_verified_delivery_with_a_syntheti
 # the peer pack CP-1C now consumes), ceiling 1,485,996 to 1,667,319. The other seven pathways'
 # instructions are byte-identical and no other ceiling moved.
 # 2026-11-25 (owner ruling R9, "CP-2 writes a scorecard table using the owner's Risk Rubric";
-# docs/methodology/portfolio-recommendation.md § 3): CP-2's credit scorecard block with the rubric's
-# 17 rows adds 6,685 characters to CP-2's instructions in every pathway that runs it. Measured on
-# this file's input before (base 9e6c586) and after: only lite_credit_assessment passes its
-# ceiling, 669,952 to 676,637 (+6,685), so its ceiling rises by that growth, 675,151 to 681,836.
-# The other ceilings hold and are unchanged.
+# docs/methodology/portfolio-recommendation.md § 3; and owner, 2026-11-25, Scale "must be in any
+# currency reported by the issuer"): CP-2's credit scorecard block with the rubric's 17 rows and the
+# Scale currency rule adds 7,242 characters to CP-2's instructions in every pathway that runs it.
+# Measured on this file's input before (base 9e6c586) and after: only lite_credit_assessment
+# passes its ceiling, 669,952 to 677,194 (+7,242), so its ceiling rises by that growth, 675,151 to
+# 682,393. The other ceilings hold and are unchanged.
 INSTRUCTION_BUDGET = {
     "deep_credit_assessment": 1_903_059,
-    "lite_credit_assessment": 681_836,
+    "lite_credit_assessment": 682_393,
     "credit_snapshot": 1_667_319,
     "covenant_refinancing": 1_157_279,
     "distressed_restructuring": 1_188_321,
@@ -3373,9 +3374,10 @@ def test_no_text_sent_to_a_model_gives_usd_as_its_only_example(tmp_path):
     found = {name: usd_only_examples(text) for name, text in sent.items()}
     quoted = {name for name, f in found.items() if f and set(f) == {CP4_QUOTED_PROVISION}}
     assert quoted == {"instructions CP-4", "method CP-4"}, "the known quote moved or went"
-    # Known and kept, for the owner to rule on: the Risk Rubric's Scale row is the owner's own
-    # text, sent byte for byte (ruling R9, 2026-11-25), and states its EBITDA thresholds in
-    # dollars only. Nothing here converts them or adds another currency beside them.
+    # Known and kept: the Risk Rubric's Scale row is the owner's own text, sent byte for byte
+    # (ruling R9, 2026-11-25), with its EBITDA thresholds in dollars. The sentence after the table
+    # has them converted into the issuer's reporting currency (owner, 2026-11-25: "must be in any
+    # currency reported by the issuer"), and that sentence is not flagged: only the row is.
     assert found.pop("instructions CP-2") == [RUBRIC_SCALE_ROW]
     assert {name: f for name, f in found.items() if f and name not in quoted} == {}
 
@@ -10284,8 +10286,9 @@ def test_cp2_is_asked_for_the_credit_scorecard_in_every_pathway_that_runs_it(tmp
     block = cpos_launch.cp2_scorecard_block()
     assert block.startswith(opening) and head.count(block) == 1
     # Everything but the rubric table stays short.
-    rubric = block[block.index("| # | Factor |") : block.index("Score a factor only")]
-    assert len(block) - len(rubric) < 2_400
+    rubric = block[block.index("| # | Factor |") : block.index("Scale's thresholds are")]
+    # 2,761 with the Scale currency rule (owner, 2026-11-25), 2,204 before it.
+    assert len(block) - len(rubric) < 2_800
     assert_rubric(rubric)
     assert "`### T2.13 - Credit scorecard` (columns `Factor | Level | Basis`" in block
     assert "`### T2.14 - Credit assessment` (columns `Assessment | View | Basis`" in block
@@ -10318,6 +10321,20 @@ def test_cp2_is_asked_for_the_credit_scorecard_in_every_pathway_that_runs_it(tmp
     assert "not the method's T2.7 Financial Profile Scorecard, which stays unwritten" in block
     assert "is refused unless the module is blocked" in block
     assert "Choose it by the house Risk Rubric, given in full below, which describes" in block
+    # Owner, 2026-11-25: Scale "must be in any currency reported by the issuer". Typed by hand:
+    # the rubric's USD thresholds are converted into the reporting currency at the sources' stated
+    # rate (as ruling 2026-11-16-reporting-currency-from-sources.md does for a facility).
+    scale_rule = (
+        "Scale's thresholds are USD amounts, and Scale is scored in the currency CP-1's "
+        "statements report in: for another currency, convert each threshold into it with "
+        "calculate at the FX rate the source materials state for the reporting (for example "
+        "$1bn at 0.92 EUR per USD is EUR 920m), never a rate looked up or derived, and compare "
+        "the latest LTM reported EBITDA in the CP-1 handoff (the latest fiscal year where it "
+        "gives no LTM); Basis gives the EBITDA, the converted threshold and the rate. With no "
+        "stated rate, Scale is `Not scored` and listed in `## Gaps`."
+    )
+    assert scale_rule in block
+    assert block.index(scale_rule) > block.index("| 17 | Financial policy |")
     # No file is named for the rubric: the table is the whole of it, and a named file that is not
     # supplied reads as a missing companion file.
     assert "portfolio-recommendation" not in texts["CP-2"]
