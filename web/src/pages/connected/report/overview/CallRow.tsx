@@ -14,7 +14,6 @@ import {
   type OutputEntry,
 } from "../../publishedReport";
 import {
-  actionBias,
   moduleBottomLines,
   moduleState,
   runMoneyUnit,
@@ -22,9 +21,10 @@ import {
 } from "../../reportView";
 import { TextLink } from "../../../run/TextLink";
 import { PublishedSource } from "../PublishedTrace";
-import { earlierStance } from "./changeData";
+import { UNREAD_STANCE, committeeStance, earlierStance } from "./changeData";
+import { readerReason } from "./reason";
 import { useSvgScale } from "./svgScale";
-import { bottomLine, entryOf, type Passage, type RowProps } from "./read";
+import { bottomLineBlocks, entryOf, type Passage, type PassageTable, type RowProps } from "./read";
 import { Figure, GapNote, Tile } from "./Tile";
 
 /** Stances, bands and outlooks are the modules' words: one neutral style, no good/bad grouping. */
@@ -47,7 +47,22 @@ function Source({
   );
 }
 
-/** A passage's first sentence in the module's words, a link where it cites a source, or its gap. */
+/** One block of a module's bottom line: a paragraph, or a table the module wrote there. */
+type Said = Passage | PassageTable;
+
+function EvidenceLink({ href, children }: { href: string; children: string }) {
+  return (
+    <Button className={LINK} href={href} color="link-gray" size="sm" iconTrailing={ArrowRight}>
+      {children}
+    </Button>
+  );
+}
+
+/**
+ * One block of a bottom line in the module's words: a paragraph through the reader rule (inline
+ * source markers removed), a link where it cites a source or carries an id the page cannot name,
+ * the table it is said in, or the gap when there is none.
+ */
 function Sentence({
   run,
   entry,
@@ -55,25 +70,24 @@ function Sentence({
   className,
 }: Pick<RowProps, "run"> & {
   entry: OutputEntry;
-  passage: Passage | undefined;
+  passage: Said | undefined;
   className: string;
 }) {
   if (!passage)
     return (
       <GapNote>Not established for this run. The module&apos;s handoff has no bottom line.</GapNote>
     );
-  if (passage.text === null)
+  const href = evidencePath(run.folder, entry, passage.line);
+  if ("table" in passage)
     return (
-      <Button
-        href={evidencePath(run.folder, entry, passage.line)}
-        color="link-gray"
-        size="sm"
-        iconTrailing={ArrowRight}
-      >
-        Read this passage in Evidence
-      </Button>
+      <div className="flex flex-col items-start gap-1">
+        <p className="text-small text-text-secondary">The bottom line is a table.</p>
+        <EvidenceLink href={href}>Read this table in Evidence</EvidenceLink>
+      </div>
     );
-  return <p className={className}>{passage.text}</p>;
+  const words = passage.text === null ? null : readerReason(passage.text);
+  if (words === null) return <EvidenceLink href={href}>Read this passage in Evidence</EvidenceLink>;
+  return <p className={className}>{words}</p>;
 }
 
 /** The modules of the run as the pipeline draws them: the lead, then every other but the changes module. */
@@ -176,8 +190,8 @@ function CallTile({ run, view }: Pick<RowProps, "run" | "view">) {
         <RunFacts run={run} view={view} />
       </Tile>
     );
-  const stance = actionBias(lead);
-  const [first, ...rest] = bottomLine(lead);
+  const { stance, unread } = committeeStance(lead);
+  const [first, ...rest] = bottomLineBlocks(lead);
   const name = moduleName(lead.output.module);
   return (
     <Tile span={8} label="The call" className="gap-7 self-start">
@@ -185,6 +199,7 @@ function CallTile({ run, view }: Pick<RowProps, "run" | "view">) {
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
           <h3 className="text-small font-medium text-text-secondary">The call · {name}</h3>
           {stance && <StanceChip stance={stance} large />}
+          {unread && <p className="text-small text-text-secondary">{UNREAD_STANCE}</p>}
         </div>
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
@@ -214,7 +229,7 @@ function Paragraphs({
   entry,
   rest,
   className,
-}: Pick<RowProps, "run"> & { entry: OutputEntry; rest: Passage[]; className: string }) {
+}: Pick<RowProps, "run"> & { entry: OutputEntry; rest: Said[]; className: string }) {
   return (
     <div className={className}>
       {rest.map((passage, at) => (
@@ -246,7 +261,7 @@ function Continuation({
   run,
   entry,
   rest,
-}: Pick<RowProps, "run"> & { entry: OutputEntry; rest: Passage[] }) {
+}: Pick<RowProps, "run"> & { entry: OutputEntry; rest: Said[] }) {
   if (rest.length === 0) return null;
   return (
     <>
@@ -273,8 +288,8 @@ function Continuation({
  */
 const SHORT_BOTTOM_LINE = 90;
 
-const bottomLineSize = (passage: Passage | undefined) =>
-  (passage?.text ?? "").length <= SHORT_BOTTOM_LINE
+const bottomLineSize = (passage: Said | undefined) =>
+  (passage && "text" in passage ? (passage.text ?? "") : "").length <= SHORT_BOTTOM_LINE
     ? "text-h2 sm:text-h1 lg:text-display"
     : "text-h3 sm:text-h2 lg:text-metric";
 
@@ -411,7 +426,7 @@ function ClearanceTile({ run, view }: Pick<RowProps, "run" | "view">) {
         <GapNote>{name} is not part of this run.</GapNote>
       </Tile>
     );
-  const [first, ...rest] = bottomLine(entry);
+  const [first, ...rest] = bottomLineBlocks(entry);
   return (
     <Tile span={12} label="Evidence clearance" className="gap-3">
       <Head
@@ -470,8 +485,8 @@ function ChangesBody({ snapshot, run, view }: RowProps): ReactNode {
           : "No comparison with an earlier run is shown for this run."}
       </p>
     );
-  const [first] = bottomLine(entry);
-  const now = view.lead ? actionBias(view.lead) : undefined;
+  const [first] = bottomLineBlocks(entry);
+  const now = view.lead ? committeeStance(view.lead).stance : undefined;
   return (
     <>
       <Sentence

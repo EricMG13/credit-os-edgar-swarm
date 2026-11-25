@@ -169,3 +169,16 @@ it("lays the runs tile on the report's 12-column grid", () => {
   const tile = screen.getByRole("region", { name: "Runs of Acme" });
   expect(tile.parentElement).toHaveClass("lg:grid-cols-12");
 });
+
+it("says it could not read a stance when the decision states one this page does not know", () => {
+  const { snapshot, runs } = setup();
+  snapshot.workspace.handoffs["n".repeat(64)] = decision("Hold");
+  render(<RunHistory snapshot={snapshot} run={runs.newKey as PublishedRun} issuer="Acme" />);
+  const items = within(screen.getByRole("list", { name: "Runs, newest first" })).getAllByRole(
+    "listitem",
+  );
+  expect(
+    within(row(items, 0)).getByText("This page could not read a stance from the decision"),
+  ).toBeTruthy();
+  expect(within(row(items, 0)).queryByText("Stance not stated")).toBeNull();
+});

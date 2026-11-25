@@ -358,3 +358,70 @@ it("keeps the meter's scale labels at least 12 px on screen when the meter is dr
     expect(Number(label.getAttribute("font-size")) * (204 / 408)).toBeGreaterThanOrEqual(12);
   restore();
 });
+
+it("says it could not read the stance when the decision states one this page does not know", () => {
+  const lead = entry("CP-6", [text("Bottom line", "The view."), decision("Hold")]);
+  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  const call = screen.getByRole("region", { name: "The call" });
+  expect(
+    within(call).getByText("This page could not read a stance from the decision"),
+  ).toBeVisible();
+  expect(within(call).queryByText("Hold")).toBeNull();
+});
+
+it("removes inline source markers from the bottom line and links a passage carrying an unnamed id", () => {
+  const lead = entry("CP-6", [
+    text(
+      "Bottom line",
+      "Cover is thin [E3].",
+      "Leverage of 4.2x [E3] per T4.18 and CP-1 supports Watchlist.",
+    ),
+  ]);
+  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  const call = screen.getByRole("region", { name: "The call" });
+  expect(within(call).getByText("Cover is thin.")).toBeVisible();
+  expect(call).not.toHaveTextContent(/\[E3\]|T4\.18/);
+  expect(
+    within(call).getAllByRole("link", { name: "Read this passage in Evidence" }).length,
+  ).toBeGreaterThan(0);
+});
+
+it("says a bottom line written as a table is a table, with the way to it, and keeps a paragraph before it", () => {
+  const tableSection = (heading: string, paragraph?: string): Section => ({
+    heading,
+    level: 3,
+    line: (line += 1),
+    blocks: [
+      ...(paragraph
+        ? [{ type: "text" as const, line: (line += 1), end: line, text: paragraph }]
+        : []),
+      {
+        type: "table" as const,
+        line: (line += 1),
+        headers: ["Measure", "View"],
+        rows: [{ line: (line += 1), cells: ["Leverage", "High"] }],
+      },
+    ],
+  });
+  const onlyTable = entry("CP-6", [tableSection("Bottom line")]);
+  const { unmount } = render(
+    <CallRow snapshot={snapshot} run={run} view={view([onlyTable], onlyTable)} />,
+  );
+  const call = screen.getByRole("region", { name: "The call" });
+  expect(within(call).getByText("The bottom line is a table.")).toBeVisible();
+  expect(
+    within(call).getAllByRole("link", { name: "Read this table in Evidence" }).length,
+  ).toBeGreaterThan(0);
+  expect(within(call).queryByText(/has no bottom line/)).toBeNull();
+  unmount();
+  const both = entry("CP-6", [tableSection("Bottom line", "Leverage is high.")]);
+  const validation = entry("CP-5", [tableSection("Bottom line")]);
+  render(<CallRow snapshot={snapshot} run={run} view={view([both, validation], both)} />);
+  const second = screen.getByRole("region", { name: "The call" });
+  expect(within(second).getByText("Leverage is high.")).toBeVisible();
+  expect(
+    within(second).getAllByRole("link", { name: "Read this table in Evidence" }).length,
+  ).toBeGreaterThan(0);
+  const clearance = screen.getByRole("region", { name: "Evidence clearance" });
+  expect(within(clearance).getByText("The bottom line is a table.")).toBeVisible();
+});

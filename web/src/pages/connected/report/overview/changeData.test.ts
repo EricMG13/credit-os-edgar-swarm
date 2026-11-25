@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import type { PublishedRun, Section, Snapshot } from "../../publishedReport";
-import { earlierStance, runStance } from "./changeData";
+import { committeeStance, earlierStance, runStance } from "./changeData";
 
 const decision = (bias: string): Section[] => [
   {
@@ -80,4 +80,27 @@ it("states no stance for an earlier-format record or a comparison that does not 
   expect(runStance(snap, "oldKey", record)).toBeUndefined();
   const mismatched = { ...(snap.workspace.runs.newKey as PublishedRun), asOf: "2026-06-30" };
   expect(earlierStance(snap, mismatched)).toBeUndefined();
+});
+
+it("says the page could not read a stance when the decision passage states one it does not know", () => {
+  const entry = (text: string) =>
+    ({
+      output: { module: "CP-6", id: "x", label: "CP-6", href: "", sha256: "s" },
+      sections: [
+        {
+          heading: "Decision",
+          level: 3,
+          line: 3,
+          blocks: [{ type: "text", line: 4, end: 4, text }],
+        },
+      ],
+      selected: true,
+    }) as never;
+  expect(committeeStance(entry("Final Action Bias: Hold. The view."))).toEqual({ unread: true });
+  expect(committeeStance(entry("Final Action Bias: Watchlist. The view."))).toEqual({
+    stance: "Watchlist",
+    unread: false,
+  });
+  expect(committeeStance(entry("The committee met."))).toEqual({ unread: false });
+  expect(committeeStance(undefined)).toEqual({ unread: false });
 });

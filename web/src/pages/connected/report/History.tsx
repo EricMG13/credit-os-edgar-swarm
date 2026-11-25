@@ -13,7 +13,7 @@ import {
 } from "../publishedReport";
 import { moduleOrder } from "../reportView";
 import { StanceChip } from "./overview/CallRow";
-import { runStance } from "./overview/changeData";
+import { UNREAD_STANCE, runStanceRead } from "./overview/changeData";
 import { asOfDate } from "../runFigures";
 import { Bento, Tile } from "./overview/Tile";
 
@@ -56,8 +56,17 @@ const QUIET = `${chip} border-border-container font-normal text-text-secondary`;
 const held = (record: PublishedRun) => !record.history && Object.hasOwn(record, "modules");
 
 /** The run's stance in the Overview's own chip; what is not stated, or not held here, says so. */
-function Stance({ record, stance }: { record: PublishedRun; stance: string | undefined }) {
+function Stance({
+  record,
+  stance,
+  unread,
+}: {
+  record: PublishedRun;
+  stance: string | undefined;
+  unread: boolean;
+}) {
   if (!held(record)) return <span className={QUIET}>Stance not in the run list</span>;
+  if (unread) return <span className={QUIET}>{UNREAD_STANCE}</span>;
   if (stance === undefined) return <span className={QUIET}>Stance not stated</span>;
   return <StanceChip stance={stance} />;
 }
@@ -83,7 +92,7 @@ function RunRow({
   details,
 }: {
   record: PublishedRun;
-  stance: string | undefined;
+  stance: { stance?: string; unread: boolean };
   current: boolean;
   /** Another run has the same as-of date: their order is not known. */
   tie: boolean;
@@ -102,7 +111,7 @@ function RunRow({
         ) : (
           <span className="text-h4 text-gap-text">As-of date not recorded</span>
         )}
-        <Stance record={record} stance={stance} />
+        <Stance record={record} stance={stance.stance} unread={stance.unread} />
         {tie && <span className={QUIET}>Same as-of date</span>}
         {current && (
           <span className={`${chip} border-action-subtle-hover bg-surface-selected text-text-link`}>
@@ -177,7 +186,7 @@ export function RunHistory({
             <RunRow
               key={key}
               record={record}
-              stance={runStance(snapshot, key, record)}
+              stance={runStanceRead(snapshot, key, record)}
               current={record === run}
               tie={Boolean(record.asOf) && (dates.get(record.asOf ?? "") ?? 0) > 1}
               catalogue={byFolder.get(record.folder)}

@@ -339,10 +339,9 @@ it("shows the next five dated items and says how many more are on the Calendar",
   render(<DatesRow {...props} />);
   const tile = screen.getByRole("region", { name: "Dates to watch" });
   expect(within(within(tile).getByRole("list")).getAllByRole("listitem")).toHaveLength(5);
-  expect(within(tile).getByRole("link", { name: "2 later dates in the Calendar" })).toHaveAttribute(
-    "href",
-    "#calendar",
-  );
+  expect(
+    within(tile).getByRole("link", { name: "2 later events in the Calendar" }),
+  ).toHaveAttribute("href", "#calendar");
 });
 
 it("groups events of one day under one mark with their count, and names marks only in the numbered list", () => {
@@ -401,4 +400,38 @@ it("draws the limitations as one list when every module recorded one, after the 
     "href",
     "#modules/CP-2",
   );
+});
+
+it("always says how many recorded events have no date, beside the dated ones", () => {
+  const rows = [event("2025-07-01", "Coupon")];
+  mocks.calendar = rows;
+  mocks.upcoming = rows;
+  mocks.gaps = [
+    {
+      owner: "Liquidity",
+      reason: "No date.",
+      unplaced: [
+        { href: "a", cells: [] },
+        { href: "b", cells: [] },
+      ],
+    },
+  ];
+  render(<DatesRow {...props} />);
+  const tile = screen.getByRole("region", { name: "Dates to watch" });
+  expect(
+    within(tile).getByRole("link", { name: "2 events have no date; see the Calendar" }),
+  ).toHaveAttribute("href", "#calendar");
+});
+
+it("draws event cells through the reader rule: markers removed, a cell carrying an unnamed id not drawn", () => {
+  const marked = {
+    ...event("2025-07-01", "Covenant test [E3]"),
+    cells: ["2025-07-01", "", "", "Covenant test [E3]", "Per T4.18 test", "", "Wall"],
+  };
+  mocks.calendar = [marked];
+  mocks.upcoming = [marked];
+  render(<DatesRow {...props} />);
+  const tile = screen.getByRole("region", { name: "Dates to watch" });
+  expect(within(within(tile).getByRole("list")).getByText("Covenant test")).toBeVisible();
+  expect(tile).not.toHaveTextContent(/\[E3\]|T4\.18/);
 });
