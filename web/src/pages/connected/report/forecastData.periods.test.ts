@@ -5,6 +5,7 @@ import {
   isForecastPeriod,
   periodsInOrder,
   scenarioComparisonNotice,
+  unplacedNote,
 } from "../visuals/scenarioPeriods";
 import { caseYears, cellsOf, endOf, fiscalYear, forecastMeasure } from "./forecastData";
 
@@ -95,10 +96,62 @@ it("gives every reported and pro forma column with a figure, in period order, be
   expect(measure?.cases[0]?.cells.get("FY2025E")?.display).toBe("4.6x");
   expect(measure?.cases[0]?.cells.has("LTM Jun 2025")).toBe(false);
   if (!measure) throw new Error("no measure");
+  // A figure under a label the rule cannot place is drawn last, as authored, and the gap stated.
+  expect(measure.unplaced.map(({ period, display, value: v }) => [period, display, v])).toEqual([
+    ["Quarter", "6.6x", 6.6],
+  ]);
+  expect(unplacedNote(measure.unplaced)).toEqual([
+    "Not placed in time order, shown last: Quarter.",
+  ]);
   expect(historyNotes(measure.historyGaps)).toEqual([
     "Before the forecast, FY2022: EBITDA is not positive.",
-    "Also published, not placed in time order and not drawn: Quarter 6.6x.",
   ]);
+});
+
+it("keeps figures the rule cannot place in the order written, and names one with no figure or published twice", () => {
+  const measure = forecastMeasure(
+    model(
+      [
+        { label: "Run rate", group: "Run rate" },
+        { label: "FY2025E", group: "Base case" },
+        { label: "Stub period", group: "Other" },
+        { label: "FY2024", group: "Fiscal year" },
+        { label: "Opening", group: "Other" },
+        { label: "Covenant basis", group: "Other" },
+        { label: "Closing", group: "Other" },
+        { label: "Covenant basis", group: "Restated" },
+        { label: "Interim", group: "Other" },
+      ],
+      [
+        value("6.6"),
+        value("4.6"),
+        missing("EBITDA is not positive"),
+        value("5.5"),
+        value("6.9"),
+        value("5.1"),
+        value("6.2"),
+        value("5.3"),
+        { status: "unavailable", display: "n.a." },
+      ],
+    ),
+    /^Net leverage\b/,
+  );
+  if (!measure) throw new Error("no measure");
+  expect(measure.history.map(({ period }) => period)).toEqual(["FY2024"]);
+  expect(measure.unplaced.map(({ period, display }) => [period, display])).toEqual([
+    ["Run rate", "6.6x"],
+    ["Opening", "6.9x"],
+    ["Closing", "6.2x"],
+  ]);
+  expect(unplacedNote(measure.unplaced)).toEqual([
+    "Not placed in time order, shown last: Run rate, Opening, Closing.",
+  ]);
+  expect(historyNotes(measure.historyGaps)).toEqual([
+    "Not placed in time order, Stub period: EBITDA is not positive.",
+    "Not placed in time order, no figure for Interim.",
+    "Published more than once, so not drawn: Covenant basis.",
+  ]);
+  expect(unplacedNote([])).toEqual([]);
 });
 
 it("names a period before the forecast that is published twice, and draws neither", () => {
@@ -127,7 +180,8 @@ it("has no history for a grid with forecast columns only, and no forecast for on
     /^Net leverage\b/,
   );
   expect(forecastOnly?.history).toEqual([]);
-  expect(forecastOnly?.historyGaps).toEqual({ blank: [], repeated: [], unread: [] });
+  expect(forecastOnly?.unplaced).toEqual([]);
+  expect(forecastOnly?.historyGaps).toEqual({ blank: [], repeated: [] });
   const historyOnly = forecastMeasure(
     model([{ label: "FY2024", group: "Fiscal year" }], [value("5.5")]),
     /^Net leverage\b/,

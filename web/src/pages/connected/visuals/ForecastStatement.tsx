@@ -11,8 +11,10 @@ import {
 } from "./ForecastGrid";
 import { forecastCaseNames, gridOf, type CaseNames, type Grid } from "./LegacyForecast";
 import { record, stringsIn, word } from "./visualData";
+import { latestReported, periodPlace } from "../reportView";
 import {
   analyzeScenarioPeriods,
+  fiscalYear,
   isForecastPeriod,
   scenarioComparisonNotice,
 } from "./scenarioPeriods";
@@ -85,7 +87,6 @@ type StatementColumn = ReturnType<typeof statementColumns>[number];
  * compared year (`source` null). */
 type ShownColumn = GridColumn & { source: StatementColumn | null; missing?: string };
 
-const ACTUAL_YEAR = /^FY(\d{4})A?$/u;
 const INTEREST_ROW = /^(?:Interest|Interest coverage(?: \(.*\))?)$/i;
 const NOT_PUBLISHED = "Not published";
 /** The rows a long statement opens on: the rows the model marks `total`, and the exact rows the
@@ -103,14 +104,16 @@ function shownOf(column: StatementColumn, band: string, label = column.label): S
   return { label, band, title, source: column };
 }
 
-/** The latest actual fiscal year the grid publishes, which leads the selected case's years. */
+/**
+ * The latest reported period the grid publishes, which leads the selected case's years: the last
+ * actual, year to date or last twelve months column in the one period order, never a pro forma
+ * one (`latestReported`). None where that chooses none: no reported column, one period published
+ * twice, or a fiscal year beside a dated period. The History view has every column.
+ */
 function latestActual(history: StatementColumn[]) {
-  let latest: { column: StatementColumn; year: string } | undefined;
-  for (const column of history) {
-    const year = ACTUAL_YEAR.exec(column.label)?.[1];
-    if (year && (!latest || year >= latest.year)) latest = { column, year };
-  }
-  return latest ? [latest.column] : [];
+  const place = (column: StatementColumn) => periodPlace(column.label);
+  const latest = latestReported(history.filter(place), place)?.latest;
+  return latest ? [latest] : [];
 }
 
 type Kept = ReturnType<typeof analyzeScenarioPeriods>["periods"];
@@ -125,16 +128,16 @@ function caseColumns(lead: StatementColumn[], kept: Kept) {
   return cases.flatMap((member) => {
     const band = `Forecast · ${readerText(member.group)}`;
     const own = lead.filter(({ rawGroup }) => rawGroup === member.rawGroup);
-    // A forecast year inside the case's own span that it publishes no column for.
-    const years = own.flatMap(({ label }) => {
-      const year = /^FY(\d{4})E$/u.exec(label)?.[1];
-      return year ? [Number(year)] : [];
-    });
+    // A forecast year inside the case's own span that it publishes no column for, by the years
+    // the period rule reads from its labels.
+    const years = own.flatMap(({ label }) => fiscalYear(label) ?? []);
     const inSpan = years.length
       ? Array.from(
           { length: Math.max(...years) - Math.min(...years) + 1 },
-          (_, at) => `FY${String(Math.min(...years) + at)}E`,
-        ).map((period) => ({ period, groups: [] as string[] }))
+          (_, at) => Math.min(...years) + at,
+        )
+          .filter((year) => !years.includes(year))
+          .map((year) => ({ period: `FY${String(year)}E`, groups: [] as string[] }))
       : [];
     const absent = [...kept, ...inSpan]
       .filter(

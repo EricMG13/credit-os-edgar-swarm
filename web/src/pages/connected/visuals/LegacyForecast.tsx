@@ -304,7 +304,8 @@ function ForecastTrends({
         const forecast = perCase.flatMap(({ cells }) => cells.map(exactValue));
         if (forecast.filter((value) => value !== null).length < 2) return null;
         // The row's reported and pro forma figures lead every case's line: the same in each.
-        const { history, gaps } = historyOf(
+        // A figure under a label the rule cannot place is given too: the chart draws it last.
+        const { history, unplaced, gaps } = historyOf(
           grid.columns.map((column, at) => {
             const cell = row.cells[at];
             return {
@@ -318,7 +319,11 @@ function ForecastTrends({
         );
         const series = perCase.map(({ name, cells }) => ({
           name,
-          values: [...history.map(({ value }) => value), ...cells.map(exactValue)],
+          values: [
+            ...history.map(({ value }) => value),
+            ...cells.map(exactValue),
+            ...unplaced.map(({ value }) => value),
+          ],
         }));
         return (
           <TrendChart
@@ -330,7 +335,11 @@ function ForecastTrends({
               periods,
             })}
             key={label}
-            periods={[...history.map(({ period }) => period), ...periods]}
+            periods={[
+              ...history.map(({ period }) => period),
+              ...periods,
+              ...unplaced.map(({ period }) => period),
+            ]}
             series={series}
             yTicks={forecastTicks(series.flatMap((entry) => entry.values))}
             note={historyCaption(note, history.length, groups.length, historyNotes(gaps))}
@@ -339,6 +348,7 @@ function ForecastTrends({
               cells: [
                 ...history.map(({ cell }) => (cell ? displayForecastCell(cell) : null)),
                 ...cells.map((cell) => (cell ? displayForecastCell(cell) : NOT_PUBLISHED)),
+                ...unplaced.map(({ cell }) => (cell ? displayForecastCell(cell) : null)),
               ],
             }))}
           />

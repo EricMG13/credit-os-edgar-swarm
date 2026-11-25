@@ -388,3 +388,52 @@ test("a period the rule cannot order is opened on the first stated, never on 'th
   expect(periodsOrdered(ordered, ordered.issuers, LEVERAGE)).toBe(true);
   expect(commonPeriod(ordered, ordered.issuers, LEVERAGE)).toBe("FY2025");
 });
+
+// Review of 2026-11-25: Coverage opens on a reported period (an actual, a year to date or a last
+// twelve months) where the newest runs state one, never on a pro forma or forecast period that
+// happens to be stated as often.
+test("the view opens on the most stated reported period, not a pro forma or forecast one", () => {
+  const equal = ltm([
+    ["FY2026E", 3.1],
+    ["PF LTM Jun 2025", 3.9],
+    ["FY2024", 4.5],
+    ["LTM Jun 2025", 4.2],
+  ]);
+  expect(commonPeriod(equal, equal.issuers, LEVERAGE)).toBe("LTM Jun 2025");
+  // A forecast stated by more runs than any reported period still does not open the view.
+  const two: Coverage = {
+    ...data,
+    facts: [
+      fact("a2", "alpha", LEVERAGE, { period: "FY2026E", text: "3.1", at: 3.1, unit: "x" }),
+      fact("b1", "beta", LEVERAGE, { period: "FY2026E", text: "2.9", at: 2.9, unit: "x" }),
+      fact("a2", "alpha", LEVERAGE, { period: "FY2024", text: "4.5", at: 4.5, unit: "x" }),
+      fact("b1", "beta", LEVERAGE, { period: "FY2025", text: "4.0", at: 4.0, unit: "x" }),
+    ],
+  };
+  expect(commonPeriod(two, two.issuers, LEVERAGE)).toBe("FY2025");
+  // With no reported period stated, the most stated period of any class, the later of equals.
+  const forward = ltm([
+    ["FY2027E", 2.8],
+    ["PF FY2025", 3.9],
+    ["FY2026E", 3.1],
+  ]);
+  expect(commonPeriod(forward, forward.issuers, LEVERAGE)).toBe("FY2027E");
+  // Where a label cannot be placed there is no "later": the first reported period as written.
+  const unordered = ltm([
+    ["FY2026E", 3.1],
+    ["Run rate", 4.4],
+    ["FY2024", 4.5],
+    ["FY2023", 4.9],
+  ]);
+  expect(periodsOrdered(unordered, unordered.issuers, LEVERAGE)).toBe(false);
+  expect(commonPeriod(unordered, unordered.issuers, LEVERAGE)).toBe("FY2024");
+  // No figure stated for any period: still a reported period, the latest.
+  const gaps: Coverage = {
+    ...data,
+    issuers: [data.issuers[0] as Issuer],
+    facts: ["FY2026E", "FY2024", "FY2023"].map((period) =>
+      fact("a2", "alpha", LEVERAGE, { period, text: "Not supplied", gap: true }),
+    ),
+  };
+  expect(commonPeriod(gaps, gaps.issuers, LEVERAGE)).toBe("FY2024");
+});

@@ -289,3 +289,47 @@ it("draws the reported, LTM and pro forma columns before the forecast years, in 
     ["FY2026E", "20", "50"],
   ]);
 });
+
+it("draws a figure the period rule cannot place last, after the forecast years, and says so", () => {
+  const mixed = model(
+    [
+      row("Distributions", [value("7"), value("9"), value("20"), value("30")]),
+      row("Debt repayment", [na("No run-rate repayment"), value("60"), value("50"), value("40")]),
+    ],
+    [
+      { label: "Run rate", group: "Run rate", start: "", end: "" },
+      { label: "FY2024", group: "Fiscal year", start: "", end: "" },
+      { label: "FY2026E", group: "Base case", start: "", end: "" },
+      { label: "FY2025E", group: "Base case", start: "", end: "" },
+    ],
+  );
+  const { container } = render(view(mixed));
+  expect(screen.getByRole("img").getAttribute("aria-label")).toBe(
+    [
+      "Distributions FY2024 9",
+      "Debt repayment FY2024 60",
+      "Distributions FY2025E 30",
+      "Debt repayment FY2025E 40",
+      "Distributions FY2026E 20",
+      "Debt repayment FY2026E 50",
+      "Distributions Run rate 7",
+      "Debt repayment Run rate not published",
+    ].join(", "),
+  );
+  expect(container.querySelector('[data-part="Distributions Run rate"]')).not.toBeNull();
+  expect(screen.getByText("Not placed in time order, shown last: Run rate.")).toBeVisible();
+  expect(screen.getByText("Run rate Debt repayment: No run-rate repayment")).toBeVisible();
+  expect(container.textContent).not.toContain("not drawn");
+  fireEvent.click(screen.getByRole("button", { name: "Table" }));
+  expect(
+    screen
+      .getAllByRole("row")
+      .slice(1)
+      .map((item) => [...item.children].map((cell) => cell.textContent)),
+  ).toEqual([
+    ["FY2024", "9", "60"],
+    ["FY2025E", "30", "40"],
+    ["FY2026E", "20", "50"],
+    ["Run rate", "7", "No run-rate repayment"],
+  ]);
+});

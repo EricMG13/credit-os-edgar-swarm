@@ -423,6 +423,62 @@ it("puts LTM and PF after the fiscal years and before the forecast years on the 
   ).toBeVisible();
 });
 
+it("draws a figure the period rule cannot place last, after the forecast years, and says so", () => {
+  const { container } = draw(
+    measureOf(
+      [
+        { label: "Run rate", group: "Run rate" },
+        { label: "FY2024", group: "Fiscal year" },
+        ...cols("Base case", ["FY2025E", "FY2026E"]),
+      ],
+      [value("6.60"), value("5.50"), value("4.60"), value("4.10")],
+    ),
+  );
+  const axis = [...container.querySelectorAll("[data-axis-period]")];
+  expect(axis.map((label) => label.getAttribute("data-axis-period"))).toEqual([
+    "FY2024",
+    "FY2025E",
+    "FY2026E",
+    "Run rate",
+  ]);
+  const xs = axis.map((label) => Number(label.getAttribute("x")));
+  expect([...xs].sort((a, b) => a - b)).toEqual(xs);
+  const point = container.querySelector('[data-point="unplaced Run rate"]');
+  expect(Number(point?.getAttribute("cx"))).toBe(xs[3]);
+  // Its place in time is not known: no line runs to it, from the reported years or from a case.
+  expect(container.querySelectorAll('[data-segment="history"]')).toHaveLength(0);
+  expect(container.querySelectorAll('[data-segment="Base case"]')).toHaveLength(1);
+  expect(within(screen.getByRole("figure")).getByText("6.60x")).toBeInTheDocument();
+  expect(screen.getByRole("img").getAttribute("aria-label")).toBe(
+    "Net leverage by period. Reported: FY2024 5.50x; Base case: FY2025E 4.60x, FY2026E 4.10x; Not placed in time order, shown last: Run rate 6.60x.",
+  );
+  expect(screen.getByText("Not placed in time order, shown last: Run rate.")).toBeVisible();
+  expect(
+    within(screen.getByRole("list", { name: "Chart key" })).getByText(
+      "Not placed in time order, shown last",
+    ),
+  ).toBeVisible();
+  fireEvent.click(screen.getByRole("button", { name: "Table" }));
+  const table = within(screen.getByRole("table", { name: /Net leverage by case/ }));
+  expect(table.getAllByRole("columnheader").map((cell) => cell.textContent)).toEqual([
+    "Period",
+    "Reported",
+    "Not placed in time order",
+    "Base case",
+  ]);
+  expect(
+    table
+      .getAllByRole("row")
+      .slice(1)
+      .map((row) => [...row.children].map((cell) => cell.textContent)),
+  ).toEqual([
+    ["FY2024", "5.50x", "", ""],
+    ["FY2025E", "", "", "4.60x"],
+    ["FY2026E", "", "", "4.10x"],
+    ["Run rate", "", "6.60x", ""],
+  ]);
+});
+
 it("states every period's figure in its own row of the table, reported apart from each case", () => {
   draw(measureOf(MIXED, MIXED_CELLS));
   fireEvent.click(screen.getByRole("button", { name: "Table" }));

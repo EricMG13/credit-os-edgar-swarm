@@ -248,6 +248,10 @@ describe("headlineSources for a figure the catalogue lacks", () => {
     ["a year that disagrees with its date", ["FY2023 / 2024-09-30", "FY2024 / 2024-09-30"]],
     ["an impossible date", ["2024-02-30", "2024-09-30"]],
     ["a leap day in a year with none", ["2023-02-29", "2024-09-30"]],
+    // Which of a fiscal year and a date is later depends on the year end: no latest is guessed.
+    ["a fiscal year beside a dated period", ["2024-09-30", "FY2023"]],
+    ["a fiscal year beside a later date", ["FY2025", "2025-06-30"]],
+    ["a dated fiscal year beside a fiscal quarter", ["FY2024 / 2024-09-30", "Q1 2025", "LTM 2025"]],
   ])("has no source for it when its chart has %s", (_, periods) => {
     const source = entry([
       leverage(["FY2023", "FY2024"]),
@@ -264,7 +268,12 @@ describe("headlineSources for a figure the catalogue lacks", () => {
     ["a last twelve months period after the fiscal years", ["LTM Jun 2025", "FY2023", "FY2024"], 0],
     ["quarters in time order", ["Q3 FY2024", "Q1 FY2024", "Q2 FY2024"], 0],
     ["a year to date before a last twelve months", ["LTM Jun 2025", "FY2024", "YTD Jun 2025"], 0],
-    ["a fiscal year and a dated period", ["2024-09-30", "FY2023"], 0],
+    [
+      "dated fiscal years before a last twelve months period",
+      ["LTM Jun 2025", "FY2023 / 2023-09-30", "FY2024 / 2024-09-30"],
+      0,
+    ],
+    ["fiscal years and quarters, none carrying a date", ["Q1 2025", "FY2023", "FY2024"], 0],
     [
       "the last reported period, not the pro forma or forecast ones after it",
       ["FY2026E", "PF LTM Jun 2025", "FY2024", "LTM Jun 2025", "FY2025E"],

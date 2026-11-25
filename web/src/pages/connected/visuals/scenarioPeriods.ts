@@ -1,3 +1,4 @@
+import { periodGapNote } from "@/components/chart/seriesData";
 import { orderPeriods, parsePeriod } from "@/utils/periodOrder";
 
 export interface ScenarioPeriodObservation {
@@ -19,6 +20,21 @@ export function isForecastPeriod(period: string) {
   return parsePeriod(period)?.periodClass === "forecast";
 }
 
+/** The fiscal year of an actual (`FY2024`) or forecast (`FY2025E`) label that the period rule
+ * reads as one whole year; null for any other period (a quarter, a last twelve months). */
+export function fiscalYear(label: string) {
+  const parsed = parsePeriod(label);
+  const whole = parsed?.span === "year" && ["actual", "forecast"].includes(parsed.periodClass);
+  return whole ? (parsed.end?.[0] ?? null) : null;
+}
+
+/** What a label writes before the year it names ("FY", "FY ", nothing), so that a year with no
+ * row can be named as its neighbours are; nothing where the label does not write the year out. */
+export function yearPrefix(label: string, year: number) {
+  const at = label.indexOf(String(year));
+  return at < 0 ? "" : label.slice(0, at);
+}
+
 /** Period labels in the one period order; a label the rule cannot read stays last, as written. */
 export function periodsInOrder(periods: readonly string[]) {
   return orderPeriods(periods, (period) => period).ordered;
@@ -33,62 +49,73 @@ export function periodList(periods: readonly string[]) {
 /** One published cell of a row, as a chart reads it: its period, its text and its figure. */
 type PeriodCell = { period: string; display: string; value: number | null; reason: string };
 
-/** What a row publishes before the forecast and a chart does not draw. */
+/** What a row publishes outside the forecast and a chart does not draw. */
 export type HistoryGaps<T extends PeriodCell = PeriodCell> = {
-  /** Columns that state no figure, in period order. */
+  /** Columns that state no figure: those in period order, then those the rule cannot place. */
   blank: T[];
   /** Periods the grid publishes more than once. */
   repeated: string[];
-  /** Figures under a label the period rule cannot read. */
-  unread: T[];
 };
 
 /**
- * A row's cells before the forecast: every actual, year to date, last twelve months and pro forma
- * column that states a figure, in the one period order. `gaps` are what is not drawn.
+ * A row's cells outside the forecast. `history` is every actual, year to date, last twelve months
+ * and pro forma column that states a figure, in the one period order, drawn before the forecast.
+ * `unplaced` are the figures under a label the period rule cannot read, as authored: a chart draws
+ * them last, after the forecast, and says so (`unplacedNote`). `gaps` are what is not drawn: a
+ * column with no figure, and a period published twice (which figure is right is not guessed).
  */
 export function historyOf<T extends PeriodCell>(cells: readonly T[]) {
-  const placed = cells.filter(({ period }) => parsePeriod(period) && !isForecastPeriod(period));
-  const count = (cell: T) => placed.filter((other) => other.period === cell.period).length;
-  const once = orderPeriods(
-    placed.filter((cell) => count(cell) === 1),
+  const outside = cells.filter(({ period }) => !isForecastPeriod(period));
+  const count = (cell: T) => outside.filter((other) => other.period === cell.period).length;
+  const { ordered, gaps: unread } = orderPeriods(
+    outside.filter((cell) => count(cell) === 1),
     ({ period }) => period,
-  ).ordered;
+  );
+  const figures = ordered.filter(({ value }) => value !== null);
   const gaps: HistoryGaps<T> = {
-    blank: once.filter(({ value }) => value === null),
-    repeated: [...new Set(placed.filter((cell) => count(cell) > 1).map(({ period }) => period))],
-    unread: cells.filter(({ period, value }) => !parsePeriod(period) && value !== null),
+    blank: ordered.filter(({ value }) => value === null),
+    repeated: [...new Set(outside.filter((cell) => count(cell) > 1).map(({ period }) => period))],
   };
-  return { history: once.filter(({ value }) => value !== null), gaps };
+  return {
+    history: figures.filter((cell) => !unread.includes(cell)),
+    unplaced: figures.filter((cell) => unread.includes(cell)),
+    gaps,
+  };
+}
+
+/** What a chart says of the figures it draws last because their labels cannot be placed in time
+ * (the wording of every period chart: `periodGapNote`). Nothing when there are none. */
+export function unplacedNote(unplaced: readonly { period: string }[]) {
+  const note = periodGapNote(unplaced.map(({ period }) => period));
+  return note ? [note] : [];
 }
 
 /**
- * What the reader is told of the periods before the forecast that a chart does not draw, each
- * fact once: a column with no figure (its reason as written), a period published twice, and a
- * figure under a label that cannot be placed in time. `drawn` are blank periods the chart does
- * show and says so itself.
+ * What the reader is told of the periods outside the forecast that a chart does not draw, each
+ * fact once: a column with no figure (its reason as written) and a period published twice. A
+ * label the rule cannot read is not known to come before the forecast, so it is not said to.
+ * `drawn` are blank periods the chart does show and says so itself.
  */
 export function historyNotes(
-  { blank, repeated, unread }: HistoryGaps,
+  { blank, repeated }: HistoryGaps,
   drawn: ReadonlySet<string> = new Set(),
 ) {
-  const undrawn = blank.filter(({ period }) => !drawn.has(period));
-  const unexplained = undrawn.filter(({ reason }) => !reason).map(({ period }) => period);
+  const notes = (read: boolean, where: string, twice: string) => {
+    const mine = (period: string) => (parsePeriod(period) !== null) === read;
+    const undrawn = blank.filter(({ period }) => mine(period) && !drawn.has(period));
+    const unexplained = undrawn.filter(({ reason }) => !reason).map(({ period }) => period);
+    const again = repeated.filter(mine);
+    return [
+      ...undrawn.flatMap(({ period, reason }) =>
+        reason ? [`${where}, ${period}: ${reason}.`] : [],
+      ),
+      ...(unexplained.length ? [`${where}, no figure for ${periodList(unexplained)}.`] : []),
+      ...(again.length ? [`${twice}, so not drawn: ${periodList(again)}.`] : []),
+    ];
+  };
   return [
-    ...undrawn.flatMap(({ period, reason }) =>
-      reason ? [`Before the forecast, ${period}: ${reason}.`] : [],
-    ),
-    ...(unexplained.length
-      ? [`Before the forecast, no figure for ${periodList(unexplained)}.`]
-      : []),
-    ...(repeated.length
-      ? [`Published more than once before the forecast, so not drawn: ${periodList(repeated)}.`]
-      : []),
-    ...(unread.length
-      ? [
-          `Also published, not placed in time order and not drawn: ${periodList(unread.map((cell) => `${cell.period} ${cell.display}`))}.`,
-        ]
-      : []),
+    ...notes(true, "Before the forecast", "Published more than once before the forecast"),
+    ...notes(false, "Not placed in time order", "Published more than once"),
   ];
 }
 

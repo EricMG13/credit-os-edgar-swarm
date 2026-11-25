@@ -434,7 +434,13 @@ export const stated = (figure: Figure | undefined): figure is Figure & { value: 
 /** Where a Period cell sits in the one period order (`periodKey`, the twin of `period_order` of
  * `credit_os_catalogue.py`), and whether it is a reported period: an actual, a year to date or a
  * last twelve months. A pro forma or a forecast is placed too, and is never a latest reported one. */
-export type PeriodPlace = { key: readonly number[]; reported: boolean };
+export type PeriodPlace = {
+  key: readonly number[];
+  reported: boolean;
+  /** For an actual period, whether the label carries its own date (`2025-06-30`, `FY2024 /
+   * 2024-09-30`) or is fiscal-labelled (`FY2025`, `Q3 2025`, `Jun 2025`); null for another class. */
+  dated: boolean | null;
+};
 
 const REPORTED: ReadonlySet<string> = new Set(["actual", "ytd", "ltm"]);
 
@@ -442,7 +448,16 @@ const REPORTED: ReadonlySet<string> = new Set(["actual", "ytd", "ltm"]);
 export function periodPlace(cell: string): PeriodPlace | undefined {
   const parsed = parsePeriod(cell);
   const key = periodKey(cell);
-  return parsed && key ? { key, reported: REPORTED.has(parsed.periodClass) } : undefined;
+  if (!parsed || !key) return undefined;
+  const dated = parsed.periodClass === "actual" ? parsed.span === "date" : null;
+  return { key, reported: REPORTED.has(parsed.periodClass), dated };
+}
+
+/** Whether the actual periods among these mix dated and fiscal-labelled ones (`FY2025` beside
+ * `2025-06-30`): which is later depends on the year end, so no latest is chosen from them. */
+function mixesDatedAndFiscal(places: readonly PeriodPlace[]) {
+  const forms = new Set(places.map(({ dated }) => dated));
+  return forms.has(true) && forms.has(false);
 }
 
 /**
@@ -450,7 +465,8 @@ export function periodPlace(cell: string): PeriodPlace | undefined {
  * `credit_os_catalogue.py` chooses it: the last in that order among the actual, year to date and
  * last twelve months periods, whatever order the items are in, never a pro forma or forecast one.
  * Nothing where the builder chooses none: an item with no place (a period that cannot be read, a
- * malformed row), two items with one place, or no reported period.
+ * malformed row), two items with one place, no reported period, or actual periods that mix dated
+ * and fiscal-labelled ones (`mixes_dated_and_fiscal` there). A chart still draws those in order.
  */
 export function latestReported<T>(
   items: readonly T[],
@@ -468,7 +484,7 @@ export function latestReported<T>(
       index > 0 && comparePeriodKeys(placed[index - 1]?.at.key ?? [], at.key) === 0,
   );
   const latest = placed.filter(({ at }) => at.reported).at(-1);
-  if (repeats || !latest) return undefined;
+  if (repeats || !latest || mixesDatedAndFiscal(placed.map(({ at }) => at))) return undefined;
   return { ordered: placed.map(({ item }) => item), latest: latest.item };
 }
 

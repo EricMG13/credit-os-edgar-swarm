@@ -29,14 +29,23 @@ const revenue = [
   value("1050", "1,050"),
 ];
 
-function draw() {
+function draw(
+  extra: { columns: typeof columns; cells: typeof revenue } = { columns: [], cells: [] },
+) {
   render(
     <LegacyForecast
       model={{
         cashflow: {
           units: "USD millions",
-          columns,
-          rows: [{ label: "Revenue", band: "Revenue", total: false, cells: revenue }],
+          columns: [...extra.columns, ...columns],
+          rows: [
+            {
+              label: "Revenue",
+              band: "Revenue",
+              total: false,
+              cells: [...extra.cells, ...revenue],
+            },
+          ],
         },
       }}
     />,
@@ -84,5 +93,45 @@ it("keeps every figure with its own period in the Table form", () => {
   expect(rows).toEqual([
     ["Base case", "1,100", "1,200", "1,250", "1,310", "1,300", "1,400"],
     ["Downside case", "1,100", "1,200", "1,250", "1,310", "1,150", "1,050"],
+  ]);
+});
+
+it("draws a figure the period rule cannot place last, after the forecast years, and says so", () => {
+  const figure = draw({
+    columns: [{ label: "Run rate", group: "Run rate" }],
+    cells: [value("1275", "1,275")],
+  });
+  const ticks = [
+    ...figure.querySelectorAll(".recharts-xAxis-tick-labels .recharts-cartesian-axis-tick-value"),
+  ].map((tick) => tick.textContent);
+  expect(ticks).toEqual([
+    "FY2023",
+    "FY2024",
+    "LTM Jun 2025",
+    "PF LTM Jun 2025",
+    "FY2025E",
+    "FY2026E",
+    "Run rate",
+  ]);
+  const caption = figure.querySelector("figcaption")?.textContent ?? "";
+  expect(caption).toContain("Not placed in time order, shown last: Run rate.");
+  expect(caption).not.toContain("not drawn");
+  fireEvent.click(within(figure).getByRole("radio", { name: "Table" }));
+  const rows = within(within(figure).getByRole("table", { name: "Revenue" }))
+    .getAllByRole("row")
+    .map((row) => [...row.children].map((cell) => cell.textContent));
+  expect(rows).toEqual([
+    [
+      "Revenue",
+      "FY2023",
+      "FY2024",
+      "LTM Jun 2025",
+      "PF LTM Jun 2025",
+      "FY2025E",
+      "FY2026E",
+      "Run rate",
+    ],
+    ["Base case", "1,100", "1,200", "1,250", "1,310", "1,300", "1,400", "1,275"],
+    ["Downside case", "1,100", "1,200", "1,250", "1,310", "1,150", "1,050", "1,275"],
   ]);
 });

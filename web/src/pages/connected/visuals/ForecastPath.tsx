@@ -13,7 +13,7 @@ import {
   type MeasureCell,
   type ScheduleYear,
 } from "../report/forecastData";
-import { historyNotes, periodsInOrder } from "./scenarioPeriods";
+import { historyNotes, periodsInOrder, unplacedNote } from "./scenarioPeriods";
 import { ticks } from "./visualData";
 
 /** The maturity schedule as its module publishes it, drawn under the fiscal years of the same axis. */
@@ -67,10 +67,15 @@ function useMeasuredWidth(fallback: number) {
 
 /**
  * One period on the X axis. `history` is a reported or pro forma period before the forecast,
- * `forecast` a period of the drawn cases, `reach` a later fiscal year a scheduled maturity falls in.
+ * `forecast` a period of the drawn cases, `reach` a later fiscal year a scheduled maturity falls in,
+ * `unplaced` a figure under a label the period rule cannot place, drawn last.
  * `year` is the fiscal year the slot stands for; null for a period that is not one whole year.
  */
-type Slot = { label: string; year: number | null; kind: "history" | "forecast" | "reach" };
+type Slot = {
+  label: string;
+  year: number | null;
+  kind: "history" | "forecast" | "reach" | "unplaced";
+};
 const slotKey = (slot: Slot) => `${slot.kind}-${slot.label}`;
 const isForecast = (slot: Slot) => slot.kind === "forecast";
 
@@ -88,8 +93,9 @@ function drawnCases(measure: Measure, group: string | undefined) {
  * The periods on X, in the one period order: every reported and pro forma period the measure
  * states a figure for, then the drawn cases' forecast periods (one slot per fiscal year from the
  * first to the last, published or not), then the fiscal years after them that a scheduled maturity
- * falls in, up to `REACH` years on. Only the drawn cases' periods are forecast slots: with no
- * comparison, the selected case's own periods alone.
+ * falls in, up to `REACH` years on, then the figures whose labels the rule cannot place, as
+ * written. Only the drawn cases' periods are forecast slots: with no comparison, the selected
+ * case's own periods alone.
  */
 function axisSlots(measure: Measure, drawn: MeasureCase[], schedule: PathSchedule): Slot[] {
   const periods = [...new Set(drawn.flatMap((item) => [...item.cells.keys()]))];
@@ -122,6 +128,11 @@ function axisSlots(measure: Measure, drawn: MeasureCase[], schedule: PathSchedul
     })),
     ...forecast.map((label): Slot => ({ label, year: fiscalYear(label), kind: "forecast" })),
     ...reach.map((year): Slot => ({ label: `FY${String(year)}`, year, kind: "reach" })),
+    ...measure.unplaced.map(({ period }): Slot => ({
+      label: period,
+      year: null,
+      kind: "unplaced",
+    })),
   ];
 }
 
@@ -132,11 +143,11 @@ function cellAt(item: MeasureCase, slot: Slot): MeasureCell | undefined {
   return [...item.cells.values()].find((cell) => fiscalYear(cell.period) === slot.year);
 }
 
-/** The reported or pro forma figure in a slot before the forecast. */
+/** The figure in a slot outside the forecast: reported or pro forma before it, or unplaced. */
 function historyAt(measure: Measure, slot: Slot): MeasureCell | undefined {
-  return slot.kind === "history"
-    ? measure.history.find((cell) => cell.period === slot.label)
-    : undefined;
+  if (slot.kind === "history") return measure.history.find((cell) => cell.period === slot.label);
+  if (slot.kind === "unplaced") return measure.unplaced.find((cell) => cell.period === slot.label);
+  return undefined;
 }
 
 /** Where a fiscal year is drawn: its forecast or later slot, else its reported one; -1 for none. */
@@ -382,19 +393,21 @@ function pointLabels(
         });
       }
   }
-  // Each figure before the forecast is labelled at its own period, so it is never read as a
-  // forecast: the latest always, an earlier one where there is clear room (the table has them all).
+  // Each figure outside the forecast is labelled at its own period, so it is never read as a
+  // forecast: the latest reported one and each unplaced one always, an earlier one where there is
+  // clear room (the table has them all).
   const reported = slots.flatMap((slot, at) => {
     const cell = historyAt(measure, slot);
     return cell?.value == null ? [] : [{ cell, at, value: cell.value }];
   });
+  const always = new Set([measure.history.at(-1), ...measure.unplaced]);
   for (const { cell, at, value } of [...reported].reverse()) {
     const spots = around(g.x(at), g.y(value));
     wanted.push({
       key: `history-${cell.period}`,
       text: cell.display,
       kind: "figure",
-      optional: cell !== reported.at(-1)?.cell,
+      optional: !always.has(cell),
       spots: ringed(
         [spots[5], spots[3], spots[4], spots[0]].filter((spot): spot is Spot => spot !== undefined),
       ),
@@ -633,11 +646,12 @@ function History({ measure, slots, g }: { measure: Measure; slots: Slot[]; g: Ge
         return cell?.value == null ? null : (
           <circle
             key={slotKey(slot)}
-            data-point={`history ${cell.period}`}
+            data-point={`${slot.kind} ${cell.period}`}
             cx={g.x(at)}
             cy={g.y(cell.value)}
             r="5"
             strokeWidth="2"
+            strokeDasharray={slot.kind === "unplaced" ? "2 2" : undefined}
             className="fill-surface-card stroke-chart-3"
           />
         );
@@ -751,6 +765,9 @@ function Lane({ schedule, slots, g }: { schedule: PathSchedule; slots: Slot[]; g
   );
 }
 
+/** What the chart calls the figures whose labels the period rule cannot place. */
+const UNPLACED = "Not placed in time order, shown last";
+
 /** The reported and pro forma figures before the forecast, named for what they hold. */
 function historyName(measure: Measure) {
   const proForma = measure.history.some(({ period }) => parsePeriod(period)?.periodClass === "pf");
@@ -777,7 +794,12 @@ function reading(measure: Measure, drawn: MeasureCase[], slots: Slot[], schedule
   const lane = placed.length
     ? ` Debt maturing: ${placed.map((item) => `${item.label} ${item.cell?.text ?? ""}`).join(", ")}.`
     : "";
-  return `Net leverage by period. ${[...before, ...cases].join("; ")}.${lane}`;
+  const last = measure.unplaced.length
+    ? [
+        `${UNPLACED}: ${measure.unplaced.map((cell) => `${cell.period} ${cell.display}`).join(", ")}`,
+      ]
+    : [];
+  return `Net leverage by period. ${[...before, ...cases, ...last].join("; ")}.${lane}`;
 }
 
 function missingNotes(drawn: MeasureCase[], slots: Slot[]) {
@@ -807,7 +829,14 @@ function notes(measure: Measure, drawn: MeasureCase[], slots: Slot[], schedule: 
     out.push(
       `The model also publishes ${periodList(measure.others)}; this chart reads ${measure.label}.`,
     );
-  out.push(...historyNotes(measure.historyGaps), ...missingNotes(drawn, slots));
+  out.push(
+    // Said only of what the axis holds: with no forecast period nothing is drawn, last or not.
+    ...unplacedNote(
+      measure.unplaced.filter(({ period }) => slots.some((slot) => slot.label === period)),
+    ),
+    ...historyNotes(measure.historyGaps),
+    ...missingNotes(drawn, slots),
+  );
   for (const item of schedule.years)
     if (item.cell?.value === null && yearAt(slots, item.year) >= 0)
       out.push(`Debt maturing, ${item.label}: ${item.cell.text}.`);
@@ -893,6 +922,15 @@ function Legend({
           {historyName(measure)}, before the forecast
         </li>
       )}
+      {measure.unplaced.length > 0 && (
+        <li className="flex items-center gap-1.5">
+          <span
+            aria-hidden="true"
+            className="size-2.5 rounded-ds-full border-2 border-dashed border-chart-3"
+          />
+          {UNPLACED}
+        </li>
+      )}
       {lane && (
         <li className="flex items-center gap-1.5">
           <span aria-hidden="true" className="h-2.5 w-2 bg-chart-2" />
@@ -952,6 +990,7 @@ function PathTable({
   schedule: PathSchedule;
 }) {
   const reported = measure.history.length > 0;
+  const unplaced = measure.unplaced.length > 0;
   const lane = schedule.years.some((item) => yearAt(slots, item.year) >= 0);
   const rows = tableRows(slots, schedule);
   return (
@@ -973,6 +1012,11 @@ function PathTable({
             {reported && (
               <th scope="col" className="py-2 pr-4 font-medium">
                 {historyName(measure)}
+              </th>
+            )}
+            {unplaced && (
+              <th scope="col" className="py-2 pr-4 font-medium">
+                Not placed in time order
               </th>
             )}
             {drawn.map((item) => (
@@ -998,7 +1042,12 @@ function PathTable({
                 </th>
                 {reported && (
                   <td className="py-2 pr-4 font-mono tabular-nums">
-                    {historyAt(measure, row)?.display ?? ""}
+                    {row.kind === "history" ? (historyAt(measure, row)?.display ?? "") : ""}
+                  </td>
+                )}
+                {unplaced && (
+                  <td className="py-2 pr-4 font-mono tabular-nums">
+                    {row.kind === "unplaced" ? (historyAt(measure, row)?.display ?? "") : ""}
                   </td>
                 )}
                 {drawn.map((item) => {
@@ -1103,7 +1152,7 @@ function Chart({
   const { probe, widthOf } = useTextWidth();
   const values = [
     ...drawn.flatMap((item) => [...item.cells.values()].map((cell) => cell.value)),
-    ...measure.history.map((cell) => cell.value),
+    ...[...measure.history, ...measure.unplaced].map((cell) => cell.value),
   ].filter((value): value is number => value !== null);
   const lane = schedule.years.some((item) => yearAt(slots, item.year) >= 0);
   const { keyed, room } = labelRoom(drawn, slots, width, widthOf);

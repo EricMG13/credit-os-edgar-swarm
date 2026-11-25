@@ -1,8 +1,9 @@
 import { moduleName } from "../api";
 import { forecastCaseNames, gridOf, type Grid } from "../visuals/LegacyForecast";
-import { orderPeriods, parsePeriod } from "@/utils/periodOrder";
+import { orderPeriods } from "@/utils/periodOrder";
 import {
   analyzeScenarioPeriods,
+  fiscalYear,
   historyOf,
   isForecastPeriod,
   periodList,
@@ -46,14 +47,6 @@ export type MeasureCase = {
   cells: Map<string, MeasureCell>;
   own: Map<string, MeasureCell>;
 };
-
-/** The fiscal year of an actual (`FY2024`) or forecast (`FY2025E`) column label that the period
- * rule reads as one whole year; null for any other period (a quarter, a last twelve months). */
-export function fiscalYear(label: string) {
-  const parsed = parsePeriod(label);
-  const whole = parsed?.span === "year" && ["actual", "forecast"].includes(parsed.periodClass);
-  return whole ? (parsed.end?.[0] ?? null) : null;
-}
 
 const byPeriod = <T extends { period: string }>(cells: readonly T[]) =>
   orderPeriods(cells, ({ period }) => period).ordered;
@@ -104,12 +97,13 @@ const toEntry = ({ period, start, end, display, value, reason }: MeasureCell) =>
 
 const toPeriod = ({ period }: MeasureCell) => period;
 
-export { periodList };
+export { fiscalYear, periodList };
 
 /**
  * One measure of the published model, by case: the cells of the grid's row for it in each
  * forecast column of the main grid and the `other` grid, and `history`, the row's reported and pro
- * forma figures before them, with `historyGaps`, what it publishes there and is not drawn
+ * forma figures before them, `unplaced`, its figures under a label the period rule cannot place
+ * (drawn last), and `historyGaps`, what it publishes outside the forecast and is not drawn
  * (`historyOf`). Where a grid has several matching rows,
  * the one `prefer` names is read; none is chosen otherwise. Periods go through the same
  * eligibility as the cash proxy comparison (`analyzeScenarioPeriods`): a period a case does not
@@ -156,9 +150,11 @@ export function forecastMeasure(model: unknown, pattern: RegExp, prefer?: RegExp
     ? byPeriod([...single.cells.values()]).map(toPeriod)
     : analysis.periods.map(({ period }) => period);
   // Reported and pro forma figures: drawn before the forecast, never mixed into a case's cells.
-  const { history, gaps: historyGaps } = historyOf(
-    first.grid.columns.map((column, at) => measureCell(column, first.row.cells[at])),
-  );
+  const {
+    history,
+    unplaced,
+    gaps: historyGaps,
+  } = historyOf(first.grid.columns.map((column, at) => measureCell(column, first.row.cells[at])));
   return {
     label: first.row.label,
     /** Other rows the model publishes for this measure, not read here. */
@@ -166,6 +162,7 @@ export function forecastMeasure(model: unknown, pattern: RegExp, prefer?: RegExp
     cases,
     periods,
     history,
+    unplaced,
     historyGaps,
     compared: !analysis.noSharedPeriod,
     notice: scenarioComparisonNotice(analysis),
@@ -372,6 +369,9 @@ export function maturitySchedule(view: ReportView) {
       source,
     };
   const table = source.table;
+  // Not a period order: whether the row is written as a fiscal year, the model's own axis. The
+  // period rule reads `2026` and `FY2026` as one year; a schedule by calendar year is not the
+  // model's fiscal year, so only the `FY` form is placed and any other stays beside the axis.
   const dated = (label: string) => (/^FY\d{4}$/u.test(label) ? fiscalYear(label) : null);
   const rows = [...slots.dated, ...slots.undated].filter(
     (slot): slot is typeof slot & { cell: Cell } => slot.cell != null,

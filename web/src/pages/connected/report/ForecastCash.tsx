@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Segmented } from "@/components/kit/Segmented";
-import { historyNotes, periodsInOrder } from "../visuals/scenarioPeriods";
+import { historyNotes, periodsInOrder, unplacedNote } from "../visuals/scenarioPeriods";
 import {
   cellsOf,
   fiscalYear,
@@ -278,24 +278,37 @@ function yearSlots(periods: string[]) {
 
 type Read = { name: string; measure: Measure | null; cells: Map<string, MeasureCell> };
 
+/** A row's cell in each period outside the forecast: its figure, or its published cell with no
+ * figure and the reason it gives. */
+const cellsOutside = (measure: Measure | null) =>
+  new Map(
+    [
+      ...(measure?.history ?? []),
+      ...(measure?.unplaced ?? []),
+      ...(measure?.historyGaps.blank ?? []),
+    ].map((cell) => [cell.period, cell]),
+  );
+
 /**
- * The periods before the forecast that either row states a figure for, in period order, each part
- * with its own cell: a part with no figure there keeps its published cell and reason.
+ * The periods outside the forecast that either row states a figure for, each part with its own
+ * cell (a part with no figure there keeps its published cell and reason): `before`, the reported
+ * and pro forma periods in period order, and `last`, the periods the rule cannot place, as written.
  */
-function historySlots(read: Read[]): Slot[] {
-  const cellsOfRow = (measure: Measure | null) =>
-    new Map(
-      [...(measure?.history ?? []), ...(measure?.historyGaps.blank ?? [])].map((cell) => [
-        cell.period,
-        cell,
-      ]),
-    );
-  const stated = read.flatMap(({ measure }) => (measure?.history ?? []).map((cell) => cell.period));
-  const byRow = read.map(({ name, measure }) => ({ name, cells: cellsOfRow(measure) }));
-  return periodsInOrder([...new Set(stated)]).map((period) => ({
+function historySlots(read: Read[]) {
+  const byRow = read.map(({ name, measure }) => ({ name, cells: cellsOutside(measure) }));
+  const slot = (period: string): Slot => ({
     period,
     parts: byRow.map(({ name, cells }) => ({ name, cell: cells.get(period) })) as [Part, Part],
-  }));
+  });
+  const periods = (cells: (measure: Measure) => MeasureCell[]) => [
+    ...new Set(
+      read.flatMap(({ measure }) => (measure ? cells(measure) : []).map(({ period }) => period)),
+    ),
+  ];
+  return {
+    before: periodsInOrder(periods(({ history }) => history)).map(slot),
+    last: periods(({ unplaced }) => unplaced).map(slot),
+  };
 }
 
 /** Distributions and debt repayments by year, stacked from zero on one scale; never summed. */
@@ -346,18 +359,21 @@ export function UsesOfCash({
         </GapNote>
       </Tile>
     );
-  const before = historySlots(byName);
+  const { before, last } = historySlots(byName);
   const slots: Slot[] = [
     ...before,
     ...yearSlots(periods).map((period) => ({
       period,
       parts: byName.map(({ name, cells }) => ({ name, cell: cells.get(period) })) as [Part, Part],
     })),
+    ...last,
   ];
-  // A period before the forecast that is drawn says its own gap; the others are named per row.
-  const drawnBefore = new Set(before.map(({ period }) => period));
+  // A period outside the forecast that is drawn says its own gap; the others are named per row.
+  const drawnOutside = new Set([...before, ...last].map(({ period }) => period));
   const undrawn = byName.flatMap(({ name, measure }) =>
-    measure ? historyNotes(measure.historyGaps, drawnBefore).map((note) => `${name}: ${note}`) : [],
+    measure
+      ? historyNotes(measure.historyGaps, drawnOutside).map((note) => `${name}: ${note}`)
+      : [],
   );
   const gapNotes = slots.flatMap(({ period, parts }) =>
     parts.every(({ cell }) => cell === undefined)
@@ -374,7 +390,7 @@ export function UsesOfCash({
               : [],
         ),
   );
-  const notes = [...gapNotes, ...undrawn];
+  const notes = [...gapNotes, ...undrawn, ...unplacedNote(last)];
   return (
     <Tile {...tile}>
       <div className="flex">

@@ -275,6 +275,19 @@ describe("the one period order (ruling of 2026-11-25)", () => {
       ["FY2024", "YTD 2025", "LTM", "PF FY2024", "FY2025E", "Current"].map(isReported),
     ).toEqual([true, true, true, false, false, false]);
   });
+  it("chooses no latest reported period where dated and fiscal-labelled actuals are mixed", () => {
+    expect(latestReported(["FY2025", "2025-06-30"], (label) => label)).toBeUndefined();
+    expect(
+      latestReported(["FY2023", "FY2024 / 2024-09-30", "LTM Jun 2025"], (label) => label),
+    ).toBeUndefined();
+    expect(latestReported(["Q4 2024", "2025-03-31", "Current"], (label) => label)).toBeUndefined();
+    // One form only, or a date outside the actual class: the latest is chosen as before.
+    expect(latestReported(["2024-12-31", "2025-06-30"], (label) => label)).toBe("2025-06-30");
+    expect(latestReported(["FY2024", "LTM 2025-06-30"], (label) => label)).toBe("LTM 2025-06-30");
+    expect(latestReported(["FY2024", "Q1 2025", "PF 2025-06-30"], (label) => label)).toBe(
+      "Q1 2025",
+    );
+  });
   it("names the periods it could not place, in the reader's words", () => {
     expect(unplacedNotes([], 3)).toEqual([]);
     expect(unplacedNotes(["Current", "Thereafter"], 4)).toEqual([
