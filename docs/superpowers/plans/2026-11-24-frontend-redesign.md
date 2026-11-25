@@ -189,3 +189,14 @@ Coordinator: `session_01EB6ycPxKRUz49po8T6WMyS`, branch `claude/exciting-albatta
 | S8 | `session_01EB6ycP6P5K1yaBQpSXRf9K` | `claude/redesign-s8-library-coverage` |
 | S9 | `session_01EB6ycQcudmWEUV4y5xjsRW` | `claude/redesign-s9-start-run` |
 | S10 | `session_01EB6ycPNYufzfhRnFDveY6V` | `claude/redesign-s10-run` |
+
+## Rendered check and the three-round limit (owner, 2026-11-25)
+
+About half of the review findings were things only a real browser shows. Every session runs
+`docs/design/preview/check-render.cjs` (five widths, `--stress`, a fixture for its hard cases) and
+looks at the PNGs before it reports. Owner: "consider if more than 3 rounds and likely due no live
+browser. leave for local validation." So after a branch's third review round, findings that are
+rendering-only (layout, overlap, size, spacing) no longer hold the merge: they are listed in
+VERIFICATION.md under "For local validation" and the branch goes to the final review. Findings
+about what the page says (a false or hidden statement, a wrong count, a derived figure, machinery
+in page text, an unreachable control) still hold it at any round.

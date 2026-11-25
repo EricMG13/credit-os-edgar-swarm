@@ -23,3 +23,20 @@ node docs/design/preview/screenshot.cjs "/report/<run>#overview" ~/overview-390.
 
 `require('playwright')` resolves from any directory in the cloud container; elsewhere run the
 scripts from `web/`.
+
+## Rendered check before reporting a screen
+
+Unit tests run without a layout engine, so they cannot see sideways scroll, colliding chart
+labels, small targets or shrunken text. Before reporting a screen as done, run the rendered check
+on it at all five widths, with `--stress` (long text) and with a fixture for the cases the
+synthetic run lacks, and look at the PNGs it writes:
+
+```bash
+node docs/design/preview/check-render.cjs --out ~/shots --stress "/report/<run>#overview"
+node docs/design/preview/check-render.cjs --out ~/shots --fixture my-cases.cjs "/coverage"
+```
+
+It fails on: the page scrolling sideways; a scroll box that is not named and focusable; cut text
+with no full text reachable; targets under 32px (44px at 480px and below); text under 12px,
+including scaled chart text; chart labels that overlap or leave their figure; console errors.
+A finding from shared code outside your files is reported, not fixed in place.
