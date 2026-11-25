@@ -60,6 +60,46 @@ function entry(options: { established?: boolean; limitation?: string } = {}): Ou
   };
 }
 
+function withFigures(
+  base: OutputEntry,
+  note = "Maturities exclude the revolving facility; it is undrawn.",
+): OutputEntry {
+  base.output.events = [{ lane: "Refinancing events", table: 41 }];
+  base.output.maps = [{ name: "Creditor map", table: 51 }];
+  const debt = base.sections[0];
+  if (!debt) throw new Error("Missing fixture section");
+  debt.blocks.push({ type: "text", line: 26, end: 26, text: note });
+  base.sections.push(
+    {
+      heading: "Chart data: refinancing events",
+      level: 3,
+      line: 40,
+      blocks: [
+        {
+          type: "table",
+          line: 41,
+          headers: ["Event", "Date"],
+          rows: [{ line: 43, cells: ["Notes redeemed", "2026-03-31"] }],
+        },
+      ],
+    },
+    {
+      heading: "Chart data: creditor map",
+      level: 3,
+      line: 50,
+      blocks: [
+        {
+          type: "table",
+          line: 51,
+          headers: ["Creditor", "Owes"],
+          rows: [{ line: 53, cells: ["Bank A", "Bank B"] }],
+        },
+      ],
+    },
+  );
+  return base;
+}
+
 function viewOf(output: OutputEntry): View {
   return {
     catalogue: undefined,
@@ -169,4 +209,63 @@ it("states that no charts were published when there are none", () => {
   empty.output.chartGaps = [];
   render(<RunCharts view={viewOf(empty)} folder="current" />);
   expect(screen.getByText("No charts were published for this run.")).toBeInTheDocument();
+});
+
+it("draws an events row with its table and a trace to its table line", () => {
+  render(<RunCharts view={viewOf(withFigures(entry()))} folder="current" />);
+  const row = rowOf("Refinancing events");
+  expect(row.getByRole("link", { name: "Source table" })).toHaveAttribute(
+    "href",
+    `/report/current#evidence/debt~${SHA}-41`,
+  );
+  fireEvent.click(row.getByText("Table for Refinancing events"));
+  expect(row.getByRole("cell", { name: "2026-03-31" })).toBeInTheDocument();
+});
+
+it("draws a maps row with its table and a trace to its table line", () => {
+  render(<RunCharts view={viewOf(withFigures(entry()))} folder="current" />);
+  const row = rowOf("Creditor map");
+  expect(row.getByRole("link", { name: "Source table" })).toHaveAttribute(
+    "href",
+    `/report/current#evidence/debt~${SHA}-51`,
+  );
+  fireEvent.click(row.getByText("Table for Creditor map"));
+  expect(row.getByRole("cell", { name: "Bank B" })).toBeInTheDocument();
+});
+
+it("draws the module-written qualification under its chart table with its own trace", () => {
+  render(<RunCharts view={viewOf(withFigures(entry()))} folder="current" />);
+  const row = rowOf("Debt maturities");
+  const note = row.getByText("Maturities exclude the revolving facility; it is undrawn.");
+  expect(note).toBeInTheDocument();
+  expect(row.getByRole("link", { name: "Qualification source" })).toHaveAttribute(
+    "href",
+    `/report/current#evidence/debt~${SHA}-26`,
+  );
+});
+
+it("traces each table row to its own handoff line", () => {
+  render(<RunCharts view={viewOf(entry())} folder="current" />);
+  const row = rowOf("Debt maturities");
+  expect(row.getByRole("link", { name: "Show sources for FY2026" })).toHaveAttribute(
+    "href",
+    `/report/current#evidence/debt~${SHA}-23`,
+  );
+  expect(row.getByRole("link", { name: "Show sources for FY2027" })).toHaveAttribute(
+    "href",
+    `/report/current#evidence/debt~${SHA}-24`,
+  );
+});
+
+it("holds back a page-citing qualification", () => {
+  render(
+    <RunCharts
+      view={viewOf(withFigures(entry(), "The facility is undrawn (see p. 12 of the filing)."))}
+      folder="current"
+    />,
+  );
+  expect(document.body.textContent).not.toMatch(/p\. 12/);
+  expect(
+    rowOf("Debt maturities").getByText("Qualification recorded in Evidence."),
+  ).toBeInTheDocument();
 });

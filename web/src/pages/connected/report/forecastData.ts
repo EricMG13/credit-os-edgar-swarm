@@ -6,10 +6,16 @@ import {
   scenarioComparisonNotice,
 } from "../visuals/scenarioPeriods";
 import { amount, record, word } from "../visuals/visualData";
-import { containsReference, readerText, type OutputEntry } from "../publishedReport";
+import {
+  blocked,
+  containsReference,
+  methodNote,
+  passages,
+  readerText,
+  type OutputEntry,
+} from "../publishedReport";
 import type { ReportView } from "../reportView";
 import { figureSource, moduleSource, unitOf, type Cell } from "./overview/figureData";
-import { passageParagraphs } from "./overview/read";
 import { headroomTests, type HeadroomTest } from "./overview/stressData";
 import { wallSlots } from "./overview/structureData";
 
@@ -159,6 +165,69 @@ export function forecastMeasure(model: unknown, pattern: RegExp, prefer?: RegExp
 
 export type Measure = NonNullable<ReturnType<typeof forecastMeasure>>;
 
+/** One reading of which row the page draws for a measure, shared by every tile that uses it. */
+export type MeasureRead = {
+  measure: Measure | null;
+  /** Every row the model publishes for the measure. */
+  rows: string[];
+  /** The measure in reader words: "net leverage". */
+  what: string;
+  /** The basis the page names when several rows match: "net debt over Adj EBITDA". */
+  basis?: string;
+};
+
+export function readMeasure(
+  model: unknown,
+  what: string,
+  pattern: RegExp,
+  prefer?: { pattern: RegExp; basis: string },
+): MeasureRead {
+  return {
+    measure: forecastMeasure(model, pattern, prefer?.pattern),
+    rows: measureRows(model, pattern),
+    what,
+    basis: prefer?.basis,
+  };
+}
+
+/** Why a measure has no figure for a case, in the same words in every tile. */
+export function absentText({ measure, rows, what, basis }: MeasureRead, caseName?: string) {
+  if (!measure && rows.length > 1)
+    return `The model publishes ${String(rows.length)} ${what} rows: ${periodList(rows)}. None is on ${basis ?? "the page's basis"}, so none is drawn.`;
+  if (!measure) return `The model publishes no ${what} figure.`;
+  if (measure.cases.length === 0) return `The model's ${what} row has no dated forecast year.`;
+  return `No ${what} figure for ${caseName ?? "the selected case"}.`;
+}
+
+/** The forecast years a case's columns cover, whatever rows the model publishes. */
+export function caseYears(model: unknown, group: string | undefined) {
+  const columns = grids(model).flatMap((grid) =>
+    grid.columns.filter(
+      (column) =>
+        isDatedForecastPeriod(column.label) && (group === undefined || column.group === group),
+    ),
+  );
+  const sorted = [...new Map(columns.map((column) => [column.label, column])).values()].sort(
+    (a, b) => a.label.localeCompare(b.label),
+  );
+  return { first: sorted[0], last: sorted.at(-1) };
+}
+
+/** The model's cases from its forecast columns, named once, base first. */
+export function modelCases(model: unknown) {
+  const names = forecastCaseNames(record(record(model).cashflow));
+  const groups = [
+    ...new Set(
+      grids(model).flatMap((grid) =>
+        grid.columns
+          .filter((column) => isDatedForecastPeriod(column.label))
+          .map(({ group }) => group),
+      ),
+    ),
+  ].sort(byBaseFirst);
+  return groups.map((group) => ({ group, name: names.get(group) ?? group }));
+}
+
 /**
  * The case's own published cells in period order, compared or not; none for a case the measure
  * has no row for. Without a selected case, the measure's first case.
@@ -190,9 +259,11 @@ export function extremeOf(cells: MeasureCell[], kind: "highest" | "lowest") {
   if (values.length < 2) return null;
   const pick = kind === "highest" ? Math.max : Math.min;
   const extreme = pick(...values.map((cell) => cell.value ?? 0));
+  // A tie is a tie as the reader sees it: every year whose published figure reads the same.
+  const shown = values.find((cell) => cell.value === extreme)?.display;
   return {
     kind,
-    cells: values.filter((cell) => cell.value === extreme),
+    cells: values.filter((cell) => cell.display === shown),
     notCalculated: cells.filter((cell) => cell.value === null).map((cell) => cell.period),
     notPublished: unpublishedYears(cells),
   };
@@ -213,16 +284,34 @@ export function earningsBasis(model: unknown) {
   return grids(model)[0]?.rows.find((row) => /^Adj EBITDA\b/u.test(row.label))?.label ?? null;
 }
 
-/** The forward model's own limitation that matches `pattern`, in its words. */
-export function modelLimitation(entry: OutputEntry | undefined, pattern: RegExp) {
-  if (!entry) return null;
-  const lines = passageParagraphs(entry, "Limitations").flatMap(({ text }) =>
-    (text ?? "").split(/\n|(?<=\.)\s+-\s+/u),
-  );
-  const found = lines
-    .map((line) => line.replace(/^\s*-\s*/u, "").trim())
-    .find((line) => pattern.test(line));
-  return found && !containsReference(found) ? readerText(found) : null;
+export type Limitation = { line: number; text: string | null };
+
+/**
+ * The forward model's Limitations passage, every item once, as written: one item per bullet of
+ * each paragraph, in the module's order. An item that cites a source by name has no text: the page
+ * links to it in Evidence instead of drawing it. Nothing is selected from it.
+ */
+export function modelLimitations(entry: OutputEntry | undefined): Limitation[] {
+  if (!entry) return [];
+  return passages(entry.sections)
+    .filter((section) => section.heading === "Limitations")
+    .flatMap(({ blocks }) => blocks)
+    .flatMap((block) => {
+      if (block.type !== "text" || methodNote(block.text)) return [];
+      const lines = block.text.split("\n");
+      const items: { line: number; parts: string[] }[] = [];
+      lines.forEach((line, at) => {
+        const bullet = /^\s*[-*]\s+(.*)$/u.exec(line);
+        const last = items.at(-1);
+        if (bullet || !last) items.push({ line: block.line + at, parts: [bullet?.[1] ?? line] });
+        else last.parts.push(line.trim());
+      });
+      return items.map(({ line, parts }) => {
+        const text = parts.join(" ").replaceAll("**", "").replaceAll("`", "").trim();
+        return { line, text: containsReference(text) ? null : readerText(text) };
+      });
+    })
+    .filter(({ text }) => text !== "");
 }
 
 /** The covenant tests as Legal & covenants writes them: level, current figure, direction. */
@@ -238,9 +327,27 @@ export function covenantTests(view: ReportView) {
   };
 }
 
-export type ScheduleYear = { year: number; label: string; cell: Cell | null };
+export type ScheduleYear = {
+  year: number;
+  label: string;
+  cell: Cell | null;
+  /** The row's handoff line, for its own trace. */
+  line?: number;
+  /** A key unique within the schedule: a year can have more than one row. */
+  key: string;
+};
 
-/** The maturity schedule as Financial foundation publishes it, by fiscal year and as written. */
+/** The handoff line of a table row by its first cell, where the table records row lines. */
+function rowLine(table: { rows: string[][]; rowLines?: (number | undefined)[] }, label: string) {
+  const at = table.rows.findIndex((row) => readerText(row[0] ?? "") === readerText(label));
+  return at >= 0 ? table.rowLines?.[at] : undefined;
+}
+
+/**
+ * The maturity schedule as Financial foundation publishes it, every row as written, by fiscal year
+ * where its label is one. A year the schedule has no row for is not a row: it is neither drawn nor
+ * listed. A year may have more than one row; each is kept.
+ */
 export function maturitySchedule(view: ReportView) {
   const name = moduleName("CP-1");
   const source = figureSource(view, "CP-1", "Debt maturities", name);
@@ -261,15 +368,23 @@ export function maturitySchedule(view: ReportView) {
       reason: "The maturity schedule states no amount for any period.",
       source,
     };
+  const table = source.table;
   const dated = (label: string) => (/^FY\d{4}$/u.test(label) ? fiscalYear(label) : null);
-  const years = slots.dated.flatMap((slot): ScheduleYear[] => {
-    const year = dated(slot.label);
-    return year === null ? [] : [{ year, label: slot.label, cell: slot.cell }];
-  });
+  const rows = [...slots.dated, ...slots.undated].filter(
+    (slot): slot is typeof slot & { cell: Cell } => slot.cell != null,
+  );
+  const read = rows.map((slot, at) => ({
+    year: dated(slot.label) ?? 0,
+    label: slot.label,
+    cell: slot.cell,
+    line:
+      ("line" in slot ? (slot.line as number | undefined) : undefined) ??
+      rowLine(table, slot.label),
+    key: `${slot.label}-${String(at)}`,
+  }));
+  const years = read.filter((row) => row.year !== 0);
   // Rows not labelled by fiscal year are kept as written, beside the axis.
-  const offAxis = [...slots.dated, ...slots.undated]
-    .filter((slot) => dated(slot.label) === null)
-    .map((slot) => ({ year: 0, label: slot.label, cell: slot.cell }));
+  const offAxis = read.filter((row) => row.year === 0);
   return {
     years,
     offAxis,
@@ -279,63 +394,116 @@ export function maturitySchedule(view: ReportView) {
   };
 }
 
+/** One stated figure of a funding-gap row: its column's header and its cell as written. */
+export type GapFigure = { header: string; text: string; value: number | null };
+
 export type FundingGap = {
   module: string;
   name: string;
   entry: OutputEntry;
   line: number;
+  /** The row's own label, in reader words. */
   label: string;
-  /** The cell as written: a figure, or the module's words for why there is none. */
-  text: string;
-  value: number | null;
-  unit: string;
+  figures: GapFigure[];
+  /** The unit as the row or its header states it; null when neither does. */
+  unit: string | null;
   horizon: string | null;
 };
 
 const FUNDING_GAP = /^(?:CP-2D\s+)?funding gap\b/iu;
 const HORIZON = /^(?:CP-2D\s+)?horizon\b/iu;
+const UNIT_COLUMN = /^(?:Reporting unit|Units?)$/iu;
+const CURRENCY_COLUMN = /^Currency$/iu;
+const SCALE_COLUMN = /^Scale$/iu;
+const NOT_A_FIGURE =
+  /^(?:Source|Evidence|Basis|Basis and limitation|Notes?|Limitations?|Status|Category)$/iu;
+const EMPTY = /^(?:|—|-|–)$/u;
+/** A register id in brackets, such as "(T2E.3.r03)": machinery, never page text. */
+const REGISTER_ID = /\s*\((?:[A-Z]\d[\w]*(?:\.\w+)*)\)/gu;
+
+const plain = (text: string) => readerText(text.replace(REGISTER_ID, "").trim());
+
+function gapUnit(headers: string[], cells: string[], valueAt: number) {
+  const header = /\(([^()]+)\)\s*$/u.exec(headers[valueAt] ?? "")?.[1];
+  if (header) return header;
+  const at = (pattern: RegExp) => headers.findIndex((name) => pattern.test(name.trim()));
+  const unit = cells[at(UNIT_COLUMN)]?.trim();
+  if (unit && !EMPTY.test(unit)) return unit;
+  const currency = cells[at(CURRENCY_COLUMN)]?.trim() ?? "";
+  const scale = cells[at(SCALE_COLUMN)]?.trim() ?? "";
+  const both = [currency, scale].filter((part) => part && !EMPTY.test(part)).join(" ");
+  return both || null;
+}
 
 function gapIn(entry: OutputEntry, module: string): FundingGap | null {
-  for (const table of entry.sections.flatMap(({ blocks }) =>
+  const tables = entry.sections.flatMap(({ blocks }) =>
     blocks.flatMap((block) => (block.type === "table" ? [block] : [])),
-  )) {
+  );
+  for (const table of tables) {
     const row = table.rows.find(({ cells }) => FUNDING_GAP.test(cells[0] ?? ""));
     if (!row) continue;
-    const at = row.cells.findIndex((cell, index) => index > 0 && cell.trim() && cell !== "—");
-    const text = at > 0 ? (row.cells[at] ?? "") : "";
-    const header = at > 0 ? (table.headers[at] ?? "") : "";
-    const unitAt = table.headers.findIndex((name) => /^(?:Reporting unit|Unit)$/iu.test(name));
-    const unit =
-      /\(([^()]+)\)\s*$/u.exec(header)?.[1] ?? (unitAt >= 0 ? (row.cells[unitAt] ?? "") : "");
+    const columns = table.headers.flatMap((header, at) =>
+      at === 0 ||
+      UNIT_COLUMN.test(header.trim()) ||
+      CURRENCY_COLUMN.test(header.trim()) ||
+      SCALE_COLUMN.test(header.trim()) ||
+      NOT_A_FIGURE.test(header.trim())
+        ? []
+        : [at],
+    );
+    const stated = columns.filter((at) => !EMPTY.test((row.cells[at] ?? "").trim()));
+    const figures = stated.map((at) => {
+      const text = (row.cells[at] ?? "").trim();
+      return {
+        header: plain(table.headers[at] ?? ""),
+        text: containsReference(text)
+          ? "Stated with a source reference; see Evidence."
+          : plain(text),
+        value: amount(text.replaceAll("−", "-")),
+      };
+    });
     const horizon = table.rows.find(({ cells }) => HORIZON.test(cells[0] ?? ""));
-    const horizonText = horizon?.cells.slice(1).find((cell) => cell.trim() && cell !== "—") ?? null;
+    const horizonText = horizon?.cells
+      .slice(1)
+      .map((cell) => cell.trim())
+      .find((cell) => !EMPTY.test(cell));
     return {
       module,
       name: moduleName(module),
       entry,
       line: row.line,
-      label: readerText(row.cells[0] ?? ""),
-      text: readerText(text),
-      value: amount(text.replaceAll("−", "-")),
-      unit,
-      horizon: horizonText,
+      label: plain(row.cells[0] ?? ""),
+      figures: figures.length
+        ? figures
+        : [{ header: "", text: "Not stated in the row", value: null }],
+      unit: gapUnit(table.headers, row.cells, stated[0] ?? -1),
+      horizon: horizonText && !containsReference(horizonText) ? plain(horizonText) : null,
     };
   }
   return null;
 }
 
 /**
- * The funding gap as the liquidity module states it, else as the refinancing module repeats it:
- * the figure, its unit and horizon, named as that module's. With neither, the modules looked at
- * and why each gave none.
+ * The funding gap as the liquidity module states it and as the refinancing module repeats it:
+ * each module's row, owned by that module, every stated column with its header. With neither, why
+ * each module gave none: it did not run, it is not assessable, or the page found no row named
+ * Funding gap in its handoff.
  */
 export function fundingGap(view: ReportView) {
+  const gaps: FundingGap[] = [];
   const looked: string[] = [];
   for (const module of ["CP-2D", "CP-3C"]) {
-    const { entry, reason } = moduleSource(view, module, moduleName(module));
-    const found = entry && !reason ? gapIn(entry, module) : null;
-    if (found) return { gap: found, looked };
-    looked.push(reason ?? `${moduleName(module)} states no funding gap figure.`);
+    const name = moduleName(module);
+    const { entry, reason } = moduleSource(view, module, name);
+    if (!entry || reason) {
+      looked.push(
+        entry && blocked(entry) ? `${name} is not assessable: ${reason ?? ""}` : (reason ?? ""),
+      );
+      continue;
+    }
+    const found = gapIn(entry, module);
+    if (found) gaps.push(found);
+    else looked.push(`This page found no row named Funding gap in ${name}'s handoff.`);
   }
-  return { gap: null, looked };
+  return { gaps, looked };
 }

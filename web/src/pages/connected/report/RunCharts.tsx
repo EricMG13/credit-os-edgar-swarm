@@ -10,6 +10,7 @@ import {
 } from "../publishedReport";
 import type { buildReportView } from "../reportView";
 import { chartTable, publishedTables, word } from "../visuals/visualData";
+import { ChartQualifications } from "../visuals/ChartQualifications";
 import { PublishedSource } from "./PublishedTrace";
 
 const CHART_PREFIX = "Chart data: ";
@@ -61,7 +62,20 @@ function chartOutput(entry: OutputEntry): {
   charts: Figure[];
   chartGaps: Figure[];
 } {
-  const { charts = [], chartGaps = [], parseError, state, summary } = entry.output;
+  const { chartGaps = [], parseError, state, summary } = entry.output;
+  const charts = [
+    ...(entry.output.charts ?? []).map((figure) => ({ ...figure, category: "chart" })),
+    ...(entry.output.events ?? []).map((figure) => ({
+      ...figure,
+      title: figure.title ?? figure.lane,
+      category: "event",
+    })),
+    ...(entry.output.maps ?? []).map((figure) => ({
+      ...figure,
+      title: figure.title ?? figure.name,
+      category: "map",
+    })),
+  ];
   const withheld = parseError || state?.established === false || blocked(entry);
   const coveredLines = new Set([...charts, ...chartGaps].map(({ table }) => table));
   return {
@@ -112,6 +126,7 @@ function TableCell({ cell, row }: { cell: Cell; row?: boolean }) {
 }
 
 function ChartTableView({ title, table }: { title: string; table: ReturnType<typeof chartTable> }) {
+  const traced = table.rows.some(({ end }) => end !== undefined);
   return (
     <div
       role="region"
@@ -134,6 +149,14 @@ function ChartTableView({ title, table }: { title: string; table: ReturnType<typ
                 {text}
               </th>
             ))}
+            {traced && (
+              <th
+                scope="col"
+                className="border-b border-border-hairline px-3 py-2 text-left font-medium text-text-secondary"
+              >
+                {table.endHeading}
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -147,6 +170,7 @@ function ChartTableView({ title, table }: { title: string; table: ReturnType<typ
                   <TableCell cell={cell} />
                 </td>
               ))}
+              {traced && <td className="px-3 py-2 align-top">{row.end}</td>}
             </tr>
           ))}
         </tbody>
@@ -195,10 +219,28 @@ function ChartRow({
             <summary className={`min-h-8 w-fit cursor-pointer text-small text-text-link ${FOCUS}`}>
               {`Table for ${title}`}
             </summary>
-            <div className="pt-2">
+            <div className="grid min-w-0 gap-2 pt-2">
               <ChartTableView
                 title={title}
-                table={chartTable({ ...source, evidenceInDrawer: true })}
+                table={chartTable({
+                  ...source,
+                  evidenceInDrawer: true,
+                  rowSource: (at, label) => (
+                    <PublishedSource
+                      href={evidencePath(folder, entry, at)}
+                      name={label}
+                      linkLabel={`Show sources for ${label}`}
+                    >
+                      Source row
+                    </PublishedSource>
+                  ),
+                })}
+              />
+              <ChartQualifications
+                category={descriptor.category === "chart" ? "chart" : "other"}
+                sections={entry.sections}
+                line={descriptor.table}
+                evidenceHref={(at) => evidencePath(folder, entry, at)}
               />
             </div>
           </details>

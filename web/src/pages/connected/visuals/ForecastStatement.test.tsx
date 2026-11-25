@@ -542,3 +542,45 @@ it("merges no gaps with different reasons, nor across the Actual and Forecast ba
     "another reason",
   ]);
 });
+
+it("draws a year missing inside the selected case's span as Not published, in place", () => {
+  render(
+    <ForecastStatement
+      model={{
+        cashflow: {
+          units: "USD millions",
+          columns: [
+            { label: "FY2025E", group: "Base case" },
+            { label: "FY2027E", group: "Base case" },
+          ],
+          rows: [
+            {
+              label: "Revenue",
+              band: "Revenue",
+              kind: "money",
+              total: false,
+              cells: [
+                { status: "value", exact: "100", display: "100" },
+                { status: "value", exact: "120", display: "120" },
+              ],
+            },
+          ],
+        },
+      }}
+      selectedCase="Base case"
+      selectedRawGroup="Base case"
+    />,
+  );
+  const table = within(screen.getByRole("table", { name: "Forecast grid" }));
+  expect(table.getByRole("columnheader", { name: /FY2026E/ })).toBeInTheDocument();
+  const cells = within(
+    table.getByRole("rowheader", { name: "Revenue" }).closest("tr") as HTMLElement,
+  )
+    .getAllByRole("cell")
+    .map((cell) => cell.getAttribute("aria-label") ?? cell.textContent);
+  expect(cells.slice(0, 3)).toEqual([
+    "100",
+    "Not published This case publishes no FY2026E column.",
+    "120",
+  ]);
+});

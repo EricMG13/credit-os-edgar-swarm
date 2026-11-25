@@ -1,3 +1,4 @@
+import { containsReference, readerText } from "../publishedReport";
 import { driverTable } from "./forecastDrivers";
 import { RecordedForecastAssumptions, type ForecastSource } from "./ForecastRecord";
 import { GapChip } from "./ForecastGaps";
@@ -9,6 +10,17 @@ const SHOCKED_CASE = "Downside case";
 /** "Not stated": the gap chip. */
 function NotStated() {
   return <GapChip>Not stated</GapChip>;
+}
+
+const NOTE_IN_EVIDENCE = "The model's note on the downside case is in Evidence.";
+
+/** A table id such as T2B.1, which `containsReference` does not recognise. */
+const TABLE_ID = /\bT\d+[A-Z]*\.\d+\b/u;
+
+/** The model's downside note for the reader: module names, and no reference drawn here. */
+function readerNote(note: string) {
+  const text = readerText(note);
+  return containsReference(text) || TABLE_ID.test(text) ? NOTE_IN_EVIDENCE : text;
 }
 
 /** The small accent mark that, with the words, says a recorded value differs from base. */
@@ -119,9 +131,11 @@ export function AssumptionsByCase({
                 <tr key={row.id} className="border-t border-border-hairline align-top">
                   <th scope="row" className="py-2 pr-3 text-left font-medium text-text-primary">
                     {row.name}
-                    <span className="block text-caption font-normal text-text-tertiary">
-                      {row.unit}
-                    </span>
+                    {row.unit && (
+                      <span className="block text-caption font-normal text-text-tertiary">
+                        {row.unit}
+                      </span>
+                    )}
                   </th>
                   {row.cells.map((cell, at) => (
                     <td
@@ -132,11 +146,24 @@ export function AssumptionsByCase({
                     >
                       {cell.stated ? (
                         <>
-                          <span className="inline-flex items-center gap-1.5">
+                          <span
+                            className="inline-flex flex-wrap items-center gap-x-1.5"
+                            title={cell.title}
+                          >
                             {cell.differs && <Mark />}
-                            {cell.text}
+                            {cell.parts.map((part, index) => (
+                              <span key={index} className="inline-flex items-center gap-1.5">
+                                {index > 0 && <span aria-hidden="true"> · </span>}
+                                {part === null ? <NotStated /> : part}
+                              </span>
+                            ))}
                           </span>
                           {cell.differs && <span className="sr-only">, differs from base</span>}
+                          {cell.unlike && (
+                            <span className="block font-sans text-caption text-text-secondary">
+                              stated differently from base
+                            </span>
+                          )}
                           {cell.only && (
                             <span className="block font-sans text-caption text-text-secondary">
                               only this case states it
@@ -158,7 +185,7 @@ export function AssumptionsByCase({
         </table>
       </div>
       {downsideNote !== undefined && cases.some(({ shock }) => shock) && (
-        <p className="text-small text-text-secondary">{downsideNote}</p>
+        <p className="text-small text-text-secondary">{readerNote(downsideNote)}</p>
       )}
       <details open>
         <summary className="flex min-h-8 cursor-pointer items-center rounded-ds-sm text-small font-medium text-text-link outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2 max-[480px]:min-h-11">

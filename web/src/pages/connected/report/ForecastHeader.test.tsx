@@ -2,8 +2,8 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 import type { OutputEntry, PublishedRun } from "../publishedReport";
 import type { ReportView } from "../reportView";
-import { forecastMeasure } from "./forecastData";
-import { ForecastHeader, ForecastStats } from "./ForecastHeader";
+import { readMeasure } from "./forecastData";
+import { CaseFigure, ForecastHeader, ForecastStats } from "./ForecastHeader";
 
 const run = { folder: "current", issuer: "Northbridge" } as PublishedRun;
 
@@ -102,38 +102,55 @@ it("draws the gap in place of the bottom line when the forward model did not run
 });
 
 const value = (exact: string) => ({ status: "value", exact, display: `${exact}x` });
-function measure(label: string, cells: unknown[]) {
-  return forecastMeasure(
-    {
-      cashflow: {
-        columns: ["FY2025E", "FY2026E", "FY2027E"].map((period) => ({
-          label: period,
-          group: "Base case",
-        })),
-        rows: [{ label, band: "", kind: "", total: false, cells }],
-      },
-    },
-    /./,
-  );
-}
+const COLUMNS = ["FY2025E", "FY2026E", "FY2027E"].map((period) => ({
+  label: period,
+  group: "Base case",
+}));
+const modelOf = (rows: Record<string, unknown[]>) => ({
+  cashflow: {
+    columns: COLUMNS,
+    rows: Object.entries(rows).map(([label, cells]) => ({
+      label,
+      band: "",
+      kind: "",
+      total: false,
+      cells,
+    })),
+  },
+});
+const leverageOf = (model: unknown) =>
+  readMeasure(model, "net leverage", /^Net leverage\b/, {
+    pattern: /net debt \/ Adj EBITDA/,
+    basis: "net debt over Adj EBITDA",
+  });
+const coverOf = (model: unknown) => readMeasure(model, "interest cover", /^Interest coverage\b/);
 
-it("labels its selections as selections: highest and lowest published years, ties and gaps named", () => {
+function stats(model: unknown, folderView = view([])) {
   render(
     <ForecastStats
-      view={view([])}
+      view={folderView}
       folder="current"
-      leverage={measure("Net leverage", [value("5.65"), value("5.50"), value("5.65")])}
-      cover={measure("Interest coverage", [
-        value("3.40"),
-        { status: "unavailable", display: "n.a.", reason: "Interest is zero" },
-        value("3.90"),
-      ])}
+      leverage={leverageOf(model)}
+      cover={coverOf(model)}
       group="Base case"
       caseName="Base case"
       basis="Base case · Adj EBITDA"
     />,
   );
-  const strip = within(screen.getByLabelText("Forecast figures"));
+  return within(screen.getByLabelText("Forecast figures"));
+}
+
+it("labels its selections as selections: highest and lowest published years, ties and gaps named", () => {
+  const strip = stats(
+    modelOf({
+      "Net leverage (net debt / Adj EBITDA)": [value("5.65"), value("5.50"), value("5.65")],
+      "Interest coverage": [
+        value("3.40"),
+        { status: "unavailable", display: "n.a.", reason: "Interest is zero" },
+        value("3.90"),
+      ],
+    }),
+  );
   expect(
     strip.getByText("Net leverage: highest published forecast year, Base case"),
   ).toBeInTheDocument();
@@ -146,34 +163,92 @@ it("labels its selections as selections: highest and lowest published years, tie
     strip.getByText("Interest cover: lowest published forecast year, Base case"),
   ).toBeInTheDocument();
   expect(strip.getByText("3.40x")).toBeInTheDocument();
-  // The year with no figure is named in the same cell.
-  expect(strip.getByText("FY2026E not calculated")).toBeInTheDocument();
+  // The year with no figure is named in the same cell, with the model's reason.
+  expect(strip.getByText("FY2026E not calculated: Interest is zero")).toBeInTheDocument();
   expect(strip.queryByText(/peak|minimum/i)).toBeNull();
-  expect(strip.getByText("Neither Liquidity nor Refinancing & LME states one")).toBeInTheDocument();
+  expect(
+    strip.getByText(
+      "Liquidity did not run in this run. Refinancing & LME did not run in this run.",
+    ),
+  ).toBeInTheDocument();
 });
 
-it("says why a stat is empty, never zero, and singles out nothing on a one-point path", () => {
+it("counts a case's published years and names each year with no figure", () => {
+  const strip = stats(
+    modelOf({
+      "Net leverage (net debt / Adj EBITDA)": [
+        value("2.50"),
+        value("2.20"),
+        { status: "unavailable", display: "n.a.", reason: "EBITDA is not positive" },
+      ],
+      "Interest coverage": [
+        value("5.0"),
+        { status: "unavailable", display: "n.a.", reason: "Interest is zero" },
+        { status: "unavailable", display: "n.a." },
+      ],
+    }),
+  );
+  // Three years, one without a figure: a highest year among the two that have one.
+  expect(strip.getByText("2.50x")).toBeInTheDocument();
+  // Named in the highest-year cell and as the reason the last year has no figure.
+  expect(strip.getAllByText("FY2027E not calculated: EBITDA is not positive")).toHaveLength(2);
+  // Cover has one figure: it is not a lowest year, and the other years are named.
+  expect(
+    strip.getByText(
+      "Only FY2025E has a figure; FY2026E not calculated: Interest is zero; FY2027E not calculated",
+    ),
+  ).toBeInTheDocument();
+  expect(strip.queryByText("5.0x")).toBeNull();
+});
+
+it("says what the lead says when the model publishes two rows and none on the stated basis", () => {
+  const strip = stats(
+    modelOf({
+      "Net leverage (gross)": [value("3"), value("2"), value("1")],
+      "Net leverage (covenant basis)": [value("4"), value("3"), value("2")],
+    }),
+  );
+  const words =
+    "The model publishes 2 net leverage rows: Net leverage (gross) and Net leverage (covenant basis). None is on net debt over Adj EBITDA, so none is drawn.";
+  expect(strip.getAllByText(words)).toHaveLength(2);
+  expect(strip.queryByText(/publishes no net leverage figure/)).toBeNull();
+});
+
+it("says why a stat is empty, never zero", () => {
+  const strip = stats(modelOf({ Revenue: [value("1"), value("2"), value("3")] }));
+  expect(strip.getAllByText("The model publishes no net leverage figure.")).toHaveLength(2);
+  expect(strip.getByText("The model publishes no interest cover figure.")).toBeInTheDocument();
+  expect(strip.queryByText(/^0/)).toBeNull();
+});
+
+it("says an unreadable forward-model handoff could not be read", () => {
+  const unreadable = { ...forward("x"), output: { ...forward("x").output, parseError: "bad" } };
+  header([unreadable]);
+  expect(
+    screen.getByText("Forward credit model's handoff could not be read; it is in Evidence."),
+  ).toBeInTheDocument();
+  expect(screen.queryByText(/wrote no bottom line/)).toBeNull();
+});
+
+it("draws the selected case's cash proxy as the model displays it, never rounded", () => {
   render(
-    <ForecastStats
-      view={view([])}
-      folder="current"
-      leverage={null}
-      cover={measure("Interest coverage", [
-        value("3.40"),
-        { status: "unavailable", display: "n.a." },
-        { status: "unavailable", display: "n.a." },
-      ])}
-      group="Base case"
-      caseName="Base case"
-      basis=""
+    <CaseFigure
+      option={{
+        name: "Base case",
+        rawGroup: "Base case",
+        period: "FY2027E",
+        value: 1234.5,
+        units: "USD millions",
+        description: undefined,
+      }}
+      display="1,234.50"
+      notice={undefined}
+      shownQualifications={[]}
     />,
   );
-  const strip = within(screen.getByLabelText("Forecast figures"));
-  expect(strip.getAllByText("The model publishes no net leverage figure")).toHaveLength(2);
-  expect(
-    strip.getByText("One published forecast year only: no interest cover year to single out"),
-  ).toBeInTheDocument();
-  expect(strip.queryByText("3.40x")).toBeNull();
+  expect(screen.getByText("1,234.50")).toBeInTheDocument();
+  expect(screen.queryByText("1,234.5")).toBeNull();
+  expect(screen.queryByText(/rounded/)).toBeNull();
 });
 
 it("offers no way to a forward model the run does not have", () => {

@@ -3,6 +3,7 @@ import { Segmented } from "@/components/kit/Segmented";
 import { cx } from "@/utils/cx";
 import { GapNote, Tile } from "../report/overview/Tile";
 import {
+  absentText,
   extremeOf,
   fiscalYear,
   periodList,
@@ -148,7 +149,13 @@ function styleOf(drawn: MeasureCase[], selected: MeasureCase, item: MeasureCase)
   };
 }
 
-type Label = { key: string; x: number; y: number; text: string; anchor: "start" | "middle" };
+type Label = {
+  key: string;
+  x: number;
+  y: number;
+  text: string;
+  anchor: "start" | "middle" | "end";
+};
 
 /** Pushes labels that share a column apart so none overprints another. */
 function spread(labels: Label[]) {
@@ -168,8 +175,25 @@ function spread(labels: Label[]) {
   return labels;
 }
 
-function pointLabels(drawn: MeasureCase[], selected: MeasureCase, slots: Slot[], g: Geometry) {
+function pointLabels(
+  drawn: MeasureCase[],
+  selected: MeasureCase,
+  slots: Slot[],
+  g: Geometry,
+  measure: Measure,
+) {
   const labels: Label[] = [];
+  // The actual year's figure is labelled with its own period, so it is never read as a forecast.
+  const actual = measure.actual;
+  const actualYear = actual ? fiscalYear(actual.period) : null;
+  if (actual && actual.value !== null && actualYear !== null)
+    labels.push({
+      key: "actual",
+      x: g.x(actualYear) - 10,
+      y: g.y(actual.value) + 4,
+      text: `${actual.display} ${actual.period}`,
+      anchor: "end",
+    });
   for (const item of drawn) {
     const cells = slots.flatMap((slot) => cellAt(item, slot) ?? []);
     const last = [...cells].reverse().find((cell) => cell.value !== null);
@@ -402,16 +426,6 @@ function Actual({ measure, g }: { measure: Measure; g: Geometry }) {
         strokeWidth="2"
         className="fill-surface-card stroke-chart-3"
       />
-      <text
-        x={g.x(year)}
-        y={g.y(actual.value) - 12}
-        textAnchor="middle"
-        strokeWidth="4"
-        paintOrder="stroke"
-        className="fill-text-primary stroke-surface-card font-mono text-small font-medium"
-      >
-        {actual.display}
-      </text>
     </g>
   );
 }
@@ -436,14 +450,18 @@ function Axis({ slots, g }: { slots: Slot[]; g: Geometry }) {
 }
 
 /** The maturity schedule as written, by fiscal year, under the path on the same axis. */
+/** A cell's own words for why it has no amount, short enough for the lane: "Not supplied". */
+const gapWords = (text: string) => /^(Not \w+)/u.exec(text.trim())?.[1] ?? "No amount";
+
+/** The maturity schedule as written, by fiscal year, under the path on the same axis. A year with
+ * several rows draws each, side by side; a year with no row draws nothing. */
 function Lane({ schedule, slots, g }: { schedule: PathSchedule; slots: Slot[]; g: Geometry }) {
   const placed = schedule.years.filter((item) => slots.some((slot) => slot.year === item.year));
   const most = Math.max(0, ...placed.map((item) => item.cell?.value ?? 0));
-  const width = Math.min(56, g.step * 0.5);
   return (
     <g>
       <text x={LEFT} y={LANE_TOP - 10} className="fill-text-secondary text-caption">
-        {`Debt maturing in the year${schedule.unit ? `, ${schedule.unit}` : ""}${g.step < 96 && placed.some((item) => item.cell?.value === null) ? " · n.s. not supplied" : ""}`}
+        {`Debt maturing in the year${schedule.unit ? `, ${schedule.unit}` : ""}`}
       </text>
       <line
         x1={LEFT}
@@ -453,12 +471,16 @@ function Lane({ schedule, slots, g }: { schedule: PathSchedule; slots: Slot[]; g
         className="stroke-border-container"
       />
       {placed.map((item) => {
-        const x = g.x(item.year);
+        const same = placed.filter((other) => other.year === item.year);
+        const room = Math.min(56, g.step * 0.6) / same.length;
+        const width = Math.max(8, room - 4);
+        const x = g.x(item.year) - (same.length * room) / 2 + same.indexOf(item) * room + room / 2;
         if (!item.cell) return null;
         const amount = item.cell.value;
-        if (amount === null)
+        if (amount === null) {
+          const [first = "", second = ""] = gapWords(item.cell.text).split(" ");
           return (
-            <g key={item.year} data-lane-gap={item.label}>
+            <g key={item.key} data-lane-gap={item.label}>
               <rect
                 x={x - width / 2}
                 y={LANE_BASE - 14}
@@ -470,18 +492,29 @@ function Lane({ schedule, slots, g }: { schedule: PathSchedule; slots: Slot[]; g
               />
               <text
                 x={x}
-                y={LANE_BASE - 20}
+                y={LANE_BASE - 34}
                 textAnchor="middle"
                 className="fill-gap-text text-caption"
               >
-                {g.step < 96 ? "n.s." : "Not supplied"}
+                {g.step < 96 ? first : `${first} ${second}`}
               </text>
+              {g.step < 96 && (
+                <text
+                  x={x}
+                  y={LANE_BASE - 20}
+                  textAnchor="middle"
+                  className="fill-gap-text text-caption"
+                >
+                  {second}
+                </text>
+              )}
             </g>
           );
+        }
         const height =
           most > 0 && amount > 0 ? Math.max(THINNEST, (amount / most) * LANE_HEIGHT) : 0;
         return (
-          <g key={item.year}>
+          <g key={item.key}>
             <rect
               x={x - width / 2}
               y={LANE_BASE - height}
@@ -517,7 +550,7 @@ function reading(drawn: MeasureCase[], slots: Slot[], schedule: PathSchedule) {
   );
   const placed = schedule.years.filter((item) => slots.some((slot) => slot.year === item.year));
   const lane = placed.length
-    ? ` Debt maturing: ${placed.map((item) => `${item.label} ${item.cell?.text ?? "no row"}`).join(", ")}.`
+    ? ` Debt maturing: ${placed.map((item) => `${item.label} ${item.cell?.text ?? ""}`).join(", ")}.`
     : "";
   return `Net leverage by case. ${cases.join("; ")}.${lane}`;
 }
@@ -552,7 +585,7 @@ function notes(measure: Measure, drawn: MeasureCase[], slots: Slot[], schedule: 
   out.push(...missingNotes(drawn, slots));
   for (const item of schedule.years)
     if (item.cell?.value === null && slots.some((slot) => slot.year === item.year))
-      out.push(`Debt maturing, ${item.label}: ${item.cell.reason ?? "not supplied"}.`);
+      out.push(`Debt maturing, ${item.label}: ${item.cell.text}.`);
   const beyond = schedule.years.filter(
     (item) => item.cell && !slots.some((slot) => slot.year === item.year),
   );
@@ -562,7 +595,7 @@ function notes(measure: Measure, drawn: MeasureCase[], slots: Slot[], schedule: 
     );
   if (schedule.offAxis.length)
     out.push(
-      `Debt maturing, not by fiscal year: ${schedule.offAxis.map((item) => `${item.label} ${item.cell?.text ?? "not supplied"}`).join(", ")}.`,
+      `Debt maturing, not by fiscal year: ${schedule.offAxis.map((item) => `${item.label} ${item.cell?.text ?? ""}`).join(", ")}.`,
     );
   return out;
 }
@@ -638,6 +671,54 @@ function Legend({
   );
 }
 
+type TableRow = {
+  key: string;
+  label: string;
+  year: number;
+  forecast: Slot | null;
+  actual: boolean;
+};
+
+/** One row per period label as published: an actual year and a forecast year are different
+ * columns of the model, so FY2025 and FY2025E are different rows, and an actual is never put in a
+ * case's column. */
+function tableRows(slots: Slot[], measure: Measure, schedule: PathSchedule): TableRow[] {
+  const actual = measure.actual?.value != null ? measure.actual : null;
+  const rows: TableRow[] = [];
+  if (actual) {
+    const year = fiscalYear(actual.period) ?? 0;
+    rows.push({
+      key: `actual-${actual.period}`,
+      label: actual.period,
+      year,
+      forecast: null,
+      actual: true,
+    });
+  }
+  for (const slot of slots) {
+    if (slot.forecast)
+      rows.push({
+        key: `forecast-${slot.label}`,
+        label: slot.label,
+        year: slot.year,
+        forecast: slot,
+        actual: false,
+      });
+    else if (
+      !rows.some((row) => row.year === slot.year) &&
+      schedule.years.some((item) => item.year === slot.year)
+    )
+      rows.push({
+        key: `debt-${slot.label}`,
+        label: slot.label,
+        year: slot.year,
+        forecast: null,
+        actual: false,
+      });
+  }
+  return rows.sort((a, b) => a.year - b.year || Number(b.actual) - Number(a.actual));
+}
+
 function PathTable({
   drawn,
   slots,
@@ -649,9 +730,12 @@ function PathTable({
   measure: Measure;
   schedule: PathSchedule;
 }) {
-  const actual = measure.actual;
+  const actual = measure.actual?.value != null ? measure.actual : null;
   const lane = schedule.years.some((item) => slots.some((slot) => slot.year === item.year));
-  const debt = (slot: Slot) => schedule.years.find((item) => item.year === slot.year)?.cell;
+  const rows = tableRows(slots, measure, schedule);
+  // A year's maturities sit once, on the forecast row of that year where there is one.
+  const debtRow = (year: number) =>
+    rows.find((row) => row.year === year && row.forecast) ?? rows.find((row) => row.year === year);
   return (
     <div
       role="region"
@@ -668,6 +752,11 @@ function PathTable({
             <th scope="col" className="py-2 pr-4 font-medium">
               Period
             </th>
+            {actual && (
+              <th scope="col" className="py-2 pr-4 font-medium">
+                Actual
+              </th>
+            )}
             {drawn.map((item) => (
               <th key={item.group} scope="col" className="py-2 pr-4 font-medium">
                 {item.name}
@@ -681,28 +770,24 @@ function PathTable({
           </tr>
         </thead>
         <tbody>
-          {slots.map((slot) => {
-            const isActual = actual?.value != null && fiscalYear(actual.period) === slot.year;
-            const owed = debt(slot);
-            if (!slot.forecast && !isActual && !owed) return null;
+          {rows.map((row) => {
+            const owed =
+              debtRow(row.year) === row
+                ? schedule.years.filter((item) => item.year === row.year)
+                : [];
             return (
-              <tr key={slot.year} className="border-b border-border-hairline">
+              <tr key={row.key} className="border-b border-border-hairline">
                 <th scope="row" className="py-2 pr-4 text-left font-mono font-normal">
-                  {isActual ? actual.period : slot.label}
+                  {row.label}
                 </th>
+                {actual && (
+                  <td className="py-2 pr-4 font-mono tabular-nums">
+                    {row.actual ? actual.display : ""}
+                  </td>
+                )}
                 {drawn.map((item) => {
-                  if (isActual)
-                    return (
-                      <td key={item.group} className="py-2 pr-4 font-mono tabular-nums">
-                        {actual.display}
-                      </td>
-                    );
-                  if (!slot.forecast)
-                    return (
-                      <td key={item.group} className="py-2 pr-4 text-gap-text">
-                        After the forecast
-                      </td>
-                    );
+                  const slot = row.forecast;
+                  if (!slot) return <td key={item.group} className="py-2 pr-4" />;
                   const cell = cellAt(item, slot);
                   const text = !cell
                     ? "Not published"
@@ -722,13 +807,19 @@ function PathTable({
                   );
                 })}
                 {lane && (
-                  <td
-                    className={cx(
-                      "py-2 pr-4",
-                      owed?.value == null ? "text-gap-text" : "font-mono tabular-nums",
-                    )}
-                  >
-                    {owed ? owed.text : "No row in the schedule"}
+                  <td className="py-2 pr-4">
+                    {owed.map((item) => (
+                      <span
+                        key={item.key}
+                        className={cx(
+                          "block",
+                          item.cell?.value == null ? "text-gap-text" : "font-mono tabular-nums",
+                        )}
+                      >
+                        {owed.length > 1 ? `${item.label}: ` : ""}
+                        {item.cell?.text}
+                      </span>
+                    ))}
                   </td>
                 )}
               </tr>
@@ -778,20 +869,12 @@ function Chart({
         <OtherGaps drawn={drawn} selected={selected} slots={slots} g={g} />
         <Actual measure={measure} g={g} />
         <Lines drawn={drawn} selected={selected} slots={slots} g={g} />
-        <Labels labels={pointLabels(drawn, selected, slots, g)} />
+        <Labels labels={pointLabels(drawn, selected, slots, g, measure)} />
         <Axis slots={slots} g={g} />
         {lane && <Lane schedule={schedule} slots={slots} g={g} />}
       </svg>
     </div>
   );
-}
-
-function absentText(measure: Measure | null, rows: string[], caseName: string | undefined) {
-  if (!measure && rows.length > 1)
-    return `The model publishes ${String(rows.length)} net leverage rows: ${periodList(rows)}. None is on net debt over Adj EBITDA, so none is drawn.`;
-  if (!measure) return "The model publishes no net leverage figure.";
-  if (measure.cases.length === 0) return "The model's net leverage row has no dated forecast year.";
-  return `No net leverage figure for ${caseName ?? "the selected case"}.`;
 }
 
 /**
@@ -854,7 +937,12 @@ export function LeveragePath({
       }
     >
       {!measure || !selected ? (
-        <GapNote>{absentText(measure, rows, caseName)}</GapNote>
+        <GapNote>
+          {absentText(
+            { measure, rows, what: "net leverage", basis: "net debt over Adj EBITDA" },
+            caseName,
+          )}
+        </GapNote>
       ) : (
         <>
           <Legend

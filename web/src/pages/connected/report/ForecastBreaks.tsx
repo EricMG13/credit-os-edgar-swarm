@@ -6,10 +6,10 @@ import { evidencePath, type OutputEntry } from "../publishedReport";
 import type { ReportView } from "../reportView";
 import {
   cellsOf,
+  absentText,
   covenantTests,
-  forecastMeasure,
   fundingGap,
-  modelLimitation,
+  type MeasureRead,
   type MeasureCell,
   type ScheduleYear,
 } from "./forecastData";
@@ -18,6 +18,7 @@ import { moduleSource } from "./overview/figureData";
 import { downsidePanels, type DownsidePanel } from "./overview/stressData";
 import { Figure, Tile } from "./overview/Tile";
 import { PublishedSource } from "./PublishedTrace";
+import type { ForecastSource } from "./ForecastRecord";
 
 /** The maturity schedule as the page reads it, with the reason when there is none. */
 export type BreaksSchedule = {
@@ -54,63 +55,87 @@ function Part({
   );
 }
 
+function rowTrace(
+  folder: string,
+  entry: OutputEntry | undefined,
+  line: number | undefined,
+  name: string,
+) {
+  if (!entry) return undefined;
+  return (
+    <PublishedSource
+      href={evidencePath(folder, entry, line)}
+      name={name}
+      linkLabel={`Source for ${name}`}
+    >
+      View source
+    </PublishedSource>
+  );
+}
+
 function FundingGapPart({ view, folder }: { view: ReportView; folder: string }) {
-  const { gap, looked } = fundingGap(view);
-  if (!gap)
+  const { gaps, looked } = fundingGap(view);
+  if (!gaps.length)
     return (
       <Part title="Funding gap">
-        <ModuleGap>
-          {looked.every((reason) => reason.endsWith("states no funding gap figure."))
-            ? `Neither ${moduleName("CP-2D")} nor ${moduleName("CP-3C")} states a funding gap figure.`
-            : `Neither ${moduleName("CP-2D")} nor ${moduleName("CP-3C")} states a funding gap figure. Looked at: ${looked.join(" ")}`}
-        </ModuleGap>
+        <ModuleGap>{looked.join(" ")}</ModuleGap>
       </Part>
     );
-  const detail = [
-    `${gap.name}'s figure`,
-    gap.horizon ? `at its horizon end, ${gap.horizon}` : "at its horizon end",
-    gap.unit,
-  ]
-    .filter(Boolean)
-    .join(" · ");
   return (
-    <Part
-      title="Funding gap"
-      detail={detail}
-      trace={
-        <PublishedSource
-          href={evidencePath(folder, gap.entry, gap.line)}
-          name="the funding gap"
-          linkLabel="Source for the funding gap"
-        >
-          View source
-        </PublishedSource>
-      }
-    >
-      {gap.value === null ? (
-        <GapChip>{gap.text || "Not stated"}</GapChip>
-      ) : (
-        <Figure className="text-h3">{gap.text}</Figure>
-      )}
+    <Part title="Funding gap">
+      <ul className="grid gap-3">
+        {gaps.map((gap) => (
+          <li key={gap.module} className="grid gap-1">
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-caption text-text-secondary">
+                {[`${gap.name}: ${gap.label}`, gap.horizon, gap.unit ?? "unit not stated"]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </span>
+              {rowTrace(folder, gap.entry, gap.line, `${gap.name}'s ${gap.label}`)}
+            </div>
+            <dl className="flex flex-wrap gap-x-5 gap-y-1">
+              {gap.figures.map((figure) => (
+                <div key={figure.header || figure.text} className="grid gap-0.5">
+                  {figure.header && (
+                    <dt className="text-caption text-text-tertiary">{figure.header}</dt>
+                  )}
+                  <dd>
+                    {figure.value === null ? (
+                      <GapChip>{figure.text}</GapChip>
+                    ) : (
+                      <Figure className="text-h4">{figure.text}</Figure>
+                    )}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </li>
+        ))}
+      </ul>
     </Part>
   );
 }
 
-/** A list of published figures, each on one scale from zero shared by the list only. */
-function FigureList({
-  items,
-  tone,
-}: {
-  items: { key: string; label: string; text: string; value: number | null; reason?: string }[];
-  tone: "primary" | "secondary";
-}) {
+type ListItem = {
+  key: string;
+  label: string;
+  text: string;
+  value: number | null;
+  reason?: string;
+  trace?: ReactNode;
+};
+
+/** A list of published figures, each on one scale from zero shared by the list only, each with
+ * its own trace. A figure the module does not give keeps the module's words. */
+function FigureList({ items, tone }: { items: ListItem[]; tone: "primary" | "secondary" }) {
   const most = Math.max(0, ...items.map((item) => item.value ?? 0));
   return (
     <ul className="grid gap-1.5">
       {items.map((item) => (
         <li
           key={item.key}
-          className="grid grid-cols-[minmax(0,5.5rem)_minmax(0,1fr)] items-center gap-2"
+          className="grid grid-cols-[minmax(0,5.5rem)_minmax(0,1fr)_auto] items-center gap-2"
         >
           <span className="font-mono text-caption text-text-secondary">{item.label}</span>
           {item.value === null ? (
@@ -120,6 +145,7 @@ function FigureList({
           ) : (
             <Figure className="text-small">{item.text}</Figure>
           )}
+          <span className="flex min-w-8 justify-end">{item.trace}</span>
         </li>
       ))}
     </ul>
@@ -127,32 +153,27 @@ function FigureList({
 }
 
 function LiquidityPart({
-  model,
+  liquidity,
   group,
   caseName,
+  source,
 }: {
-  model: unknown;
+  liquidity: MeasureRead;
   group: string | undefined;
   caseName: string;
+  source?: ForecastSource;
 }) {
-  const measure = forecastMeasure(model, /^Accessible liquidity\b/u);
+  const { measure } = liquidity;
   const cells: MeasureCell[] = measure ? cellsOf(measure, group) : [];
   const title = `Accessible liquidity, ${caseName}`;
-  if (!cells.length)
+  if (!measure || !cells.length)
     return (
       <Part title={title}>
-        <ModuleGap>
-          {measure
-            ? `No accessible liquidity figure for ${caseName}.`
-            : "The model publishes no accessible liquidity figure."}
-        </ModuleGap>
+        <ModuleGap>{absentText(liquidity, caseName)}</ModuleGap>
       </Part>
     );
   return (
-    <Part
-      title={title}
-      detail={`By forecast year, as the model publishes it · ${measure?.label ?? ""}`}
-    >
+    <Part title={title} detail={`By forecast year, as the model publishes it · ${measure.label}`}>
       <FigureList
         tone="primary"
         items={cells.map((cell) => ({
@@ -161,14 +182,20 @@ function LiquidityPart({
           text: cell.value === null ? cell.display || "n.a." : cell.display,
           value: cell.value,
           reason: cell.reason,
+          trace: source?.(`${measure.label}, ${cell.period}`, {
+            case: caseName,
+            rawGroup: group,
+            row: measure.label,
+            period: cell.period,
+          }),
         }))}
       />
     </Part>
   );
 }
 
-function SchedulePart({ schedule }: { schedule: BreaksSchedule }) {
-  const items = [...schedule.years, ...schedule.offAxis].filter((item) => item.cell);
+function SchedulePart({ schedule, folder }: { schedule: BreaksSchedule; folder: string }) {
+  const items = [...schedule.years, ...schedule.offAxis];
   if (!items.length)
     return (
       <Part title="Debt maturing">
@@ -186,26 +213,18 @@ function SchedulePart({ schedule }: { schedule: BreaksSchedule }) {
       <FigureList
         tone="secondary"
         items={items.map((item) => ({
-          key: item.label,
+          key: item.key,
           label: item.label,
-          text: item.cell?.value === null ? "Not supplied" : (item.cell?.text ?? ""),
+          text: item.cell?.text ?? "",
           value: item.cell?.value ?? null,
-          reason: item.cell?.reason ?? undefined,
+          trace: rowTrace(folder, schedule.entry, item.line, `debt maturing, ${item.label}`),
         }))}
       />
     </Part>
   );
 }
 
-function CovenantPart({
-  view,
-  folder,
-  caveat,
-}: {
-  view: ReportView;
-  folder: string;
-  caveat: string | null;
-}) {
+function CovenantPart({ view, folder }: { view: ReportView; folder: string }) {
   const { tests, reason, source } = covenantTests(view);
   const name = moduleName("CP-4");
   if (!tests.length)
@@ -214,27 +233,21 @@ function CovenantPart({
         <ModuleGap entry={source.entry}>{reason ?? `${name} states no covenant test.`}</ModuleGap>
       </Part>
     );
-  const line = source.state === "ready" ? source.descriptor.table : undefined;
+  const table = source.state === "ready" ? source.table : undefined;
   return (
-    <Part
-      title="Covenant tests"
-      detail={`As ${name} writes them`}
-      trace={
-        source.state === "ready" ? (
-          <PublishedSource
-            href={evidencePath(folder, source.entry, typeof line === "number" ? line : undefined)}
-            name="the covenant tests"
-            linkLabel="Source for the covenant tests"
-          >
-            View source
-          </PublishedSource>
-        ) : undefined
-      }
-    >
+    <Part title="Covenant tests" detail={`As ${name} writes them`}>
       <ul className="grid gap-2">
         {tests.map((test, at) => (
           <li key={`${test.label}-${String(at)}`} className="grid gap-0.5">
-            <span className="text-small font-medium text-text-primary">{test.label}</span>
+            <span className="flex items-start justify-between gap-2">
+              <span className="text-small font-medium text-text-primary">{test.label}</span>
+              {rowTrace(
+                folder,
+                source.entry,
+                table?.rowLines?.[at] ?? (table ? table.line : undefined),
+                `the ${test.label} test`,
+              )}
+            </span>
             <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-text-secondary">
               <span>
                 Level{" "}
@@ -263,8 +276,7 @@ function CovenantPart({
         ))}
       </ul>
       <p className="text-caption text-text-secondary">
-        {caveat ??
-          "Shown as the legal module states them; the forecast's figures are not set against them."}
+        This forecast&apos;s figures are not set against the covenant tests above.
       </p>
     </Part>
   );
@@ -456,6 +468,22 @@ function StressPart({ view, folder }: { view: ReportView; folder: string }) {
     >
       <div role="group" aria-label="Point-in-time stress" className="grid gap-2">
         <StressMultiple cases={data.cases} panels={data.panels} />
+        <ul aria-label="Stressed measures" className="flex flex-wrap gap-x-4 gap-y-1">
+          {data.panels.map((panel) => (
+            <li
+              key={panel.measure}
+              className="flex items-center gap-1 text-caption text-text-secondary"
+            >
+              {panel.measure}
+              {rowTrace(
+                folder,
+                entry,
+                ("line" in panel ? (panel.line as number | undefined) : undefined) ?? data.line,
+                `stress, ${panel.measure}`,
+              )}
+            </li>
+          ))}
+        </ul>
         <ul className="grid gap-1 text-caption text-text-secondary">
           {notes.map((note) => (
             <li key={note}>{note}</li>
@@ -467,44 +495,49 @@ function StressPart({ view, folder }: { view: ReportView; folder: string }) {
 }
 
 /**
- * What breaks, and when: the funding gap as the liquidity module states it; the model's liquidity
- * path and the maturity schedule, each as its own figure, with the model's own limit between them
- * (the model does not model maturities); the covenant tests as the legal module writes them; then
- * the point-in-time stress.
+ * What breaks, and when: the funding gap as the liquidity and refinancing modules state it; the
+ * model's liquidity path and the maturity schedule, each as its own figure and never set against
+ * each other; the covenant tests as the legal module writes them; then the point-in-time stress.
+ * No module sentence is picked out to stand between them: the page says what it does, and links to
+ * the forward model's own limitations.
  */
 export function WhatBreaks({
   view,
   folder,
-  model,
-  handoff,
+  liquidity,
   group,
   caseName,
   schedule,
+  source,
   trace,
 }: {
   view: ReportView;
   folder: string;
-  model: unknown;
-  /** The forward model's handoff, for its own limit sentences. */
-  handoff?: OutputEntry;
+  liquidity: MeasureRead;
   group: string | undefined;
   caseName: string;
   schedule: BreaksSchedule;
+  source?: ForecastSource;
   trace?: ReactNode;
 }) {
-  const apart = modelLimitation(handoff, /maturit|refinanc/iu);
-  const covenant = modelLimitation(handoff, /covenant/iu);
   return (
     <Tile span={4} label="What breaks, and when" title="What breaks, and when" trace={trace}>
       <FundingGapPart view={view} folder={folder} />
-      <LiquidityPart model={model} group={group} caseName={caseName} />
-      {apart && (
-        <p className="rounded-ds-sm border border-info-edge bg-info-fill p-3 text-caption text-info-text">
-          {apart}
-        </p>
-      )}
-      <SchedulePart schedule={schedule} />
-      <CovenantPart view={view} folder={folder} caveat={covenant} />
+      <LiquidityPart liquidity={liquidity} group={group} caseName={caseName} source={source} />
+      <p className="grid gap-1 rounded-ds-sm border border-info-edge bg-info-fill p-3 text-caption text-info-text">
+        <span>
+          This page shows the model&apos;s liquidity and the maturity schedule apart; it does not
+          set one against the other.
+        </span>
+        <a
+          href="#modules/CP-2G"
+          className="inline-flex min-h-8 w-fit items-center rounded-ds-xs font-medium underline underline-offset-2 outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2 max-[480px]:min-h-11"
+        >
+          {`${moduleName("CP-2G")}'s limitations`}
+        </a>
+      </p>
+      <SchedulePart schedule={schedule} folder={folder} />
+      <CovenantPart view={view} folder={folder} />
       <StressPart view={view} folder={folder} />
     </Tile>
   );

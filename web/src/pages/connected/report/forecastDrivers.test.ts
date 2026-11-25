@@ -196,3 +196,54 @@ it("tabulates the retained TransDigm inputs as recorded: upside dividends and fl
     ["0.0184", false],
   ]);
 });
+
+it("draws a null year as Not stated and keeps the other years' values", () => {
+  const table = driverTable({ base_drivers: { revenue_growth: { values: ["0.1", null, "0.3"] } } });
+  const cell = table.rows[0]?.cells[0];
+  expect(cell?.parts).toEqual(["0.1", null, "0.3"]);
+  expect(cell?.text).toBe("0.1 · Not stated · 0.3");
+  expect(cell?.text).not.toContain("null");
+});
+
+it("gives no unit to a key whose kind is unknown, a caption only to known money and fraction keys", () => {
+  const table = driverTable({
+    currency: "USD",
+    scale: 1,
+    base_drivers: {
+      mystery: { values: ["1"] },
+      dividends: { values: ["1"] },
+      interest_rate: { values: ["0.1"] },
+    },
+  });
+  expect(table.rows.map(({ key, unit }) => [key, unit])).toEqual([
+    ["mystery", ""],
+    ["dividends", "USD millions"],
+    ["interest_rate", "Fraction"],
+  ]);
+});
+
+it("compares only like forms: a percent against a decimal is stated differently, never differs", () => {
+  const flags = (base: string, other: string) => {
+    const table = driverTable({
+      base_drivers: { revenue_growth: { values: [base] } },
+      upside_drivers: { revenue_growth: { values: [other] } },
+    });
+    const cell = table.rows[0]?.cells[1];
+    return [cell?.differs, cell?.unlike];
+  };
+  expect(flags("0.05", "5%")).toEqual([false, true]);
+  expect(flags("5%", "0.05")).toEqual([false, true]);
+  expect(flags("0.05", "0.050")).toEqual([false, false]);
+  expect(flags("0.05", "0.06")).toEqual([true, false]);
+  expect(flags("5%", "5.0%")).toEqual([false, false]);
+  expect(flags("5%", "6%")).toEqual([true, false]);
+});
+
+it("draws exponent numbers as exact plain decimals and keeps the recorded text in the title", () => {
+  const table = driverTable({
+    base_drivers: { interest_rate: { values: [1e-7, "2.5e-3", "1.5e2"] } },
+  });
+  const cell = table.rows[0]?.cells[0];
+  expect(cell?.text).toBe("0.0000001 · 0.0025 · 150");
+  expect(cell?.title).toBe("1e-7 · 2.5e-3 · 1.5e2");
+});

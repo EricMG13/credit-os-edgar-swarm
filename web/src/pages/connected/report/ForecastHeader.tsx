@@ -5,6 +5,7 @@ import { ArrowRight } from "@untitledui/icons";
 import type { ReactNode } from "react";
 import { moduleName } from "../api";
 import {
+  blocked,
   evidencePath,
   readerText,
   unitLabel,
@@ -14,13 +15,14 @@ import {
 import type { ReportView } from "../reportView";
 import type { forecastCaseOptions } from "../visuals/LegacyForecast";
 import {
+  absentText,
   cellsOf,
   endOf,
   extremeOf,
   fundingGap,
   periodList,
-  type Measure,
   type MeasureCell,
+  type MeasureRead,
 } from "./forecastData";
 import { ModuleGap } from "./ForecastGaps";
 import { moduleSource } from "./overview/figureData";
@@ -32,7 +34,6 @@ import type { ForecastSource } from "./ForecastRecord";
 export type CaseChoice = { name: string; rawGroup: string; hatched: boolean };
 type CaseOption = ReturnType<typeof forecastCaseOptions>[number];
 
-const rounded = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
 const TARGET = "min-h-8 max-[480px]:min-h-11";
 
 function CaseSwitch({
@@ -82,18 +83,20 @@ function CaseSwitch({
  */
 export function CaseFigure({
   option,
+  display,
   notice,
   shownQualifications,
   source,
 }: {
   option: CaseOption | undefined;
+  /** The cell's display as the model publishes it; the page never rounds it. */
+  display: string | undefined;
   notice: string | undefined;
   shownQualifications: string[];
   source?: ForecastSource;
 }) {
   if (!option) return null;
-  const { name, rawGroup, period, periodStart, periodEnd, value, description, reason, units } =
-    option;
+  const { name, rawGroup, period, periodStart, periodEnd, description, reason, units } = option;
   return (
     <div
       id="forecast-cases"
@@ -102,7 +105,7 @@ export function CaseFigure({
     >
       <dl
         aria-label="Selected case cash proxy"
-        aria-describedby="forecast-case-measure forecast-case-note"
+        aria-describedby="forecast-case-measure"
         className="flex flex-wrap items-baseline gap-x-3 gap-y-1"
       >
         <dt id="forecast-case-measure" className="text-caption text-text-tertiary">
@@ -110,7 +113,7 @@ export function CaseFigure({
         </dt>
         <dd className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
           <span className="font-mono text-small font-medium text-text-primary tabular-nums">
-            {typeof value === "number" ? rounded.format(value) : "n.a."}
+            {display || "n.a."}
           </span>
           {period && (
             <span className="text-caption text-text-secondary">
@@ -140,9 +143,6 @@ export function CaseFigure({
           {notice}
         </p>
       )}
-      <p id="forecast-case-note" className="text-caption text-text-tertiary">
-        Case figures are rounded to at most 2 decimals.
-      </p>
     </div>
   );
 }
@@ -157,7 +157,14 @@ function BottomLine({
   folder: string;
 }) {
   const name = moduleName("CP-2G");
-  const found = handoff ? { entry: handoff, reason: undefined } : moduleSource(view, "CP-2G", name);
+  // The page's matched handoff, read the same way every tile reads a module: unreadable and
+  // blocked handoffs say so.
+  const source = moduleSource(view, "CP-2G", name);
+  const found = handoff
+    ? handoff.output.parseError
+      ? { entry: handoff, reason: `${name}'s handoff could not be read; it is in Evidence.` }
+      : { entry: handoff, reason: blocked(handoff) ? source.reason : undefined }
+    : source;
   if (!found.entry || found.reason)
     return (
       <ModuleGap entry={found.entry}>
@@ -260,34 +267,38 @@ export function ForecastHeader({
   );
 }
 
-/** Why a stat has no figure: the measure is not in the model, or not given for the case. */
-function absence(measure: Measure | null, cells: MeasureCell[], what: string, caseName: string) {
-  if (!measure) return `The model publishes no ${what} figure`;
-  if (!cells.length) return `No ${what} figure for ${caseName}`;
-  return cells.some(({ value }) => value !== null)
-    ? `One published forecast year only: no ${what} year to single out`
-    : `Not calculated for ${caseName}`;
+/** Each year of a case with no figure, named with the model's reason. */
+function noFigure(cells: MeasureCell[]) {
+  return cells
+    .filter((cell) => cell.value === null)
+    .map((cell) => `${cell.period} not calculated${cell.reason ? `: ${cell.reason}` : ""}`);
 }
 
-/** The years a selection leaves without a figure, said in the same cell. */
-function missingWords(notCalculated: string[], notPublished: string[]) {
-  return [
-    ...(notCalculated.length ? [`${periodList(notCalculated)} not calculated`] : []),
-    ...(notPublished.length ? [`${periodList(notPublished)} not published`] : []),
-  ].join("; ");
+/** Why a stat has no figure, in the words the lead uses; a case's years counted and named. */
+function absence(read: MeasureRead, cells: MeasureCell[], caseName: string) {
+  if (!read.measure || !cells.length) return absentText(read, caseName);
+  const valued = cells.filter((cell) => cell.value !== null);
+  if (valued.length === 1)
+    return [`Only ${valued[0]?.period ?? ""} has a figure`, ...noFigure(cells)].join("; ");
+  return noFigure(cells).join("; ") || `No ${read.what} figure for ${caseName}.`;
 }
 
 function selection(
   label: string,
+  read: MeasureRead,
   cells: MeasureCell[],
   kind: "highest" | "lowest",
-  absent: string,
+  caseName: string,
   trace: (cell: MeasureCell | null) => ReactNode,
 ): Stat {
   const picked = extremeOf(cells, kind);
   const [first] = picked?.cells ?? [];
-  if (!picked || !first) return { label, value: null, gap: absent, trace: trace(null) };
-  const missing = missingWords(picked.notCalculated, picked.notPublished);
+  if (!picked || !first)
+    return { label, value: null, gap: absence(read, cells, caseName), trace: trace(null) };
+  const missing = [
+    ...noFigure(cells),
+    ...(picked.notPublished.length ? [`${periodList(picked.notPublished)} not published`] : []),
+  ];
   return {
     label,
     value: first.display,
@@ -295,25 +306,31 @@ function selection(
     mark: (
       <span className="grid gap-0.5 text-caption text-text-secondary">
         <span>{periodList(picked.cells.map(({ period }) => period))}</span>
-        {missing && <span>{missing}</span>}
+        {missing.map((words) => (
+          <span key={words}>{words}</span>
+        ))}
       </span>
     ),
   };
 }
 
 function fundingStat(view: ReportView, folder: string): Stat {
-  const { gap } = fundingGap(view);
+  const { gaps, looked } = fundingGap(view);
   const label = "Funding gap";
-  if (!gap)
+  if (!gaps.length) return { label, value: null, gap: looked.join(" ") };
+  const figures = gaps.flatMap((gap) => gap.figures.map((figure) => ({ gap, figure })));
+  const [only] = figures;
+  if (figures.length !== 1 || !only)
     return {
       label,
       value: null,
-      gap: `Neither ${moduleName("CP-2D")} nor ${moduleName("CP-3C")} states one`,
+      gap: `${String(figures.length)} figures, stated by ${periodList(gaps.map(({ name }) => name))}: see What breaks, and when`,
     };
+  const { gap, figure } = only;
   return {
     label,
-    value: gap.value === null ? null : gap.text,
-    gap: gap.text,
+    value: figure.value === null ? null : figure.text,
+    gap: figure.text,
     trace: (
       <PublishedSource
         href={evidencePath(folder, gap.entry, gap.line)}
@@ -325,7 +342,9 @@ function fundingStat(view: ReportView, folder: string): Stat {
     ),
     mark: (
       <span className="text-caption text-text-secondary">
-        {[`${gap.name}'s figure`, gap.horizon, gap.unit].filter(Boolean).join(" · ")}
+        {[`${gap.name}: ${gap.label}`, figure.header, gap.horizon, gap.unit ?? "unit not stated"]
+          .filter(Boolean)
+          .join(" · ")}
       </span>
     ),
   };
@@ -333,8 +352,9 @@ function fundingStat(view: ReportView, folder: string): Stat {
 
 /**
  * The selected case's figures as selections the page makes and labels as such: its highest and
- * lowest published forecast years (ties and missing years named), its last year, and the funding
- * gap as the liquidity module states it. A case's own years, compared with other cases or not.
+ * lowest published forecast years (ties on the figures as shown, and missing years named), its last
+ * year, and the funding gap as the liquidity and refinancing modules state it. A case's own years,
+ * compared with other cases or not.
  */
 export function ForecastStats({
   view,
@@ -348,15 +368,15 @@ export function ForecastStats({
 }: {
   view: ReportView;
   folder: string;
-  leverage: Measure | null;
-  cover: Measure | null;
+  leverage: MeasureRead;
+  cover: MeasureRead;
   group: string | undefined;
   caseName: string;
   source?: ForecastSource;
   basis: string;
 }) {
-  const path = leverage ? cellsOf(leverage, group) : [];
-  const covers = cover ? cellsOf(cover, group) : [];
+  const path = leverage.measure ? cellsOf(leverage.measure, group) : [];
+  const covers = cover.measure ? cellsOf(cover.measure, group) : [];
   const end = endOf(path);
   const start = path[0];
   const trace = (name: string, row: string | undefined) => (cell: MeasureCell | null) =>
@@ -368,19 +388,21 @@ export function ForecastStats({
           ...(cell ? { period: cell.period } : {}),
         })
       : undefined;
+  const leverageRow = leverage.measure?.label;
   const stats: Stat[] = [
     selection(
       `Net leverage: highest published forecast year, ${caseName}`,
+      leverage,
       path,
       "highest",
-      absence(leverage, path, "net leverage", caseName),
-      trace("Highest published net leverage", leverage?.label),
+      caseName,
+      trace("Highest published net leverage", leverageRow),
     ),
     end && end.value !== null
       ? {
           label: `Net leverage, ${end.period}`,
           value: end.display,
-          trace: trace("Net leverage", leverage?.label)(end),
+          trace: trace("Net leverage", leverageRow)(end),
           ...(start && start !== end && start.value !== null
             ? { prior: `${start.display} in ${start.period}` }
             : {}),
@@ -388,15 +410,18 @@ export function ForecastStats({
       : {
           label: end ? `Net leverage, ${end.period}` : "Net leverage, last forecast year",
           value: null,
-          gap: end?.reason || absence(leverage, path, "net leverage", caseName),
-          trace: trace("Net leverage", leverage?.label)(end),
+          gap: end
+            ? `${end.period} not calculated${end.reason ? `: ${end.reason}` : ""}`
+            : absentText(leverage, caseName),
+          trace: trace("Net leverage", leverageRow)(end),
         },
     selection(
       `Interest cover: lowest published forecast year, ${caseName}`,
+      cover,
       covers,
       "lowest",
-      absence(cover, covers, "interest cover", caseName),
-      trace("Lowest published interest cover", cover?.label),
+      caseName,
+      trace("Lowest published interest cover", cover.measure?.label),
     ),
     fundingStat(view, folder),
   ];

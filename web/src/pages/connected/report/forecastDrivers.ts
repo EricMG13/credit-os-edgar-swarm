@@ -20,6 +20,7 @@ const FRACTIONS = new Set([
   "ebitda_decline",
   "rate_increase",
 ]);
+const MONEY = new Set(["dividends", "debt_repayment"]);
 const DRIVER_GROUPS = [
   ["base_drivers", "Base case"],
   ["upside_drivers", "Upside case"],
@@ -27,12 +28,60 @@ const DRIVER_GROUPS = [
 ] as const;
 const SHOCK = "downside_shock";
 
+/** One recorded value as recorded; null where the case states nothing for that year. */
+type Recorded = string | null;
+
 /** The recorded values, each exactly as recorded; null when the case states nothing. */
-function recordedValues(raw: unknown): string[] | null {
+function recordedValues(raw: unknown): Recorded[] | null {
   if (raw === undefined || raw === null) return null;
   if (typeof raw === "string" || typeof raw === "number") return [String(raw)];
   const values = record(raw).values;
-  return Array.isArray(values) ? values.map((item) => word(item) || String(item)) : null;
+  if (!Array.isArray(values)) return null;
+  return values.map((item: unknown) =>
+    item === null || item === undefined ? null : word(item) || String(item as string | number),
+  );
+}
+
+/** A number written with an exponent as the same number in plain decimals, digit for digit. */
+function plainDecimal(text: string) {
+  const parts = /^(-?)(\d+)(?:\.(\d+))?[eE]([+-]?\d+)$/u.exec(text.trim());
+  if (!parts) return text;
+  const digits = `${parts[2] ?? ""}${parts[3] ?? ""}`;
+  const point = (parts[2] ?? "").length + Number(parts[4]);
+  const body =
+    point <= 0
+      ? `0.${"0".repeat(-point)}${digits}`
+      : point >= digits.length
+        ? `${digits}${"0".repeat(point - digits.length)}`
+        : `${digits.slice(0, point)}.${digits.slice(point)}`;
+  const whole = body.replace(/^0+(?=\d)/u, "");
+  return `${parts[1] ?? ""}${whole}`;
+}
+
+const PLAIN = /^-?\d+(?:\.\d+)?$/u;
+const PERCENT = /^-?\d+(?:\.\d+)?\s*%$/u;
+
+/** The form a recorded value is written in: a plain decimal, a percent, or other text. */
+function formOf(text: Recorded) {
+  if (text === null) return "gap";
+  const plain = plainDecimal(text.trim());
+  if (PLAIN.test(plain)) return "plain";
+  return PERCENT.test(text.trim()) ? "percent" : "text";
+}
+
+/** Two recorded values: equal, different, or written in forms that cannot be compared. */
+function compareOne(a: Recorded, b: Recorded): "same" | "differs" | "unlike" {
+  const forms = [formOf(a), formOf(b)];
+  if (a === null || b === null) return a === b ? "same" : "differs";
+  if (forms[0] !== forms[1]) return "unlike";
+  const key = forms[0] === "percent" ? (t: string) => t.replace(/\s*%$/u, "") : plainDecimal;
+  return forms[0] === "text"
+    ? a === b
+      ? "same"
+      : "differs"
+    : canonical(key(a)) === canonical(key(b))
+      ? "same"
+      : "differs";
 }
 
 /** A recorded number in one canonical spelling (0.40 and 0.4 agree); anything else exactly. */
@@ -46,12 +95,18 @@ function canonical(text: string) {
 }
 
 /** One recorded value is a scalar and stands for every year. */
-function sameValues(a: string[], b: string[]) {
-  const one = (list: string[], other: string[]) =>
-    list.length === 1 && other.every((text) => canonical(text) === canonical(list[0] ?? ""));
-  if (a.length === 1 && b.length >= 1) return one(a, b);
-  if (b.length === 1) return one(b, a);
-  return a.length === b.length && a.every((text, at) => canonical(text) === canonical(b[at] ?? ""));
+function compareValues(a: Recorded[], b: Recorded[]) {
+  const pairs: [Recorded, Recorded][] =
+    a.length === 1 && b.length >= 1
+      ? b.map((text) => [a[0] ?? null, text])
+      : b.length === 1
+        ? a.map((text) => [text, b[0] ?? null])
+        : a.length === b.length
+          ? a.map((text, at) => [text, b[at] ?? null])
+          : [];
+  if (!pairs.length) return "differs";
+  const results = pairs.map(([x, y]) => compareOne(x, y));
+  return results.includes("differs") ? "differs" : results.includes("unlike") ? "unlike" : "same";
 }
 
 function amountUnit(document: Record<string, unknown>) {
@@ -66,6 +121,12 @@ function amountUnit(document: Record<string, unknown>) {
 
 export type DriverCell = {
   text: string;
+  /** The text year by year; null is a year the case states nothing for. */
+  parts: Recorded[];
+  /** The values exactly as recorded (a number with an exponent is drawn as plain decimals). */
+  title: string;
+  /** Both base and this case state the driver, in forms that cannot be compared as numbers. */
+  unlike: boolean;
   stated: boolean;
   /** Both base and this case state the driver and the recorded numbers differ. */
   differs: boolean;
@@ -73,7 +134,15 @@ export type DriverCell = {
   only: boolean;
 };
 
-const NOT_STATED: DriverCell = { text: "Not stated", stated: false, differs: false, only: false };
+const NOT_STATED: DriverCell = {
+  text: "Not stated",
+  parts: [],
+  title: "",
+  unlike: false,
+  stated: false,
+  differs: false,
+  only: false,
+};
 
 /**
  * The forecast inputs' drivers as a table: one row per driver any case states and one column per
@@ -111,14 +180,22 @@ export function driverTable(document: Record<string, unknown>, shockName = "Down
     const base = isShock ? null : (values[0] ?? null);
     const cells = values.map((recorded, at): DriverCell => {
       if (!recorded) return NOT_STATED;
+      const first = recorded[0] ?? null;
       const every =
         recorded.length > 1 &&
-        recorded.every((text) => canonical(text) === canonical(recorded[0] ?? ""));
+        first !== null &&
+        recorded.every((text) => text !== null && compareOne(text, first) === "same");
+      const shown = recorded.map((text) => (text === null ? null : plainDecimal(text)));
+      const parts = every ? [`${plainDecimal(first)} each year`] : shown;
       const counted = at > 0 && !isShock;
+      const compared = counted && base !== null ? compareValues(base, recorded) : "same";
       return {
-        text: every ? `${recorded[0] ?? ""} each year` : recorded.join(" · "),
+        text: parts.map((part) => part ?? "Not stated").join(" · "),
+        parts,
+        title: recorded.map((text) => text ?? "Not stated").join(" · "),
+        unlike: compared === "unlike",
         stated: true,
-        differs: counted && base !== null && !sameValues(base, recorded),
+        differs: compared === "differs",
         only: counted && base === null,
       };
     });
@@ -128,7 +205,7 @@ export function driverTable(document: Record<string, unknown>, shockName = "Down
       key,
       name: DRIVER_NAMES[key] ?? key.replaceAll("_", " "),
       shock: isShock,
-      unit: FRACTIONS.has(key) ? "Fraction" : unit,
+      unit: FRACTIONS.has(key) ? "Fraction" : MONEY.has(key) ? unit : "",
       cells,
     };
   });

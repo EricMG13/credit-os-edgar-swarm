@@ -4,7 +4,10 @@ import { ArrowRight, Download01 } from "@untitledui/icons";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import { useResource } from "../useResource";
 import { scopeQualifications } from "../visuals/LegacyForecast";
+import { moduleName } from "../api";
 import type { ForecastSource } from "./ForecastRecord";
+import type { Limitation } from "./forecastData";
+import { PublishedSource } from "./PublishedTrace";
 import { GapNote, Tile } from "./overview/Tile";
 
 type FileLink = { label: string; href: string };
@@ -67,6 +70,8 @@ export function ForecastScopeTiles({
   source,
   note,
   register,
+  limitations = [],
+  limitationHref,
   select,
 }: {
   model: { id: string };
@@ -74,6 +79,9 @@ export function ForecastScopeTiles({
   source?: ForecastSource;
   note?: ReactNode;
   register: boolean;
+  /** The forward model's own Limitations passage, every item, as written. */
+  limitations?: Limitation[];
+  limitationHref?: (line: number) => string;
   select?: ReactNode;
 }) {
   const { base, limits } = scopeQualifications(model);
@@ -100,6 +108,34 @@ export function ForecastScopeTiles({
           </ul>
         ) : (
           <GapNote>No qualifications are available in this summary.</GapNote>
+        )}
+        {limitations.length > 0 && (
+          <section
+            aria-label={`${moduleName("CP-2G")}'s limitations`}
+            className="grid min-w-0 gap-2"
+          >
+            <h4 className="text-small font-medium text-text-primary">
+              {`${moduleName("CP-2G")}'s limitations, as it writes them`}
+            </h4>
+            <ul className="grid min-w-0 gap-2 wrap-anywhere">
+              {limitations.map(({ line, text }) => (
+                <li key={line} className={`${TRACE_HOST} flex items-start justify-between gap-2`}>
+                  <p className="text-small text-text-secondary">
+                    {text ?? "This limitation cites its source by name; read it in Evidence."}
+                  </p>
+                  {limitationHref && (
+                    <PublishedSource
+                      href={limitationHref(line)}
+                      name={`${moduleName("CP-2G")} limitation, line ${String(line)}`}
+                      linkLabel={`Source for this ${moduleName("CP-2G")} limitation`}
+                    >
+                      View source
+                    </PublishedSource>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
         {note}
         <div className="flex flex-wrap gap-x-4">

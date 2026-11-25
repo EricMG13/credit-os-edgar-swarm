@@ -30,11 +30,15 @@ import {
   type ForecastSource,
 } from "./ForecastRecord";
 import {
+  caseYears,
   cellsOf,
   earningsBasis,
   forecastMeasure,
   maturitySchedule,
-  measureRows,
+  modelCases,
+  modelLimitations,
+  readMeasure,
+  type Measure,
 } from "./forecastData";
 import { CaseFigure, ForecastHeader, ForecastStats, type CaseChoice } from "./ForecastHeader";
 import { ModuleGap } from "./ForecastGaps";
@@ -235,13 +239,23 @@ function tableTrace(folder: string, source: Ready | { state: "gap" }, name: stri
 }
 
 const NET_LEVERAGE = /^Net leverage\b/u;
+const LIQUIDITY = /^Accessible liquidity\b/u;
+const CASH_PROXY_ROW = /^Cash proxy \(not issuer free cash flow\)$/u;
 const ON_ADJ_EBITDA = /net debt \/ Adj EBITDA/u;
 const COVER = /^Interest coverage\b/u;
 const COVER_ON_ADJ_EBITDA = /Adj EBITDA \/ (?:cash )?interest/u;
 
+/** The page's one reading of net leverage: the row on net debt over Adj EBITDA. */
+const readLeverage = (model: unknown) =>
+  readMeasure(model, "net leverage", NET_LEVERAGE, {
+    pattern: ON_ADJ_EBITDA,
+    basis: "net debt over Adj EBITDA",
+  });
+
 function caseChoices(
+  model: Model,
   options: ReturnType<typeof forecastCaseOptions>,
-  leverage: ReturnType<typeof forecastMeasure>,
+  leverage: Measure | null,
 ): CaseChoice[] {
   const drawn = (group: string) =>
     leverage?.cases.some(
@@ -249,19 +263,18 @@ function caseChoices(
     ) ?? false;
   if (options.length)
     return options.map(({ name, rawGroup }) => ({ name, rawGroup, hatched: !drawn(rawGroup) }));
-  return (leverage?.cases ?? []).map(({ name, group }) => ({
+  // Without a cash proxy row, the cases are the model's forecast column groups.
+  return modelCases(model).map(({ name, group }) => ({
     name,
     rawGroup: group,
     hatched: !drawn(group),
   }));
 }
 
-function basisItems(model: Model, leverage: ReturnType<typeof forecastMeasure>, group?: string) {
+function basisItems(model: Model, group?: string) {
   const units = word(record(model.cashflow).units);
-  // The selected case's own published years, compared with other cases or not.
-  const cells = leverage ? cellsOf(leverage, group) : [];
-  const first = cells[0];
-  const last = cells.at(-1);
+  // The selected case's own forecast columns, whatever rows the model publishes.
+  const { first, last } = caseYears(model, group);
   return [
     { label: "Earnings basis", value: earningsBasis(model) ?? "Not recorded" },
     { label: "Units", value: unitLabel(units) || "Units not recorded" },
@@ -269,7 +282,7 @@ function basisItems(model: Model, leverage: ReturnType<typeof forecastMeasure>, 
       label: "Forecast years",
       value:
         first && last
-          ? `${first.period}${first.start ? ` (from ${first.start})` : ""} to ${last.period}${last.end ? ` (to ${last.end})` : ""}`
+          ? `${first.label}${first.start ? ` (from ${first.start})` : ""} to ${last.label}${last.end ? ` (to ${last.end})` : ""}`
           : "Not recorded",
     },
   ];
@@ -301,8 +314,12 @@ function ModelTiles({
   select: ReactNode;
 }) {
   const cashflow = record(model.cashflow);
-  const leverage = forecastMeasure(model, NET_LEVERAGE, ON_ADJ_EBITDA);
-  const cover = forecastMeasure(model, COVER, COVER_ON_ADJ_EBITDA);
+  const leverage = readLeverage(model);
+  const cover = readMeasure(model, "interest cover", COVER, {
+    pattern: COVER_ON_ADJ_EBITDA,
+    basis: "Adj EBITDA over interest",
+  });
+  const liquidity = readMeasure(model, "accessible liquidity", LIQUIDITY);
   const schedule = maturitySchedule(view);
   const scheduleTrace = tableTrace(run.folder, schedule.source, "the maturity schedule");
   const scheduleGap =
@@ -322,13 +339,15 @@ function ModelTiles({
         basis={`${caseName} · ${earningsBasis(model) ?? "earnings basis not recorded"}`}
       />
       <LeveragePath
-        measure={leverage}
-        rows={measureRows(model, NET_LEVERAGE)}
+        measure={leverage.measure}
+        rows={leverage.rows}
         group={group}
         caseName={caseName}
         schedule={{ ...schedule, gap: scheduleGap, trace: scheduleTrace }}
         trace={
-          leverage ? source("Net leverage path", { row: leverage.label, case: "" }) : undefined
+          leverage.measure
+            ? source("Net leverage path", { row: leverage.measure.label, case: "" })
+            : undefined
         }
       />
 
@@ -336,13 +355,19 @@ function ModelTiles({
         <WhatBreaks
           view={view}
           folder={run.folder}
-          model={model}
-          handoff={handoff}
+          liquidity={liquidity}
           group={group}
           caseName={caseName}
+          source={source}
           schedule={{ ...schedule, entry: schedule.source.entry, trace: scheduleTrace }}
         />
-        <UsesOfCash model={model} group={group} caseName={caseName} source={source} />
+        <UsesOfCash
+          model={model}
+          group={group}
+          caseName={caseName}
+          units={unitLabel(word(cashflow.units))}
+          source={source}
+        />
       </div>
       <AssumptionsByCase
         document={input?.value ?? null}
@@ -384,10 +409,20 @@ function ModelTiles({
         source={source}
         note={<BasisNote model={model} handoff={handoff} href={href} />}
         register={Boolean(model.register)}
+        limitations={modelLimitations(handoff)}
+        limitationHref={href}
         select={select}
       />
     </>
   );
+}
+
+/** The selected case's cash proxy cell for its period, as the model displays it. */
+function caseDisplay(model: Model, group: string | undefined, period: string | undefined) {
+  const measure = forecastMeasure(model, CASH_PROXY_ROW);
+  return period && measure
+    ? cellsOf(measure, group).find((cell) => cell.period === period)?.display
+    : undefined;
 }
 
 export function Forecast({
@@ -406,8 +441,8 @@ export function Forecast({
   const { models, entries } = view;
   const model = models[selected] ?? models[0];
   const caseOptions = model ? forecastCaseOptions(model) : [];
-  const leverage = model ? forecastMeasure(model, NET_LEVERAGE, ON_ADJ_EBITDA) : null;
-  const cases = caseChoices(caseOptions, leverage);
+  const leverage = model ? readLeverage(model).measure : null;
+  const cases = model ? caseChoices(model, caseOptions, leverage) : [];
   const current = cases.find(({ name }) => name === chosenCase) ?? cases[0];
   const option = caseOptions.find(({ name }) => name === current?.name);
   const selectedCase = option?.name;
@@ -428,12 +463,13 @@ export function Forecast({
         cases={cases}
         current={current?.name}
         onSelect={setChosenCase}
-        basis={model ? basisItems(model, leverage, group) : []}
+        basis={model ? basisItems(model, group) : []}
         hasModel={Boolean(model)}
         caseFigure={
           model && caseOptions.length > 1 ? (
             <CaseFigure
               option={option}
+              display={caseDisplay(model, group, option?.period)}
               notice={caseOptions[0]?.comparisonNotice}
               shownQualifications={baseQualifications(model)}
               source={source}

@@ -105,10 +105,23 @@ function caseColumns(lead: StatementColumn[], kept: Kept) {
   return cases.flatMap((member) => {
     const band = `Forecast · ${readerText(member.group)}`;
     const own = lead.filter(({ rawGroup }) => rawGroup === member.rawGroup);
-    const absent = kept
+    // A forecast year inside the case's own span that it publishes no column for.
+    const years = own.flatMap(({ label }) => {
+      const year = /^FY(\d{4})E$/u.exec(label)?.[1];
+      return year ? [Number(year)] : [];
+    });
+    const inSpan = years.length
+      ? Array.from(
+          { length: Math.max(...years) - Math.min(...years) + 1 },
+          (_, at) => `FY${String(Math.min(...years) + at)}E`,
+        ).map((period) => ({ period, groups: [] as string[] }))
+      : [];
+    const absent = [...kept, ...inSpan]
       .filter(
-        ({ period, groups }) =>
-          !groups.includes(member.rawGroup) && !own.some(({ label }) => label === period),
+        ({ period, groups }, at, all) =>
+          !groups.includes(member.rawGroup) &&
+          !own.some(({ label }) => label === period) &&
+          all.findIndex((other) => other.period === period) === at,
       )
       .map(({ period }): ShownColumn => ({
         label: period,

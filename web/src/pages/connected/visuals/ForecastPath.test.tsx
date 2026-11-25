@@ -143,16 +143,17 @@ it("draws the published maturity schedule as written on the axis, naming no sing
     {
       schedule: {
         years: [
-          { year: 2026, label: "FY2026", cell: cell("500", 500) },
+          { year: 2026, label: "FY2026", key: "FY2026", cell: cell("500", 500) },
           {
             year: 2027,
             label: "FY2027",
+            key: "FY2027",
             cell: cell("Not supplied: the schedule stops here", null, "the schedule stops here"),
           },
-          { year: 2028, label: "FY2028", cell: cell("1,250", 1250) },
-          { year: 2034, label: "FY2034", cell: cell("900", 900) },
+          { year: 2028, label: "FY2028", key: "FY2028", cell: cell("1,250", 1250) },
+          { year: 2034, label: "FY2034", key: "FY2034", cell: cell("900", 900) },
         ],
-        offAxis: [{ year: 0, label: "Thereafter", cell: cell("4,768", 4768) }],
+        offAxis: [{ year: 0, label: "Thereafter", key: "Thereafter", cell: cell("4,768", 4768) }],
         unit: "US$m",
       },
     },
@@ -163,7 +164,9 @@ it("draws the published maturity schedule as written on the axis, naming no sing
   expect(figure.queryByText(/maturity wall/i)).toBeNull();
   expect(container.querySelector('[data-lane-gap="FY2027"]')).not.toBeNull();
   expect(figure.getByText("Not supplied")).toBeInTheDocument();
-  expect(screen.getByText("Debt maturing, FY2027: the schedule stops here.")).toBeInTheDocument();
+  expect(
+    screen.getByText("Debt maturing, FY2027: Not supplied: the schedule stops here."),
+  ).toBeInTheDocument();
   expect(screen.getByText("Debt maturing beyond this axis: FY2034 900.")).toBeInTheDocument();
   expect(
     screen.getByText("Debt maturing, not by fiscal year: Thereafter 4,768."),
@@ -238,4 +241,23 @@ it("draws the gap in place: no row, two unmatched rows, a case without the row",
   });
   expect(screen.getByText("No net leverage figure for Downside drivers.")).toBeInTheDocument();
   expect(screen.queryByText("1.5x")).toBeNull();
+});
+
+it("keeps an actual year and a forecast year of the same fiscal year apart, by their labels", () => {
+  draw(
+    measureOf(
+      [{ label: "FY2025", group: "Fiscal year" }, ...cols("Base case", ["FY2025E", "FY2026E"])],
+      [value("2.50"), value("2.20"), value("2.00")],
+    ),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Table" }));
+  const table = within(screen.getByRole("table", { name: /Net leverage by case/ }));
+  const row = (label: string) =>
+    within(table.getByRole("rowheader", { name: label }).closest("tr") as HTMLElement)
+      .getAllByRole("cell")
+      .map((cell) => cell.textContent);
+  // Columns: Actual, Base case. The actual is never put in the case's column.
+  expect(row("FY2025")).toEqual(["2.50x", ""]);
+  expect(row("FY2025E")).toEqual(["", "2.20x"]);
+  expect(row("FY2026E")).toEqual(["", "2.00x"]);
 });

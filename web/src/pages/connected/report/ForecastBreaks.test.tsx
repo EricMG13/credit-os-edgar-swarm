@@ -3,6 +3,7 @@ import { expect, it } from "vitest";
 import type { OutputEntry } from "../publishedReport";
 import type { ReportView } from "../reportView";
 import { WhatBreaks } from "./ForecastBreaks";
+import { readMeasure } from "./forecastData";
 
 const value = (exact: string) => ({ status: "value", exact, display: exact });
 const LIQUIDITY = "Accessible liquidity";
@@ -193,8 +194,13 @@ const forward = entryOf("CP-2G", [
 
 const schedule = {
   years: [
-    { year: 2026, label: "FY2026", cell: { text: "500", value: 500, reason: null } },
-    { year: 2028, label: "FY2028", cell: { text: "1,250", value: 1250, reason: null } },
+    { year: 2026, label: "FY2026", key: "FY2026", cell: { text: "500", value: 500, reason: null } },
+    {
+      year: 2028,
+      label: "FY2028",
+      key: "FY2028",
+      cell: { text: "1,250", value: 1250, reason: null },
+    },
   ],
   offAxis: [],
   unit: "US$m",
@@ -206,11 +212,11 @@ function breaks(entries: OutputEntry[], cells = [value("212"), value("295"), val
     <WhatBreaks
       view={view(entries)}
       folder="current"
-      model={model(cells)}
-      handoff={entries.find(({ output }) => output.module === "CP-2G")}
+      liquidity={readMeasure(model(cells), "accessible liquidity", /^Accessible liquidity\b/)}
       group="Base case"
       caseName="Base case"
       schedule={schedule}
+      source={(name) => <button type="button">{`Show sources for ${name}`}</button>}
     />,
   );
 }
@@ -219,10 +225,10 @@ it("states the liquidity module's funding gap as that module's figure, with hori
   breaks([liquidity]);
   const part = within(screen.getByRole("region", { name: "Funding gap" }));
   expect(part.getByText("120.5")).toBeInTheDocument();
-  expect(
-    part.getByText("Liquidity's figure · at its horizon end, 2026-03-31 · USD millions"),
-  ).toBeInTheDocument();
-  expect(part.getByRole("link", { name: "Source for the funding gap" })).toHaveAttribute(
+  // Named by the module and the row's own label, never the page's own wording.
+  expect(part.getByText("Liquidity: Funding gap · 2026-03-31 · USD millions")).toBeInTheDocument();
+  expect(part.queryByText(/horizon end/)).toBeNull();
+  expect(part.getByRole("link", { name: "Source for Liquidity's Funding gap" })).toHaveAttribute(
     "href",
     expect.stringContaining("-45") as string,
   );
@@ -233,12 +239,12 @@ it("names the modules it looked at when neither states a funding gap", () => {
   breaks([]);
   expect(
     within(screen.getByRole("region", { name: "Funding gap" })).getByText(
-      "Neither Liquidity nor Refinancing & LME states a funding gap figure. Looked at: Liquidity did not run in this run. Refinancing & LME did not run in this run.",
+      "Liquidity did not run in this run. Refinancing & LME did not run in this run.",
     ),
   ).toBeInTheDocument();
 });
 
-it("shows the liquidity path and the maturity schedule apart, with the model's own limit between", () => {
+it("shows the liquidity path and the maturity schedule apart, with a trace per figure, picking no sentence", () => {
   breaks([forward]);
   const path = within(screen.getByRole("region", { name: "Accessible liquidity, Base case" }));
   for (const [year, figure] of [
@@ -248,16 +254,25 @@ it("shows the liquidity path and the maturity schedule apart, with the model's o
   ] as const) {
     expect(path.getByText(year)).toBeInTheDocument();
     expect(path.getByText(figure)).toBeInTheDocument();
+    expect(
+      path.getByRole("button", { name: `Show sources for Accessible liquidity, ${year}` }),
+    ).toBeInTheDocument();
   }
   const debt = within(screen.getByRole("region", { name: "Debt maturing" }));
   expect(debt.getByText("FY2028")).toBeInTheDocument();
   expect(debt.getByText("1,250")).toBeInTheDocument();
   expect(path.queryByText("1,250")).toBeNull();
+  // The page says what it does and links to the model's own limitations; it quotes no sentence.
   expect(
     screen.getByText(
-      "Debt maturities and refinancing feasibility are not modelled; the maturity wall and funding gap belong to the liquidity and refinancing modules.",
+      "This page shows the model's liquidity and the maturity schedule apart; it does not set one against the other.",
     ),
   ).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Forward credit model's limitations" })).toHaveAttribute(
+    "href",
+    "#modules/CP-2G",
+  );
+  expect(screen.queryByText(/refinancing feasibility/)).toBeNull();
 });
 
 it("shows each covenant test as the legal module writes it, with the model's caveat in words", () => {
@@ -269,10 +284,10 @@ it("shows each covenant test as the legal module writes it, with the model's cav
   expect(part.getByText("0.8x")).toBeInTheDocument();
   expect(part.getByText("Passes at or below")).toBeInTheDocument();
   expect(
-    part.getByText(
-      "The break tests reuse watch levels, not covenant tests; covenant compliance belongs to the legal module.",
-    ),
+    part.getByText("This forecast's figures are not set against the covenant tests above."),
   ).toBeInTheDocument();
+  expect(part.queryByText(/break tests reuse/)).toBeNull();
+  expect(part.getByRole("link", { name: "Source for the Net leverage test" })).toBeInTheDocument();
 });
 
 it("draws the legal module blocked in the designed blocked state with its reason", () => {

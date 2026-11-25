@@ -882,9 +882,10 @@ it("keeps the missing cash-proxy reason on its case card and explains its precis
   const cases = within(caseItem("Downside shock"));
   expect(cases.getByText(missing)).toBeInTheDocument();
   expect(within(caseFigure()).getByText("n.a.")).toBeInTheDocument();
-  expect(caseFigure()).toHaveAccessibleDescription(/Cash proxy.*2 decimals/);
-  // The precision is the figure's description, not part of the figure.
-  expect(within(caseFigure()).queryByText(/2 decimals/)).toBeNull();
+  // The figure is the model's own display, so the page claims no rounding of it; its
+  // description names the measure.
+  expect(caseFigure()).toHaveAccessibleDescription(/^Cash proxy, Downside shock/);
+  expect(screen.queryByText(/rounded/)).toBeNull();
 });
 
 it("uses stored case names for descriptions and reader names for all column groups", () => {

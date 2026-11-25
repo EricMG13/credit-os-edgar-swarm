@@ -127,3 +127,40 @@ it("draws a gap, not an empty table, when the inputs state no driver", () => {
   expect(screen.getByText("The forecast inputs state no driver for any case.")).toBeInTheDocument();
   expect(screen.queryByRole("table")).toBeNull();
 });
+
+it("draws the downside note with module names, never codes or register ids", () => {
+  const real = "Downside case is CP-2G's own downside drivers; no CP-2A shock was supplied.";
+  const { unmount } = render(<AssumptionsByCase document={document} downsideNote={real} />);
+  expect(screen.queryByText(/CP-2/u)).toBeNull();
+  expect(
+    screen.getByText(/^Downside case is .+'s own downside drivers; no .+ shock was supplied\.$/u),
+  ).toBeInTheDocument();
+  unmount();
+  render(<AssumptionsByCase document={document} downsideNote="(CP-2A s01, see T2B.1)" />);
+  expect(
+    screen.getByText("The model's note on the downside case is in Evidence."),
+  ).toBeInTheDocument();
+  expect(screen.queryByText(/T2B\.1/u)).toBeNull();
+});
+
+it("draws a null year as the gap chip, an unknown key with no unit, and unlike forms as stated differently", () => {
+  render(
+    <AssumptionsByCase
+      document={{
+        base_drivers: {
+          revenue_growth: { values: ["0.1", null] },
+          ebitda_margin: "0.1",
+          mystery: { values: ["1e-7"] },
+        },
+        upside_drivers: { ebitda_margin: "10%" },
+      }}
+    />,
+  );
+  expect(texts(rowOf("Revenue growth"))[0]).toBe("0.1 · Not stated");
+  const margin = texts(rowOf("EBITDA margin"));
+  expect(margin[1]).toContain("stated differently from base");
+  expect(margin[1]).not.toContain("differs");
+  expect(rowOf("mystery").textContent).not.toContain("USD");
+  expect(texts(rowOf("mystery"))[0]).toBe("0.0000001");
+  expect(within(rowOf("mystery")).getByTitle("1e-7")).toBeInTheDocument();
+});

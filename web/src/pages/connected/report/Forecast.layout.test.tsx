@@ -104,12 +104,96 @@ it("lays the tiles in the screen map's order, the lead first after the figures",
   expect(screen.getByText("1.23x · FY2025E")).toBeInTheDocument();
 });
 
-it("draws no source reference, hash or module code on the page", () => {
-  const { container } = render(<Forecast view={view([model])} run={run} />);
-  const text = container.textContent;
-  expect(text).not.toMatch(/[0-9a-f]{64}/u);
-  expect(text).not.toMatch(/\bCP-[A-Z0-9]+\b/u);
-  expect(text).not.toMatch(/\.(?:md|json|txt|pdf|xlsx)\b/u);
+const handoff = (module: string, sha: string, sections: unknown[]) => ({
+  selected: true,
+  output: {
+    id: module,
+    sha256: sha,
+    module,
+    label: "",
+    href: "",
+    state: { established: true, declared: null },
+  },
+  sections,
+});
+const findings = { heading: "Findings", level: 2, line: 1, blocks: [] };
+const text = (heading: string, line: number, body: string) => ({
+  heading,
+  level: 3,
+  line,
+  blocks: [{ type: "text", line: line + 2, end: line + 2, text: body }],
+});
+const table = (heading: string, line: number, headers: string[], rows: string[][]) => ({
+  heading,
+  level: 3,
+  line,
+  blocks: [
+    {
+      type: "table",
+      line: line + 2,
+      headers,
+      rows: rows.map((cells, at) => ({ line: line + 4 + at, cells })),
+    },
+  ],
+});
+
+it("draws no source reference, hash, register id or module code, even where the handoffs carry them", () => {
+  const sha = "f".repeat(64);
+  const coded = {
+    ...model,
+    sources: [{ role: "handoff", sha256: sha }],
+    cashflow: {
+      ...model.cashflow,
+      notes: ["Downside case is CP-2G's own downside drivers; no CP-2A shock was supplied."],
+    },
+  };
+  const entries = [
+    handoff("CP-2G", sha, [
+      findings,
+      text("Bottom line", 10, "Net leverage falls under the CP-2A downside to 1.1x."),
+      text(
+        "Limitations",
+        20,
+        "- The break tests reuse CP-2A's levels, not covenant tests; covenant compliance belongs to CP-4.\n- Debt maturities are not modelled; the funding gap belongs to CP-2D and CP-3C.",
+      ),
+    ]),
+    handoff("CP-2D", "a".repeat(64), [
+      findings,
+      text("Bottom line", 10, "Liquidity lasts."),
+      table(
+        "T2E.5 Funding gap",
+        30,
+        ["Line", "Value"],
+        [
+          ["CP-2D horizon (analyst judgment)", "CP-2D horizon of 24 months (T2E.3.r03)"],
+          ["Funding gap", "120"],
+        ],
+      ),
+    ]),
+    handoff("CP-3C", "b".repeat(64), [
+      findings,
+      text("Bottom line", 10, "Refinancing is needed."),
+      table(
+        "T3D.2 Refinancing burden",
+        30,
+        ["Line", "Value"],
+        [["CP-2D funding gap at its horizon end", "120"]],
+      ),
+    ]),
+  ];
+  const { container } = render(
+    <Forecast view={{ ...view([coded]), entries, modules: [] } as unknown as View} run={run} />,
+  );
+  // The handoffs' figures and words are drawn, named by module.
+  expect(screen.getAllByText("120").length).toBeGreaterThan(0);
+  expect(
+    screen.getByText(/the funding gap belongs to Liquidity and Refinancing & LME/),
+  ).toBeInTheDocument();
+  const page = container.textContent;
+  expect(page).not.toMatch(/[0-9a-f]{64}/u);
+  expect(page).not.toMatch(/\bCP-[A-Z0-9]+\b/u);
+  expect(page).not.toMatch(/\bT\d+[A-Z]*\.\d+(?:\.r\d+)?\b/u);
+  expect(page).not.toMatch(/\.(?:md|json|txt|pdf|xlsx)\b/u);
 });
 
 it("draws the header's gap and the run charts only when no forecast model was published", () => {

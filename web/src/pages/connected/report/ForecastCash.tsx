@@ -56,7 +56,7 @@ function stepFor(max: number) {
 }
 
 function reasonOf(cell: MeasureCell | undefined) {
-  return cell ? cell.reason || "No value published" : "Not published for this case";
+  return cell ? cell.reason || "No value published" : "Not published";
 }
 
 const isNegative = (cell: MeasureCell | undefined) => (cell?.value ?? 0) < 0;
@@ -84,7 +84,8 @@ function Chart({ slots }: { slots: Slot[] }) {
   const description = slots
     .flatMap(({ period, parts }) =>
       parts.map(
-        ({ name, cell }) => `${name} ${period} ${cell?.value == null ? "n.a." : cell.display}`,
+        ({ name, cell }) =>
+          `${name} ${period} ${cell?.value == null ? "not published" : cell.display}`,
       ),
     )
     .join(", ");
@@ -161,7 +162,7 @@ function Chart({ slots }: { slots: Slot[] }) {
               return (
                 <g key={name}>
                   <rect
-                    data-part={`${name} ${slot.period} n.a.`}
+                    data-part={`${name} ${slot.period} not published`}
                     x={x}
                     y={y}
                     width={barWidth}
@@ -184,7 +185,7 @@ function Chart({ slots }: { slots: Slot[] }) {
                     textAnchor="middle"
                     className="fill-text-secondary font-mono text-caption"
                   >
-                    n.a.
+                    Not published
                   </text>
                 </g>
               );
@@ -275,7 +276,7 @@ export function UsesOfCash({
     span: 5,
     label: "Uses of cash",
     title: `Uses of cash, ${caseName ?? "selected case"}`,
-    kicker: `Distributions and debt repayments by year as the model publishes them${units ? ` · ${units}` : ""}`,
+    kicker: `Distributions and debt repayments by year as the model publishes them · ${units || "Units not recorded"}`,
     trace: trace("Distributions"),
   } as const;
   if (measures.every(([, measure]) => measure === null))
@@ -303,13 +304,19 @@ export function UsesOfCash({
     parts: byName.map(({ name, cells }) => ({ name, cell: cells.get(period) })) as [Part, Part],
   }));
   const notes = slots.flatMap(({ period, parts }) =>
-    parts.flatMap(({ name, cell }) =>
-      isNegative(cell)
-        ? [`${period} ${name}: ${cell?.display ?? ""} (negative, not stacked)`]
-        : isMissing(cell)
-          ? [`${period} ${name}: ${reasonOf(cell)}`]
-          : [],
-    ),
+    parts.every(({ cell }) => cell === undefined)
+      ? [`${period}: not published for this case.`]
+      : parts.flatMap(({ name, cell }) =>
+          isNegative(cell)
+            ? [`${period} ${name}: ${cell?.display ?? ""} (negative, not stacked)`]
+            : isMissing(cell)
+              ? [
+                  cell === undefined
+                    ? `${period} ${name}: not published for this case.`
+                    : `${period} ${name}: ${reasonOf(cell)}`,
+                ]
+              : [],
+        ),
   );
   return (
     <Tile

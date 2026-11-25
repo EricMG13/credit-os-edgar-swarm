@@ -94,7 +94,7 @@ it("draws the designated run figure with a same-output trace even when no model 
     "#modules/CP-1",
   );
   expect(screen.getAllByText("No dated proposal was evaluated").length).toBeGreaterThanOrEqual(2);
-  expect(screen.getByText("Module not assessable.")).toBeInTheDocument();
+  expect(screen.getAllByText("Module not assessable.").length).toBeGreaterThanOrEqual(1);
   // The withheld module's chart is listed with its reason and offers no table.
   expect(
     within(chartRow("Liquidity bridge")).getByText("Module not assessable."),
@@ -102,8 +102,9 @@ it("draws the designated run figure with a same-output trace even when no model 
   expect(screen.queryByText("Table for Liquidity bridge")).toBeNull();
   expect(screen.queryByText("237")).toBeNull();
   expect(screen.queryByText("Retained maturity schedule")).toBeNull();
-  expect(screen.queryByText("Issuer dates")).toBeNull();
-  expect(screen.queryByText("Operating model")).toBeNull();
+  // The selected module's events and maps are listed beside its charts.
+  expect(chartRow("Issuer dates")).toBeInTheDocument();
+  expect(chartRow("Operating model")).toBeInTheDocument();
 });
 
 it("spells out a ratio chart caption while retaining its stored x unit", () => {
@@ -131,6 +132,8 @@ it("shows the recorded build rejection and keeps its raw table in Evidence", () 
   const returned = entry("CP-4", "Covenants", { value: "725" });
   returned.output.charts = [];
   returned.output.chartGaps = [];
+  returned.output.events = [];
+  returned.output.maps = [];
   returned.output.issue =
     "Events: legal is not in its fixed table; Chart data: figures is not in its fixed table";
   const view: ReturnType<typeof buildReportView> = {

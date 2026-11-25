@@ -9,7 +9,8 @@ import {
   extremeOf,
   fundingGap,
   measureRows,
-  modelLimitation,
+  maturitySchedule,
+  modelLimitations,
   periodList,
   type MeasureCell,
 } from "./forecastData";
@@ -231,47 +232,92 @@ const tableSection = (heading: string, line: number, headers: string[], rows: st
   ],
 });
 
-it("reads the funding gap the liquidity module states, with its unit, horizon and line", () => {
+it("reads every stated column of the liquidity module's funding gap, with its unit and line", () => {
   const liquidity = handoff("CP-2D", [
     tableSection(
       "T2E.5 Funding gap",
       40,
-      ["Line", "Value (USD millions)"],
+      ["Line", "Base", "Downside", "Unit", "Source"],
       [
-        ["Horizon", "2026-03-31"],
-        ["Funding gap", "120.5"],
+        ["Horizon", "2026-03-31", "2026-03-31", "", "T2E.3"],
+        ["Funding gap", "0", "250", "USD millions", "T2E.5.r07"],
       ],
     ),
   ]);
-  const { gap } = fundingGap(view([liquidity]));
+  const [gap] = fundingGap(view([liquidity])).gaps;
   expect(gap).toMatchObject({
     module: "CP-2D",
     name: "Liquidity",
-    text: "120.5",
-    value: 120.5,
+    label: "Funding gap",
     unit: "USD millions",
     horizon: "2026-03-31",
     line: 45,
   });
+  // Every stated column, with its header: a zero is a figure, never dropped for the next one.
+  expect(gap?.figures).toEqual([
+    { header: "Base", text: "0", value: 0 },
+    { header: "Downside", text: "250", value: 250 },
+  ]);
 });
 
-it("falls back to the refinancing module's repeat, and else names the modules it looked at", () => {
+it("reads the refinancing module's repeat as written: a Value column, no unit, ids dropped", () => {
+  // The real shape (owners/cp3c.py _single): Line | Value, with no unit column.
   const refinancing = handoff("CP-3C", [
     tableSection(
       "T3D.2 Refinancing burden",
       10,
-      ["Line", "Value (EUR millions)"],
-      [["CP-2D funding gap at its horizon end", "200"]],
+      ["Line", "Value"],
+      [
+        ["CP-2D funding gap at its horizon end", "200"],
+        ["CP-2D horizon (analyst judgment)", "CP-2D horizon of 24 months (T2E.3.r03)"],
+      ],
     ),
   ]);
-  expect(fundingGap(view([refinancing])).gap).toMatchObject({ module: "CP-3C", text: "200" });
+  const [gap] = fundingGap(view([refinancing])).gaps;
+  expect(gap).toMatchObject({
+    module: "CP-3C",
+    label: "Liquidity funding gap at its horizon end",
+    unit: null,
+    horizon: "Liquidity horizon of 24 months",
+    figures: [{ header: "Value", text: "200", value: 200 }],
+  });
+});
+
+it("draws an empty funding-gap cell as stated nowhere, and shows both modules' figures", () => {
+  const liquidity = handoff("CP-2D", [
+    tableSection("T2E.5 Funding gap", 40, ["Line", "Value (USD millions)"], [["Funding gap", "—"]]),
+  ]);
+  const refinancing = handoff("CP-3C", [
+    tableSection(
+      "T3D.2 Refinancing burden",
+      10,
+      ["Line", "Value"],
+      [["CP-2D funding gap at its horizon end", "180"]],
+    ),
+  ]);
+  const { gaps } = fundingGap(view([liquidity, refinancing]));
+  expect(gaps.map(({ module, figures }) => [module, figures])).toEqual([
+    ["CP-2D", [{ header: "", text: "Not stated in the row", value: null }]],
+    ["CP-3C", [{ header: "Value", text: "180", value: 180 }]],
+  ]);
+});
+
+it("says what it looked for when neither module states a funding gap", () => {
+  const liquidity = handoff("CP-2D", [
+    tableSection("T2E.5 Liquidity", 40, ["Line", "Value"], [["Peak funding gap", "90"]]),
+  ]);
+  expect(fundingGap(view([liquidity])).looked).toEqual([
+    "This page found no row named Funding gap in Liquidity's handoff.",
+    "Refinancing & LME did not run in this run.",
+  ]);
   expect(fundingGap(view([])).looked).toEqual([
     "Liquidity did not run in this run.",
     "Refinancing & LME did not run in this run.",
   ]);
 });
 
-it("quotes the forward model's own limitation sentence, not a paraphrase", () => {
+it("lists the forward model's limitations whole, each once, selecting none", () => {
+  // The real list's shape (owners/cp2g.py _FIXED_LIMITATIONS): one bullet per item.
   const forward = handoff("CP-2G", [
     { heading: "Findings", level: 2, line: 1, blocks: [] },
     {
@@ -282,14 +328,77 @@ it("quotes the forward model's own limitation sentence, not a paraphrase", () =>
         {
           type: "text",
           line: 32,
-          end: 33,
-          text: "- The break tests reuse watch levels, not covenant tests; covenant compliance belongs to the legal module.\n- Debt maturities and refinancing feasibility are not modelled.",
+          end: 35,
+          text: [
+            "- No new borrowing, refinancing or covenant waiver is modelled: debt moves only by the analyst's repayments, and cash is not floored, so a negative cash balance is an unfunded requirement, not a forecast of events.",
+            "- The break tests reuse CP-2A's levels, which are watch levels and definitions, not covenant tests; covenant compliance belongs to CP-4.",
+            "- Debt maturities and refinancing feasibility are not modelled; the maturity wall and funding",
+            "  gap belong to CP-2D and CP-3C",
+          ].join("\n"),
         },
       ],
     },
   ]);
-  expect(modelLimitation(forward, /refinancing feasibility/u)).toBe(
-    "Debt maturities and refinancing feasibility are not modelled.",
+  expect(modelLimitations(forward)).toEqual([
+    {
+      line: 32,
+      text: "No new borrowing, refinancing or covenant waiver is modelled: debt moves only by the analyst's repayments, and cash is not floored, so a negative cash balance is an unfunded requirement, not a forecast of events.",
+    },
+    {
+      line: 33,
+      text: "The break tests reuse Downside's levels, which are watch levels and definitions, not covenant tests; covenant compliance belongs to Legal & covenants.",
+    },
+    {
+      line: 34,
+      text: "Debt maturities and refinancing feasibility are not modelled; the maturity wall and funding gap belong to Liquidity and Refinancing & LME",
+    },
+  ]);
+});
+
+it("ties on the figures as the reader sees them", () => {
+  const shown = (period: string, value: number, display: string): MeasureCell => ({
+    period,
+    start: "",
+    end: "",
+    display,
+    value,
+    reason: "",
+  });
+  const tied = extremeOf(
+    [
+      shown("FY2025E", 1.234, "1.23x"),
+      shown("FY2026E", 1.2349, "1.23x"),
+      shown("FY2027E", 1, "1.00x"),
+    ],
+    "highest",
   );
-  expect(modelLimitation(forward, /nothing like this/u)).toBeNull();
+  expect(tied?.cells.map(({ period }) => period)).toEqual(["FY2025E", "FY2026E"]);
+});
+
+it("reads the maturity schedule's rows only: a year with no row is neither drawn nor listed", () => {
+  const foundation = {
+    ...handoff("CP-1", [
+      { heading: "Findings", level: 2, line: 1, blocks: [] },
+      tableSection(
+        "Chart data: debt maturities",
+        41,
+        ["Period", "Debt maturing", "Reporting unit", "Basis and limitation"],
+        [
+          ["FY2026", "500", "US$m", "Synthetic."],
+          ["FY2028", "Not calculated: schedule incomplete", "US$m", "Synthetic."],
+          ["FY2029", "1,250", "US$m", "Synthetic."],
+        ],
+      ),
+    ]),
+  };
+  foundation.output = {
+    ...foundation.output,
+    charts: [{ title: "Debt maturities", table: 43, columns: [1], unit: "US$m" }],
+  };
+  const schedule = maturitySchedule(view([foundation]));
+  expect(schedule.years.map(({ label, cell }) => [label, cell?.text])).toEqual([
+    ["FY2026", "500"],
+    ["FY2028", "Not calculated: schedule incomplete"],
+    ["FY2029", "1,250"],
+  ]);
 });

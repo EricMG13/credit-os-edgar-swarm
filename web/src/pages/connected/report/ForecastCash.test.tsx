@@ -69,20 +69,20 @@ it("draws a missing part as a labelled hatched block above the stated parts, nev
   const repayment = part(chart, "Debt repayment FY2025E");
   // The stated repayment starts at the baseline, as if distributions were not zero but unknown.
   expect(num(repayment, "y") + num(repayment, "height")).toBeCloseTo(axis, 5);
-  const missing = part(chart, "Distributions FY2025E n.a.");
+  const missing = part(chart, "Distributions FY2025E not published");
   expect(num(missing, "y") + num(missing, "height")).toBeCloseTo(num(repayment, "y"), 5);
   expect(num(missing, "height")).toBe(18);
   expect(chart.textContent).toContain("Distributions");
-  expect(chart.textContent).toContain("n.a.");
+  expect(chart.textContent).toContain("Not published");
   expect(screen.getByText(/FY2025E Distributions: Dividends not modelled/u)).toBeTruthy();
   // Stated distributions sit first, repayments above them.
   const dist = part(chart, "Distributions FY2026E");
   expect(num(dist, "y") + num(dist, "height")).toBeCloseTo(axis, 5);
 });
 
-it("shows a missing value as n.a. with its reason in the notes", () => {
+it("shows a missing value as Not published with its reason in the notes", () => {
   render(view());
-  expect(screen.getByRole("img").textContent).toContain("n.a.");
+  expect(screen.getByRole("img").textContent).toContain("Not published");
   expect(screen.getByText(/FY2026E Debt repayment: Repayment not modelled/u)).toBeTruthy();
 });
 
@@ -97,12 +97,11 @@ it("keeps a slot for a fiscal year the case has no column for, drawn as the labe
   render(view(gapped));
   const chart = screen.getByRole("img");
   expect(chart.textContent).toContain("FY2026E");
-  expect(chart.textContent.match(/n\.a\./gu)?.length).toBe(2);
-  expect(screen.getByText("FY2026E Distributions: Not published for this case")).toBeTruthy();
-  expect(screen.getByText("FY2026E Debt repayment: Not published for this case")).toBeTruthy();
+  expect(chart.textContent.match(/Not published/gu)?.length).toBe(2);
+  expect(screen.getByText("FY2026E: not published for this case.")).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Table" }));
   expect(screen.getAllByRole("row").map((item) => item.textContent)).toContain(
-    "FY2026ENot published for this caseNot published for this case",
+    "FY2026ENot publishedNot published",
   );
 });
 
@@ -182,6 +181,6 @@ it("shows units once in the kicker, and nothing when none are recorded", () => {
   const { unmount } = render(view(full, { units: "USD millions" }));
   expect(screen.getAllByText(/USD millions/u)).toHaveLength(1);
   unmount();
-  render(view(full));
-  expect(screen.queryByText(/Units not recorded/u)).toBeNull();
+  render(view(full, { units: "" }));
+  expect(screen.getAllByText(/Units not recorded/u)).toHaveLength(1);
 });
