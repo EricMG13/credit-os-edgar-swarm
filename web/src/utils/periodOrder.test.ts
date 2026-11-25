@@ -23,9 +23,9 @@ const cases = JSON.parse(
 const self = (label: string) => label;
 
 it("reads every kind of case from the shared table", () => {
-  expect(cases.labels).toHaveLength(51);
-  expect(cases.unparseable).toHaveLength(10);
-  expect(cases.orders).toHaveLength(10);
+  expect(cases.labels).toHaveLength(82);
+  expect(cases.unparseable).toHaveLength(44);
+  expect(cases.orders).toHaveLength(12);
 });
 
 describe("parsePeriod", () => {
@@ -45,6 +45,53 @@ describe("parsePeriod", () => {
       expect(periodKey(label)).toBeNull();
     },
   );
+
+  const read = (label: string) => {
+    const parsed = parsePeriod(label);
+    return parsed && [parsed.periodClass, parsed.end, parsed.span];
+  };
+
+  it("reads at most one year in a label", () => {
+    expect(read("FY2024 FY2025")).toBeNull();
+    expect(read("FY24 FY25")).toBeNull();
+    expect(read("2024 2025E")).toBeNull();
+  });
+
+  it("reads a four-digit year between 1900 and 2199 only", () => {
+    expect(read("1899")).toBeNull();
+    expect(read("FY2200")).toBeNull();
+    expect(read("1900")).toEqual(["actual", [1900, 12, 31], "year"]);
+    expect(read("FY2199")).toEqual(["actual", [2199, 12, 31], "year"]);
+  });
+
+  it("turns the century of a two-digit year at seventy", () => {
+    expect(read("FY69")).toEqual(["actual", [2069, 12, 31], "year"]);
+    expect(read("FY70")).toEqual(["actual", [1970, 12, 31], "year"]);
+    expect(read("FY00")).toEqual(["actual", [2000, 12, 31], "year"]);
+  });
+
+  it("reads a letter after the year as a suffix only when it stands alone", () => {
+    expect(read("2024 EBITDA")).toBeNull();
+    expect(read("2024 Flow")).toBeNull();
+    expect(read("2024EA")).toBeNull();
+    expect(read("2024 A")).toEqual(["actual", [2024, 12, 31], "year"]);
+    expect(read("2024 F")).toEqual(["forecast", [2024, 12, 31], "year"]);
+    expect(read("26E")).toEqual(["forecast", [2026, 12, 31], "year"]);
+    expect(read("26A")).toBeNull();
+  });
+
+  it("reads a fiscal prefix standing apart from its year with it", () => {
+    expect(read("FY ended 31 Dec 2024")).toEqual(["actual", [2024, 12, 31], "month"]);
+    expect(read("FY Q3 24")).toEqual(["actual", [2024, 9, 31], "quarter"]);
+    expect(read("FY")).toBeNull();
+    expect(read("LTM FY")).toBeNull();
+  });
+
+  it("finds a label with a character the rule does not know unparseable", () => {
+    expect(read("FY2024*")).toBeNull();
+    expect(read("FY2024 %")).toBeNull();
+    expect(read("FY2024 | Q4 — reported")).toEqual(["actual", [2024, 12, 31], "quarter"]);
+  });
 
   it("remembers a prior year-to-date label", () => {
     expect(parsePeriod("PYTD")).toEqual({

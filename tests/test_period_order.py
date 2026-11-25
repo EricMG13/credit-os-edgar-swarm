@@ -29,9 +29,9 @@ CASES: dict[str, Any] = json.loads(
 
 
 def test_the_shared_table_has_every_kind_of_case() -> None:
-    assert len(CASES["labels"]) == 51
-    assert len(CASES["unparseable"]) == 10
-    assert len(CASES["orders"]) == 10
+    assert len(CASES["labels"]) == 82
+    assert len(CASES["unparseable"]) == 44
+    assert len(CASES["orders"]) == 12
 
 
 @pytest.mark.parametrize("case", CASES["labels"], ids=lambda case: repr(case["label"]))
@@ -57,6 +57,52 @@ def test_labels_are_ordered_and_gaps_reported(case: dict[str, Any]) -> None:
 
     assert list(ordered) == case["ordered"]
     assert list(gaps) == case["gaps"]
+
+
+def test_a_label_names_at_most_one_year() -> None:
+    assert parse_period("FY2024 FY2025") is None
+    assert parse_period("FY24 FY25") is None
+    assert parse_period("2024 2025E") is None
+
+
+def test_a_four_digit_year_is_between_1900_and_2199() -> None:
+    assert parse_period("1899") is None
+    assert parse_period("FY2200") is None
+    assert parse_period("1900") == ParsedPeriod(PeriodClass.ACTUAL, (1900, 12, 31), "year")
+    assert parse_period("FY2199") == ParsedPeriod(PeriodClass.ACTUAL, (2199, 12, 31), "year")
+
+
+def test_a_two_digit_year_turns_the_century_at_seventy() -> None:
+    assert parse_period("FY69") == ParsedPeriod(PeriodClass.ACTUAL, (2069, 12, 31), "year")
+    assert parse_period("FY70") == ParsedPeriod(PeriodClass.ACTUAL, (1970, 12, 31), "year")
+    assert parse_period("FY00") == ParsedPeriod(PeriodClass.ACTUAL, (2000, 12, 31), "year")
+
+
+def test_a_letter_after_the_year_is_a_suffix_only_when_it_stands_alone() -> None:
+    assert parse_period("2024 EBITDA") is None
+    assert parse_period("2024 Flow") is None
+    assert parse_period("2024EA") is None
+    assert parse_period("2024 A") == ParsedPeriod(PeriodClass.ACTUAL, (2024, 12, 31), "year")
+    assert parse_period("2024 F") == ParsedPeriod(PeriodClass.FORECAST, (2024, 12, 31), "year")
+    assert parse_period("26E") == ParsedPeriod(PeriodClass.FORECAST, (2026, 12, 31), "year")
+    assert parse_period("26A") is None
+
+
+def test_a_fiscal_prefix_standing_apart_from_its_year_is_read_with_it() -> None:
+    assert parse_period("FY ended 31 Dec 2024") == ParsedPeriod(
+        PeriodClass.ACTUAL, (2024, 12, 31), "month"
+    )
+    assert parse_period("FY Q3 24") == ParsedPeriod(PeriodClass.ACTUAL, (2024, 9, 31), "quarter")
+    assert parse_period("FY") is None
+    assert parse_period("LTM FY") is None
+
+
+def test_a_character_the_rule_does_not_know_makes_the_label_unparseable() -> None:
+    assert parse_period("FY2024*") is None
+    assert parse_period("FY2024 %") is None
+    assert parse_period("FY2024 | Q4 — reported") == ParsedPeriod(
+        PeriodClass.ACTUAL, (2024, 12, 31), "quarter"
+    )
 
 
 def test_ltm_and_pf_sit_after_fiscal_years_oldest_first() -> None:
