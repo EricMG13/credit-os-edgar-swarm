@@ -229,3 +229,32 @@ so they wait for it. A paid proof run of CP-2's scorecard stays a separate owner
 
 Not verified: SSGA holdings file columns; whether the app's host can reach ssga.com; cost of the
 longer CP-2 instruction; that Excel renders the conditional formats identically on Windows and Mac.
+
+## 9. Risk Rubric level text (transcribed from the owner's rubric image, 2026-11-25)
+
+Factor names are the coordinating session's reading, confirmed by the owner; the image has no row
+labels. Probability of default is dropped by ruling R9. Levels: 1 Excellent, 2 Strong,
+3 Satisfactory, 4 Weak, 5 Poor.
+
+| Factor | 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|
+| Scale | EBITDA > $1bn — large, diversified issuer with global reach | $500m–$1bn — strong mid-cap with solid market presence | $200m–$500m — medium-sized, regionally focused | $100m–$200m — small-scale, limited diversification | < $100m — niche or subscale, vulnerable to shocks |
+| Market position | Market leader with strong pricing power and durable brand | Top-tier competitor with moderate pricing power | Mid-tier competitor in fragmented industry | Weak player in highly competitive or commoditized sector | Marginal operator with limited market relevance |
+| Regulatory exposure | Minimal regulatory exposure; stable framework | Moderate oversight, but manageable compliance burden | Some exposure to evolving regulation; minor compliance risk | High regulatory sensitivity (e.g., pharma, healthcare, finance) | Significant compliance or litigation risk; ongoing investigations |
+| Technology | Tech leader or innovator; disrupts peers | Competitive adopter; technology embedded in strategy | Average tech positioning; not at risk near-term | Lagging digital adoption; facing disruptive pressures | Obsolete tech; business model threatened by innovation |
+| Barriers to entry | Very high barriers (capital intensity, IP, regulation) | High barriers (brand, relationships, economies of scale) | Moderate barriers (cost efficiencies, know-how) | Low barriers (few obstacles to entry) | None (high churn, perfect competition) |
+| Leverage | Low leverage (<3x), conservative structure | Moderate leverage (3–4x), ample headroom | Elevated leverage (4–5x), stable but stretched | High leverage (>5x), limited covenant cushion | Very high leverage (>6x), fragile structure or covenant breach risk |
+| Free cash flow | Strong, consistent FCF >10% of revenue | Solid FCF, positive through cycle | Modest FCF, positive in stable years only | Weak FCF, negative under mild stress | Persistent negative FCF, reliant on external financing |
+| Liquidity | Cash & RCF comfortably cover 2+ years' obligations | Sufficient to cover 12–24 months | Adequate for 6–12 months | Tight liquidity; dependent on revolver draw | Insufficient liquidity; default risk within 12 months |
+| Rating trend | Stable rating trend, strong outlook | Limited downgrade risk, stable fundamentals | Balanced risk of upgrade/downgrade | Negative outlook or on watch | Repeated downgrades or imminent distress |
+| Geographic diversification | Operations in >3 continents; diversified customer base globally | 2–3 major regions, with one contributing 40–50% of revenue | Majority (>60%) of revenues from one region, limited operations elsewhere | >80% of revenue from one country; minimal cross-border sales | 100% single country operations |
+| Product diversification | Multiple independent revenue streams across end-markets | 1–2 products/services contribute 30–50% of sales | 1 main product/service contributes 60–70% of sales | 1–2 products/services contribute >80% of sales | 100% of revenues derived from one product/service |
+| Market share | Dominant market leader (>30%) | Top 3 competitor | Mid-tier, <10% share | Small player, <5% share | Marginal presence or niche operator |
+| Customer concentration | Highly diversified; no customer >5% of sales | Some concentration; top 3 <20% total | Moderate; top 3 <35% total | High; top 3 >50% total | Extreme; one client >50% total |
+| Market access | Frequent issuer; broad investor base | Regular market access; well-followed credit | Occasional issuer; depends on market conditions | Limited access; small or private placement only | No market access; dependent on sponsor or bank support |
+| Maturity profile | No maturities <3 years | Small near-term maturities, easily manageable | Moderate maturities, likely refinanced | Large maturities requiring market access | Refinancing wall imminent or missed maturity |
+| Interest cover | EBITDA/Interest >4.0x | 3.0–4.0x | 2.0–3.0x | 1.0–2.0x | <1.0x (interest not covered) |
+| Financial policy | Conservative and creditor-friendly. Net leverage <2.5x; stable policy. | Moderately conservative. Leverage <3.5x; disciplined management. | Neutral or balanced policy. Leverage 3.5–4.5x; some shareholder bias. | Aggressive policy. Frequent debt-funded actions. | Highly aggressive / equity-focused. Covenant breaches; distressed history. |
+
+Gaps in the rubric as written, for the owner: Leverage has no level for 5–6x between "4 (>5x)" and
+"5 (>6x)" (read here as 4 for 5–6x); Market share has no level for 10–30% outside the top three.
