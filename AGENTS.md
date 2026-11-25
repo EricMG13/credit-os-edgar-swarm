@@ -61,8 +61,8 @@ plans, staff roles, pauses and approval records are evidence, not inherited auth
   always labelled proposed until the analyst confirms.
 - Completion requires the issuer library's Overview, Changes, Modules, Forecast and Evidence
   pages for the run populated from its actual module handoffs and checked against
-  them, not just successful handoff generation. Once the Deliverables page is built, it is part
-  of the issuer library: download tiles only, no contents shown. The HTML Model, charts and calculation
+  them, not just successful handoff generation. Once the Deliverables page is built,
+  completion also requires it: download tiles only, no contents shown. The HTML Model, charts and calculation
   JSON are parts of that issuer report; the separately delivered HTML report is retired.
   CP-OS owns this end-to-end completion condition, including delivery.
 - A presentation change needs a fidelity check, recorded in VERIFICATION.md with its scope.
