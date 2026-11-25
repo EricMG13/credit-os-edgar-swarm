@@ -190,3 +190,12 @@ describe("report page changes", () => {
     }, SETTLE);
   });
 });
+
+describe("module records address", () => {
+  it("draws the module when the address names a table with an escape that is not UTF-8", async () => {
+    open("#modules/CP-1/records/%E0");
+    expect(
+      await screen.findByRole("heading", { level: 2, name: "Financial foundation" }),
+    ).toBeInTheDocument();
+  });
+});

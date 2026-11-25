@@ -671,9 +671,18 @@ function moduleAddress(rest: string[]) {
   const at = rest.indexOf("records");
   const output = at === 0 ? undefined : rest[0];
   if (at === -1) return { output, records: false };
-  const named = rest[at + 1];
-  const table = named ? decodeURIComponent(named) : undefined;
-  return { output, records: true, table };
+  return { output, records: true, table: tableTitle(rest[at + 1]) };
+}
+
+/** A table title from the address; an escape that is not UTF-8 names no table. */
+function tableTitle(named: string | undefined) {
+  if (!named) return undefined;
+  try {
+    return decodeURIComponent(named);
+  } catch (error) {
+    if (!(error instanceof URIError)) throw error;
+    return undefined;
+  }
 }
 
 function reportRoute(hash: string): { tab: Tab; parts: string[] } {
