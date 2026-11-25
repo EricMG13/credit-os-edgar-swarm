@@ -9,7 +9,7 @@ import {
   type LeverageMeasure,
   type Support,
 } from "./earningsQualityData";
-import { FigureTile, GapTile, LeadFrame, ScrollFigure } from "./kit/LeadFrame";
+import { FigureTile, GapTile, LeadFrame } from "./kit/LeadFrame";
 import { fittingTicks, Measured, niceAxis, SIZE, textWidth } from "./kit/marks";
 import { group } from "./kit/numbers";
 import type { LeadProps } from "./types";
@@ -72,7 +72,7 @@ function Row({
           </p>
         )}
       </div>
-      <ScrollFigure label="Earnings quality figure" size="narrow">
+      <>
         <svg
           viewBox={`0 0 ${String(BRIDGE.width)} ${String(BRIDGE.height)}`}
           width="100%"
@@ -118,7 +118,7 @@ function Row({
             {text}
           </text>
         </svg>
-      </ScrollFigure>
+      </>
     </li>
   );
 }

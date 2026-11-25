@@ -1,458 +1,374 @@
-import { containsReference, readerText } from "../../../publishedReport";
-import { ticks } from "../../../visuals/visualData";
-import { linear } from "../kit/geometry";
-import { group, signOf, type Reading } from "../kit/numbers";
-import type { EarningsAgainstDebt, EarningsMeasure } from "./legacyData";
+import type { Mark, MarkTone } from "../../overview/marks";
+import { tone } from "../../../signal";
+import { fittingTicks, niceAxis, type DumbbellRow, type DumbbellSide, type NiceAxis } from "../kit/marks";
+import { LINE, NARROW, SIZE, signedText, textWidth, wrap } from "../kit/marks/text";
+import { group, type Reading } from "../kit/numbers";
+import { safeText } from "../kit/reader";
+import type {
+  EarningsAgainstDebt,
+  EarningsMeasure,
+  LeverageSeries,
+  PeriodCell,
+} from "./foundationData";
 
-const EVIDENCE = "Detail is in Evidence.";
+// The words and positions of the earnings-against-debt tile. Every figure is one the handoff states;
+// the one computed figure is a measure's exact change between the comparison periods (ruling i).
 
-/** Handoff text as a working page may draw it: module codes as names, a source reference never. */
-export const clean = (text: string) => (containsReference(text) ? EVIDENCE : readerText(text));
+/** What a cell the table does not state for a period is called: never zero, never blank. */
+export const NOT_IN_TABLE = "not stated in this table";
 
-/** Why a cell is not drawn as a value, in the handoff's words where it gives them. */
-export function reasonOf(cell: Reading) {
-  if (cell.kind === "gap") return clean(cell.reason);
-  return cell.kind === "text" ? "not a number in the handoff" : "";
-}
-
-/** The first letter lowered, unless the word is an acronym ("EBITDA As Defined" stays). */
-export const inSentence = (label: string) =>
-  /^[A-Z][a-z]/.test(label) ? `${label.charAt(0).toLowerCase()}${label.slice(1)}` : label;
-
-const magnitude = (text: string) => group(text.replace(/^-/, ""));
-
-/** A signed derived figure: "+5,130", "−20", "0". */
-export function signed(text: string) {
-  return `${signOf(text) === 1 ? "+" : ""}${group(text)}`;
-}
-
-/** "rose 5,130", "fell 20", "was unchanged". */
-export function movement(change: string) {
-  const sign = signOf(change);
-  if (sign === 0) return "was unchanged";
-  return `${sign === 1 ? "rose" : "fell"} ${magnitude(change)}`;
-}
-
-/** "up", "down" or "unchanged": direction only, never better or worse. */
-export function direction(change: string) {
-  const sign = signOf(change);
-  return sign === 1 ? "up" : sign === -1 ? "down" : "unchanged";
-}
-
-/** A value axis from zero (or through it), on round ticks, mapped onto a pixel range. */
-export function valueScale(
-  values: number[],
-  range: readonly [number, number],
-  suffix = "",
-): { at: (value: number) => number; ticks: { value: number; x: number; label: string }[] } {
-  const marks = ticks(values);
-  const at = linear([marks[0]?.value ?? 0, marks.at(-1)?.value ?? 1], range);
-  return {
-    at,
-    ticks: marks.map((tick) => ({
-      value: tick.value,
-      x: at(tick.value),
-      label: `${tick.label.replace("-", "−")}${suffix}`,
-    })),
-  };
-}
-
-function niceStep(raw: number) {
-  const power = 10 ** Math.floor(Math.log10(raw));
-  const factor = raw / power;
-  return (factor <= 1 ? 1 : factor <= 2 ? 2 : factor <= 5 ? 5 : 10) * power;
-}
-
-/**
- * A ratio's own axis, not from zero: round ticks just around the stated values, so that 6.27x and
- * 6.53x read apart. `lo` is the axis start the caption must name.
- */
-export function ratioAxis(values: number[]) {
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const step = niceStep((max - min || Math.abs(max) / 10 || 1) / 4);
-  const decimals = Math.max(0, -Math.floor(Math.log10(step) + 1e-9));
-  const fix = (value: number) => Number(value.toFixed(decimals)) + 0;
-  // A value that falls on a round tick gets one step of room, so no mark sits on the axis end;
-  // an all-positive ratio's axis never goes below zero.
-  const floor = fix(Math.floor(min / step + 1e-9) * step);
-  const ceiling = fix(Math.ceil(max / step - 1e-9) * step);
-  const lo = floor === min && (min < 0 || floor - step >= 0) ? fix(floor - step) : floor;
-  const hi = ceiling === max ? fix(ceiling + step) : Math.max(ceiling, fix(lo + step));
-  const count = Math.round((hi - lo) / step);
-  const label = (value: number) => `${value.toFixed(decimals).replace("-", "−")}x`;
-  return {
-    lo,
-    hi,
-    label,
-    ticks: Array.from({ length: count + 1 }, (_, at) => fix(lo + at * step)),
-  };
-}
-
-// ---------------------------------------------------------------------------------------------
-// The dumbbell panel
-// ---------------------------------------------------------------------------------------------
-
-/** Layout of the left panel, in viewBox units. Text is 11 px or more at the 1440 layout. */
-export const ED = {
-  width: 800,
-  labelEnd: 146,
-  x0: 156,
-  x1: 572,
-  g0: 640,
-  g1: 736,
-  top: 52,
-  row: 42,
-  debtGap: 14,
-  gapMark: 48,
-} as const;
-
-const MONO = 7.3; // advance of a 12 px mono figure, for keeping labels apart only
-const LONG_REASON = 96;
-
-type Anchor = "start" | "end" | "middle";
-type Label = { x: number; y: number; anchor: Anchor };
-export type DumbbellMark =
-  | { kind: "value"; x: number; text: string; label: Label }
-  | { kind: "gap"; x: number; reason: string };
-export type Growth =
-  | { kind: "bar"; x: number; width: number; text: string; label: Label }
-  | { kind: "none"; text: string };
-export type DumbbellRow = {
-  key: EarningsMeasure["key"];
-  label: string;
-  y: number;
-  prior: DumbbellMark;
-  current: DumbbellMark;
-  growth: Growth | null;
-  /** The reasons a mark is not drawn, as one line beneath the row; long reasons go to the notes. */
-  reasonLine: string | null;
-  longReasons: string[];
+/** The owner's table names these measures; reported EBITDA it does not, so it gets direction only. */
+const TONE_KEY: Record<EarningsMeasure["key"], string> = {
+  sales: "revenue",
+  reportedEbitda: "reported_ebitda",
+  adjustedEbitda: "adjusted_ebitda",
+  grossDebt: "gross_debt",
 };
 
-function beside(x: number, y: number, text: string, side: "left" | "right"): Label {
-  const width = text.length * MONO;
-  if (side === "left")
-    return x - 10 - width < ED.labelEnd
-      ? { x, y: y - 10, anchor: "middle" }
-      : { x: x - 10, y: y + 4, anchor: "end" };
-  return x + 11 + width > ED.g0 - 8
-    ? { x, y: y - 10, anchor: "middle" }
-    : { x: x + 11, y: y + 4, anchor: "start" };
+/** Debt is the second series: navy, with its own legend entry. */
+export const seriesOf = (measure: EarningsMeasure) =>
+  measure.key === "grossDebt" ? ("secondary" as const) : ("primary" as const);
+
+/** A cell as the page writes it: the figure grouped, a gap or words as written, or "not stated …". */
+export function cellWords(cell: Reading | null) {
+  if (cell === null) return NOT_IN_TABLE;
+  return cell.kind === "number" ? group(cell.text) : safeText(cell.text);
 }
 
-/** Growth is drawn only on a positive base: a percentage of zero or of a negative figure says nothing. */
-const growthShown = (measure: EarningsMeasure) =>
-  measure.growth !== null &&
-  measure.pair.prior.cell.kind === "number" &&
-  measure.pair.prior.cell.value > 0;
+/** The cell of one period, or null. */
+export const at = (values: readonly PeriodCell[], label: string) =>
+  values.find((value) => value.label === label)?.cell ?? null;
 
-function marksOf(measure: EarningsMeasure, y: number, at: (value: number) => number) {
-  const { prior, current } = measure.pair;
-  const p = prior.cell.kind === "number" ? at(prior.cell.value) : null;
-  const c = current.cell.kind === "number" ? at(current.cell.value) : null;
-  const value = (x: number, cell: Reading, side: "left" | "right"): DumbbellMark => ({
-    kind: "value",
-    x,
-    text: group(cell.text),
-    label: beside(x, y, group(cell.text), side),
-  });
-  const gap = (x: number, cell: Reading): DumbbellMark => ({
-    kind: "gap",
-    x,
-    reason: reasonOf(cell),
-  });
-  // A gap sits beside the stated mark, on the side with room; the stated label takes the other side.
-  const room = (x: number) => x + 14 + ED.gapMark <= ED.x1 + 40;
-  if (p !== null && c !== null) {
-    const rising = c >= p;
-    return {
-      prior: value(p, prior.cell, rising ? "left" : "right"),
-      current: value(c, current.cell, rising ? "right" : "left"),
-    };
-  }
-  if (p !== null)
-    return room(p)
-      ? { prior: value(p, prior.cell, "left"), current: gap(p + 14, current.cell) }
-      : { prior: value(p, prior.cell, "right"), current: gap(p - 14 - ED.gapMark, current.cell) };
-  if (c !== null)
-    return room(c)
-      ? { prior: gap(c + 14, prior.cell), current: value(c, current.cell, "left") }
-      : { prior: gap(c - 14 - ED.gapMark, prior.cell), current: value(c, current.cell, "right") };
-  return {
-    prior: gap(ED.x0 + 4, prior.cell),
-    current: gap(ED.x0 + 12 + ED.gapMark, current.cell),
-  };
+/** The stated change with its sign: "+1,355", "−6,585", "0". */
+export const changeText = (change: string) => signedText(group(change), Number(change));
+
+/** "up, better", "up, worse", "down", "unchanged": direction, and better or worse only from `tone()`. */
+export function changeNote(key: string, change: string) {
+  const judged = tone(key, change);
+  const sign = Math.sign(Number(change));
+  const way = sign > 0 ? "up" : sign < 0 ? "down" : "unchanged";
+  return judged === "better" || judged === "worse" ? `${way}, ${judged}` : way;
 }
 
-function growthOf(
-  measure: EarningsMeasure,
-  at: (value: number) => number,
-  y: number,
-): Growth | null {
-  if (measure.change === null) return null;
-  if (!growthShown(measure) || measure.growth === null)
-    return { kind: "none", text: "not calculable" };
-  const value = Number(measure.growth);
-  const [from, to] = [at(0), at(value)];
-  const text = `${signed(measure.growth)}%`;
-  return {
-    kind: "bar",
-    x: Math.min(from, to),
-    width: Math.abs(to - from),
-    text,
-    label:
-      value >= 0
-        ? { x: to + 6, y: y + 4, anchor: "start" }
-        : { x: to - 6, y: y + 4, anchor: "end" },
-  };
+function side(cell: Reading | null): DumbbellSide {
+  if (cell?.kind === "number") return { value: cell.value, text: group(cell.text) };
+  return { gap: cellWords(cell) };
 }
 
-function reasonsOf(measure: EarningsMeasure, priorLabel: string, currentLabel: string) {
-  const sides = [
-    [priorLabel, measure.pair.prior.cell],
-    [currentLabel, measure.pair.current.cell],
-  ] as const;
-  return sides.flatMap(([period, cell]) =>
-    cell.kind === "number" ? [] : [`${period} not supplied: ${reasonOf(cell)}`],
+/** The dumbbell rows for two compared periods: earnings teal, debt navy, the change and its note. */
+export function dumbbellRows(data: EarningsAgainstDebt): DumbbellRow[] {
+  const comparison = data.comparison;
+  if (!comparison) return [];
+  return data.measures.map((measure) => ({
+    label: measure.label,
+    prior: side(at(measure.values, comparison.from)),
+    current: side(at(measure.values, comparison.to)),
+    series: seriesOf(measure),
+    ...(measure.change === null
+      ? {}
+      : {
+          change: changeText(measure.change),
+          note: changeNote(TONE_KEY[measure.key], measure.change),
+        }),
+  }));
+}
+
+/** Whether every stated figure of a series is adjacent: a line never runs across an unstated period. */
+export function contiguous(values: readonly PeriodCell[]) {
+  const stated = values.flatMap((value, index) => (value.cell?.kind === "number" ? [index] : []));
+  const [first] = stated;
+  const last = stated.at(-1);
+  return first === undefined || last === undefined || last - first + 1 === stated.length;
+}
+
+/** The leverage figures the Slope draws: the stated numbers only, each with its own text. */
+export function leverageMarks(leverage: LeverageSeries): Mark[] {
+  return leverage.values.flatMap((value) =>
+    value.cell?.kind === "number"
+      ? [{ label: value.label, value: value.cell.value, text: `${group(value.cell.text)}x` }]
+      : [],
   );
 }
 
-/**
- * The growth column is narrow: label its two ends and zero only, and drop a label that would
- * touch one already kept (zero and the far end are kept first).
- */
-function sparse<T extends { value: number; x: number }>(marks: T[]) {
-  const ends = [marks.find((m) => m.value === 0), marks.at(-1), marks[0]];
-  const kept: T[] = [];
-  for (const mark of ends)
-    if (mark && !kept.includes(mark) && kept.every((k) => Math.abs(k.x - mark.x) >= 28))
-      kept.push(mark);
-  return kept.sort((a, b) => a.x - b.x);
+/** The Slope's tone: the owner's word for the move, none where it names none. */
+export const leverageTone = (leverage: LeverageSeries): MarkTone => leverage.tone;
+
+/** "worse" or "better" where the owner's table judges the move; otherwise no word. */
+export const leverageWord = (leverage: LeverageSeries) =>
+  leverage.tone === "worse" || leverage.tone === "better" ? leverage.tone : null;
+
+/** The leverage periods the module did not state as a number, each with its reason as written. */
+export const leverageGaps = (leverage: LeverageSeries) =>
+  leverage.values.flatMap((value) =>
+    value.cell?.kind === "number" ? [] : [`${value.label}: ${cellWords(value.cell)}`],
+  );
+
+/** The leverage reading: every stated figure, the stated change and the owner's word. */
+export function leverageReading(leverage: LeverageSeries) {
+  const figures = leverage.values.map(
+    (value) =>
+      `${value.label} ${value.cell?.kind === "number" ? `${group(value.cell.text)}x` : cellWords(value.cell)}`,
+  );
+  const word = leverageWord(leverage);
+  const change =
+    leverage.change === null ? "" : `, ${changeText(leverage.change)}x${word ? `, ${word}` : ""}`;
+  return `${leverage.label} on its own scale: ${figures.join(", ")}${change}.`;
 }
 
-/** Every row of the dumbbell panel on one scale; heights and positions are proportional to the stated figures. */
-export function dumbbellLayout(data: EarningsAgainstDebt) {
-  const values = data.measures.flatMap((m) =>
-    [m.pair.prior.cell, m.pair.current.cell].flatMap((cell) =>
-      cell.kind === "number" ? [cell.value] : [],
-    ),
-  );
-  const money = valueScale(values, [ED.x0, ED.x1]);
-  const growthValues = data.measures.filter(growthShown).map((m) => Number(m.growth));
-  const growth = valueScale(growthValues, [ED.g0, ED.g1], "%");
-  let y = ED.top - ED.row;
-  let separator = null as number | null;
-  const rows = data.measures.map((measure, index): DumbbellRow => {
-    const before = y;
-    y += ED.row;
-    if (measure.key === "grossDebt" && index > 0) {
-      y += ED.debtGap;
-      separator = (before + y) / 2;
-    }
-    const reasons = reasonsOf(measure, data.priorLabel, data.currentLabel);
-    const long = reasons.join("; ").length > LONG_REASON;
-    return {
-      key: measure.key,
+/** The kicker's span: one period by name, otherwise the first to the last. */
+export function periodSpan(labels: readonly string[]) {
+  const [first] = labels;
+  const last = labels.at(-1);
+  if (!first || !last) return "";
+  return first === last ? first : `${first} → ${last}`;
+}
+
+// ---------------------------------------------------------------------------------------------
+// One period: one bar per measure on one scale from zero
+// ---------------------------------------------------------------------------------------------
+
+const BAR = 16;
+const ROW_GAP = 14;
+
+export type BarRow = {
+  label: string;
+  labelLines: string[];
+  series: "primary" | "secondary";
+  top: number;
+  barY: number;
+  /** The stated figure, or the reason it is not drawn. */
+  value: { value: number; text: string } | null;
+  reason: string[];
+};
+
+/** The one-period bars at `width`: label beside (wide) or above (narrow), figure beyond the bar. */
+export function barLayout(data: EarningsAgainstDebt, width: number) {
+  const narrow = width < NARROW;
+  const period = data.periods[0]?.label ?? "";
+  const cells = data.measures.map((measure) => at(measure.values, period));
+  const values = cells.flatMap((cell) => (cell?.kind === "number" ? [cell.value] : []));
+  const axis = niceAxis(values, { zero: true });
+  const longest = Math.max(0, ...data.measures.map((measure) => textWidth(measure.label)));
+  const labelWidth = narrow ? width : Math.min(longest + 16, Math.round(width * 0.3));
+  const figureRoom = Math.max(0, ...values.map((value) => textWidth(group(String(value))))) + 12;
+  const plot = [narrow ? 0 : labelWidth, Math.max(labelWidth + 60, width - figureRoom)] as const;
+  const left = narrow ? 0 : plot[0];
+  const right = narrow ? width - figureRoom : plot[1];
+  const x = (value: number) => axis.place(value, left, right);
+  let y = 2;
+  const rows = data.measures.map((measure, index): BarRow => {
+    const cell = cells[index] ?? null;
+    const labelLines = wrap(measure.label, labelWidth - (narrow ? 0 : 12));
+    const labelHeight = narrow ? labelLines.length * LINE : 0;
+    const reason =
+      cell?.kind === "number" ? [] : wrap(cellWords(cell), right - left, SIZE.label);
+    const markHeight = reason.length ? BAR + 4 + reason.length * LINE : BAR;
+    const height = Math.max(narrow ? 0 : labelLines.length * LINE, labelHeight + markHeight);
+    const row: BarRow = {
       label: measure.label,
-      y,
-      ...marksOf(measure, y, money.at),
-      growth: growthOf(measure, growth.at, y),
-      reasonLine: reasons.length
-        ? long
-          ? `${reasons.map((reason) => reason.split(":")[0]).join("; ")}; the reason is in the notes below`
-          : reasons.join("; ")
-        : null,
-      longReasons: long ? reasons.map((reason) => `${measure.label}, ${reason}.`) : [],
+      labelLines,
+      series: seriesOf(measure),
+      top: y,
+      barY: y + labelHeight,
+      value: cell?.kind === "number" ? { value: cell.value, text: group(cell.text) } : null,
+      reason,
     };
+    y += height + ROW_GAP;
+    return row;
   });
-  const axisY = y + 24;
-  return {
-    rows,
-    ticks: money.ticks,
-    zero: money.at(0),
-    growthTicks: growthValues.length ? growth.ticks : [],
-    growthLabels: growthValues.length ? sparse(growth.ticks) : [],
-    growthZero: growth.at(0),
-    separator,
-    axisY,
-    height: axisY + 26,
-  };
+  const plotBottom = y - ROW_GAP + 4;
+  const ticks = fittingTicks(axis, left, right, (text) => textWidth(text, SIZE.tick));
+  return { narrow, axis, rows, x, left, right, ticks, plotBottom, height: plotBottom + 22 };
 }
 
 // ---------------------------------------------------------------------------------------------
-// The leverage panel
+// Three or more periods: a small multiple, one line per measure on one shared scale from zero
 // ---------------------------------------------------------------------------------------------
 
-/** Layout of the right panel, in viewBox units. */
-export const LEV = {
-  width: 296,
-  height: 276,
-  top: 64,
-  bottom: 214,
-  gridFrom: 44,
-  prior: 104,
-  current: 224,
-} as const;
+const PLOT_TOP = 40;
+const PLOT_HEIGHT = 96;
+const GUTTER = 16;
+const MARGIN = 44;
+const PAD = 26;
 
-type Leverage = NonNullable<EarningsAgainstDebt["leverage"]>;
-export type RatioMark =
-  | { kind: "value"; x: number; y: number; text: string; labelY: number }
-  | { kind: "gap"; x: number; reason: string };
+export type LinePoint = {
+  label: string;
+  x: number;
+  /** The stated figure's position and text; null for a period the module did not state. */
+  value: { y: number; value: number; text: string } | null;
+};
 
-/** The ratio on its own axis, prior ring and current dot, with the arrow between; null if neither is a number. */
-export function leverageLayout(leverage: Leverage) {
-  const cells = [leverage.pair.prior.cell, leverage.pair.current.cell];
-  const values = cells.flatMap((cell) => (cell.kind === "number" ? [cell.value] : []));
-  if (!values.length) return null;
-  const axis = ratioAxis(values);
-  const y = linear([axis.lo, axis.hi], [LEV.bottom, LEV.top]);
-  const [p, c] = cells.map((cell) => (cell.kind === "number" ? cell.value : null));
-  // A label sits on the side away from the connector: below a mark whose partner is higher.
-  const mark = (cell: Reading, x: number, other: number | null | undefined): RatioMark => {
-    if (cell.kind !== "number") return { kind: "gap", x, reason: reasonOf(cell) };
-    const at = y(cell.value);
-    const below = other != null && other > cell.value ? at + 24 : null;
-    const above = at - 14 < LEV.top - 18 ? at + 24 : at - 14;
+export type LinePanel = {
+  label: string;
+  series: "primary" | "secondary";
+  left: number;
+  top: number;
+  width: number;
+  points: LinePoint[];
+  /** Line segments between adjacent stated periods only: never across an unstated one. */
+  segments: { x1: number; y1: number; x2: number; y2: number }[];
+  periodLines: string[][];
+  reasons: string[];
+  /** Whether this panel carries the scale's tick labels (the first of its row). */
+  ticks: boolean;
+};
+
+const columnsFor = (width: number, count: number) =>
+  Math.max(1, Math.min(count, width >= NARROW ? 4 : width >= 360 ? 2 : 1));
+
+/** The small multiple at `width`: every measure's panel on the one axis, gaps in place. */
+export function lineLayout(data: EarningsAgainstDebt, width: number) {
+  const values = data.measures.flatMap((measure) =>
+    measure.values.flatMap((value) => (value.cell?.kind === "number" ? [value.cell.value] : [])),
+  );
+  const axis: NiceAxis = niceAxis(values, { zero: true });
+  const columns = columnsFor(width, data.measures.length);
+  const panelWidth = (width - GUTTER * (columns - 1)) / columns;
+  const y = (value: number) => axis.place(value, PLOT_TOP + PLOT_HEIGHT, PLOT_TOP);
+  const count = data.periods.length;
+  const spacing = (panelWidth - MARGIN - 2 * PAD) / Math.max(1, count - 1);
+  const xOf = (left: number, index: number) => left + MARGIN + PAD + index * spacing;
+  const laid = data.measures.map((measure, index) => {
+    const column = index % columns;
+    const left = column * (panelWidth + GUTTER);
+    const points = measure.values.map((value, period): LinePoint => {
+      const cell = value.cell;
+      return {
+        label: value.label,
+        x: xOf(left, period),
+        value:
+          cell?.kind === "number"
+            ? { y: y(cell.value), value: cell.value, text: group(cell.text) }
+            : null,
+      };
+    });
+    const segments = points.slice(1).flatMap((point, at) => {
+      const before = points[at];
+      return before?.value && point.value
+        ? [{ x1: before.x, y1: before.value.y, x2: point.x, y2: point.value.y }]
+        : [];
+    });
+    const reasons = measure.values.flatMap((value) =>
+      value.cell?.kind === "number"
+        ? []
+        : wrap(`${value.label}: ${cellWords(value.cell)}`, panelWidth, SIZE.label),
+    );
     return {
-      kind: "value",
-      x,
-      y: at,
-      text: `${group(cell.text)}x`,
-      labelY: below !== null && below <= LEV.bottom + 6 ? below : above,
+      label: measure.label,
+      series: seriesOf(measure),
+      left,
+      row: Math.floor(index / columns),
+      width: panelWidth,
+      points,
+      segments,
+      periodLines: points.map((point) => wrap(point.label, Math.max(spacing - 6, 40), SIZE.tick)),
+      reasons,
+      ticks: column === 0,
     };
-  };
-  const prior = mark(leverage.pair.prior.cell, LEV.prior, c);
-  const current = mark(leverage.pair.current.cell, LEV.current, p);
+  });
+  const rowHeight = (row: number) =>
+    Math.max(
+      0,
+      ...laid
+        .filter((panel) => panel.row === row)
+        .map(
+          (panel) =>
+            PLOT_TOP +
+            PLOT_HEIGHT +
+            8 +
+            Math.max(1, ...panel.periodLines.map((lines) => lines.length)) * 13 +
+            panel.reasons.length * LINE +
+            12,
+        ),
+    );
+  const rowCount = Math.ceil(data.measures.length / columns);
+  const tops = Array.from({ length: rowCount }, (_, row) =>
+    Array.from({ length: row }, (_, before) => rowHeight(before)).reduce((a, b) => a + b, 0),
+  );
+  const panels: LinePanel[] = laid.map((panel) => {
+    const top = tops[panel.row] ?? 0;
+    const shift = (n: number) => n + top;
+    return {
+      label: panel.label,
+      series: panel.series,
+      left: panel.left,
+      top,
+      width: panel.width,
+      points: panel.points.map((point) => ({
+        ...point,
+        value: point.value ? { ...point.value, y: shift(point.value.y) } : null,
+      })),
+      segments: panel.segments.map((s) => ({ ...s, y1: shift(s.y1), y2: shift(s.y2) })),
+      periodLines: panel.periodLines,
+      reasons: panel.reasons,
+      ticks: panel.ticks,
+    };
+  });
+  const height = (tops.at(-1) ?? 0) + rowHeight(rowCount - 1);
   return {
     axis,
-    fromZero: axis.lo === 0,
-    ticks: axis.ticks.map((value) => ({ value, y: y(value), label: axis.label(value) })),
-    prior,
-    current,
-    // An arrow only for a move: an unchanged ratio has the word and no arrow.
-    arrow:
-      prior.kind === "value" && current.kind === "value" && prior.y !== current.y
-        ? arrowOf(prior, current)
-        : null,
-  };
-}
-
-/** The connector from the ring to the dot, ending in an arrowhead short of the dot. */
-function arrowOf(from: { x: number; y: number }, to: { x: number; y: number }) {
-  const [dx, dy] = [to.x - from.x, to.y - from.y];
-  const length = Math.hypot(dx, dy) || 1;
-  const [ux, uy] = [dx / length, dy / length];
-  const tip = { x: to.x - ux * 8, y: to.y - uy * 8 };
-  const base = { x: tip.x - ux * 7, y: tip.y - uy * 7 };
-  const [nx, ny] = [-uy * 4, ux * 4];
-  const point = (x: number, y: number) => `${x.toFixed(2)},${y.toFixed(2)}`;
-  return {
-    line: { x1: from.x + ux * 6, y1: from.y + uy * 6, x2: base.x, y2: base.y },
-    head: [
-      point(tip.x, tip.y),
-      point(base.x + nx, base.y + ny),
-      point(base.x - nx, base.y - ny),
-    ].join(" "),
+    y,
+    panels,
+    height,
+    plot: { top: PLOT_TOP, height: PLOT_HEIGHT, margin: MARGIN },
   };
 }
 
 // ---------------------------------------------------------------------------------------------
-// Words: the title, the readings and the table
+// Readings and the table view
 // ---------------------------------------------------------------------------------------------
 
-const cellText = (cell: Reading) => (cell.kind === "number" ? group(cell.text) : "not supplied");
-
-/** The title, templated from the stated changes of gross debt and reported EBITDA; no judgement. */
-export function earningsTitle(data: EarningsAgainstDebt) {
-  const pick = (key: EarningsMeasure["key"]) =>
-    data.measures.find((m) => m.key === key && m.change !== null);
-  const clauses = [pick("grossDebt"), pick("reportedEbitda")].flatMap((m) =>
-    m?.change == null ? [] : [{ label: m.label, change: m.change }],
-  );
-  const [first, second] = clauses;
-  if (!first) return `Earnings and debt, ${data.priorLabel} → ${data.currentLabel}`;
-  const head = `${first.label} ${movement(first.change)}`;
-  return second ? `${head} while ${inSentence(second.label)} ${movement(second.change)}` : head;
+/** The figure's reading: every measure in every period as written, and the stated change. */
+export function earningsReading(data: EarningsAgainstDebt, form: string) {
+  const parts = data.measures.map((measure) => {
+    const figures = measure.values.map((value) => `${value.label} ${cellWords(value.cell)}`);
+    const change =
+      measure.change === null
+        ? ""
+        : `, ${changeText(measure.change)} ${changeNote(TONE_KEY[measure.key], measure.change)}`;
+    return `${measure.label} ${figures.join(", ")}${change}`;
+  });
+  return `${data.unit}, ${form} on one scale from zero: ${parts.join("; ")}.`;
 }
 
-function measureReading(measure: EarningsMeasure) {
-  const { prior, current } = measure.pair;
-  const span = `${inSentence(measure.label)} ${cellText(prior.cell)} to ${cellText(current.cell)}`;
-  if (measure.change === null) return span;
-  if (signOf(measure.change) === 0) return `${span}, unchanged`;
-  if (growthShown(measure) && measure.growth !== null)
-    return `${span}, ${direction(measure.change)} ${group(measure.growth.replace(/^-/, ""))}% (derived)`;
-  return `${span}, ${direction(measure.change)} ${magnitude(measure.change)} (derived)`;
-}
+const ratio = (cell: Reading | null) =>
+  cell?.kind === "number" ? `${group(cell.text)}x` : cellWords(cell);
 
-/** The left panel's reading, every number in it. */
-export function earningsReading(data: EarningsAgainstDebt) {
-  const parts = data.measures.map(measureReading);
-  return `${data.priorLabel} to ${data.currentLabel} on one ${data.unit} scale from zero: ${parts.join("; ")}.`;
-}
-
-const TONE_WORD = { worse: "worse", better: "better" } as const;
-
-/** "worse" or "better" only where the owner's table says so; otherwise the direction alone. */
-export function leverageWord(leverage: Leverage) {
-  if (leverage.tone === "worse" || leverage.tone === "better") return TONE_WORD[leverage.tone];
-  if (leverage.change === null) return null;
-  return direction(leverage.change);
-}
-
-/** The right panel's reading. */
-export function leverageReading(leverage: Leverage, start: string, fromZero: boolean) {
-  const { prior, current } = leverage.pair;
-  const ratio = (cell: Reading) =>
-    cell.kind === "number" ? `${group(cell.text)}x` : "not supplied";
-  const scale = fromZero ? "from zero" : `from ${start}, not from zero`;
-  const base = `Total debt to EBITDA on its own scale ${scale}: ${ratio(prior.cell)} to ${ratio(current.cell)}`;
-  if (leverage.change === null) return `${base}.`;
-  const word = leverageWord(leverage);
-  const change = `${signed(leverage.change)}x (derived)`;
-  return word === "worse" || word === "better"
-    ? `${base}, ${change}, ${word}.`
-    : `${base}, ${change}${word === "unchanged" ? ", unchanged" : ""}.`;
-}
-
-const tableCell = (cell: Reading) =>
-  cell.kind === "number" ? group(cell.text) : `Not supplied: ${reasonOf(cell)}`;
-
-/** The table view: every measure and the leverage row, derived columns named as derived. */
+/** The table view: every measure in every period as written, the stated change where there is one. */
 export function earningsTable(data: EarningsAgainstDebt) {
-  const rows = data.measures.map((m) => [
-    m.label,
-    tableCell(m.pair.prior.cell),
-    tableCell(m.pair.current.cell),
-    m.change === null ? "Not derived" : signed(m.change),
-    growthShown(m) && m.growth !== null ? `${signed(m.growth)}%` : "Not derived",
+  const labels = data.periods.map((period) => period.label);
+  const comparison = data.comparison;
+  const changeHeader = comparison ? [`Change, ${comparison.from} → ${comparison.to}`] : [];
+  const rows = data.measures.map((measure) => [
+    measure.label,
+    ...labels.map((label) => cellWords(at(measure.values, label))),
+    ...(comparison
+      ? [
+          measure.change === null
+            ? "Not stated"
+            : `${changeText(measure.change)}, ${changeNote(TONE_KEY[measure.key], measure.change)}`,
+        ]
+      : []),
   ]);
   const lev = data.leverage;
-  const ratio = (cell: Reading) =>
-    cell.kind === "number" ? `${group(cell.text)}x` : tableCell(cell);
   const leverageRow = lev
     ? [
         [
           lev.label,
-          ratio(lev.pair.prior.cell),
-          ratio(lev.pair.current.cell),
-          lev.change === null
-            ? "Not derived"
-            : `${signed(lev.change)}x, ${leverageWord(lev) ?? "unchanged"}`,
-          "Not applicable: a ratio",
+          ...labels.map((label) => ratio(at(lev.values, label))),
+          ...(comparison
+            ? [
+                lev.change === null
+                  ? "Not stated"
+                  : `${changeText(lev.change)}x${leverageWord(lev) ? `, ${leverageWord(lev) ?? ""}` : ""}`,
+              ]
+            : []),
         ],
       ]
     : [];
   return {
-    caption: `Earnings against debt and leverage, ${data.unit}, ${data.priorLabel} to ${data.currentLabel}`,
-    headers: [
-      "Measure",
-      data.priorLabel,
-      data.currentLabel,
-      "Change (derived)",
-      "Growth % (derived)",
-    ],
+    caption: `Earnings against debt and leverage, ${data.unit}, ${periodSpan(labels)}`,
+    headers: ["Measure", ...labels, ...changeHeader],
     rows: [...rows, ...leverageRow],
   };
 }

@@ -1,7 +1,7 @@
 // Synthetic, built from the module contract (src/deploy_vii/bindings/cp1d.py and
 // src/deploy_workflow/owners/cp1d.py: T1D.2 assessment, the Step | Amount bridge, T1D.6 leverage);
 // not a real handoff — unproven on a real run. No CP-1D handoff has been retained.
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { entry, section, table } from "../overview/rows.fixture";
 import { bridgeGeometry, readBridge, readLeverage } from "./earningsQualityData";
