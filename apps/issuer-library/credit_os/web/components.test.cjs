@@ -1570,3 +1570,24 @@ test('Sided cards: the trace control is in the head row beside the figure, with 
   const noFigure = cards.find(card => card.includes('Other note'));
   assert.ok(/<div class="sd-head"><p class="sd-name">Other note<\/p><button/.test(noFigure), 'with no figure the control sits beside the name');
 });
+
+// ---- Chart periods (owner, 2026-11-25): the latest period of a tile is the one the store says (handoff_fields.py period_columns); the page orders nothing.
+test('metricTiles: the latest period is the last reported one the store names, never a pro forma or forecast column', () => {
+  const headers = ['Metric', 'FY2025E', 'FY2023', 'LTM Jun 2025', 'PF 2025', 'FY2024', 'Definition'];
+  const block = { headers, rows: [{ line: 1, cells: ['Revenue', '130', '100', '120', '125', '110', 'Net sales'] }], periods: { order: [2, 5, 3, 4, 1], reported: [2, 5, 3] } };
+  const kinds = require('./shapes.js').columnKinds(block);
+  const html = C.metricTiles(block, { key: r => `k:${r.line}` });
+  // shapes.js reads FY2025E, FY2023, PF 2025 and FY2024 as period columns of this table; of those the store's last reported one is FY2024 (column 5).
+  assert.deepEqual(kinds.map((k, at) => (k === 'period' ? at : null)).filter(at => at !== null), [1, 2, 4, 5]);
+  assert.ok(!html.includes('<p class="tile-v">125</p>'), 'nor is the pro forma column');
+  assert.ok(html.includes('<p class="tile-v">110</p>'), html);
+  assert.ok(!html.includes('<p class="tile-v">130</p>'), 'the forecast year is not the latest reported figure');
+  assert.ok(html.includes('FY2025E 130 · FY2023 100 · PF 2025 125'), 'the other periods are beneath as written, each with its label');
+  // Only forecast columns: the last in the order supplied.
+  const forecasts = { headers: ['Metric', 'FY2027E', 'FY2026E', 'Definition'], rows: [{ line: 1, cells: ['Revenue', '150', '140', 'Net sales'] }], periods: { order: [2, 1], reported: [] } };
+  assert.ok(C.metricTiles(forecasts, { key: r => `k:${r.line}` }).includes('<p class="tile-v">150</p>'));
+  // A table the store gave no order: the first period column, as written.
+  const bare = { headers: ['Metric', 'FY2023', 'FY2024', 'Definition'], rows: [{ line: 1, cells: ['Revenue', '100', '110', 'Net sales'] }] };
+  assert.ok(C.metricTiles(bare, { key: r => `k:${r.line}` }).includes('<p class="tile-v">100</p>'));
+  assert.ok(!/\\d\{4\}/.test(require('fs').readFileSync(require('path').join(__dirname, 'components.js'), 'utf8').split('function periodOrder(')[1].split('function earlierParts(')[0]), 'no year is read from a header here');
+});

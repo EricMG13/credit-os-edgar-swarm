@@ -520,10 +520,12 @@
   }
 
   // ---- metric and measure: tiles
-  // The latest period is the one whose header names the latest year (the first, when none does); the others, in order, are the earlier ones.
-  function periodOrder(periodCols) {
-    const year = col => Number((/\d{4}/.exec(col.label) || [0])[0]);
-    const latest = periodCols.reduce((best, col) => (year(col) > year(best) ? col : best), periodCols[0]);
+  // The store says which columns are periods, in order, and which of them are reported (handoff_fields.py period_columns: `block.periods`); nothing is ordered here.
+  // The latest is the last reported period among these columns, else the last of any class, else (a table the store gave no order) the first; the others, as written, are the earlier ones.
+  function periodOrder(periodCols, block) {
+    const lastOf = list => (list || []).findLast(at => periodCols.some(col => col.at === at));
+    const pick = lastOf(block.periods?.reported) ?? lastOf(block.periods?.order);
+    const latest = periodCols.find(col => col.at === pick) || periodCols[0];
     return {latest, earlier: periodCols.filter(col => col !== latest)};
   }
   // A row's earlier periods: a number goes beneath the value with its period's label, any other text is a note.
@@ -538,7 +540,7 @@
   function metricTiles(block, ctx) {
     const cols = visibleColumns(block, 'metric', ctx), labelCol = cols[0], periodCols = cols.slice(1).filter(col => col.kind === 'period');
     if (!labelCol || !periodCols.length || !block.rows.length) return recordCards(block, ctx);
-    const {latest, earlier} = periodOrder(periodCols), definition = cols.find(col => /definition|identity/i.test(col.label));
+    const {latest, earlier} = periodOrder(periodCols, block), definition = cols.find(col => /definition|identity/i.test(col.label));
     const others = cols.slice(1).filter(col => !periodCols.includes(col) && col !== definition);
     const tiles = block.rows.map(row => {
       const raw = cellText(row, latest.at), {below, notes} = earlierParts(row, earlier, ctx);
@@ -557,7 +559,7 @@
   function metricStrip(block, ctx, text, link) {
     const cols = visibleColumns(block, 'metric', ctx), labelCol = cols[0], periodCols = cols.slice(1).filter(col => col.kind === 'period');
     if (!labelCol || !periodCols.length || !block.rows.length) return '';
-    const {latest, earlier} = periodOrder(periodCols), reader = readerText();
+    const {latest, earlier} = periodOrder(periodCols, block), reader = readerText();
     const plainText = reader.plainText(text);
     const named = block.rows.filter(row => fieldHtml(cellText(row, labelCol.at), ctx) !== '').map(row => ({row, spans: phrasesIn(reader.plainText(cellText(row, labelCol.at)).trim(), plainText)})).filter(item => item.spans.length);
     // A label found only inside the span of a longer label the text names ("EBITDA" in "EBITDA margin") is not cited on its own; one that also stands alone elsewhere stays.
@@ -574,7 +576,7 @@
   function measureTiles(block, ctx) {
     const cols = visibleColumns(block, 'measure', ctx), labelCol = cols[0];
     const consequence = cols.find(col => col.kind === 'consequence'), valueCols = cols.slice(1).filter(col => col.kind === 'period');
-    const main = valueCols.length ? periodOrder(valueCols) : {latest: cols.slice(1).find(col => col !== consequence), earlier: []};
+    const main = valueCols.length ? periodOrder(valueCols, block) : {latest: cols.slice(1).find(col => col !== consequence), earlier: []};
     if (!labelCol || !main.latest || !block.rows.length) return recordCards(block, ctx);
     const tagCols = cols.slice(1).filter(col => col !== main.latest && !main.earlier.includes(col) && col !== consequence);
     // A stated absence ("Not calculated: ...") is a sentence, not a value: a tile draws it as its own absence line, no tag; when every tile states the same one, the strip says it once beneath.

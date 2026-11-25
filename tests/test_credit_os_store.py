@@ -2441,3 +2441,186 @@ def test_describe_names_an_os_errors_kind_and_never_its_path():
 def test_describe_keeps_the_reason_of_other_errors(error, text):
     """The library's own refusals (literal, path-free text) and non-OS errors keep today's text."""
     assert source.describe(error) == text
+
+
+# ---- Chart periods (owner, 2026-11-25): the library supplies the order a chart is drawn in.
+LEVERAGE_HEADER = "| Period | Net debt / EBITDA | Reporting unit | Basis and limitation |"
+
+
+def leverage_chart(*periods: str) -> dict:
+    rows = [f"| {p} | {i + 1}.5 | x | Synthetic. |" for i, p in enumerate(periods)]
+    fields = synthetic_charts(chart_section("Chart data: leverage", LEVERAGE_HEADER, *rows))
+    assert fields["issue"] is None and fields["chartGaps"] == []
+    (chart,) = fields["charts"]
+    return chart
+
+
+def test_a_period_chart_draws_fiscal_years_then_ytd_ltm_pf_and_forecasts_oldest_first():
+    chart = leverage_chart(
+        "FY2026E",  # 0
+        "LTM Jun 2025",  # 1
+        "FY2023",  # 2
+        "PF LTM Jun 2025",  # 3
+        "YTD Jun 2025",  # 4
+        "FY2024",  # 5
+        "FY2025E",  # 6
+        "LTM Dec 2024",  # 7
+    )
+    # FY2023, FY2024 | YTD Jun 2025 | LTM Dec 2024, LTM Jun 2025 | PF LTM Jun 2025 | FY2025E,
+    # FY2026E
+    assert chart["rows"] == [2, 5, 4, 7, 1, 3, 6, 0]
+    assert "unplaced" not in chart
+    assert chart["columns"] == [1] and chart["unit"] == "x"
+
+
+def test_a_period_the_rule_cannot_place_is_kept_last_as_written_and_named():
+    chart = leverage_chart("Run-rate", "FY2024", "Stub period", "FY2023")
+    assert chart["rows"] == [3, 1, 0, 2]
+    assert chart["unplaced"] == [0, 2]
+
+
+@pytest.mark.parametrize(
+    ("periods", "rows", "unplaced"),
+    [
+        (("FY2024",), [0], None),
+        (("FY2024", "FY2023", "FY2024"), [1, 0, 2], None),  # equal periods keep their order
+        (("Opening", "Closing"), [0, 1], [0, 1]),
+        (("Run-rate",), [0], [0]),
+    ],
+)
+def test_period_chart_order_keeps_every_row_once(periods, rows, unplaced):
+    chart = leverage_chart(*periods)
+    assert chart["rows"] == rows
+    assert chart.get("unplaced") == unplaced
+
+
+def test_a_step_table_and_a_row_table_carry_no_period_order():
+    (waterfall,) = synthetic_charts(bridge("100", "-40", "60"))["charts"]
+    assert waterfall["kind"] == "waterfall"
+    assert "rows" not in waterfall and "unplaced" not in waterfall
+    (stack_chart,) = synthetic_charts(
+        stack("| Term loan | 1 | Yes | 1,200 | 2.4 | US$m | Synthetic. |")
+    )["charts"]
+    assert stack_chart["kind"] == "stack" and "rows" not in stack_chart
+
+
+def table_blocks(text: str) -> list[dict]:
+    sections, problem, _ = store.handoff_parts(text.encode(), strict=False)
+    assert problem is None
+    return [b for s in sections for b in s["blocks"] if b["type"] == "table"]
+
+
+def test_a_table_with_period_columns_says_their_order_and_which_are_reported():
+    (block,) = table_blocks(
+        "## Findings\n\n"
+        "| Metric | FY2025E | FY2023 | Change | LTM Jun 2025 | PF 2025 | FY2024 | Definition |\n"
+        "| --- | --- | --- | --- | --- | --- | --- | --- |\n"
+        "| Revenue | 130 | 100 | +10 | 120 | 125 | 110 | Net sales |\n"
+    )
+    # FY2023, FY2024, LTM Jun 2025, PF 2025, FY2025E; pro forma and forecast are not reported.
+    assert block["periods"] == {"order": [2, 6, 4, 5, 1], "reported": [2, 6, 4]}
+    assert block["headers"][0] == "Metric" and block["rows"][0]["cells"][1] == "130"
+
+
+def test_a_table_without_period_columns_is_left_as_parsed():
+    (block,) = table_blocks(
+        "## Findings\n\n| Item | Value | Basis |\n| --- | --- | --- |\n| FY2024 cash | 5 | S |\n"
+    )
+    assert "periods" not in block
+
+
+PATH_ROWS = [
+    ("Reference / 2027", "30"),
+    ("Downside / 2026", "12"),
+    ("Reference / 2025", "10"),
+    ("Downside / LTM Jun 2025", "9"),
+    ("Reference / 2026", "20"),
+    ("Downside / 2027", "15"),
+    ("Reference / LTM Jun 2025", "8"),
+    ("Downside / 2025", "11"),
+]
+
+
+def visual_sections(headers: list[str], rows: list[tuple[str, ...]]) -> list[dict]:
+    lines = [f"| {' | '.join(cells)} |" for cells in (headers, ["---"] * len(headers), *rows)]
+    return store.sections_of("## T2H.5 Paths\n\n" + "\n".join(lines) + "\n")
+
+
+def pinned_visual(visual: dict, headers: list[str], rows: list[tuple[str, ...]]) -> dict:
+    sections = visual_sections(headers, rows)
+    (table,) = (b for s in sections for b in s["blocks"] if b["type"] == "table")
+    config = {"period": "p", "scope": "s", "visual": {**visual, "table": table["line"]}}
+    return store.pinned_fields(sections, config, "CP-X")["visual"]
+
+
+def test_a_path_visual_is_given_its_periods_in_rule_order_and_each_series_rows():
+    visual = pinned_visual({"kind": "paths", "column": 1}, ["Path", "Closing cash"], PATH_ROWS)
+    assert visual["paths"] == {
+        "periods": ["2025", "2026", "2027", "LTM Jun 2025"],
+        "series": [
+            {"name": "Reference", "rows": [2, 4, 0, 6]},
+            {"name": "Downside", "rows": [7, 1, 5, 3]},
+        ],
+    }
+
+
+def test_a_path_visual_keeps_a_period_one_series_lacks_and_one_the_rule_cannot_place():
+    rows = [("Base / Run-rate", "1"), ("Base / 2026", "2"), ("Low / 2025", "3")]
+    visual = pinned_visual({"kind": "paths", "column": 1}, ["Path", "Closing cash"], rows)
+    assert visual["paths"] == {
+        "periods": ["2025", "2026", "Run-rate"],
+        "series": [
+            {"name": "Base", "rows": [None, 1, 0]},
+            {"name": "Low", "rows": [2, None, None]},
+        ],
+    }
+
+
+@pytest.mark.parametrize(
+    "rows",
+    [
+        [("Reference 2025", "1")],  # no " / " between the path and its period
+        [("Reference / 2025", "1"), ("Reference / 2025", "2")],  # one path, one period, twice
+    ],
+)
+def test_a_path_visual_whose_rows_do_not_name_one_path_and_period_each_is_refused(rows):
+    with pytest.raises(ValueError, match="CP-X"):
+        pinned_visual({"kind": "paths", "column": 1}, ["Path", "Closing cash"], rows)
+
+
+def test_a_comparison_visual_whose_columns_are_periods_is_given_them_in_rule_order():
+    headers = ["Measure", "Q1 FY2024", "Q1 FY2023", "Basis"]
+    rows = [("Net sales", "1,789", "1,592", "S"), ("EBITDA", "912", "780", "S")]
+    visual = pinned_visual({"kind": "paired", "rows": [0, 1], "columns": [1, 2]}, headers, rows)
+    assert visual["periods"] == {"axis": "columns", "order": [2, 1]}
+
+
+def test_a_comparison_visual_whose_rows_are_periods_is_given_them_in_rule_order():
+    headers = ["Period", "Sources less uses"]
+    rows = [("FY2025E", "4"), ("LTM Jun 2024", "3"), ("FY2023", "1"), ("FY2024", "2")]
+    visual = pinned_visual({"kind": "bars", "column": 1}, headers, rows)
+    assert visual["periods"] == {"axis": "rows", "order": [2, 3, 1, 0]}
+    chosen = pinned_visual({"kind": "bars", "column": 1, "rows": [3, 0]}, headers, rows)
+    assert chosen["periods"] == {"axis": "rows", "order": [3, 0]}
+
+
+@pytest.mark.parametrize(
+    ("visual", "headers", "rows"),
+    [
+        # Peers are companies, whatever year their header carries.
+        (
+            {"kind": "peers", "rows": [0], "columns": [1, 2]},
+            ["M", "A 2024", "B 2024"],
+            [("x", "1", "2")],
+        ),
+        (
+            {"kind": "paired", "rows": [0], "columns": [1, 2]},
+            ["M", "Base", "Severe"],
+            [("x", "1", "2")],
+        ),
+        ({"kind": "bars", "column": 1}, ["Item", "Value"], [("Cash", "1"), ("FY2024 debt", "2")]),
+        ({"kind": "matrix", "columns": [0, 1]}, ["Period", "FY2024"], [("FY2023", "1")]),
+    ],
+)
+def test_a_visual_that_is_not_over_periods_is_left_as_configured(visual, headers, rows):
+    assert "periods" not in pinned_visual(visual, headers, rows)

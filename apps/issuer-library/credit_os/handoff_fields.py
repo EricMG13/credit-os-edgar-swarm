@@ -11,6 +11,7 @@ from typing import Any
 from credit_os.source import (
     valid_date,
 )
+from deploy_vii.period_order import PeriodClass, order_periods, parse_period
 
 READER_TABLES = [
     ["Bottom line", "Confidence", "Main limitation"],
@@ -282,6 +283,72 @@ def _period_cells_ok(section: dict[str, Any], table: dict[str, Any]) -> bool:
     )
 
 
+def _period_rows(table: dict[str, Any]) -> dict[str, list[int]]:
+    """The order a Period table's rows are drawn in (the one rule, deploy_vii.period_order): every
+    row once. `unplaced` names the rows whose Period the rule cannot read: they are drawn last, as
+    written, and the page says so."""
+    rows = table["rows"]
+    ordered, gaps = order_periods(range(len(rows)), lambda at: str(rows[at]["cells"][0]))
+    return {"rows": list(ordered), **({"unplaced": list(gaps)} if gaps else {})}
+
+
+REPORTED_CLASSES = (PeriodClass.ACTUAL, PeriodClass.YTD, PeriodClass.LTM)
+
+
+def period_columns(headers: list[str]) -> dict[str, list[int]] | None:
+    """The columns after the first whose header the rule reads as a period, in rule order, and
+    those of them that are reported (not pro forma or forecast); None when no header is a period.
+    The page picks its latest and earlier period columns from these and orders nothing itself."""
+    periods = [at for at in range(1, len(headers)) if parse_period(headers[at]) is not None]
+    if not periods:
+        return None
+    order, _ = order_periods(periods, lambda at: headers[at])
+    reported = [at for at in order if _reported(headers[at])]
+    return {"order": list(order), "reported": reported}
+
+
+def _reported(label: str) -> bool:
+    parsed = parse_period(label)
+    return parsed is not None and parsed.period_class in REPORTED_CLASSES
+
+
+def path_series(table: dict[str, Any]) -> dict[str, Any]:
+    """A path table (`<path> / <period>` in the first column) as its periods in rule order and,
+    for each path as first written, the row of each period (None where it has none). A period
+    the rule cannot read is kept last, as written."""
+    cells: dict[tuple[str, str], int] = {}
+    for at, row in enumerate(table["rows"]):
+        name, slash, period = str(row["cells"][0]).rpartition(" / ")
+        if not slash or (name, period) in cells:
+            raise ValueError(f"path row {at + 1} does not name one path and period")
+        cells[name, period] = at
+    periods, _ = order_periods(list(dict.fromkeys(period for _, period in cells)), str)
+    return {
+        "periods": list(periods),
+        "series": [
+            {"name": name, "rows": [cells.get((name, period)) for period in periods]}
+            for name in dict.fromkeys(name for name, _ in cells)
+        ],
+    }
+
+
+def visual_periods(visual: dict[str, Any], table: dict[str, Any]) -> dict[str, Any] | None:
+    """Where a paired or bar visual is over periods, the axis they lie on and their order by the
+    rule: two or more value columns that are all periods, else category rows that all are."""
+    if visual.get("kind") not in ("paired", "bars"):
+        return None
+    columns = visual.get("columns") or []
+    if len(columns) > 1 and all(parse_period(table["headers"][c]) is not None for c in columns):
+        ordered, _ = order_periods(columns, lambda c: str(table["headers"][c]))
+        return {"axis": "columns", "order": list(ordered)}
+    rows = visual.get("rows") or list(range(len(table["rows"])))
+    labels = {at: str(table["rows"][at]["cells"][0]) for at in rows}
+    if not labels or any(parse_period(label) is None for label in labels.values()):
+        return None
+    ordered, _ = order_periods(rows, labels.__getitem__)
+    return {"axis": "rows", "order": list(ordered)}
+
+
 def _chart_table(section: dict[str, Any]) -> dict[str, Any] | None:
     """What the app needs to draw the section's table, or None when it is not the fixed shape."""
     tables = [b for b in section["blocks"] if b["type"] == "table"]
@@ -317,6 +384,8 @@ def _chart_table(section: dict[str, Any]) -> dict[str, Any] | None:
         if headers != STEP_HEADERS or _bridge_amounts(table) is None:
             return None
         chart |= {"kind": "waterfall", "amount": 1}
+    else:
+        chart |= _period_rows(table)
     return chart
 
 
