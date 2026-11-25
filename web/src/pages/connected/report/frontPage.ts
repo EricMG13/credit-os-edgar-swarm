@@ -887,6 +887,82 @@ const findingLabel: Record<string, string> = {
   portfolio_decision: "Portfolio decision",
 };
 
+function issuerRatings(view: ReportView, run: PublishedRun) {
+  const asOf = run.asOf ?? "";
+  return (view.catalogue?.ratings ?? []).filter(
+    ({ scope, date, label, agency, outlook }) =>
+      scope === "issuer" &&
+      reportDate(date) &&
+      reportDate(asOf) &&
+      date <= asOf &&
+      readyField(label) &&
+      readyField(agency) &&
+      (!outlook || readyField(outlook)),
+  );
+}
+
+function frontChallenge(analysis: OutputEntry | undefined) {
+  const combined = analysis
+    ? sectionPassages(analysis, ["Contrary evidence and what would change the view"])
+    : [];
+  if (combined.length || !analysis) return { combined, challenge: combined, triggers: [] };
+  return {
+    combined,
+    challenge: sectionPassages(analysis, ["Contrary evidence", "Strengths and weaknesses"]),
+    triggers: sectionPassages(analysis, ["What would change the view"]),
+  };
+}
+
+function specialistLabel(run: PublishedRun, specialist: boolean) {
+  return run.pathway && specialist ? (findingLabel[run.pathway] ?? "Credit view") : "Credit view";
+}
+
+function frontHeadline(
+  foundation: OutputEntry | undefined,
+  profile: ReturnType<typeof financialProfile> | undefined,
+  specialist: boolean,
+  view: ReportView,
+  run: PublishedRun,
+) {
+  const headline = foundation ? headlines(foundation, profile, view, run.asOf) : [];
+  const missing = specialist
+    ? []
+    : financialRows
+        .map(([label]) => label)
+        .filter((label) => !headline.some(({ category }) => category === label));
+  return { headline, missing };
+}
+
+function frontCompany(view: ReportView, ratings: ReturnType<typeof issuerRatings>) {
+  const company = companyProfile(selectedOutput(view, "CP-1A"));
+  return {
+    ...company,
+    sector: company.sector ?? readyField(view.catalogue?.sector),
+    ratings,
+    differing: differingAgencies(view.entries, ratings),
+  };
+}
+
+function frontCapital(
+  instruments: ReturnType<typeof instrumentTable>,
+  legacy: ReturnType<typeof legacyCapital>,
+  foundation: OutputEntry | undefined,
+) {
+  return (
+    legacy?.table ??
+    (instruments && { ...instruments, title: "Capital structure" }) ??
+    debtPrincipal(foundation)
+  );
+}
+
+function frontAnalysis(analysis: OutputEntry | undefined, specialist: boolean) {
+  return {
+    compactLead: !specialist && analysis ? authoredSummary(analysis) : undefined,
+    findings: analysis ? sectionPassages(analysis, ["Key findings"]).slice(0, 2) : [],
+    limitations: analysis ? frontLimitations(analysis) : [],
+  };
+}
+
 export function buildIssuerFrontPage(view: ReportView, run: PublishedRun) {
   if (run.publicationVerified !== true || view.folder !== run.folder) return null;
   const lead = scopedLead(view, run);
@@ -895,33 +971,12 @@ export function buildIssuerFrontPage(view: ReportView, run: PublishedRun) {
   const specialist = Boolean(run.pathway && Object.hasOwn(findingLabel, run.pathway));
   const analysis = lead?.entry;
   const issuer = run.issuerHeading || run.issuer;
-  const company = companyProfile(selectedOutput(view, "CP-1A"));
-  const ratings = (view.catalogue?.ratings ?? []).filter(
-    ({ scope, date, label, agency, outlook }) =>
-      scope === "issuer" &&
-      reportDate(date) &&
-      reportDate(run.asOf ?? "") &&
-      date <= (run.asOf ?? "") &&
-      readyField(label) &&
-      readyField(agency) &&
-      (!outlook || readyField(outlook)),
-  );
+  const ratings = issuerRatings(view, run);
   const instruments = instrumentTable(foundation);
   const legacy = legacyCapital(foundation, issuer, run.asOf);
-  const headline = foundation ? headlines(foundation, profile, view, run.asOf) : [];
-  const missingHeadline = specialist
-    ? []
-    : financialRows
-        .map(([label]) => label)
-        .filter((label) => !headline.some(({ category }) => category === label));
-  const combinedChallenge = analysis
-    ? sectionPassages(analysis, ["Contrary evidence and what would change the view"])
-    : [];
-  const challenge = combinedChallenge.length
-    ? combinedChallenge
-    : analysis
-      ? sectionPassages(analysis, ["Contrary evidence", "Strengths and weaknesses"])
-      : [];
+  const { headline, missing } = frontHeadline(foundation, profile, specialist, view, run);
+  const { combined, challenge, triggers } = frontChallenge(analysis);
+  const { compactLead, findings, limitations } = frontAnalysis(analysis, specialist);
   return {
     folder: run.folder,
     issuer: view.catalogue?.name || run.issuerHeading || run.issuer,
@@ -930,37 +985,25 @@ export function buildIssuerFrontPage(view: ReportView, run: PublishedRun) {
     asOf: run.asOf,
     period: view.catalogue?.period,
     scope: scopeLabel(run),
-    leadLabel:
-      run.pathway && specialist ? (findingLabel[run.pathway] ?? "Credit view") : "Credit view",
+    leadLabel: specialistLabel(run, specialist),
     lead: lead?.passage,
-    compactLead: !specialist && analysis ? authoredSummary(analysis) : undefined,
+    compactLead,
     actions: actions(view, run),
     figures: specialist ? [] : snapshotFigures(foundation),
     headline,
-    missingHeadline,
-    findings: analysis ? sectionPassages(analysis, ["Key findings"]).slice(0, 2) : [],
+    missingHeadline: missing,
+    findings,
     challenge,
-    triggers:
-      !combinedChallenge.length && analysis
-        ? sectionPassages(analysis, ["What would change the view"])
-        : [],
-    hasCombinedChallenge: combinedChallenge.length > 0,
-    limitations: analysis ? frontLimitations(analysis) : [],
+    triggers,
+    hasCombinedChallenge: combined.length > 0,
+    limitations,
     financials: profile,
     instruments,
-    capital:
-      legacy?.table ??
-      (instruments && { ...instruments, title: "Capital structure" }) ??
-      debtPrincipal(foundation),
+    capital: frontCapital(instruments, legacy, foundation),
     capitalBasis: legacy?.basis,
     liquidity: capitalLiquidity(foundation, legacy?.date),
     tranches: legacy?.tranches,
-    company: {
-      ...company,
-      sector: company.sector ?? readyField(view.catalogue?.sector),
-      ratings,
-      differing: differingAgencies(view.entries, ratings),
-    },
+    company: frontCompany(view, ratings),
   };
 }
 
