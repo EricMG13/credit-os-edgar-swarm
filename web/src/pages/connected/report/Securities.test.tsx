@@ -130,7 +130,7 @@ it("shows the paired observed quote with all authored digits and keeps the unquo
   expect(within(loan).queryByText(/yield/)).toBeNull();
   // The market level's stated gap and the yield it leaves: the word, and the module's reason once.
   expect(within(loan).getAllByText("Not supplied")).toHaveLength(2);
-  expect(within(loan).getByText("No loan observation")).toBeInTheDocument();
+  expect(within(loan).getAllByText("No loan observation")).toHaveLength(2);
   expect(within(loan).getByRole("link", { name: "Source for Term loan" })).toHaveAttribute(
     "href",
     "#evidence/5-8",
@@ -181,7 +181,7 @@ it("draws one card per instrument for a phone: name, rank, bars, recommendation 
     "href",
     "#evidence/5-6",
   );
-  expect(within(card("Term loan")).getByText("No loan observation")).toBeInTheDocument();
+  expect(within(card("Term loan")).getAllByText("No loan observation")).toHaveLength(2);
 });
 
 it("draws the fundamental value matrix in the shared table style, one trace per row", () => {
@@ -377,12 +377,13 @@ it("lists each card's columns as the two-column key-value list", () => {
   expect(list).not.toHaveClass("grid-cols-1");
 });
 
-// Review 4, Q7: the last trade's gap carries its reason, the market level's own reason once.
-it("gives a last trade the page cannot read the gap cell with its reason", () => {
+// Review 6, V4: a last trade the market level states as missing carries the module's reason.
+it("gives a last trade the market level states as missing the module's stated reason", () => {
   const view = securityView(dataset("1 Oct 2026", [basis("2026-10-01")]), "2026-10-02");
   if (!view) throw new Error("missing security review");
   render(<Securities data={view} href={(line) => `#evidence/5-${String(line)}`} />);
   const loan = instrumentRow("Term loan");
-  expect(within(loan).getByText("This page could not read a last trade.")).toBeInTheDocument();
-  expect(within(loan).getAllByText("No loan observation")).toHaveLength(1);
+  expect(within(loan).queryByText("This page could not read a last trade.")).toBeNull();
+  // Once in the market level, once in the last trade.
+  expect(within(loan).getAllByText("No loan observation")).toHaveLength(2);
 });

@@ -246,6 +246,18 @@ it("keeps a cell's readable words and drops only the clause that cites a registe
   expect(readerCell("Term SOFR +2.75%")).toBe("Term SOFR +2.75%");
 });
 
+// Review 6, V2: leading words stay only after a link word, and never end on a dangling word.
+it("keeps a cell's leading words only when a link word introduces what it cites", () => {
+  expect(readerCell("Run 20261113-101500-01 retained")).toBe("In Evidence");
+  expect(readerCell("Retained in run 20261113-101500-01")).toBe("In Evidence");
+  expect(readerCell("Individual coupons in T2F.2")).toBe("Individual coupons");
+  expect(readerCell("Coupon step-up per T2F.2; margin ratchet")).toBe(
+    "Coupon step-up; margin ratchet",
+  );
+  expect(readerCell("Amortisation schedule rows of T2F.2")).toBe("Amortisation schedule");
+  expect(readerCell("Hedged notional for T2F.4")).toBe("In Evidence");
+});
+
 const PROOF_2D = path.resolve(import.meta.dirname, "../../../../../../proof/handoffs/CP-2D.md");
 
 it("reads a chart table the store withheld from the handoff, and tells it from none", () => {

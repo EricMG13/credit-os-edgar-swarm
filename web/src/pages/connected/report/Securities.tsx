@@ -328,11 +328,9 @@ function LastTrade({
     );
   if (item.yieldText !== null)
     return <span className="font-mono text-text-primary tabular-nums">{item.yieldText}</span>;
+  const stated = statedGap(item.cells[market] ?? "");
   return (
-    <GapCell
-      word={statedGap(item.cells[market] ?? "") ? "Not supplied" : "Not stated"}
-      reason={NO_TRADE}
-    />
+    <GapCell word={stated ? "Not supplied" : "Not stated"} reason={stated?.reason || NO_TRADE} />
   );
 }
 

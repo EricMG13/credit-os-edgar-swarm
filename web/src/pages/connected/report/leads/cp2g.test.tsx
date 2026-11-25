@@ -171,11 +171,10 @@ it("lists the retained drivers by case and year as stated, inheritance as words"
   expect(row("Interest rate", "Base case")).toEqual(["6.13%", "6.13%", "6.13%"]);
   expect(row("Dividends", "Upside case")).toEqual(["4348", "38", "38"]);
   expect(row("Debt repayment", "Base case")).toEqual(["580", "92", "92"]);
-  // Review 3, P8: the block's rate_increase is printed as recorded, never as a percentage rise.
+  // Review 6, V1: the contract's rate_increase is the row's proportional cash-interest increase.
   expect(
-    within(tile).getByText("Downside shock: EBITDA decline 20%, rate increase 0.0184 as recorded."),
+    within(tile).getByText("Downside shock: EBITDA decline 20%, cash-interest increase 1.84%."),
   ).toBeVisible();
-  expect(tile.textContent).not.toMatch(/1\.84%/);
   expect(within(tile).getByText(/USD millions/)).toBeVisible();
 });
 
@@ -311,7 +310,7 @@ it("counts driver values beyond the stated years and prints a tiny decimal as a 
   );
 });
 
-it("prints a numeric downside rate increase as recorded", () => {
+it("prints the downside rate increase as the contract's cash-interest share", () => {
   const made = forecastBlock({
     currency: "USD",
     scale: 1,
@@ -322,6 +321,6 @@ it("prints a numeric downside rate increase as recorded", () => {
   render(<ForwardLead {...leadProps(made)} />);
   const tile = screen.getByRole("region", { name: "Drivers by case" });
   expect(
-    within(tile).getByText("Downside shock: EBITDA decline 15%, rate increase 0.0259 as recorded."),
+    within(tile).getByText("Downside shock: EBITDA decline 15%, cash-interest increase 2.59%."),
   ).toBeVisible();
 });

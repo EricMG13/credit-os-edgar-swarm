@@ -72,19 +72,24 @@ const LINK_WORD =
   /(?:^|\s+)(?:per|see|in|from|at|on|of|for|and|by|under|table|register|rows?|pp?\.|pages?|sections?|§|paras?\.?|-|–|—)$/i;
 const DANGLING = /[\s,;:(\-–—]+$/;
 
-/** The longest leading run of a clause's words the reader rule draws, no dangling link word. */
+/** A word that introduces what a clause cites: "per T2F.2", "see note 4", "rows of T2F.2". */
+const INTRODUCES = /^(?:per|see|in|from|table|register)$/i;
+
+/**
+ * A clause's words before the first word it cites, kept only when a link word introduces that word
+ * ("Individual coupons in T2F.2") and what remains does not end on a dangling word; otherwise
+ * nothing ("Run 20261113-101500-01 retained" is no phrase without its id).
+ */
 function leadingWords(clause: string) {
   const words = clause.split(/\s+/);
-  for (let count = words.length - 1; count > 0; count -= 1) {
-    let lead = words.slice(0, count).join(" ");
-    for (let before = ""; before !== lead;) {
-      before = lead;
-      lead = lead.replace(LINK_WORD, "").replace(DANGLING, "");
-    }
-    const drawn = lead ? readerReason(lead) : null;
-    if (drawn) return drawn;
-  }
-  return "";
+  const cites = words.findIndex((word) => readerReason(word) === null);
+  if (cites < 1) return "";
+  const before = words[cites - 1] ?? "";
+  const pair = /^of$/i.test(before) && /^rows?$/i.test(words[cites - 2] ?? "");
+  if (!pair && !INTRODUCES.test(before)) return "";
+  const lead = words.slice(0, cites - (pair ? 2 : 1)).join(" ");
+  if (!lead || LINK_WORD.test(lead) || DANGLING.test(lead)) return "";
+  return readerReason(lead) ?? "";
 }
 
 /** A bracketed group whose words cite a source or an id: "(credit_agreement.pdf page 3)", "(T2F.2)". */

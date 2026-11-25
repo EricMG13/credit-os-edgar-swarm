@@ -401,10 +401,7 @@ function shockLine(document: Record<string, unknown>) {
     const text = recorded(value);
     return text === null ? "not stated" : shareText(text);
   };
-  // The block's rate_increase is printed as recorded: whether it is a proportional rise in cash
-  // interest or an additive yield change is the block's own prose, not a unit the page can name.
-  const rise = recorded(rate);
-  return `Downside shock: EBITDA decline ${share(decline)}, rate increase ${rise === null ? "not stated" : `${rise} as recorded`}.`;
+  return `Downside shock: EBITDA decline ${share(decline)}, cash-interest increase ${share(rate)}.`;
 }
 
 /** The forecast block's drivers by case and year, as stated; a case's inherited driver in words. */
