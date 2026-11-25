@@ -8,11 +8,11 @@ export type Box = { left: number; right: number; top: number; bottom: number };
 export type Point = { x: number; y: number };
 /** Text widths in SVG user units, and the font's box above and below the baseline. */
 export type Metrics = { width: (text: string) => number; ascent: number; descent: number };
-export type Geometry = { width: number; height: number; plot: Box; zero: number; axis: number };
-export type ValuePoint = Point & { text: string; period: string };
-export type Tick = { x: number; text: string };
+type Geometry = { width: number; height: number; plot: Box; zero: number; axis: number };
+type ValuePoint = Point & { text: string; period: string };
+type Tick = { x: number; text: string };
 /** A dashed missing-period mark: a vertical stroke at x from top to bottom. */
-export type GapMark = { x: number; top: number; bottom: number };
+type GapMark = { x: number; top: number; bottom: number };
 
 export type TrendLayoutInput = {
   metrics: Metrics;
@@ -31,7 +31,7 @@ export type TrendLayoutInput = {
 
 /** Text drawn with `text-anchor: start` at x (its left) and baseline y. */
 export type Placed = { text: string; x: number; y: number; box: Box };
-export type ValueLabel = Placed & { index: number; withPeriod: boolean };
+type ValueLabel = Placed & { index: number; withPeriod: boolean };
 export type TrendLayout = {
   zeroLabel: Placed;
   ticks: (Placed & { index: number })[];
@@ -78,7 +78,7 @@ const distance = (box: Box, p: Point): number =>
   );
 
 /** Whether a segment runs through a box (Liang-Barsky clipping, edges included). */
-export function crosses(box: Box, a: Point, b: Point): boolean {
+function crosses(box: Box, a: Point, b: Point): boolean {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
   const edges: [number, number][] = [

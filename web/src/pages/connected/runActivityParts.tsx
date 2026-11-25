@@ -35,7 +35,7 @@ const notes = (run: LiveRun) =>
   texts(serviceText(run.reason), run.name_differs && "Issuer name differs from earlier runs");
 
 /** The only way into a run: 32px tall, 44px on a phone, and a name that breaks only between words. */
-export function RunIssuerLink({ run }: { run: Pick<LiveRun, "id" | "issuer_name"> }) {
+function RunIssuerLink({ run }: { run: Pick<LiveRun, "id" | "issuer_name"> }) {
   return (
     <TextLink
       href={runPath(run)}
