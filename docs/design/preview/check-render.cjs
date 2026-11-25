@@ -88,6 +88,9 @@ function measure(minTarget) {
   const shown = (el) => {
     const box = el.getBoundingClientRect();
     const style = getComputedStyle(el);
+    // Content of a closed disclosure is not on screen, whatever its box says.
+    const closed = el.closest("details:not([open])");
+    if (closed && !el.closest("summary")) return false;
     return (
       box.width > 2 &&
       box.height > 2 &&

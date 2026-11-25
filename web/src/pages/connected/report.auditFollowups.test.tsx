@@ -151,18 +151,20 @@ it("C1-014 C5-005 names the Evidence page and hides its ineffective source switc
   expect(screen.queryByRole("switch")).toBeNull();
 });
 
-it("J3-017 uses History for the history tab and names the issuer in its breadcrumb", async () => {
+it("J3-017 reaches Runs from the issuer crumb, names the page Runs and the issuer in its breadcrumb", async () => {
   const { snapshot } = fixture();
   reader(snapshot, "#history");
-  await screen.findByRole("heading", { name: "Report history" });
+  await screen.findByRole("region", { name: "Runs of Acme" });
+  const sections = screen.getByRole("navigation", { name: "Report sections" });
+  expect(within(sections).queryByRole("link", { name: "History" })).toBeNull();
+  const crumbs = screen.getByRole("navigation", { name: "Breadcrumb" });
   expect(
-    within(screen.getByRole("navigation", { name: "Report sections" })).getByRole("link", {
-      name: "History",
-    }),
-  ).toHaveAttribute("href", "#history");
-  expect(screen.getByRole("navigation", { name: "Breadcrumb" })).toHaveTextContent(
-    "Library / Acme",
-  );
+    within(crumbs)
+      .getAllByRole("listitem")
+      .map((item) => item.textContent),
+  ).toEqual(["Library", "Acme", "Runs"]);
+  expect(within(crumbs).getByRole("link", { name: "Acme" })).toHaveAttribute("href", "#history");
+  expect(document.title).toBe("Runs — Acme — Credit OS");
   expect(screen.getByRole("link", { name: "Run progress" })).toHaveAttribute(
     "href",
     "/run/current",
@@ -198,13 +200,22 @@ it("T17 residual identifies an unpublished report's known issuer in its page tit
 it("C3-015 C3-027 J1-009 names and attributes the lead view and its continuation", async () => {
   const { snapshot } = fixture();
   reader(snapshot, "#overview");
-  const band = await screen.findByRole("region", { name: "Credit view" });
-  expect(band).toHaveTextContent("The credit view is stable.");
-  expect(screen.getByRole("link", { name: "Credit view from Committee decision" })).toHaveAttribute(
-    "href",
-    "#modules/CP-6",
-  );
-  expect(screen.getByText("Credit view, continued")).toBeInTheDocument();
+  const call = await screen.findByRole("region", { name: "The call" });
+  expect(
+    within(call).getByRole("heading", { level: 3, name: "The call · Committee decision" }),
+  ).toBeInTheDocument();
+  const first = within(call).getByText("The credit view is stable.");
+  expect(first).toHaveClass("lg:text-display");
+  const [rest, behind] = within(call).getAllByText("The second paragraph remains qualified.");
+  if (!rest || !behind)
+    throw new Error("the continuation is drawn twice: in full and behind Read on");
+  expect(rest).not.toHaveClass("lg:text-display");
+  expect(rest.closest("details")).toBeNull();
+  expect(behind.closest("details")).toContainElement(within(call).getByText("Read on"));
+  expect(first.compareDocumentPosition(rest) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  // The lead is attributed by the tile's heading and reached through its pipeline node.
+  const nodes = screen.getAllByRole("link", { name: /^Committee decision/ });
+  expect(nodes.map((node) => node.getAttribute("href"))).toContain("#modules/CP-6");
   expect(screen.queryByText("Decision rationale")).toBeNull();
 });
 
