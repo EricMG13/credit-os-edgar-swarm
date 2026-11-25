@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for JETBLUE AIRWAYS CORP as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/fe0fd7df9c9663657cd81e928e3e65bc761a4d8228b5d9d2fe8d539fa1d58d47/1.response.md",
+    "CP-1": "requests/CP-1/a846410d618abf52fcb74bd6d4c0d56f2dbb9ba8c3dbacb4408ec3bb96c7eebd/1.response.md",
+    "CP-1A": "requests/CP-1A/47591c9d9b0d76c212153b3556d0ccc168d36166ac897223dcf7d6a1ca3a753c/1.response.md",
+    "CP-2": "requests/CP-2/8380eb83465efb168d6ded07dee810afd03eaff623d8785bfc7d15ffbcdce8d6/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "fd5a201253dee38bc04d083109dd0ff61437e91fc580841f29db00ff4f386677",
+  "delivery_sha256": "952548d70020aea28c7801fb745d72c2b084215897381a2f0f921e9d50cdf329"
+}

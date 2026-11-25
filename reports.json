@@ -64,5 +64,38 @@
       "CP-2": 1
     },
     "notes": "The accepted CP-1 KPI table, which cannot be replaced, labels the ambulatory infusion suite counts (182 against 188) as not comparable although they are probably like-for-like, and the scratchpad was shared with other issuers' runs, so I opened another issuer's builder script by mistake and did not use it."
+  },
+  {
+    "issuer_id": "jblu",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "I answered CP-1A and CP-2 this session, and each was accepted on its first submission with an empty review. CP-0 and CP-1 were already accepted at attempt 1 in the resumed run folder, so I did not submit them here. The final launcher run exited 0 with delivery written, and the `run_issuer.py verify` check for jblu reported ok. The one defect I saw and could not fix is in CP-1A, which cannot be replaced: its contrary-evidence paragraph states the USD 3.00 per gallon fuel assumption but cites only the Q3 release and the Q3 10-Q, while the figure is on page 2 of the Q2 release."
+  },
+  {
+    "issuer_id": "hbm",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 0,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The source documents contain unfixable defects (the Q2 2026 release dates the municipal bonds as due 2 July 2036 while the statements give only an initial mandatory tender date, the same release prints the dividend payment date before its record date, third-quarter 2025 free cash flow is negative 15.2 in one release and negative 16.1 in another, and the Copper World feasibility study slipped from mid-2026 with no restated date), and the audited FY2025 statements, covenant levels and the Copper World venture agreement are absent from the sources, so these are logged as gaps rather than resolved."
+  },
+  {
+    "issuer_id": "chrd-1486159",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The filings print no EBITDA, interim cash interest, covenant ratios, ratings or legal documents, so EBITDA is derived, last-twelve-months cash-interest cover is unsupplied and covenant headroom is not established."
   }
 ]

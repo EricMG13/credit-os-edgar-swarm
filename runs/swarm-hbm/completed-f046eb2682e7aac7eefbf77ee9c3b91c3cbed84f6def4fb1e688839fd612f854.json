@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Hudbay Minerals Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/9acc2a40d2743fce8277ef82f81d61005eadab4a9a6608c6fa90dea4f1597c7d/1.response.md",
+    "CP-1": "requests/CP-1/e006eb515ebd75e1f573943ad990e5265c8d6eca265f925595f01279d9116eb3/1.response.md",
+    "CP-1A": "requests/CP-1A/773bb9eb38c31246f9fed33fd9b7a1e49424dd6c5a47f74a4e86698b3dc1693a/1.response.md",
+    "CP-2": "requests/CP-2/a5198b32673daa09d7dbdbc2320875c36ec1b6b53b4231da1e19ea8c85beb0c4/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "efab661f4385d2c6fd8ea53b8f604d463b0a8a61ef93cf116bff78b7e8da23cd",
+  "delivery_sha256": "da8f81ab25926462a00f17d0fcdeb3a151df513c1dc31bda6595fd946842693e"
+}

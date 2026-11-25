@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Hudbay Minerals Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "05b8dc807332da93c440abf6baade419ffb9f80a3b5bafafeae875efc776945b",
+    "CP-1.md": "8b4e75b021b58babb6b86edddcabc42541d771a4ec553e8bb0f83a1450ceb58f",
+    "CP-1A.md": "2eca8d520d940f34acd55238f58f1d049e08b3f3174c7ddffe36a9fb238b9f5e",
+    "CP-2.md": "8c53f64b39bed2274e7b7ad78b1b893c6b10824f687c985bbd66f299f7ed3122",
+    "coverage.json": "fac7aede8aaa525001780f69278007e865e579851134447d7db9527b02f590cf",
+    "view.json": "68385f2e0517cfdcc80d7aaa9cbc9e2604d71d36539c7512f77b1c4422f51e77",
+    "report-view.json": "2687c96e66f4520193069a7010595901f0e5b80c534ed11ee8f674063e4a2ae7"
+  }
+}
