@@ -1,7 +1,8 @@
 import { cx } from "@/utils/cx";
 import { fittingTicks, niceAxis, type AxisTick, type NiceAxis } from "./axis";
 import { GapSlot } from "./GapSlot";
-import { BAR, LINE, NARROW, SIZE, SLIM, signedText, textWidth, wrap } from "./text";
+import { group, readCell } from "../numbers";
+import { BAR, LINE, NARROW, SIZE, SLIM, gapWords, signedText, textWidth, wrap } from "./text";
 import {
   AxisNote,
   Grid,
@@ -53,6 +54,14 @@ export type WaterfallRow =
        * sign and the legend's word carry the direction; the tone is secondary.
        */
       tone?: "increase" | "decrease";
+      /**
+       * On a step: print `text` (and the prior's text) exactly as given, with thousands grouped and
+       * a true minus only where the text has one: a cash payment written "1158" prints "1,158",
+       * never "−1,158". Without it a step's figure is signed (`+70`, `−10`), except that a text
+       * that already carries a sign is always printed as written. The direction is the geometry
+       * and the Increase / Decrease word from the sign of `value`.
+       */
+      asWritten?: boolean;
     }
   | {
       kind: "gap";
@@ -159,7 +168,7 @@ function placePrior(rows: readonly WaterfallRow[]): (PriorPlaced | null)[] {
       running = null;
       return { kind: "value", total: false, from: null, to: null, text: prior.text };
     }
-    const text = signedText(prior.text, prior.value);
+    const text = stepText(row, prior.text, prior.value);
     if (running === null) return { kind: "value", total: false, from: null, to: null, text };
     const from: number = running;
     running = from + prior.value;
@@ -174,8 +183,23 @@ const priorPositions = (rows: readonly WaterfallRow[]) =>
       : [],
   );
 
+/** A figure as written: grouped, a hyphen minus made a true minus, an accounting negative kept. */
+function writtenText(text: string) {
+  const reading = readCell(text);
+  if (reading.kind !== "number") return text.trim().replace(/^-(?=\d)/, "−");
+  return reading.written ?? group(text);
+}
+
+/** True for a step printed as written: asked for, or its text already carries a sign. */
+const asWritten = (row: WaterfallRow, text: string) =>
+  (row.kind === "step" && row.asWritten === true) || /^\s*[+−-]\s?\d/.test(text);
+
+/** A step's figure (its own or its prior's): as written where `asWritten`, else signed. */
+const stepText = (row: WaterfallRow, text: string, value: number) =>
+  asWritten(row, text) ? writtenText(text) : signedText(text, value);
+
 const valueText = (row: WaterfallRow) =>
-  row.kind === "gap" ? "" : row.kind === "step" ? signedText(row.text, row.value) : row.text;
+  row.kind === "gap" ? "" : row.kind === "step" ? stepText(row, row.text, row.value) : row.text;
 
 const UNPLACED = "not placed: an earlier step is not stated";
 
@@ -198,7 +222,10 @@ export function waterfallAxis(rows: readonly WaterfallRow[], axisStart?: number 
 }
 
 function rowReading(row: WaterfallRow) {
-  if (row.kind === "gap") return `${row.label} not stated: ${row.reason}`;
+  if (row.kind === "gap") return `${row.label} not stated: ${gapWords(row.reason)}`;
+  // A sign the text does not carry is never read into it: "1158" paid reads "1,158, decrease".
+  if (row.kind === "step" && row.asWritten === true)
+    return `${row.label} ${writtenText(row.text)}${row.value > 0 ? ", increase" : row.value < 0 ? ", decrease" : ""}`;
   if (row.kind === "step")
     return row.value < 0
       ? `less ${row.label} ${signedText(row.text, row.value).slice(1)}`
@@ -292,7 +319,7 @@ function splitLines(split: readonly WaterfallSplit[], left: number, right: numbe
 /** The prior line's text: its figure where placed, its reason or "not placed" otherwise. */
 function priorLines(prior: PriorPlaced | null, width: number) {
   if (!prior) return [];
-  if (prior.kind === "gap") return wrap(prior.reason, width - 22, SIZE.tick);
+  if (prior.kind === "gap") return wrap(gapWords(prior.reason), width - 22, SIZE.tick);
   return prior.to === null ? wrap(`${prior.text} · ${UNPLACED}`, width, SIZE.tick) : [prior.text];
 }
 
@@ -325,7 +352,7 @@ function lay(
     const noteWidth = f.plotRight - f.plotLeft + (f.narrow ? 0 : 40);
     const noteLines =
       one.row.kind === "gap"
-        ? wrap(one.row.reason, noteWidth)
+        ? wrap(gapWords(one.row.reason), noteWidth)
         : one.to === null
           ? wrap(`${valueText(one.row)} · ${UNPLACED}`, noteWidth)
           : [];

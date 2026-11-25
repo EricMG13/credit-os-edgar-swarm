@@ -3,7 +3,7 @@ import type { TableViewData } from "../kit/LeadFrame";
 import { LINE, NARROW, SIZE, textWidth, wrap } from "../kit/marks";
 import { group } from "../kit/numbers";
 import { safeText } from "../kit/reader";
-import type { DebtStack, StackFacility } from "./foundationData";
+import { cellText, type DebtStack, type StackFacility } from "./foundationData";
 
 // The debt stack as a proportional column in the module's ranking order, the first claim at the
 // top: each stated amount a segment, all on one scale (the Overview's capital stack, structureData
@@ -48,7 +48,7 @@ const SHORTEST = 120;
 
 /** A facility's stated amount as the reader sees it, grouped; a gap or words as written. */
 export const amountText = (facility: StackFacility) =>
-  facility.amount.kind === "number" ? group(facility.amount.text) : safeText(facility.amount.text);
+  facility.amount.kind === "number" ? group(facility.amount.text) : cellText(facility.amount);
 
 function kindOf(facility: StackFacility): StackSegment["kind"] {
   const { amount } = facility;
@@ -62,7 +62,7 @@ export function facilityDetail(facility: StackFacility) {
   return [
     `Ranking ${String(facility.ranking)}`,
     `Secured: ${safeText(facility.secured)}`,
-    `Cumulative leverage ${safeText(facility.leverage.text)}`,
+    `Cumulative leverage ${cellText(facility.leverage)}`,
   ].join(" · ");
 }
 
@@ -189,7 +189,7 @@ export function stackTable(stack: DebtStack): TableViewData {
       String(facility.ranking),
       safeText(facility.secured),
       amountText(facility),
-      safeText(facility.leverage.text),
+      cellText(facility.leverage),
       facility.basis ?? "",
     ]),
   };

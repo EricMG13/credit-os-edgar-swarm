@@ -2,7 +2,8 @@
 // FY2024, relative value and distressed drafts; outdated evidence: shape and scope only), not
 // computed by the code under test. The Disposal, altered-step and gap cases are mutations of the
 // accepted handoff (fixtures/mutations.ts), not real handoffs. Ruling (i): no "+360" bracket, no
-// add-back total, no "largest step" note; a negative step is a decrease, never an add-back.
+// add-back total, no "largest step" note; a negative step is a decrease, never an add-back. The
+// subtotal, all-gap and source-dash bridges are the coordinator's L12 inputs (mutations).
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { containsReference, type OutputEntry } from "../../../publishedReport";
@@ -13,6 +14,15 @@ import { EbitdaBridgeTile } from "./EbitdaBridge";
 afterEach(cleanup);
 
 const BRIDGE = "Chart data: EBITDA bridge";
+const SUBTOTAL_ROWS = [
+  ["EBITDA (Reported)", "3813", "US$m", "Opening."],
+  ["Acquisition transaction and integration-related expenses", "70", "US$m", "Step."],
+  ["Stock comp", "217", "US$m", "Step."],
+  ["Refinancing", "58", "US$m", "Step."],
+  ["Subtotal before other items", "4158", "US$m", "Subtotal."],
+  ["Other, net", "15", "US$m", "Step."],
+  ["EBITDA (Adjusted)", "4173", "US$m", "Closing."],
+];
 
 function draw(entry: OutputEntry) {
   render(<EbitdaBridgeTile lead={leadProps(entry)} />);
@@ -140,7 +150,10 @@ describe("EBITDA bridge: other handoffs and mutations", () => {
       6,
     );
     expect(parts(tile, "value")).toContain("−10");
-    expect(parts(tile, "legend-text")).toEqual(["Opening", "Increase or decrease", "Closing"]);
+    // The kit names each step tone it draws: a rise and a fall are told apart by tone and word.
+    expect(parts(tile, "legend-text")).toEqual(["Opening", "Increase", "Decrease", "Closing"]);
+    expect(disposal?.getAttribute("data-tone")).toBe("decrease");
+    expect(bars[1]?.getAttribute("data-tone")).toBe("increase");
     expect(svg?.getAttribute("aria-label")).toContain("less Disposal 10");
     expect(openTable(tile)[3]).toEqual(["Disposal", "−10", "Decrease"]);
     expectNoDerived(tile);
@@ -207,9 +220,64 @@ describe("EBITDA bridge: other handoffs and mutations", () => {
   it("without the bridge table: the one gap tile with the true reason", () => {
     render(<EbitdaBridgeTile lead={leadProps(dropTable(cp1Entry(), BRIDGE))} />);
     const tile = screen.getByRole("region", { name: "EBITDA bridge" });
-    expect(tile.textContent).toBe(
-      "EBITDA bridge · This page could not read the EBITDA bridge from the handoff.",
+    expect(tile.textContent).toBe("EBITDA bridge · This page could not read the EBITDA bridge.");
+  });
+
+  it("a subtotal row is a level drawn from the axis start, and the bridge reconciles around it", () => {
+    // Coordinator input L12 (a mutation): 3,813 + 70 + 217 + 58 = 4,158, the stated subtotal;
+    // 4,158 + 15 = 4,173, the closing.
+    const entry = withRows(cp1Entry(), BRIDGE, SUBTOTAL_ROWS);
+    const { tile, bars } = draw(entry);
+    expect(
+      bars.map((bar) => [bar.getAttribute("data-bar"), num(bar, "data-from"), num(bar, "data-to")]),
+    ).toEqual([
+      ["level", 3600, 3813],
+      ["step", 3813, 3883],
+      ["step", 3883, 4100],
+      ["step", 4100, 4158],
+      ["level", 3600, 4158],
+      ["step", 4158, 4173],
+      ["closing", 3600, 4173],
+    ]);
+    // The subtotal bar starts where the opening does, and is as long as its amount on the scale.
+    expect(num(bars[4], "x")).toBeCloseTo(num(bars[0], "x"), 6);
+    const perUnit = num(bars[2], "width") / 217;
+    expect(num(bars[4], "width") / (4158 - 3600)).toBeCloseTo(perUnit, 6);
+    expect(tile.querySelector('[data-step="Subtotal before other items"]')).toBeNull();
+    expect(tile.textContent).not.toMatch(/do not add up/);
+    expect(parts(tile, "value")).toEqual(["3,813", "+70", "+217", "+58", "4,158", "+15", "4,173"]);
+    expect(parts(tile, "legend-text")).toEqual(["Opening and subtotal", "Increase", "Closing"]);
+    expect(openTable(tile)[5]).toEqual(["Subtotal before other items", "4,158", "Subtotal"]);
+    expect(tile.querySelectorAll("[data-axis-break]")).toHaveLength(3);
+  });
+
+  it("a subtotal its steps do not reach: not drawn, the gap names the stated levels", () => {
+    const entry = setCell(withRows(cp1Entry(), BRIDGE, SUBTOTAL_ROWS), BRIDGE, 4, "Amount", "4160");
+    const { tile, svg } = draw(entry);
+    expect(svg).toBeNull();
+    expect(tile.textContent).toContain(
+      "This page did not draw the bridge because its steps do not add up to the subtotal and closing figures it states.",
     );
+  });
+
+  it("an all-gap bridge is its gap tile with the module's reason, never an empty axis", () => {
+    const REASON = "Not supplied: no reconciliation in the filing read";
+    const entry = withRows(cp1Entry(), BRIDGE, [
+      ["EBITDA (Reported)", REASON, "US$m", "x"],
+      ["Add-backs", REASON, "US$m", "x"],
+      ["EBITDA (Adjusted)", REASON, "US$m", "x"],
+    ]);
+    render(<EbitdaBridgeTile lead={leadProps(entry)} />);
+    const tile = screen.getByRole("region", { name: "EBITDA bridge" });
+    expect(tile.textContent).toBe(`EBITDA bridge · ${REASON}`);
+    expect(tile.querySelector("svg")).toBeNull();
+    expect(tile.textContent).not.toMatch(/0\.0|1\.0/);
+  });
+
+  it("a source-dash gap is drawn as a dash", () => {
+    const entry = setCell(cp1Entry(), BRIDGE, 2, "Amount", "Not supplied: source dash");
+    const { tile } = draw(entry);
+    expect(parts(tile, "reason")).toEqual(["Not supplied: \u2014"]);
   });
 
   it("in another unit per row: the gap tile says so", () => {
@@ -219,7 +287,7 @@ describe("EBITDA bridge: other handoffs and mutations", () => {
       />,
     );
     expect(screen.getByRole("region", { name: "EBITDA bridge" }).textContent).toContain(
-      "This page could not read the EBITDA bridge in one unit from the handoff.",
+      "This page could not read the EBITDA bridge in one unit.",
     );
   });
 });

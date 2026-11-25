@@ -27,8 +27,10 @@ export function readCell(cell: string): Reading {
   if (gap !== undefined) return { kind: "gap", text: cell.trim(), reason: gap };
   const bracketed = BRACKETED.exec(text)?.[1];
   if (bracketed !== undefined && PLAIN.test(bracketed)) {
-    const plain = `-${bracketed.replaceAll(",", "")}`;
-    return { kind: "number", text: plain, value: Number(plain), written: cell.trim() };
+    const bare = bracketed.replaceAll(",", "");
+    // "(0)" is zero, not a negative zero.
+    const plain = Number(bare) === 0 ? bare : `-${bare}`;
+    return { kind: "number", text: plain, value: Number(plain) + 0, written: cell.trim() };
   }
   if (PLAIN.test(text))
     return {

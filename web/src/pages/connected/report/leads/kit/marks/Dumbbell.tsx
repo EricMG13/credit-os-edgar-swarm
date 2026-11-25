@@ -3,7 +3,7 @@ import type { MarkTone } from "../../../overview/marks";
 import { fittingTicks, niceAxis, type NiceAxis } from "./axis";
 import { GapSlot } from "./GapSlot";
 import { AxisNote, Grid, SvgLegend, TickLabels, legendHeight, type LegendItem } from "./parts";
-import { LINE, NARROW, SIZE, textWidth, wrap } from "./text";
+import { LINE, NARROW, SIZE, gapWords, textWidth, wrap } from "./text";
 
 /** One side of a pair: a stated figure, or the module's reason it is not stated. */
 export type DumbbellSide = { value: number; text: string } | { gap: string };
@@ -39,6 +39,11 @@ export type DumbbellProps = {
   label?: string;
   /** Draw the legend (prior ring, current dot, the gap swatch where a side is not stated). */
   legend?: boolean;
+  /**
+   * A group caption above the plot (what this group of rows is and the scale it is on), for a
+   * lead that draws several dumbbells as small multiples, each on its own scale.
+   */
+  caption?: string;
 };
 
 const known = (side: DumbbellSide): side is { value: number; text: string } => !("gap" in side);
@@ -121,7 +126,7 @@ function frame(rows: readonly DumbbellRow[], axis: NiceAxis, width: number): Fra
   const wanted = Math.max(0, ...changes) + 16;
   const changeWidth = narrow
     ? width
-    : Math.min(Math.max(wanted, gaps ? 170 : 0), Math.round(width * 0.3));
+    : Math.min(Math.max(wanted, gaps ? 170 : 0), Math.round(width * 0.22));
   const labelWidth = narrow ? width : Math.min(longest + 16, Math.round(width * 0.28));
   const plotLeft = narrow ? 0 : labelWidth;
   const plotRight = narrow ? width : width - changeWidth;
@@ -155,8 +160,8 @@ type Laid = {
 
 function reasons(row: DumbbellRow, periods: DumbbellProps["periods"]) {
   return [
-    known(row.prior) ? null : `${periods.prior}: ${row.prior.gap}`,
-    known(row.current) ? null : `${periods.current}: ${row.current.gap}`,
+    known(row.prior) ? null : `${periods.prior}: ${gapWords(row.prior.gap)}`,
+    known(row.current) ? null : `${periods.current}: ${gapWords(row.current.gap)}`,
   ].filter((text): text is string => text !== null);
 }
 
@@ -263,16 +268,18 @@ function Pair({ one, f, reason }: { one: Laid; f: Frame; reason: string }) {
   const points = [prior, current].filter(known).map((side) => f.x(side.value));
   const [low, high] = [Math.min(...points), Math.max(...points)];
   const reach = flat ? 14 : 12;
-  // Two figures closer than a mark's width: the ring is drawn hollow over the dot, so both show.
+  // Two figures closer than a mark's diameter: the ring is drawn above the row line and the dot
+  // below it, so both are seen.
   const close = both && !flat && high - low < 12;
   const ring = known(prior) ? (
     <circle
       data-prior={prior.value}
+      {...(close ? { "data-offset": "above" } : {})}
       cx={f.x(prior.value)}
-      cy={cy}
+      cy={close ? cy - 5 : cy}
       r={flat ? 8 : 5}
       strokeWidth="2"
-      className={cx(close ? "fill-none" : "fill-surface-card", "stroke-chart-3")}
+      className="fill-surface-card stroke-chart-3"
     />
   ) : null;
   return (
@@ -286,16 +293,17 @@ function Pair({ one, f, reason }: { one: Laid; f: Frame; reason: string }) {
           reason={reason}
         />
       )}
-      {both && !flat && (
+      {both && !flat && !close && (
         <line x1={low} x2={high} y1={cy} y2={cy} strokeWidth="2" className="stroke-chart-3" />
       )}
-      {known(prior) && !close && ring}
+      {known(prior) && ring}
       {known(current) && (
         <circle
           data-current={current.value}
           {...(row.series ? { "data-series": row.series } : {})}
+          {...(close ? { "data-offset": "below" } : {})}
           cx={f.x(current.value)}
-          cy={cy}
+          cy={close ? cy + 5 : cy}
           r={flat ? 4 : 6}
           className={
             row.tone === "worse"
@@ -306,7 +314,6 @@ function Pair({ one, f, reason }: { one: Laid; f: Frame; reason: string }) {
           }
         />
       )}
-      {known(prior) && close && ring}
       <Figure spot={left} x={low - reach} anchor="end" cy={cy} />
       <Figure spot={right} x={high + reach} anchor="start" cy={cy} />
     </g>
@@ -391,6 +398,7 @@ export function Dumbbell({
   axisStart,
   label,
   legend = true,
+  caption,
 }: DumbbellProps) {
   const rows = finite(given);
   const axis = dumbbellAxis(rows, axisStart);
@@ -407,9 +415,11 @@ export function Dumbbell({
           : []),
       ]
     : [];
-  const legendBlock = legendHeight(items, width);
-  const laid = lay(rows, f, periods, legendBlock + (legendBlock ? 10 : 2));
-  const plotTop = legendBlock + 2;
+  const captionLines = caption ? wrap(caption, width) : [];
+  const head = legendHeight(items, width) + captionLines.length * LINE;
+  const captionY = legendHeight(items, width) + 12;
+  const laid = lay(rows, f, periods, head + (head ? 10 : 2));
+  const plotTop = head + 2;
   const plotBottom = (laid.at(-1)?.top ?? plotTop) + (laid.at(-1)?.height ?? 0) - GAP + 4;
   const [inLeft, inRight] = [f.x(axis.start), f.x(axis.end)];
   const kept = fittingTicks(axis, inLeft, inRight, (text) => textWidth(text, SIZE.tick));
@@ -427,6 +437,21 @@ export function Dumbbell({
       className="block"
     >
       <SvgLegend items={items} width={width} />
+      {captionLines.length > 0 && (
+        <text
+          data-part="caption"
+          x="0"
+          y={captionY}
+          fontSize={SIZE.label}
+          className="fill-text-secondary font-body font-medium"
+        >
+          {captionLines.map((line, at) => (
+            <tspan key={`${String(at)}-${line}`} x="0" y={captionY + at * LINE}>
+              {line}
+            </tspan>
+          ))}
+        </text>
+      )}
       <Grid
         ticks={kept}
         x={f.x}

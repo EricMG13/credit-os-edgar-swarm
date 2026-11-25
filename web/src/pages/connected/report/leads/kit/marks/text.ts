@@ -44,3 +44,12 @@ export function signedText(text: string, value: number) {
 
 /** A colon-free id for SVG `url(#…)` references, from React's `useId`. */
 export const svgId = (id: string, part: string) => `${id.replace(/[^\w-]/g, "")}-${part}`;
+
+/**
+ * A gap's words as a mark draws them: "—" for a cell the source left as a dash (the reason, or
+ * the stated-gap reason, is exactly "source dash"); any other text as given.
+ */
+export const gapWords = (text: string) =>
+  /^(?:Not (?:supplied|calculable|calculated|applicable):\s*)?source dash$/i.test(text.trim())
+    ? "—"
+    : text;

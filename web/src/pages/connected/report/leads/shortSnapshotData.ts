@@ -1,7 +1,8 @@
 import type { OutputEntry } from "../../publishedReport";
-import { safeText } from "./kit/reader";
-import { difference, group, readCell, signOf } from "./kit/numbers";
-import { allTables, tableWith } from "./kit/tables";
+import { changeBetween, periodKey, yearApart } from "./kit/changes";
+import { group, readCell } from "./kit/numbers";
+import { reasonText, safeText } from "./kit/reader";
+import { allTables, periodLabel, tableWith } from "./kit/tables";
 import { tone } from "../../signal";
 
 /*
@@ -14,7 +15,6 @@ import { tone } from "../../signal";
  */
 
 const KEY_FIGURE_HEADERS = ["Measure", "Value", "Period", "Source"] as const;
-export const MOST_FIGURES = 6;
 
 export type Figure =
   | { kind: "value"; text: string; period: string }
@@ -26,7 +26,10 @@ export type KeyFigure = {
   current: Figure;
   /** The same measure in an earlier period, when the table states both. */
   prior: Figure | null;
-  /** Exact `current - prior`, derived, when both are plain numbers with the same unit text. */
+  /**
+   * The one change the page may print: the exact prior to current difference of one measure, when
+   * both periods are of one kind exactly a year apart and the unit text is the same.
+   */
   change: {
     text: string;
     /** The size of the change with the figures' own unit text, no sign: "0.40x". */
@@ -69,31 +72,40 @@ function figureOf(value: string, period: string): Figure {
     return {
       kind: "gap",
       text: safeText(value),
-      reason: safeText(reading.reason),
+      reason: reasonText(reading.reason),
       period: when,
     };
   return { kind: "value", text: safeText(value), period: when };
 }
 
-const yearOf = (period: string) => /(\d{4})(?!.*\d{4})/.exec(period)?.[1];
+type Row = { fig: Figure; line: number };
 
-function pair(measure: string, a: { fig: Figure; line: number }, b: { fig: Figure; line: number }) {
-  const years = [yearOf(a.fig.period), yearOf(b.fig.period)];
-  if (!years[0] || !years[1] || years[0] === years[1]) return null;
-  const [prior, current] = years[0] < years[1] ? [a, b] : [b, a];
+/** Two rows of one measure as prior and current, only when their periods are a year apart. */
+function pair(measure: string, a: Row, b: Row) {
+  if (!yearApart(a.fig.period, b.fig.period)) return null;
+  const [first, second] = [periodKey(a.fig.period), periodKey(b.fig.period)];
+  if (!first || !second) return null;
+  const [prior, current] = first.year < second.year ? [a, b] : [b, a];
   const p = prior.fig.kind === "value" ? split(prior.fig.text) : null;
   const c = current.fig.kind === "value" ? split(current.fig.text) : null;
   let change: KeyFigure["change"] = null;
   let marks: KeyFigure["marks"] = null;
   if (p && c) {
     marks = { prior: Number(p.number), current: Number(c.number) };
-    const exact =
-      p.prefix === c.prefix && p.suffix === c.suffix ? difference(c.number, p.number) : null;
-    const sign = signOf(exact);
-    if (exact !== null && (sign === 1 || sign === 0 || sign === -1)) {
-      const key = TONE_KEYS[norm(measure)];
-      const size = `${c.prefix}${c.prefix ? " " : ""}${group(exact.replace(/^-/, ""))}${c.suffix}`;
-      change = { text: exact, size, sign, tone: key ? tone(key, exact) : "none" };
+    const unit = (part: NonNullable<typeof p>) => `${part.prefix}|${part.suffix}`;
+    const made = changeBetween(
+      { period: prior.fig.period, cell: p.number, unit: unit(p) },
+      { period: current.fig.period, cell: c.number, unit: unit(c) },
+    );
+    const key = TONE_KEYS[norm(measure)];
+    if (made && made.sign !== null) {
+      const size = `${c.prefix}${c.prefix ? " " : ""}${group(made.text.replace(/^-/, ""))}${c.suffix}`;
+      change = {
+        text: made.text,
+        size,
+        sign: made.sign,
+        tone: key ? tone(key, made.text) : "none",
+      };
     }
   }
   return {
@@ -115,43 +127,41 @@ export function readKeyFigures(entry: OutputEntry): KeyFigures {
     KEY_FIGURE_HEADERS.every((name) => table.headers.includes(name)),
   );
   if (found.length === 0)
-    return { state: "gap", reason: "This page could not read the key figures from the handoff." };
+    return { state: "gap", reason: "This page could not read the key figures." };
   if (found.length > 1)
     return {
       state: "gap",
-      reason:
-        "This page could not read the key figures from the handoff because they appear more than once.",
+      reason: "This page could not read the key figures: they appear more than once.",
     };
   const [only] = found;
   const table = only?.table;
   if (!table?.rows.length)
     return {
       state: "gap",
-      reason: "This page could not read a row of the key figures from the handoff.",
+      reason: "This page could not read a row of the key figures.",
     };
   const at = (name: string) => table.headers.indexOf(name);
   const rows = table.rows.map((row) => ({
     measure: safeText(row.cells[at("Measure")] ?? ""),
-    fig: figureOf(row.cells[at("Value")] ?? "", row.cells[at("Period")] ?? ""),
+    fig: figureOf(row.cells[at("Value")] ?? "", periodLabel(row.cells[at("Period")] ?? "")),
     line: row.line,
   }));
   const used = new Set<number>();
   const figures: KeyFigure[] = [];
   rows.forEach((row, index) => {
     if (used.has(index)) return;
-    const same = rows
-      .map((other, otherIndex) => ({ other, otherIndex }))
-      .filter(
-        ({ other, otherIndex }) =>
-          otherIndex !== index && norm(other.measure) === norm(row.measure),
-      );
-    const [match] = same;
-    const joined =
-      same.length === 1 && match && !used.has(match.otherIndex)
-        ? pair(row.measure, row, match.other)
-        : null;
-    if (joined && match) {
-      used.add(match.otherIndex);
+    // The first later row of the same measure in the period a year apart; any other period is its own figure.
+    const matchAt = rows.findIndex(
+      (other, otherIndex) =>
+        otherIndex > index &&
+        !used.has(otherIndex) &&
+        norm(other.measure) === norm(row.measure) &&
+        yearApart(row.fig.period, other.fig.period),
+    );
+    const other = matchAt >= 0 ? rows[matchAt] : undefined;
+    const joined = other ? pair(row.measure, row, other) : null;
+    if (joined) {
+      used.add(matchAt);
       figures.push(joined);
     } else
       figures.push({
@@ -194,7 +204,7 @@ export function readChangeScreen(entry: OutputEntry): ChangeScreen {
     return {
       state: "gap",
       reason:
-        "This page could not read the change screen from the handoff because the table is not in a shape this page reads.",
+        "This page could not read the change screen: its table is not in a shape this page reads.",
     };
   const at = (name: string) => table.headers.indexOf(name);
   const textAt = TEXT_HEADERS.map(at).find((index) => index >= 0) ?? -1;
@@ -214,7 +224,7 @@ export function readChangeScreen(entry: OutputEntry): ChangeScreen {
   if (!items.length)
     return {
       state: "gap",
-      reason: "This page could not read a row of the change screen from the handoff.",
+      reason: "This page could not read a row of the change screen.",
     };
   return { state: "ready", line: table.line, items };
 }

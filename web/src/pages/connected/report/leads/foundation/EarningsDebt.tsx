@@ -1,10 +1,12 @@
 import { cx } from "@/utils/cx";
+import { tone } from "../../../signal";
 import { MiniSlope, Slope } from "../../overview/marks";
 import { Figure, GapNote } from "../../overview/Tile";
 import { FigureTile, GapTile } from "../kit/LeadFrame";
-import { Dumbbell, GapSlot, LINE, SIZE, useFigureWidth } from "../kit/marks";
+import { Dumbbell, GapSlot, LINE, SIZE, useFigureWidth, type LegendEntry } from "../kit/marks";
 import { Grid, TickLabels } from "../kit/marks/parts";
 import type { LeadProps } from "../types";
+import { periodsCaption } from "./periodsData";
 import {
   barLayout,
   changeText,
@@ -12,6 +14,7 @@ import {
   dumbbellRows,
   earningsReading,
   earningsTable,
+  leverageChange,
   leverageGaps,
   leverageMarks,
   leverageReading,
@@ -299,14 +302,24 @@ function Money({ data }: { data: EarningsAgainstDebt }) {
 }
 
 /** Leverage: the overview Slope on its own scale with the stated values, or figures and a MiniSlope. */
-function Leverage({ leverage, basis }: { leverage: LeverageSeries; basis: string | null }) {
+function Leverage({
+  leverage,
+  basis,
+  comparison,
+}: {
+  leverage: LeverageSeries;
+  basis: string | null;
+  comparison: EarningsAgainstDebt["comparison"];
+}) {
   const [ref, width] = useFigureWidth(408);
   const marks = leverageMarks(leverage);
-  const word = leverageWord(leverage);
+  const moved = leverageChange(leverage, comparison);
+  const word = leverageWord(moved);
+  const slopeTone = moved === null ? "none" : tone("leverage", moved);
   const gaps = leverageGaps(leverage);
   // One stated figure is written, not drawn: a slope needs two.
   const drawn = marks.length > 1 && contiguous(leverage.values);
-  const reading = leverageReading(leverage);
+  const reading = leverageReading(leverage, comparison);
   return (
     <div ref={ref} data-leverage className="flex w-full min-w-0 flex-col gap-2">
       <p className="text-caption font-medium text-text-primary">
@@ -314,7 +327,7 @@ function Leverage({ leverage, basis }: { leverage: LeverageSeries; basis: string
         <span className="font-normal text-text-tertiary"> · own scale</span>
       </p>
       {drawn && width >= SLOPE_WIDTH && (
-        <Slope marks={marks} tone={leverage.tone} suffix="x" label={reading} />
+        <Slope marks={marks} tone={slopeTone} suffix="x" label={reading} />
       )}
       {(!drawn || width < SLOPE_WIDTH) && (
         <div className="flex flex-col gap-2">
@@ -328,14 +341,14 @@ function Leverage({ leverage, basis }: { leverage: LeverageSeries; basis: string
           </ul>
           {drawn && marks.length > 1 && (
             <div className="max-w-60">
-              <MiniSlope marks={marks} tone={leverage.tone} label={reading} />
+              <MiniSlope marks={marks} tone={slopeTone} label={reading} />
             </div>
           )}
         </div>
       )}
-      {leverage.change !== null && (
+      {moved !== null && (
         <p data-change className="text-small text-text-secondary">
-          <Figure className="font-medium">{`${changeText(leverage.change)}x`}</Figure>
+          <Figure className="font-medium">{`${changeText(moved)}x`}</Figure>
           {word && (
             <span
               data-tone={word}
@@ -363,28 +376,42 @@ function Leverage({ leverage, basis }: { leverage: LeverageSeries; basis: string
   );
 }
 
-function legendOf(data: EarningsAgainstDebt) {
+function legendOf(data: EarningsAgainstDebt): LegendEntry[] {
   const labels = data.periods.map((period) => period.label);
   const debt = data.measures.some((measure) => measure.key === "grossDebt");
   const earnings = data.measures.some((measure) => measure.key !== "grossDebt");
+  const compared = data.comparison && labels.length === 2 ? data.comparison : null;
   const latest = data.comparison?.to ?? labels[0] ?? "";
-  const series =
-    labels.length > 2 || (labels.length === 2 && !data.comparison)
-      ? { earnings: "Earnings", debt: "Gross debt" }
-      : { earnings: `${latest} earnings`, debt: `${latest} gross debt` };
+  // One period is bars; two compared periods a ring to a dot; any other set a line per measure.
+  const kind = labels.length === 1 ? "bar" : compared ? "dot" : "line";
+  const named = labels.length === 1 || compared;
   const gap = data.measures.some((measure) =>
     measure.values.some((value) => value.cell?.kind !== "number"),
   );
+  const worse =
+    data.leverage && leverageWord(leverageChange(data.leverage, data.comparison)) === "worse";
   return [
-    ...(data.comparison && labels.length === 2
-      ? [{ tone: "prior" as const, text: data.comparison.from }]
+    ...(compared ? [{ kind: "ring" as const, tone: "prior" as const, text: compared.from }] : []),
+    ...(earnings
+      ? [
+          {
+            kind,
+            tone: "primary" as const,
+            text: named ? `${latest} earnings` : "Earnings",
+          },
+        ]
       : []),
-    ...(earnings ? [{ tone: "primary" as const, text: series.earnings }] : []),
-    ...(debt ? [{ tone: "secondary" as const, text: series.debt }] : []),
-    ...(data.leverage?.tone === "worse"
-      ? [{ tone: "signal" as const, text: "Leverage, worse" }]
+    ...(debt
+      ? [
+          {
+            kind,
+            tone: "secondary" as const,
+            text: named ? `${latest} gross debt` : "Gross debt",
+          },
+        ]
       : []),
-    ...(gap ? [{ tone: "gap" as const, text: "Not stated" }] : []),
+    ...(worse ? [{ kind: "line" as const, tone: "worse" as const, text: "Leverage, worse" }] : []),
+    ...(gap ? [{ kind: "hatch" as const, text: "Not stated" }] : []),
   ];
 }
 
@@ -412,12 +439,17 @@ export function EarningsDebtTile({ lead }: { lead: LeadProps }) {
       line={data.tableLine}
       source="the earnings and debt figures"
       legend={legendOf(data)}
+      caption={periodsCaption(lead.entry)}
       table={earningsTable(data)}
     >
       <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_408px]">
         {data.measures.length ? <Money data={data} /> : <GapNote>{absentText(data)}</GapNote>}
         {data.leverage ? (
-          <Leverage leverage={data.leverage} basis={data.leverageBasis} />
+          <Leverage
+            leverage={data.leverage}
+            basis={data.leverageBasis}
+            comparison={data.comparison}
+          />
         ) : (
           <p className="text-caption text-gap-text">
             This page could not read total debt / EBITDA.

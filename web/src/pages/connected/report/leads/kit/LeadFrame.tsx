@@ -7,6 +7,7 @@ import { moduleSource } from "../../overview/figureData";
 import { FigureNotes, FigureSourceControl, Key } from "../../overview/figureParts";
 import { Bento, GapNote, Tile } from "../../overview/Tile";
 import type { LeadProps } from "../types";
+import { Legend, type LegendEntry } from "./marks/Legend";
 import { useOverflows } from "./useWidth";
 
 /**
@@ -231,7 +232,11 @@ export function FigureTile({
   title: string;
   line?: number;
   source: string;
-  legend?: { tone: KeyTone; text: string }[];
+  /**
+   * The figure's legend: the one kit `Legend` entries (`{ kind: "ring" | "dot" | …, tone, text }`,
+   * each its real mark shape), or the earlier square keys (`{ tone, text }`).
+   */
+  legend?: readonly ({ tone: KeyTone; text: string } | LegendEntry)[];
   notes?: readonly string[];
   table?: TableViewData;
   /** A short line in the tile head under the kicker (which periods are drawn, a basis). */
@@ -270,11 +275,16 @@ export function FigureTile({
     >
       {legend.length > 0 && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          {legend.map((item) => (
-            <Key key={item.text} tone={item.tone}>
-              {item.text}
-            </Key>
-          ))}
+          {legend.flatMap((item) =>
+            "kind" in item
+              ? []
+              : [
+                  <Key key={item.text} tone={item.tone}>
+                    {item.text}
+                  </Key>,
+                ],
+          )}
+          <Legend items={legend.filter((item): item is LegendEntry => "kind" in item)} />
         </div>
       )}
       {children}

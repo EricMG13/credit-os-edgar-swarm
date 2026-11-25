@@ -950,7 +950,13 @@ describe("interestCover: EBITDA / cash interest for every stated period", () => 
       "Coverage is historical and uses net cash interest paid rather than a forward coupon run rate.",
     ]);
     expect(cover?.tableLine).toBe(329);
-    expect(cover && "change" in cover).toBe(false);
+    // The one change, by the kit rule (FY2023 → FY2024, a year apart): 3.29 − 2.71 = 0.58.
+    expect([cover?.change?.text, cover?.change?.stated, cover?.tone]).toEqual([
+      "0.58",
+      false,
+      "better",
+    ]);
+    expect(cover?.ordered).toBe(true);
   });
   it("reads the one period of the relative value handoff; a calculation id is left out", () => {
     const cover = interestCover(relative);
@@ -982,6 +988,8 @@ describe("interestCover: EBITDA / cash interest for every stated period", () => 
       ["FY2023", "gap: cash interest not split"],
       ["FY2024", "3.29"],
     ]);
+    // FY2023 is a gap: no change to the latest period, no better/worse.
+    expect([interestCover(entry)?.change, interestCover(entry)?.tone]).toEqual([null, "none"]);
   });
   it("reads a negative ratio and words as written, never as a gap", () => {
     const entry = setCell(setCell(accepted, COVER, 0, RATIO, "-0.4"), COVER, 1, RATIO, "n.m.");
@@ -1011,6 +1019,22 @@ describe("interestCover: EBITDA / cash interest for every stated period", () => 
     );
     expect(figureGap(withRows(accepted, COVER, []), "cover")).toBe(
       "This page could not read the periods of interest cover because it has no rows.",
+    );
+  });
+  it("a cover or bridge with no stated number is its words as written, never an empty axis", () => {
+    const words = withRows(accepted, COVER, [
+      ["FY2023", "n.m.", "x", "-"],
+      ["FY2024", "n.m.", "x", "-"],
+    ]);
+    expect(interestCover(words)).toBeNull();
+    expect(figureGap(words, "cover")).toBe("n.m.");
+    const bridge = withRows(accepted, BRIDGE, [
+      ["EBITDA (Reported)", "n.m.", "US$m", "x"],
+      ["Add-backs", "Not supplied: not itemised", "US$m", "x"],
+      ["EBITDA (Adjusted)", "n.m.", "US$m", "x"],
+    ]);
+    expect(figureGap(bridge, "bridge")).toBe(
+      "EBITDA (Reported): n.m.; Add-backs: Not supplied: not itemised; EBITDA (Adjusted): n.m.",
     );
   });
   it("an all-gap cover is the module's own reason, not a drawing", () => {

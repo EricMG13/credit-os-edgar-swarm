@@ -226,16 +226,13 @@ describe("Waterfall", () => {
       "Free cash flow",
       "After distributions",
     ]);
-    expect(container.querySelector('[data-part="reason"]')?.textContent).toBe(
-      "Not supplied: source dash",
-    );
+    // A cell the source left as a dash is drawn as the dash; the reason stays on data-gap.
+    expect(container.querySelector('[data-part="reason"]')?.textContent).toBe("—");
     // The step after the gap has no known start: written, not placed.
     expect(container.querySelector('[data-part="unplaced"]')?.textContent).toBe(
       "−2,038 · not placed: an earlier step is not stated",
     );
-    expect(svgOf(container).getAttribute("aria-label")).toContain(
-      "Repurchases not stated: Not supplied: source dash",
-    );
+    expect(svgOf(container).getAttribute("aria-label")).toContain("Repurchases not stated: —");
   });
 
   it("keeps a stated zero as a value: a bar and its figure, not a gap", () => {

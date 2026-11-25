@@ -1,5 +1,5 @@
 /**
- * The lead marks: one waterfall, one dumbbell, one bullet, one axis, one gap slot. Code against
+ * The lead marks: one waterfall, one dumbbell, one bullet, one axis, one gap slot, one legend. Code against
  * this file; no lead keeps a private waterfall, dumbbell, bullet, `niceStep` or `GapSlot`. Import
  * the Overview marks (`../../overview/marks`: Slope, DotStrip, MiniSlope, Ruler, DeltaBar,
  * SplitBar, GapBar) where one fits; they are not redrawn here.
@@ -27,8 +27,13 @@
  *   <Waterfall rows unit width axisStart?: number | "auto" label? legend?: { level?, step?,
  *     closing?, gap? } />
  *   Levels and the closing are drawn from the axis start (level teal, closing navy); a step
- *   floats from the running total (navy outline), its figure signed (`+70`, `−10`), a fall drawn
- *   leftward. A gap row is the hatched slot with its reason; a step after a gap has no known
+ *   floats from the running total, its tone from its sign (`tone?: "increase" | "decrease"`:
+ *   increase a teal outline on a teal tint, decrease the signal outline on its tint; the legend
+ *   names them "Increase" and "Decrease" whenever a legend is given, `legend.step` is not drawn),
+ *   its figure signed (`+70`, `−10`), a fall drawn leftward. `asWritten: true` on a step prints its
+ *   text (and its prior's) exactly as given, grouped, a minus only where written ("1158" paid →
+ *   "1,158", never "−1,158"), and reads it "Cash Interest Paid 1,158, decrease"; a text that
+ *   already carries a sign is always printed as written. Bars are `BAR` (16) tall, priors `SLIM`. A gap row is the hatched slot with its reason; a step after a gap has no known
  *   start until the next level and is written, not placed. `axisStart` omitted: from zero;
  *   "auto": cut where the values sit high (CP-1's rule); a number: start there. A cut axis has
  *   the break glyph on every total and the line "Axis starts at …, marked on the total bars."
@@ -72,7 +77,11 @@
  *     note?: string; tone?: MarkTone };
  *   <Dumbbell rows width periods={{ prior, current }} unit axisStart? label? legend? />
  *   Prior ring → current dot on one shared scale from zero (or a cut axis, stated under it);
- *   each figure written outward, away from the other mark; `change` and `note` (direction and
+ *   each figure written outward, away from the other mark; a ring and dot closer than their
+ *   diameter are drawn offset (ring above the row line, dot below: `data-offset`). The label
+ *   column takes at most 28 % and the change slot at most 22 %, so the plot has half the width.
+ *   `caption?: string` prints a group caption above the plot: rows of very different size are
+ *   drawn as small multiples, one Dumbbell per group, each on its own scale with its caption; `change` and `note` (direction and
  *   the better/worse word from signal.ts `tone()`) in the row's change slot; `tone: "worse"`
  *   draws the dot in the signal colour (the word must be in `note`). A side the module did not
  *   state: a hatched strip under the row and "{period}: {reason}" in the change slot.
@@ -91,20 +100,40 @@
  *
  * ── Bullet ────────────────────────────────────────────────────────────────────────────────
  *   <Bullet name value: BulletSide limit: { value, text } proposed?: BulletSide width
- *     limitKind?: "max" | "min" beyond?: string names?: { value?, limit?, proposed? } unit?
- *     label? />
- *   The value as a bar against the limit (a rule, "Limit 12.0" above it) and the proposed as a
- *   ring, on one scale from zero. A figure beyond the limit gets the word (default "above the
- *   limit" / "below the limit") written under the bar, and the part beyond in the signal colour.
+ *     status?: string names?: { value?, limit?, proposed? } plotLeft?: number labelWidth?: number
+ *     legend?: boolean unit? label? />
+ *   Current as a bar, proposed as a ring, the limit as a rule ("Limit 12.0" above it), all on one
+ *   scale from zero, with their figures as stated in ONE line under the scale ("Current 9.5%
+ *   Proposed 12.6%"), the same on every row, never inside a bar. The mark judges nothing: no
+ *   "above/below the limit", no signal colour; `status` prints the row's own status or
+ *   compliance cell as written (through `safeText`), nothing without one. A missing side prints
+ *   once, "Proposed: no proposal" (a stated gap's reason, not "Not supplied: …" twice). The track
+ *   runs to the figure's edge at every width. `plotLeft` (or `labelWidth`) starts every bullet of
+ *   one figure at one x. `limitKind` and `beyond` are removed (round 3, L3).
  *
  *     <Bullet
  *       width={width}
  *       name="Single-name exposure"
  *       unit="%"
+ *       plotLeft={240}
  *       value={{ value: 9.5, text: "9.5%" }}
  *       proposed={{ value: 12.6, text: "12.6%" }}
  *       limit={{ value: 12, text: "12.0%" }}
+ *       status={row.compliance}
  *     />
+ *
+ * ── Legend ────────────────────────────────────────────────────────────────────────────────
+ *   type LegendEntry = { kind: "ring" | "dot" | "line" | "bar" | "slim" | "square" | "hatch";
+ *     tone?: "primary" | "secondary" | "prior" | "worse" | "increase" | "decrease" | "neutral";
+ *     text: string; dashed?: boolean };
+ *   <Legend items className? />   the ONE legend (HTML, 12 px, wrapping): each entry drawn as its
+ *   real mark (ring a hollow circle, dot a filled one, line a short stroke, bar/slim/square a
+ *   swatch, hatch the gap texture). FigureTile's `legend` takes these entries too; pass them
+ *   instead of square keys for rings, dots and lines. Inside an SVG the marks draw the same
+ *   swatches (`MarkSwatch`, parts.tsx `SvgLegend`).
+ *
+ *     legend={[{ kind: "ring", tone: "prior", text: "FY2023" }, { kind: "dot", text: "FY2024" },
+ *       { kind: "ring", tone: "secondary", text: "Proposed exposure" }]}
  *
  * ── Axis and gap ──────────────────────────────────────────────────────────────────────────
  *   niceAxis(values, { zero: boolean; start?: number; suffix?: string }): NiceAxis
@@ -114,21 +143,42 @@
  *     const axis = niceAxis([3813, 4173], { zero: false });   // 3,600 … 4,200, cut
  *     const x = (v: number) => axis.place(v, 180, 440);
  *   fittingTicks(axis, from, to, measure): the ticks whose labels fit side by side.
- *   <GapSlot x y width height reason? />   the hatched not-known slot inside any SVG.
- *     <GapSlot x={0} y={10} width={120} height={14} reason="Not supplied: no segment schedule" />
+ *   <GapSlot x y width height reason? text? />   the ONE hatched not-known slot inside any SVG;
+ *   with `text` the words sit on a solid chip (card fill, 12 px, padded) inside the hatch, never
+ *   on the texture; `gapSlotHeight(width, height, text)` is the height it then takes.
+ *     <GapSlot x={0} y={10} width={120} height={BAR} reason="Not supplied: no segment schedule"
+ *       text={reasonText("no segment schedule")} />
+ *   <GapChip reason />   the same style in HTML (a list, a stat): hatch, solid chip, reason.
+ *   BAR (16) and SLIM (5): the only two bar heights. A gap whose reason is "source dash" is
+ *   drawn "—" by every mark.
  *   NARROW, SIZE, textWidth(text, size), wrap(text, width, size), signedText(text, value).
  *
  * ── Tile parts (../LeadFrame) ─────────────────────────────────────────────────────────────
  *   FigureTile: the Table view button sits in the tile head beside the trace control
- *   (aria-expanded/aria-controls; the panel with the real <table> opens under the figure).
+ *   (aria-expanded/aria-controls; the panel with the real <table> opens under the figure);
+ *   `caption?: ReactNode` is a small line in the head under the kicker.
  *   TableView: the same button and panel, standalone. Link: `<Link href="#forecast">Open the
  *   forecast</Link>` at 32 px (44 px at 480 px and below).
+ *   UnreadFigures (../UnreadFigures): `<UnreadFigures lead={props} drawn={["Leverage", …]} />`
+ *   one tile per `Chart data:` section the lead does not draw, its rows as stated;
+ *   `chartTitles(entry)` lists the titles the store publishes.
+ *
+ * ── Kit data (../changes, ../tables, ../numbers, ../reader) ──────────────────────────────
+ *   changeBetween({ period, cell, unit? }, { period, cell, unit? }, stated?): Change | null — the
+ *   one change a page prints: the stated change as written, else the exact difference only for
+ *   one kind of period exactly a year apart on one unit. periodKey(label), yearApart(a, b).
+ *   orderByPeriod / periodRows / statementColumns: time order inside a year (Q1 < Q2, H1 < H2,
+ *   LTM by end month), two-digit years; `isUnordered(read)` → draw `read.stated` in handoff order
+ *   with no connecting line and `UNORDERED_SENTENCE`; comparisonOf(read) is then null.
+ *   readCell: "(12.3)" is −12.3 (`written` keeps the brackets); "n.m." stays words.
+ *   safeText strips `[E3]`-style markers; reasonText(reason): "—" for "source dash".
  */
 export { fittingTicks, niceAxis, type NiceAxis } from "./axis";
 export { Bullet, type BulletSide } from "./Bullet";
 export { Dumbbell, type DumbbellRow, type DumbbellSide } from "./Dumbbell";
-export { GapSlot, Measured } from "./GapSlot";
-export { LINE, NARROW, SIZE, signedText, textWidth, wrap } from "./text";
+export { GapChip, GapSlot, Measured, gapSlotHeight } from "./GapSlot";
+export { Legend, type LegendEntry } from "./Legend";
+export { BAR, LINE, NARROW, SIZE, SLIM, signedText, textWidth, wrap } from "./text";
 export {
   Waterfall,
   waterfallAxis,

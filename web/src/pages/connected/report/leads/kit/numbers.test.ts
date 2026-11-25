@@ -30,6 +30,8 @@ describe("readCell", () => {
       written: "(1,160)",
     });
     expect(numberOf("(2.0)")).toBe(-2);
+    expect(readCell("(0)")).toEqual({ kind: "number", text: "0", value: 0, written: "(0)" });
+    expect(Object.is(numberOf("(0.0)"), -0)).toBe(false);
     expect(group("(1,160)")).toBe("−1,160");
     expect(difference("(10)", "5")).toBe("-15");
     // Not a plain number in brackets: words as written.

@@ -1,9 +1,18 @@
 import { cx } from "@/utils/cx";
 import { FigureTile, GapTile } from "../kit/LeadFrame";
 import { GapSlot, LINE, Measured, SIZE } from "../kit/marks";
-import { Grid, HALO, HALO_CLASS, Legend, TickLabels } from "../kit/marks/parts";
+import { Legend } from "../kit/marks/Legend";
+import { Grid, HALO, HALO_CLASS, TickLabels } from "../kit/marks/parts";
 import type { LeadProps } from "../types";
-import { coverLayout, coverReading, coverTable, type CoverLayout } from "./coverGeometry";
+import {
+  coverChange,
+  coverLayout,
+  coverLegend,
+  coverNotes,
+  coverReading,
+  coverTable,
+  type CoverLayout,
+} from "./coverGeometry";
 import { figureGap, interestCover, type InterestCover } from "./foundationData";
 
 const LABEL = "Interest cover";
@@ -103,7 +112,7 @@ function CoverStrip({ cover, width }: { cover: InterestCover; width: number }) {
   const layout = coverLayout(cover, width);
   const bands = layout.narrow
     ? layout.rows.map((row) => [row.y - 9, row.y + 9] as const)
-    : [[layout.plotTop, layout.plotBottom] as const];
+    : [[0, layout.plotBottom] as const];
   return (
     <svg
       viewBox={`0 0 ${String(width)} ${String(layout.height)}`}
@@ -113,7 +122,6 @@ function CoverStrip({ cover, width }: { cover: InterestCover; width: number }) {
       data-layout={layout.narrow ? "narrow" : "wide"}
       className="block"
     >
-      <Legend items={layout.legend} width={width} />
       <Grid ticks={layout.ticks} x={layout.x} bands={bands} strong={0} />
       {layout.links.map(({ from, to }) => (
         <line
@@ -139,7 +147,8 @@ function CoverStrip({ cover, width }: { cover: InterestCover; width: number }) {
 /**
  * Interest cover: EBITDA / cash interest for every period the module states, in time order, on
  * one scale from zero (the earlier periods as rings, the latest as the dot, a line by period),
- * each figure as written. No change is printed: the handoff states none.
+ * each figure as written. The one change printed is the kit's rule (`changeBetween`: the latest
+ * two periods of one kind exactly a year apart), its better/worse word from signal.ts only.
  */
 export function InterestCoverTile({ lead }: { lead: LeadProps }) {
   const cover = interestCover(lead.entry);
@@ -149,6 +158,7 @@ export function InterestCoverTile({ lead }: { lead: LeadProps }) {
         {figureGap(lead.entry, "cover") ?? "This page could not read interest cover."}
       </GapTile>
     );
+  const change = coverChange(cover);
   return (
     <FigureTile
       props={lead}
@@ -159,8 +169,14 @@ export function InterestCoverTile({ lead }: { lead: LeadProps }) {
       line={cover.tableLine}
       source="interest cover"
       table={coverTable(cover)}
-      notes={cover.notes}
+      notes={coverNotes(cover)}
     >
+      <Legend items={coverLegend(cover)} />
+      {change && (
+        <p data-part="change" className="text-caption text-text-secondary">
+          {change}
+        </p>
+      )}
       <Measured fallback={FALLBACK}>
         {(width) => <CoverStrip cover={cover} width={width} />}
       </Measured>

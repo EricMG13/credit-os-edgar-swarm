@@ -2,7 +2,7 @@ import type { TableViewData } from "../kit/LeadFrame";
 import { signedText, waterfallAxis, waterfallReading, type WaterfallRow } from "../kit/marks";
 import { group } from "../kit/numbers";
 import { safeText } from "../kit/reader";
-import { bridgeKind, bridgeKinds, type BridgeKind, type EbitdaBridge } from "./foundationData";
+import { bridgeKind, cellText, type BridgeKind, type EbitdaBridge } from "./foundationData";
 
 // The EBITDA bridge as the kit Waterfall draws it: the stated steps in order, each labelled as
 // written and signed; a stated subtotal is a level drawn from the axis start like the totals; a
@@ -32,7 +32,7 @@ export function bridgeRows(data: EbitdaBridge): WaterfallRow[] {
       return {
         kind: "gap",
         label,
-        reason: safeText(step.cell.text),
+        reason: cellText(step.cell),
         of: kind === "step" ? "step" : "level",
       };
     return { kind, label, value: step.cell.value, text: group(step.cell.text) };
@@ -48,19 +48,6 @@ const WORD: Record<BridgeKind, string> = {
   gap: "Not stated",
   closing: "Closing",
 };
-
-/** The legend's word for the steps: the kinds the bridge's changes take ("Increase or decrease"). */
-export function stepWord(data: EbitdaBridge) {
-  const changes = bridgeKinds(data)
-    .filter((kind) => kind === "increase" || kind === "decrease" || kind === "no change")
-    .map((kind) => WORD[kind].toLowerCase());
-  if (!changes.length) return null;
-  const words =
-    changes.length < 2
-      ? changes.join("")
-      : `${changes.slice(0, -1).join(", ")} or ${changes.at(-1) ?? ""}`;
-  return `${words.charAt(0).toUpperCase()}${words.slice(1)}`;
-}
 
 /** The figure's reading: every step with its signed amount, and where the axis starts. */
 export function bridgeReading(rows: readonly WaterfallRow[], unit: string) {
@@ -82,7 +69,7 @@ export const notAdding = (data: EbitdaBridge) =>
 
 /** A step's amount as the table states it: a change signed, a total grouped, a gap as written. */
 function amountText(step: EbitdaBridge["steps"][number]) {
-  if (step.cell.kind !== "number") return safeText(step.cell.text);
+  if (step.cell.kind !== "number") return cellText(step.cell);
   const text = group(step.cell.text);
   return step.kind === "change" ? signedText(text, step.cell.value) : text;
 }

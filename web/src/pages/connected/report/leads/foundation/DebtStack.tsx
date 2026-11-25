@@ -1,7 +1,7 @@
 import { cx } from "@/utils/cx";
 import { FigureTile, GapTile } from "../kit/LeadFrame";
 import { GapSlot, LINE, Measured, SIZE } from "../kit/marks";
-import { Legend, legendHeight, type LegendItem } from "../kit/marks/parts";
+import { Legend, type LegendEntry } from "../kit/marks/Legend";
 import type { LeadProps } from "../types";
 import {
   stackLayout,
@@ -20,13 +20,15 @@ const FALLBACK = 508;
 const FILL: Record<string, string> = { yes: "fill-chart-1", no: "fill-chart-2" };
 const fillOf = (secured: string) => FILL[secured.trim().toLowerCase()] ?? "fill-chart-3";
 
-function legendOf(stack: DebtStack): LegendItem[] {
+function legendOf(stack: DebtStack): LegendEntry[] {
   const words = new Set(stack.facilities.map((f) => f.secured.trim().toLowerCase()));
   return [
-    ...(words.has("yes") ? [{ tone: "level" as const, text: "Secured: Yes" }] : []),
-    ...(words.has("no") ? [{ tone: "closing" as const, text: "Secured: No" }] : []),
+    ...(words.has("yes") ? [{ kind: "square" as const, text: "Secured: Yes" }] : []),
+    ...(words.has("no")
+      ? [{ kind: "square" as const, tone: "secondary" as const, text: "Secured: No" }]
+      : []),
     ...(stack.facilities.some((f) => f.amount.kind === "gap")
-      ? [{ tone: "gap" as const, text: "Not stated" }]
+      ? [{ kind: "hatch" as const, text: "Not stated" }]
       : []),
   ];
 }
@@ -140,23 +142,18 @@ function Words({ segment, layout }: { segment: StackSegment; layout: StackLayout
   );
 }
 
-const LEGEND_GAP = 10;
-
 function StackFigure({ stack, width }: { stack: DebtStack; width: number }) {
   const layout = stackLayout(stack, width);
-  const legend = legendOf(stack);
-  const legendBlock = legend.length ? legendHeight(legend, width) + LEGEND_GAP : 0;
   return (
     <svg
-      viewBox={`0 0 ${String(width)} ${String(layout.height + legendBlock)}`}
+      viewBox={`0 0 ${String(width)} ${String(layout.height)}`}
       width="100%"
       role="img"
       aria-label={stackReading(stack)}
       data-layout={layout.narrow ? "narrow" : "wide"}
       className="block"
     >
-      <Legend items={legend} width={width} />
-      <g transform={`translate(0 ${String(legendBlock)})`}>
+      <g>
         {layout.segments.map((segment) => (
           <g key={`${String(segment.facility.line)}-${segment.facility.facility}`}>
             <Segment segment={segment} layout={layout} />
@@ -201,6 +198,7 @@ export function DebtStackTile({ lead }: { lead: LeadProps }) {
       table={stackTable(stack)}
       notes={stack.notes}
     >
+      <Legend items={legendOf(stack)} />
       <Measured fallback={FALLBACK}>
         {(width) => <StackFigure stack={stack} width={width} />}
       </Measured>

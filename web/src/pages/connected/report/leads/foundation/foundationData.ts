@@ -1,11 +1,13 @@
 import { unitLabel, type OutputEntry, type Row, type Table } from "../../../publishedReport";
 import { tone } from "../../../signal";
 import { difference, readCell, signOf, sum, type Reading } from "../kit/numbers";
-import { IN_EVIDENCE, safeText } from "../kit/reader";
+import { changeBetween, type Change } from "../kit/changes";
+import { IN_EVIDENCE, reasonText, safeText } from "../kit/reader";
 import {
   allTables,
   columnOf,
   comparisonOf,
+  isUnordered,
   normalLabel,
   orderByPeriod,
   periodOf,
@@ -781,13 +783,23 @@ function bridgeRuns(steps: readonly BridgeStep[]): (boolean | null)[] {
 }
 
 /**
+ * A cell as drawn: a stated gap keeps its words with its reason through `reasonText` (a source
+ * dash is "—"); a number or words through `safeText`.
+ */
+export function cellText(cell: Reading): string {
+  if (cell.kind !== "gap") return safeText(cell.text);
+  return `${cell.text.slice(0, cell.text.length - cell.reason.length)}${reasonText(cell.reason)}`;
+}
+
+/**
  * The cells of an all-gap figure in the module's own words: the stated gap once when every cell
  * states the same, else each row's label with its own.
  */
 function gapWords(cells: readonly { label: string; text: string }[]) {
-  const texts = [...new Set(cells.map((cell) => safeText(cell.text)))];
+  const words = (text: string) => cellText(readCell(text));
+  const texts = [...new Set(cells.map((cell) => words(cell.text)))];
   if (texts.length === 1) return texts[0] ?? "";
-  return cells.map((cell) => `${safeText(cell.label)}: ${safeText(cell.text)}`).join("; ");
+  return cells.map((cell) => `${safeText(cell.label)}: ${words(cell.text)}`).join("; ");
 }
 
 /** See the exported reader below; a string is the reason the figure is not drawn. */
@@ -809,7 +821,7 @@ function readBridge(entry: OutputEntry): EbitdaBridge | string {
       kind: at === 0 ? "opening" : at === last ? "closing" : middle,
     };
   });
-  if (steps.every((step) => step.cell.kind === "gap"))
+  if (steps.every((step) => step.cell.kind !== "number"))
     return gapWords(steps.map((step) => ({ label: step.label, text: step.cell.text })));
   const units = new Set(
     table.rows.flatMap((row, at) =>
@@ -1048,11 +1060,18 @@ export type InterestCover = {
   /** The measure as the table's column names it ("EBITDA / cash interest"). */
   label: string;
   unit: string;
-  /** Every stated period, in time order. */
-  periods: Period[];
+  /** False when the periods cannot be put in time order: they are then in the order stated. */
+  ordered: boolean;
+  /** Every stated period's figure: in time order, or as stated when `ordered` is false. */
   values: PeriodCell[];
   /** The Basis and limitation words per period, sources left out. */
   bases: (string | null)[];
+  /**
+   * The change from the period before the latest to the latest (kit `changeBetween`: the same kind
+   * exactly one year apart, both stated numbers), with its better/worse from `tone("coverage")`.
+   */
+  change: Change | null;
+  tone: ReturnType<typeof tone>;
   notes: string[];
   tableLine: number;
 };
@@ -1060,24 +1079,66 @@ export type InterestCover = {
 const COVER = "Chart data: interest cover";
 const COVER_COLUMN = "EBITDA / cash interest";
 
+/** The rows of a period-rows table in time order, or as stated when no time order can be told. */
+function statedRows(
+  table: Table,
+): { rows: { label: string; period: Period | null; row: Row }[]; ordered: boolean } | string {
+  const read = periodRows(table);
+  if ("periods" in read)
+    return {
+      rows: read.periods.map(({ period, item }) => ({ label: period.label, period, row: item })),
+      ordered: true,
+    };
+  if (isUnordered(read))
+    return {
+      rows: read.stated.map(({ label, period, item }) => ({ label, period, row: item })),
+      ordered: false,
+    };
+  return read.reason;
+}
+
 /** See the exported reader below; a string is the reason the figure is not drawn. */
 function readCover(entry: OutputEntry): InterestCover | string {
-  const read = periodTable(entry, COVER, "interest cover");
-  if (typeof read === "string") return read;
-  const values = columnCells(read, COVER_COLUMN);
-  if (!values) return BECAUSE("interest cover", NOT_A_SHAPE);
-  if (values.every((value) => value.cell?.kind === "gap"))
+  const table = tableUnder(entry, COVER);
+  if (!table) return NOT_IN("interest cover");
+  const read = statedRows(table);
+  if (typeof read === "string") return periodsGap("interest cover", read);
+  const [at, unitAt, basisAt] = [COVER_COLUMN, "Reporting unit", "Basis and limitation"].map(
+    (header) => columnOf(table, header),
+  );
+  if (at === undefined || at < 0 || unitAt === undefined || unitAt < 0)
+    return BECAUSE("interest cover", NOT_A_SHAPE);
+  const values = read.rows.map(({ label, row }): PeriodCell => ({
+    label,
+    cell: readCell(row.cells[at] ?? ""),
+    line: row.line,
+  }));
+  if (values.every((value) => value.cell?.kind !== "number"))
     return gapWords(values.map((value) => ({ label: value.label, text: value.cell?.text ?? "" })));
-  if (!read.unit) return NOT_IN("interest cover in one unit");
-  const basisAt = columnOf(read.table, "Basis and limitation");
+  const units = new Set(read.rows.map(({ row }) => (row.cells[unitAt] ?? "").trim()));
+  const [unit] = [...units];
+  if (units.size !== 1 || !unit) return NOT_IN("interest cover in one unit");
+  const [prior, latest] = read.ordered ? read.rows.slice(-2) : [];
+  const [from, to] = values.slice(-2);
+  const change =
+    prior?.period && latest?.period && from && to && read.rows.length >= 2
+      ? changeBetween(
+          { period: prior.period, cell: from.cell, unit },
+          { period: latest.period, cell: to.cell, unit },
+        )
+      : null;
   return {
-    label: read.table.headers[columnOf(read.table, COVER_COLUMN)] ?? COVER_COLUMN,
-    unit: read.unit,
-    periods: read.rows.map(({ period }) => period),
+    label: table.headers[at] ?? COVER_COLUMN,
+    unit: unitLabel(unit),
+    ordered: read.ordered,
     values,
-    bases: read.rows.map(({ row }) => (basisAt < 0 ? null : basisText(row.cells[basisAt] ?? ""))),
+    bases: read.rows.map(({ row }) =>
+      basisAt === undefined || basisAt < 0 ? null : basisText(row.cells[basisAt] ?? ""),
+    ),
+    change,
+    tone: change ? tone("coverage", change.text) : "none",
     notes: sectionNotes(entry, COVER),
-    tableLine: read.table.line,
+    tableLine: table.line,
   };
 }
 
@@ -1126,7 +1187,7 @@ function readStack(entry: OutputEntry): DebtStack | string {
   const cell = (row: Row, at: number | undefined) => (row.cells[at ?? -1] ?? "").trim();
   if (table.rows.length === 0) return BECAUSE("the debt stack", "it has no rows");
   const amounts = table.rows.map((row) => readCell(cell(row, amount)));
-  if (amounts.every((reading) => reading.kind === "gap"))
+  if (amounts.every((reading) => reading.kind !== "number"))
     return gapWords(
       table.rows.map((row, at) => ({ label: cell(row, name), text: amounts[at]?.text ?? "" })),
     );

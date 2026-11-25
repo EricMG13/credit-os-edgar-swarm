@@ -1,5 +1,6 @@
 import type { Mark } from "../../overview/marks";
 import { tone } from "../../../signal";
+import { changeBetween } from "../kit/changes";
 import {
   LINE,
   NARROW,
@@ -50,6 +51,24 @@ function cellWords(cell: Reading | null) {
 const at = (values: readonly PeriodCell[], label: string) =>
   values.find((value) => value.label === label)?.cell ?? null;
 
+/**
+ * The change a lead may print for one measure: the exact difference between the comparison periods
+ * (kit `changeBetween`: the same kind of period exactly one year apart, one unit, both figures
+ * numbers), else null: the stated figures stand with their periods and no change.
+ */
+export function printedChange(
+  values: readonly PeriodCell[],
+  comparison: EarningsAgainstDebt["comparison"],
+  unit: string,
+): string | null {
+  if (!comparison) return null;
+  const change = changeBetween(
+    { period: comparison.from, cell: at(values, comparison.from), unit },
+    { period: comparison.to, cell: at(values, comparison.to), unit },
+  );
+  return change?.reading.kind === "number" ? change.text : null;
+}
+
 /** The stated change with its sign: "+1,355", "−6,585", "0". */
 export const changeText = (change: string) => signedText(group(change), Number(change));
 
@@ -70,18 +89,18 @@ function side(cell: Reading | null): DumbbellSide {
 export function dumbbellRows(data: EarningsAgainstDebt): DumbbellRow[] {
   const comparison = data.comparison;
   if (!comparison) return [];
-  return data.measures.map((measure) => ({
-    label: measure.label,
-    prior: side(at(measure.values, comparison.from)),
-    current: side(at(measure.values, comparison.to)),
-    series: seriesOf(measure),
-    ...(measure.change === null
-      ? {}
-      : {
-          change: changeText(measure.change),
-          note: changeNote(TONE_KEY[measure.key], measure.change),
-        }),
-  }));
+  return data.measures.map((measure) => {
+    const change = printedChange(measure.values, comparison, data.unit);
+    return {
+      label: measure.label,
+      prior: side(at(measure.values, comparison.from)),
+      current: side(at(measure.values, comparison.to)),
+      series: seriesOf(measure),
+      ...(change === null
+        ? {}
+        : { change: changeText(change), note: changeNote(TONE_KEY[measure.key], change) }),
+    };
+  });
 }
 
 /** Whether every stated figure of a series is adjacent: a line never runs across an unstated period. */
@@ -101,9 +120,15 @@ export function leverageMarks(leverage: LeverageSeries): Mark[] {
   );
 }
 
-/** "worse" or "better" where the owner's table judges the move; otherwise no word. */
-export const leverageWord = (leverage: LeverageSeries) =>
-  leverage.tone === "worse" || leverage.tone === "better" ? leverage.tone : null;
+/** The leverage change a lead may print, in `x`: the figures' exact change over the comparison. */
+export const leverageChange = (leverage: LeverageSeries, comparison: EarningsAgainstDebt["comparison"]) =>
+  printedChange(leverage.values, comparison, "x");
+
+/** "worse" or "better" where the owner's table judges the printed move; otherwise no word. */
+export function leverageWord(change: string | null) {
+  const judged = change === null ? "none" : tone("leverage", change);
+  return judged === "worse" || judged === "better" ? judged : null;
+}
 
 /** The leverage periods the module did not state as a number, each with its reason as written. */
 export const leverageGaps = (leverage: LeverageSeries) =>
@@ -112,14 +137,17 @@ export const leverageGaps = (leverage: LeverageSeries) =>
   );
 
 /** The leverage reading: every stated figure, the stated change and the owner's word. */
-export function leverageReading(leverage: LeverageSeries) {
+export function leverageReading(
+  leverage: LeverageSeries,
+  comparison: EarningsAgainstDebt["comparison"],
+) {
   const figures = leverage.values.map(
     (value) =>
       `${value.label} ${value.cell?.kind === "number" ? `${group(value.cell.text)}x` : cellWords(value.cell)}`,
   );
-  const word = leverageWord(leverage);
-  const change =
-    leverage.change === null ? "" : `, ${changeText(leverage.change)}x${word ? `, ${word}` : ""}`;
+  const moved = leverageChange(leverage, comparison);
+  const word = leverageWord(moved);
+  const change = moved === null ? "" : `, ${changeText(moved)}x${word ? `, ${word}` : ""}`;
   return `${leverage.label} on its own scale: ${figures.join(", ")}${change}.`;
 }
 
@@ -345,10 +373,9 @@ export function lineLayout(data: EarningsAgainstDebt, width: number) {
 export function earningsReading(data: EarningsAgainstDebt, form: string) {
   const parts = data.measures.map((measure) => {
     const figures = measure.values.map((value) => `${value.label} ${cellWords(value.cell)}`);
+    const moved = printedChange(measure.values, data.comparison, data.unit);
     const change =
-      measure.change === null
-        ? ""
-        : `, ${changeText(measure.change)} ${changeNote(TONE_KEY[measure.key], measure.change)}`;
+      moved === null ? "" : `, ${changeText(moved)} ${changeNote(TONE_KEY[measure.key], moved)}`;
     return `${measure.label} ${figures.join(", ")}${change}`;
   });
   return `${data.unit}, ${form} on one scale from zero: ${parts.join("; ")}.`;
@@ -362,18 +389,23 @@ export function earningsTable(data: EarningsAgainstDebt) {
   const labels = data.periods.map((period) => period.label);
   const comparison = data.comparison;
   const changeHeader = comparison ? [`Change, ${comparison.from} → ${comparison.to}`] : [];
-  const rows = data.measures.map((measure) => [
-    measure.label,
-    ...labels.map((label) => cellWords(at(measure.values, label))),
-    ...(comparison
-      ? [
-          measure.change === null
-            ? "Not stated"
-            : `${changeText(measure.change)}, ${changeNote(TONE_KEY[measure.key], measure.change)}`,
-        ]
-      : []),
-  ]);
+  const rows = data.measures.map((measure) => {
+    const moved = printedChange(measure.values, comparison, data.unit);
+    return [
+      measure.label,
+      ...labels.map((label) => cellWords(at(measure.values, label))),
+      ...(comparison
+        ? [
+            moved === null
+              ? "Not stated"
+              : `${changeText(moved)}, ${changeNote(TONE_KEY[measure.key], moved)}`,
+          ]
+        : []),
+    ];
+  });
   const lev = data.leverage;
+  const levMoved = lev ? leverageChange(lev, comparison) : null;
+  const levWord = leverageWord(levMoved);
   const leverageRow = lev
     ? [
         [
@@ -381,9 +413,9 @@ export function earningsTable(data: EarningsAgainstDebt) {
           ...labels.map((label) => ratio(at(lev.values, label))),
           ...(comparison
             ? [
-                lev.change === null
+                levMoved === null
                   ? "Not stated"
-                  : `${changeText(lev.change)}x${leverageWord(lev) ? `, ${leverageWord(lev) ?? ""}` : ""}`,
+                  : `${changeText(levMoved)}x${levWord ? `, ${levWord}` : ""}`,
               ]
             : []),
         ],

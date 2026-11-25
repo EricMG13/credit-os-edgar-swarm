@@ -10,7 +10,6 @@ import {
   bridgeTable,
   levelWord,
   notAdding,
-  stepWord,
 } from "./bridgeGeometry";
 import { ebitdaBridge, figureGap } from "./foundationData";
 
@@ -54,7 +53,6 @@ export function EbitdaBridgeTile({ lead }: { lead: LeadProps }) {
       </AsTall>
     );
   const rows = bridgeRows(data);
-  const step = stepWord(data);
   return (
     <AsTall>
       <FigureTile {...common}>
@@ -70,7 +68,6 @@ export function EbitdaBridgeTile({ lead }: { lead: LeadProps }) {
                 level: levelWord(data),
                 closing: "Closing",
                 gap: "Not stated",
-                ...(step ? { step } : {}),
               }}
             />
           )}

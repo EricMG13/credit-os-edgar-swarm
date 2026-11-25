@@ -189,9 +189,3 @@ export const HALO = {
 } as const;
 /** The class that colours `HALO`. */
 export const HALO_CLASS = "stroke-surface-card";
-
-/**
- * The in-figure legend under its earlier name (the same component as `SvgLegend`), kept so
- * existing callers keep working; a tile head uses the kit's HTML `Legend` from `kit/marks`.
- */
-export const Legend = SvgLegend;

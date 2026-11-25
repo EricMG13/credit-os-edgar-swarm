@@ -13,7 +13,7 @@ const ID = String.raw`[A-Z]{1,3}\d+[A-Za-z]?(?:\.\d+)?`;
 const MARKER = new RegExp(String.raw`\s*\[${ID}(?:\s*[,;–-]\s*${ID})*\]`, "g");
 
 /** The text without its inline reference markers (`[E3]`, `[E12, E14]`): machinery, never drawn. */
-export const withoutMarkers = (text: string) =>
+const withoutMarkers = (text: string) =>
   text
     .replace(MARKER, "")
     .replace(/\s+([.,;:])/g, "$1")
