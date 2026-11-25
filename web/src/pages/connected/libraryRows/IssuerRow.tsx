@@ -4,7 +4,8 @@ import { Badge } from "@/components/base/badges/badges";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { StatsStrip, type Stat } from "@/components/kit/StatsStrip";
 import { TextLink } from "../../run/TextLink";
-import { reportPath, withUnit, type CatalogueRun } from "../publishedReport";
+import { reportPath, runPathway, withUnit, type CatalogueRun } from "../publishedReport";
+import { reportDate } from "../issuerEntry";
 import { PublishedSource } from "../report/PublishedTrace";
 import { asOfDate } from "../runFigures";
 import { changeText, tone } from "../signal";
@@ -177,7 +178,7 @@ export function IssuerRow({
   const [open, setOpen] = useState(false);
   const [opened, setOpened] = useState(false);
   const panel = useId();
-  const { newest, linked, published, pathway, entries } = group;
+  const { newest, linked, published, pathway, entries, related } = group;
   const load = useScopedSnapshots();
   const trace = useFigureTrace(newest, load);
   const next = useNextEvent(linked?.id, opened, load);
@@ -231,7 +232,20 @@ export function IssuerRow({
                 newest.name
               )}
             </h3>
-            {newest.sector && <p className="text-small text-text-secondary">{newest.sector}</p>}
+            {(newest.ticker || newest.sector) && (
+              <p className="text-small text-text-secondary">
+                {[newest.ticker, newest.sector].filter(Boolean).join(" · ")}
+              </p>
+            )}
+            {newest.period && newest.period !== newest.date && (
+              <p className="text-small text-text-secondary">Financial period {newest.period}</p>
+            )}
+            {group.scope && <p className="text-small text-text-secondary">{group.scope}</p>}
+            {group.assessmentUnavailable && (
+              <p className="text-small text-gap-text">
+                A verified issuer assessment is unavailable.
+              </p>
+            )}
             {!published && (
               <p className="text-small text-gap-text">
                 Run not published, as of {asOfDate(newest.date)}
@@ -251,12 +265,28 @@ export function IssuerRow({
                 <span className="text-small text-text-tertiary">{runs}</span>
               )}
             </p>
+            {related.length > 0 && (
+              <ul aria-label={`Other reports, ${newest.name}`} className="grid gap-1 text-small">
+                {related.map(({ catalogue, run, timing }) => (
+                  <li key={catalogue.id}>
+                    <span className="text-text-secondary">{timing} · </span>
+                    <TextLink href={reportPath(run.folder)} className={QUIET_LINK}>
+                      {`${runPathway(run, catalogue) || "Credit report"} · ${
+                        reportDate(catalogue.date)
+                          ? asOfDate(catalogue.date)
+                          : "As-of date unavailable"
+                      }`}
+                    </TextLink>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
         <div className="flex flex-wrap items-start gap-x-4 gap-y-3 xl:contents">
           <div className="flex min-w-0 flex-col gap-1 xl:order-2">
-            <span className={CELL_LABEL}>Stance</span>
-            <GapChip>Stance not stated</GapChip>
+            <span className={CELL_LABEL}>Decision</span>
+            <GapChip>Not shown</GapChip>
           </div>
           <div className="flex min-w-0 flex-wrap items-center gap-2 xl:order-6">
             <span className={`${CELL_LABEL} w-full`}>Run</span>
@@ -296,20 +326,24 @@ export function IssuerRow({
             className="grid min-w-0 content-start gap-2"
           >
             <h4 className="text-small font-medium text-text-primary">Credit view</h4>
-            <CreditView run={published} />
+            <CreditView
+              run={published}
+              date={newest.date}
+              showUnavailableFinding={!group.assessmentUnavailable}
+            />
           </section>
           <section aria-label={`Runs, ${newest.name}`} className="grid min-w-0 content-start gap-2">
             <h4 className="text-small font-medium text-text-primary">Runs, newest first</h4>
             <Runs group={group} />
           </section>
           <section
-            aria-label={`Stance, ${newest.name}`}
+            aria-label={`Decision, ${newest.name}`}
             className="grid min-w-0 content-start gap-2"
           >
-            <h4 className="text-small font-medium text-text-primary">Stance</h4>
+            <h4 className="text-small font-medium text-text-primary">Decision</h4>
             <p className="text-small text-gap-text">
-              The committee decision does not yet state its stance as a field, so the Library does
-              not read one from the credit view.
+              The Library shows a committee decision only with a recorded clearance. The report's
+              Committee decision page shows the decision as the module wrote it.
             </p>
           </section>
           <section

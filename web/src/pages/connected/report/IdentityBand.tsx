@@ -71,7 +71,10 @@ const ISSUER_LEVEL = /\b(?:issuer|corporate family|cfr|icr|idr)\b/i;
 const firstToken = (text: string | undefined) => text?.trim().split(/\s+/)[0]?.toLowerCase();
 
 /** Entered issuer-scope agencies whose issuer-level register rows all carry another rating; each once. */
-function differingAgencies(entry: OutputEntry | undefined, ratings: CatalogueRating[]) {
+export function differingAgencies(entries: OutputEntry[], ratings: CatalogueRating[]) {
+  const entry = entries.find(
+    (item) => item.selected && item.output.module === "CP-2H" && !blocked(item),
+  );
   const register = entry && ratingRegister(entry);
   if (!register || register.level < 0) return [];
   const differing = ratings
@@ -122,10 +125,7 @@ export function reportIdentity(catalogue: CatalogueRun | undefined, entries: Out
       ? undefined
       : readerText(handoffSector));
   const ratings = catalogue?.ratings ?? [];
-  const registered = entries.find(
-    (item) => item.selected && item.output.module === "CP-2H" && !blocked(item),
-  );
-  return { sector, ratings, differing: differingAgencies(registered, ratings) };
+  return { sector, ratings, differing: differingAgencies(entries, ratings) };
 }
 
 /** The way to the ratings module when it shows another rating than the one entered. */

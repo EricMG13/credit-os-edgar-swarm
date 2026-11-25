@@ -10,7 +10,7 @@ import { card } from "./layout";
 import { getLibraryIndex, type LibraryIndex } from "./publishedReport";
 import { isUnreachable } from "./useResource";
 import { ChipGroup } from "@/components/kit/Chip";
-import { groupIssuers, matchesQuery, RUN_STATES } from "./libraryRows/group";
+import { groupIssuers, libraryPathways, matchesQuery, RUN_STATES } from "./libraryRows/group";
 import { figureName } from "./libraryRows/FigureMark";
 import { IssuerRow, ROW_COLUMNS } from "./libraryRows/IssuerRow";
 import { stated } from "./reportView";
@@ -37,15 +37,15 @@ function MatchRuns({
   setFilters: Dispatch<SetStateAction<LibraryFilters>>;
 }) {
   const search = useRef<HTMLInputElement>(null);
-  const groups = groupIssuers(snapshot);
+  // A pathway filter changes which run stands for each issuer, so the groups follow it.
+  const groups = groupIssuers(snapshot, filters.pathway);
   const sectors = [...new Set(groups.map(({ newest }) => newest.sector).filter(Boolean))].sort();
-  const pathways = [...new Set(groups.map(({ pathway }) => pathway).filter(Boolean))].sort();
+  const pathways = libraryPathways(snapshot);
   const states = RUN_STATES.filter((state) => groups.some((group) => group.state === state));
   const rows = groups.filter(
     (group) =>
       matchesQuery(group, filters.query) &&
       (filters.sector === "all" || group.newest.sector === filters.sector) &&
-      (filters.pathway === "all" || group.pathway === filters.pathway) &&
       (filters.state === "all" || group.state === filters.state),
   );
   // The column header carries the qualified label when every row that states the figure shares it.
@@ -130,7 +130,7 @@ function MatchRuns({
             className={`hidden gap-x-4 px-5 text-caption text-text-tertiary xl:grid ${ROW_COLUMNS}`}
           >
             <span className="pl-9">Issuer</span>
-            <span>Stance</span>
+            <span>Decision</span>
             <span>Net leverage</span>
             <span>{coverageInHeader ? coverageName : "Interest cover"}</span>
             <span>Liquidity (cash)</span>
@@ -212,6 +212,8 @@ function EmptyLibrary({ readOnly }: { readOnly: boolean }) {
     </EmptyState>
   );
 }
+
+export { resetCardFindings } from "./libraryRows/CreditView";
 
 export function ReportLibrary({ readOnly = false }: { readOnly?: boolean }) {
   const { value, problem, retry } = useLibrary();

@@ -307,3 +307,52 @@ it("gives every Report history row its modules run, its status and its labels", 
     fetch.mock.calls.map(([url]) => url).filter((url) => url.startsWith("/connected/snapshot")),
   ).toEqual([SNAPSHOT]);
 });
+
+it.each([false, undefined])(
+  "keeps an unverified committee attempt in Modules (%s)",
+  async (verified) => {
+    const fixture = snapshot();
+    const run = fixture.workspace.runs.acmeKey;
+    if (!run) throw new Error("Expected the selected fixture run");
+    run.publicationVerified = verified;
+    const earlier = "acme/committee-first";
+    const latest = "acme/committee-retry";
+    const earlierSha = "a".repeat(64);
+    const latestSha = "d".repeat(64);
+    const positive = "Final Action Bias: Add exposure by 2% of NAV.";
+    run.modules["CP-6"] = { outputs: [earlier, latest], default: latest };
+    run.lead = { module: "CP-6", line: 4, output: latest, sha256: latestSha, text: positive };
+    fixture.workspace.outputs[earlier] = {
+      id: earlier,
+      module: "CP-6",
+      sha256: earlierSha,
+      href: "",
+      label: "First attempt",
+    };
+    fixture.workspace.outputs[latest] = {
+      id: latest,
+      module: "CP-6",
+      sha256: latestSha,
+      href: "",
+      label: "Retry",
+    };
+    fixture.workspace.handoffs[earlierSha] = [
+      h("Findings", 2, 1),
+      h("Bottom line", 3, 3, [text(4, "Limited assessment.")]),
+    ];
+    fixture.workspace.handoffs[latestSha] = [
+      h("Findings", 2, 1),
+      h("Bottom line", 3, 3, [text(4, positive)]),
+      h("Decision", 3, 7, [text(8, positive)]),
+    ];
+    serve({ [SNAPSHOT]: () => json(fixture) });
+    open();
+    expect(
+      await screen.findByText(/A verified credit view is unavailable for this run/),
+    ).toBeVisible();
+    expect(document.body).not.toHaveTextContent("Add exposure");
+
+    window.location.hash = "#modules/CP-6";
+    expect((await screen.findAllByText(positive)).length).toBeGreaterThan(0);
+  },
+);

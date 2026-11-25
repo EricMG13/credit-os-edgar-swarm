@@ -21,6 +21,7 @@ import {
   comparisonRows,
   getSnapshot,
   outputEntries,
+  publishedRunForFolder,
   runLabels,
   runPathway,
   runTiming,
@@ -52,6 +53,8 @@ import { StressRow } from "./report/overview/StressRow";
 import { StructureRow } from "./report/overview/StructureRow";
 import { Bento } from "./report/overview/Tile";
 import { useResource } from "./useResource";
+import { ExportMenu, ReportExportPreview } from "./export/ReportExportPreview";
+import { exportRoute, reportExports } from "./export/reportExport";
 
 /** The report's sections in the section control's order. History is reached from the issuer crumb. */
 const tabs = [
@@ -101,7 +104,10 @@ function historyEntry() {
   if (named && typeof state.reportEntry === "string") return state.reportEntry;
   entryCount += 1;
   const id = `${String(Date.now())}-${String(entryCount)}`;
-  window.history.replaceState({ ...(named ? state : null), reportEntry: id }, "");
+  window.history.replaceState(
+    { ...(typeof state === "object" && state !== null ? state : null), reportEntry: id },
+    "",
+  );
   return id;
 }
 
@@ -245,6 +251,7 @@ const ReportPage = memo(function ReportPage({
   mode,
   catalogue,
   issuer,
+  exports,
 }: {
   snapshot: Snapshot;
   run: PublishedRun;
@@ -254,6 +261,7 @@ const ReportPage = memo(function ReportPage({
   tab: Tab;
   mode: Mode;
   issuer: string;
+  exports: ReportExports;
 }) {
   const view = useMemo(() => buildReportView(snapshot, routeKey, run), [snapshot, routeKey, run]);
   const labels = runLabels(outputEntries(snapshot, run, routeKey), run);
@@ -283,6 +291,7 @@ const ReportPage = memo(function ReportPage({
                 id={run.folder}
                 preview={Boolean(snapshot.preview)}
                 evidence={tab === "evidence"}
+                exports={exports}
               />
             }
           />
@@ -371,14 +380,17 @@ function ReportUtilities({
   id,
   preview,
   evidence,
+  exports,
 }: {
   id: string;
   preview: boolean;
   evidence: boolean;
+  exports: ReportExports;
 }) {
   const [sources, setSources] = useSourcesOn();
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+      <ExportMenu options={exports.options} reason={exports.reason} />
       {!evidence && (
         <SourcesSwitch isSelected={sources} onChange={setSources} label="Highlight source icons" />
       )}
@@ -409,7 +421,19 @@ function FactChips({
   facts: { mode: Mode; preview: boolean; labels: string[] };
 }) {
   const unit = runMoneyUnit(catalogue);
-  const plain = [runPathway(run, catalogue), runTiming(run), unit ? unitLabel(unit) : ""];
+  // A verified publication also names the ticker, and the financial period where it is not the
+  // run's own period or as-of date.
+  const verified = run.publicationVerified === true;
+  const period = catalogue?.period;
+  const plain = [
+    runPathway(run, catalogue),
+    runTiming(run),
+    verified && catalogue?.ticker ? catalogue.ticker : "",
+    verified && period && period !== run.period && period !== run.asOf
+      ? `Financial period ${period}`
+      : "",
+    unit ? unitLabel(unit) : "",
+  ];
   const test = facts.preview ? "Test preview" : facts.mode === "synthetic" ? "Synthetic test" : "";
   return (
     <ul aria-label="Run facts" className="flex flex-wrap items-center gap-2">
@@ -702,8 +726,9 @@ function reportRoute(hash: string): { tab: Tab; parts: string[] } {
 
 function reportPublication(loaded: Loaded | undefined, id: string) {
   const value = loaded && "snapshot" in loaded ? loaded.snapshot : undefined;
-  const found = value && Object.entries(value.workspace.runs).find(([, run]) => run.folder === id);
-  const catalogue = value?.catalogue.real.find((entry) => entry.id === id);
+  const found = value && publishedRunForFolder(value.workspace.runs, id);
+  const matches = value?.catalogue.real.filter((entry) => entry.id === id);
+  const catalogue = matches?.length === 1 ? matches[0] : undefined;
   const run = found?.[1] ?? null;
   return { value, found, run, catalogue, issuer: reportIssuer(run, catalogue, loaded) };
 }
@@ -725,12 +750,25 @@ function unpublishedIssuer(loaded: Loaded | undefined) {
 
 function useReportTitle(issuer: string | null, page: string) {
   useEffect(() => {
-    if (!issuer || !page) return;
-    document.title = `${page} — ${issuer} — Credit OS`;
+    document.title = [page, issuer, "Credit OS"].filter(Boolean).join(" — ");
     return () => {
       document.title = "Credit OS";
     };
   }, [issuer, page]);
+}
+
+type ReportExports = ReturnType<typeof reportExports>;
+
+function useReportExport(value: Snapshot | null | undefined, id: string, mode: Mode, hash: string) {
+  const exportId = exportRoute(hash);
+  const exports = useMemo(() => reportExports(value, id, mode), [value, id, mode]);
+  const preview =
+    exportId === null
+      ? ({ state: "unavailable", reason: "This PDF format is unavailable." } as const)
+      : exportId && value !== undefined
+        ? exports.resolve(exportId)
+        : undefined;
+  return { exportId, exports, preview };
 }
 
 function ReportReaderPage({ id, mode, retry }: { id: string; mode: Mode; retry: () => void }) {
@@ -744,8 +782,19 @@ function ReportReaderPage({ id, mode, retry }: { id: string; mode: Mode; retry: 
   const { value, found, run, catalogue, issuer } = reportPublication(loaded, id);
   const root = useRef<HTMLDivElement>(null);
   useReportPlace(root, hash, Boolean(run));
-  const page = run ? readerPageName(tab, parts) : "Credit report";
-  useReportTitle(issuer, page);
+  const { exportId, exports, preview } = useReportExport(value, id, mode, hash);
+  const readyPreview = preview?.state === "ready" ? preview : null;
+  const reportPage = run ? readerPageName(tab, parts) : "Credit report";
+  const page = exportId === undefined ? reportPage : (readyPreview?.name ?? "PDF preview");
+  useReportTitle(exportId === undefined ? issuer : (readyPreview?.document.issuer ?? null), page);
+  if (exportId !== undefined)
+    return (
+      <div ref={root}>
+        <ReportExportPreview key={exportId ?? "unsupported"} report={preview}>
+          <ReaderStatus loaded={loaded} found={Boolean(found)} id={id} retry={retry} />
+        </ReportExportPreview>
+      </div>
+    );
   return (
     <div
       ref={root}
@@ -764,6 +813,7 @@ function ReportReaderPage({ id, mode, retry }: { id: string; mode: Mode; retry: 
           mode={mode}
           catalogue={catalogue}
           issuer={issuer ?? found[1].issuer}
+          exports={exports}
         />
       )}
     </div>

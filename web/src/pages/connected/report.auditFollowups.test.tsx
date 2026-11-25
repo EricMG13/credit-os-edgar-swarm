@@ -93,7 +93,7 @@ function fixture(): { run: PublishedRun; snapshot: Snapshot } {
           [
             section("Findings", 1, []),
             section("Bottom line", 3, [
-              module === "CP-6" ? "The credit view is stable." : `${module} view retained.`,
+              module === "CP-6" ? "The credit view is stable." : "Cash covers interest.",
               "The second paragraph remains qualified.",
             ]),
             section("Key findings", 8, ["Cash covers the next maturity."]),
@@ -198,8 +198,16 @@ it("T17 residual identifies an unpublished report's known issuer in its page tit
   expect(document.title).toBe("Credit report — Known issuer — Credit OS");
 });
 
-it("C3-015 C3-027 J1-009 names and attributes the lead view and its continuation", async () => {
-  const { snapshot } = fixture();
+it("C3-015 C3-027 J1-009 attributes the verified credit view to its exact Evidence line", async () => {
+  const { run, snapshot } = fixture();
+  run.publicationVerified = true;
+  run.lead = {
+    output: "current/CP-2",
+    module: "CP-2",
+    sha256: hashes[0],
+    line: 4,
+    text: "Cash covers interest.",
+  };
   reader(snapshot, "#overview");
   const call = await screen.findByRole("region", { name: "The call" });
   expect(

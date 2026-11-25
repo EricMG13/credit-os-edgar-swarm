@@ -1,39 +1,76 @@
 import { runPathway, type CatalogueRun, type LibraryIndex } from "../publishedReport";
+import {
+  isIssuerAssessment,
+  issuerGroups,
+  relatedIssuerReports,
+  scopeLabel,
+  selectIssuerEntry,
+} from "../issuerEntry";
 
 export type LibraryRun = LibraryIndex["workspace"]["runs"][string];
 export type RunState = "Delivered" | "Test preview" | "No report published";
 
-/** One issuer of the library: its runs newest first, and what its newest run says about itself. */
+/** Another published report of the issuer the row links to: newer, or of the same as-of date. */
+export type RelatedReport = { catalogue: CatalogueRun; run: LibraryRun; timing: string };
+
+/** One issuer of the library: its runs newest first, and what its selected run says about itself. */
 export type IssuerGroup = {
   key: string;
-  /** Newest first; the first is the run the row draws. */
+  /** Newest first. */
   entries: CatalogueRun[];
+  /**
+   * The run the row draws: the newest verified Full or Deep assessment, else the newest verified
+   * Lite, else the newest published run; under a pathway filter, the newest run of that pathway.
+   */
   newest: CatalogueRun;
-  /** The newest run that has a published report to open. */
+  /** The selected run when it has a published report to open, else the newest that has one. */
   linked: CatalogueRun | undefined;
   /** The ids of the runs that have a published report to open. */
   openable: ReadonlySet<string>;
-  /** The newest run's published record, when it has one. */
+  /** The selected run's published record, when it has one. */
   published: LibraryRun | undefined;
   pathway: string;
   state: RunState;
+  /** The selected run's scope in words, when it is published. */
+  scope: string | undefined;
+  /** Unfiltered, the issuer has no verified assessment, so the row says so. */
+  assessmentUnavailable: boolean;
+  related: RelatedReport[];
+  /** The runs a search reads: every candidate run, as the selection had them. */
+  searched: CatalogueRun[];
 };
 
 export const RUN_STATES: readonly RunState[] = ["Delivered", "Test preview", "No report published"];
 
-/** One group per issuer, in the order the service first listed the issuer. */
-export function groupIssuers(index: LibraryIndex): IssuerGroup[] {
-  const byFolder = new Map(Object.values(index.workspace.runs).map((run) => [run.folder, run]));
-  const groups = new Map<string, CatalogueRun[]>();
-  for (const entry of index.catalogue.real) {
-    const key = byFolder.get(entry.id)?.issuerKey ?? entry.id;
-    groups.set(key, [...(groups.get(key) ?? []), entry]);
-  }
-  return [...groups].flatMap(([key, runs]) => {
-    const entries = [...runs].sort((a, b) => b.date.localeCompare(a.date));
-    const [newest] = entries;
-    if (!newest) return [];
-    const published = byFolder.get(newest.id);
+/** The pathways the library's runs are of, for the pathway filter. */
+export function libraryPathways(index: LibraryIndex): string[] {
+  const items = [...issuerGroups(index).values()].flat();
+  return [
+    ...new Set(items.map(({ run, catalogue }) => runPathway(run ?? { pathway: null }, catalogue))),
+  ]
+    .filter(Boolean)
+    .sort();
+}
+
+/**
+ * One group per issuer, in the order the service first listed the issuer. With `pathway` other
+ * than "all", only that pathway's runs are candidates and an issuer with none is left out.
+ */
+export function groupIssuers(index: LibraryIndex, pathway = "all"): IssuerGroup[] {
+  const filtered = pathway !== "all";
+  return [...issuerGroups(index)].flatMap(([key, items]) => {
+    const candidates = filtered
+      ? items.filter(
+          ({ run, catalogue }) => runPathway(run ?? { pathway: null }, catalogue) === pathway,
+        )
+      : items;
+    const selected = selectIssuerEntry(candidates, filtered);
+    if (!selected) return [];
+    const entries = items
+      .map(({ catalogue }) => catalogue)
+      .sort((a, b) => b.date.localeCompare(a.date));
+    const openable = new Set(items.flatMap(({ run, catalogue }) => (run ? [catalogue.id] : [])));
+    const published = selected.run;
     const state: RunState = !published
       ? "No report published"
       : index.preview
@@ -43,22 +80,29 @@ export function groupIssuers(index: LibraryIndex): IssuerGroup[] {
       {
         key,
         entries,
-        newest,
-        linked: entries.find((entry) => byFolder.has(entry.id)),
-        openable: new Set(entries.filter((entry) => byFolder.has(entry.id)).map((e) => e.id)),
+        newest: selected.catalogue,
+        linked: published ? selected.catalogue : entries.find((entry) => openable.has(entry.id)),
+        openable,
         published,
-        pathway: runPathway(published ?? { pathway: null }, newest),
+        pathway: runPathway(published ?? { pathway: null }, selected.catalogue),
         state,
+        scope: published ? scopeLabel(published) : undefined,
+        assessmentUnavailable: !filtered && !isIssuerAssessment(published),
+        related: relatedIssuerReports(items, selected).flatMap(({ catalogue, run, timing }) =>
+          run ? [{ catalogue, run, timing }] : [],
+        ),
+        searched: candidates.map(({ catalogue }) => catalogue),
       },
     ];
   });
 }
 
-/** Whether the newest run's name, sector, period or date holds the typed words. */
+/** Whether any candidate run's name, sector, period or date holds the typed words. */
 export function matchesQuery(group: IssuerGroup, query: string): boolean {
   const wanted = query.trim().toLowerCase();
-  const { newest } = group;
-  return [newest.name, newest.issuer, newest.title, newest.sector, newest.period, newest.date].some(
-    (value) => value.toLowerCase().includes(wanted),
+  return group.searched.some((run) =>
+    [run.name, run.issuer, run.title, run.sector, run.period, run.date].some((value) =>
+      value.toLowerCase().includes(wanted),
+    ),
   );
 }
