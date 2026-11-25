@@ -372,3 +372,14 @@ it("draws a compact gap: dashed, sized to its words, no hatch", () => {
   expect(gap).toHaveClass("border-dashed", "w-fit");
   expect(gap).not.toHaveClass("gap-hatch");
 });
+
+it("puts a drawn map in a named, focusable region so a deep map can be scrolled by keyboard", () => {
+  render(
+    <NodeList
+      label="Ownership"
+      edges={[{ from: "Parent", relationship: "Owns", type: "Ownership", to: "Issuer", line: 4 }]}
+    />,
+  );
+  const region = screen.getByRole("region", { name: "Ownership map" });
+  expect(region).toHaveAttribute("tabindex", "0");
+});

@@ -513,7 +513,14 @@ export function NodeList({
   return (
     <div className="flex min-w-0 flex-col gap-3">
       {edges.length > 0 && (
-        <div className="-my-6 hidden min-w-0 overflow-x-auto md:block">
+        <div
+          role="region"
+          aria-label={`${label} map`}
+          // A deep map scrolls sideways inside its tile; the region takes focus so a keyboard can.
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+          tabIndex={0}
+          className={cx("relative -my-6 hidden min-w-0 overflow-x-auto md:block", FOCUS)}
+        >
           <MapDrawing edges={edges} />
         </div>
       )}
