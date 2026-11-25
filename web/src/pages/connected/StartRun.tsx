@@ -1111,7 +1111,14 @@ function IntakeForm({
   const { title, previous, next } = FORM_STEPS[step];
   const capText = shownCapText(cap);
   const synthetic = mode === "synthetic";
-  const readiness = readinessRows(shownDocs, purposeChosen, review, accepted, approved);
+  // On the Purpose step a card is always selected, so the purpose is chosen from there on.
+  const readiness = readinessRows(
+    shownDocs,
+    purposeChosen || step !== "documents",
+    review,
+    accepted,
+    approved,
+  );
 
   function acceptReviewItems(ids: readonly string[], checked: boolean) {
     setAccepted((previouslyAccepted) => {

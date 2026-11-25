@@ -1152,7 +1152,8 @@ describe("connected run start", () => {
         "Advanced adds model, effort, turns per module, module selection and valuation and assumption fields.",
       ),
     ).toBeInTheDocument();
-    expect(panel.getByText("Purpose chosen").closest("li")).toHaveTextContent("Not met");
+    // A card is selected on the Purpose step, so the rail reads the purpose as chosen there.
+    expect(panel.getByText("Purpose chosen").closest("li")).not.toHaveTextContent("Not met");
     advanceToContext();
     expect(panel.getByText("Purpose chosen").closest("li")).not.toHaveTextContent("Not met");
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
@@ -2992,8 +2993,9 @@ describe("connected run start: readiness after going back, and repeated announce
     render(<ConnectedApp path="/start" mode="synthetic" />);
     await fillInputs();
     await advanceToPurpose();
+    expect(rowOf("Purpose chosen")).not.toHaveTextContent("Not met");
     fireEvent.click(screen.getByRole("radio", { name: "Deep credit assessment" }));
-    expect(rowOf("Purpose chosen")).toHaveTextContent("Not met");
+    expect(rowOf("Purpose chosen")).not.toHaveTextContent("Not met");
     advanceToContext();
     expect(rowOf("Purpose chosen")).not.toHaveTextContent("Not met");
   }
