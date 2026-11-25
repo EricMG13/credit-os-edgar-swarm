@@ -97,7 +97,7 @@ function drawn() {
   return unique.filter((name) =>
     [
       "Credit analysis",
-      "credit-risk transmission",
+      "Credit-risk transmission",
       "Key findings",
       CONTRARY,
       "Limitations of this module",
@@ -115,9 +115,10 @@ it("draws the module's figures directly under the header, before the findings an
     passage(CONTRARY, 8),
     TRANSMISSION,
   ]);
+  // Fundamental credit's lead draws the transmission map, under the header and before the findings.
   expect(drawn()).toEqual([
     "Credit analysis",
-    "credit-risk transmission",
+    "Credit-risk transmission",
     "Key findings",
     CONTRARY,
     "Limitations of this module",
@@ -126,8 +127,10 @@ it("draws the module's figures directly under the header, before the findings an
 
 it("draws the Limitations gap last when the module wrote none", () => {
   renderModule([passage("Bottom line", 4), passage("Key findings", 6), passage(CONTRARY, 8)]);
+  // The output declares a transmission map whose table is not there: the lead says it could not read it.
   expect(drawn()).toEqual([
     "Credit analysis",
+    "Credit-risk transmission",
     "Key findings",
     CONTRARY,
     "Limitations of this module",

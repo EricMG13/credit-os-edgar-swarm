@@ -297,7 +297,7 @@ describe("prose in a coded section goes with its table", () => {
     expect(screen.getAllByText(DEBT_SENTENCE)).toHaveLength(1);
   });
 
-  it("draws prose and the promoted table of a partly promoted section and lists nothing", () => {
+  it("keeps a promoted section whole in the records when the module's lead draws its figures", () => {
     const section: Section = {
       heading: "T2B.7 Monitoring sensitivity flags",
       level: 3,
@@ -309,6 +309,10 @@ describe("prose in a coded section goes with its table", () => {
     };
     const entry = entryOf("CP-2A", [section]);
     page(entry);
+    // Downside's lead draws the module's figures, so the frame promotes no table into the flow: the
+    // section, its words and its table, waits in the records, drawn once when they are opened.
+    expect(screen.queryByText("Thresholds are indicative only.")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Show records" }));
     expect(screen.getAllByText("Thresholds are indicative only.")).toHaveLength(1);
     expect(recordSections(entry.sections, entry)).toEqual([]);
   });

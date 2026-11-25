@@ -224,7 +224,7 @@ it("draws CP-8's bottom line once, as the since-earlier sentence, and keeps its 
   expect(page).not.toHaveTextContent("The earlier run did not state gross debt.");
 });
 
-it("draws no module chart repeat on Overview, and the transmission map on its own module page", async () => {
+it("draws no module chart repeat on Overview, and the transmission map once on its own module page", async () => {
   serve({ [SNAPSHOT]: () => json(snapshot()) });
   open();
   await screen.findByRole("region", { name: "Overview" });
@@ -233,9 +233,11 @@ it("draws no module chart repeat on Overview, and the transmission map on its ow
   expect(screen.queryByRole("figure", { name: "credit-risk transmission" })).toBeNull();
   cleanup();
   open("#modules/CP-2");
+  // Fundamental credit's lead draws its maps; the frame draws no second copy.
   expect(
-    await screen.findByRole("figure", { name: "credit-risk transmission" }),
+    await screen.findByRole("region", { name: "Credit-risk transmission" }),
   ).toBeInTheDocument();
+  expect(screen.queryByRole("figure", { name: "credit-risk transmission" })).toBeNull();
 });
 
 it("labels an earlier-format run with changed methods on Overview and Changes", async () => {
