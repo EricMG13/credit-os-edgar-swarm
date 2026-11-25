@@ -26,9 +26,21 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
   committee write no bottom line on the Overview; an unheld module's limitations stay listed, a
   held one's are noted as elsewhere only when something is missing, as main computes it. History
   shows Not shown, Withheld or Unavailable per decision; the Library cell reads "Not shown".
-- Tests: RESULT_GATES. Python: RESULT_PY.
-- Fidelity (presentation change): RESULT_CHECK.
-- Final review before merge (Fable): RESULT_REVIEW.
+- Tests: full `npm run gates` passes on `4d5e937` (461 files, 7,898 tests with coverage, audit,
+  knip, duplication, build, 78 script tests, file gates). Python: 1,883 passed, 2 skipped (need
+  retained data or a screenshot path), including every test that reads the built pages and the
+  currency proof; main's targeted publication tests (246) pass.
+- Fidelity (presentation change): `check-render.cjs` on the merged build over the synthetic run,
+  25 pages at 1440, 1024, 480, 479 and 390: 83 of 125 passed; all 42 failures were the Export PDF
+  button at 36 px on a phone, fixed and rechecked on five pages at three widths with no failures.
+  The merged Overview was looked at at 1440.
+- Final review before merge (Fable, independent): do not merge until one item was fixed; all
+  seven findings repaired in `4d5e937`. Blocking: the Overview drew the changes module's bottom
+  line, which can restate the stance and which main kept off the Overview; the tile now points
+  to Changes. Also: the lead's pointer to the gaps ledger, passage names in the call, a Library
+  decision note false for runs with no committee module, run counts and same-date runs, and
+  main's two Coverage tests restored against the redesigned controls (not dropped, as first
+  recorded above).
 - Judged changes: the PDF's masthead and rules take the redesigned theme's brand tones (teal,
   where main's spec named navy and ultramarine; spec updated). The Export PDF control and preview
   keep main's markup, not yet restyled. Follow-on items 20 to 22 record what the merge left open.

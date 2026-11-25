@@ -35,7 +35,7 @@ export function ExportMenu({ options, reason }: { options: ExportOption[]; reaso
   if (options.length === 0)
     return (
       <details className="relative">
-        <summary className="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold">
+        <summary className="flex min-h-8 cursor-pointer items-center rounded-lg px-3 text-sm font-semibold max-[480px]:min-h-11">
           Export PDF
         </summary>
         <p className="absolute top-full right-0 z-10 w-64 rounded-ds-sm border border-border-hairline bg-surface-card p-3 text-sm shadow-2">
@@ -45,7 +45,7 @@ export function ExportMenu({ options, reason }: { options: ExportOption[]; reaso
     );
   return (
     <MenuTrigger>
-      <Button color="secondary" size="sm">
+      <Button color="secondary" size="sm" className="max-[480px]:min-h-11">
         Export PDF
       </Button>
       <Popover
