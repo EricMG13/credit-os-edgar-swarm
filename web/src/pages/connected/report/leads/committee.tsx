@@ -1,7 +1,6 @@
 import { ChevronDown } from "@untitledui/icons";
-import { useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { cx } from "@/utils/cx";
-import { GapPattern } from "../overview/figureParts";
 import { FigureTile, GapTile, LeadFrame } from "./kit/LeadFrame";
 import { Bullet, GapChip, Measured, textWidth, type BulletSide } from "./kit/marks";
 import {
@@ -117,51 +116,6 @@ function SaidText({ value, lines, className }: { value: Said; lines: 1 | 2; clas
   return <ClampedText words={value.text} lines={lines} className={className} />;
 }
 
-const CONFIDENCE_LEVEL: Record<string, number> = { low: 1, medium: 2, high: 3 };
-
-/** Three steps for the three stated confidence words; any other word is shown without a meter. */
-function ConfidenceMeter({ word }: { word: string }) {
-  const hatch = useId();
-  const key = word.toLowerCase();
-  const level = CONFIDENCE_LEVEL[key];
-  const insufficient = key === "insufficient information";
-  if (level === undefined && !insufficient) return null;
-  return (
-    <svg
-      viewBox="0 0 84 12"
-      width="84"
-      height="12"
-      aria-hidden="true"
-      data-confidence={insufficient ? "none" : String(level)}
-    >
-      <defs>
-        <GapPattern id={hatch} />
-      </defs>
-      {[0, 1, 2].map((at) => (
-        <rect
-          key={at}
-          x={at * 30}
-          y="2"
-          width="24"
-          height="8"
-          rx="2"
-          strokeWidth="1.5"
-          data-step={at + 1}
-          data-filled={level !== undefined && at < level ? "true" : "false"}
-          className={
-            insufficient
-              ? "stroke-border-gap"
-              : level !== undefined && at < level
-                ? "fill-chart-1 stroke-chart-1"
-                : "fill-surface-card stroke-chart-3"
-          }
-          fill={insufficient ? `url(#${hatch})` : undefined}
-        />
-      ))}
-    </svg>
-  );
-}
-
 /** The Conditions cell exactly as written: one paragraph per cell, never split into parts. */
 function ConditionList({ conditions }: { conditions: Conditions }) {
   if (conditions === null) return null;
@@ -227,7 +181,6 @@ function StanceTile(props: LeadProps) {
           {stated.confidence ? (
             <p className="flex min-w-0 flex-wrap items-center gap-2 text-small text-text-secondary">
               <span data-confidence-word>{`Confidence ${stated.confidence}`}</span>
-              <ConfidenceMeter word={stated.confidence} />
             </p>
           ) : (
             <GapChip reason="This page could not read a confidence." />

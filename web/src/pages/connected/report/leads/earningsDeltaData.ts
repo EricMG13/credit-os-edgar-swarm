@@ -3,6 +3,7 @@ import { readerText, unitLabel, type OutputEntry, type Table } from "../../publi
 import { difference, group, readCell, sum } from "./kit/numbers";
 import { changeBetween } from "./kit/changes";
 import { IN_EVIDENCE, namesSource, reasonText, safeText } from "./kit/reader";
+import { niceAxis } from "./kit/marks";
 import { allTables, columnOf } from "./kit/tables";
 
 const RESULTS = "Chart data: prior and current results";
@@ -24,8 +25,6 @@ const TWICE_KPIS =
   "This page could not read the margin and KPI changes: the table is stated more than once.";
 export const TWICE_EARNINGS =
   "This page could not read the earnings table: more than one is stated.";
-export const TWICE_BRIDGE =
-  "This page could not read the variance bridge: more than one table is stated.";
 export const FEW_PERIODS = "This page could not read two annual periods in the earnings table.";
 export const MIXED_PERIODS =
   "This page did not compare the earnings table's two latest annual periods: they are different kinds of period.";
@@ -78,8 +77,8 @@ export type Pair = {
   others: OtherPeriod[];
 };
 
-/** The orders of magnitude (powers of ten) a small multiple's larger figures span. */
-type Band = { lo: number; hi: number };
+/** The two end labels of the scale a group is drawn on (`−2,000`, `8,000`). */
+type AxisEnds = { from: string; to: string };
 
 export type PairGroup = {
   /** The unit as the page names it (`US$m`, `%`, `x`); empty when the handoff states none. */
@@ -91,8 +90,10 @@ export type PairGroup = {
   drawn: Pair[];
   /** The drawn pairs with both figures stated. */
   rows: Pair[];
-  /** Set when the unit's rows are drawn as several small multiples: the magnitudes this one covers. */
-  band: Band | null;
+  /** The scale the group is drawn on, from its own axis; null for the group with no figure above zero. */
+  axis: AxisEnds | null;
+  /** The group of pairs with no non-zero figure: stated figures, drawn without a scale. */
+  noFigure: boolean;
   /** Amounts share one scale from zero; levels (margins, KPIs) one scale cut where they sit. */
   fromZero: boolean;
 };
@@ -289,36 +290,46 @@ const MOST_GROUPS = 4;
 /**
  * A unit's drawn pairs as small multiples: one group per order of magnitude of the pair's larger
  * figure (bands of x10), each its own scale; groups in the order a pair of each first appears,
- * pairs in the handoff's order inside a group. Beyond four groups the smallest bands are one.
+ * pairs in the handoff's order inside a group. Pairs with no non-zero figure are one last group of
+ * their own. At most four groups, that one included: beyond, the smallest bands are one.
  */
-function bandGroups(pairs: readonly Pair[]): { pairs: Pair[]; band: Band | null }[] {
-  const bands = pairs.map(magnitudeBand);
-  const present = [...new Set(bands.filter((one): one is number => one !== null))].sort(
-    (a, b) => b - a,
-  );
-  if (present.length < 2) return [{ pairs: [...pairs], band: null }];
-  const own = present.length > MOST_GROUPS ? present.slice(0, MOST_GROUPS - 1) : present;
+function bandGroups(pairs: readonly Pair[]): { pairs: Pair[]; noFigure: boolean }[] {
+  const zero = pairs.filter((pair) => magnitudeBand(pair) === null);
+  const sized = pairs.filter((pair) => magnitudeBand(pair) !== null);
+  const bands = sized.map((pair) => magnitudeBand(pair) ?? 0);
+  const present = [...new Set(bands)].sort((a, b) => b - a);
+  const room = MOST_GROUPS - (zero.length > 0 ? 1 : 0);
+  const own = present.length > room ? present.slice(0, room - 1) : present;
   const merged = present.filter((one) => !own.includes(one));
-  const slot = (band: number | null) => {
-    const use = band ?? present.at(-1) ?? 0;
-    return own.includes(use) ? use : (merged[0] ?? use);
-  };
+  const slot = (band: number) => (own.includes(band) ? band : (merged[0] ?? band));
   const keys = [...new Set(bands.map(slot))];
-  return keys.map((key) => {
-    const members = pairs.filter((_, at) => slot(bands[at] ?? null) === key);
-    const covered = key === merged[0] ? merged : [key];
-    return { pairs: members, band: { lo: Math.min(...covered), hi: Math.max(...covered) } };
-  });
+  return [
+    ...keys.map((key) => ({
+      pairs: sized.filter((_, at) => slot(bands[at] ?? 0) === key),
+      noFigure: false,
+    })),
+    ...(zero.length > 0 ? [{ pairs: zero, noFigure: true }] : []),
+  ];
+}
+
+/** The ends of the axis a group's figures are drawn on (the kit's own: from zero for amounts, cut for levels). */
+function axisOf(pairs: readonly Pair[], amounts: boolean): AxisEnds {
+  const values = pairs.flatMap((pair) =>
+    [pair.prior.value, pair.current.value].filter((value): value is number => value !== null),
+  );
+  const { ticks } = niceAxis(values, { zero: amounts });
+  return { from: ticks[0]?.label ?? "", to: ticks.at(-1)?.label ?? "" };
 }
 
 function groupOf(unit: string, pairs: Pair[], amounts: boolean): PairGroup[] {
-  return bandGroups(pairs).map(({ pairs: members, band }) => ({
+  return bandGroups(pairs).map(({ pairs: members, noFigure }) => ({
     unit,
     percent: PERCENT_UNIT.test(unit),
     unitNotStated: unit === "",
     drawn: members,
     rows: members.filter(bothFigures),
-    band,
+    axis: noFigure ? null : axisOf(members, amounts),
+    noFigure,
     fromZero: amounts,
   }));
 }
@@ -569,13 +580,14 @@ export type Bridge =
   | {
       kind: "bridge";
       line: number;
-      /** The `Chart data: …` heading the steps are under. */
+      /** The `Chart data: …` heading the steps are under, and its plain title (`EBITDA variance`). */
       heading: string;
+      title: string;
       unit: string;
       steps: Step[];
       notes: string[];
     }
-  | { kind: "unreconciled"; line: number; heading: string; message: string };
+  | { kind: "unreconciled"; line: number; heading: string; title: string; message: string };
 
 const NOT_DRAWN = "This page could not draw the variance bridge";
 const NOT_A_BRIDGE =
@@ -583,24 +595,36 @@ const NOT_A_BRIDGE =
 
 const isZero = (exact: string | null) => exact !== null && /^-?0(?:\.0+)?$/.test(exact);
 
-/** The one `Chart data: …` step table, drawn only when opening plus its changes is exactly the closing. */
-export function bridge(entry: OutputEntry): Bridge | null {
-  const tables = allTables(entry).filter(
-    ({ heading, table }) =>
-      heading.startsWith("Chart data: ") &&
-      table.headers.length === STEP_HEADERS.length &&
-      table.headers.every((header, at) => header === STEP_HEADERS[at]),
-  );
-  const [only] = tables;
-  if (!only) return null;
-  const { table, heading } = only;
+/** A chart heading's subject as a plain title: `Chart data: EBITDA variance` is `EBITDA variance`. */
+const titleOf = (heading: string) => {
+  const name = heading.replace(/^Chart data:\s*/, "").trim();
+  return name.charAt(0).toUpperCase() + name.slice(1);
+};
+
+/**
+ * Every `Chart data: …` step table, each its own bridge under its own title, drawn only when its
+ * opening plus its changes is exactly its closing; otherwise the reason it is not.
+ */
+export function bridges(entry: OutputEntry): Bridge[] {
+  return allTables(entry)
+    .filter(
+      ({ heading, table }) =>
+        heading.startsWith("Chart data: ") &&
+        table.headers.length === STEP_HEADERS.length &&
+        table.headers.every((header, at) => header === STEP_HEADERS[at]),
+    )
+    .map(({ heading, table }) => bridgeOf(heading, table));
+}
+
+function bridgeOf(heading: string, table: Table): Bridge {
+  const title = titleOf(heading);
   const refuse = (message: string): Bridge => ({
     kind: "unreconciled",
     line: table.line,
     heading,
+    title,
     message,
   });
-  if (tables.length > 1) return refuse(TWICE_BRIDGE);
   const amounts = table.rows.map((row) => row.cells[1] ?? "");
   if (table.rows.length < 3)
     return refuse(
@@ -633,21 +657,29 @@ export function bridge(entry: OutputEntry): Bridge | null {
       line: row.line,
     };
   });
-  return { kind: "bridge", line: table.line, heading, unit, steps, notes: basisNotes(table) };
+  return {
+    kind: "bridge",
+    line: table.line,
+    heading,
+    title,
+    unit,
+    steps,
+    notes: basisNotes(table),
+  };
 }
 
 // ---------------------------------------------------------------------------------------------
 // The lead
 
 export type EarningsDelta = {
-  bridge: Bridge | null;
+  bridges: Bridge[];
   movers: PairFigure;
   kpis: PairFigure;
 };
 
 export function earningsDelta(entry: OutputEntry): EarningsDelta {
   return {
-    bridge: bridge(entry),
+    bridges: bridges(entry),
     movers: chartPairs(entry, RESULTS, true, TWICE_RESULTS) ?? statementPairs(entry, false),
     kpis: chartPairs(entry, KPIS, false, TWICE_KPIS) ?? statementPairs(entry, true),
   };

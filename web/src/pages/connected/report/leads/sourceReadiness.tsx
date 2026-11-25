@@ -9,9 +9,8 @@ import {
 } from "./sourceReadinessData";
 import type { LeadProps } from "./types";
 
-const ABSENT = "This page could not read the readiness by area from the handoff.";
-const NOT_HERE =
-  "This page could not read the key evidence located or the conflicts from the handoff.";
+const ABSENT = "This page could not read the readiness by area.";
+const NOT_HERE = "This page could not read the key evidence located or the conflicts.";
 
 // The state columns of the matrix, by their grid line at lg and above; the last two lines hold the
 // reason, and "other" has a column only when a row states a word the page does not know.

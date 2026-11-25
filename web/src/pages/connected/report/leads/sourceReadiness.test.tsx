@@ -143,7 +143,7 @@ describe("sourceReadiness data", () => {
     if (result.kind !== "ready") throw new Error("expected rows");
     expect(result.rows.map(({ area, reason }) => [area, reason])).toEqual([
       ["Financial foundation", "Reason is in Evidence."],
-      ["Debt terms", "This page could not read a limitation for this area from the handoff."],
+      ["Debt terms", "This page could not read a limitation for this area."],
       ["Detail is in Evidence.", "Complete."],
     ]);
   });
@@ -332,11 +332,11 @@ describe("SourceReadinessLead", () => {
     expect(within(matrix()).getByText("Only the synthetic filing is available")).toBeVisible();
     expect(screen.queryByText("Filing p.1")).toBeNull();
   });
-  it("says in one gap tile that the key evidence located and the conflicts are not read from the handoff", () => {
+  it("says in one gap tile that the key evidence located and the conflicts are not read", () => {
     lead();
     const tile = screen.getByRole("region", { name: "Key evidence located and conflicts" });
     expect(tile).toHaveTextContent(
-      "This page could not read the key evidence located or the conflicts from the handoff.",
+      "This page could not read the key evidence located or the conflicts.",
     );
     expect(tile.className).not.toContain("border-dashed");
   });
@@ -352,9 +352,7 @@ describe("SourceReadinessLead", () => {
   it("draws one plain gap tile when the table is absent", () => {
     lead(entry("CP-0", [], []));
     const tile = screen.getByRole("region", { name: "Readiness by area" });
-    expect(tile).toHaveTextContent(
-      "This page could not read the readiness by area from the handoff.",
-    );
+    expect(tile).toHaveTextContent("This page could not read the readiness by area.");
     expect(tile.className).not.toContain("border-dashed");
     expect(screen.queryByRole("img")).toBeNull();
     expect(screen.queryByText(/could not read the key evidence/)).toBeNull();

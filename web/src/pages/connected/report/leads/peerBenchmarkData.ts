@@ -71,6 +71,9 @@ function countOf(cell: string): Count {
   };
 }
 
+/** The text closed by one full stop: one the module already wrote ("n.m.", "no peers.") is not doubled. */
+export const end = (text: string) => (text.endsWith(".") ? text : `${text}.`);
+
 /** What can be drawn for one metric. */
 type Drawing =
   /** The band is stated; the median and the issuer are drawn where stated. */
@@ -137,8 +140,8 @@ function drawingOf(row: Omit<PeerRow, "drawing" | "notes">): Drawing {
 function notesOf(row: Omit<PeerRow, "drawing" | "notes">, drawing: Drawing) {
   const notes: string[] = [];
   if (drawing.kind === "strip" && row.median.kind !== "number")
-    notes.push(`${row.metric}, peer median: ${shown(row.median)}.`);
-  if (row.count.kind === "gap") notes.push(`${row.metric}, peer count: ${row.count.reason}.`);
+    notes.push(end(`${row.metric}, peer median: ${shown(row.median)}`));
+  if (row.count.kind === "gap") notes.push(end(`${row.metric}, peer count: ${row.count.reason}`));
   return notes;
 }
 

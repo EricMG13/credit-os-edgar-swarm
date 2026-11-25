@@ -13,6 +13,7 @@ import {
   type Side,
   type Unstated,
 } from "./earningsDeltaData";
+import { periodKey } from "./kit/changes";
 import { FigureTile, GapTile, LeadFrame, type TableViewData } from "./kit/LeadFrame";
 import {
   Dumbbell,
@@ -85,15 +86,37 @@ function sharedPeriods(pairs: readonly Pair[]) {
     : null;
 }
 
-const power = (exponent: number) =>
-  group(String(Number((10 ** exponent).toFixed(Math.max(0, -exponent)))));
-
-/** The group's head: its unit, and for a small multiple the sizes of figure its own scale holds. */
+/** The group's head: the scale it is actually drawn on, or that it has no figure above zero. */
 function captionOf(one: PairGroup, several: boolean) {
+  if (one.noFigure) return "No figure above zero";
   const unit = one.unitNotStated ? "unit not read" : one.unit;
-  if (one.band)
-    return `${unit}, larger figure ${power(one.band.lo)} to under ${power(one.band.hi + 1)}`;
-  return several ? unit : undefined;
+  if (!several || one.axis === null) return undefined;
+  return `${unit}, axis ${one.axis.from} to ${one.axis.to}`;
+}
+
+/** Pairs with no non-zero figure: the stated figures as written, with no scale. */
+function NoFigureGroup({ group: one, caption }: { group: PairGroup; caption: string }) {
+  return (
+    <div className="flex min-w-0 flex-col gap-2">
+      <p className="text-caption text-text-tertiary">{caption}</p>
+      <ul aria-label={caption} className="flex flex-col divide-y divide-border-hairline">
+        {one.drawn.map((pair) => (
+          <li
+            key={pair.line}
+            data-no-figure={pair.label}
+            className="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-1 py-2 first:pt-0 last:pb-0"
+          >
+            <span className="text-small font-medium wrap-anywhere text-text-primary">
+              {pair.label}
+            </span>
+            <span className="font-mono text-small text-text-secondary tabular-nums">
+              {`${sideText(pair.prior, one.unit)} \u2192 ${sideText(pair.current, one.unit)}`}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 function GroupRows({
@@ -105,9 +128,10 @@ function GroupRows({
   several: boolean;
   legend: boolean;
 }) {
+  const caption = captionOf(one, several);
+  if (one.noFigure) return <NoFigureGroup group={one} caption={caption ?? ""} />;
   const shared = sharedPeriods(one.drawn);
   const rows = one.drawn.map((pair) => dumbbellRow(pair, one.unit, shared !== null));
-  const caption = captionOf(one, several);
   return (
     <Measured fallback={640}>
       {(width) => (
@@ -187,25 +211,38 @@ function reasonOfPair({ pair }: Unstated) {
   return `${pair.priorPeriod ?? "Prior"}: ${pair.prior.text} \u00b7 ${pair.currentPeriod ?? "Current"}: ${pair.current.text}`;
 }
 
-/** Pairs with no stated figure, one line each (rows with the same reason are one line), the reason once on the gap chip. */
+/** The kind of the two periods a pair compares (`FY`, `Q1`): rows of another kind are never one line. */
+const periodKind = (pair: Pair) =>
+  [pair.priorPeriod, pair.currentPeriod]
+    .map((label) => (label ? (periodKey(label)?.form ?? label) : ""))
+    .join(">");
+
+/**
+ * Pairs with no stated figure, one line each; pairs with the same unit, the same kind of period and
+ * the same reason are one line, their labels joined with "; ", the reason once on the gap chip.
+ */
 function UnstatedList({ unstated }: { unstated: readonly Unstated[] }) {
-  const lines = unstated.reduce<{ labels: string[]; reason: string }[]>((found, item) => {
-    const reason = reasonOfPair(item);
-    const same = found.find((line) => line.reason === reason);
-    if (same) same.labels.push(item.pair.label);
-    else found.push({ labels: [item.pair.label], reason });
-    return found;
-  }, []);
+  const lines = unstated.reduce<{ key: string; labels: string[]; reason: string }[]>(
+    (found, item) => {
+      const reason = reasonOfPair(item);
+      const key = [item.unit, periodKind(item.pair), reason].join("|");
+      const same = found.find((line) => line.key === key);
+      if (same) same.labels.push(item.pair.label);
+      else found.push({ key, labels: [item.pair.label], reason });
+      return found;
+    },
+    [],
+  );
   return (
     <ul aria-label="Not stated" className="flex flex-col divide-y divide-border-hairline">
       {lines.map((line) => (
         <li
-          key={line.reason + line.labels.join()}
-          data-gap-line={line.labels.join(", ")}
+          key={line.key + line.labels.join()}
+          data-gap-line={line.labels.join("; ")}
           className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 py-2 first:pt-0 last:pb-0"
         >
           <span className="text-small font-medium wrap-anywhere text-text-primary">
-            {line.labels.join(", ")}
+            {line.labels.join("; ")}
           </span>
           <GapChip reason={line.reason} />
         </li>
@@ -247,7 +284,7 @@ function PairTile({
     >
       {figure.groups.map((one, at) => (
         <GroupRows
-          key={`${one.unit}-${String(one.band?.lo ?? "")}-${String(one.drawn[0]?.line ?? at)}`}
+          key={`${one.unit}-${one.axis?.from ?? "none"}-${String(one.drawn[0]?.line ?? at)}`}
           group={one}
           several={several}
           legend={at === 0}
@@ -278,7 +315,7 @@ function waterfallRows(bridge: Shown): WaterfallRow[] {
 /** Every step as the handoff states it: the amounts, no totals made here. */
 function bridgeTable(bridge: Shown): TableViewData {
   return {
-    caption: "Variance bridge, every step",
+    caption: `${bridge.title}, every step`,
     headers: ["Step", "Role", `Amount${bridge.unit ? ` (${bridge.unit})` : ""}`],
     rows: bridge.steps.map((step) => [
       step.label,
@@ -293,11 +330,11 @@ function BridgeTile({ props, bridge }: { props: LeadProps; bridge: Shown }) {
     <FigureTile
       props={props}
       span={12}
-      label={BRIDGE_NAME}
+      label={bridge.title}
       kicker={`Prior to current${bridge.unit ? `, ${bridge.unit}` : ""}`}
-      title={BRIDGE_NAME}
+      title={bridge.title}
       line={bridge.line}
-      source="the variance bridge"
+      source={bridge.title}
       notes={bridge.notes}
       table={bridgeTable(bridge)}
     >
@@ -332,9 +369,9 @@ function Gap({ name, children }: { name: string; children: string }) {
 export const EarningsDeltaLead: FC<LeadProps> & {
   draws?: readonly ("figures" | "events" | "maps")[];
 } = (props) => {
-  const { bridge, movers, kpis } = earningsDelta(props.entry);
+  const { bridges, movers, kpis } = earningsDelta(props.entry);
   const nothing =
-    bridge === null &&
+    bridges.length === 0 &&
     movers.kind === "gap" &&
     movers.reason === NO_RESULTS &&
     kpis.kind === "gap" &&
@@ -342,16 +379,29 @@ export const EarningsDeltaLead: FC<LeadProps> & {
   // Results and margins side by side (8 and 4) only when the margins are tall enough to leave no hole.
   const beside =
     movers.kind === "ready" && kpis.kind === "ready" && sizeOf(kpis) * 5 >= sizeOf(movers) * 3;
-  const drawn = [...DRAWN, ...(bridge ? [bridge.heading.replace(/^Chart data:\s*/, "")] : [])];
+  // Only a step table drawn as a bridge is ours; one this page could not draw is listed as stated.
+  const drawn = [
+    ...DRAWN,
+    ...bridges.flatMap((one) =>
+      one.kind === "bridge" ? [one.heading.replace(/^Chart data:\s*/, "")] : [],
+    ),
+  ];
   return (
     <LeadFrame props={props}>
       {nothing ? (
         <Gap name="Earnings figures">{EMPTY}</Gap>
       ) : (
         <>
-          {bridge?.kind === "bridge" && <BridgeTile props={props} bridge={bridge} />}
-          {bridge?.kind === "unreconciled" && <Gap name={BRIDGE_NAME}>{bridge.message}</Gap>}
-          {bridge === null && <Gap name={BRIDGE_NAME}>{NO_BRIDGE}</Gap>}
+          {bridges.map((one) =>
+            one.kind === "bridge" ? (
+              <BridgeTile key={one.line} props={props} bridge={one} />
+            ) : (
+              <Gap key={one.line} name={`${one.title}, not drawn`}>
+                {one.message}
+              </Gap>
+            ),
+          )}
+          {bridges.length === 0 && <Gap name={BRIDGE_NAME}>{NO_BRIDGE}</Gap>}
           {movers.kind === "ready" ? (
             <PairTile
               props={props}

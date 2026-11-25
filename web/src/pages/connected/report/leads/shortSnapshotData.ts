@@ -59,13 +59,24 @@ const apart = (a: string, b: string) => yearApart(a, b) || yearApart(b, a);
 
 const norm = (text: string) => text.trim().replace(/\s+/g, " ").toLowerCase();
 
-/** A value as `prefix number suffix` ("3.10x" is `""`, `3.10`, `x`), the number plain. */
+/**
+ * A value as `prefix number suffix` ("3.10x" is `""`, `3.10`, `x`). An accounting negative, the
+ * number in brackets with its unit inside or after them ("(3.3x)", "(3.3)x", "(3.3%)", "(1,158)"),
+ * is the negative number: `number` is "-3.3", `suffix` is "x", never a bracket.
+ */
 function split(text: string) {
-  const match = /^([^\d\-−]*?)(-?[\d,]+(?:\.\d+)?)(\D*)$/.exec(text.trim().replaceAll("−", "-"));
-  const number = match?.[2]?.replaceAll(",", "");
-  return match && number !== undefined && readCell(number).kind === "number"
-    ? { prefix: (match[1] ?? "").trim(), number, suffix: (match[3] ?? "").trim() }
-    : null;
+  const plain = text.trim().replaceAll("−", "-");
+  const bracketed = /^([^\d\-(]*?)\(\s*([\d,]+(?:\.\d+)?)\s*([^\d()]*?)\s*\)\s*([^\d()]*)$/.exec(
+    plain,
+  );
+  const match = bracketed ?? /^([^\d\-]*?)(-?[\d,]+(?:\.\d+)?)(\D*)$/.exec(plain);
+  if (!match) return null;
+  const negative = bracketed !== null;
+  const digits = (match[2] ?? "").replaceAll(",", "");
+  if (readCell(digits).kind !== "number") return null;
+  const number = negative && Number(digits) !== 0 ? `-${digits}` : digits;
+  const suffix = negative ? `${match[3] ?? ""}${match[4] ?? ""}` : (match[3] ?? "");
+  return { prefix: (match[1] ?? "").trim(), number, suffix: suffix.trim() };
 }
 
 function figureOf(value: string, period: string): Figure {

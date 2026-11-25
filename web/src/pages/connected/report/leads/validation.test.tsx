@@ -91,13 +91,22 @@ describe("clearance", () => {
     expect(word("Blocked over the evaluated set")).toBe("slash");
     expect(word("Pending review")).toBe("ring");
   });
-  it("falls back to the module's first bottom-line sentence, then to nothing", () => {
-    const written = cp5(text("Bottom line", "Evidence is thin. A second sentence follows."));
-    expect(clearance(written)).toMatchObject({
+  it("falls back to the bottom line's first paragraph, whole, then to nothing", () => {
+    const one = cp5(text("Bottom line", "Evidence is thin."));
+    expect(clearance(one)).toMatchObject({
       status: "Evidence is thin.",
       shape: null,
       source: "bottom line",
     });
+    const two = cp5(
+      text(
+        "Bottom line",
+        "Cleared for the U.S. notes only. Committee use is restricted to the evaluated set.",
+      ),
+    );
+    expect(clearance(two)?.status).toBe(
+      "Cleared for the U.S. notes only. Committee use is restricted to the evaluated set.",
+    );
     expect(clearance(cp5())).toBeNull();
   });
   it("does not guess when two tables both carry a Status row", () => {
@@ -278,7 +287,12 @@ describe("ClearanceLead", () => {
   it("prints no count of issues: not as a figure, not in a label, not in the table view", () => {
     const { container } = render5(full());
     const tile = screen.getByRole("region", { name: "Clearance" });
-    expect(within(tile).queryAllByRole("img")).toHaveLength(0);
+    // The only image is the status mark, named for its shape: no issue image, so no count label.
+    expect(
+      within(tile)
+        .queryAllByRole("img")
+        .map((img) => img.getAttribute("aria-label")),
+    ).toEqual(["half-filled circle"]);
     expect(container.innerHTML).not.toMatch(
       /listed|Counted from|\d+ (?:issues|gaps|contradictions)/i,
     );
@@ -551,5 +565,35 @@ describe("round 3 wording and text", () => {
     expect(container.textContent).not.toMatch(/from the handoff/i);
     for (const kicker of container.querySelectorAll("h3 ~ *, p.text-caption"))
       expect(kicker.textContent).not.toMatch(/the module/i);
+  });
+});
+
+describe("round 4 status text", () => {
+  it("draws the whole bottom-line paragraph as the status when there is no verdict table", () => {
+    render5(
+      cp5(
+        text(
+          "Bottom line",
+          "Cleared for the U.S. notes only. Committee use is restricted to the evaluated set.",
+        ),
+      ),
+    );
+    const clearanceTile = screen.getByRole("region", { name: "Clearance" });
+    expect(
+      within(clearanceTile).getAllByText(
+        "Cleared for the U.S. notes only. Committee use is restricted to the evaluated set.",
+      )[0],
+    ).toBeVisible();
+    expect(clearanceTile.textContent).not.toMatch(/opening sentence/i);
+  });
+  it("keeps the shape's name in the accessible name, not in the visible text", () => {
+    const { container } = render5(full());
+    const tile = screen.getByRole("region", { name: "Clearance" });
+    const mark = within(tile).getByRole("img", { name: "half-filled circle" });
+    expect(mark).toBeVisible();
+    // Visible text: everything but screen-reader-only spans, and SVG labels are not text.
+    expect(container.textContent).not.toMatch(/half-filled circle|filled circle|struck circle/);
+    for (const hidden of container.querySelectorAll(".sr-only"))
+      expect(hidden.textContent).not.toMatch(/circle/);
   });
 });

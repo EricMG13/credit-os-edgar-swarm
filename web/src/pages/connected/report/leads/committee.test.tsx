@@ -238,11 +238,10 @@ describe("CommitteeLead", () => {
     expect(tile.querySelector("[data-action-bias]")?.textContent).toBe("Underweight");
     expect(within(tile).getByText("Confidence Medium")).toBeVisible();
     expect(within(tile).queryByText(/typed field/)).toBeNull();
-    expect(
-      [...container.querySelectorAll("[data-step]")].map((step) =>
-        step.getAttribute("data-filled"),
-      ),
-    ).toEqual(["true", "true", "false"]);
+    // The confidence is the word as written: the page makes no scale of its own from it
+    // (the contract's call scale is 1, 2, 3, 5, not three steps).
+    expect(container.querySelector("[data-step], [data-confidence]")).toBeNull();
+    expect(tile.querySelector("[data-confidence-word]")?.textContent).toBe("Confidence Medium");
     expect([...tile.querySelectorAll("[data-condition]")].map((item) => item.textContent)).toEqual([
       "Refinance by 2027; Cover above 3x",
     ]);

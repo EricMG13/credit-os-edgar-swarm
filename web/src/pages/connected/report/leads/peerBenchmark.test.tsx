@@ -547,4 +547,29 @@ describe("PeerBenchmarkLead", () => {
     expect(listed).toHaveTextContent("EBITDA margin");
     expect(listed).toHaveTextContent("31.2");
   });
+
+  it("never joins a sentence that ends in a full stop to another: no '..' in any label or text", () => {
+    const input = peers(
+      [
+        ["Margin", "n.m.", "5", "Not supplied: no peers.", "12", "n.m.", "%", ""],
+        [
+          "Cover",
+          "Not supplied: no filing.",
+          "Not supplied: only two peers reported it.",
+          "8",
+          "12",
+          "4",
+          "%",
+          "",
+        ],
+      ],
+      null,
+    );
+    render(<PeerBenchmarkLead {...leadProps(input)} />);
+    for (const el of document.querySelectorAll("[aria-label]"))
+      expect(el.getAttribute("aria-label"), el.getAttribute("aria-label") ?? "").not.toContain(
+        "..",
+      );
+    expect(document.body.textContent).not.toContain("..");
+  });
 });

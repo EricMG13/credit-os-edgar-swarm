@@ -38,7 +38,7 @@ export function readinessWord(cell: string | undefined): Word {
 }
 
 const REASON_IN_EVIDENCE = "Reason is in Evidence.";
-const NO_LIMITATION = "This page could not read a limitation for this area from the handoff.";
+const NO_LIMITATION = "This page could not read a limitation for this area.";
 
 export type ReadinessRow = {
   area: string;

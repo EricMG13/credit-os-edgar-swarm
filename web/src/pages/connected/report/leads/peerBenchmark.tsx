@@ -16,6 +16,7 @@ import { UnreadFigures } from "./kit/UnreadFigures";
 import { safeText } from "./kit/reader";
 import {
   bandGapText,
+  end,
   chartTitleOf,
   readPeerBenchmark,
   shown,
@@ -69,7 +70,7 @@ function reading(row: PeerRow) {
   const { drawing } = row;
   const count = peersText(row);
   if (drawing.kind === "conflict")
-    return `${row.metric}: ${drawing.message}, so no range is drawn. ${count}.`;
+    return `${end(`${row.metric}: ${drawing.message}, so no range is drawn`)} ${end(count)}`;
   const stated = (label: string, value: PeerRow["low"]) =>
     `${label} ${value.kind === "number" ? withUnit(shown(value), unit) : shown(value)}`;
   const parts = [
@@ -78,7 +79,7 @@ function reading(row: PeerRow) {
     stated("peer high", row.high),
     stated("issuer", row.issuer),
   ];
-  return `${row.metric}: ${parts.join(", ")}. ${count}.`;
+  return `${end(`${row.metric}: ${parts.join(", ")}`)} ${end(count)}`;
 }
 
 /** The hatched slot with the module's words on its solid chip, as tall as the words need. */

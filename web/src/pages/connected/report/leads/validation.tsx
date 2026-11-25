@@ -26,13 +26,22 @@ const WORD: Record<Shape, string> = {
 };
 
 /** A status as a shape: the word always sits beside it. */
-function StatusMark({ shape, size = 16 }: { shape: Shape; size?: number }) {
+function StatusMark({
+  shape,
+  size = 16,
+  named = false,
+}: {
+  shape: Shape;
+  size?: number;
+  /** The mark is the status's only shape: it is an image with the shape's name (not visible text). */
+  named?: boolean;
+}) {
   return (
     <svg
       viewBox="0 0 16 16"
       width={size}
       height={size}
-      aria-hidden="true"
+      {...(named ? { role: "img", "aria-label": WORD[shape] } : { "aria-hidden": true })}
       data-shape={shape}
       className="flex-none"
     >
@@ -269,7 +278,7 @@ function ClearanceTile(props: LeadProps) {
       ) : verdict.source === "verdict" && verdict.status !== null ? (
         <div className="flex min-w-0 flex-col gap-2">
           <div className="flex min-w-0 items-center gap-3">
-            {verdict.shape && <StatusMark shape={verdict.shape} size={32} />}
+            {verdict.shape && <StatusMark shape={verdict.shape} size={32} named />}
             <div className="flex min-w-0 flex-col">
               <p
                 className="text-h2 text-text-primary wrap-anywhere"
@@ -279,7 +288,6 @@ function ClearanceTile(props: LeadProps) {
               </p>
               {verdict.scope && <p className="text-caption text-text-tertiary">{verdict.scope}</p>}
             </div>
-            {verdict.shape && <span className="sr-only">{WORD[verdict.shape]}</span>}
           </div>
           {verdict.notEvaluated && (
             <p className="text-caption text-text-secondary wrap-anywhere">
@@ -296,7 +304,7 @@ function ClearanceTile(props: LeadProps) {
         <div className="flex min-w-0 flex-col gap-1">
           <p className="text-lead text-text-primary text-pretty wrap-anywhere">{verdict.status}</p>
           <p className="text-caption text-text-tertiary">
-            This page could not read a clearance status; its opening sentence is shown.
+            This page could not read a clearance status; the summary is shown instead.
           </p>
         </div>
       )}

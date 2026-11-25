@@ -275,9 +275,9 @@ export function clearance(entry: OutputEntry): Clearance | null {
   const [first] = bottomLine(entry);
   const opening = first?.text ? safeText(first.text) : null;
   if (first && opening) {
-    const [sentence = opening] = opening.split(/(?<=[.!?])\s+/);
+    // The paragraph whole: sentences are never cut ("the U.S. notes" is not a sentence end).
     return {
-      status: sentence,
+      status: opening,
       scope: null,
       notEvaluated: null,
       limit: null,

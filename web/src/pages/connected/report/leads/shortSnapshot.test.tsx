@@ -165,6 +165,90 @@ describe("shortSnapshotData: one rule for a change", () => {
   });
 });
 
+describe("shortSnapshotData: accounting negatives", () => {
+  it("reads (3.3x) as -3.3 with its x: the change is -0.4x and worse, the marks sit at -2.9 and -3.3", () => {
+    const [cover] = figuresOf([
+      ["Interest cover", "(2.9x)", "FY2023", SOURCE],
+      ["Interest cover", "(3.3x)", "FY2024", SOURCE],
+    ]);
+    expect(cover).toMatchObject({
+      current: { text: "(3.3x)", period: "FY2024" },
+      prior: { text: "(2.9x)", period: "FY2023" },
+      change: { text: "-0.4", size: "0.4x", sign: -1, tone: "worse" },
+      marks: { prior: -2.9, current: -3.3, suffix: "x" },
+    });
+  });
+
+  it("reads (1,158) to (1,160) as a change of -2, worse for free cash flow", () => {
+    const [fcf] = figuresOf([
+      ["Free cash flow", "(1,158)", "FY2023", SOURCE],
+      ["Free cash flow", "(1,160)", "FY2024", SOURCE],
+    ]);
+    expect(fcf).toMatchObject({
+      current: { text: "(1,160)" },
+      prior: { text: "(1,158)" },
+      change: { text: "-2", size: "2", sign: -1, tone: "worse" },
+      marks: { prior: -1158, current: -1160 },
+    });
+  });
+
+  it("keeps the positive control: 2.9x to 3.3x is +0.4x, better", () => {
+    const [cover] = figuresOf([
+      ["Interest cover", "2.9x", "FY2023", SOURCE],
+      ["Interest cover", "3.3x", "FY2024", SOURCE],
+    ]);
+    expect(cover?.change).toMatchObject({ text: "0.4", size: "0.4x", sign: 1, tone: "better" });
+  });
+
+  it("reads the suffix variants (3.3)x and (3.3%) the same way, and gives an unknown measure a direction only", () => {
+    const [x, pct, other] = figuresOf([
+      ["Interest cover", "(2.9)x", "FY2023", SOURCE],
+      ["Interest cover", "(3.3)x", "FY2024", SOURCE],
+      ["Net margin", "(2.9%)", "FY2023", SOURCE],
+      ["Net margin", "(3.3%)", "FY2024", SOURCE],
+      ["Other measure", "(5)", "FY2023", SOURCE],
+      ["Other measure", "(9)", "FY2024", SOURCE],
+    ]);
+    expect(x).toMatchObject({
+      change: { text: "-0.4", size: "0.4x", sign: -1, tone: "worse" },
+      marks: { prior: -2.9, current: -3.3, suffix: "x" },
+      current: { text: "(3.3)x" },
+    });
+    expect(pct).toMatchObject({
+      change: { text: "-0.4", size: "0.4%", sign: -1, tone: "none" },
+      marks: { suffix: "%" },
+      current: { text: "(3.3%)" },
+    });
+    expect(other?.change).toMatchObject({ text: "-4", sign: -1, tone: "none" });
+  });
+
+  it("draws the ruler without brackets in its ticks, the change as -0.4x worse, the figures as written", () => {
+    render(
+      <ShortSnapshotLead
+        {...leadProps(
+          snapshot([
+            ["Interest cover", "(2.9x)", "FY2023", SOURCE],
+            ["Interest cover", "(3.3x)", "FY2024", SOURCE],
+            ["Free cash flow", "(1,158)", "FY2023", SOURCE],
+            ["Free cash flow", "(1,160)", "FY2024", SOURCE],
+          ]),
+        )}
+      />,
+    );
+    const cover = document.querySelector('li[data-figure="Interest cover, FY2024"]');
+    expect(cover).toHaveTextContent("(3.3x)");
+    expect(cover?.querySelector('[data-part="change"]')).toHaveTextContent(/^−0\.4x worse$/);
+    expect(cover).toHaveTextContent("from (2.9x) in FY2023");
+    const ticks = [...(cover?.querySelectorAll("svg text") ?? [])].map((t) => t.textContent);
+    expect(ticks.length).toBeGreaterThan(0);
+    for (const tick of ticks) expect(tick).not.toMatch(/[()]/);
+    expect(ticks.every((tick) => /^[-−]/.test(tick))).toBe(true);
+    const fcf = document.querySelector('li[data-figure="Free cash flow, FY2024"]');
+    expect(fcf?.querySelector('[data-part="change"]')).toHaveTextContent(/^−2 worse$/);
+    expect(fcf).toHaveTextContent("(1,160)");
+  });
+});
+
 const cell = (label: string) => document.querySelector(`li[data-figure="${label}"]`);
 
 describe("no source reference in what is drawn", () => {

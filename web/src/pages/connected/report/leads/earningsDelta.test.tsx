@@ -8,13 +8,12 @@ import type { OutputEntry } from "../../publishedReport";
 import { entry, section, table } from "../overview/rows.fixture";
 import { EarningsDeltaLead } from "./earningsDelta";
 import {
-  bridge,
+  bridges,
   earningsDelta,
   FEW_PERIODS,
   MIXED_PERIODS,
   NO_PERCENT,
   NO_UNIT,
-  TWICE_BRIDGE,
   TWICE_EARNINGS,
   TWICE_RESULTS,
 } from "./earningsDeltaData";
@@ -128,9 +127,10 @@ describe("the prior and current results from the retained earnings table", () =>
   });
   it("splits rows of very different size into small multiples, each on its own scale", () => {
     if (movers.kind !== "ready") throw new Error("expected movers");
-    expect(movers.groups.map((one) => one.band)).toEqual([
-      { lo: 3, hi: 3 },
-      { lo: 2, hi: 2 },
+    // Each group's head is the scale actually drawn: -158 to 7,940 on ticks of 2,000, then -431 to 980.
+    expect(movers.groups.map((one) => one.axis)).toEqual([
+      { from: "\u22122,000", to: "8,000" },
+      { from: "\u2212500", to: "1,000" },
     ]);
   });
   it("lists every pair in the handoff's own order, not ranked by the size of its change", () => {
@@ -215,7 +215,7 @@ describe("the prior and current results from the retained earnings table", () =>
       kind: "gap",
       reason: "This page could not read the margin and KPI changes.",
     });
-    expect(empty.bridge).toBeNull();
+    expect(empty.bridges).toEqual([]);
   });
 });
 
@@ -321,7 +321,7 @@ describe("pairs from the chart tables", () => {
     expect(money?.rows.map((pair) => pair.label)).toEqual(["Revenue", "Adjusted EBITDA"]);
     expect(small?.rows.map((pair) => pair.label)).toEqual(["Flat measure"]);
     expect(money?.fromZero).toBe(true);
-    expect(times?.band).toBeNull();
+    expect(times?.axis).toEqual({ from: "0", to: "4" });
     expect(times?.rows[0]?.change).toMatchObject({ text: "+0.58x", basis: "computed", sign: 1 });
     expect(times?.rows[0]?.tone).toBe("better");
   });
@@ -497,7 +497,7 @@ describe("pairs from the chart tables", () => {
       "better",
     ]);
   });
-  it("splits a unit into at most four small multiples, by order of magnitude, groups in order of first appearance", () => {
+  it("splits a unit into at most four small multiples incl. the one with no figure above zero, each headed by its axis", () => {
     const row = (label: string, value: string) => [
       label,
       "FY2023",
@@ -521,11 +521,31 @@ describe("pairs from the chart tables", () => {
       ),
     );
     if (movers.kind !== "ready") throw new Error("expected movers");
-    expect(movers.groups.map((one) => [one.band, one.drawn.map((pair) => pair.label)])).toEqual([
-      [{ lo: 0, hi: 1 }, ["a", "b", "f", "g"]],
-      [{ lo: 2, hi: 2 }, ["c"]],
-      [{ lo: 3, hi: 3 }, ["d"]],
-      [{ lo: 4, hi: 4 }, ["e"]],
+    expect(
+      movers.groups.map((one) => [one.axis, one.noFigure, one.drawn.map((pair) => pair.label)]),
+    ).toEqual([
+      [{ from: "0", to: "500" }, false, ["a", "b", "c", "f"]],
+      [{ from: "0", to: "5,000" }, false, ["d"]],
+      [{ from: "0", to: "50,000" }, false, ["e"]],
+      [null, true, ["g"]],
+    ]);
+  });
+  it("puts a pair with no non-zero figure in its own group, whatever else it states", () => {
+    const { movers } = earningsDelta(
+      delta(
+        results([
+          ["Both zero", "FY2023", "0", "FY2024", "0", "US$m", "x"],
+          ["Zero and a gap", "FY2023", "0", "FY2024", "Not supplied: not split", "US$m", "x"],
+          ["Loss", "FY2023", "-400", "FY2024", "-100", "US$m", "x"],
+        ]),
+      ),
+    );
+    if (movers.kind !== "ready") throw new Error("expected movers");
+    expect(
+      movers.groups.map((one) => [one.axis, one.noFigure, one.drawn.map((pair) => pair.label)]),
+    ).toEqual([
+      [{ from: "\u2212500", to: "0" }, false, ["Loss"]],
+      [null, true, ["Both zero", "Zero and a gap"]],
     ]);
   });
   it("keeps a unit whose rows are all one size as one group, and units apart", () => {
@@ -539,9 +559,9 @@ describe("pairs from the chart tables", () => {
       ),
     );
     if (movers.kind !== "ready") throw new Error("expected movers");
-    expect(movers.groups.map((one) => [one.unit, one.band, one.drawn.length])).toEqual([
-      ["US$m", null, 2],
-      ["EURm", null, 1],
+    expect(movers.groups.map((one) => [one.unit, one.axis !== null, one.drawn.length])).toEqual([
+      ["US$m", true, 2],
+      ["EURm", true, 1],
     ]);
   });
   it("is a gap when a required column is missing, and when the table is empty", () => {
@@ -576,8 +596,9 @@ describe("the variance bridge", () => {
     ["Revenue FY2024", "115", "US$m", "Reported."],
   ];
   it("is drawn when the opening and its changes add up to the closing", () => {
-    const result = bridge(delta(steps(GOOD)));
+    const [result] = bridges(delta(steps(GOOD)));
     if (result?.kind !== "bridge") throw new Error("expected a bridge");
+    expect(result.title).toBe("Earnings bridge");
     expect(result.unit).toBe("US$m");
     expect(result.steps.map((step) => [step.role, step.label, step.value])).toEqual([
       ["opening", "Revenue FY2023", 100],
@@ -587,7 +608,7 @@ describe("the variance bridge", () => {
     ]);
   });
   it("is not drawn as a bridge when the steps do not add up, and says why", () => {
-    const result = bridge(
+    const [result] = bridges(
       delta(steps([...GOOD.slice(0, 3), ["Revenue FY2024", "116", "US$m", "x"]])),
     );
     expect(result).toMatchObject({
@@ -597,7 +618,7 @@ describe("the variance bridge", () => {
     });
   });
   it("says a gap step is not supplied, with its stated reason, and does not call that a failure to add up", () => {
-    const result = bridge(
+    const [result] = bridges(
       delta(
         steps([
           GOOD[0] ?? [],
@@ -613,7 +634,7 @@ describe("the variance bridge", () => {
     });
   });
   it("screens a gap reason that names a register", () => {
-    const result = bridge(
+    const [result] = bridges(
       delta(
         steps([
           GOOD[0] ?? [],
@@ -627,21 +648,29 @@ describe("the variance bridge", () => {
         "This page could not draw the variance bridge because Disposals is not supplied (Detail is in Evidence.).",
     });
   });
-  it("is not a bridge with a gap amount, with two units, with no changes, or when two tables compete", () => {
+  it("is not a bridge with a gap amount, with two units or with no changes", () => {
+    const only = (rows: string[][]) => bridges(delta(steps(rows)))[0];
     const gap = [GOOD[0] ?? [], ["Organic", "Not supplied: x", "US$m", "x"], GOOD[3] ?? []];
-    expect(bridge(delta(steps(gap)))).toMatchObject({ kind: "unreconciled" });
+    expect(only(gap)).toMatchObject({ kind: "unreconciled" });
     const units = GOOD.map((row, at) => (at === 1 ? [row[0] ?? "", "20", "EURm", "x"] : row));
-    expect(bridge(delta(steps(units)))).toMatchObject({ kind: "unreconciled" });
-    expect(bridge(delta(steps([GOOD[0] ?? [], GOOD[3] ?? []])))).toMatchObject({
-      kind: "unreconciled",
-    });
-    expect(bridge(delta(steps(GOOD), steps(GOOD, "Chart data: other")))).toMatchObject({
-      kind: "unreconciled",
-      message: TWICE_BRIDGE,
-    });
+    expect(only(units)).toMatchObject({ kind: "unreconciled" });
+    expect(only([GOOD[0] ?? [], GOOD[3] ?? []])).toMatchObject({ kind: "unreconciled" });
   });
-  it("is absent without a step table", () => {
-    expect(bridge(delta(results(MONEY)))).toBeNull();
+  it("is one bridge per step table, each under its own title, each with its own verdict", () => {
+    const [ebitda, revenue] = bridges(
+      delta(
+        steps(GOOD, "Chart data: EBITDA variance"),
+        steps(
+          [GOOD[0] ?? [], ["Disposals", "Not supplied: not split", "US$m", "x"], GOOD[3] ?? []],
+          "Chart data: revenue variance",
+        ),
+      ),
+    );
+    expect(ebitda).toMatchObject({ kind: "bridge", title: "EBITDA variance" });
+    expect(revenue).toMatchObject({ kind: "unreconciled", title: "Revenue variance" });
+  });
+  it("is none without a step table", () => {
+    expect(bridges(delta(results(MONEY)))).toEqual([]);
   });
 });
 
