@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "sxc-1514705-2026-11-18-credit_snapshot-host",
+    "issuer_id": "sxc-1514705",
+    "issuer_name": "SunCoke Energy, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_sxc.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_sxc.htm.jsonl",
+      "sha256": "6365c758e01fa29f9d4774baa663b7e8e671b6547ea2b6509ac96ead8f5555df"
+    },
+    "10-K_2025-12-31_sxc.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_sxc.htm.jsonl",
+      "sha256": "07fa0b81b8936575d006a82ede2d89cd0c073be43cf00146b6389cbb0155c233"
+    },
+    "10-Q_2026-03-31_sxc.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_sxc.htm.jsonl",
+      "sha256": "2da2131109a24cf6bc47b9d376656fe2357c5b2064aece518d1c2ef564d20bb0"
+    },
+    "10-Q_2026-06-30_sxc.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_sxc.htm.jsonl",
+      "sha256": "feb7574febb560531bb3aa80135245b7656b2c50e0e6787e7162ad869baa5982"
+    },
+    "10-Q_2026-09-30_sxc.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_sxc.htm.jsonl",
+      "sha256": "1c37d11c0726a5258ea72e306e135517ec0bd3129912927942ed04d12d47489b"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1514705-suncoke-energy-inc.json",
+      "sha256": "c62835564cfc163a2a72670a66b40936864bfe9d945a28dfa5b11c57439316a3"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "201187442e0341fad242bd51e04253f6a87fe779b15c1fe08369d2318afd0d8d"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "3449f7394fc4680d649a88a31f190a3257bf733cdf12db3b1e6fcf211f643dfb"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "702599266f4ae8f6e2411753e910e18cb9ae2d82b8ef42f404ceddf40ae19ea2"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "c4b8236d2c58b03dc456fb70f2c4f87818c9225bc159b558db63aab32486b6b0"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for SunCoke Energy, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "SunCoke Energy, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

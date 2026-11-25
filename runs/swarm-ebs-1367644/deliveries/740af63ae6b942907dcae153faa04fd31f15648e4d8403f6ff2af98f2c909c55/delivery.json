@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Emergent BioSolutions Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "4b164824bf0d2d60e52045c62d05847d930adf07da49ee025465f22536e8fcbf",
+    "CP-1.md": "ef88d80e1f2275ec342737c69715ecd513db865a94154fb10187f8e2f05ef1b6",
+    "CP-1A.md": "06fbf5171d18f9e0d9d80a38555d4a143fb05685ca7d321cdd62e1825f404186",
+    "CP-2.md": "ac974b9682c674c580810101cc97e56ecb54c133893eadce3336ac9bf18a0f63",
+    "coverage.json": "63c851f4dcf1583ac5833537e72402c540b3917ea841a0b5fd2eb0c33df2b056",
+    "view.json": "dfd6aee4192b3aa0291f0ab0889599fdc23c23cc44e15f818750088c0a47a6ce",
+    "report-view.json": "85c5bb49b6d7239499187937f798c0eabd4881fff582e311d308e42fa60b86d8"
+  }
+}
