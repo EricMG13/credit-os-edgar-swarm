@@ -4001,11 +4001,12 @@ describe("connected run start: the review sheet shows every input Submit sends",
     expect(shown(more, "Prior period")).toEqual(["Not given"]);
   });
 
-  it("V8 shows the legal documents and whether each attachment is among the documents", async () => {
+  it("V8 shows the legal documents and, for each attachment among the documents, its file", async () => {
     const { sheet } = await sheetAfter({ advanced: true, more: chooseAttachments });
     const more = part(sheet, "Context");
     expect(shown(more, "Legal documents")).toEqual(["Draft agreement"]);
-    expect(shown(more, "Management EBITDA bridge")).toEqual(["Among the documents"]);
+    // The page holds the file the analyst chose for the box, and names it (coordinator, round 3).
+    expect(shown(more, "Management EBITDA bridge")).toEqual([file.name]);
     expect(shown(more, "Portfolio workbook")).toEqual(["Not given"]);
     expect(shown(more, "Prior decision record")).toEqual(["Not given"]);
   });

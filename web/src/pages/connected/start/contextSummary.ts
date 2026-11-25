@@ -102,9 +102,11 @@ function sentRows(view: RowsView, kind: RowKind) {
 
 export function researchSummary(view: RowsView & Pick<IntakeView, "analystNote">) {
   const note = view.analystNote.trim() !== "";
-  const questions = sentRows(view, "research_questions");
-  if (!note && !questions) return NOT_GIVEN;
-  return line([note ? "note given" : "no note", count(questions, "question", "questions")]);
+  if (!note && !view.rowsOf("research_questions").length) return NOT_GIVEN;
+  return line([
+    note ? "note given" : "no note",
+    rowsPart(view, "research_questions", "question", "questions"),
+  ]);
 }
 
 function periodsPhrase(current: string, prior: string, required: boolean) {
@@ -167,16 +169,42 @@ export function filesSummary(view: FilesView, roles: readonly FileRole[]) {
   return chosen.length ? chosen.join(" · ") : "None chosen";
 }
 
+/**
+ * Rows drawn but not sent: those nothing was typed into, and those holding only new-issue terms
+ * on a run that is not a new issue. The line says each, so a drawn row never reads as nothing.
+ */
+function unsentRows(view: RowsView, kind: RowKind) {
+  const rows = view.rowsOf(kind);
+  const blank = rows.filter((row) => sendableRows(kind, [row], true).length === 0).length;
+  return { blank, newIssueOnly: rows.length - sentRows(view, kind) - blank };
+}
+
+const rowWord = (n: number) => (n === 1 ? "row" : "rows");
+
+/** "1 facility"; rows not sent are said after it: "1 facility row, not filled". */
+function rowsPart(view: RowsView, kind: RowKind, one: string, many: string) {
+  const sent = sentRows(view, kind);
+  const { blank, newIssueOnly } = unsentRows(view, kind);
+  const unsent = [
+    blank > 0 && `${String(blank)} ${one} ${rowWord(blank)}, not filled`,
+    newIssueOnly > 0 &&
+      `${String(newIssueOnly)} ${one} ${rowWord(newIssueOnly)} with new-issue terms only, not sent`,
+  ].filter((part) => part !== false);
+  return [...(sent || !unsent.length ? [count(sent, one, many)] : []), ...unsent].join(" · ");
+}
+
 export function dealSummary(view: RowsView) {
-  const ratings = sentRows(view, "ratings");
-  const quotes = sentRows(view, "quotes");
+  const kinds = ["ratings", "quotes", "deal_terms"] as const;
   const facilities = sentRows(view, "deal_terms");
   const required = view.run.run_type === "primary" && facilities === 0;
-  if (!ratings && !quotes && !facilities && !required) return NOT_GIVEN;
+  const drawn = kinds.some((kind) => view.rowsOf(kind).length > 0);
+  if (!drawn && !required) return NOT_GIVEN;
   return line([
-    count(ratings, "rating", "ratings"),
-    count(quotes, "quote", "quotes"),
-    required ? "no facilities, at least one required" : count(facilities, "facility", "facilities"),
+    rowsPart(view, "ratings", "rating", "ratings"),
+    rowsPart(view, "quotes", "quote", "quotes"),
+    required && view.rowsOf("deal_terms").length === 0
+      ? "no facilities, at least one required"
+      : rowsPart(view, "deal_terms", "facility", "facilities"),
   ]);
 }
 

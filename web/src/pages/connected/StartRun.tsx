@@ -933,7 +933,12 @@ function IntakeForm({
       answers,
       summary,
       cap: shownCap,
-      attachmentNames: { portfolio_workbook: attachments.portfolio_workbook },
+      // The file named in each box, for the review to show: shown only, never sent.
+      attachmentNames: {
+        management_bridge: attachments.management_bridge,
+        portfolio_workbook: attachments.portfolio_workbook,
+        prior_case: attachments.prior_case,
+      },
     });
     setLastReview({
       pathway: answers.context.run.pathway,

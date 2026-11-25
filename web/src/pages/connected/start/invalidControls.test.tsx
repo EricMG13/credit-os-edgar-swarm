@@ -150,4 +150,61 @@ describe("a control the browser finds invalid", () => {
     expect(cutoff.closest("details")).toHaveAttribute("open");
     expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/summary"))).toBe(false);
   });
+
+  it.each([
+    ["Facilities and deal terms", "Add facility", "Maturity"],
+    ["Ratings", "Add rating", "As-of"],
+  ])(
+    "opens the closed section and the row of an invalid %s date the page has no words for",
+    async (region, add, label) => {
+      const fetchMock = await documents();
+      fireEvent.click(screen.getByRole("button", { name: "Continue to purpose" }));
+      await screen.findByRole("heading", { name: "Purpose" });
+      fireEvent.click(screen.getByRole("button", { name: "Continue to context" }));
+      await screen.findByRole("heading", { name: "More context" });
+      const rows = within(screen.getByRole("region", { name: region }));
+      fireEvent.click(rows.getByRole("button", { name: add }));
+      const date = rows.getByLabelText(label);
+      const row = date.closest("details") as HTMLDetailsElement;
+      const section = row.parentElement?.closest("details") as HTMLDetailsElement;
+      row.open = true;
+      section.open = false;
+      // The browser's own bubble stands for a control the page has no words for: the event is
+      // not cancelled, and every closed disclosure that holds the control is opened for it.
+      expect(date.dispatchEvent(new Event("invalid", { cancelable: true }))).toBe(true);
+      expect(section).toHaveAttribute("open");
+      expect(row).toHaveAttribute("open");
+      expect(fetchMock.mock.calls.some(([path]) => path.endsWith("/summary"))).toBe(false);
+    },
+  );
+
+  it("cancels a double click's second press on a section heading, mousedown and click", async () => {
+    await documents();
+    fireEvent.click(screen.getByRole("button", { name: "Continue to purpose" }));
+    await screen.findByRole("heading", { name: "Purpose" });
+    chooseControl("Run form level", "advanced");
+    fireEvent.click(screen.getByRole("button", { name: "Continue to context" }));
+    await screen.findByRole("heading", { name: "More context" });
+    const turns = screen.getByLabelText("Turns per module");
+    fireEvent.change(turns, { target: { value: "0" } });
+    turns.dispatchEvent(new Event("invalid", { cancelable: true }));
+    await waitFor(() => {
+      expect(turns).toHaveFocus();
+    });
+    const heading = turns.closest("details")?.querySelector("summary") as HTMLElement;
+    // fireEvent returns false when the event's default was prevented.
+    expect(fireEvent.mouseDown(heading, { detail: 2 })).toBe(false);
+    expect(fireEvent.click(heading, { detail: 2 })).toBe(false);
+    expect(turns).toHaveFocus();
+  });
+
+  it("marks each field once when a double click checks the step twice in one task", async () => {
+    await documents({ issuer: "" });
+    for (const label of ["Issuer name", "Issuer ID", "Issuer name", "Issuer ID"]) {
+      screen.getByLabelText(label).dispatchEvent(new Event("invalid", { cancelable: true }));
+      await Promise.resolve();
+    }
+    expect(await screen.findByRole("button", { name: /^2 problems to fix: / })).toBeInTheDocument();
+    expect(screen.getAllByRole("alert")).toHaveLength(2);
+  });
 });

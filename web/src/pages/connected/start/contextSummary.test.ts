@@ -73,19 +73,21 @@ describe("the one-line summaries", () => {
     expect(count(12, "quote", "quotes")).toBe("12 quotes");
   });
 
-  it("says the note and the questions typed, not a row left blank", () => {
+  it("says the note and the questions typed, and a row left blank as not filled", () => {
     const note = (analystNote: string, rows: Row[]) => ({
       analystNote,
       ...rowsView({ research_questions: rows }),
     });
     expect(researchSummary(note("", []))).toBe("Not given");
-    expect(researchSummary(note("  \n ", [emptyRow("research_questions")]))).toBe("Not given");
+    expect(researchSummary(note("  \n ", [emptyRow("research_questions")]))).toBe(
+      "No note · 1 question row, not filled",
+    );
     expect(researchSummary(note("Check 2028.", []))).toBe("Note given · no questions");
     expect(
       researchSummary(
         note("", [{ text: "Run-rate savings?", focus_module: "" }, emptyRow("research_questions")]),
       ),
-    ).toBe("No note · 1 question");
+    ).toBe("No note · 1 question · 1 question row, not filled");
     expect(
       researchSummary(
         note("x", [
@@ -172,13 +174,16 @@ describe("the one-line summaries", () => {
     ).toBe("None chosen");
   });
 
-  it("counts the ratings, quotes and facilities that would be sent", () => {
+  it("counts the ratings, quotes and facilities that would be sent, and says rows not filled", () => {
     expect(dealSummary(rowsView({}))).toBe("Not given");
     expect(
       dealSummary(
         rowsView({ ratings: [{ agency: "Moody's", scope: "issuer" }, emptyRow("ratings")] }),
       ),
-    ).toBe("1 rating · no quotes · no facilities");
+    ).toBe("1 rating · 1 rating row, not filled · no quotes · no facilities");
+    expect(dealSummary(rowsView({ deal_terms: [emptyRow("deal_terms")] }))).toBe(
+      "No ratings · no quotes · 1 facility row, not filled",
+    );
     expect(
       dealSummary(
         rowsView({
@@ -192,9 +197,11 @@ describe("the one-line summaries", () => {
     ).toBe("No ratings · 2 quotes · 1 facility");
   });
 
-  it("does not count a facility holding only new-issue terms on a secondary run", () => {
+  it("says a facility holding only new-issue terms on a secondary run is not sent", () => {
     const facility = { ...emptyRow("deal_terms"), tenor_years: "7" };
-    expect(dealSummary(rowsView({ deal_terms: [facility] }))).toBe("Not given");
+    expect(dealSummary(rowsView({ deal_terms: [facility] }))).toBe(
+      "No ratings · no quotes · 1 facility row with new-issue terms only, not sent",
+    );
     expect(dealSummary(rowsView({ deal_terms: [facility] }, { run_type: "primary" }))).toBe(
       "No ratings · no quotes · 1 facility",
     );

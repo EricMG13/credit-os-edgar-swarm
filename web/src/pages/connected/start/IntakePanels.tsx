@@ -29,7 +29,7 @@ import { DocumentFields } from "./DocumentsStep";
 import { PurposeFields } from "./PurposeStep";
 import { ContextFields } from "./ContextStep";
 import { ReviewConfirmation } from "./ReviewStep";
-import { HEADING_FOCUS, focusStep, invalidMessage, type FieldKey } from "./fields";
+import { HEADING_FOCUS, focusStep, invalidMessage, openHolders, type FieldKey } from "./fields";
 
 function StepFields({
   view,
@@ -250,6 +250,7 @@ function InputStepForm({
       <form
         onInvalidCapture={invalid.onInvalid}
         onClickCapture={invalid.onClick}
+        onMouseDownCapture={invalid.onMouseDown}
         onSubmit={(event) => {
           onAdvance(event);
         }}
@@ -352,10 +353,7 @@ function useInvalidControls(
       const worded = Boolean(field && message);
       check.current = { first: control, marks: [], worded };
       checkedAt.current = Date.now();
-      if (!worded) {
-        const section = control.closest("details");
-        if (section && !section.open) section.open = true;
-      }
+      if (!worded) openHolders(control);
       setTimeout(() => {
         const done = check.current;
         check.current = undefined;
@@ -364,12 +362,16 @@ function useInvalidControls(
     }
     if (!check.current.worded) return;
     event.preventDefault();
-    if (field && message) check.current.marks.push([field, message]);
+    // One mark per field: a second check in the same task (a double click) adds no repeat.
+    if (field && message && !check.current.marks.some(([marked]) => marked === field))
+      check.current.marks.push([field, message]);
   };
-  const onClick = (event: MouseEvent<HTMLFormElement>) => {
+  // The second press of a double click, landing on a section heading as the page moves: its
+  // mousedown would move the focus there and its click would close the section.
+  const onSecondPress = (event: MouseEvent<HTMLFormElement>) => {
     const recent = Date.now() - checkedAt.current < 600;
     if (recent && event.detail > 1 && (event.target as Element).closest("summary"))
       event.preventDefault();
   };
-  return { onInvalid, onClick };
+  return { onInvalid, onClick: onSecondPress, onMouseDown: onSecondPress };
 }

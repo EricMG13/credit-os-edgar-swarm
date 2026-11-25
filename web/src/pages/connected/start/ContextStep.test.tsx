@@ -168,7 +168,7 @@ describe("the More context step sections", () => {
     });
     const questions = within(screen.getByRole("region", { name: "Research questions" }));
     fireEvent.click(questions.getByRole("button", { name: "Add research question" }));
-    expect(said("For the research")).toBe("Note given · no questions");
+    expect(said("For the research")).toBe("Note given · 1 question row, not filled");
     fireEvent.change(questions.getByLabelText(/^Question/), {
       target: { value: "How much of EBITDA is cost savings?" },
     });

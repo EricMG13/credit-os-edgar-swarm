@@ -114,11 +114,20 @@ export function FieldMessage({ problem, field }: { problem?: ShownProblem; field
   );
 }
 
+/** Opens every closed disclosure that holds `element`: a row inside a section opens both. */
+export function openHolders(element: Element) {
+  for (
+    let holder = element.closest("details");
+    holder;
+    holder = holder.parentElement?.closest("details") ?? null
+  )
+    holder.open = true;
+}
+
 /** Opens what holds the control, then focuses and scrolls to it. */
 export function focusField(field: FieldKey) {
   const control = document.querySelector<HTMLElement>(`[data-field="${field}"]`);
-  const holder = control?.closest("details");
-  if (holder) holder.open = true;
+  if (control) openHolders(control);
   control?.focus();
   control?.scrollIntoView({ block: "center" });
 }
