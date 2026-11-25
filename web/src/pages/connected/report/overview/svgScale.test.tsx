@@ -21,9 +21,9 @@ it("keeps chart text at least 12 px on screen when its figure is drawn smaller t
   restore();
 });
 
-it("leaves the size as asked, at least 12, where the figure is drawn at or above its viewBox", () => {
+it("keeps chart text at its size on screen when its figure is drawn larger than its viewBox", () => {
   const restore = measuredAt(816);
   const { container } = render(<Figure view={408} />);
-  expect(Number(container.querySelector("text")?.getAttribute("font-size"))).toBe(12);
+  expect(Number(container.querySelector("text")?.getAttribute("font-size"))).toBe(6);
   restore();
 });

@@ -5,9 +5,9 @@ export const LEAST_TEXT = 12;
 
 /**
  * A figure drawn in a fixed viewBox scales with its frame, and so does its text. This measures the
- * rendered width against `viewWidth` and gives font sizes in user units that draw at least the
- * asked size on screen: `font(12)` is 12 px whether the figure is drawn at full or two-thirds size.
- * Before layout, and where the figure is drawn larger than its viewBox, the size is as asked.
+ * rendered width against `viewWidth` and gives font sizes in user units that draw at the asked
+ * size on screen (never under 12 px): `font(12)` is 12 px whether the figure is drawn at two-thirds
+ * or twice its viewBox. Before layout the size is as asked.
  */
 export function useSvgScale(viewWidth: number) {
   const [node, setNode] = useState<SVGSVGElement | null>(null);
@@ -23,6 +23,6 @@ export function useSvgScale(viewWidth: number) {
       observer.disconnect();
     };
   }, [node, viewWidth]);
-  const font = (px: number = LEAST_TEXT) => Math.max(px, LEAST_TEXT) / Math.min(scale, 1);
+  const font = (px: number = LEAST_TEXT) => Math.max(px, LEAST_TEXT) / scale;
   return { ref: setNode, font, scale };
 }
