@@ -1,7 +1,7 @@
 import { figureSource } from "../../overview/figureData";
 import { GapTile, LeadFrame } from "../kit/LeadFrame";
 import { UnreadFigures, chartTitles } from "../kit/UnreadFigures";
-import type { LeadProps } from "../types";
+import type { LeadKind, LeadProps } from "../types";
 import { CashLadderTile } from "./CashLadder";
 import { DebtStackTile } from "./DebtStack";
 import { EarningsDebtTile } from "./EarningsDebt";
@@ -88,4 +88,4 @@ export function FoundationLead(props: LeadProps) {
  * The kinds the lead draws itself, so the module frame does not draw them again: the lead draws
  * the maturity wall (the module's typed figure) as its own tile.
  */
-FoundationLead.draws = ["figures"] as const satisfies readonly ("figures" | "events" | "maps")[];
+FoundationLead.draws = ["figures"] as const satisfies readonly LeadKind[];

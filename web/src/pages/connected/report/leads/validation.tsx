@@ -4,7 +4,7 @@ import { GapNote } from "../overview/Tile";
 import { FigureTile, GapTile, LeadFrame } from "./kit/LeadFrame";
 import { svgId } from "./kit/marks/text";
 import { IN_EVIDENCE } from "./kit/reader";
-import type { LeadProps } from "./types";
+import type { LeadKind, LeadProps } from "./types";
 import {
   clearance,
   issues,
@@ -402,8 +402,6 @@ function RemediationTile(props: LeadProps) {
   );
 }
 
-type Draw = "figures" | "events" | "maps";
-
 /** CP-5: the clearance status, the issues listed by severity word, the module's remediation actions. */
 export function ClearanceLead(props: LeadProps) {
   return (
@@ -419,4 +417,4 @@ export function ClearanceLead(props: LeadProps) {
 }
 
 /** This lead draws no typed figure, event lane or map: the module frame keeps drawing them all. */
-ClearanceLead.draws = [] as readonly Draw[];
+ClearanceLead.draws = [] as readonly LeadKind[];

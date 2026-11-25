@@ -16,7 +16,7 @@ import {
   type Limit,
   type LedgerRow,
 } from "./committeeData";
-import type { LeadProps } from "./types";
+import type { LeadKind, LeadProps } from "./types";
 import { IN_EVIDENCE } from "./kit/reader";
 import { saidText, type Said } from "./validationData";
 
@@ -456,8 +456,6 @@ function WatchTile(props: LeadProps) {
   );
 }
 
-type Draw = "figures" | "events" | "maps";
-
 /**
  * CP-6: the stance as written, the challenged points, the portfolio limits and the decision-and-
  * watch events. At 1440 the stance and the limits stack in the left column beside the ledger, the
@@ -499,4 +497,4 @@ export function CommitteeLead(props: LeadProps) {
 }
 
 /** This lead draws the portfolio-limits figure and the module's watch events itself. */
-CommitteeLead.draws = ["figures", "events"] as readonly Draw[];
+CommitteeLead.draws = ["figures", "events"] as readonly LeadKind[];
