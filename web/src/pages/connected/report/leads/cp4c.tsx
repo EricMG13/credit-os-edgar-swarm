@@ -1,33 +1,58 @@
-import { Fragment, useState } from "react";
+import { Fragment, useState, useSyncExternalStore } from "react";
 import { Segmented } from "@/components/kit/Segmented";
 import { blocked, unitLabel, withUnit } from "../../publishedReport";
 import { ticks, word, type SourceTable } from "../../visuals/visualData";
 import { basisNotes, readCell, type Cell } from "../overview/figureData";
 import { Key } from "../overview/figureParts";
-import { Bento, GapNote, Tile } from "../overview/Tile";
-import { Bridge, bridgeOf, stepTable } from "./bridge";
-import { BarLine, spoken } from "./cp3c";
+import { Bento, Tile } from "../overview/Tile";
+import { Bridge, bridgeOf } from "./bridge";
+import { spoken } from "./cp3c";
 import { withDraws } from "./draws";
-import { LeadFigure, LeadGap, Trace } from "./parts";
+import {
+  BarRow,
+  CompactGap,
+  GapCell,
+  KeyValues,
+  LeadFigure,
+  LeadGap,
+  statedGap,
+  TableRegion,
+  Trace,
+} from "./parts";
 import {
   chartOf,
-  readerCellOf,
   chartsStartingWith,
   columnOf,
   leadHref,
   readerCell,
+  readerCellOf,
   registerTable,
   rowName,
-  WITHHELD,
-  type Chart,
 } from "./read";
 import type { LeadProps } from "./types";
+import { ChartGap, writtenTable } from "./written";
 
 type Href = (line?: number) => string;
 type Entry = LeadProps["entry"];
 
 const TITLE = "Value allocation";
 const RECOVERY = "Recovery by class";
+const FULCRUM = "This page could not read a fulcrum class from the handoff.";
+
+const WIDE = "(min-width: 640px)";
+
+/** Whether the screen is wide enough for both switches on the tile's control row. */
+function useWide() {
+  return useSyncExternalStore(
+    (change) => {
+      const query = typeof window.matchMedia === "function" ? window.matchMedia(WIDE) : null;
+      query?.addEventListener("change", change);
+      return () => query?.removeEventListener("change", change);
+    },
+    () => (typeof window.matchMedia === "function" ? window.matchMedia(WIDE).matches : true),
+    () => true,
+  );
+}
 
 /** "Value allocation — scenario 1" → "Scenario 1"; the title itself when it names no scenario. */
 function scenarioName(title: string) {
@@ -35,33 +60,10 @@ function scenarioName(title: string) {
   return rest ? rest.charAt(0).toUpperCase() + rest.slice(1) : title;
 }
 
-function AllocationFigure({ title, chart }: { title: string; chart: Chart }) {
-  const read = bridgeOf(chart);
-  if (!read)
-    return (
-      <GapNote>
-        {chart.state === "gap" ? chart.reason : "The module wrote no value allocation table."}
-      </GapNote>
-    );
-  const { steps, unit, why } = read;
-  if (why)
-    return (
-      <p role="note" className="text-small text-text-secondary">
-        {why}
-      </p>
-    );
-  return (
-    <Bridge
-      steps={steps}
-      unit={unit}
-      label={`${title} in ${unitLabel(unit)}: ${steps.map((step) => `${step.label} ${step.cell.text}`).join(", ")}.`}
-    />
-  );
-}
-
 function ValueAllocation({ entry, href }: { entry: Entry; href: Href }) {
   const scenarios = chartsStartingWith(entry, TITLE);
   const [chosen, choose] = useState(scenarios[0]?.title ?? "");
+  const wide = useWide();
   const current = scenarios.find((item) => item.title === chosen) ?? scenarios[0];
   if (!current)
     return (
@@ -69,53 +71,78 @@ function ValueAllocation({ entry, href }: { entry: Entry; href: Href }) {
         span={8}
         label={TITLE}
         title={TITLE}
-        reason="The module wrote no value allocation table."
+        reason="This page could not read a value allocation table from the handoff."
       />
     );
   const { chart } = current;
   const read = bridgeOf(chart);
-  const first = read?.steps[0];
-  const last = read?.steps.at(-1);
-  const reading =
-    read && !read.why && first && last
-      ? `${first.label} ${first.cell.text} to ${last.label.toLowerCase()} ${last.cell.text}`
-      : TITLE;
-  const table = read ? stepTable(read.steps, href) : undefined;
+  const table = read ? writtenTable(read.table, href) : undefined;
+  const scenario = scenarios.length > 1 && (
+    <Segmented
+      label="Scenario"
+      segments={scenarios.map((item) => ({ key: item.title, label: scenarioName(item.title) }))}
+      current={current.title}
+      onSelect={choose}
+    />
+  );
+  const trace = read && <Trace href={href(read.table.line)} name={current.title} />;
   return (
     <LeadFigure
       span={8}
       label={TITLE}
-      kicker={scenarios.length > 1 ? TITLE : current.title}
-      title={reading}
+      kicker={current.title}
+      title={TITLE}
       basis={read?.unit ? unitLabel(read.unit) : undefined}
       legend={
-        <>
-          {scenarios.length > 1 && (
-            <Segmented
-              label="Scenario"
-              segments={scenarios.map((item) => ({
-                key: item.title,
-                label: scenarioName(item.title),
-              }))}
-              current={current.title}
-              onSelect={choose}
+        ((!wide && scenario) || (read && !read.why)) && (
+          <>
+            {!wide && scenario}
+            {read && !read.why && (
+              <>
+                <Key tone="primary">Value and residual</Key>
+                <Key tone="secondary">Cost or distribution</Key>
+              </>
+            )}
+          </>
+        )
+      }
+      // The scenario switch sits in the tile's one control row, beside Figure / Table; on a phone,
+      // where the row cannot hold both, it goes under the title.
+      trace={
+        ((wide && scenario) || trace) && (
+          <>
+            {wide && scenario}
+            {trace}
+          </>
+        )
+      }
+      figure={
+        <div className="flex min-w-0 flex-col gap-3">
+          {!read ? (
+            <CompactGap>
+              {chart.state === "gap"
+                ? chart.reason
+                : "This page could not read a value allocation table from the handoff."}
+            </CompactGap>
+          ) : read.why ? (
+            <>
+              <p role="note" className="text-small text-text-secondary">
+                {read.why}
+              </p>
+              {table && <TableRegion label={TITLE} table={table} />}
+            </>
+          ) : (
+            <Bridge
+              steps={read.steps}
+              unit={read.unit}
+              label={`${current.title} in ${unitLabel(read.unit)}: ${read.steps.map((step) => `${step.label} ${step.cell.text}`).join(", ")}.`}
             />
           )}
-          {read && !read.why && (
-            <>
-              <Key tone="primary">Value and residual</Key>
-              <Key tone="secondary">Cost or distribution</Key>
-            </>
-          )}
-        </>
+          <CompactGap>{FULCRUM}</CompactGap>
+        </div>
       }
-      trace={read ? <Trace href={href(read.table.line)} name={current.title} /> : undefined}
-      figure={<AllocationFigure title={current.title} chart={chart} />}
       table={table}
-      notes={[
-        "The handoff does not state the fulcrum class.",
-        ...(read ? basisNotes(read.table) : []),
-      ]}
+      notes={read ? basisNotes(read.table) : []}
     />
   );
 }
@@ -144,31 +171,71 @@ function recoveries(table: SourceTable) {
   return classes.flatMap((item) => rows.filter((row) => row.name === item));
 }
 
-const percentText = (cell: Cell) => (cell.value === null ? cell.text : withUnit(cell.text, "%"));
 const percentSpoken = (cell: Cell) =>
-  cell.value === null ? spoken(cell).replace(/^not supplied/, "% not supplied") : percentText(cell);
+  cell.value === null
+    ? spoken(cell).replace(/^not supplied/, "% not supplied")
+    : withUnit(cell.text, "%");
+
+/** A stated figure as written (`suffix` its unit sign), or its stated gap as the word and reason. */
+function Stated({ cell, suffix = "" }: { cell: Cell; suffix?: string }) {
+  const gap = cell.value === null ? statedGap(cell.text) : null;
+  if (gap) return <GapCell word={gap.word} reason={gap.reason} />;
+  if (!cell.text.trim()) return <GapCell word="Not stated" />;
+  return (
+    <span className="font-mono text-small text-text-primary tabular-nums">
+      {cell.value === null || !suffix ? cell.text : withUnit(cell.text, suffix)}
+    </span>
+  );
+}
+
+/** One amount on the shared scale: its name, its bar from zero where it is a number, its figure. */
+function AmountRow({
+  name,
+  cell,
+  top,
+  tone,
+}: {
+  name: string;
+  cell: Cell;
+  top: number;
+  tone: "primary" | "secondary";
+}) {
+  const placed = cell.value !== null && cell.value >= 0 && top > 0;
+  return (
+    <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-x-2 gap-y-1">
+      <span className="text-caption text-text-secondary">{name}</span>
+      {placed ? (
+        <span className="flex min-w-0 items-center gap-2">
+          <BarRow
+            end={(cell.value ?? 0) / top}
+            tone={tone}
+            bar={{ "data-bar": cell.text }}
+            className="flex-1"
+          />
+          <span className="flex-none text-right">
+            <Stated cell={cell} />
+          </span>
+        </span>
+      ) : (
+        <Stated cell={cell} />
+      )}
+    </div>
+  );
+}
 
 function RecoveryByClass({ entry, href }: { entry: Entry; href: Href }) {
   const chart = chartOf(entry, RECOVERY);
   const rows = chart.state === "ready" ? recoveries(chart.table) : null;
   if (chart.state !== "ready" || !rows?.length)
     return (
-      <LeadGap
-        span={4}
+      <ChartGap
+        chart={chart}
+        span={12}
         label={RECOVERY}
         title={RECOVERY}
-        reason={
-          chart.state === "gap"
-            ? chart.reason
-            : chart.state === "absent"
-              ? "The module wrote no recovery by class table."
-              : WITHHELD
-        }
-        trace={
-          chart.state === "gap" || chart.state === "absent" ? undefined : (
-            <Trace href={href(chart.table.line)} name={RECOVERY} />
-          )
-        }
+        href={href}
+        unread="This page could not read the recovery by class table the handoff has."
+        absent="This page could not read a recovery by class table from the handoff."
       />
     );
   const unit = word(chart.descriptor.unit);
@@ -184,7 +251,7 @@ function RecoveryByClass({ entry, href }: { entry: Entry; href: Href }) {
     .join(" ")}`;
   return (
     <LeadFigure
-      span={4}
+      span={12}
       label={RECOVERY}
       title={RECOVERY}
       basis={unit ? `${unitLabel(unit)} · recovery % as stated` : undefined}
@@ -199,7 +266,7 @@ function RecoveryByClass({ entry, href }: { entry: Entry; href: Href }) {
       trace={<Trace href={href(chart.table.line)} name={RECOVERY} />}
       figure={
         !oneUnit ? (
-          <GapNote>The claims and recoveries are stated in more than one unit.</GapNote>
+          <CompactGap>The claims and recoveries are stated in more than one unit.</CompactGap>
         ) : (
           <div role="img" aria-label={reading} className="flex flex-col">
             {rows.map((row, at) => (
@@ -210,37 +277,19 @@ function RecoveryByClass({ entry, href }: { entry: Entry; href: Href }) {
                   </span>
                 )}
                 <div className="flex flex-col gap-1 py-2">
-                  <span className="flex items-baseline justify-between gap-2 text-caption text-text-tertiary">
+                  <span className="flex flex-wrap items-baseline justify-between gap-2 text-caption text-text-tertiary">
                     {row.scenario}
-                    <span
-                      className={
-                        row.percent.value === null
-                          ? "text-gap-text"
-                          : "font-mono text-small text-text-primary tabular-nums"
-                      }
-                    >
-                      {percentText(row.percent)}
-                    </span>
+                    <Stated cell={row.percent} suffix="%" />
                   </span>
-                  <BarLine name="Claim" cell={row.claim} top={top} tone="primary" />
-                  <BarLine name="Recovery" cell={row.recovery} top={top} tone="secondary" />
+                  <AmountRow name="Claim" cell={row.claim} top={top} tone="primary" />
+                  <AmountRow name="Recovery" cell={row.recovery} top={top} tone="secondary" />
                 </div>
               </Fragment>
             ))}
           </div>
         )
       }
-      table={{
-        head: [...RECOVERY_COLUMNS],
-        rows: rows.map((row) => ({
-          label: row.name,
-          cells: [row.scenario, row.claim.text, row.recovery.text, row.percent.text].map(
-            (cell) => cell || null,
-          ),
-          end: <Trace href={href(row.line)} name={`${row.name}, ${row.scenario}`} />,
-        })),
-        endHeading: "Source",
-      }}
+      table={writtenTable(chart.table, href)}
       notes={basisNotes(chart.table)}
     />
   );
@@ -257,7 +306,7 @@ function PlanTreatment({ entry, href }: { entry: Entry; href: Href }) {
         span={12}
         label={label}
         title={label}
-        reason="The module wrote no plan treatment register."
+        reason="This page could not read a plan treatment register from the handoff."
       />
     );
   const path = columnOf(table, "path");
@@ -278,18 +327,12 @@ function PlanTreatment({ entry, href }: { entry: Entry; href: Href }) {
                 <span className="text-small font-medium wrap-anywhere text-text-primary">
                   {name}
                 </span>
-                <dl className="grid grid-cols-1 gap-x-3 gap-y-0.5 text-caption sm:grid-cols-[9rem_minmax(0,1fr)]">
-                  {fields.map(({ field, at }) => (
-                    <Fragment key={field}>
-                      <dt className="text-text-tertiary">
-                        {field.charAt(0).toUpperCase() + field.slice(1)}
-                      </dt>
-                      <dd className="wrap-anywhere text-text-secondary">
-                        {readerCell(cells[at] ?? "")}
-                      </dd>
-                    </Fragment>
-                  ))}
-                </dl>
+                <KeyValues
+                  items={fields.map(({ field, at }) => ({
+                    key: field.charAt(0).toUpperCase() + field.slice(1),
+                    value: readerCell(cells[at] ?? ""),
+                  }))}
+                />
               </span>
               <Trace href={href(line)} name={name} />
             </li>
@@ -309,8 +352,11 @@ export const RestructuringLead = withDraws(
     return (
       <Bento>
         <ValueAllocation entry={entry} href={href} />
-        <RecoveryByClass entry={entry} href={href} />
-        <PlanTreatment entry={entry} href={href} />
+        {/* Recovery and plan treatment stack beside the allocation, each as tall as its content. */}
+        <div className="flex min-w-0 flex-col gap-4 self-start lg:col-span-4">
+          <RecoveryByClass entry={entry} href={href} />
+          <PlanTreatment entry={entry} href={href} />
+        </div>
       </Bento>
     );
   },

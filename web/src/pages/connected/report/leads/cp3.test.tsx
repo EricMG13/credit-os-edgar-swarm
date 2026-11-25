@@ -79,16 +79,31 @@ All amounts USD millions unless stated; yields are percentages from last trades 
 it("draws the real run's recommendation table as text: prices, not yields, so no bar", () => {
   render(<SecurityLead {...props(handoff(REAL))} />);
   const tile = screen.getByRole("region", { name: "Instrument decisions" });
+  // F3: every column the module wrote, in its order, Recovery sensitivity included.
   expect(
-    within(tile).getByRole("columnheader", {
-      name: "Market level at 2024-09-30 (fair value, % of par)",
-    }),
-  ).toBeInTheDocument();
+    within(within(tile).getByRole("table"))
+      .getAllByRole("columnheader")
+      .map((cell) => cell.textContent),
+  ).toEqual([
+    "Security group",
+    "Market level at 2024-09-30 (fair value, % of par)",
+    "Structural position",
+    "Recovery sensitivity",
+    "Relative value",
+    "Recommendation",
+    "Source",
+  ]);
   const secured = row("Secured notes 2028–2033 (six series)");
   expect(within(secured).getByText("101.40% to 105.80%; 103.50% aggregate")).toBeInTheDocument();
   expect(within(secured).getByText("Senior secured")).toBeInTheDocument();
+  expect(within(secured).getByText("Moderate")).toBeInTheDocument();
+  expect(within(row("5.50% 2027 subordinated notes")).getByText("High")).toBeInTheDocument();
   expect(within(secured).getByText("Requires More Work")).toBeInTheDocument();
-  expect(within(secured).getAllByText("Not supplied")).toHaveLength(2);
+  // Stated values are never labelled Not supplied; no column the module did not write is added.
+  expect(within(secured).queryByText("Not supplied")).toBeNull();
+  expect(
+    within(tile).getByText("This page could not read a spread from the handoff."),
+  ).toBeVisible();
   expect(within(row("Term loans (Tranches I, J, K, L)")).getByText("99.91%")).toBeInTheDocument();
   expect(tile.querySelectorAll("[data-bar]")).toHaveLength(0);
   expect(within(secured).getByRole("link", { name: /Source for Secured notes/ })).toHaveAttribute(
@@ -96,6 +111,40 @@ it("draws the real run's recommendation table as text: prices, not yields, so no
     expect.stringContaining("#evidence/"),
   );
   expect(within(tile).queryByRole("note")).toBeNull();
+});
+
+it("draws a stated yield-to-worst and spread as written, and no spread gap", () => {
+  const stated = REAL.replace(
+    "| Recovery sensitivity | Relative value | Recommendation |\n|---|---|---|---|---|---|",
+    "| Recovery sensitivity | Yield to worst | Spread | Relative value | Recommendation |\n|---|---|---|---|---|---|---|---|",
+  )
+    .replace(
+      "| Moderate | Unclear | Requires More Work |\n| Secured",
+      "| Moderate | 6.4% | 250 bp | Unclear | Requires More Work |\n| Secured",
+    )
+    .replaceAll("| Moderate | Unclear |", "| Moderate | 6.1% | 220 bp | Unclear |")
+    .replaceAll("| High | Unclear |", "| High | 8.2% | 410 bp | Unclear |");
+  render(<SecurityLead {...props(handoff(stated))} />);
+  const tile = screen.getByRole("region", { name: "Instrument decisions" });
+  const loans = row("Term loans (Tranches I, J, K, L)");
+  expect(within(loans).getByText("6.4%")).toBeInTheDocument();
+  expect(within(loans).getByText("250 bp")).toBeInTheDocument();
+  expect(
+    within(row("Secured notes 2028–2033 (six series)")).getByText("220 bp"),
+  ).toBeInTheDocument();
+  expect(within(tile).getByRole("columnheader", { name: "Yield to worst" })).toBeInTheDocument();
+  expect(within(tile).getByRole("columnheader", { name: "Spread" })).toBeInTheDocument();
+  expect(within(tile).queryByText("Not supplied")).toBeNull();
+  expect(within(tile).queryByText(/could not read a spread/)).toBeNull();
+  // The card on a phone draws them too.
+  const card = within(within(tile).getByRole("list", { name: "Instruments" }))
+    .getAllByRole("listitem")
+    .find((item) =>
+      within(item).queryByRole("heading", { name: "Term loans (Tranches I, J, K, L)" }),
+    );
+  if (!card) throw new Error("missing card");
+  expect(within(card).getByText("6.4%")).toBeInTheDocument();
+  expect(within(card).getByText("250 bp")).toBeInTheDocument();
 });
 
 it("draws the yield bars where a last-trade yield reads, each against the largest", () => {
@@ -108,7 +157,8 @@ it("draws the yield bars where a last-trade yield reads, each against the larges
   expect(tile.querySelectorAll("[data-bar]")).toHaveLength(2);
   const loan = row("Synthetic term loan");
   expect(loan.querySelector("[data-bar]")).toBeNull();
-  expect(within(loan).getByText("Not supplied: no loan observation")).toBeInTheDocument();
+  expect(within(loan).getByText("No loan observation")).toBeInTheDocument();
+  expect(within(loan).queryByText(/Not supplied: /)).toBeNull();
   // A source cell is for the trace only.
   expect(within(tile).queryByText("Filing p.1")).toBeNull();
 });
@@ -136,21 +186,26 @@ it("draws the relative value and portfolio fit passages and the peer gap", () =>
     ),
   ).toBeVisible();
   const peers = screen.getByRole("region", { name: "Relative value against peers" });
+  // F1: the page says only what it checked.
   expect(
-    within(peers).getByText("This handoff has no peer levels to compare the instruments against."),
+    within(peers).getByText("This page could not read peer levels from the handoff."),
   ).toBeVisible();
+  expect(peers.textContent).not.toMatch(/has no peer levels/);
   expect(peers.textContent).not.toMatch(/supplied at run start/);
 });
 
 it("states each gap when the module wrote neither table nor passage", () => {
   render(<SecurityLead {...props(handoff("## Findings\n\n### Bottom line\n\nNeutral.\n"))} />);
   const tile = screen.getByRole("region", { name: "Instrument decisions" });
-  expect(within(tile).getByText("The module wrote no instrument table.")).toBeVisible();
+  expect(
+    within(tile).getByText("This page could not read an instrument table from the handoff."),
+  ).toBeVisible();
   expect(
     within(screen.getByRole("region", { name: "Relative value" })).getByText(
-      "The module wrote no relative value passage.",
+      "This page could not read a relative value passage from the handoff.",
     ),
   ).toBeVisible();
+  expect(document.body.textContent).not.toMatch(/The module wrote no/);
 });
 
 it("draws nothing for a blocked module", () => {

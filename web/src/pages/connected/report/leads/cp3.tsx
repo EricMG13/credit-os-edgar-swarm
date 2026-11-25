@@ -33,7 +33,7 @@ function Passage({
         span={6}
         label={title}
         title={title}
-        reason={`The module wrote no ${title.toLowerCase()} passage.`}
+        reason={`This page could not read a ${title.toLowerCase()} passage from the handoff.`}
       />
     );
   return (
@@ -62,18 +62,18 @@ export const SecurityLead = withDraws(
             span={12}
             label={TITLE}
             title={TITLE}
-            reason="The module wrote no instrument table."
+            reason="This page could not read an instrument table from the handoff."
           />
         )}
         <Passage entry={entry} heading="Relative value" title="Relative value" href={href} />
         <Passage entry={entry} heading="Portfolio Fit" title="Portfolio fit" href={href} />
+        {data?.outcomes && <ValueMatrix table={data.outcomes} href={href} />}
         <LeadGap
-          span={12}
+          span={6}
           label="Relative value against peers"
           title="Relative value against peers"
-          reason="This handoff has no peer levels to compare the instruments against."
+          reason="This page could not read peer levels from the handoff."
         />
-        {data?.outcomes && <ValueMatrix table={data.outcomes} href={href} />}
       </Bento>
     );
   },

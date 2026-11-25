@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, expect, it } from "vitest";
+import { afterEach, expect, it, vi } from "vitest";
 import type { OutputEntry } from "../../publishedReport";
 import { RestructuringLead } from "./cp4c";
 import { leadProps } from "./lead.fixture";
@@ -114,8 +114,15 @@ it("draws the value allocation of the first scenario as a waterfall, steps as wr
   );
   for (const text of ["1,000", "-50", "-700", "-250"])
     expect(within(figure).getAllByText(text).length).toBeGreaterThan(0);
-  expect(within(tile).getByText("The handoff does not state the fulcrum class.")).toBeVisible();
-  expect(tile.textContent).not.toMatch(/methodology|Needs/);
+  // Ruling (a): the title is the subject; the scenario is its kicker.
+  expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(/^Value allocation$/);
+  // F1, G7: the fulcrum gap says only what the page checked, in the figure's place, not a note.
+  const fulcrum = within(tile).getByText(
+    "This page could not read a fulcrum class from the handoff.",
+  );
+  expect(fulcrum).toBeVisible();
+  expect(fulcrum.closest("li")).toBeNull();
+  expect(tile.textContent).not.toMatch(/does not state the fulcrum|methodology|Needs/);
   expect(within(tile).queryByText(/fulcrum is|fulcrum:/i)).toBeNull();
 });
 
@@ -127,11 +134,18 @@ it("switches scenarios with a pressed button group, the table following", () => 
     "aria-pressed",
     "true",
   );
+  // G12: the scenario switch and the Figure / Table switch share the tile's one control row.
+  expect(within(tile).getByRole("group", { name: "Scenario" }).parentElement).toBe(
+    within(tile).getByRole("group", { name: "Value allocation: figure or table" }).parentElement,
+  );
   fireEvent.click(second);
   expect(second).toHaveAttribute("aria-pressed", "true");
   expect(within(tile).getByRole("img")).toHaveAccessibleName(/Enterprise value 800/);
   fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
   expect(within(tile).getByRole("cell", { name: "800" })).toBeVisible();
+  // F15: the per-row unit and basis stay with their rows.
+  expect(within(tile).getAllByRole("cell", { name: "US$m" })).toHaveLength(5);
+  expect(within(tile).getAllByRole("cell", { name: "Synthetic." })).toHaveLength(5);
   expect(
     within(tile)
       .getAllByRole("link", { name: /Source for/ })
@@ -161,10 +175,12 @@ it("reads a value allocation the store withheld from the handoff, and says it do
   );
   expect(within(tile).queryByRole("img")).toBeNull();
   expect(within(tile).getByText(/does not reconcile/)).toBeVisible();
-  expect(within(tile).getByRole("link", { name: /Source for/ })).toHaveAttribute(
-    "href",
-    expect.stringContaining("#evidence/"),
-  );
+  // It says it is shown as a table, so the steps are drawn as written in the figure's place.
+  const steps = within(tile).getByRole("region", { name: "Value allocation table" });
+  expect(within(steps).getByRole("cell", { name: "-200" })).toBeVisible();
+  expect(
+    within(tile).getByRole("link", { name: "Source for Value allocation — scenario 1" }),
+  ).toHaveAttribute("href", expect.stringContaining("#evidence/"));
   fireEvent.click(within(tile).getByRole("button", { name: "Scenario 2" }));
   expect(within(tile).getByRole("img")).toHaveAccessibleName(/Enterprise value 800/);
 });
@@ -177,14 +193,17 @@ it("draws claim against recovery per class and scenario, the stated recovery % a
     "Recovery by class in US$m. First lien term loan, Scenario 1: claim 700, recovery 700, recovery 100%. First lien term loan, Scenario 2: claim 700, recovery 700, recovery 100%. Senior unsecured notes, Scenario 1: claim 600, recovery 250, recovery 41.7%. Senior unsecured notes, Scenario 2: claim 600, recovery not supplied (distribution not settled), recovery % not supplied (recovery not settled).",
   );
   expect(within(figure).getByText("41.7%")).toBeInTheDocument();
-  expect(within(figure).getByText("Not supplied: distribution not settled")).toBeInTheDocument();
-  expect(figure.querySelectorAll("[data-gap]").length).toBeGreaterThan(0);
+  // G7: the shared gap cell, the word and the reason, never "Recovery: Not supplied: reason".
+  expect(within(figure).getAllByText("Not supplied")).toHaveLength(2);
+  expect(within(figure).getByText("Distribution not settled")).toBeInTheDocument();
+  expect(within(figure).getByText("Recovery not settled")).toBeInTheDocument();
+  expect(figure.textContent).not.toMatch(/Not supplied: /);
   expect(within(figure).queryByText("0")).toBeNull();
   const bars = [...figure.querySelectorAll<HTMLElement>("[data-bar]")].map(
     (bar) => bar.style.width,
   );
-  // One scale from zero for every class: its top is the scale tick at or above 700, 800.
-  expect(bars.slice(3)).toEqual(["87.5%", "75%", `${String((250 / 800) * 100)}%`, "75%"]);
+  // One scale from zero, its top 800: 700 is 87.5%, 600 is 75%, 250 is 31.25%.
+  expect(bars.slice(3)).toEqual(["87.5%", "75%", "31.25%", "75%"]);
 });
 
 it("draws the plan treatment as written, and the gaps when the module wrote none", () => {
@@ -197,9 +216,9 @@ it("draws the plan treatment as written, and the gaps when the module wrote none
     <RestructuringLead {...leadProps(handoff("## Findings\n\n### Bottom line\n\nThin.\n"))} />,
   );
   for (const [name, text] of [
-    ["Value allocation", "The module wrote no value allocation table."],
-    ["Recovery by class", "The module wrote no recovery by class table."],
-    ["Plan treatment", "The module wrote no plan treatment register."],
+    ["Value allocation", "This page could not read a value allocation table from the handoff."],
+    ["Recovery by class", "This page could not read a recovery by class table from the handoff."],
+    ["Plan treatment", "This page could not read a plan treatment register from the handoff."],
   ] as const)
     expect(within(screen.getByRole("region", { name })).getByText(text)).toBeVisible();
   // Ruling vii: no build note on the reader's page.
@@ -242,4 +261,26 @@ it("names a plan path without a name by its place", () => {
   );
   const tile = screen.getByRole("region", { name: "Plan treatment" });
   expect(within(tile).getByRole("link", { name: "Source for Row 1" })).toBeVisible();
+});
+
+it("puts the scenario switch under the title on a phone, where the control row cannot hold both", () => {
+  const narrow = (query: string) =>
+    ({
+      matches: false,
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }) as unknown as MediaQueryList;
+  vi.stubGlobal("matchMedia", narrow);
+  try {
+    render(<RestructuringLead {...leadProps(restructuring())} />);
+    const tile = screen.getByRole("region", { name: "Value allocation" });
+    expect(within(tile).getByRole("group", { name: "Scenario" }).parentElement).not.toBe(
+      within(tile).getByRole("group", { name: "Value allocation: figure or table" }).parentElement,
+    );
+    fireEvent.click(within(tile).getByRole("button", { name: "Scenario 2" }));
+    expect(within(tile).getByRole("img")).toHaveAccessibleName(/Enterprise value 800/);
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });

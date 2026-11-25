@@ -72,39 +72,80 @@ function made(markdown = MARKDOWN) {
   });
 }
 
-it("pairs debt maturing with committed resources per period, as written, on one scale", () => {
+/** The year slots of the need figure, each with its label and its bars' heights. */
+function slots(figure: HTMLElement) {
+  return [...figure.querySelectorAll<HTMLElement>("[data-slot]")].map((slot) => [
+    slot.dataset.slot,
+    [...slot.querySelectorAll<HTMLElement>("[data-bar]")].map((bar) => [
+      bar.dataset.bar,
+      bar.style.height,
+    ]),
+  ]);
+}
+
+it("draws debt maturing and committed resources as two marks per year, as written, on one scale", () => {
   render(<RefinancingLead {...leadProps(made())} />);
   const tile = screen.getByRole("region", { name: "Refinancing need" });
+  expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(/^Refinancing need$/);
   const figure = within(tile).getByRole("img");
   expect(figure).toHaveAccessibleName(
     "Debt maturing against committed resources in US$m. FY2026: debt maturing 500, committed resources 300. FY2027: debt maturing 1,250, committed resources not supplied (no commitment is stated).",
   );
-  for (const text of ["FY2026", "500", "300", "FY2027", "1,250"])
-    expect(within(figure).getByText(text)).toBeInTheDocument();
-  const widths = [...figure.querySelectorAll<HTMLElement>("[data-bar]")].map((bar) => [
-    bar.dataset.bar,
-    bar.style.width,
+  // Each amount labelled as written under its year.
+  expect([...figure.querySelectorAll("[data-figure]")].map((label) => label.textContent)).toEqual([
+    "500",
+    "300",
+    "1,250",
   ]);
-  // One scale from zero for both series: its top is the scale tick at or above 1,250.
-  expect(widths).toEqual([
-    ["500", `${String((500 / 1250) * 100)}%`],
-    ["300", `${String((300 / 1250) * 100)}%`],
-    ["1,250", "100%"],
+  // One scale from zero for both series, its top 1,250: 500 is 40%, 300 is 24%.
+  expect(slots(figure)).toEqual([
+    [
+      "FY2026",
+      [
+        ["500", "40%"],
+        ["300", "24%"],
+      ],
+    ],
+    ["FY2027", [["1,250", "100%"]]],
   ]);
   expect(within(tile).getByText("US$m")).toBeVisible();
   expect(within(tile).getByText("Synthetic.")).toBeVisible();
 });
 
-it("draws a stated gap as a hatched mark with its reason, never zero, and no shortfall", () => {
+it("keeps a slot for a year with no row and lists a row not labelled by a year as written", () => {
+  const spaced = MARKDOWN.replace("| FY2027 | 1,250 |", "| FY2029 | 1,250 |").replace(
+    "| Synthetic. |\n\n### Events",
+    "| Synthetic. |\n| Thereafter | 900 | Not supplied: no facility beyond 2029 | US$m | Synthetic. |\n\n### Events",
+  );
+  render(<RefinancingLead {...leadProps(made(spaced))} />);
+  const figure = within(screen.getByRole("region", { name: "Refinancing need" })).getByRole("img");
+  expect(slots(figure).map(([year]) => year)).toEqual(["FY2026", "FY2027", "FY2028", "FY2029"]);
+  expect(slots(figure)[1]).toEqual(["FY2027", []]);
+  const unplaced = within(figure).getByRole("list", { name: "Rows not placed by year" });
+  expect(within(unplaced).getByText("Thereafter")).toBeInTheDocument();
+  expect(within(unplaced).getByText("900")).toBeInTheDocument();
+  expect(within(unplaced).getByText("No facility beyond 2029")).toBeInTheDocument();
+  expect(figure.querySelector('[data-slot="Thereafter"]')).toBeNull();
+});
+
+it("draws a stated gap in the figure's place with its reason, never zero, and no shortfall", () => {
   render(<RefinancingLead {...leadProps(made())} />);
   const figure = within(screen.getByRole("region", { name: "Refinancing need" })).getByRole("img");
   expect(figure.querySelectorAll("[data-gap]")).toHaveLength(1);
-  expect(within(figure).getByText("Not supplied: no commitment is stated")).toBeInTheDocument();
-  expect(within(figure).queryByText("0")).toBeNull();
+  const gaps = within(figure).getByRole("list", { name: "Amounts not supplied" });
+  expect(within(gaps).getByText("Committed resources, FY2027")).toBeInTheDocument();
+  expect(within(gaps).getByText("Not supplied")).toBeInTheDocument();
+  expect(within(gaps).getByText("No commitment is stated")).toBeInTheDocument();
+  // G7: the shared gap cell, no raw "Not supplied: reason" and no hatched swatch.
+  expect(within(figure).queryByText(/Not supplied: /)).toBeNull();
+  expect(figure.querySelector(".gap-hatch")).toBeNull();
+  expect(
+    [...figure.querySelectorAll("[data-figure]")].map((label) => label.textContent),
+  ).not.toContain("0");
   expect(within(figure).queryByText(/950|200|shortfall/i)).toBeNull();
 });
 
-it("has a table view with each cell as written and one trace per row", () => {
+it("has a table view with each cell as written, its unit and basis per row, one trace per row", () => {
   render(<RefinancingLead {...leadProps(made())} />);
   const tile = screen.getByRole("region", { name: "Refinancing need" });
   fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
@@ -112,6 +153,10 @@ it("has a table view with each cell as written and one trace per row", () => {
   expect(
     within(tile).getByRole("cell", { name: "Not supplied: no commitment is stated" }),
   ).toBeVisible();
+  // F15: the per-row unit and basis stay with their rows.
+  expect(within(tile).getByRole("columnheader", { name: "Reporting unit" })).toBeVisible();
+  expect(within(tile).getByRole("columnheader", { name: "Basis and limitation" })).toBeVisible();
+  expect(within(tile).getAllByRole("cell", { name: "US$m" })).toHaveLength(2);
   const links = within(tile).getAllByRole("link", { name: /Source for/ });
   expect(links.at(-1)).toHaveAttribute("href", expect.stringContaining("#evidence/"));
 });
@@ -138,12 +183,14 @@ it("states the gaps when the module wrote neither table, and draws nothing when 
   render(<RefinancingLead {...leadProps(handoff("## Findings\n\n### Bottom line\n\nThin.\n"))} />);
   expect(
     within(screen.getByRole("region", { name: "Refinancing need" })).getByText(
-      "The module wrote no refinancing need table.",
+      "This page could not read a refinancing need table from the handoff.",
     ),
   ).toBeVisible();
   const paths = screen.getByRole("region", { name: "Liability-management paths" });
   expect(
-    within(paths).getByText("The module wrote no liability-management path register."),
+    within(paths).getByText(
+      "This page could not read a liability-management path register from the handoff.",
+    ),
   ).toBeVisible();
   expect(paths.textContent).not.toMatch(/Built from the module's contract/);
   expect(screen.queryByRole("list", { name: "Refinancing dates" })).toBeNull();
@@ -170,6 +217,24 @@ it("draws the module's stated reason when the whole table is a gap", () => {
       "No maturity schedule in the files",
     ),
   ).toBeVisible();
+});
+
+it("says the store withheld the need table, traces it and opens the table as written", () => {
+  const withheld = handoff(MARKDOWN, {
+    events: [{ lane: "Refinancing", table: lineOf(MARKDOWN, "Events: Refinancing"), gap: null }],
+  });
+  render(<RefinancingLead {...leadProps(withheld)} />);
+  const tile = screen.getByRole("region", { name: "Refinancing need" });
+  expect(
+    within(tile).getByText("This page could not draw the table the handoff has."),
+  ).toBeVisible();
+  expect(within(tile).getByRole("link", { name: "Source for Refinancing need" })).toHaveAttribute(
+    "href",
+    expect.stringContaining("#evidence/"),
+  );
+  expect(within(tile).getByText("The table as written")).toBeInTheDocument();
+  const table = within(tile).getByRole("region", { name: "Refinancing need table" });
+  expect(within(table).getByRole("cell", { name: "1,250" })).toBeInTheDocument();
 });
 
 it("puts amounts in more than one unit in the table view with the reason, not on one scale", () => {

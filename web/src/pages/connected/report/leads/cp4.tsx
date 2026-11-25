@@ -1,66 +1,37 @@
-import { Fragment } from "react";
-import { blocked, unitLabel, withUnit } from "../../publishedReport";
+import { blocked, unitLabel } from "../../publishedReport";
 import { word } from "../../visuals/visualData";
 import { Key } from "../overview/figureParts";
 import { basisNotes } from "../overview/figureData";
-import { bulletGeometry, type HeadroomTest } from "../overview/stressData";
 import { Bento, Tile } from "../overview/Tile";
-import { bulletTable, Bullets, leadTests } from "./bullet";
+import { Bullets, leadTests } from "./bullet";
 import { withDraws } from "./draws";
-import { LeadFigure, LeadGap, MapTile, Trace } from "./parts";
-import {
-  chartOf,
-  columnOf,
-  leadHref,
-  mapOf,
-  readerCell,
-  registerTable,
-  rowName,
-  WITHHELD,
-} from "./read";
+import { KeyValues, LeadFigure, LeadGap, MapTile, Trace } from "./parts";
+import { chartOf, columnOf, leadHref, mapOf, readerCell, registerTable, rowName } from "./read";
 import type { LeadProps } from "./types";
+import { ChartGap, writtenTable } from "./written";
 
 type Href = (line?: number) => string;
 
 const TITLE = "Covenant headroom";
 
 const MAPS = [
-  { name: "legal entities", title: "Legal entities", span: 4 },
-  { name: "intercreditor", title: "Intercreditor", span: 6 },
+  { name: "legal entities", title: "Legal entities", span: 4, noun: "a legal entities map" },
+  { name: "intercreditor", title: "Intercreditor", span: 6, noun: "an intercreditor map" },
 ] as const;
-
-const shown = (test: HeadroomTest, cell: HeadroomTest["current"]) =>
-  cell.value === null ? cell.text : withUnit(cell.text, test.unit);
-
-/** The first test the figure can draw, as its reading: current against threshold, as written. */
-function reading(tests: readonly HeadroomTest[]) {
-  const lead = tests.find((test) => bulletGeometry(test) !== null);
-  if (!lead) return TITLE;
-  const headroom = lead.headroom ? `, headroom ${lead.headroom}` : "";
-  return `${lead.label} ${shown(lead, lead.current)} against a threshold of ${shown(lead, lead.threshold)}${headroom}`;
-}
 
 function Headroom({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
   const chart = chartOf(entry, TITLE);
   const tests = chart.state === "ready" ? leadTests(chart.table, chart.descriptor) : null;
   if (chart.state !== "ready" || !tests?.length)
     return (
-      <LeadGap
+      <ChartGap
+        chart={chart}
         span={8}
         label={TITLE}
         title={TITLE}
-        reason={
-          chart.state === "gap"
-            ? chart.reason
-            : chart.state === "ready"
-              ? "The covenant table is not in its fixed shape."
-              : chart.state === "withheld"
-                ? WITHHELD
-                : "The module wrote no covenant headroom table."
-        }
-        trace={
-          chart.state === "withheld" ? <Trace href={href(chart.line)} name={TITLE} /> : undefined
-        }
+        href={href}
+        unread="This page could not read the covenant headroom table the handoff has."
+        absent="This page could not read a covenant headroom table from the handoff."
       />
     );
   const { table, descriptor } = chart;
@@ -70,8 +41,7 @@ function Headroom({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
     <LeadFigure
       span={8}
       label={TITLE}
-      kicker={TITLE}
-      title={reading(tests)}
+      title={TITLE}
       basis={
         unit
           ? `${unitLabel(unit)} · each test on its own scale from zero`
@@ -88,7 +58,7 @@ function Headroom({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
       }
       trace={<Trace href={href(table.line)} name={TITLE} />}
       figure={<Bullets label="Covenant tests" tests={tests} href={rowHref} />}
-      table={bulletTable(tests, rowHref)}
+      table={writtenTable(table, href)}
       notes={basisNotes(table)}
     />
   );
@@ -105,7 +75,7 @@ function Baskets({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
         span={6}
         label={label}
         title={label}
-        reason="The module wrote no basket and capacity register."
+        reason="This page could not read a basket and capacity register from the handoff."
       />
     );
   const name = columnOf(table, "Basket / Test");
@@ -126,16 +96,12 @@ function Baskets({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
                 <span className="text-small font-medium wrap-anywhere text-text-primary">
                   {basket}
                 </span>
-                <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-caption">
-                  {fields.map(({ field, at }) => (
-                    <Fragment key={field}>
-                      <dt className="text-text-tertiary">{field}</dt>
-                      <dd className="wrap-anywhere text-text-secondary">
-                        {readerCell(cells[at] ?? "")}
-                      </dd>
-                    </Fragment>
-                  ))}
-                </dl>
+                <KeyValues
+                  items={fields.map(({ field, at }) => ({
+                    key: field,
+                    value: readerCell(cells[at] ?? ""),
+                  }))}
+                />
               </span>
               <Trace href={href(line)} name={basket} />
             </li>
@@ -155,7 +121,7 @@ export const LegalLead = withDraws(
     return (
       <Bento>
         <Headroom entry={entry} href={href} />
-        {MAPS.map(({ name, title, span }) => (
+        {MAPS.map(({ name, title, span, noun }) => (
           <MapTile
             key={name}
             map={mapOf(entry, name)}
@@ -163,7 +129,7 @@ export const LegalLead = withDraws(
             label={title}
             title={title}
             href={href}
-            absent={`The module wrote no ${title.toLowerCase()} map.`}
+            absent={`This page could not read ${noun} from the handoff.`}
           />
         ))}
         <Baskets entry={entry} href={href} />

@@ -1,11 +1,11 @@
-import { Fragment } from "react";
+import { cx } from "@/utils/cx";
 import { blocked, withUnit } from "../../publishedReport";
 import { ticks, type SourceTable } from "../../visuals/visualData";
 import { basisNotes, readCell } from "../overview/figureData";
 import { Key } from "../overview/figureParts";
-import { Bento, GapNote, Tile } from "../overview/Tile";
+import { Bento, Tile } from "../overview/Tile";
 import { withDraws } from "./draws";
-import { LeadFigure, LeadGap, Trace } from "./parts";
+import { CompactGap, GapCell, KeyValues, LeadFigure, LeadGap, statedGap, Trace } from "./parts";
 import {
   chartOf,
   columnOf,
@@ -14,9 +14,9 @@ import {
   readerCellOf,
   registerTable,
   rowName,
-  WITHHELD,
 } from "./read";
 import type { LeadProps } from "./types";
+import { ChartGap, writtenTable } from "./written";
 
 type Href = (line?: number) => string;
 
@@ -30,6 +30,9 @@ const COLUMNS = [
   "Source class",
 ] as const;
 const DAY = 86_400_000;
+/** The fewest points a date axis is drawn for; fewer are a list of figures. */
+const AXIS_FROM = 3;
+const CURVE_GAP = "This page could not read an issuer curve from the handoff.";
 
 /** A stated calendar date as a time, or null for any other text. */
 function dayOf(text: string) {
@@ -52,7 +55,6 @@ function quotes(table: SourceTable) {
       day: dayOf(row[maturity] ?? ""),
       cell,
       unit,
-      cells: at.map((column) => row[column] ?? ""),
       line: table.rowLines?.[index] ?? table.line,
       index,
     };
@@ -60,16 +62,22 @@ function quotes(table: SourceTable) {
 }
 
 type Quote = NonNullable<ReturnType<typeof quotes>>[number];
-
-/** Why a quote is not placed: its stated gap, a yield below zero, or its maturity date. */
-function unplacedReason(row: Quote) {
-  if (row.cell.value === null) return row.cell.text || "Not supplied";
-  if (row.cell.value < 0) return "Stated yield below zero; not placed.";
-  return `maturity date ${row.maturity || "not stated"}`;
-}
 type Placed = Quote & { day: number; value: number };
 
-const W = { width: 400, height: 236, left: 36, right: 384, top: 14, base: 200 } as const;
+/** Why a quote is not placed, in the figure's place: its stated gap, or what the page could not read. */
+function Unplaced({ row }: { row: Quote }) {
+  const gap = row.cell.value === null ? statedGap(row.cell.text) : null;
+  if (gap) return <GapCell word={gap.word} reason={gap.reason} />;
+  const maturityGap = row.day === null ? statedGap(row.maturity) : null;
+  if (maturityGap) return <GapCell word={maturityGap.word} reason={maturityGap.reason} />;
+  const reason =
+    row.cell.value === null
+      ? `This page could not read the yield “${row.cell.text}” as a number.`
+      : row.cell.value < 0
+        ? "Stated yield below zero; not placed."
+        : `This page could not read the maturity date “${row.maturity}” as a date.`;
+  return <span className="text-caption wrap-anywhere text-gap-text">{reason}</span>;
+}
 
 /**
  * The date axis: 1 January of each year inside the domain, at most five labels; within one year,
@@ -90,101 +98,102 @@ function dateTicks(low: number, high: number, points: readonly Placed[]) {
   );
 }
 
+const pct = (share: number) => `${String(Number((share * 100).toFixed(6)))}%`;
+
+/** A date label's anchor near an edge of the plot, so it stays inside the tile. */
+const anchor = (share: number) =>
+  share < 0.08 ? "" : share > 0.92 ? "-translate-x-full" : "-translate-x-1/2";
+
+/** The points on a true date axis, yield from zero; every label is page text over the plot. */
 function Scatter({ points, label }: { points: Placed[]; label: string }) {
   const days = points.map((point) => point.day);
   const pad = Math.max(120 * DAY, (Math.max(...days) - Math.min(...days)) * 0.06);
   const low = Math.min(...days) - pad;
   const high = Math.max(...days) + pad;
   const scale = ticks(points.map((point) => point.value));
-  const top = scale.at(-1)?.value ?? 1;
-  const x = (time: number) => W.left + ((time - low) / (high - low)) * (W.right - W.left);
-  const y = (value: number) => W.base - (value / (top || 1)) * (W.base - W.top);
+  const top = scale.at(-1)?.value || 1;
+  const x = (time: number) => (time - low) / (high - low);
+  const y = (value: number) => value / top;
   return (
-    <div className="grid min-w-0 grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-      <svg
-        viewBox={`0 0 ${String(W.width)} ${String(W.height)}`}
-        width="100%"
-        role="img"
-        aria-label={label}
-        className="block"
-      >
+    <div
+      role="img"
+      aria-label={label}
+      className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] gap-x-2"
+    >
+      <div aria-hidden="true" className="relative h-52 min-w-8">
         {scale.map((tick) => (
-          <Fragment key={tick.value}>
-            <line
-              x1={W.left}
-              x2={W.right}
-              y1={y(tick.value)}
-              y2={y(tick.value)}
-              className={tick.value === 0 ? "stroke-connector" : "stroke-border-hairline"}
-            />
-            <text
-              x={W.left - 6}
-              y={y(tick.value) + 4}
-              textAnchor="end"
-              fontSize="12"
-              className="fill-text-tertiary font-mono"
-            >
-              {tick.label}
-            </text>
-          </Fragment>
-        ))}
-        {dateTicks(low, high, points).map(({ label: date, time }) => (
-          <Fragment key={date}>
-            <line
-              x1={x(time)}
-              x2={x(time)}
-              y1={W.base}
-              y2={W.base + 4}
-              className="stroke-connector"
-            />
-            <text
-              x={x(time)}
-              y={W.base + 18}
-              textAnchor="middle"
-              fontSize="12"
-              className="fill-text-tertiary font-mono"
-            >
-              {date}
-            </text>
-          </Fragment>
-        ))}
-        {points.map((point, at) => {
-          const cx = x(point.day);
-          const cy = y(point.value);
-          return (
-            <g key={point.index}>
-              <circle data-point={point.name} cx={cx} cy={cy} r="4.5" className="fill-chart-1" />
-              <text
-                x={cx}
-                y={cy - 9}
-                textAnchor="middle"
-                fontSize="12"
-                className="fill-text-primary font-mono font-medium"
-              >
-                {at + 1}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-      <ol aria-label="Instruments by maturity" className="flex min-w-0 flex-col">
-        {points.map((point, at) => (
-          <li
-            key={point.index}
-            className="grid grid-cols-[1.5rem_minmax(0,1fr)_auto] items-baseline gap-2 border-t border-border-hairline py-2 first:border-t-0 first:pt-0"
+          <span
+            key={tick.value}
+            className="absolute right-0 translate-y-1/2 font-mono text-caption text-text-tertiary tabular-nums"
+            style={{ bottom: pct(y(tick.value)) }}
           >
-            <span className="font-mono text-small text-text-tertiary">{at + 1}</span>
-            <span className="flex min-w-0 flex-col">
-              <span className="text-small wrap-anywhere text-text-primary">{point.name}</span>
-              <span className="font-mono text-caption text-text-tertiary">{point.maturity}</span>
-            </span>
-            <span className="font-mono text-small font-medium text-text-primary tabular-nums">
-              {withUnit(point.cell.text, point.unit)}
-            </span>
-          </li>
+            {tick.label}
+          </span>
         ))}
-      </ol>
+      </div>
+      <div className="relative h-52 border-b border-connector">
+        {scale.map((tick) => (
+          <span
+            key={tick.value}
+            aria-hidden="true"
+            className="absolute inset-x-0 h-px bg-border-hairline"
+            style={{ bottom: pct(y(tick.value)) }}
+          />
+        ))}
+        {points.map((point, at) => (
+          <span
+            key={point.index}
+            data-point={point.name}
+            aria-hidden="true"
+            className="absolute flex -translate-x-1/2 translate-y-1/2 flex-col items-center"
+            style={{ left: pct(x(point.day)), bottom: pct(y(point.value)) }}
+          >
+            <span className="absolute bottom-full mb-0.5 font-mono text-caption font-medium text-text-primary">
+              {at + 1}
+            </span>
+            <span className="size-2.5 rounded-ds-full bg-chart-1" />
+          </span>
+        ))}
+      </div>
+      <span />
+      <div aria-hidden="true" className="relative h-6">
+        {dateTicks(low, high, points).map(({ label: date, time }) => (
+          <span
+            key={date}
+            className={cx(
+              "absolute top-1 font-mono text-caption whitespace-nowrap text-text-tertiary",
+              anchor(x(time)),
+            )}
+            style={{ left: pct(x(time)) }}
+          >
+            {date}
+          </span>
+        ))}
+      </div>
     </div>
+  );
+}
+
+/** The placed instruments, numbered as on the plot, each with its maturity and stated yield. */
+function Points({ points }: { points: readonly Placed[] }) {
+  return (
+    <ol aria-label="Instruments by maturity" className="flex min-w-0 flex-col">
+      {points.map((point, at) => (
+        <li
+          key={point.index}
+          className="grid grid-cols-[1.5rem_minmax(0,1fr)_auto] items-baseline gap-2 border-t border-border-hairline py-2 first:border-t-0 first:pt-0"
+        >
+          <span className="font-mono text-small text-text-tertiary">{at + 1}</span>
+          <span className="flex min-w-0 flex-col">
+            <span className="text-small wrap-anywhere text-text-primary">{point.name}</span>
+            <span className="font-mono text-caption text-text-tertiary">{point.maturity}</span>
+          </span>
+          <span className="font-mono text-small font-medium text-text-primary tabular-nums">
+            {withUnit(point.cell.text, point.unit)}
+          </span>
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -193,22 +202,14 @@ function YieldFigure({ entry, href }: { entry: LeadProps["entry"]; href: Href })
   const rows = chart.state === "ready" ? quotes(chart.table) : null;
   if (chart.state !== "ready" || !rows)
     return (
-      <LeadGap
+      <ChartGap
+        chart={chart}
         span={8}
         label={TITLE}
         title={TITLE}
-        reason={
-          chart.state === "gap"
-            ? chart.reason
-            : chart.state === "ready"
-              ? "The yield table is not in its fixed shape."
-              : chart.state === "withheld"
-                ? WITHHELD
-                : "The module wrote no yield against maturity table."
-        }
-        trace={
-          chart.state === "withheld" ? <Trace href={href(chart.line)} name={TITLE} /> : undefined
-        }
+        href={href}
+        unread="This page could not read the yield against maturity table the handoff has."
+        absent="This page could not read a yield against maturity table from the handoff."
       />
     );
   const candidates = rows
@@ -222,45 +223,59 @@ function YieldFigure({ entry, href }: { entry: LeadProps["entry"]; href: Href })
   const units = new Set(candidates.map((row) => row.unit));
   const placed = units.size === 1 ? candidates : [];
   const unit = placed[0]?.unit ?? "";
-  const unplotted = rows
-    .filter((row) => !candidates.some((point) => point.index === row.index))
-    .map((row) => `${row.name}: ${unplacedReason(row)}`);
+  const unplaced = rows.filter((row) => !candidates.some((point) => point.index === row.index));
   const reading = `Yield against maturity date${unit ? `, in ${unit}` : ""}. ${placed
     .map(
       (point) =>
         `${point.name} matures ${point.maturity} at ${withUnit(point.cell.text, point.unit)}.`,
     )
     .join(" ")}`;
+  const axis = placed.length >= AXIS_FROM;
   return (
     <LeadFigure
       span={8}
       label={TITLE}
-      kicker="Market-implied risk"
-      title="Observed yield by maturity date"
-      basis={unit ? `Yield in ${unit}, from zero; maturity on a date axis` : undefined}
-      legend={<Key tone="primary">Observed yield</Key>}
+      title={TITLE}
+      basis={
+        unit
+          ? axis
+            ? `Yield in ${unit}, from zero; maturity on a date axis`
+            : `Yield in ${unit}, by maturity date`
+          : undefined
+      }
+      legend={axis && <Key tone="primary">Observed yield</Key>}
       trace={<Trace href={href(chart.table.line)} name={TITLE} />}
       figure={
-        placed.length ? (
-          <Scatter points={placed} label={reading} />
-        ) : (
-          <GapNote>
-            {units.size > 1
-              ? "The yields are stated in more than one unit."
-              : "No instrument has both a stated yield and a maturity date."}
-          </GapNote>
-        )
+        <div className="flex min-w-0 flex-col gap-3">
+          {!placed.length ? (
+            <CompactGap>
+              {units.size > 1
+                ? "The yields are stated in more than one unit."
+                : "No instrument has both a stated yield and a maturity date."}
+            </CompactGap>
+          ) : axis ? (
+            <div className="grid min-w-0 grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+              <Scatter points={placed} label={reading} />
+              <Points points={placed} />
+            </div>
+          ) : (
+            <Points points={placed} />
+          )}
+          {placed.length > 0 && <CompactGap>{CURVE_GAP}</CompactGap>}
+          {unplaced.length > 0 && (
+            <ul aria-label="Instruments not placed" className="flex flex-col gap-1.5">
+              {unplaced.map((row) => (
+                <li key={row.index} className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                  <span className="text-caption wrap-anywhere text-text-secondary">{row.name}</span>
+                  <Unplaced row={row} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       }
-      table={{
-        head: [...COLUMNS],
-        rows: rows.map((row) => ({
-          label: row.name,
-          cells: row.cells.slice(1).map((cell) => readerCell(cell) || null),
-          end: <Trace href={href(row.line)} name={row.name} />,
-        })),
-        endHeading: "Source",
-      }}
-      notes={[...unplotted, ...basisNotes(chart.table)]}
+      table={writtenTable(chart.table, href)}
+      notes={basisNotes(chart.table)}
     />
   );
 }
@@ -281,7 +296,7 @@ function Implied({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
         span={4}
         label={label}
         title={label}
-        reason="The module wrote no implied risk register."
+        reason="This page could not read an implied risk register from the handoff."
       />
     );
   const security = table.headers.findIndex((header) => /^security/i.test(header.trim()));
@@ -303,16 +318,12 @@ function Implied({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
                 <span className="text-small font-medium wrap-anywhere text-text-primary">
                   {name}
                 </span>
-                <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-caption">
-                  {fields.map((field) => (
-                    <Fragment key={field.name}>
-                      <dt className="text-text-tertiary">{field.name}</dt>
-                      <dd className="wrap-anywhere text-text-secondary">
-                        {readerCell(cells[field.at] ?? "")}
-                      </dd>
-                    </Fragment>
-                  ))}
-                </dl>
+                <KeyValues
+                  items={fields.map((field) => ({
+                    key: field.name,
+                    value: readerCell(cells[field.at] ?? ""),
+                  }))}
+                />
               </span>
               <Trace href={href(line)} name={name} />
             </li>

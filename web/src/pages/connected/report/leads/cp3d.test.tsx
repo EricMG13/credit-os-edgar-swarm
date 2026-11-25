@@ -45,6 +45,7 @@ Synthetic: the market prices the subordinated notes wider than the secured notes
 | Synthetic secured notes 2028 | 2028-08-15 | 6.12 | 185 bp | 2025-03-31 | Last trade | % | Yield to maturity from last trades. |
 | Synthetic subordinated notes 2027 | 2027-11-15 | 6.80 | Not supplied: no benchmark stated | 2025-03-28 | Last trade | % | Yield to maturity from last trades. |
 | Synthetic term loan 2030 | 2030-03-22 | Not supplied: no loan quote in the files | Not supplied: no loan quote | 2025-03-31 | Evaluated price | % | Yield to maturity from last trades. |
+| Synthetic senior notes 2031 | 2031-06-30 | 7.40 | 260 bp | 2025-03-31 | Last trade | % | Yield to maturity from last trades. |
 
 ### T3E.5 — Implied risk calculations
 
@@ -73,20 +74,41 @@ function market() {
   });
 }
 
+/** The placed points, by instrument, with their positions as percent of the plot. */
+const points = (figure: HTMLElement) =>
+  [...figure.querySelectorAll<HTMLElement>("[data-point]")].map((point) => ({
+    name: point.dataset.point,
+    left: Number.parseFloat(point.style.left),
+    bottom: Number.parseFloat(point.style.bottom),
+  }));
+
 it("draws each quoted instrument as a point on a true maturity-date axis, labelled as written", () => {
   render(<MarketLead {...leadProps(market())} />);
   const tile = screen.getByRole("region", { name: "Yield against maturity" });
+  // Ruling (a): the title is the subject.
+  expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(
+    /^Yield against maturity$/,
+  );
   const figure = within(tile).getByRole("img");
   expect(figure).toHaveAccessibleName(
-    "Yield against maturity date, in %. Synthetic subordinated notes 2027 matures 2027-11-15 at 6.80%. Synthetic secured notes 2028 matures 2028-08-15 at 6.12%.",
+    "Yield against maturity date, in %. Synthetic subordinated notes 2027 matures 2027-11-15 at 6.80%. Synthetic secured notes 2028 matures 2028-08-15 at 6.12%. Synthetic senior notes 2031 matures 2031-06-30 at 7.40%.",
   );
-  const points = [...figure.querySelectorAll("[data-point]")];
-  expect(points.map((point) => point.getAttribute("data-point"))).toEqual([
+  const placed = points(figure);
+  expect(placed.map((point) => point.name)).toEqual([
     "Synthetic subordinated notes 2027",
     "Synthetic secured notes 2028",
+    "Synthetic senior notes 2031",
   ]);
-  const [early, late] = points.map((point) => Number(point.getAttribute("cx")));
-  expect(early).toBeLessThan(late ?? 0);
+  const [early, middle, late] = placed;
+  // Later maturities sit further right; the 2028 and 2031 points are 2.9 years apart, the 2027 and
+  // 2028 points 0.75 years, so the second gap is the wider one.
+  expect(early?.left).toBeLessThan(middle?.left ?? 0);
+  expect((late?.left ?? 0) - (middle?.left ?? 0)).toBeGreaterThan(
+    2 * ((middle?.left ?? 0) - (early?.left ?? 0)),
+  );
+  // Higher yields sit higher: 7.40 above 6.80 above 6.12.
+  expect(late?.bottom).toBeGreaterThan(early?.bottom ?? 0);
+  expect(early?.bottom).toBeGreaterThan(middle?.bottom ?? 0);
   const key = within(tile).getByRole("list", { name: "Instruments by maturity" });
   expect(
     within(key)
@@ -95,19 +117,49 @@ it("draws each quoted instrument as a point on a true maturity-date axis, labell
   ).toEqual([
     "1Synthetic subordinated notes 20272027-11-156.80%",
     "2Synthetic secured notes 20282028-08-156.12%",
+    "3Synthetic senior notes 20312031-06-307.40%",
   ]);
   expect(within(key).queryByText(/term loan/)).toBeNull();
   expect(within(figure).getByText("2028")).toBeInTheDocument();
   expect(within(figure).getByText("0")).toBeInTheDocument();
   expect(within(figure).queryByText(/term loan/)).toBeNull();
+  // G13: every label is page text in CSS pixels, never SVG text a viewBox rescales.
+  expect(tile.querySelector("svg text")).toBeNull();
   expect(figure.querySelector("path, polyline")).toBeNull();
 });
 
-it("lists an unquoted instrument under the figure with its reason and draws no curve", () => {
+it("lists two quoted instruments as figures, with no date axis under three points", () => {
+  const two = market();
+  two.sections = sectionsOf(MARKET.replace(/\| Synthetic senior notes 2031 .*\n/, ""));
+  render(<MarketLead {...leadProps(two)} />);
+  const tile = screen.getByRole("region", { name: "Yield against maturity" });
+  expect(tile.querySelectorAll("[data-point]")).toHaveLength(0);
+  expect(within(tile).queryByRole("img")).toBeNull();
+  const list = within(tile).getByRole("list", { name: "Instruments by maturity" });
+  expect(
+    within(list)
+      .getAllByRole("listitem")
+      .map((item) => item.textContent),
+  ).toEqual([
+    "1Synthetic subordinated notes 20272027-11-156.80%",
+    "2Synthetic secured notes 20282028-08-156.12%",
+  ]);
+  expect(within(tile).queryByText("2028")).toBeNull();
+});
+
+it("lists an unquoted instrument with its reason and draws the issuer curve gap in its place", () => {
   render(<MarketLead {...leadProps(market())} />);
   const tile = screen.getByRole("region", { name: "Yield against maturity" });
+  const unplaced = within(tile).getByRole("list", { name: "Instruments not placed" });
+  const [loan] = within(unplaced).getAllByRole("listitem");
+  if (!loan) throw new Error("one unplaced row");
+  expect(within(loan).getByText("Synthetic term loan 2030")).toBeVisible();
+  expect(within(loan).getByText("Not supplied")).toBeVisible();
+  expect(within(loan).getByText("No loan quote in the files")).toBeVisible();
+  // G7: no raw "X: Not supplied: reason".
+  expect(tile.textContent).not.toMatch(/: Not supplied: /);
   expect(
-    within(tile).getByText("Synthetic term loan 2030: Not supplied: no loan quote in the files"),
+    within(tile).getByText("This page could not read an issuer curve from the handoff."),
   ).toBeVisible();
   // Ruling vii: no method notes on the reader's page.
   expect(tile.textContent).not.toMatch(/No curve is drawn|methodology/);
@@ -122,6 +174,11 @@ it("gives spread and quote date in the table view, as written", () => {
   expect(
     within(tile).getByRole("cell", { name: "Not supplied: no loan quote in the files" }),
   ).toBeVisible();
+  // F15: the per-row unit and basis stay with their rows.
+  expect(
+    within(tile).getAllByRole("cell", { name: "Yield to maturity from last trades." }),
+  ).toHaveLength(4);
+  expect(within(tile).getByRole("columnheader", { name: "Reporting unit" })).toBeVisible();
   expect(
     within(tile)
       .getAllByRole("link", { name: /Source for/ })
@@ -143,10 +200,16 @@ it("states the gaps when the module wrote neither table, and draws nothing when 
   render(<MarketLead {...leadProps(handoff("## Findings\n\n### Bottom line\n\nThin.\n"))} />);
   const figure = screen.getByRole("region", { name: "Yield against maturity" });
   expect(
-    within(figure).getByText("The module wrote no yield against maturity table."),
+    within(figure).getByText(
+      "This page could not read a yield against maturity table from the handoff.",
+    ),
   ).toBeVisible();
   const implied = screen.getByRole("region", { name: "Market-implied default" });
-  expect(within(implied).getByText("The module wrote no implied risk register.")).toBeVisible();
+  expect(
+    within(implied).getByText(
+      "This page could not read an implied risk register from the handoff.",
+    ),
+  ).toBeVisible();
   expect(document.body.textContent).not.toMatch(/supplied at run start/);
   cleanup();
   const { container } = render(
@@ -162,10 +225,9 @@ it("states the gaps when the module wrote neither table, and draws nothing when 
 });
 
 it("labels the earliest and latest maturity dates when the points fall within one year", () => {
-  const near = MARKET.replace("| 2028-08-15 |", "| 2027-06-01 |").replace(
-    "| 2027-11-15 |",
-    "| 2027-08-01 |",
-  );
+  const near = MARKET.replace("| 2028-08-15 |", "| 2027-06-01 |")
+    .replace("| 2027-11-15 |", "| 2027-08-01 |")
+    .replace("| 2031-06-30 |", "| 2027-07-01 |");
   const made = market();
   made.sections = sectionsOf(near);
   render(<MarketLead {...leadProps(made)} />);
@@ -188,6 +250,7 @@ it("places no point when the yields are in more than one unit, and says so", () 
   const tile = screen.getByRole("region", { name: "Yield against maturity" });
   expect(tile.querySelectorAll("[data-point]")).toHaveLength(0);
   expect(within(tile).getByText("The yields are stated in more than one unit.")).toBeVisible();
+  expect(within(tile).queryByText(/could not read an issuer curve/)).toBeNull();
   expect(within(tile).queryByText(/^Yield in/)).toBeNull();
   fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
   expect(within(tile).getByRole("cell", { name: "680" })).toBeVisible();
@@ -204,11 +267,9 @@ it("gives a yield below zero its own reason, and draws no source reference in a 
   );
   render(<MarketLead {...leadProps(made)} />);
   const tile = screen.getByRole("region", { name: "Yield against maturity" });
-  expect(
-    within(tile).getByText(
-      "Synthetic subordinated notes 2027: Stated yield below zero; not placed.",
-    ),
-  ).toBeVisible();
+  const unplaced = within(tile).getByRole("list", { name: "Instruments not placed" });
+  expect(within(unplaced).getByText("Synthetic subordinated notes 2027")).toBeVisible();
+  expect(within(unplaced).getByText("Stated yield below zero; not placed.")).toBeVisible();
   expect(tile.textContent).not.toMatch(/loan_tape/);
 });
 

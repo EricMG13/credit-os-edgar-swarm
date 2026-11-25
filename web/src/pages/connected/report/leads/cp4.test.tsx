@@ -162,8 +162,10 @@ it("draws nothing for the real blocked module: no unlock line and no map gap til
 it("draws a headroom bullet per test, each on its own scale, a gap row with its reason", () => {
   render(<LegalLead {...leadProps(synthetic())} />);
   const tile = screen.getByRole("region", { name: "Covenant headroom" });
-  expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(
-    "Net leverage 4.2x against a threshold of 5.0x, headroom 0.8x",
+  // Ruling (a): the title is the subject; the reading is each bullet's own.
+  expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(/^Covenant headroom$/);
+  expect(within(tile).getAllByRole("img")[0]).toHaveAccessibleName(
+    "Net leverage: 4.2x against a threshold of 5.0x, headroom 0.8x. Passes at or below.",
   );
   const rows = within(within(tile).getByRole("list", { name: "Covenant tests" })).getAllByRole(
     "listitem",
@@ -181,6 +183,22 @@ it("draws a headroom bullet per test, each on its own scale, a gap row with its 
   expect(within(tile).getByText("Synthetic.")).toBeVisible();
   fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
   expect(within(tile).getByRole("cell", { name: "Not supplied: not stated" })).toBeVisible();
+  // F15: every column the module wrote, its per-row unit and basis included.
+  expect(
+    within(tile)
+      .getAllByRole("columnheader")
+      .map((cell) => cell.textContent),
+  ).toEqual([
+    "Test",
+    "Threshold",
+    "Current",
+    "Headroom",
+    "Direction",
+    "Reporting unit",
+    "Basis and limitation",
+    "Source",
+  ]);
+  expect(within(tile).getByRole("cell", { name: "US$m" })).toBeVisible();
   expect(
     within(tile)
       .getAllByRole("link", { name: /Source for/ })
@@ -210,14 +228,33 @@ it("states the gaps when the module wrote no headroom table, map or basket regis
   render(<LegalLead {...leadProps(handoff("## Findings\n\n### Bottom line\n\nThin.\n"))} />);
   expect(
     within(screen.getByRole("region", { name: "Covenant headroom" })).getByText(
-      "The module wrote no covenant headroom table.",
+      "This page could not read a covenant headroom table from the handoff.",
     ),
   ).toBeVisible();
   for (const [name, text] of [
-    ["Legal entities", "The module wrote no legal entities map."],
-    ["Intercreditor", "The module wrote no intercreditor map."],
-    ["Baskets and capacity", "The module wrote no basket and capacity register."],
+    ["Legal entities", "This page could not read a legal entities map from the handoff."],
+    ["Intercreditor", "This page could not read an intercreditor map from the handoff."],
+    [
+      "Baskets and capacity",
+      "This page could not read a basket and capacity register from the handoff.",
+    ],
   ] as const)
     expect(within(screen.getByRole("region", { name })).getByText(text)).toBeVisible();
   expect(document.body.textContent).not.toMatch(/supplied at run start/);
+});
+
+it("says the store withheld the headroom table, traces it and opens the table as written", () => {
+  const made = synthetic();
+  made.output.charts = [];
+  render(<LegalLead {...leadProps(made)} />);
+  const tile = screen.getByRole("region", { name: "Covenant headroom" });
+  expect(
+    within(tile).getByText("This page could not draw the table the handoff has."),
+  ).toBeVisible();
+  expect(within(tile).getByRole("link", { name: "Source for Covenant headroom" })).toHaveAttribute(
+    "href",
+    expect.stringContaining("#evidence/"),
+  );
+  const table = within(tile).getByRole("region", { name: "Covenant headroom table" });
+  expect(within(table).getByRole("cell", { name: "0.8x" })).toBeInTheDocument();
 });
