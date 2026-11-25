@@ -150,14 +150,18 @@ function styleOf(drawn: MeasureCase[], item: MeasureCase) {
 }
 
 type Anchor = "start" | "middle" | "end";
-type Spot = { x: number; y: number; anchor: Anchor };
-type Box = { left: number; right: number; top: number; bottom: number };
+/** Where a label may sit; `far` is how far it has moved out from the spots beside its point. */
+type Spot = { x: number; y: number; anchor: Anchor; far?: number };
+/** A mark a label should keep clear of; `weight` is what covering a pixel of it costs. */
+type Box = { left: number; right: number; top: number; bottom: number; weight?: number };
 type Wanted = {
   key: string;
   text: string;
   /** Point labels are mono 14px; gap words are 12px captions. */
   kind: "figure" | "gap";
   spots: Spot[];
+  /** A label the chart may leave out where no spot is clear: its figure is stated elsewhere. */
+  optional?: boolean;
 };
 type Label = Wanted & Spot;
 
@@ -182,12 +186,13 @@ const overlap = (a: Box, b: Box) =>
   Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
 
 /**
- * Each label at its first spot that sits inside the plot and clear of every point, line and label
- * placed before it; where none is clear, at the spot it overlaps least.
+ * Each label at the spot that costs least: inside the plot, clear of points and of the labels placed
+ * before it above all, then clear of lines (a line behind a haloed label stays readable), then
+ * nearest its own point, so it is never read as another case's.
  */
 function place(wanted: Wanted[], marks: Box[], bounds: Box, widthOf: TextWidth): Label[] {
   const taken = [...marks];
-  return wanted.map((label) => {
+  return wanted.flatMap((label) => {
     const width = widthOf(label.text, label.kind);
     let best: { spot: Spot; box: Box; cost: number } | undefined;
     for (const [rank, spot] of label.spots.entries()) {
@@ -197,37 +202,50 @@ function place(wanted: Wanted[], marks: Box[], bounds: Box, widthOf: TextWidth):
         box.right > bounds.right ||
         box.top < bounds.top ||
         box.bottom > bounds.bottom;
-      const covered = taken.reduce((sum, mark) => sum + overlap(box, mark), 0);
-      const cost = (outside ? 1e6 : 0) + covered * 100 + rank;
+      const covered = taken.reduce(
+        (sum, mark) => sum + overlap(box, mark) * (mark.weight ?? 100),
+        0,
+      );
+      const cost = (outside ? 1e6 : 0) + covered + rank + (spot.far ?? 0) * 6;
       if (!best || cost < best.cost) best = { spot, box, cost };
       if (cost === rank) break;
     }
+    const box = best?.box;
+    const clear =
+      box !== undefined &&
+      (best?.cost ?? 1e6) < 1e6 &&
+      !taken.some((mark) => (mark.weight ?? 100) > 2 && overlap(box, mark) > 0);
+    if (label.optional && !clear) return [];
     const spot = best?.spot ?? label.spots[0] ?? { x: 0, y: 0, anchor: "start" as const };
-    if (best) taken.push(best.box);
-    return { ...label, ...spot };
+    if (box) taken.push(box);
+    return [{ ...label, ...spot }];
   });
 }
 
 /** Every drawn point and line as boxes a label must stay clear of. */
 function marksOf(drawn: MeasureCase[], slots: Slot[], g: Geometry, measure: Measure): Box[] {
-  const dot = (x: number, y: number, r: number) => ({
+  const dot = (x: number, y: number, r: number, weight = 100) => ({
     left: x - r,
     right: x + r,
     top: y - r,
     bottom: y + r,
+    weight,
   });
   const boxes: Box[] = [];
   for (const item of drawn) {
     for (const slot of slots) {
       const cell = cellAt(item, slot);
-      if (cell?.value != null) boxes.push(dot(g.x(slot.year), g.y(cell.value), 7));
+      if (cell?.value == null) continue;
+      boxes.push(dot(g.x(slot.year), g.y(cell.value), 7));
+      // A little room around every point, so no label sits against a point it does not name.
+      boxes.push(dot(g.x(slot.year), g.y(cell.value), 18, 2));
     }
     for (const { from, to } of segments(item, slots)) {
       const [x1, y1] = [g.x(fiscalYear(from.period) ?? 0), g.y(from.value ?? 0)];
       const [x2, y2] = [g.x(fiscalYear(to.period) ?? 0), g.y(to.value ?? 0)];
       const steps = Math.max(1, Math.ceil(Math.hypot(x2 - x1, y2 - y1) / 5));
       for (let at = 0; at <= steps; at += 1)
-        boxes.push(dot(x1 + ((x2 - x1) * at) / steps, y1 + ((y2 - y1) * at) / steps, 2.5));
+        boxes.push(dot(x1 + ((x2 - x1) * at) / steps, y1 + ((y2 - y1) * at) / steps, 2.5, 4));
     }
   }
   const actual = measure.actual;
@@ -246,6 +264,18 @@ const around = (x: number, y: number): Spot[] => [
   { x: x - 10, y: y - 10, anchor: "end" },
   { x: x - 10, y: y + 18, anchor: "end" },
 ];
+
+/** The spots near a point first, then the same spots further up and down, so a crowded plot
+ * still has a clear place before any label is laid over a line. */
+function ringed(spots: Spot[]): Spot[] {
+  const rings = [14, 28].flatMap((step) =>
+    spots.flatMap((spot) => [
+      { ...spot, y: spot.y - step, far: step },
+      { ...spot, y: spot.y + step, far: step },
+    ]),
+  );
+  return [...spots, ...rings];
+}
 
 /** The text of a case's end label: its figure and its name, or its key where names do not fit. */
 function endText(item: MeasureCase, last: MeasureCell, drawn: MeasureCase[], keyed: boolean) {
@@ -273,7 +303,7 @@ function pointLabels(
         key: `${item.group}-end`,
         text: endText(item, last, drawn, keyed),
         kind: "figure",
-        spots: around(x, y),
+        spots: ringed(around(x, y)),
       });
     }
     if (item !== selected) continue;
@@ -288,16 +318,13 @@ function pointLabels(
           key: `${item.group}-${cell.period}`,
           text: `${cell.display} · ${cell.period}`,
           kind: "figure",
-          spots: [
-            spots[3],
-            spots[4],
-            spots[0],
-            spots[5],
-            spots[1],
-            spots[6],
-            spots[2],
-            spots[7],
-          ].filter((spot): spot is Spot => spot !== undefined),
+          // The strip above states the highest year; the chart labels it only where it is clear.
+          optional: true,
+          spots: ringed(
+            [spots[3], spots[4], spots[0], spots[5], spots[1], spots[6], spots[2], spots[7]].filter(
+              (spot): spot is Spot => spot !== undefined,
+            ),
+          ),
         });
       }
   }
@@ -310,8 +337,8 @@ function pointLabels(
       key: "actual",
       text: `${actual.display} ${actual.period}`,
       kind: "figure",
-      spots: [spots[5], spots[3], spots[4], spots[0]].filter(
-        (spot): spot is Spot => spot !== undefined,
+      spots: ringed(
+        [spots[5], spots[3], spots[4], spots[0]].filter((spot): spot is Spot => spot !== undefined),
       ),
     });
   }
