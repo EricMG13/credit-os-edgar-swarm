@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for ACCO BRANDS Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "73f01b51af2fea38996c9346aea4ce421a2d7df816a0ddedbd053c81d6257e0c",
+    "CP-1.md": "b7387750ffe2f00adea52fd5c1c71e46572ea3559db8bb735dae4ea4cbbc0644",
+    "CP-1A.md": "f92d4338a7ba270ad9996151336caedcc864ec7906dc67c99d22634a9e60dad6",
+    "CP-2.md": "f1088567277a78ed85d9fa169bcc40b9162a6b13cc91863a4819bd0eb3634646",
+    "coverage.json": "4aa95ee9eadda09a39ea6c2656bb4dfab595b16c683c09f2778074237e0a7fd0",
+    "view.json": "986ace1bdb30d2b69bf36672d1c6a0c6d6eb95f5320dc792aeacc1f1927a8317",
+    "report-view.json": "b95cc6980e65ef8cba5421693afeb3f60fa9b2088216d59898aa84df61a318df"
+  }
+}

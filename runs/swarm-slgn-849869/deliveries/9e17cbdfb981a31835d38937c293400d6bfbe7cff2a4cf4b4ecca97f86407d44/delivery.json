@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Silgan Holdings Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "dea6590f16107f877923b231c0ec26ca6e7c92ecf169979faaaa0597ab3a987a",
+    "CP-1.md": "b7a568c70f4b6a8ec9738cf7ce2fec91b44d5085aa4bc7ba31a0b20aef8a3998",
+    "CP-1A.md": "5304f642cc07310ee6887b15df3169eeb6f5cd6fe4454c4e0e34415568e84872",
+    "CP-2.md": "62e41a5686fd354fbb7a70085af98aeefffca607043ca816ff2b0609319f1182",
+    "coverage.json": "a78c0a60218b0cd50d73eeee13e494d787c3df8f7d1c63f3329f1a1d237d7c5c",
+    "view.json": "6dde67333b5c3be9cb885e89a85a8ba24ef600750b5c2c33a2e3e15124adbb68",
+    "report-view.json": "4245d2b55650422e5d0d6d3d85b6294f66d240ec4c0aa87e9d95dc5ef33fbcea"
+  }
+}

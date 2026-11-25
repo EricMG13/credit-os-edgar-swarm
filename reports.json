@@ -1,0 +1,68 @@
+[
+  {
+    "issuer_id": "acco-712034",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The supplied sources lack covenant EBITDA and compliance certificates, the executed credit agreement and indenture, the proxy statement, the Trust acquisition's funding and any rating or market price, so covenant headroom, the 2.00x gap between derived (5.60x) and issuer-reported (3.60x) leverage, and refinancing access are recorded as gaps rather than resolved."
+  },
+  {
+    "issuer_id": "hni-48287",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The credit agreement, indenture, proxy statement, ratings and any issuer or pro forma EBITDA were not among the supplied sources, so covenant headroom, legal capacity for shareholder payments, board independence and run-rate leverage stay open as stated gaps (and the filings' own rounding left four cash-flow totals and one balance-sheet total unstated)."
+  },
+  {
+    "issuer_id": "slgn-849869",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The run finished with all four modules accepted on the first submission and the delivery written; the one defect I could not fix is that the October 19, 2026 Silgan MCC and Trivium transaction is described only in a single 10-Q note (no sources and uses or pro forma net debt), so claim priority and post-closing leverage stay \"not established\" in CP-1A and CP-2."
+  },
+  {
+    "issuer_id": "upbd-933036",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "Defect not fixable from the supplied sources: the term loan maturity tables print nil repayments for 2026 to 2030 while the notes state 1.00% annual amortization (USD 8.75 million a year), which I flagged as a gap and kept out of the ladder. CP-0 was already accepted (its attempt 1) before this session began, so I submitted only CP-1, CP-1A and CP-2, each accepted first time. Before each submission I pre-tested my own drafts with the repo's read-only checker functions (nothing in the repository was edited)."
+  },
+  {
+    "issuer_id": "lad-1023128",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted CP-0 and CP-1 answers wrongly say the year-end 2025 debt split and issuer net debt are not printed (the 2025 10-K page 60 prints them: 14,821.9 total, 6,051.9 inventory-related, 3,724.9 financing-operations, 4,864.1 issuer net debt), and I could only correct this in CP-1A and CP-2 because accepted answers cannot be replaced; the CP-1A map relationship cells also exceed the 60-character prompt guideline."
+  },
+  {
+    "issuer_id": "crl",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The pack has no credit agreement, indentures, ratings, proxy statement or fiscal 2025 non-GAAP reconciliation, so covenant headroom on contract EBITDA, note ranking and guarantors, and market access could not be established, and the page-numbered text extracts could not be checked against the original filings."
+  }
+]

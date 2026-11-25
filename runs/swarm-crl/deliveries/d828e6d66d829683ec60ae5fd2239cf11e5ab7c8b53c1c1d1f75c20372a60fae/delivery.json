@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for CHARLES RIVER LABORATORIES INTERNATIONAL, INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "4e3d4e8ce5dd6ca8744604ca512172a5d4ad2850108ee9ead58845106790028f",
+    "CP-1.md": "02c6ceaf3bdd65f2e581ba571099f76a0a2830295f8a26ce1bb24bf49da0fe34",
+    "CP-1A.md": "14c359b1f11fb8f5701d4e61001cf1e54eaf236c362d4fab0540fc360aa1d125",
+    "CP-2.md": "70972b4ab8b7b9973c3ad29d4b4279489113afae9c3918ef87d8e4b853931b40",
+    "coverage.json": "7d7337e3ce66438bd5fc5c1d35ed40c1fe9bf8710d4cb976031ee301219b1143",
+    "view.json": "6d255a92821b41adef1414cf711ad3111a7f07fc1547eddf45075e0642df7647",
+    "report-view.json": "ddc99f3a8fc47736cd730a340363842c1f0f9dbb354e77ce3dd3f42880240496"
+  }
+}
