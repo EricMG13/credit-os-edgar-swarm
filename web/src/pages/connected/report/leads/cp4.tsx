@@ -15,6 +15,8 @@ import {
   registerTable,
   rowName,
   drawsNothing,
+  hasRegister,
+  statedInProse,
 } from "./read";
 import type { LeadProps } from "./types";
 import { ChartGap, writtenTable } from "./written";
@@ -46,6 +48,8 @@ function Headroom({
   href: Href;
   span?: 8 | 12;
 }) {
+  // A chart the module wrote as prose only is the frame's, in the module's words.
+  if (statedInProse(entry, `Chart data: ${TITLE}`)) return null;
   const { chart, tests } = headroomOf(entry);
   if (chart.state !== "ready" || !tests)
     return (
@@ -94,6 +98,8 @@ const BASKET_FIELDS = ["Estimated Capacity", "Remaining Capacity", "Status"] as 
 function Baskets({ entry, href, span }: { entry: LeadProps["entry"]; href: Href; span: 6 | 12 }) {
   const label = "Baskets and capacity";
   const table = registerTable(entry, "T4C.5", ["Capacity Type", "Basket / Test"]);
+  // No basket register at all is no tile; a gap only for one the page could not read.
+  if (!table?.rows.length && !hasRegister(entry, "T4C.5")) return null;
   if (!table?.rows.length)
     return (
       <LeadGap
@@ -148,17 +154,19 @@ export const LegalLead = withDraws(
     if (drawsNothing(entry)) return null;
     const href = leadHref(props);
     const maps = MAPS.map((item) => ({ ...item, map: mapOf(entry, item.name) }));
-    const tile = (item: (typeof maps)[number], span: 6 | 12) => (
-      <MapTile
-        key={item.name}
-        map={item.map}
-        span={span}
-        label={item.title}
-        title={item.title}
-        href={href}
-        absent={`This page could not read ${item.noun}.`}
-      />
-    );
+    // A map the module wrote as prose only is the frame's, in the module's words.
+    const tile = (item: (typeof maps)[number], span: 6 | 12) =>
+      !statedInProse(entry, `Map: ${item.name}`) && (
+        <MapTile
+          key={item.name}
+          map={item.map}
+          span={span}
+          label={item.title}
+          title={item.title}
+          href={href}
+          absent={`This page could not read ${item.noun}.`}
+        />
+      );
     const deep = (item: (typeof maps)[number]) =>
       item.map.state === "ready" && item.map.edges.length > 1;
     if (!headroomOf(entry).tests)

@@ -145,7 +145,7 @@ export function Ladder({
   label: string;
   rungs: readonly Rung[];
   ticks: readonly { at: number; label: string }[];
-  /** What the axis measures and its range, under the tick labels ("Fall in EBITDA, 0–40%"). */
+  /** What the axis measures, under the tick labels ("Fall in EBITDA"). */
   axis?: string;
   ordered?: boolean;
 }) {
@@ -214,11 +214,11 @@ export function Ladder({
 function declineAxis(values: readonly (number | null)[]) {
   const scale = niceTicks(values.map((value) => (value === null ? null : value * 100)));
   const top = scale.at(-1)?.value || 1;
-  const percent = (value: number) => `${String(value)}%`;
+  // The ticks show the range; the caption names only what the axis measures.
   return {
     top: top / 100,
     ticks: scale.map((tick) => ({ at: tick.value / top, label: `${tick.label}%` })),
-    words: `Fall in EBITDA, 0–${percent(top)}`,
+    words: "Fall in EBITDA",
   };
 }
 const TITLE = "EBITDA break points";

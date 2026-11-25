@@ -24,6 +24,7 @@ import {
   readerCell,
   registerTable,
   drawsNothing,
+  statedInProse,
 } from "./read";
 import type { LeadProps } from "./types";
 
@@ -313,7 +314,8 @@ export const MacroLead = withDraws(
     ) : sensitivity ? (
       <SensitivityTile table={sensitivity} href={href} />
     ) : null;
-    const dates = (
+    // A lane the module wrote as prose only is the frame's, in the module's words.
+    const dates = !statedInProse(entry, "Events: Hedges") && (
       <LaneTile
         lane={eventsOf(entry, "Hedges")}
         span={12}
@@ -323,7 +325,12 @@ export const MacroLead = withDraws(
         asOf={run.asOf}
       />
     );
-    const foreign = <ForeignShareTile fxGap={data?.fxGap} href={href} span={12} />;
+    // The foreign share comes from a currency register or the module's FX limitation; with
+    // neither written there is no tile, and a gap only where one is written and not read.
+    const currency = entry.sections.some(({ heading }) => /\bFX\b.*\bregister\b/i.test(heading));
+    const foreign = (data?.fxGap || currency) && (
+      <ForeignShareTile fxGap={data?.fxGap} href={href} span={12} />
+    );
     const terms = <HedgeTermsTile hedges={hedges} exposures={data?.fxExposure} href={href} />;
     const others = <OtherCharts entry={entry} module="CP-2E" href={evidence} drawn={[]} />;
     const short = onlyGaps(entry, []);

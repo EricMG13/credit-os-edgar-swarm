@@ -71,7 +71,7 @@ it("reads the canonical ranking's shares, drawing zero and keeping the original 
   expect(origins[0]).toHaveClass("w-1", "bg-chart-1");
   // The axis ends at a round maximum at or above the largest break: 12.5% is itself one.
   expect(figure.querySelector('[data-decline="0.125"]')).toHaveStyle({ width: "100%" });
-  expect(within(tile()).getByText("Fall in EBITDA, 0–12.5%")).toBeInTheDocument();
+  expect(within(tile()).getByText("Fall in EBITDA")).toBeInTheDocument();
   fireEvent.click(within(tile()).getByRole("button", { name: "Table" }));
   expect(within(tile()).getByRole("cell", { name: "12.5%" })).toBeInTheDocument();
   expect(within(tile()).getByRole("cell", { name: "0%" })).toBeInTheDocument();
@@ -234,7 +234,7 @@ it("scales the axis to a round maximum above the largest break and says so", () 
   expect(figure.querySelector('[data-decline="0.15"]')).toHaveStyle({ width: "37.5%" });
   expect(within(figure).getByText("40%")).toBeInTheDocument();
   expect(within(figure).queryByText("100%")).toBeNull();
-  expect(within(tile()).getByText("Fall in EBITDA, 0–40%")).toBeInTheDocument();
+  expect(within(tile()).getByText("Fall in EBITDA")).toBeInTheDocument();
 });
 
 it("keeps a stated break above 100% as written and scales the axis to it", () => {
@@ -255,5 +255,5 @@ it("keeps a stated break above 100% as written and scales the axis to it", () =>
   // 120 of 125 (ticks of 25 to 125) and 40 of 125, worked by hand.
   expect(figure.querySelector('[data-decline="1.2"]')).toHaveStyle({ width: "96%" });
   expect(figure.querySelector('[data-decline="0.4"]')).toHaveStyle({ width: "32%" });
-  expect(within(tile()).getByText("Fall in EBITDA, 0–125%")).toBeInTheDocument();
+  expect(within(tile()).getByText("Fall in EBITDA")).toBeInTheDocument();
 });

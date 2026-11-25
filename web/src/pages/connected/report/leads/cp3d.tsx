@@ -15,6 +15,7 @@ import {
   rowName,
   drawsNothing,
   withStatedUnit,
+  statedInProse,
 } from "./read";
 import type { LeadProps } from "./types";
 import { ChartGap, writtenTable } from "./written";
@@ -202,6 +203,8 @@ function Points({ points }: { points: readonly Placed[] }) {
 }
 
 function YieldFigure({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
+  // A chart the module wrote as prose only is the frame's, in the module's words.
+  if (statedInProse(entry, `Chart data: ${TITLE}`)) return null;
   const chart = chartOf(entry, TITLE);
   const rows = chart.state === "ready" ? quotes(chart.table) : null;
   if (chart.state !== "ready" || !rows)

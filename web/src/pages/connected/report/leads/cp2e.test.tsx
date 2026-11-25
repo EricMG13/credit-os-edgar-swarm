@@ -403,3 +403,10 @@ it("heads the tile with the first row that states a result, a stated gap before 
   expect(within(second).getByText("No floating base stated")).toBeVisible();
   expect(tile.textContent).not.toMatch(/Not calculable:/);
 });
+
+// Review 6: no currency register and no stated FX limitation is no foreign-share tile.
+it("draws no foreign-share tile when the module writes no currency register or FX limitation", () => {
+  render(<MacroLead {...leadProps(proof())} />);
+  expect(screen.queryByRole("region", { name: "Foreign share" })).toBeNull();
+  expect(screen.queryByText("This page could not read a foreign-currency share.")).toBeNull();
+});

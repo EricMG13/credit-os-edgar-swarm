@@ -14,6 +14,7 @@ import {
   rowName,
   WITHHELD,
   drawsNothing,
+  statedInProse,
 } from "./read";
 import type { Table } from "../../publishedReport";
 import type { LeadProps } from "./types";
@@ -74,6 +75,8 @@ function Triggers({
   href: Href;
   span: 8 | 12;
 }) {
+  // A chart the module wrote as prose only is the frame's, in the module's words.
+  if (statedInProse(entry, `Chart data: ${TRIGGERS}`)) return null;
   const { chart, tests } = triggersOf(entry);
   if (chart.state !== "ready" || !tests)
     return (

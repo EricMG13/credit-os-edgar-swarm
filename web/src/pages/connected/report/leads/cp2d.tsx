@@ -4,7 +4,7 @@ import { Bridge, BridgeLegend, bridgeOf, stepTable, type Step } from "./bridge";
 import { withDraws } from "./draws";
 import { onlyGaps, OtherCharts, rowBasis } from "./written";
 import { CompactGap, LaneTile, LeadFigure, LeadGap, Trace, type LeadTable, Beside } from "./parts";
-import { chartOf, eventsOf, leadHref, drawsNothing } from "./read";
+import { chartOf, eventsOf, leadHref, drawsNothing, statedInProse } from "./read";
 import type { LeadProps } from "./types";
 
 const TITLE = "Liquidity bridge";
@@ -81,7 +81,9 @@ export const LiquidityLead = withDraws(
     if (drawsNothing(entry)) return null;
     const href = leadHref(props);
     const drawn = Boolean(bridgeOf(chartOf(entry, TITLE)));
-    const dates = (
+    // A bridge or a lane the module wrote as prose only is the frame's, in the module's words.
+    const bridge = !statedInProse(entry, `Chart data: ${TITLE}`);
+    const dates = !statedInProse(entry, "Events: Financing") && (
       <LaneTile
         lane={eventsOf(entry, "Financing")}
         span={drawn ? 4 : 12}
@@ -98,7 +100,7 @@ export const LiquidityLead = withDraws(
     // that is only a gap is one full row and the dates take the next.
     return (
       <Bento>
-        <LiquidityBridge entry={entry} href={href} />
+        {bridge && <LiquidityBridge entry={entry} href={href} />}
         {drawn ? (
           <>
             <Beside>

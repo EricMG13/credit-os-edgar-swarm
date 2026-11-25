@@ -3,7 +3,7 @@ import { expect, it } from "vitest";
 import type { OutputEntry } from "../../publishedReport";
 import { entry, section, table } from "../overview/rows.fixture";
 import { EVENT_HEADERS } from "./lead.fixture";
-import { fixtureEntry, retained } from "./markdown.fixture";
+import { fixtureEntry, retained, sectionsOf } from "./markdown.fixture";
 import {
   chartOf,
   chartsStartingWith,
@@ -14,6 +14,7 @@ import {
   readerCell,
   registerTable,
   sectionParagraphs,
+  statedInProse,
 } from "./read";
 
 const H3 = retained("esg", "CP-2E-h3.md");
@@ -388,4 +389,43 @@ it("gives each placed lane event the category and days the event axis places", (
     from: Date.UTC(2025, 6, 1),
     to: Date.UTC(2025, 8, 30),
   });
+});
+
+// Review 6, V3: a drawing section the module wrote as prose, no table, is the frame's to draw.
+it("tells a chart, a lane and a map the module wrote as prose with no table", () => {
+  const made = entry(
+    "CP-2D",
+    [],
+    sectionsOf(`## Findings
+
+### Chart data: liquidity bridge
+
+The module could not chart this: no cash flow statement is supplied.
+
+### Events: Financing
+
+No dated financing event is stated for this run.
+
+### Map: credit-risk transmission
+
+The module could not map this transmission.
+
+### Chart data: leverage
+
+| Year | Leverage |
+| --- | --- |
+| 2025 | 4.1x |
+
+### Map: ownership and control
+`),
+  );
+  expect(statedInProse(made, "Chart data: Liquidity bridge")).toBe(true);
+  expect(statedInProse(made, "Events: Financing")).toBe(true);
+  expect(statedInProse(made, "Map: credit-risk transmission")).toBe(true);
+  // A table, an empty section and no section at all are not prose.
+  expect(statedInProse(made, "Chart data: Leverage")).toBe(false);
+  expect(statedInProse(made, "Map: ownership and control")).toBe(false);
+  expect(statedInProse(made, "Chart data: Interest cover")).toBe(false);
+  // A prose-only chart is not one the page lists among the module's charts.
+  expect(chartsStartingWith(made, "").map(({ title }) => title)).toEqual(["Leverage"]);
 });

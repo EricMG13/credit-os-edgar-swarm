@@ -31,6 +31,7 @@ import {
   rowName,
   drawsNothing,
   withStatedUnit,
+  statedInProse,
 } from "./read";
 import type { LeadProps } from "./types";
 import { ChartGap, writtenTable } from "./written";
@@ -53,7 +54,14 @@ function ValueAllocation({ entry, href }: { entry: Entry; href: Href }) {
   const scenarios = chartsStartingWith(entry, TITLE);
   const [chosen, choose] = useState(scenarios[0]?.title ?? "");
   const current = scenarios.find((item) => item.title === chosen) ?? scenarios[0];
-  if (!current) return <LeadGap span={12} label={TITLE} title={TITLE} reason={NO_ALLOCATION} />;
+  // An allocation the module wrote as prose only is the frame's, in the module's words.
+  const prose = entry.sections.some(
+    ({ heading }) =>
+      heading.trim().toLowerCase().startsWith(`chart data: ${TITLE.toLowerCase()}`) &&
+      statedInProse(entry, heading),
+  );
+  if (!current)
+    return prose ? null : <LeadGap span={12} label={TITLE} title={TITLE} reason={NO_ALLOCATION} />;
   const { chart } = current;
   const read = bridgeOf(chart);
   const table = read ? writtenTable(read.table, href) : undefined;
@@ -184,6 +192,8 @@ function AmountRow({
 }
 
 function RecoveryByClass({ entry, href, span }: { entry: Entry; href: Href; span: 6 | 12 }) {
+  // A chart the module wrote as prose only is the frame's, in the module's words.
+  if (statedInProse(entry, `Chart data: ${RECOVERY}`)) return null;
   const chart = chartOf(entry, RECOVERY);
   const rows = chart.state === "ready" ? recoveries(chart.table) : null;
   if (chart.state !== "ready" || !rows?.length)

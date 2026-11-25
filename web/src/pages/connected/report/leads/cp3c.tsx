@@ -27,6 +27,7 @@ import {
   registerTable,
   rowName,
   drawsNothing,
+  statedInProse,
 } from "./read";
 import type { LeadProps } from "./types";
 import { ChartGap, writtenTable } from "./written";
@@ -272,6 +273,8 @@ function NeedFigure({
   entry: LeadProps["entry"];
   href: (line?: number) => string;
 }) {
+  // A chart the module wrote as prose only is the frame's, in the module's words.
+  if (statedInProse(entry, `Chart data: ${TITLE}`)) return null;
   const { chart, rows } = needOf(entry);
   if (chart.state !== "ready" || !rows)
     return (
@@ -410,16 +413,18 @@ export const RefinancingLead = withDraws(
     const drawn = chart.state === "ready" && rows !== null;
     const lane = eventsOf(entry, "Refinancing");
     const axis = laneHasAxis(lane);
-    const dates = (span: 6 | 12) => (
-      <LaneTile
-        lane={lane}
-        span={span}
-        label="Refinancing dates"
-        title="Refinancing dates"
-        href={href}
-        asOf={run.asOf}
-      />
-    );
+    // A lane the module wrote as prose only is the frame's, in the module's words.
+    const dates = (span: 6 | 12) =>
+      !statedInProse(entry, "Events: Refinancing") && (
+        <LaneTile
+          lane={lane}
+          span={span}
+          label="Refinancing dates"
+          title="Refinancing dates"
+          href={href}
+          asOf={run.asOf}
+        />
+      );
     if (!drawn)
       return (
         <Bento>

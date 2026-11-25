@@ -285,3 +285,25 @@ it("draws a dated lane of three rows on an axis with the run's as-of date", () =
   expect(container.querySelector("[data-as-of-rule='2025-06-30']")).not.toBeNull();
   vi.unstubAllGlobals();
 });
+
+// Review 6, V3: a chart or a lane the module wrote as prose only is the frame's to draw, in its words.
+it("draws nothing for a bridge or a lane the module wrote as prose with no table", () => {
+  const made = entry(
+    "CP-2D",
+    [],
+    sectionsOf(`## Findings
+
+### Chart data: Liquidity bridge
+
+The module could not chart this: no cash flow statement is supplied.
+
+### Events: Financing
+
+No dated financing event is stated for this run.
+`),
+  );
+  render(<LiquidityLead {...leadProps(made)} />);
+  expect(screen.queryByRole("region", { name: "Liquidity bridge" })).toBeNull();
+  expect(screen.queryByRole("region", { name: "Funding dates" })).toBeNull();
+  expect(screen.queryByText(/This page could not read/)).toBeNull();
+});

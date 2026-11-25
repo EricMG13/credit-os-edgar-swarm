@@ -234,9 +234,10 @@ it("states the gaps when the module wrote no headroom table, map or basket regis
   for (const [name, text] of [
     ["Legal entities", "This page could not read the legal-entity map."],
     ["Intercreditor", "This page could not read the intercreditor map."],
-    ["Baskets and capacity", "This page could not read the baskets and capacity."],
   ] as const)
     expect(within(screen.getByRole("region", { name })).getByText(text)).toBeVisible();
+  // Review 6: no basket register at all is no tile; the gap is for one the page could not read.
+  expect(screen.queryByRole("region", { name: "Baskets and capacity" })).toBeNull();
   expect(document.body.textContent).not.toMatch(/supplied at run start/);
   expect(document.body.textContent).not.toMatch(/register|passage|table\./);
 });
@@ -339,4 +340,22 @@ it("makes a headroom that is only a gap one full row, the rest beneath it", () =
   expect(screen.getByRole("region", { name: "Covenant headroom" })).toHaveClass("lg:col-span-12");
   expect(screen.getByRole("region", { name: "Legal entities" })).toHaveClass("lg:col-span-6");
   expect(screen.getByRole("region", { name: "Intercreditor" })).toHaveClass("lg:col-span-6");
+});
+
+// Review 6: a basket register the module wrote but the page could not read is a gap tile.
+it("states the baskets gap only for a basket register the page could not read", () => {
+  render(
+    <LegalLead
+      {...leadProps(
+        handoff(
+          "## Findings\n\n### Bottom line\n\nThin.\n\n### T4C.5 — Baskets and capacity\n\nNo basket is assessable.\n",
+        ),
+      )}
+    />,
+  );
+  expect(
+    within(screen.getByRole("region", { name: "Baskets and capacity" })).getByText(
+      "This page could not read the baskets and capacity.",
+    ),
+  ).toBeVisible();
 });

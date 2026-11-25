@@ -13,7 +13,7 @@ import {
   type LeadTable,
   Beside,
 } from "./parts";
-import { eventsOf, leadHref, mapOf, drawsNothing } from "./read";
+import { eventsOf, leadHref, mapOf, drawsNothing, statedInProse } from "./read";
 import type { LeadProps } from "./types";
 import { sourceOf, writtenTable } from "./written";
 
@@ -102,9 +102,11 @@ export const BusinessLead = withDraws(
     const href = leadHref(props);
     const operating = mapOf(entry, "operating model to credit");
     const ownership = mapOf(entry, "ownership and control");
-    const map = (read: typeof operating, name: string, absent: string) => (span: 8 | 12) => (
-      <MapTile map={read} href={href} span={span} label={name} title={name} absent={absent} />
-    );
+    // A map or a lane the module wrote as prose only is the frame's, in the module's words.
+    const map = (read: typeof operating, name: string, absent: string) => (span: 8 | 12) =>
+      !statedInProse(entry, `Map: ${name}`) && (
+        <MapTile map={read} href={href} span={span} label={name} title={name} absent={absent} />
+      );
     const opMap = map(
       operating,
       "Operating model to credit",
@@ -117,15 +119,17 @@ export const BusinessLead = withDraws(
     );
     const shorter = [
       <RevenueMix key="mix" entry={entry} href={href} />,
-      <LaneTile
-        key="history"
-        lane={eventsOf(entry, "Issuer history")}
-        span={4}
-        label="Issuer history"
-        title="Issuer history"
-        href={href}
-        asOf={run.asOf}
-      />,
+      !statedInProse(entry, "Events: Issuer history") && (
+        <LaneTile
+          key="history"
+          lane={eventsOf(entry, "Issuer history")}
+          span={4}
+          label="Issuer history"
+          title="Issuer history"
+          href={href}
+          asOf={run.asOf}
+        />
+      ),
     ];
     const column = <Beside>{shorter}</Beside>;
     // The first drawn map heads the page with the shorter tiles stacked beside it; a map that is

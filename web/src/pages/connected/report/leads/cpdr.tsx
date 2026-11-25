@@ -1,7 +1,7 @@
 import { Bento } from "../overview/Tile";
 import { withDraws } from "./draws";
 import { LaneTile, LeadGap } from "./parts";
-import { eventsOf, leadHref, drawsNothing } from "./read";
+import { eventsOf, leadHref, drawsNothing, statedInProse } from "./read";
 import type { LeadProps } from "./types";
 
 const QUESTIONS = "Research questions and answers";
@@ -20,15 +20,17 @@ export const ResearchLead = withDraws(
           title={QUESTIONS}
           reason="This page could not read the research questions and their answers."
         />
-        <LaneTile
-          lane={eventsOf(entry, "Research catalysts")}
-          span={12}
-          label="Research catalysts"
-          title="Research catalysts"
-          href={href}
-          absent="This page could not read dated research catalysts."
-          asOf={run.asOf}
-        />
+        {!statedInProse(entry, "Events: Research catalysts") && (
+          <LaneTile
+            lane={eventsOf(entry, "Research catalysts")}
+            span={12}
+            label="Research catalysts"
+            title="Research catalysts"
+            href={href}
+            absent="This page could not read dated research catalysts."
+            asOf={run.asOf}
+          />
+        )}
       </Bento>
     );
   },

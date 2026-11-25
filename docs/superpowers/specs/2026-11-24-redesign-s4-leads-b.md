@@ -321,3 +321,22 @@ figures once, by the lead; the leads no longer repeat the module's passages, whi
 
 **Looked at**: every lead in the real frame at 1440 and 390. Left for local validation: CP-1A's
 one-edge map leaves space beside a tall side column.
+
+### 7.3 After the third review (2026-11-25)
+
+**Content**: the downside shock's `rate_increase` is the contract's proportional cash-interest
+increase, printed as a share ("cash-interest increase 10%"). A cell keeps its leading words only
+when a link word (per, see, in, from, table, register, rows of) introduces the cited token and
+nothing dangles; otherwise "In Evidence". A last trade the market level states as missing carries
+that stated reason. A zero bridge step has no add or use tone; the liquidity legend keeps "Adds" /
+"Uses", the value allocation names its falls "Allocated" and lists "Adds" only with a rise.
+
+**Prose-only drawing sections**: a `Chart data:`, `Events:` or `Map:` section the module wrote as
+prose with no table is the frame's to draw in the module's words. `statedInProse(entry, title)` in
+`leads/read.ts` tells one; every lead draws nothing for such a title, and `chartsStartingWith` (hence
+`OtherCharts`) leaves it out.
+
+**Absent versus unread**: CP-2 draws no ledger gap where the frame draws the written "Strengths and
+weaknesses" passage; CP-2E draws the foreign-share tile only with a currency register or a stated FX
+limitation; CP-4 draws the baskets tile only where a T4C.5 register is written. The break-point axis
+caption is "Fall in EBITDA"; the ticks show the range.

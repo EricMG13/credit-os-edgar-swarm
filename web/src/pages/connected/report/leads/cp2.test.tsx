@@ -3,6 +3,7 @@ import { afterEach, expect, it } from "vitest";
 import type { OutputEntry } from "../../publishedReport";
 import { entry, table } from "../overview/rows.fixture";
 import { CreditLead } from "./cp2";
+import { sectionsOf } from "./markdown.fixture";
 import { bottomLine, leadProps, tableSection } from "./lead.fixture";
 
 afterEach(cleanup);
@@ -226,7 +227,8 @@ it("falls back to the materiality filter by direction, keeping None supported in
   expect(within(weaknesses).getByText(/Dividends first/)).toBeVisible();
 });
 
-it("draws a gap, not the written passage, when no ledger table exists", () => {
+// Review 6: the frame draws the written passage under its own title; the lead adds no gap tile.
+it("draws neither the written passage nor a gap when no ledger table exists", () => {
   const made = credit([
     {
       heading: "Strengths and weaknesses",
@@ -240,10 +242,12 @@ it("draws a gap, not the written passage, when no ledger table exists", () => {
   render(<CreditLead {...leadProps(made)} />);
   // The module page frame draws the written section; the lead does not repeat it.
   expect(screen.queryByText("The weaknesses are financial policy.")).toBeNull();
-  expect(
-    screen.getByText("This page could not read a ranked list of strengths and weaknesses."),
-  ).toBeVisible();
+  expect(screen.queryByRole("region", { name: "Strengths and weaknesses" })).toBeNull();
+  expect(screen.queryByText(/could not read a ranked list/)).toBeNull();
   expect(screen.queryByRole("list", { name: "STRENGTH" })).toBeNull();
+  expect(screen.getByRole("region", { name: "Credit-risk transmission" })).toHaveClass(
+    "lg:col-span-8",
+  );
 });
 
 it("shows leverage and cover from CP-1 with period, basis and owner, and headroom from CP-4", () => {
@@ -322,6 +326,27 @@ it("states in words that leverage and headroom did not run, never zero", () => {
   const tile = screen.getByRole("region", { name: "Leverage, cover and headroom" });
   expect(within(tile).getAllByText(/did not run in this run/).length).toBeGreaterThanOrEqual(2);
   expect(within(tile).queryByText("0")).toBeNull();
+});
+
+// Review 6, V3: a map the module wrote as prose only is the frame's to draw, in its words.
+it("draws nothing for a transmission map the module wrote as prose with no table", () => {
+  render(
+    <CreditLead
+      {...leadProps(
+        credit(
+          sectionsOf(`## Findings
+
+### Map: credit-risk transmission
+
+The module could not map this transmission.
+`),
+          false,
+        ),
+      )}
+    />,
+  );
+  expect(screen.queryByRole("region", { name: "Credit-risk transmission" })).toBeNull();
+  expect(screen.queryByText(/could not read the credit-risk transmission/)).toBeNull();
 });
 
 it("draws the transmission map, or its gap, and nothing for a blocked module", () => {

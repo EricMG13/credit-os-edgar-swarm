@@ -18,6 +18,8 @@ import {
   readerCell,
   registerTable,
   drawsNothing,
+  sectionParagraphs,
+  statedInProse,
 } from "./read";
 import type { LeadProps } from "./types";
 
@@ -408,6 +410,8 @@ export const CreditLead = withDraws(
     if (drawsNothing(entry)) return null;
     const href = leadHref(props);
     const read = ledgerOf(entry);
+    // A written ledger passage is the frame's; the lead adds no gap of the same title above it.
+    const written = !read && sectionParagraphs(entry, LEDGER).length > 0;
     const measures = (
       <Tile
         span={4}
@@ -432,21 +436,22 @@ export const CreditLead = withDraws(
         </dl>
       </Tile>
     );
-    const map = (span: 4 | 8) => (
-      <MapTile
-        map={mapOf(entry, "credit-risk transmission")}
-        href={href}
-        span={span}
-        label="Credit-risk transmission"
-        title="Credit-risk transmission"
-        absent="This page could not read the credit-risk transmission."
-      />
-    );
+    const map = (span: 4 | 8) =>
+      !statedInProse(entry, "Map: credit-risk transmission") && (
+        <MapTile
+          map={mapOf(entry, "credit-risk transmission")}
+          href={href}
+          span={span}
+          label="Credit-risk transmission"
+          title="Credit-risk transmission"
+          absent="This page could not read the credit-risk transmission."
+        />
+      );
     // The ledger heads the page with the measures and the map stacked beside it; a ledger that is
     // only a gap is one full row, the measures and the map then beside each other.
     return (
       <Bento>
-        <LedgerTile ledger={read} href={href} />
+        {!written && <LedgerTile ledger={read} href={href} />}
         {read ? (
           <Beside>
             {measures}

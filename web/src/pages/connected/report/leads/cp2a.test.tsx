@@ -20,7 +20,7 @@ it("draws the break-point ladder in authored order on the fall-in-EBITDA axis, w
   );
   // Review 4, Q3(c): the axis runs to a nice maximum above the largest break (32% → 40%) and says so.
   expect(figure.querySelector('[data-decline="0.32"]')).toHaveStyle({ width: "80%" });
-  expect(within(ladder).getByText("Fall in EBITDA, 0–40%")).toBeVisible();
+  expect(within(ladder).getByText("Fall in EBITDA")).toBeVisible();
   // Review 4, Q5: the scenarios sit in the column beside the ladder, not under a hole.
   const column = screen.getByRole("region", { name: "Downside scenarios" }).parentElement;
   expect(column).toHaveClass("lg:col-span-4", "flex-col");

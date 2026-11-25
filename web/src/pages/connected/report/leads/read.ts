@@ -37,13 +37,20 @@ export const IN_EVIDENCE = "In Evidence";
 
 const escaped = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+/** The register heading pattern for an id: "T2F.4 — Floating exposure", "#### t2f.4 — hedge register". */
+const registerHeading = (id: string) => new RegExp(`^[*\`]*${escaped(id)}(?![\\w.])`, "i");
+
+/** Whether the module wrote a section headed by the register id, read or not. */
+export const hasRegister = (entry: OutputEntry, id: string) =>
+  entry.sections.some((section) => registerHeading(id).test(section.heading.trim()));
+
 /**
  * A register the method names by id: the one table under a heading that starts with the id ("T2F.4 —
  * Floating exposure", "T2F.4 - Floating-rate exposure", "#### t2f.4 — hedge register") whose header
  * row holds every named header, in any letter case. Its cells are model-written text.
  */
 export function registerTable(entry: OutputEntry, id: string, headers: readonly string[]) {
-  const heading = new RegExp(`^[*\`]*${escaped(id)}(?![\\w.])`, "i");
+  const heading = registerHeading(id);
   const wanted = headers.map((name) => name.toLowerCase());
   const matches = entry.sections
     .filter((section) => heading.test(section.heading.trim()))
@@ -202,6 +209,21 @@ function handoffTable(entry: OutputEntry, prefix: string, name: string, raise = 
   return tables.length === 1 && only ? sourceOf(only) : undefined;
 }
 
+/**
+ * Whether the module wrote the drawing section `title` ("Chart data: Liquidity bridge", "Events:
+ * Financing", "Map: ownership and control") as prose with no table. The frame draws that section
+ * with the module's own words, so a lead draws nothing for it. Headings compare without case.
+ */
+export function statedInProse(entry: OutputEntry, title: string) {
+  const wanted = title.trim().toLowerCase();
+  const blocks = entry.sections
+    .filter((section) => section.heading.trim().toLowerCase() === wanted)
+    .flatMap((section) => section.blocks);
+  return (
+    blocks.some((block) => block.type === "text") && !blocks.some((block) => block.type === "table")
+  );
+}
+
 export type Chart =
   | { state: "ready"; descriptor: Descriptor; table: SourceTable }
   | { state: "gap"; reason: string }
@@ -234,14 +256,17 @@ export function chartOf(entry: OutputEntry, title: string): Chart {
   return { state: "absent" };
 }
 
-/** Every chart whose title starts with `prefix`, drawn, stated as a gap or withheld, in the handoff's order. */
+/**
+ * Every chart whose title starts with `prefix`, drawn, stated as a gap or withheld, in the handoff's
+ * order; none the module wrote as prose only (`statedInProse`), which the frame draws.
+ */
 export function chartsStartingWith(entry: OutputEntry, prefix: string) {
   const titles = [
     ...headed(entry, CHART, true).map((item) => item.name),
     ...[...items(entry.output.charts), ...items(entry.output.chartGaps)].map((chart) =>
       word(record(chart).title),
     ),
-  ].filter((title) => title.startsWith(prefix));
+  ].filter((title) => title.startsWith(prefix) && !statedInProse(entry, `${CHART}${title}`));
   return [...new Set(titles)].map((title) => ({ title, chart: chartOf(entry, title) }));
 }
 
