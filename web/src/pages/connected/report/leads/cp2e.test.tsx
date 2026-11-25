@@ -22,17 +22,19 @@ const h4 = () => withHedgeEvents(fixtureEntry("CP-2E", retained("esg", "CP-2E-h4
 // The synthetic proof handoff, written to the Deploy VII rate-shock grid.
 const proof = () => fixtureEntry("CP-2E", retained("..", "..", "proof", "handoffs", "CP-2E.md"));
 
-it("draws the one stated +100 bp step from the sensitivity register, cell as written (h3)", () => {
+it("states the one +100 bp step from the sensitivity register as a figure with its words (h3)", () => {
   render(<MacroLead {...leadProps(h3())} />);
   const tile = screen.getByRole("region", { name: "Rate sensitivity" });
   expect(tile.className).toMatch(/lg:col-span-8/);
-  expect(within(tile).getByRole("heading")).toHaveTextContent(/One stated rate step/);
-  const figure = within(tile).getByRole("img");
-  expect(figure).toHaveAccessibleName(
-    /\+100 bp static annual borrowing-interest shock: \+USD 57\.89 million/,
-  );
-  expect(within(figure).getByText("+USD 57.89 million")).toBeInTheDocument();
-  expect(figure.querySelectorAll("[data-bar]")).toHaveLength(1);
+  expect(within(tile).getByRole("heading")).toHaveTextContent(/^Rate sensitivity$/);
+  // One step is a stated figure, not a one-bar chart.
+  expect(within(tile).queryByRole("img")).toBeNull();
+  expect(tile.querySelectorAll("[data-bar]")).toHaveLength(0);
+  const steps = within(tile).getByRole("list", { name: "Rate sensitivity" });
+  expect(within(steps).getAllByRole("listitem")).toHaveLength(1);
+  expect(within(steps).getByText("+100 bp static annual borrowing-interest shock")).toBeVisible();
+  expect(within(steps).getByText("+USD 57.89 million")).toBeVisible();
+  expect(within(steps).getByText("annual cash interest")).toBeVisible();
   // The issuer's own test and the not-calculable rows stay words, never a second bar.
   expect(
     within(tile).getByText(
@@ -65,9 +67,10 @@ it("draws hedged against unhedged floating-rate debt as one bar of the two state
   expect(within(figure).getByText("USD 3,400 million")).toBeInTheDocument();
   expect(within(figure).getByText("USD 5,789 million")).toBeInTheDocument();
   const hedged = figure.querySelector('[data-segment="hedged"]');
-  expect(parseFloat((hedged as HTMLElement).style.width)).toBeCloseTo(
-    (3400 / (3400 + 5789)) * 100,
-    4,
+  // 3,400 of 9,189, worked by hand: 37.0008% of the bar.
+  expect(parseFloat((hedged as HTMLElement).style.width)).toBeCloseTo(37.0008, 3);
+  expect(within(tile).getByRole("heading")).toHaveTextContent(
+    /^Hedged and unhedged floating-rate debt$/,
   );
   expect(within(tile).getByText("Gross floating-rate debt: USD 9,189 million")).toBeVisible();
 });
@@ -87,9 +90,9 @@ it("keeps h4's compound gross cell and unread impact cells as text, never a numb
   // h4 writes "USD +57.89 million …; FCF USD -57.89 million …": two amounts, so words; the
   // receivables component states one ("USD +4.87 million …") and is the one step placed.
   const ladder = screen.getByRole("region", { name: "Rate sensitivity" });
-  const figure2 = within(ladder).getByRole("img");
-  expect(figure2.querySelectorAll("[data-bar]")).toHaveLength(1);
-  expect(within(figure2).getByText("USD +4.87 million")).toBeInTheDocument();
+  const steps = within(ladder).getByRole("list", { name: "Rate sensitivity" });
+  expect(within(steps).getAllByRole("listitem")).toHaveLength(1);
+  expect(within(steps).getByText("USD +4.87 million")).toBeVisible();
   expect(
     within(ladder).getByText(/^\+100 bp, closing portfolio: USD \+57\.89 million/),
   ).toBeVisible();
@@ -98,12 +101,20 @@ it("keeps h4's compound gross cell and unread impact cells as text, never a numb
 it("states the foreign-share gap, lists the hedge terms without sources and the hedge dates", () => {
   render(<MacroLead {...leadProps(h3())} />);
   const share = screen.getByRole("region", { name: "Foreign share" });
-  expect(within(share).getByText("The handoff states no currency shares.")).toBeVisible();
+  expect(
+    within(share).getByText("This page could not read a foreign-currency share from the handoff."),
+  ).toBeVisible();
   // Ruling vii: no note on what a run would need.
   expect(share.textContent).not.toMatch(/supplied at run start/);
   const terms = screen.getByRole("region", { name: "Hedge terms" });
+  // The terms sit behind a closed disclosure, in a named scroll region the keyboard can reach.
+  const disclosure = terms.querySelector("details");
+  expect(disclosure).not.toHaveAttribute("open");
+  fireEvent.click(within(terms).getByText("Show the hedge terms"));
+  const region = within(terms).getByRole("region", { name: "Hedge terms table" });
+  expect(region).toHaveAttribute("tabindex", "0");
   expect(
-    within(terms).getAllByRole("cell", { name: "Three-month SOFR floor 2.00%; ceiling 3.50%" }),
+    within(region).getAllByRole("cell", { name: "Three-month SOFR floor 2.00%; ceiling 3.50%" }),
   ).toHaveLength(2);
   expect(within(terms).queryByText(/tdg-20240930/)).toBeNull();
   const dates = screen.getByRole("list", { name: "Hedge dates" });
@@ -115,6 +126,7 @@ it("states the foreign-share gap, lists the hedge terms without sources and the 
 it("reads the hedge register by id where the canonical title does not match (h4)", () => {
   render(<MacroLead {...leadProps(h4())} />);
   const terms = screen.getByRole("region", { name: "Hedge terms" });
+  fireEvent.click(within(terms).getByText("Show the hedge terms"));
   expect(
     within(terms).getByRole("cell", { name: "Three-month Term SOFR cap 1.25%" }),
   ).toBeVisible();
@@ -128,10 +140,12 @@ it("draws the rate-shock grid first when the handoff carries it, with the after-
   expect(figure).toHaveAccessibleName(
     /\+100 bp: before hedges 8\.00, after hedges 5\.00.*\+200 bp: before hedges 16\.00, after hedges Not supplied: no hedge sensitivity retained/,
   );
+  expect(within(tile).getByRole("heading")).toHaveTextContent(/^Added annual interest$/);
   expect(figure.querySelectorAll('[data-case="After hedges"]')).toHaveLength(1);
-  expect(
-    within(figure).getByText("Not supplied: no hedge sensitivity retained"),
-  ).toBeInTheDocument();
+  // The after-hedges gap is the one gap chip: its word and its reason, never "after Not supplied:".
+  expect(within(figure).getByText("Not supplied")).toHaveClass("border-dashed");
+  expect(within(figure).getByText("No hedge sensitivity retained")).toBeInTheDocument();
+  expect(figure.textContent).not.toMatch(/Not supplied:/);
   expect(screen.queryByRole("region", { name: "Rate sensitivity" })).toBeNull();
   // proof T2F.4 writes "USD 300m" / "USD 500m": read as written, one bar of the two.
   const hedge = screen.getByRole("region", { name: "Hedged against unhedged" });
@@ -187,7 +201,7 @@ it("gives the module's own FX limitation as the foreign-share gap", () => {
   const ladder = screen.getByRole("region", { name: "Rate sensitivity" });
   expect(
     within(ladder).getByText(
-      "The handoff has no sensitivity table with a cash impact per shock step.",
+      "This page could not read a cash impact per rate shock step from the handoff.",
     ),
   ).toBeVisible();
 });
@@ -224,16 +238,68 @@ it("places only a cash impact that states exactly one amount; a range or a quali
   );
   render(<MacroLead {...leadProps(made)} />);
   const tile = screen.getByRole("region", { name: "Rate sensitivity" });
-  expect(within(tile).getByRole("img")).toHaveAccessibleName(
-    "Rate sensitivity: +200 bp SOFR: USD 16 million.",
-  );
+  const steps = within(tile).getByRole("list", { name: "Rate sensitivity" });
   expect(
-    [...tile.querySelectorAll("[data-bar]")].map((bar) => bar.getAttribute("data-bar")),
-  ).toEqual(["USD 16 million"]);
+    within(steps)
+      .getAllByRole("listitem")
+      .map((item) => item.textContent),
+  ).toEqual(["+200 bp SOFRUSD 16 milliona year"]);
   for (const text of [
     "+100 bp SOFR: USD 5 million to USD 8 million a year, before hedges",
     "+150 bp SOFR: USD 9 million, about USD 7 million after hedges",
     "+175 bp SOFR: USD 10 million – 12 million a year",
   ])
     expect(within(tile).getByText(text)).toBeVisible();
+});
+
+it("draws three or more stated steps as a ladder on one axis", () => {
+  const made = entry(
+    "CP-2E",
+    [],
+    [
+      {
+        heading: "T2F.5 — Sensitivity register",
+        level: 4,
+        line: 9,
+        blocks: [
+          table(
+            10,
+            ["Sensitivity", "Estimated Cash Impact", "Source"],
+            [
+              ["+100 bp SOFR", "USD 8 million", "S1"],
+              ["+200 bp SOFR", "USD 16 million", "S1"],
+              ["+300 bp SOFR", "USD 24 million", "S1"],
+            ],
+          ),
+        ],
+      },
+    ],
+  );
+  render(<MacroLead {...leadProps(made)} />);
+  const tile = screen.getByRole("region", { name: "Rate sensitivity" });
+  expect(within(tile).getByRole("img")).toHaveAccessibleName(
+    "Rate sensitivity: +100 bp SOFR: USD 8 million; +200 bp SOFR: USD 16 million; +300 bp SOFR: USD 24 million.",
+  );
+  expect(
+    [...tile.querySelectorAll("[data-bar]")].map((bar) => bar.getAttribute("data-bar")),
+  ).toEqual(["USD 8 million", "USD 16 million", "USD 24 million"]);
+});
+
+it("keeps register ids and source names off the page on the real h4 handoff", () => {
+  render(<MacroLead {...leadProps(h4())} />);
+  const page = document.body.textContent;
+  expect(page).not.toMatch(/\bT2F\.\d|tdg-20240930|CP-2E/);
+});
+
+it("draws a chart the store withheld or stated as a gap, since the frame draws none", () => {
+  const made = h3();
+  made.output.chartGaps = [
+    { title: "Hedge coverage", table: 99, gap: "no hedge notional by year" },
+  ];
+  render(<MacroLead {...leadProps(made)} />);
+  expect(
+    within(screen.getByRole("region", { name: "Hedge coverage" })).getByText(
+      "No hedge notional by year",
+    ),
+  ).toBeVisible();
 });

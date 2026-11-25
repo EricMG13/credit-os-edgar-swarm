@@ -73,8 +73,15 @@ it("draws the bridge from opening to closing with each step as written, and its 
     expect(within(figure).getByText(text)).toBeInTheDocument();
   expect(within(figure).queryByText("+120")).toBeNull();
   expect(within(tile).getByText("US$m")).toBeVisible();
+  expect(within(tile).getByRole("heading")).toHaveTextContent(/^Liquidity bridge$/);
+  // One basis on every row: one note under the figure, detached from no row.
+  expect(within(tile).getByText("Synthetic.")).toBeVisible();
   fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
   expect(within(tile).getByRole("cell", { name: "-450" })).toBeVisible();
+  const head = within(tile)
+    .getAllByRole("columnheader")
+    .map((item) => item.textContent);
+  expect(head.slice(0, 4)).toEqual(["Step", "Amount", "Reporting unit", "Basis and limitation"]);
   expect(
     within(tile)
       .getAllByRole("link", { name: /Source for/ })
@@ -82,7 +89,7 @@ it("draws the bridge from opening to closing with each step as written, and its 
   ).toHaveAttribute("href", expect.stringContaining("#evidence/"));
 });
 
-it("lists the funding dates earliest first and states the runway gap", () => {
+it("lists the funding dates earliest first and claims no runway the handoff does not state", () => {
   render(<LiquidityLead {...leadProps(liquidity(BRIDGE, [EVENTS]))} />);
   const dates = screen.getByRole("list", { name: "Funding dates" });
   expect(
@@ -90,10 +97,9 @@ it("lists the funding dates earliest first and states the runway gap", () => {
       .getAllByRole("listitem")
       .map((item) => item.textContent),
   ).toEqual([expect.stringContaining("2025-03-31"), expect.stringContaining("2026")]);
-  const runway = screen.getByRole("region", { name: "Runway" });
-  expect(within(runway).getByText("This handoff states no runway figure.")).toBeVisible();
-  // Ruling vii: no methodology note on the reader's page.
-  expect(runway.textContent).not.toMatch(/methodology|Needs/);
+  // F1: the page reads no runway, so it says nothing about one; and no methodology note.
+  expect(screen.queryByRole("region", { name: "Runway" })).toBeNull();
+  expect(document.body.textContent).not.toMatch(/runway|methodology|Needs/i);
 });
 
 it("says why when the module wrote no bridge, and draws nothing for a blocked module", () => {
@@ -101,7 +107,7 @@ it("says why when the module wrote no bridge, and draws nothing for a blocked mo
   render(<LiquidityLead {...leadProps(none)} />);
   expect(
     within(screen.getByRole("region", { name: "Liquidity bridge" })).getByText(
-      "This liquidity handoff has no liquidity bridge table.",
+      "This page could not read a liquidity bridge from the handoff.",
     ),
   ).toBeVisible();
   cleanup();
@@ -166,7 +172,7 @@ it("reads a bridge the store withheld from the handoff and says why it is not dr
   const tile = screen.getByRole("region", { name: "Liquidity bridge" });
   expect(within(tile).queryByRole("img")).toBeNull();
   expect(within(tile).getByText(/does not reconcile/)).toBeVisible();
-  expect(tile.textContent).not.toMatch(/has no liquidity bridge table/);
+  expect(tile.textContent).not.toMatch(/could not read a liquidity bridge/);
   expect(within(tile).getByRole("link", { name: "Source for Liquidity bridge" })).toHaveAttribute(
     "href",
     expect.stringContaining("#evidence/"),
@@ -190,4 +196,35 @@ it("says only that it could not draw a withheld table whose own check passes", (
     within(tile).getByText("This page could not draw the table the handoff has."),
   ).toBeVisible();
   expect(within(tile).queryByRole("img")).toBeNull();
+});
+
+it("keeps each row's own basis in the table view, and lists no detached basis under the figure", () => {
+  const mixed = BRIDGE.map((row) => [...row]);
+  (mixed[1] as string[])[3] = "Moody's-adjusted.";
+  render(<LiquidityLead {...leadProps(liquidity(mixed))} />);
+  const tile = screen.getByRole("region", { name: "Liquidity bridge" });
+  expect(within(tile).queryByText("Moody's-adjusted.")).toBeNull();
+  fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
+  const row = within(tile).getByRole("row", { name: /^Free cash flow/ });
+  expect(
+    within(row)
+      .getAllByRole("cell")
+      .map((item) => item.textContent),
+  ).toEqual(["120", "US$m", "Moody's-adjusted.", expect.any(String)]);
+  expect(within(tile).getByRole("row", { name: /^Debt repayment/ })).toHaveTextContent(
+    "Synthetic.",
+  );
+});
+
+it("states a stated gap or a withheld table of another chart the module publishes", () => {
+  const made = liquidity(BRIDGE, [EVENTS]);
+  made.output.chartGaps = [
+    { title: "Cash runway", table: 99, gap: "no monthly cash flow supplied" },
+  ];
+  render(<LiquidityLead {...leadProps(made)} />);
+  expect(
+    within(screen.getByRole("region", { name: "Cash runway" })).getByText(
+      "No monthly cash flow supplied",
+    ),
+  ).toBeVisible();
 });

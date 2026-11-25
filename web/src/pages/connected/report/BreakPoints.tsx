@@ -3,10 +3,17 @@ import { Segmented } from "@/components/kit/Segmented";
 import { containsReference, type OutputEntry, type Table } from "../publishedReport";
 import { namedTable } from "../reportView";
 import { distinct, sharePosition } from "../visuals/visualData";
-import { canReadDownside, scenarioShareLabel, share, writtenTable } from "./Downside";
+import {
+  canReadDownside,
+  ControlRow,
+  registerOrTitled,
+  scenarioShareLabel,
+  share,
+  writtenTable,
+} from "./Downside";
 import { Key } from "./overview/figureParts";
 import { Bento } from "./overview/Tile";
-import { LeadFigure, Trace } from "./leads/parts";
+import { BarRow, CompactGap, LeadFigure, TableRegion, Trace, type LeadTable } from "./leads/parts";
 
 const RETAINED = "T2DS.6 Break points";
 const RANKINGS = ["T2B.7 First-break ranking", "First-break ranking"];
@@ -18,7 +25,7 @@ type Basis = { name: string; column: number };
 
 export function breakPointView(entry: OutputEntry) {
   if (!canReadDownside(entry)) return null;
-  const retained = namedTable(entry, RETAINED, [
+  const retained = registerOrTitled(entry, "T2DS.6", RETAINED, [
     "Break ID",
     "Break",
     FIXED_INTEREST,
@@ -97,37 +104,36 @@ export type Rung = {
   words?: string;
   /** The value column: the figure as written. */
   figure: ReactNode;
-  bar?: Record<string, string>;
+  bar?: Record<`data-${string}`, string>;
   /** A second stated value on the same row, drawn as a tick (after hedges). */
-  mark?: { at: number; data: Record<string, string> } | null;
+  mark?: { at: number; data: Record<`data-${string}`, string> } | null;
 };
 
 const ROW =
   "grid grid-cols-[minmax(5rem,1fr)_minmax(0,auto)] items-center gap-x-3 gap-y-1 @md:grid-cols-[minmax(0,11rem)_minmax(0,1fr)_9.5rem]";
 
 function Track({ rung, ticks }: { rung: Rung; ticks: readonly { at: number }[] }) {
+  const at = rung.at ?? 0;
   return (
-    <span className="relative col-span-2 h-5 @md:order-2 @md:col-span-1">
-      {ticks.map((tick) => (
-        <span
-          key={tick.at}
-          className={`absolute inset-y-0 w-px ${tick.at === 0 ? "bg-connector" : "bg-border-hairline"}`}
-          style={{ left: share(tick.at) }}
-        />
-      ))}
-      <span
-        {...rung.bar}
-        className="absolute top-1 h-3 min-w-0.5 rounded-[2px] bg-chart-1"
-        style={{ left: "0%", width: share(rung.at ?? 0) }}
-      />
+    <BarRow
+      end={at}
+      ticks={ticks.map((tick) => tick.at).filter((tick) => tick !== 0)}
+      zero={0}
+      bar={rung.bar}
+      className="col-span-2 @md:order-2 @md:col-span-1"
+    >
+      {at === 0 && (
+        // A stated zero keeps a mark at the origin: never read as a missing value.
+        <span data-origin className="absolute -inset-y-1 left-0 w-1 rounded-ds-xs bg-chart-1" />
+      )}
       {rung.mark && (
         <span
           {...rung.mark.data}
-          className="absolute -top-0.5 h-6 w-0.5 -translate-x-1/2 bg-text-primary"
+          className="absolute -inset-y-1.5 w-0.5 -translate-x-1/2 bg-text-primary"
           style={{ left: share(rung.mark.at) }}
         />
       )}
-    </span>
+    </BarRow>
   );
 }
 
@@ -180,7 +186,7 @@ export function Ladder({
           {ticks.map((tick, index) => (
             <span
               key={tick.at}
-              className={`absolute font-mono text-[11px] text-text-tertiary tabular-nums ${
+              className={`absolute font-mono text-caption text-text-tertiary tabular-nums ${
                 index === 0
                   ? ""
                   : index === ticks.length - 1
@@ -214,6 +220,7 @@ export function BreakPointsTile({
   span: 4 | 6 | 8 | 12;
 }) {
   const [index, setIndex] = useState(0);
+  const [view, setView] = useState("figure");
   const basis = data.bases[index];
   const rows = basis ? breakRows(data.table, basis, data.test, data.ranked, data.status) : [];
   const chart = Boolean(
@@ -229,62 +236,72 @@ export function BreakPointsTile({
           setIndex(Number(key));
         }}
       />
-    ) : undefined;
+    ) : null;
   const reading = rows
     .map(({ label, text, value }) => `${label} ${value === null ? text || "not stated" : text}`)
     .join(", ");
+  const table: LeadTable | undefined = chart
+    ? {
+        head:
+          data.status === undefined
+            ? ["Break point", REQUIRED_DECLINE]
+            : ["Break point", REQUIRED_DECLINE, "Qualification"],
+        rows: rows.map(({ line, label, status, text }) => ({
+          label,
+          cells: data.status === undefined ? [text || null] : [text || null, status || null],
+          end: <Trace href={href(line)} name={label} />,
+        })),
+        endHeading: "Source",
+      }
+    : writtenTable(data.table, href);
+  const figure = chart ? (
+    <Ladder
+      label={`${TITLE}${basis ? `, ${basis.name.toLowerCase()}` : ""}: ${reading}.`}
+      ordered={data.ranked}
+      ticks={DECLINE_TICKS}
+      rungs={rows.map((row) => ({
+        key: row.line,
+        label: row.label,
+        detail: row.status,
+        at: row.value,
+        words: row.text || "Not stated",
+        figure: row.value === null ? "" : row.text,
+        bar: row.value === null ? undefined : { "data-decline": String(row.value) },
+      }))}
+    />
+  ) : (
+    <CompactGap>
+      This page could not read a fall in EBITDA for each break point from the handoff&apos;s table.
+    </CompactGap>
+  );
+  const trace = <Trace href={href(data.table.line)} name={TITLE} />;
+  // With a basis to choose, the choice and the Figure / Table switch share one row under the title.
+  if (choice)
+    return (
+      <LeadFigure
+        span={span}
+        label={TITLE}
+        title={TITLE}
+        legend={
+          <>
+            <ControlRow label={TITLE} choice={choice} view={view} onView={setView} />
+            {chart && <Key tone="primary">Fall in EBITDA at the break</Key>}
+          </>
+        }
+        trace={trace}
+        figure={view === "table" && table ? <TableRegion label={TITLE} table={table} /> : figure}
+      />
+    );
   return (
     <LeadFigure
       span={span}
       label={TITLE}
-      kicker="Break-point ladder"
-      title="Fall in EBITDA that reaches each break point"
-      basis={basis ? `${basis.name}. Bars run from no fall to a 100% fall in EBITDA.` : undefined}
-      legend={
-        <>
-          {choice}
-          {chart && <Key tone="primary">Fall in EBITDA at the break</Key>}
-        </>
-      }
-      trace={<Trace href={href(data.table.line)} name={TITLE} />}
-      figure={
-        chart ? (
-          <Ladder
-            label={`${TITLE}${basis ? `, ${basis.name.toLowerCase()}` : ""}: ${reading}.`}
-            ordered={data.ranked}
-            ticks={DECLINE_TICKS}
-            rungs={rows.map((row) => ({
-              key: row.line,
-              label: row.label,
-              detail: row.status,
-              at: row.value,
-              words: row.text || "Not stated",
-              figure: row.value === null ? "" : row.text,
-              bar: row.value === null ? undefined : { "data-decline": String(row.value) },
-            }))}
-          />
-        ) : (
-          <p role="note" className="text-small text-text-secondary">
-            The source table does not establish a comparable ranking for this basis.
-          </p>
-        )
-      }
-      table={
-        chart
-          ? {
-              head:
-                data.status === undefined
-                  ? ["Break point", REQUIRED_DECLINE]
-                  : ["Break point", REQUIRED_DECLINE, "Qualification"],
-              rows: rows.map(({ line, label, status, text }) => ({
-                label,
-                cells: data.status === undefined ? [text || null] : [text || null, status || null],
-                end: <Trace href={href(line)} name={label} />,
-              })),
-              endHeading: "Source",
-            }
-          : writtenTable(data.table, href)
-      }
+      title={TITLE}
+      basis={basis?.name}
+      legend={chart && <Key tone="primary">Fall in EBITDA at the break</Key>}
+      trace={trace}
+      figure={figure}
+      table={table}
     />
   );
 }

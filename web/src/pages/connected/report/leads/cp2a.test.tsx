@@ -1,8 +1,8 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, expect, it } from "vitest";
-import { entry } from "../overview/rows.fixture";
+import { entry, table } from "../overview/rows.fixture";
 import { DownsideLead } from "./cp2a";
-import { bottomLine, leadProps } from "./lead.fixture";
+import { bottomLine, leadProps, tableSection } from "./lead.fixture";
 import { fixtureEntry, retained } from "./markdown.fixture";
 
 afterEach(cleanup);
@@ -41,11 +41,13 @@ it("compares every case on each measure, lists the measure it cannot place, and 
   );
   expect(within(figure).getByText("-5.1250 (−USD 5.13 million)")).toBeInTheDocument();
   expect(within(figure).queryByText(/Net leverage/)).toBeNull();
-  expect(
-    within(tile).getByText(
-      "Net leverage (x) is not drawn: Cost and rate shock: Not calculated: net debt is missing.",
-    ),
-  ).toBeVisible();
+  const note = within(tile).getByText("Net leverage (x) is not drawn.")
+    .parentElement as HTMLElement;
+  expect(note).toHaveTextContent(
+    "Net leverage (x) is not drawn.Cost and rate shockNot calculatedNet debt is missing",
+  );
+  expect(within(note).getByText("Not calculated")).toHaveClass("border-dashed");
+  expect(tile.textContent).not.toMatch(/: Not calculated:/);
   fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
   expect(
     within(tile).getByRole("cell", { name: "Not calculated: net debt is missing" }),
@@ -60,13 +62,13 @@ it("draws the gaps truthfully on the retained real T2DS.1 tables, where the read
     render(<DownsideLead {...leadProps(real)} />);
     const ladder = screen.getByRole("region", { name: "EBITDA break points" });
     expect(
-      within(ladder).getByText("The handoff writes its break points in prose, not as a table."),
+      within(ladder).getByText("This page could not read break points from the handoff."),
     ).toBeVisible();
     expect(ladder.textContent).not.toMatch(/methodology|Needs/);
     const scenarios = screen.getByRole("region", { name: "Downside scenarios" });
     expect(
       within(scenarios).getByText(
-        "The handoff has no stressed-metrics table with one column per scenario.",
+        "This page could not read stressed metrics by scenario from the handoff.",
       ),
     ).toBeVisible();
     expect(screen.queryByRole("img")).toBeNull();
@@ -84,4 +86,80 @@ it("draws nothing for a blocked module", () => {
   );
   const { container } = render(<DownsideLead {...leadProps(stopped)} />);
   expect(container).toBeEmptyDOMElement();
+});
+
+it("says it could not read the tables the real headings carry, and traces each one", () => {
+  // The real titles (sol medium run, outdated) with a header these readers do not bind.
+  const made = entry(
+    "CP-2A",
+    [],
+    [
+      tableSection(
+        "T2DS.6 — Breakpoints with unchanged cash interest",
+        table(30, ["Break", "EBITDA decline at break", "Source"], [["FCF zero", "45.05%", "C1"]]),
+      ),
+      tableSection(
+        "T2DS.4 — Stressed metrics",
+        table(40, ["Scenario", "Net leverage", "Source"], [["s01", "7.07x", "C2"]]),
+      ),
+    ],
+  );
+  render(<DownsideLead {...leadProps(made)} />);
+  const ladder = screen.getByRole("region", { name: "EBITDA break points" });
+  expect(
+    within(ladder).getByText("This page could not read the break-point table the handoff has."),
+  ).toBeVisible();
+  expect(
+    within(ladder).getByRole("link", { name: "Source for EBITDA break points" }),
+  ).toHaveAttribute("href", expect.stringMatching(/#evidence\/.*30/));
+  const scenarios = screen.getByRole("region", { name: "Downside scenarios" });
+  expect(
+    within(scenarios).getByText(
+      "This page could not read the stressed-metrics table the handoff has.",
+    ),
+  ).toBeVisible();
+  expect(document.body.textContent).not.toMatch(/prose|one column per scenario/);
+});
+
+it("draws the ladder from the real T2DS.6 heading when its header is the reader's", () => {
+  const made = proof();
+  const section = made.sections.find((item) => item.heading === "T2DS.6 Break points");
+  if (!section) throw new Error("proof break points missing");
+  section.heading = "T2DS.6 — Breakpoints with unchanged cash interest";
+  render(<DownsideLead {...leadProps(made)} />);
+  const ladder = screen.getByRole("region", { name: "EBITDA break points" });
+  expect(within(ladder).getByRole("img")).toHaveAccessibleName(/FCF reaches zero 10%/);
+});
+
+it("gives the store's own reason for a handoff it could not read, and words a wrong module's handoff", () => {
+  const broken = proof();
+  broken.output.parseError = "the handoff ended inside a table";
+  render(<DownsideLead {...leadProps(broken)} />);
+  expect(screen.getAllByText("the handoff ended inside a table")).toHaveLength(2);
+  cleanup();
+  const other = entry("CP-2D", [], []);
+  render(<DownsideLead {...leadProps(other)} />);
+  expect(screen.getByText("This page could not read break points from the handoff.")).toBeVisible();
+});
+
+it("puts each tile's own choice and its Figure / Table switch in one control row", () => {
+  render(<DownsideLead {...leadProps(proof())} />);
+  const scenarios = screen.getByRole("region", { name: "Downside scenarios" });
+  const cases = within(scenarios).getByRole("group", {
+    name: "Stress case to compare with the unstressed control",
+  });
+  const views = within(scenarios).getByRole("group", {
+    name: "Downside scenarios: figure or table",
+  });
+  expect(cases.parentElement).toBe(views.parentElement);
+  expect(within(scenarios).getByRole("heading", { level: 3 })).toHaveTextContent(
+    /^Downside scenarios$/,
+  );
+  const ladder = screen.getByRole("region", { name: "EBITDA break points" });
+  const basis = within(ladder).getByRole("group", { name: "Cash-interest basis" });
+  const switch_ = within(ladder).getByRole("group", {
+    name: "EBITDA break points: figure or table",
+  });
+  expect(basis.parentElement).toBe(switch_.parentElement);
+  expect(within(ladder).getAllByRole("group")).toHaveLength(2);
 });

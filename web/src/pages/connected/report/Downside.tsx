@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from "react";
-import { cx } from "@/utils/cx";
 import {
   blocked,
   containsReference,
@@ -14,8 +13,19 @@ import { amount, distinct, sharePosition } from "../visuals/visualData";
 import { Segmented } from "@/components/kit/Segmented";
 import { Key } from "./overview/figureParts";
 import { Bento } from "./overview/Tile";
-import { LeadFigure, Trace, type LeadTable } from "./leads/parts";
+import {
+  BarRow,
+  CompactGap,
+  GapCell,
+  KeyValues,
+  LeadFigure,
+  statedGap,
+  TableRegion,
+  Trace,
+  type LeadTable,
+} from "./leads/parts";
 import { IN_EVIDENCE, readerCell } from "./leads/read";
+
 const SCENARIOS = [
   "Scenario ID",
   "Name",
@@ -27,6 +37,28 @@ const SCENARIOS = [
   "Confidence",
 ];
 const RESULTS = "T2DS.4 Stressed flows and metrics";
+
+const escaped = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * A register table by its id, in front of its exact title: the one table holding every named header
+ * (as written) under a heading that opens with the id ("T2DS.6 — Breakpoints with unchanged cash
+ * interest"); when none or several do, the one under the exact `title`.
+ */
+export function registerOrTitled(
+  entry: OutputEntry,
+  id: string,
+  title: string,
+  headers: readonly string[],
+) {
+  const opens = new RegExp(`^[*\`]*${escaped(id)}(?![\\w.])`, "i");
+  const tables = entry.sections
+    .filter((section) => opens.test(section.heading.trim()))
+    .flatMap(({ blocks }) => blocks)
+    .filter((block): block is Table => block.type === "table")
+    .filter((table) => headers.every((name) => table.headers.includes(name)));
+  return tables.length === 1 ? tables[0] : namedTable(entry, title, headers);
+}
 
 function scenario({ line, cells }: Row) {
   const [
@@ -53,11 +85,11 @@ export function canReadDownside(entry: OutputEntry) {
 
 export function downsideView(entry: OutputEntry) {
   if (!canReadDownside(entry)) return null;
-  const matrix = namedTable(entry, RESULTS, ["Metric", "Source"]);
+  const matrix = registerOrTitled(entry, "T2DS.4", RESULTS, ["Metric", "Source"]);
   if (!matrix?.rows.length || matrix.headers[0] !== "Metric" || matrix.headers.at(-1) !== "Source")
     return null;
   const names = matrix.headers.slice(1, -1);
-  const register = namedTable(entry, "T2DS.1 Scenarios", SCENARIOS);
+  const register = registerOrTitled(entry, "T2DS.1", "T2DS.1 Scenarios", SCENARIOS);
   const cases =
     register?.headers.join("|") === SCENARIOS.join("|") ? register.rows.map(scenario) : [];
   const control = cases.filter(
@@ -107,17 +139,7 @@ function readerDetail(value: string) {
 /** A case's name as a working page draws it: a name carrying a code or a register id is in Evidence. */
 const caseName = ({ name }: { name: string }) => readerCell(name) || "Not stated";
 
-/**
- * The same recorded share in percent, moving its decimal point without rounding its digits; a
- * leading minus ("-0.025", "−0.025") is kept as written in front of the percent ("-2.5%").
- */
-export function scenarioShareLabel(text: string): string {
-  const minus = /^[-−](?=\d)/.exec(text)?.[0];
-  if (minus) {
-    const magnitude = text.slice(minus.length);
-    const shown = scenarioShareLabel(magnitude);
-    return shown === magnitude ? text : `${minus}${shown}`;
-  }
+export function scenarioShareLabel(text: string) {
   if (sharePosition(text) === null) return text;
   const stated = /\((\d+(?:\.\d+)?%)\)$/.exec(text)?.[1];
   if (stated) return stated;
@@ -154,10 +176,43 @@ export function writtenTable(table: Table, href: (line: number) => string): Lead
   };
 }
 
-export type CaseRole = "control" | "chosen" | "other";
-export type MultiplePanel = { measure: string; bars: { text: string; value: number }[] };
+const VIEWS = [
+  { key: "figure", label: "Figure" },
+  { key: "table", label: "Table" },
+] as const;
 
-const BAR_TONE = { control: "bg-chart-3", chosen: "bg-chart-1", other: "bg-chart-2" } as const;
+/**
+ * A tile's one control row: the module's own choice (a case, a basis) and the Figure / Table
+ * switch, side by side under the title, wrapping inside the tile on a narrow screen.
+ */
+export function ControlRow({
+  label,
+  choice,
+  view,
+  onView,
+}: {
+  label: string;
+  choice: ReactNode;
+  view: string;
+  onView: (view: string) => void;
+}) {
+  return (
+    <div className="flex min-w-0 basis-full flex-wrap items-center gap-2">
+      {choice}
+      <Segmented
+        label={`${label}: figure or table`}
+        segments={VIEWS}
+        current={view}
+        onSelect={onView}
+      />
+    </div>
+  );
+}
+
+type CaseRole = "control" | "chosen" | "other";
+type MultiplePanel = { measure: string; bars: { text: string; value: number }[] };
+
+const BAR_TONE = { control: "prior", chosen: "primary", other: "secondary" } as const;
 
 function PanelRows({
   panel,
@@ -180,7 +235,6 @@ function PanelRows({
       <ul className="flex flex-col gap-2">
         {panel.bars.map((bar, index) => {
           const item = cases[index];
-          const end = at(bar.value);
           return (
             <li key={index} className="flex min-w-0 flex-col gap-1">
               <span className="flex items-baseline justify-between gap-3">
@@ -196,20 +250,13 @@ function PanelRows({
                   {bar.text}
                 </span>
               </span>
-              <span className="relative h-3">
-                <span
-                  className="absolute inset-y-0 w-px bg-connector"
-                  style={{ left: share(zero) }}
-                />
-                <span
-                  data-bar={bar.text}
-                  className={cx(
-                    "absolute top-0.5 h-2 min-w-0.5 rounded-[2px]",
-                    BAR_TONE[item?.role ?? "other"],
-                  )}
-                  style={{ left: share(Math.min(zero, end)), width: share(Math.abs(end - zero)) }}
-                />
-              </span>
+              <BarRow
+                start={zero}
+                end={at(bar.value)}
+                zero={zero}
+                tone={BAR_TONE[item?.role ?? "other"]}
+                bar={{ "data-bar": bar.text }}
+              />
             </li>
           );
         })}
@@ -222,7 +269,7 @@ function PanelRows({
  * Few cases across a few measures: one panel a measure, every case a bar on that measure's own
  * scale from zero, each value as written. The control and the chosen case are named in words.
  */
-export function SmallMultiples({
+function SmallMultiples({
   label,
   cases,
   panels,
@@ -267,41 +314,60 @@ const measureName = (measure: string) =>
 
 const NOT_STATED = /^Not (?:supplied|calculated|calculable|stated)\b/i;
 
+/** A case's stated gap on a measure: its name, and the gap's word and reason as the module writes them. */
+function StatedGap({ name, text }: { name: string; text: string }) {
+  const cell = readerCell(text);
+  const gap = statedGap(cell);
+  return (
+    <span className="inline-flex min-w-0 flex-wrap items-baseline gap-x-2">
+      <span>{name}</span>
+      {gap ? <GapCell word={gap.word} reason={gap.reason} /> : <GapCell word={cell} />}
+    </span>
+  );
+}
+
 /** Each measure of the results, placed when every case's cell reads on the measure's own unit. */
 function casePanels(matrix: Table, cases: readonly Case[]) {
   const columns = cases.map(({ id }) => matrix.headers.indexOf(id));
   const measures = matrix.rows.map(({ cells }) => cells[0] ?? "");
   const placed: MultiplePanel[] = [];
-  const unplaced: string[] = [];
+  const unplaced: ReactNode[] = [];
   if (!distinct(measures)) return { placed, unplaced };
-  for (const { cells } of matrix.rows) {
+  for (const { cells, line } of matrix.rows) {
     const measure = cells[0] ?? "";
     if (containsReference(measure)) continue;
     const texts = columns.map((at) => cells[at] ?? "");
     const values = texts.map((text) => position(measure, text));
+    const name = readerCell(measure);
     if (values.every((value) => value !== null)) {
       placed.push({
-        measure: measureName(readerCell(measure)),
-        bars: texts.map((text, at) => ({ text, value: values[at] ?? 0 })),
+        measure: measureName(name),
+        bars: texts.map((text, at) => ({ text: readerCell(text), value: values[at] ?? 0 })),
       });
       continue;
     }
     const stated = texts.flatMap((text, at) =>
       values[at] === null && NOT_STATED.test(text)
-        ? [`${cases[at] ? caseName(cases[at]) : ""}: ${readerCell(text)}`]
+        ? [<StatedGap key={at} name={cases[at] ? caseName(cases[at]) : ""} text={text} />]
         : [],
     );
     unplaced.push(
-      stated.length
-        ? `${readerCell(measure)} is not drawn: ${stated.join("; ")}.`
-        : `${readerCell(measure)} is not drawn: its cells are not on one stated basis; the table has them as written.`,
+      stated.length ? (
+        <span key={line} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span>{`${name} is not drawn.`}</span>
+          {stated}
+        </span>
+      ) : (
+        `${name} is not drawn: this page could not place its cells on one stated basis; the table has them as written.`
+      ),
     );
   }
   return { placed, unplaced };
 }
 
-function CaseDetails({ selected }: { selected: Case }) {
-  const rows = (
+/** The chosen case as the module states it, with its own trace to the scenario's row. */
+function CaseDetails({ selected, href }: { selected: Case; href: (line: number) => string }) {
+  const items = (
     [
       ["EBITDA decline", scenarioShareLabel(selected.decline)],
       ["Cash-interest increase", scenarioShareLabel(selected.interest)],
@@ -310,16 +376,15 @@ function CaseDetails({ selected }: { selected: Case }) {
       ["Category", selected.category],
       ["Confidence", selected.confidence],
     ] as const
-  ).filter(([, value]) => value);
+  )
+    .filter(([, value]) => value)
+    .map(([key, value]) => ({ key, value: readerDetail(value) }));
+  const name = `${caseName(selected)} scenario`;
   return (
-    <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
-      {rows.map(([key, value]) => (
-        <div key={key} className="min-w-0">
-          <dt className="font-medium text-text-primary">{key}</dt>
-          <dd className="wrap-anywhere">{readerDetail(value)}</dd>
-        </div>
-      ))}
-    </dl>
+    <div className="flex min-w-0 items-start justify-between gap-3">
+      <KeyValues items={items} />
+      <Trace href={href(selected.line)} name={name} />
+    </div>
   );
 }
 
@@ -355,6 +420,7 @@ export function DownsideTile({
   const { matrix, control, cases } = data;
   const alternatives = cases.filter(({ id }) => id !== control?.id);
   const [chosen, setChosen] = useState(alternatives[0]?.id);
+  const [view, setView] = useState("figure");
   const selected = alternatives.find(({ id }) => id === chosen) ?? alternatives[0];
   const trace = <Trace href={href(matrix.line)} name={RESULTS_NAME} />;
   if (!control || !selected)
@@ -362,14 +428,14 @@ export function DownsideTile({
       <LeadFigure
         span={span}
         label={TITLE}
-        kicker="Scenario comparison"
-        title="Stressed flows and credit metrics, as written"
+        title={TITLE}
         trace={trace}
         className="wrap-anywhere"
         figure={
-          <p role="note" className="text-small text-text-secondary">
-            The handoff does not bind a unique control and named cases to these results.
-          </p>
+          <CompactGap>
+            This page could not read a unique control and named cases for these results from the
+            handoff.
+          </CompactGap>
         }
         table={writtenTable(matrix, href)}
       />
@@ -380,22 +446,23 @@ export function DownsideTile({
       item.id === control.id ? "control" : item.id === selected.id ? "chosen" : "other";
     return { name: caseName(item), role };
   });
-  const notes: ReactNode[] = [<CaseDetails key="details" selected={selected} />, ...unplaced];
+  const choice = (
+    <Segmented
+      label="Stress case to compare with the unstressed control"
+      segments={alternatives.map((item) => ({ key: item.id, label: caseName(item) }))}
+      current={selected.id}
+      onSelect={setChosen}
+    />
+  );
   return (
     <LeadFigure
       span={span}
       label={TITLE}
-      kicker="Scenario comparison"
-      title={`Every case against the ${caseName(control)}, each measure on its own scale`}
+      title={TITLE}
       basis={readerDetail(control.anchor)}
       legend={
         <>
-          <Segmented
-            label="Stress case to compare with the unstressed control"
-            segments={alternatives.map((item) => ({ key: item.id, label: caseName(item) }))}
-            current={selected.id}
-            onSelect={setChosen}
-          />
+          <ControlRow label={TITLE} choice={choice} view={view} onView={setView} />
           <Key tone="prior">Control</Key>
           <Key tone="primary">{caseName(selected)}</Key>
           {alternatives.length > 1 && <Key tone="secondary">Other cases</Key>}
@@ -404,16 +471,17 @@ export function DownsideTile({
       trace={trace}
       className="wrap-anywhere"
       figure={
-        placed.length > 0 ? (
+        view === "table" ? (
+          <TableRegion label={TITLE} table={resultsTable(matrix, cases, href)} />
+        ) : placed.length > 0 ? (
           <SmallMultiples label={RESULTS_NAME} cases={roles} panels={placed} />
         ) : (
-          <p role="note" className="text-small text-text-secondary">
-            The cases have no measures on a common basis.
-          </p>
+          <CompactGap>
+            This page could not place any measure of these results on one stated basis.
+          </CompactGap>
         )
       }
-      table={resultsTable(matrix, cases, href)}
-      notes={notes}
+      notes={[<CaseDetails key="details" selected={selected} href={href} />, ...unplaced]}
     />
   );
 }

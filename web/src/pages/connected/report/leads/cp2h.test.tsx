@@ -151,13 +151,15 @@ it("says why when the triggers are a stated gap or the tables are absent", () =>
     ),
   ).toBeVisible();
   const register = screen.getByRole("region", { name: "Rating register" });
-  expect(within(register).getByText("This handoff has no rating register.")).toBeVisible();
+  expect(
+    within(register).getByText("This page could not read a rating register from the handoff."),
+  ).toBeVisible();
   expect(register.textContent).not.toMatch(/Built from the module's contract/);
   cleanup();
   render(<RatingsLead {...leadProps(ratings())} />);
   expect(
     within(screen.getByRole("region", { name: "Rating triggers" })).getByText(
-      "This handoff has no rating trigger table.",
+      "This page could not read rating triggers from the handoff.",
     ),
   ).toBeVisible();
 });
@@ -217,4 +219,19 @@ it("draws a trigger's texts without source references and names a register row w
   expect(tile.textContent).not.toMatch(/rating_report|CP-2/);
   const register = screen.getByRole("region", { name: "Rating register" });
   expect(within(register).getByRole("link", { name: "Source for Row 1" })).toBeVisible();
+});
+
+it("keeps each trigger's unit and basis in the table view, and one shared basis under the figure", () => {
+  render(<RatingsLead {...leadProps(ratings({ triggers: TRIGGER_ROWS }))} />);
+  const tile = screen.getByRole("region", { name: "Rating triggers" });
+  expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(/^Rating triggers$/);
+  expect(within(tile).getByText("Synthetic.")).toBeVisible();
+  fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
+  const row = within(tile).getByRole("row", { name: /^FFO \/ debt/ });
+  expect(
+    within(row)
+      .getAllByRole("cell")
+      .map((item) => item.textContent)
+      .slice(0, 6),
+  ).toEqual(["Synthetic Agency B", "10%", "12%", "Passes at or above", "%", "Synthetic."]);
 });

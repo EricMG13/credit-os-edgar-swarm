@@ -65,12 +65,10 @@ it("states why the question list is a gap, points to the executive answer and ne
   const tile = screen.getByRole("region", { name: "Research questions and answers" });
   expect(
     within(tile).getByText(
-      "The handoff does not state each question's answer and whether it was answered as a table.",
+      "This page could not read a list of questions with their answers from the handoff.",
     ),
   ).toBeVisible();
-  expect(
-    within(tile).getByText("The answers are written in the executive answer passage."),
-  ).toBeVisible();
+  expect(within(tile).getByText("The handoff has an executive answer passage.")).toBeVisible();
   // Ruling vii: no note on where the method puts coverage.
   expect(tile.textContent).not.toMatch(/no fixed place|methodology/);
   expect(within(tile).queryByText("Answered")).toBeNull();
@@ -84,6 +82,13 @@ it("draws the causal scenarios as written and the catalysts earliest first", () 
       "A traffic shock would lift leverage.",
     ),
   ).toBeVisible();
+  // The catalysts (third rank) take a row of their own at span 8, not the slot beside the scenarios.
+  expect(screen.getByRole("region", { name: "Research catalysts" }).className).toMatch(
+    /lg:col-span-8/,
+  );
+  expect(screen.getByRole("region", { name: "Causal scenarios" }).className).toMatch(
+    /lg:col-span-8/,
+  );
   const items = within(screen.getByRole("list", { name: "Research catalysts" })).getAllByRole(
     "listitem",
   );
@@ -97,9 +102,15 @@ it("draws the causal scenarios as written and the catalysts earliest first", () 
 
 it("says what is missing when the handoff has no scenarios, catalysts or executive answer", () => {
   render(<ResearchLead {...leadProps(research(false))} />);
-  expect(screen.getByText("The handoff writes no causal scenarios.")).toBeVisible();
+  expect(
+    screen.getByText("This page could not read causal scenarios from the handoff."),
+  ).toBeVisible();
   const catalysts = screen.getByRole("region", { name: "Research catalysts" });
-  expect(within(catalysts).getByText(/no dated research catalyst/)).toBeVisible();
+  expect(
+    within(catalysts).getByText(
+      "This page could not read dated research catalysts from the handoff.",
+    ),
+  ).toBeVisible();
   expect(screen.queryByText(/executive answer passage/)).toBeNull();
 });
 

@@ -12,8 +12,9 @@ import {
   RetainedCoverTile,
 } from "../MacroSensitivity";
 import { Key } from "../overview/figureParts";
-import { Bento } from "../overview/Tile";
+import { Bento, Figure } from "../overview/Tile";
 import { withDraws } from "./draws";
+import { OtherCharts } from "./moduleCharts";
 import { LaneTile, LeadFigure, LeadGap, Trace } from "./parts";
 import { columnOf, eventsOf, leadHref, leadingMillions, readerCell, registerTable } from "./read";
 import type { LeadProps } from "./types";
@@ -53,7 +54,8 @@ function sensitivityRows(table: Table) {
     const name = cells[label] ?? "";
     const text = cells[impact] ?? "";
     const money = STEP.test(name) ? singleAmount(text) : null;
-    return { line, name: readerCell(name), text: readerCell(text), money };
+    const rest = money ? readerCell(text.trim().slice(money.written.length).trim()) : "";
+    return { line, name: readerCell(name), text: readerCell(text), money, rest };
   });
   const currencies = new Set(rows.flatMap(({ money }) => (money ? [money.currency] : [])));
   const one = currencies.size === 1;
@@ -64,6 +66,30 @@ function sensitivityRows(table: Table) {
   return { drawn, words, currency: one ? ([...currencies][0] ?? "") : "" };
 }
 
+type Drawn = ReturnType<typeof sensitivityRows>["drawn"][number];
+
+/** Fewer than three stated steps: each step's words, its amount as written and the cell's own words after it. */
+function StatedSteps({ rows }: { rows: readonly Drawn[] }) {
+  return (
+    <ul aria-label={LADDER} className="flex flex-col gap-3">
+      {rows.map((row) => (
+        <li
+          key={row.line}
+          className="flex min-w-0 flex-col gap-1 border-t border-border-hairline pt-3 first:border-t-0 first:pt-0"
+        >
+          <span className="text-small wrap-anywhere text-text-secondary">{row.name}</span>
+          <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <Figure className="text-h3 font-medium">{row.money.written}</Figure>
+            {row.rest && (
+              <span className="text-small wrap-anywhere text-text-secondary">{row.rest}</span>
+            )}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /** CP-2E's own sensitivity register: the cash cost of each stated shock step, as written. */
 function SensitivityTile({ entry, href }: { entry: OutputEntry; href: Href }) {
   const table = registerTable(entry, "T2F.5", ["Sensitivity", "Estimated Cash Impact"]);
@@ -72,21 +98,21 @@ function SensitivityTile({ entry, href }: { entry: OutputEntry; href: Href }) {
       <LeadGap
         span={8}
         label={LADDER}
-        kicker="Sensitivity ladder"
-        title="Cash cost per rate shock step"
-        reason="The handoff has no sensitivity table with a cash impact per shock step."
+        title={LADDER}
+        reason="This page could not read a cash impact per rate shock step from the handoff."
       />
     );
   const { drawn, words, currency } = sensitivityRows(table);
   const listed = words.map((row) => `${row.name}: ${row.text}`);
+  const trace = <Trace href={href(table.line)} name={LADDER} />;
   if (!drawn.length)
     return (
       <LeadGap
         span={8}
         label={LADDER}
-        kicker="Sensitivity ladder"
-        title="Cash cost per rate shock step"
-        reason="The sensitivity table states no shock step with an amount the figure can place."
+        title={LADDER}
+        trace={trace}
+        reason="This page could not read one amount for any shock step from the sensitivity table."
       >
         <ul className="flex flex-col gap-1.5 text-small text-text-secondary">
           {listed.map((text) => (
@@ -95,37 +121,35 @@ function SensitivityTile({ entry, href }: { entry: OutputEntry; href: Href }) {
             </li>
           ))}
         </ul>
-        <Trace href={href(table.line)} name={LADDER} />
       </LeadGap>
     );
   const scale = ticks([0, ...drawn.map(({ money }) => money.value)]);
   const top = scale.at(-1)?.value || 1;
-  const [first] = drawn;
-  const title =
-    drawn.length === 1 && first
-      ? `One stated rate step: ${first.name}, ${first.money.written}`
-      : "Cash cost per stated rate step";
+  const chart = drawn.length >= 3;
   return (
     <LeadFigure
       span={8}
       label={LADDER}
-      kicker="Sensitivity ladder"
-      title={title}
-      basis={`Estimated cash impact as the module states it, in ${unitLabel(`${currency} millions`)}`}
-      legend={<Key tone="primary">Estimated cash impact</Key>}
-      trace={<Trace href={href(table.line)} name={LADDER} />}
+      title={LADDER}
+      basis={`Estimated cash impact, in ${unitLabel(`${currency} millions`)}`}
+      legend={chart && <Key tone="primary">Estimated cash impact</Key>}
+      trace={trace}
       figure={
-        <Ladder
-          label={`${LADDER}: ${drawn.map((row) => `${row.name}: ${row.money.written}`).join("; ")}.`}
-          ticks={scale.map((tick) => ({ at: tick.value / top, label: tick.label }))}
-          rungs={drawn.map((row) => ({
-            key: row.line,
-            label: row.name,
-            at: row.money.value / top,
-            figure: row.money.written,
-            bar: { "data-bar": row.money.written },
-          }))}
-        />
+        chart ? (
+          <Ladder
+            label={`${LADDER}: ${drawn.map((row) => `${row.name}: ${row.money.written}`).join("; ")}.`}
+            ticks={scale.map((tick) => ({ at: tick.value / top, label: tick.label }))}
+            rungs={drawn.map((row) => ({
+              key: row.line,
+              label: row.name,
+              at: row.money.value / top,
+              figure: row.money.written,
+              bar: { "data-bar": row.money.written },
+            }))}
+          />
+        ) : (
+          <StatedSteps rows={drawn} />
+        )
       }
       table={writtenTable(table, href)}
       notes={listed}
@@ -134,6 +158,7 @@ function SensitivityTile({ entry, href }: { entry: OutputEntry; href: Href }) {
 }
 
 const HEDGED = "Hedged against unhedged";
+const HEDGED_TITLE = "Hedged and unhedged floating-rate debt";
 
 /** T2F.4's hedged and unhedged floating-rate debt: one bar of the two stated amounts. */
 function HedgedTile({ entry, href }: { entry: OutputEntry; href: Href }) {
@@ -165,12 +190,13 @@ function HedgedTile({ entry, href }: { entry: OutputEntry; href: Href }) {
       <LeadGap
         span={12}
         label={HEDGED}
-        title="Hedged against unhedged floating-rate debt"
+        title={HEDGED_TITLE}
         reason={
           table
-            ? "The handoff does not state hedged and unhedged floating-rate debt as two amounts in one currency."
-            : "The handoff has no floating-rate exposure table."
+            ? "This page could not read hedged and unhedged floating-rate debt as two amounts in one currency from the handoff."
+            : "This page could not read a floating-rate exposure table from the handoff."
         }
+        trace={table && <Trace href={href(table.line)} name={HEDGED} />}
       />
     );
   const total = hedged.value.value + unhedged.value.value;
@@ -183,9 +209,7 @@ function HedgedTile({ entry, href }: { entry: OutputEntry; href: Href }) {
     <LeadFigure
       span={12}
       label={HEDGED}
-      kicker="Hedged against unhedged"
-      title={`Hedged ${hedged.text} against unhedged ${unhedged.text} floating-rate debt`}
-      basis="Each segment is the stated amount; the bar is their sum only as a length."
+      title={HEDGED_TITLE}
       legend={
         <>
           <Key tone="primary">Hedged</Key>
@@ -199,7 +223,7 @@ function HedgedTile({ entry, href }: { entry: OutputEntry; href: Href }) {
           aria-label={`Floating-rate debt: Hedged floating-rate debt ${hedged.text}; Unhedged floating-rate debt ${unhedged.text}.`}
           className="flex min-w-0 flex-col gap-2"
         >
-          <div aria-hidden="true" className="flex h-4 w-full gap-0.5 overflow-hidden rounded-[2px]">
+          <div aria-hidden="true" className="flex h-4 w-full gap-0.5 overflow-hidden rounded-ds-xs">
             <span
               data-segment="hedged"
               className="h-full bg-chart-1"
@@ -264,16 +288,17 @@ export const MacroLead = withDraws(
         </div>
         {data?.retained && <RetainedCoverTile retained={data.retained} href={href} span={12} />}
         {data?.fx?.rows.length ? (
-          <FxShocksTile table={data.fx} currency={data.currency} href={href} span={12} />
+          <FxShocksTile table={data.fx} currency={data.currency} href={href} span={8} />
         ) : null}
         <HedgeTermsTile hedges={hedges} exposures={data?.fxExposure} href={href} />
         <LaneTile
           lane={eventsOf(entry, "Hedges")}
           span={12}
           label="Hedge dates"
-          title="Hedge dates as the module states them"
+          title="Hedge dates"
           href={evidence}
         />
+        <OtherCharts entry={entry} href={evidence} drawn={[]} />
       </Bento>
     );
   },

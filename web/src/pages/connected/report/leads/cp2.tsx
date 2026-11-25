@@ -1,12 +1,14 @@
 import type { ReactNode } from "react";
-import { blocked, evidencePath, withUnit } from "../../publishedReport";
+import { moduleName } from "../../api";
+import { blocked, evidencePath, withUnit, type OutputEntry } from "../../publishedReport";
+import { namedTable } from "../../reportView";
 import { figureSource, moduleSource } from "../overview/figureData";
-import { gapReason, lastTwo, periodSeries } from "../overview/read";
-import { bulletGeometry } from "../overview/stressData";
+import { DeltaBar } from "../overview/marks";
+import { lastTwo, periodSeries } from "../overview/read";
 import { Bento, Figure, Tile } from "../overview/Tile";
-import { leadTests } from "./bullet";
+import { Bullets, leadTests } from "./bullet";
 import { withDraws } from "./draws";
-import { LeadGap, MapTile, Prose, Trace } from "./parts";
+import { GapCell, LeadGap, MapTile, Notes, Prose, statedGap, Trace } from "./parts";
 import { columnOf, leadHref, mapOf, readerCell, registerTable, sectionParagraphs } from "./read";
 import type { LeadProps } from "./types";
 
@@ -23,8 +25,16 @@ const LEDGER_HEADER = [
 ].join("|");
 
 type Item = { rank: number; label: string; mechanism: string; line: number };
-/** `unplaced`: rows whose direction is neither side, as "<label> (<direction as written>)". */
-type Ledger = { strengths: Item[]; weaknesses: Item[]; unplaced: string[] };
+/**
+ * `unplaced`: rows whose direction is neither side, as "<label> (<direction as written>)"; `words`:
+ * each side's heading in the module's own word for it, as first written.
+ */
+type Ledger = {
+  strengths: Item[];
+  weaknesses: Item[];
+  unplaced: string[];
+  words: { strengths: string; weaknesses: string };
+};
 
 const byRank = (a: Item, b: Item) => a.rank - b.rank;
 const rankOf = (text: string) =>
@@ -45,6 +55,7 @@ type Sides = Readonly<Record<string, "strengths" | "weaknesses">>;
 function place(ledger: Ledger, sides: Sides, direction: string, item: Item) {
   const key = direction.trim();
   const side = Object.hasOwn(sides, key.toLowerCase()) ? sides[key.toLowerCase()] : undefined;
+  if (side && !ledger[side].length) ledger.words[side] = readerCell(key);
   if (side) ledger[side].push(item);
   else ledger.unplaced.push(`${item.label} (${readerCell(key) || "no direction stated"})`);
 }
@@ -59,7 +70,12 @@ function typedLedger(entry: LeadProps["entry"]): Ledger | null {
         block.headers.map((name) => name.trim().toLowerCase()).join("|") === LEDGER_HEADER,
     );
   if (found?.type !== "table") return null;
-  const ledger: Ledger = { strengths: [], weaknesses: [], unplaced: [] };
+  const ledger: Ledger = {
+    strengths: [],
+    weaknesses: [],
+    unplaced: [],
+    words: { strengths: "STRENGTH", weaknesses: "WEAKNESS" },
+  };
   const sides = { strength: "strengths", weakness: "weaknesses" } as const;
   for (const { cells, line } of found.rows) {
     const item = {
@@ -85,7 +101,12 @@ function filterLedger(entry: LeadProps["entry"]): Ledger | null {
     implication: columnOf(found, "Credit Implication"),
   };
   if (at.rank < 0 || at.driver < 0 || at.direction < 0) return null;
-  const ledger: Ledger = { strengths: [], weaknesses: [], unplaced: [] };
+  const ledger: Ledger = {
+    strengths: [],
+    weaknesses: [],
+    unplaced: [],
+    words: { strengths: "Positive", weaknesses: "Negative" },
+  };
   const sides = { positive: "strengths", negative: "weaknesses" } as const;
   for (const { cells, line } of found.rows) {
     const item = {
@@ -155,22 +176,14 @@ function LedgerTile({
       <Tile
         span={8}
         label="Strengths and weaknesses"
-        title="Strengths against weaknesses"
+        title="Strengths and weaknesses"
         className="w-full self-start"
       >
         <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2">
-          <Column title="Strengths" items={ledger.strengths} href={href} />
-          <Column title="Weaknesses" items={ledger.weaknesses} href={href} />
+          <Column title={ledger.words.strengths} items={ledger.strengths} href={href} />
+          <Column title={ledger.words.weaknesses} items={ledger.weaknesses} href={href} />
         </div>
-        {ledger.unplaced.length > 0 && (
-          <ul className="flex flex-col gap-1.5 border-t border-border-hairline pt-3 text-caption text-text-secondary">
-            {ledger.unplaced.map((text, at) => (
-              <li key={at} className="wrap-anywhere">
-                {`Not placed: ${text}`}
-              </li>
-            ))}
-          </ul>
-        )}
+        <Notes notes={ledger.unplaced.map((text) => `Not placed: ${text}`)} />
       </Tile>
     );
   const paragraphs = sectionParagraphs(entry, "Strengths and weaknesses");
@@ -180,7 +193,7 @@ function LedgerTile({
         span={8}
         label="Strengths and weaknesses"
         title="Strengths and weaknesses"
-        reason="The handoff states no strengths and weaknesses."
+        reason="This page could not read strengths and weaknesses from the handoff."
       />
     );
   return (
@@ -202,7 +215,7 @@ function Stat({ name, trace, children }: { name: string; trace?: ReactNode; chil
         {name}
         {trace}
       </dt>
-      <dd className="flex min-w-0 flex-col gap-0.5">{children}</dd>
+      <dd className="flex min-w-0 flex-col gap-1">{children}</dd>
     </div>
   );
 }
@@ -211,6 +224,34 @@ const Reason = ({ children }: { children: ReactNode }) => (
   <span className="text-small text-gap-text">{children}</span>
 );
 
+const Caption = ({ children }: { children: ReactNode }) => (
+  <span className="text-caption wrap-anywhere text-text-secondary">{children}</span>
+);
+
+/** A row's own "Basis and limitation" cell in a chart table, as a working page shows it. */
+function basisAt(entry: OutputEntry, chart: string, line: number | undefined) {
+  const table = namedTable(entry, `Chart data: ${chart}`, ["Period", "Reporting unit"]);
+  const column = table ? columnOf(table, "Basis and limitation") : -1;
+  const row = table?.rows.find((item) => item.line === line);
+  return column < 0 || !row ? "" : readerCell(row.cells[column] ?? "");
+}
+
+/** Whether `prior` names the year before `latest`: the same period with its one year less by one. */
+function yearBefore(prior: string, latest: string) {
+  const years = latest.match(/\d{4}/g) ?? [];
+  const [year] = years;
+  if (years.length !== 1 || !year) return false;
+  return latest.replace(year, String(Number(year) - 1)) === prior;
+}
+
+const FINANCIALS = moduleName("CP-1");
+const COVENANTS = moduleName("CP-4");
+
+/**
+ * One measure of the Financial foundation: its latest figure with its period, basis cell and owner in
+ * words. "from <prior>" and the before-to-after mark only when the row before has the same basis and
+ * is the year before; otherwise no comparison.
+ */
 function SeriesStat({
   props,
   name,
@@ -223,73 +264,102 @@ function SeriesStat({
   heading: RegExp;
 }) {
   const { entry, reason } = moduleSource(props.view, "CP-1", "The financial foundation");
-  const series = periodSeries(entry, chart, heading);
+  const series = entry && !reason ? periodSeries(entry, chart, heading) : null;
   if (!entry || reason || !series)
     return (
       <Stat name={name}>
-        <Reason>{reason ?? "The financial foundation handoff has no such table."}</Reason>
+        <Reason>
+          {reason ?? `This page could not read ${name} from the ${FINANCIALS} handoff.`}
+        </Reason>
       </Stat>
     );
   const { latest, prior } = lastTwo(series);
-  const stated = latest?.value != null;
+  if (!latest)
+    return (
+      <Stat name={name}>
+        <Reason>{`This page could not read ${name} from the ${FINANCIALS} handoff.`}</Reason>
+      </Stat>
+    );
+  const shown = (cell: string) => withUnit(cell, series.unit);
+  const basis = basisAt(entry, chart, latest.line);
+  const gap = latest.value === null ? statedGap(readerCell(latest.cell)) : null;
+  const before =
+    prior &&
+    prior.value !== null &&
+    latest.value !== null &&
+    basisAt(entry, chart, prior.line) === basis &&
+    yearBefore(prior.period, latest.period)
+      ? { prior, from: prior.value, to: latest.value }
+      : null;
   return (
     <Stat
       name={name}
-      trace={<Trace href={evidencePath(props.run.folder, entry, latest?.line)} name={name} />}
+      trace={<Trace href={evidencePath(props.run.folder, entry, latest.line)} name={name} />}
     >
-      {latest && stated ? (
-        <Figure className="text-h3 font-medium">{withUnit(latest.cell, series.unit)}</Figure>
+      <Caption>{`${latest.period}, ${FINANCIALS}`}</Caption>
+      {latest.value !== null ? (
+        <Figure className="text-h3 font-medium">{shown(latest.cell)}</Figure>
+      ) : gap ? (
+        <GapCell word={gap.word} reason={gap.reason} />
       ) : (
-        <Reason>
-          {latest?.period ?? "Latest period"}:{" "}
-          {readerCell((latest && gapReason(latest.cell)) ?? "") || "not supplied"}
-        </Reason>
+        <GapCell word={readerCell(latest.cell) || "Not stated"} />
       )}
-      {prior?.value != null && (
-        <span className="text-caption text-text-secondary">
-          {stated ? "from " : "earlier "}
-          {withUnit(prior.cell, series.unit)} in {prior.period}
-        </span>
+      {basis && <Caption>{basis}</Caption>}
+      {before && (
+        <>
+          <Caption>{`from ${shown(before.prior.cell)} in ${before.prior.period}`}</Caption>
+          <div className="w-52 max-w-full">
+            <DeltaBar
+              from={{
+                label: before.prior.period,
+                value: before.from,
+                text: shown(before.prior.cell),
+              }}
+              to={{ label: latest.period, value: before.to, text: shown(latest.cell) }}
+              tone="none"
+              label={`${name}: ${shown(before.prior.cell)} in ${before.prior.period}, ${shown(latest.cell)} in ${latest.period}.`}
+            />
+          </div>
+        </>
       )}
     </Stat>
   );
 }
 
+/**
+ * The covenant module's own first test: its current and threshold labelled on the shared bullet, its
+ * stated gap when it is one, with the owner and the row's basis in words. No other module's measure.
+ */
 function HeadroomStat({ props }: { props: LeadProps }) {
-  const source = figureSource(props.view, "CP-4", "Covenant headroom", "Legal & covenants");
+  const name = "Covenant headroom";
+  const source = figureSource(props.view, "CP-4", name, COVENANTS);
+  const { reason } = moduleSource(props.view, "CP-4", COVENANTS);
   if (source.state === "gap")
     return (
-      <Stat name="Covenant headroom">
-        <Reason>{source.reason}</Reason>
+      <Stat name={name}>
+        <Reason>
+          {reason ?? `This page could not read covenant headroom from the ${COVENANTS} handoff.`}
+        </Reason>
       </Stat>
     );
-  const tests = leadTests(source.table, source.descriptor);
-  const lead = tests?.find((test) => bulletGeometry(test) !== null);
-  if (!lead)
+  const first = leadTests(source.table, source.descriptor)?.[0];
+  if (!first)
     return (
-      <Stat name="Covenant headroom">
-        <Reason>The covenant table states no test with both a level and a value.</Reason>
+      <Stat name={name}>
+        <Reason>{`This page could not read a covenant test from the ${COVENANTS} handoff.`}</Reason>
       </Stat>
     );
-  const shown = (cell: typeof lead.current) =>
-    cell.value === null ? cell.text : withUnit(cell.text, lead.unit);
+  const column = source.table.headers.findIndex((header) => /^Basis and limitation$/i.test(header));
+  const basis = column < 0 ? "" : readerCell(source.table.rows[0]?.[column] ?? "");
+  const line = source.table.rowLines?.[0] ?? source.table.line;
   return (
     <Stat
-      name={`Covenant headroom: ${lead.label}`}
-      trace={
-        <Trace
-          href={evidencePath(props.run.folder, source.entry, source.table.line)}
-          name="Covenant headroom"
-        />
-      }
+      name={name}
+      trace={<Trace href={evidencePath(props.run.folder, source.entry, line)} name={name} />}
     >
-      <Figure className="text-h3 font-medium">
-        {shown(lead.current)}
-        <span className="text-text-tertiary"> / {shown(lead.threshold)}</span>
-      </Figure>
-      {lead.headroom && (
-        <span className="text-caption text-text-secondary">{lead.headroom} headroom</span>
-      )}
+      <Caption>{COVENANTS}</Caption>
+      <Bullets label={name} tests={[first]} />
+      {basis && <Caption>{basis}</Caption>}
     </Stat>
   );
 }
@@ -330,8 +400,8 @@ export const CreditLead = withDraws(
           href={href}
           span={12}
           label="Credit-risk transmission"
-          title="How risk reaches the credit"
-          absent="This handoff has no credit-risk transmission map."
+          title="Credit-risk transmission"
+          absent="This page could not read a credit-risk transmission map from the handoff."
         />
       </Bento>
     );

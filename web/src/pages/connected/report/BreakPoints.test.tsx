@@ -62,6 +62,11 @@ it("reads the canonical ranking's shares, drawing zero and keeping the original 
   // A stated zero is a bar of no length on the fall-in-EBITDA axis, never a missing mark.
   const zero = figure.querySelector('[data-decline="0"]');
   expect(zero).toHaveStyle({ width: "0%" });
+  // ...and it keeps a visible mark at the origin; a non-zero bar has none.
+  const origins = figure.querySelectorAll("[data-origin]");
+  expect(origins).toHaveLength(1);
+  expect(items(figure)[0]?.contains(origins[0] ?? null)).toBe(true);
+  expect(origins[0]).toHaveClass("w-1", "bg-chart-1");
   expect(figure.querySelector('[data-decline="0.125"]')).toHaveStyle({ width: "12.5%" });
   fireEvent.click(within(tile()).getByRole("button", { name: "Table" }));
   expect(within(tile()).getByRole("cell", { name: "12.5%" })).toBeInTheDocument();
@@ -160,10 +165,30 @@ it("states when the table does not establish a comparable ranking and keeps its 
   expect(within(tile()).queryByRole("img")).toBeNull();
   expect(
     within(tile()).getByText(
-      "The source table does not establish a comparable ranking for this basis.",
+      "This page could not read a fall in EBITDA for each break point from the handoff's table.",
     ),
   ).toBeInTheDocument();
   fireEvent.click(within(tile()).getByRole("button", { name: "Table" }));
   expect(within(tile()).getByRole("cell", { name: "Not calculated: no base FCF" })).toBeVisible();
   expect(within(tile()).queryByRole("cell", { name: "Filing p.2" })).toBeNull();
+});
+
+it("reads the break points under the heading the real handoffs use, header checks unchanged", () => {
+  const titled = "T2DS.6 — Breakpoints with unchanged cash interest";
+  const data = breakPointView(entry(titled, RETAINED_HEADERS, RETAINED_ROWS));
+  expect(data?.bases.map(({ name }) => name)).toEqual([
+    "Interest held",
+    "Cash-interest increase 5%",
+  ]);
+  expect(data?.table.line).toBe(3);
+  // The same heading with a header the reader does not know is still found, but draws no basis.
+  const other = breakPointView(
+    entry(
+      titled,
+      ["Break ID", "Break", "EBITDA decline at break (interest held)", "Status", "Source"],
+      [["B1", "FCF reaches zero", "0.10 (10%)", "Calculated", "Filing p.2"]],
+    ),
+  );
+  expect(other?.bases).toEqual([]);
+  expect(breakPointView(entry("Breakpoints T2DS.6", RETAINED_HEADERS, RETAINED_ROWS))).toBeNull();
 });

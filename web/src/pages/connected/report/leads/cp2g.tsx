@@ -1,6 +1,6 @@
-import { Fragment } from "react";
-import { ChartTable, type TableCell } from "@/components/chart/ChartTable";
-import { items, record, ticks, word } from "../../visuals/visualData";
+import { Fragment, useId, useLayoutEffect, useRef, useState } from "react";
+import type { TableCell } from "@/components/chart/ChartTable";
+import { amount, items, record, ticks, word } from "../../visuals/visualData";
 import { scenarioShareLabel } from "../Downside";
 import { forecastInput } from "../ForecastRecord";
 import { GapPattern } from "../overview/figureParts";
@@ -8,11 +8,12 @@ import { forwardPath } from "../overview/stressData";
 import { Bento, Tile } from "../overview/Tile";
 import { blocked } from "../../publishedReport";
 import { withDraws } from "./draws";
-import { LeadFigure, LeadGap, Trace } from "./parts";
+import { GapCell, LeadFigure, LeadGap, Notes, TableRegion, Trace } from "./parts";
 import { leadHref, readerCell } from "./read";
 import type { LeadProps } from "./types";
 
 const PATH_LABEL = "Net leverage path";
+const PATH_TITLE = "Net leverage by case";
 const DRIVERS = "Drivers by case";
 
 type Path = NonNullable<ReturnType<typeof forwardPath>>;
@@ -25,17 +26,61 @@ const TONES = [
 ] as const;
 const toneOf = (at: number) => TONES[at % TONES.length] ?? TONES[0];
 
-/** The highest value the model states on any drawn point: selection only, never a computed figure. */
-function peakOf(path: Path) {
-  let best: { group: string; period: string; display: string; value: number } | null = null;
-  for (const { group, points } of path.cases)
-    for (const point of points)
-      if (point.value !== null && (best === null || point.value > best.value))
-        best = { group, period: point.period, display: point.display, value: point.value };
-  return best;
+const capital = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+
+/** "a", "a and b", "a, b and c". */
+const joined = (words: readonly string[]) =>
+  words.length < 2
+    ? (words[0] ?? "")
+    : `${words.slice(0, -1).join(", ")} and ${words.at(-1) ?? ""}`;
+
+/** The number a displayed figure shows ("7.10x" reads 7.1); null when the display is not one. */
+const displayed = (display: string) => amount(display.trim().replace(/x$/i, ""));
+
+/**
+ * A case's highest published forecast year, chosen on the figures as the model displays them (never
+ * on hidden exact values): only with two or more published years, ties named as ties, and the years
+ * with no published figure named. Null when a displayed figure is not a number.
+ */
+function highestYear(group: string, points: readonly Point[]) {
+  const published = points.filter((point) => point.value !== null);
+  if (published.length < 2) return null;
+  const read = published.map((point) => ({ point, shown: displayed(point.display) }));
+  const shown = read.flatMap(({ shown: value }) => (value === null ? [] : [value]));
+  if (shown.length !== read.length) return null;
+  const top = Math.max(...shown);
+  const at = read.filter(({ shown: value }) => value === top).map(({ point }) => point);
+  const [first] = at;
+  if (!first) return null;
+  const years = at.map((point) => point.period);
+  const when = years.length > 1 ? `${joined(years)}, tied` : first.period;
+  const skipped = points.filter((point) => point.value === null).map((point) => point.period);
+  const missing = skipped.length ? `; no published figure for ${joined(skipped)}` : "";
+  return `Highest published forecast year, ${group}: ${first.display} (${when})${missing}.`;
 }
 
-const P = { width: 240, height: 150, left: 30, right: 230, top: 36, base: 118 } as const;
+/** A box's width in CSS pixels, so an SVG drawn to it keeps its text at its stated size. */
+function useWidth(fallback: number) {
+  const box = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(fallback);
+  useLayoutEffect(() => {
+    const node = box.current;
+    if (!node) return;
+    const measure = () => {
+      const next = Math.round(node.getBoundingClientRect().width);
+      if (next > 0) setWidth(next);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+  return { box, width };
+}
+
+const P = { height: 160, left: 40, top: 36, base: 124, inset: 30 } as const;
 
 /** One scale for every case: the model's values placed between the axis ticks, nothing joined across a gap. */
 function scaleOf(path: Path) {
@@ -51,8 +96,6 @@ function CasePanel({
   points,
   periods,
   tone,
-  peak,
-  mark,
   y,
   scale,
 }: {
@@ -60,143 +103,122 @@ function CasePanel({
   points: readonly Point[];
   periods: readonly string[];
   tone: (typeof TONES)[number];
-  peak: ReturnType<typeof peakOf>;
-  /** The word set over the highest point: "Peak" only on a complete path. */
-  mark: string;
   y: (value: number) => number;
   scale: ReturnType<typeof ticks>;
 }) {
-  const step = periods.length > 1 ? (P.right - P.left - 36) / (periods.length - 1) : 0;
+  const { box, width } = useWidth(240);
+  const right = width - 8;
+  const step = periods.length > 1 ? (right - P.left - 2 * P.inset) / (periods.length - 1) : 0;
   const x = (period: string) =>
-    periods.length > 1 ? P.left + 18 + periods.indexOf(period) * step : (P.left + P.right) / 2;
+    periods.length > 1 ? P.left + P.inset + periods.indexOf(period) * step : (P.left + right) / 2;
   const placed = points.map((point) => ({
     ...point,
     x: x(point.period),
     y: point.value === null ? null : y(point.value),
   }));
-  const gapId = `forward-gap-${group.replace(/\W+/g, "-")}`;
+  const gapId = useId();
   return (
     <div data-case={group} className="flex min-w-0 flex-col gap-1">
       <h4 className="text-caption font-medium text-text-secondary">{group}</h4>
-      <svg
-        viewBox={`0 0 ${String(P.width)} ${String(P.height)}`}
-        width="100%"
-        className="block max-w-sm"
-      >
-        <defs>
-          <GapPattern id={gapId} />
-        </defs>
-        {scale.map((tick) => (
-          <Fragment key={tick.value}>
-            <line
-              x1={P.left}
-              y1={y(tick.value)}
-              x2={P.right}
-              y2={y(tick.value)}
-              className="stroke-border-hairline"
-            />
-            <text
-              x="0"
-              y={y(tick.value) + 4}
-              fontSize="11"
-              className="fill-text-tertiary font-mono"
-            >
-              {tick.label}x
-            </text>
-          </Fragment>
-        ))}
-        {placed.map((point) =>
-          point.y === null ? (
-            <rect
-              key={point.period}
-              data-gap={point.period}
-              x={point.x - 16}
-              y={P.top - 8}
-              width="32"
-              height={P.base - P.top + 16}
-              rx="4"
-              fill={`url(#${gapId})`}
-              strokeDasharray="3 3"
-              className="stroke-border-gap"
-            />
-          ) : null,
-        )}
-        {placed.map((point, at) => {
-          const next = placed[at + 1];
-          return point.y !== null && next?.y != null ? (
-            <line
-              key={`segment-${point.period}`}
-              x1={point.x}
-              y1={point.y}
-              x2={next.x}
-              y2={next.y}
-              strokeWidth="2"
-              className={tone.stroke}
-            />
-          ) : null;
-        })}
-        {placed.map((point) => {
-          if (point.y === null) return null;
-          const isPeak = peak?.group === group && peak.period === point.period;
-          return (
-            <Fragment key={point.period}>
-              <circle
-                cx={point.x}
-                cy={point.y}
-                r="4"
-                data-peak={isPeak ? point.display : undefined}
-                className={tone.fill}
+      <div ref={box} className="w-full max-w-sm min-w-0">
+        {/* The view box is the drawn box in CSS pixels: every label is 12px at every width. */}
+        <svg
+          width={width}
+          height={P.height}
+          viewBox={`0 0 ${String(width)} ${String(P.height)}`}
+          className="block"
+        >
+          <defs>
+            <GapPattern id={gapId} />
+          </defs>
+          {scale.map((tick) => (
+            <Fragment key={tick.value}>
+              <line
+                x1={P.left}
+                y1={y(tick.value)}
+                x2={right}
+                y2={y(tick.value)}
+                className="stroke-border-hairline"
               />
               <text
-                x={point.x}
-                y={point.y - 9}
-                textAnchor="middle"
-                fontSize="11"
-                className="fill-text-primary font-mono"
+                x="0"
+                y={y(tick.value) + 4}
+                fontSize="12"
+                className="fill-text-tertiary font-mono"
               >
-                {point.display}
+                {tick.label}x
               </text>
-              {isPeak && (
+            </Fragment>
+          ))}
+          {placed.map((point) =>
+            point.y === null ? (
+              // A period with no figure is an area on the plot: hatched, never a zero.
+              <rect
+                key={point.period}
+                data-gap={point.period}
+                x={point.x - 16}
+                y={P.top - 8}
+                width="32"
+                height={P.base - P.top + 16}
+                rx="4"
+                fill={`url(#${gapId})`}
+                strokeDasharray="3 3"
+                className="stroke-border-gap"
+              />
+            ) : null,
+          )}
+          {placed.map((point, at) => {
+            const next = placed[at + 1];
+            return point.y !== null && next?.y != null ? (
+              <line
+                key={`segment-${point.period}`}
+                x1={point.x}
+                y1={point.y}
+                x2={next.x}
+                y2={next.y}
+                strokeWidth="2"
+                className={tone.stroke}
+              />
+            ) : null;
+          })}
+          {placed.map((point) =>
+            point.y === null ? null : (
+              <Fragment key={point.period}>
+                <circle cx={point.x} cy={point.y} r="4" className={tone.fill} />
                 <text
                   x={point.x}
-                  y={point.y - 22}
+                  y={point.y - 9}
                   textAnchor="middle"
-                  fontSize="11"
-                  className="fill-text-secondary font-body"
+                  fontSize="12"
+                  className="fill-text-primary font-mono"
                 >
-                  {mark}
+                  {point.display}
                 </text>
-              )}
-            </Fragment>
-          );
-        })}
-        {periods.map((period) => (
-          <text
-            key={period}
-            x={x(period)}
-            y={P.height - 8}
-            textAnchor="middle"
-            fontSize="11"
-            className="fill-text-tertiary font-body"
-          >
-            {period}
-          </text>
-        ))}
-      </svg>
+              </Fragment>
+            ),
+          )}
+          {periods.map((period) => (
+            <text
+              key={period}
+              x={x(period)}
+              y={P.height - 8}
+              textAnchor="middle"
+              fontSize="12"
+              className="fill-text-tertiary font-body"
+            >
+              {period}
+            </text>
+          ))}
+        </svg>
+      </div>
     </div>
   );
 }
 
+const COLUMNS = ["", "@xl:grid-cols-2", "@xl:grid-cols-2 @4xl:grid-cols-3"] as const;
+
 /** Net leverage by case as small multiples on one shared scale: each case's points as the model displays them. */
-function PathPanels({
-  path,
-  peak,
-  mark,
-}: {
-  path: Path;
-  peak: ReturnType<typeof peakOf>;
-  mark: string;
-}) {
+function PathPanels({ path }: { path: Path }) {
   const periods = [...new Set(path.cases.flatMap(({ points }) => points.map((p) => p.period)))];
   const { scale, y } = scaleOf(path);
   const reading = path.cases
@@ -205,6 +227,7 @@ function PathPanels({
         `${group}: ${points.map((point) => `${point.period} ${point.value === null ? "no figure" : point.display}`).join(", ")}`,
     )
     .join(". ");
+  const columns = COLUMNS[Math.min(path.cases.length, 3) - 1] ?? "";
   return (
     <div
       role="img"
@@ -213,7 +236,8 @@ function PathPanels({
     >
       <div
         aria-hidden="true"
-        className="grid grid-cols-1 gap-x-6 gap-y-4 @xl:grid-cols-2 @4xl:grid-cols-3"
+        data-columns={Math.min(path.cases.length, 3)}
+        className={`grid grid-cols-1 gap-x-6 gap-y-4 ${columns}`}
       >
         {path.cases.map(({ group, points }, at) => (
           <CasePanel
@@ -222,8 +246,6 @@ function PathPanels({
             points={points}
             periods={periods}
             tone={toneOf(at)}
-            peak={peak}
-            mark={mark}
             y={y}
             scale={scale}
           />
@@ -233,6 +255,8 @@ function PathPanels({
   );
 }
 
+const FOCUS = "outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2";
+
 function ForwardPathTile({ view, href }: { view: LeadProps["view"]; href: string }) {
   const model = view.models[0];
   const path = model ? forwardPath(model) : null;
@@ -241,52 +265,48 @@ function ForwardPathTile({ view, href }: { view: LeadProps["view"]; href: string
       <LeadGap
         span={12}
         label={PATH_LABEL}
-        kicker="Case paths"
-        title="Net leverage by case"
+        title={PATH_TITLE}
         reason={
           model
-            ? "The published model has no net leverage path."
+            ? "This page could not read a net leverage path from the published model."
             : "No forecast model was published for this run."
         }
       />
     );
-  const peak = peakOf(path);
   const periods = [...new Set(path.cases.flatMap(({ points }) => points.map((p) => p.period)))];
-  // "Peaks" only when every case states a figure for every period; otherwise the highest stated.
-  const complete = path.cases.every(({ points }) =>
-    periods.every((period) =>
-      points.some((point) => point.period === period && point.value !== null),
-    ),
-  );
+  const highest = path.cases.flatMap(({ group, points }) => highestYear(group, points) ?? []);
   const gaps = path.cases.flatMap(({ group, points }) =>
     points
       .filter((point) => point.value === null)
-      .map(
-        (point) =>
-          `${group}, ${point.period}: ${readerCell(point.reason) || "no figure in the model"}.`,
-      ),
+      .map((point) => (
+        <span
+          key={`${group}-${point.period}`}
+          className="inline-flex flex-wrap items-baseline gap-x-2"
+        >
+          <span>{`${group}, ${point.period}`}</span>
+          <GapCell
+            word={readerCell(point.display) || "No figure"}
+            reason={capital(readerCell(point.reason)) || "No figure in the model"}
+          />
+        </span>
+      )),
   );
   return (
     <LeadFigure
       span={12}
       label={PATH_LABEL}
-      kicker="Case paths"
-      title={
-        peak
-          ? `${complete ? "Net leverage peaks at" : "Highest stated net leverage"} ${peak.display} (${peak.group}, ${peak.period})`
-          : "Net leverage by case"
-      }
+      title={PATH_TITLE}
       basis={`${path.measure}; every case on one scale`}
       legend={
         <a
           href="#forecast"
-          className="inline-flex min-h-8 items-center text-small font-medium text-text-link underline"
+          className={`inline-flex min-h-11 items-center rounded-ds-xs text-small font-medium text-text-link underline ${FOCUS}`}
         >
           Open the forecast
         </a>
       }
       trace={<Trace href={href} name="the forward credit model" />}
-      figure={<PathPanels path={path} peak={peak} mark={complete ? "Peak" : "Highest"} />}
+      figure={<PathPanels path={path} />}
       table={{
         head: ["Case", ...periods],
         rows: path.cases.map(({ group, points }) => ({
@@ -297,7 +317,7 @@ function ForwardPathTile({ view, href }: { view: LeadProps["view"]; href: string
           }),
         })),
       }}
-      notes={[...gaps, ...path.limits]}
+      notes={[...highest, ...gaps]}
     />
   );
 }
@@ -326,11 +346,35 @@ const CASES = [
 
 const driverName = (key: string) => DRIVER_NAMES[key] ?? key.replaceAll("_", " ");
 
+/**
+ * A number as a decimal, never in exponent form ("1e-7" is 0.0000001): its digits as JSON records
+ * them, the decimal point moved by the exponent.
+ */
+function plainNumber(value: number) {
+  const text = String(value);
+  const exponent = /^(-?)(\d)(?:\.(\d+))?e([+-]\d+)$/.exec(text);
+  if (!exponent) return text;
+  const [, sign = "", lead = "", rest = "", power = "0"] = exponent;
+  const digits = `${lead}${rest}`;
+  const point = 1 + Number(power);
+  if (point <= 0) return `${sign}0.${"0".repeat(-point)}${digits}`;
+  return `${sign}${digits.padEnd(point, "0")}${digits.length > point ? `.${digits.slice(point)}` : ""}`;
+}
+
+/** A recorded share in percent, its digits unrounded; a leading minus kept in front ("-0.025" → "-2.5%"). */
+function shareText(text: string) {
+  const minus = /^[-−](?=\d)/.exec(text)?.[0];
+  if (!minus) return scenarioShareLabel(text);
+  const magnitude = text.slice(minus.length);
+  const shown = scenarioShareLabel(magnitude);
+  return shown === magnitude ? text : `${minus}${shown}`;
+}
+
 function stated(key: string, value: unknown): TableCell {
   if (typeof value === "number")
-    return SHARES.has(key) ? scenarioShareLabel(String(value)) : String(value);
+    return SHARES.has(key) ? shareText(plainNumber(value)) : plainNumber(value);
   if (typeof value !== "string" || !value.trim()) return { gap: true };
-  return SHARES.has(key) ? scenarioShareLabel(value.trim()) : readerCell(value) || { gap: true };
+  return SHARES.has(key) ? shareText(value.trim()) : readerCell(value) || { gap: true };
 }
 
 /** The block's amount units in words: scale 1 is millions and 1000 thousands (cpos_forecast). */
@@ -348,7 +392,11 @@ function shockLine(document: Record<string, unknown>) {
   if (shock === null || typeof shock !== "object") return "No downside shock is stated.";
   const { ebitda_decline: decline, rate_increase: rate } = record(shock);
   const share = (value: unknown) =>
-    typeof value === "string" && value.trim() ? scenarioShareLabel(value.trim()) : "not stated";
+    typeof value === "number"
+      ? shareText(plainNumber(value))
+      : typeof value === "string" && value.trim()
+        ? shareText(value.trim())
+        : "not stated";
   return `Downside shock: EBITDA decline ${share(decline)}, interest-rate increase ${share(rate)}.`;
 }
 
@@ -366,8 +414,8 @@ function DriversTile({
       <LeadGap
         span={12}
         label={DRIVERS}
-        title="Forecast drivers by case"
-        reason="This handoff has no forecast inputs."
+        title={DRIVERS}
+        reason="This page could not read forecast inputs from the handoff."
       />
     );
   const document = input.value;
@@ -394,8 +442,9 @@ function DriversTile({
       <LeadGap
         span={12}
         label={DRIVERS}
-        title="Forecast drivers by case"
+        title={DRIVERS}
         reason="The forecast block states no driver values."
+        trace={<Trace href={href(input.line)} name="the forecast inputs" />}
       >
         {reasons.length > 0 && (
           <ul className="flex flex-col gap-1.5 text-small text-text-secondary">
@@ -406,7 +455,6 @@ function DriversTile({
             ))}
           </ul>
         )}
-        <Trace href={href(input.line)} name="the forecast inputs" />
       </LeadGap>
     );
   }
@@ -418,22 +466,34 @@ function DriversTile({
       return years.map((_, at): TableCell => (inherited ? "As base" : stated(key, list[at])));
     }),
   }));
+  // Values the block states beyond its years are counted, never silently dropped.
+  const beyond = cases.flatMap(([group, name]) =>
+    keys.flatMap((key) => {
+      const extra = values(group, key).length - years.length;
+      return extra > 0
+        ? [
+            `${driverName(key)}, ${name}: ${String(extra)} ${extra === 1 ? "value" : "values"} not drawn (beyond the stated years).`,
+          ]
+        : [];
+    }),
+  );
   const head = ["Driver", ...cases.flatMap(([, name]) => years.map((year) => `${name}, ${year}`))];
   return (
     <Tile
       span={12}
       label={DRIVERS}
-      kicker="Drivers by case"
-      title="Forecast drivers by case and year, as stated"
+      title={DRIVERS}
       trace={<Trace href={href(input.line)} name="the forecast inputs" />}
+      className="w-full self-start"
     >
       <p className="-mt-2 text-caption text-text-tertiary">
         {amountUnits(document)} A case shows “As base” where it keeps the base driver.
       </p>
-      <ChartTable caption={DRIVERS} head={head} rows={rows} />
-      <p className="border-t border-border-hairline pt-3 text-caption text-text-secondary">
-        {shockLine(document)}
-      </p>
+      {/* Row labels keep a reading width; the table scrolls inside its own named region. */}
+      <div className="min-w-0 [&_tbody_th]:min-w-[16ch] [&_tbody_th]:whitespace-normal sm:[&_tbody_th]:min-w-[22ch]">
+        <TableRegion label={DRIVERS} table={{ head, rows }} />
+      </div>
+      <Notes notes={[shockLine(document), ...beyond]} />
     </Tile>
   );
 }

@@ -82,7 +82,7 @@ it.each([
     expect(within(tile).queryByRole("img")).toBeNull();
     expect(
       within(tile).getByText(
-        "The rate-shock table does not establish comparable cash-interest values.",
+        "This page could not read comparable added annual interest from the rate-shock table.",
       ),
     ).toBeVisible();
     fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
@@ -125,24 +125,46 @@ function drawFx(moves: string[]) {
   render(<MacroSensitivity data={data} href={(line) => `#evidence/1-${String(line)}`} />);
 }
 
-it("states a comparison that has no alternative instead of drawing a selector with one option", () => {
+const moveHeads = (figure: HTMLElement) =>
+  [...figure.querySelectorAll("thead th")].map((item) => item.textContent);
+
+it("draws every stated move in one compact table, each measure's cells as written", () => {
   drawFx(["5%", "10%"]);
-  expect(screen.queryByRole("group", { name: "Compare with the 5% move" })).toBeNull();
-  expect(screen.getByText("Compared with the 5% move: 10%")).toBeInTheDocument();
   const tile = screen.getByRole("region", { name: "Foreign-currency strengthening" });
-  expect(within(tile).getByRole("img")).toHaveAccessibleName(/Total debt after the move.*800.*801/);
+  // No selector with one option: both moves are columns of the one table.
+  expect(within(tile).queryByRole("group", { name: /Compare with/ })).toBeNull();
+  const figure = within(tile).getByRole("table", {
+    name: "Foreign-currency strengthening, by currency move",
+  });
+  expect(moveHeads(figure)).toEqual(["5%", "10%"]);
+  const debt = within(figure)
+    .getByText(/^Total debt after the move/)
+    .closest("tbody") as HTMLElement;
+  expect(within(debt).getByText("800")).toBeInTheDocument();
+  expect(within(debt).getByText("801")).toBeInTheDocument();
+  expect(within(figure).getByText("Total leverage after the move (x)")).toBeInTheDocument();
+  expect(within(figure).getAllByText("0.00")).toHaveLength(2);
+  fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
+  expect(within(tile).getByRole("cell", { name: "3.01x" })).toBeVisible();
 });
 
-it("offers the selector when there are two moves to choose between", () => {
+it("draws a third move as a third column, never behind a selector", () => {
   drawFx(["5%", "10%", "15%"]);
-  const select = screen.getByRole("group", { name: "Compare with the 5% move" });
-  expect(
-    within(select)
-      .getAllByRole("button")
-      .map((option) => option.textContent),
-  ).toEqual(["10%", "15%"]);
-  expect(screen.queryByText(/Compared with the 5% move:/)).toBeNull();
   const tile = screen.getByRole("region", { name: "Foreign-currency strengthening" });
-  fireEvent.click(within(select).getByRole("button", { name: "15%" }));
-  expect(within(tile).getByRole("img")).toHaveAccessibleName(/802/);
+  expect(within(tile).queryByRole("group", { name: /Compare with/ })).toBeNull();
+  const figure = within(tile).getByRole("table");
+  expect(moveHeads(figure)).toEqual(["5%", "10%", "15%"]);
+  expect(within(figure).getByText("802")).toBeInTheDocument();
+});
+
+it("says it could not read the moves when two read alike, and keeps the table", () => {
+  drawFx(["5%", "5%"]);
+  const tile = screen.getByRole("region", { name: "Foreign-currency strengthening" });
+  expect(
+    within(tile).getByText(
+      "This page could not read two or more distinct currency moves from the currency-shock table.",
+    ),
+  ).toBeVisible();
+  fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
+  expect(within(tile).getAllByRole("cell", { name: "5%" })).toHaveLength(2);
 });

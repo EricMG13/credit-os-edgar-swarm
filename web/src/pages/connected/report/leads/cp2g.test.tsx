@@ -47,12 +47,13 @@ const model = {
   },
 };
 
-it("draws net leverage by case as the model displays it, the peak, the gap period and the link", () => {
+it("draws net leverage by case as the model displays it, the highest year, the gap period and the link", () => {
   render(<ForwardLead {...leadProps(high(), [], [model])} />);
   const tile = screen.getByRole("region", { name: "Net leverage path" });
   expect(tile.className).toMatch(/lg:col-span-12/);
-  expect(within(tile).getByRole("heading")).toHaveTextContent(
-    "Highest stated net leverage 7.10x (Downside case, FY2026E)",
+  // Ruling (a): a subject name, no reading assembled by the page.
+  expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(
+    /^Net leverage by case$/,
   );
   const figure = within(tile).getByRole("img");
   expect(figure).toHaveAccessibleName(
@@ -61,27 +62,78 @@ it("draws net leverage by case as the model displays it, the peak, the gap perio
   for (const text of ["5.90x", "6.40x", "7.10x"])
     expect(within(figure).getByText(text)).toBeInTheDocument();
   expect(figure.querySelectorAll("[data-gap]")).toHaveLength(1);
-  expect(figure.querySelector("[data-peak]")).toHaveAttribute("data-peak", "7.10x");
-  expect(within(figure).queryByText("0")).toBeNull();
+  // F8: no peak mark, no "peaks at"; the highest year only where a case publishes two or more.
+  expect(figure.querySelector("[data-peak]")).toBeNull();
+  expect(tile.textContent).not.toMatch(/peak/i);
   expect(
-    within(tile).getByText("Base case, FY2026E: the inputs do not state this period."),
+    within(tile).getByText("Highest published forecast year, Downside case: 7.10x (FY2026E)."),
   ).toBeVisible();
-  // The covenant module owns limits: this page says nothing about them, and no build note.
-  expect(tile.textContent).not.toMatch(/No limit is published|methodology/);
-  expect(within(tile).getByRole("link", { name: "Open the forecast" })).toHaveAttribute(
-    "href",
-    "#forecast",
-  );
-  expect(within(tile).getByRole("link", { name: "Open the forecast" })).toHaveClass("min-h-8");
+  expect(within(tile).queryByText(/Highest published forecast year, Base case/)).toBeNull();
+  expect(within(figure).queryByText("0")).toBeNull();
+  const gap = within(tile).getByText("Base case, FY2026E").parentElement as HTMLElement;
+  expect(within(gap).getByText("n.a.")).toHaveClass("border-dashed");
+  expect(within(gap).getByText("The inputs do not state this period")).toBeVisible();
+  // The covenant module owns limits, and the model's own limits are not a reader's note.
+  expect(tile.textContent).not.toMatch(/limit|Arithmetic over stated inputs|methodology/i);
+  const link = within(tile).getByRole("link", { name: "Open the forecast" });
+  expect(link).toHaveAttribute("href", "#forecast");
+  expect(link).toHaveClass("min-h-11", "outline-focus-ring", "focus-visible:outline-2");
   fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
   expect(within(tile).getByRole("row", { name: /Downside case/ })).toHaveTextContent("7.10x");
+});
+
+it("draws every panel's text at 12px and one column per case", () => {
+  render(<ForwardLead {...leadProps(high(), [], [model])} />);
+  const figure = within(screen.getByRole("region", { name: "Net leverage path" })).getByRole("img");
+  const svg = figure.querySelector("svg") as SVGSVGElement;
+  // The view box is the drawn width: user units are CSS pixels.
+  expect(svg.getAttribute("viewBox")).toBe(`0 0 ${String(svg.getAttribute("width"))} 160`);
+  for (const text of figure.querySelectorAll("text"))
+    expect(text).toHaveAttribute("font-size", "12");
+  expect(figure.querySelector("[data-columns]")).toHaveAttribute("data-columns", "2");
+  expect(figure.querySelector("[data-columns]")).toHaveClass("@xl:grid-cols-2");
+  expect(figure.querySelector("[data-columns]")).not.toHaveClass("@4xl:grid-cols-3");
+});
+
+it("names ties as ties on the displayed figures, and names the years with no published figure", () => {
+  const tied = structuredClone(model);
+  tied.cashflow.columns.push({
+    label: "FY2027E",
+    group: "Downside case",
+    start: "2027-04-01",
+    end: "2028-03-31",
+  });
+  const [row] = tied.cashflow.rows;
+  if (!row) throw new Error("one row");
+  // 7.104 and 7.096 both display 7.10x: a tie on what the reader sees, whatever the exact values.
+  row.cells[3] = cell("7.10x", "7.104");
+  row.cells[4] = cell("7.10x", "7.096");
+  row.cells.push(cell("n.a.", null));
+  render(<ForwardLead {...leadProps(high(), [], [tied])} />);
+  expect(
+    screen.getByText(
+      "Highest published forecast year, Downside case: 7.10x (FY2025E and FY2026E, tied); no published figure for FY2027E.",
+    ),
+  ).toBeVisible();
+});
+
+it("states no highest year for a single published period", () => {
+  const single = structuredClone(model);
+  single.cashflow.columns = single.cashflow.columns.slice(0, 2);
+  const [row] = single.cashflow.rows;
+  if (!row) throw new Error("one row");
+  row.cells = row.cells.slice(0, 2);
+  render(<ForwardLead {...leadProps(high(), [], [single])} />);
+  const tile = screen.getByRole("region", { name: "Net leverage path" });
+  expect(within(tile).getByRole("img")).toHaveAccessibleName(/Base case: FY2025E 5\.90x/);
+  expect(tile.textContent).not.toMatch(/Highest|peak/i);
 });
 
 it("says why when the published model has no net leverage path", () => {
   render(<ForwardLead {...leadProps(high(), [], [{ cashflow: {} }])} />);
   expect(
     within(screen.getByRole("region", { name: "Net leverage path" })).getByText(
-      "The published model has no net leverage path.",
+      "This page could not read a net leverage path from the published model.",
     ),
   ).toBeVisible();
 });
@@ -148,17 +200,6 @@ it("draws nothing for a blocked module", () => {
   expect(container).toBeEmptyDOMElement();
 });
 
-it("says the path peaks only when every period of every case has a figure", () => {
-  const complete = structuredClone(model);
-  const [row] = complete.cashflow.rows;
-  if (!row) throw new Error("one row");
-  row.cells[2] = cell("6.10x", "6.1");
-  render(<ForwardLead {...leadProps(high(), [], [complete])} />);
-  expect(
-    within(screen.getByRole("region", { name: "Net leverage path" })).getByRole("heading"),
-  ).toHaveTextContent("Net leverage peaks at 7.10x (Downside case, FY2026E)");
-});
-
 const forecastBlock = (document: Record<string, unknown>) =>
   entry(
     "CP-2G",
@@ -197,4 +238,41 @@ it("shows a negative share driver as a percentage, its digits unrounded", () => 
       .map((item) => item.textContent),
   ).toEqual(["12%", "12%", "12%", "-5%", "-2.5%", "0%"]);
   expect(within(tile).getByText(/Shares are shown as percentages/)).toBeVisible();
+});
+
+it("counts driver values beyond the stated years and prints a tiny decimal as a decimal", () => {
+  const made = forecastBlock({
+    currency: "USD",
+    scale: 1,
+    years: [{ year: 2025 }, { year: 2026 }],
+    base_drivers: {
+      revenue_growth: { values: [0.0000001, "0.12", "0.12", "0.12"] },
+      dividends: { values: [0.0000001, 38] },
+    },
+  });
+  render(<ForwardLead {...leadProps(made)} />);
+  const tile = screen.getByRole("region", { name: "Drivers by case" });
+  const growth = within(tile).getByRole("row", { name: /^Revenue growth/ });
+  expect(
+    within(growth)
+      .getAllByRole("cell")
+      .map((item) => item.textContent),
+  ).toEqual(["0.00001%", "12%"]);
+  const dividends = within(tile).getByRole("row", { name: /^Dividends/ });
+  expect(
+    within(dividends)
+      .getAllByRole("cell")
+      .map((item) => item.textContent),
+  ).toEqual(["0.0000001", "38"]);
+  expect(tile.textContent).not.toMatch(/e-7/);
+  expect(
+    within(tile).getByText(
+      "Revenue growth, Base case: 2 values not drawn (beyond the stated years).",
+    ),
+  ).toBeVisible();
+  // The drivers table scrolls inside its own named, focusable region.
+  expect(within(tile).getByRole("region", { name: "Drivers by case table" })).toHaveAttribute(
+    "tabindex",
+    "0",
+  );
 });

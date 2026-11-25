@@ -6,6 +6,7 @@ import { eventsOf, leadHref, sectionParagraphs } from "./read";
 import type { LeadProps } from "./types";
 
 const QUESTIONS = "Research questions and answers";
+const SCENARIOS = "Causal synthesis and scenarios";
 
 /** CP-DR: what the research found, the scenarios it draws and the dates that matter. */
 export const ResearchLead = withDraws(
@@ -14,45 +15,41 @@ export const ResearchLead = withDraws(
     if (blocked(entry)) return null;
     const href = leadHref(props);
     const answered = entry.sections.some((section) => section.heading === "Executive answer");
-    const scenarios = sectionParagraphs(entry, "Causal synthesis and scenarios");
+    const scenarios = sectionParagraphs(entry, SCENARIOS);
     return (
       <Bento>
         <LeadGap
           span={12}
           label={QUESTIONS}
           title={QUESTIONS}
-          reason="The handoff does not state each question's answer and whether it was answered as a table."
+          reason="This page could not read a list of questions with their answers from the handoff."
         >
           {answered && (
             <p className="text-caption text-text-secondary">
-              The answers are written in the executive answer passage.
+              The handoff has an executive answer passage.
             </p>
           )}
         </LeadGap>
         {scenarios.length ? (
-          <Tile
-            span={8}
-            label="Causal scenarios"
-            title="Causal synthesis and scenarios"
-            className="w-full self-start"
-          >
+          <Tile span={8} label="Causal scenarios" title={SCENARIOS} className="w-full self-start">
             <Prose label="Causal scenarios" paragraphs={scenarios} href={href} />
           </Tile>
         ) : (
           <LeadGap
             span={8}
             label="Causal scenarios"
-            title="Causal synthesis and scenarios"
-            reason="The handoff writes no causal scenarios."
+            title={SCENARIOS}
+            reason="This page could not read causal scenarios from the handoff."
           />
         )}
+        {/* A third-rank list at span 8: it cannot fit beside the scenarios, so it takes the next row. */}
         <LaneTile
           lane={eventsOf(entry, "Research catalysts")}
-          span={4}
+          span={8}
           label="Research catalysts"
           title="Research catalysts"
           href={href}
-          absent="The handoff states no dated research catalyst."
+          absent="This page could not read dated research catalysts from the handoff."
         />
       </Bento>
     );

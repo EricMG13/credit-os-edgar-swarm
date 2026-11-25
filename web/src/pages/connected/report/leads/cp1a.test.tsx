@@ -4,6 +4,7 @@ import type { OutputEntry } from "../../publishedReport";
 import { entry, table } from "../overview/rows.fixture";
 import { BusinessLead } from "./cp1a";
 import { bottomLine, EVENT_HEADERS, leadProps, tableSection } from "./lead.fixture";
+import { proofHandoff } from "./proof.fixture";
 
 afterEach(cleanup);
 
@@ -93,7 +94,9 @@ it("draws the operating model map as the module wrote it, with a table view", ()
 it("states the revenue mix gap and draws ownership, the transaction passage and the history", () => {
   render(<BusinessLead {...leadProps(business({ op: OP, own: OWN, prose: true }))} />);
   const mix = screen.getByRole("region", { name: "Revenue mix" });
-  expect(within(mix).getByText("This handoff has no revenue-mix table.")).toBeVisible();
+  expect(
+    within(mix).getByText("This page could not read a revenue mix from the handoff."),
+  ).toBeVisible();
   expect(within(mix).queryByText("0")).toBeNull();
   const own = screen.getByRole("list", { name: "Ownership and control" });
   expect(within(own).getByText("Synthetic C")).toBeVisible();
@@ -122,13 +125,17 @@ it("says why when a map or the transaction passage is absent or gapped", () => {
   ).toBeVisible();
   expect(
     within(screen.getByRole("region", { name: "Transaction and new debt" })).getByText(
-      "The handoff writes no transaction summary.",
+      "This page could not read a transaction summary from the handoff.",
     ),
   ).toBeVisible();
   cleanup();
   render(<BusinessLead {...leadProps(entry("CP-1A", [], []))} />);
-  expect(screen.getByText("This handoff has no operating-model map.")).toBeVisible();
-  expect(screen.getByText("This handoff has no ownership and control map.")).toBeVisible();
+  expect(
+    screen.getByText("This page could not read an operating-model map from the handoff."),
+  ).toBeVisible();
+  expect(
+    screen.getByText("This page could not read an ownership and control map from the handoff."),
+  ).toBeVisible();
 });
 
 it("draws nothing for a blocked module", () => {
@@ -220,4 +227,31 @@ it("draws no source reference or module code from a map edge or a dated event", 
   expect(within(tile).getByText("In Evidence")).toBeVisible();
   fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
   expect(tile.textContent).not.toMatch(/annual_report|CP-2A/);
+});
+
+it("draws the proof handoff's revenue mix register cell by cell as written, in a small table tile", () => {
+  render(<BusinessLead {...leadProps(proofHandoff("CP-1A"))} />);
+  const mix = screen.getByRole("region", { name: "Revenue mix" });
+  expect(mix.className).toMatch(/lg:col-span-4/);
+  const table = within(mix).getByRole("region", { name: "Revenue mix table" });
+  expect(within(table).getByRole("columnheader", { name: "Item" })).toBeVisible();
+  expect(within(table).getByRole("rowheader", { name: "Observed" })).toBeVisible();
+  expect(
+    within(table).getByRole("cell", { name: "Not supplied: nothing to report" }),
+  ).toBeVisible();
+  expect(within(mix).getAllByRole("link", { name: /Source for/ })[0]).toHaveAttribute(
+    "href",
+    expect.stringContaining("#evidence/"),
+  );
+  expect(within(mix).queryByText(/could not read/)).toBeNull();
+});
+
+it("keeps the issuer history (third rank) a half-width tile after the maps and the passage", () => {
+  render(<BusinessLead {...leadProps(business({ op: OP, own: OWN, prose: true }))} />);
+  const history = screen.getByRole("region", { name: "Issuer history" });
+  expect(history.className).toMatch(/lg:col-span-6/);
+  const regions = screen.getAllByRole("region").map((item) => item.getAttribute("aria-label"));
+  expect(regions.indexOf("Issuer history")).toBeGreaterThan(
+    regions.indexOf("Transaction and new debt"),
+  );
 });

@@ -131,7 +131,7 @@ const cp4 = () =>
     ],
   );
 
-it("draws the typed ledger: strengths left, weaknesses right, each ranked, as two real lists", () => {
+it("draws the typed ledger: strengths left, weaknesses right, each ranked, under the module's own words", () => {
   const made = credit([
     ledger([
       row("WEAKNESS", "2", "Weak B", "Because B."),
@@ -141,8 +141,10 @@ it("draws the typed ledger: strengths left, weaknesses right, each ranked, as tw
     ]),
   ]);
   render(<CreditLead {...leadProps(made)} />);
-  const strengths = screen.getByRole("list", { name: "Strengths" });
-  const weaknesses = screen.getByRole("list", { name: "Weaknesses" });
+  const strengths = screen.getByRole("list", { name: "STRENGTH" });
+  const weaknesses = screen.getByRole("list", { name: "WEAKNESS" });
+  expect(screen.getByRole("heading", { name: "STRENGTH" })).toBeVisible();
+  expect(screen.queryByRole("heading", { name: "Strengths" })).toBeNull();
   expect(
     within(strengths)
       .getAllByRole("listitem")
@@ -182,9 +184,9 @@ it("falls back to the materiality filter by direction, keeping None supported in
       )}
     />,
   );
-  const strengths = screen.getByRole("list", { name: "Strengths" });
+  const strengths = screen.getByRole("list", { name: "Positive" });
   expect(within(strengths).getByText("None supported")).toBeVisible();
-  const weaknesses = screen.getByRole("list", { name: "Weaknesses" });
+  const weaknesses = screen.getByRole("list", { name: "Negative" });
   expect(within(weaknesses).getByText("Financial policy")).toBeVisible();
   expect(within(weaknesses).getByText(/Dividends first/)).toBeVisible();
 });
@@ -203,18 +205,78 @@ it("falls back to the written passage when no ledger table exists, with no build
   render(<CreditLead {...leadProps(made)} />);
   expect(screen.getByText("The weaknesses are financial policy.")).toBeVisible();
   expect(screen.queryByText(/A ranked ledger needs/)).toBeNull();
-  expect(screen.queryByRole("list", { name: "Strengths" })).toBeNull();
+  expect(screen.queryByRole("list", { name: "STRENGTH" })).toBeNull();
 });
 
-it("shows leverage and cover from CP-1 with the prior value, and headroom from CP-4", () => {
+it("shows leverage and cover from CP-1 with period, basis and owner, and headroom from CP-4", () => {
   render(<CreditLead {...leadProps(credit([]), [cp1(), cp4()])} />);
   const tile = screen.getByRole("region", { name: "Leverage, cover and headroom" });
+  const leverage = within(tile).getByText("Total debt / EBITDA").closest("div") as HTMLElement;
+  expect(within(leverage).getAllByText("6.1x")[0]).toHaveClass("text-h3");
+  expect(within(leverage).getByText("FY2024, Financial foundation")).toBeVisible();
+  expect(within(leverage).getByText("Synthetic.")).toBeVisible();
+  // Same basis, the year before: the comparison and the before-to-after mark.
+  expect(within(leverage).getByText("from 6.4x in FY2023")).toBeVisible();
+  expect(within(leverage).getByRole("img")).toHaveAccessibleName(
+    "Total debt / EBITDA: 6.4x in FY2023, 6.1x in FY2024.",
+  );
+  const cover = within(tile).getByText("EBITDA / cash interest").closest("div") as HTMLElement;
+  expect(within(cover).getByText("Not supplied")).toHaveClass("border-dashed");
+  expect(within(cover).getByText(/Interest not split/i)).toBeVisible();
+  expect(within(cover).queryByText(/from /)).toBeNull();
+  const headroom = within(tile).getByText("Covenant headroom").closest("div") as HTMLElement;
+  expect(within(headroom).getByText("Legal & covenants")).toBeVisible();
+  expect(within(headroom).getByText("Current")).toBeVisible();
+  expect(within(headroom).getByText("Threshold")).toBeVisible();
+  expect(within(headroom).getByText("5.5x")).toBeVisible();
+  expect(within(headroom).getByText("7.5x")).toBeVisible();
+  expect(within(headroom).getByText("27%")).toBeVisible();
+});
+
+it("draws no comparison when the prior row has another basis or is not the year before", () => {
+  const other = cp1();
+  const leverage = other.sections[0]?.blocks[0];
+  if (leverage?.type !== "table") throw new Error("leverage table missing");
+  const [older] = leverage.rows;
+  if (!older) throw new Error("prior row missing");
+  older.cells[4] = "Moody's-adjusted.";
+  render(<CreditLead {...leadProps(credit([]), [other, cp4()])} />);
+  let tile = screen.getByRole("region", { name: "Leverage, cover and headroom" });
   expect(within(tile).getByText("6.1x")).toBeVisible();
-  expect(within(tile).getByText(/from 6.4x in FY2023/)).toBeVisible();
-  expect(within(tile).getByText(/Interest not split/i)).toBeVisible();
-  expect(within(tile).getByText("5.5x")).toBeVisible();
-  expect(within(tile).getByText(/7.5x/)).toBeVisible();
-  expect(within(tile).getByText(/27%/)).toBeVisible();
+  expect(within(tile).queryByText(/from 6\.4x/)).toBeNull();
+  expect(within(tile).queryByRole("img", { name: /Total debt/ })).toBeNull();
+  cleanup();
+  older.cells[4] = "Synthetic.";
+  older.cells[0] = "FY2022";
+  render(<CreditLead {...leadProps(credit([]), [other, cp4()])} />);
+  tile = screen.getByRole("region", { name: "Leverage, cover and headroom" });
+  expect(within(tile).queryByText(/from 6\.4x/)).toBeNull();
+});
+
+it("draws the covenant module's first test even when it is a gap, with its stated reason", () => {
+  const gapped = cp4();
+  const covenant = gapped.sections[0]?.blocks[0];
+  if (covenant?.type !== "table") throw new Error("covenant table missing");
+  covenant.rows.unshift({
+    line: 81,
+    cells: [
+      "Maintenance leverage",
+      "6.0",
+      "Not supplied: compliance certificate not provided",
+      "Not supplied: no current",
+      "Passes at or below",
+      "x",
+      "Synthetic.",
+    ],
+  });
+  render(<CreditLead {...leadProps(credit([]), [cp1(), gapped])} />);
+  const tile = screen.getByRole("region", { name: "Leverage, cover and headroom" });
+  const headroom = within(tile).getByText("Covenant headroom").closest("div") as HTMLElement;
+  expect(within(headroom).getByText("Maintenance leverage")).toBeVisible();
+  expect(within(headroom).getByText("Compliance certificate not provided")).toBeVisible();
+  expect(within(headroom).getByText("6.0x")).toBeVisible();
+  // The next test is not drawn in its place.
+  expect(within(headroom).queryByText("Springing leverage")).toBeNull();
 });
 
 it("states in words that leverage and headroom did not run, never zero", () => {
@@ -233,7 +295,9 @@ it("draws the transmission map, or its gap, and nothing for a blocked module", (
   expect(tile.textContent).not.toMatch(/The map does not mark/);
   cleanup();
   render(<CreditLead {...leadProps(credit([], false))} />);
-  expect(screen.getByText("This handoff has no credit-risk transmission map.")).toBeVisible();
+  expect(
+    screen.getByText("This page could not read a credit-risk transmission map from the handoff."),
+  ).toBeVisible();
   cleanup();
   const { container } = render(
     <CreditLead
@@ -255,7 +319,7 @@ it("says a missing ledger label is not stated and lists a row it cannot place", 
     ]),
   ]);
   render(<CreditLead {...leadProps(made)} />);
-  const strengths = screen.getByRole("list", { name: "Strengths" });
+  const strengths = screen.getByRole("list", { name: "STRENGTH" });
   const [first, second] = within(strengths).getAllByRole("listitem");
   expect(first).toHaveTextContent("Not stated");
   expect(second).toHaveTextContent("In Evidence");
@@ -281,6 +345,6 @@ it("lists a materiality row whose direction is not positive or negative as not p
   );
   expect(screen.getByText("Not placed: Scale (Positive (moderate))")).toBeVisible();
   expect(
-    within(screen.getByRole("list", { name: "Weaknesses" })).getByText("Leverage"),
+    within(screen.getByRole("list", { name: "Negative" })).getByText("Leverage"),
   ).toBeVisible();
 });

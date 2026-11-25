@@ -122,7 +122,7 @@ it.each(["0", "0.10 (25%)"])(
     expect(within(tile()).queryByRole("img")).toBeNull();
     expect(
       within(tile()).getByText(
-        "The handoff does not bind a unique control and named cases to these results.",
+        "This page could not read a unique control and named cases for these results from the handoff.",
       ),
     ).toBeVisible();
     fireEvent.click(within(tile()).getByRole("button", { name: "Table" }));
@@ -163,13 +163,89 @@ it("J3-016 labels the chosen stress and displays both shock quantities as percen
   expect(interest).toHaveTextContent("0%");
 });
 
-it("shows a negative share as a percentage by moving its decimal point, digits unrounded", () => {
-  expect(scenarioShareLabel("-0.05")).toBe("-5%");
-  expect(scenarioShareLabel("-0.025")).toBe("-2.5%");
-  expect(scenarioShareLabel("−0.1234")).toBe("−12.34%");
+it("keeps the exported share label's base behaviour: a negative share is returned as written", () => {
+  expect(scenarioShareLabel("-0.05")).toBe("-0.05");
+  expect(scenarioShareLabel("-0.025")).toBe("-0.025");
+  expect(scenarioShareLabel("−0.1234")).toBe("−0.1234");
   expect(scenarioShareLabel("0.025")).toBe("2.5%");
+  expect(scenarioShareLabel("0.10 (10%)")).toBe("10%");
   expect(scenarioShareLabel("-1.5")).toBe("-1.5");
   expect(scenarioShareLabel("-x")).toBe("-x");
+});
+
+it("gives every case its own scenario trace in the case details", () => {
+  const source = entry("0.10 (10%)", "50.00");
+  const [cases] = source.sections;
+  const register = cases?.blocks[0];
+  if (register?.type !== "table") throw new Error("scenario register missing");
+  register.rows.push({
+    line: 7,
+    cells: ["b", "Deeper cut", "0.2 (20%)", "0", "Stress assumption", "", "", ""],
+  });
+  const results = source.sections[1]?.blocks[0];
+  if (results?.type !== "table") throw new Error("results missing");
+  results.headers = ["Metric", "a", "b", "c", "Source"];
+  results.rows = [
+    { line: 22, cells: ["Free cash flow (USD millions)", "50.00", "40.00", "62.00", "Filing p.1"] },
+  ];
+  const data = downsideView(source);
+  if (!data) throw new Error("Test scenario matrix was rejected");
+  render(<Downside data={data} href={(line) => `#evidence/0-${String(line)}`} />);
+  expect(
+    within(tile()).getByRole("link", { name: "Source for Lower margin scenario" }),
+  ).toHaveAttribute("href", "#evidence/0-6");
+  fireEvent.click(within(tile()).getByRole("button", { name: "Deeper cut" }));
+  expect(
+    within(tile()).getByRole("link", { name: "Source for Deeper cut scenario" }),
+  ).toHaveAttribute("href", "#evidence/0-7");
+  expect(
+    within(tile()).queryByRole("link", { name: "Source for Lower margin scenario" }),
+  ).toBeNull();
+});
+
+it("draws a scenario named with a module code by the module's name, never the raw code", () => {
+  const source = entry("0.10 (10%)", "50.00");
+  const register = source.sections[0]?.blocks[0];
+  if (register?.type !== "table") throw new Error("scenario register missing");
+  const stress = register.rows[1];
+  if (!stress) throw new Error("stress row missing");
+  stress.cells[1] = "Stress CP-2G";
+  const data = downsideView(source);
+  if (!data) throw new Error("Test scenario matrix was rejected");
+  render(<Downside data={data} href={(line) => `#evidence/0-${String(line)}`} />);
+  expect(tile().textContent).not.toMatch(/CP-2G/);
+  expect(within(tile()).getByRole("img").getAttribute("aria-label")).not.toMatch(/CP-2G/);
+  expect(
+    within(tile()).getByRole("button", { name: "Stress Forward credit model" }),
+  ).toHaveAttribute("aria-pressed", "true");
+  fireEvent.click(within(tile()).getByRole("button", { name: "Table" }));
+  expect(
+    within(tile()).getByRole("columnheader", { name: "Stress Forward credit model" }),
+  ).toBeVisible();
+});
+
+it("reads the stressed metrics and scenarios under the headings the real handoffs use", () => {
+  const source = entry("0.10 (10%)", "50.00");
+  const [cases, results] = source.sections;
+  if (!cases || !results) throw new Error("sections missing");
+  cases.heading = "T2DS.1 — Scenarios";
+  results.heading = "T2DS.4 — Stressed metrics";
+  const data = downsideView(source);
+  expect(data?.cases.map(({ id }) => id)).toEqual(["c", "a"]);
+  expect(data?.matrix.line).toBe(20);
+  // A heading that only mentions the id further on is not the register.
+  cases.heading = "Notes on T2DS.1 — Scenarios";
+  expect(downsideView(source)?.cases).toEqual([]);
+});
+
+it("names a case's stated gap with its word and reason, never a double colon", () => {
+  const data = downsideView(entry("0.10 (10%)", "Not calculated: net debt is missing"));
+  if (!data) throw new Error("Test scenario matrix was rejected");
+  render(<Downside data={data} href={(line) => `#evidence/0-${String(line)}`} />);
+  expect(within(tile()).getByText("Free cash flow (USD millions) is not drawn.")).toBeVisible();
+  expect(within(tile()).getByText("Not calculated")).toBeVisible();
+  expect(within(tile()).getByText("Net debt is missing")).toBeVisible();
+  expect(tile().textContent).not.toMatch(/: Not calculated:/);
 });
 
 it("gives a written table cell that reads as nothing as missing, not an empty string", () => {

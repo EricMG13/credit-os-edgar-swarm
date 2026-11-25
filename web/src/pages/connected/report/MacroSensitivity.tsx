@@ -1,6 +1,4 @@
-import { useState, type ReactNode } from "react";
-import { ChartTable } from "@/components/chart/ChartTable";
-import { Segmented } from "@/components/kit/Segmented";
+import { BarCell } from "@/components/kit/BarCell";
 import {
   blocked,
   containsReference,
@@ -11,10 +9,19 @@ import {
 import { namedRow, namedTable } from "../reportView";
 import { amount, distinct, sharePosition, ticks } from "../visuals/visualData";
 import { Ladder } from "./BreakPoints";
-import { SmallMultiples, writtenTable, type MultiplePanel } from "./Downside";
+import { writtenTable } from "./Downside";
 import { Key } from "./overview/figureParts";
-import { Bento, Tile } from "./overview/Tile";
-import { LeadFigure, LeadGap, Trace } from "./leads/parts";
+import { Bento, Figure, Tile } from "./overview/Tile";
+import {
+  CompactGap,
+  Disclosure,
+  GapCell,
+  LeadFigure,
+  LeadGap,
+  statedGap,
+  Trace,
+  type LeadTable,
+} from "./leads/parts";
 import { readerCell } from "./leads/read";
 
 const RATE = [
@@ -232,6 +239,24 @@ function rateRow(cells: readonly string[], currency: string) {
 
 const AFTER = "After hedges";
 
+/** A row's after-hedges figure as written, or its stated gap as the one gap chip. */
+function AfterHedges({ net, placed }: { net: string; placed: boolean }) {
+  const text = readerCell(net);
+  const gap = placed ? null : statedGap(text);
+  return (
+    <span className="flex flex-wrap items-baseline justify-end gap-x-1.5 text-caption text-text-secondary">
+      <span className="font-body">after</span>
+      {placed ? (
+        <span>{text}</span>
+      ) : gap ? (
+        <GapCell word={gap.word} reason={gap.reason} className="font-body" />
+      ) : (
+        <GapCell word={text || "Not stated"} className="font-body" />
+      )}
+    </span>
+  );
+}
+
 /** Deploy VII's rate-shock grid: added annual interest per step, before hedges, with the after mark. */
 export function RateLadderTile({
   table,
@@ -262,13 +287,15 @@ export function RateLadderTile({
     .join("; ");
   const left = read
     .filter(({ row }) => !row)
-    .map(({ cells }) => `${readerCell(cells[0] ?? "")}: not placed; the table has it as written.`);
+    .map(
+      ({ cells }) =>
+        `This page could not place ${readerCell(cells[0] ?? "")}; the table has it as written.`,
+    );
   return (
     <LeadFigure
       span={span}
       label="Added annual interest"
-      kicker="Sensitivity ladder"
-      title="Added annual interest per rate shock, before and after hedges"
+      title="Added annual interest"
       basis={placed ? unit : undefined}
       legend={
         placed && (
@@ -292,14 +319,9 @@ export function RateLadderTile({
               label: row.step,
               at: row.before / top,
               figure: (
-                <span className="flex flex-col items-end">
-                  <span>{row.gross}</span>
-                  <span className="text-caption text-text-secondary">
-                    <span className="font-body">after </span>
-                    <span className={row.after === null ? "text-gap-text" : undefined}>
-                      {row.net || "Not stated"}
-                    </span>
-                  </span>
+                <span className="flex flex-col items-end gap-0.5">
+                  <span>{readerCell(row.gross)}</span>
+                  <AfterHedges net={row.net} placed={row.after !== null} />
                 </span>
               ),
               bar: { "data-case": "Before hedges" },
@@ -313,9 +335,9 @@ export function RateLadderTile({
             }))}
           />
         ) : (
-          <p role="note" className="text-small text-text-secondary">
-            The rate-shock table does not establish comparable cash-interest values.
-          </p>
+          <CompactGap>
+            This page could not read comparable added annual interest from the rate-shock table.
+          </CompactGap>
         )
       }
       table={writtenTable(table, href)}
@@ -337,34 +359,32 @@ function fxMove(cells: readonly string[]) {
     : null;
 }
 
-function fxPanels(table: Table, chosen: number, currency: string): MultiplePanel[] {
-  return FX.slice(2).flatMap((measure, index) => {
+/** Each measure of the grid: its cells by move, a bar only for a number on the measure's own unit. */
+function fxRows(table: Table, currency: string) {
+  return FX.slice(2).map((measure, index) => {
     const column = index + 2;
-    const from = table.rows[0]?.cells[column] ?? "";
-    const to = table.rows[chosen]?.cells[column] ?? "";
-    const unit = index === 3 ? "x" : currency ? `${currency} millions` : "";
-    const convert =
-      index === 3
-        ? (text: string) => amount(text.replace(/x$/, ""))
-        : (text: string) => moneyPosition(text, currency);
-    const a = convert(from);
-    const b = convert(to);
-    if (!unit || a === null || b === null || !Number.isFinite(Math.abs(a) + Math.abs(b))) return [];
-    return [
-      {
-        measure: `${measure} (${unitLabel(unit)})`,
-        bars: [
-          { text: from, value: a },
-          { text: to, value: b },
-        ],
-      },
-    ];
+    const leverage = index === 3;
+    const unit = leverage ? "x" : currency ? `${currency} millions` : "";
+    const read = (text: string) =>
+      leverage ? amount(text.replace(/x$/, "")) : moneyPosition(text, currency);
+    const cells = table.rows.map(({ cells: row }) => {
+      const text = row[column] ?? "";
+      return { text: readerCell(text), value: unit ? read(text) : null };
+    });
+    const top = Math.max(0, ...cells.map(({ value }) => (value !== null && value > 0 ? value : 0)));
+    return {
+      measure: unit ? `${measure} (${unitLabel(unit)})` : measure,
+      cells: cells.map(({ text, value }) => ({
+        text,
+        share: value === null || value < 0 ? null : top > 0 ? value / top : 0,
+      })),
+    };
   });
 }
 
 const FX_TITLE = "Foreign-currency strengthening";
 
-/** Deploy VII's currency-shock grid: the first move against a chosen move, measure by measure. */
+/** Deploy VII's currency-shock grid: every measure against every stated move, in one compact table. */
 export function FxShocksTile({
   table,
   currency,
@@ -376,62 +396,61 @@ export function FxShocksTile({
   href: Href;
   span: Span;
 }) {
-  const [chosen, setChosen] = useState(1);
   const moves = table.rows.map(({ cells }) => fxMove(cells));
-  const first = moves[0];
-  const next = moves[chosen];
-  const compared =
-    first &&
-    next &&
+  const readable =
+    moves.length > 1 &&
     moves.every(Boolean) &&
-    new Set(moves.map((item) => item?.position)).size === moves.length
-      ? ([first.text, next.text] as const)
-      : null;
-  const panels = compared ? fxPanels(table, chosen, currency) : [];
-  const choice: ReactNode =
-    compared && moves.length > 2 ? (
-      <Segmented
-        label={`Compare with the ${compared[0]} move`}
-        segments={moves.slice(1).map((move, at) => ({
-          key: String(at + 1),
-          label: move?.text ?? "",
-        }))}
-        current={String(chosen)}
-        onSelect={(key) => {
-          setChosen(Number(key));
-        }}
-      />
-    ) : compared ? (
-      <p className="text-small font-medium text-text-primary">
-        Compared with the {compared[0]} move: {compared[1]}
-      </p>
-    ) : null;
+    new Set(moves.map((item) => item?.position)).size === moves.length;
+  const rows = readable ? fxRows(table, currency) : [];
   return (
     <LeadFigure
       span={span}
       label={FX_TITLE}
-      kicker="Currency shock"
-      title={
-        compared
-          ? `The ${compared[0]} move against the ${compared[1]} move, each measure on its own scale`
-          : FX_TITLE
-      }
-      legend={choice}
+      title={FX_TITLE}
       trace={<Trace href={href(table.line)} name={FX_TITLE} />}
       figure={
-        compared && panels.length > 0 ? (
-          <SmallMultiples
-            label={FX_TITLE}
-            cases={[
-              { name: `${compared[0]} move`, role: "other" },
-              { name: `${compared[1]} move`, role: "chosen" },
-            ]}
-            panels={panels}
-          />
+        readable ? (
+          <table className="w-full max-w-3xl border-collapse text-small">
+            <caption className="sr-only">{`${FX_TITLE}, by currency move`}</caption>
+            <thead>
+              <tr className="border-b border-border-hairline">
+                {moves.map((move, at) => (
+                  <th
+                    key={at}
+                    scope="col"
+                    className="px-2 pb-2 text-left text-caption font-medium text-text-tertiary"
+                  >
+                    {move?.text}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            {rows.map((row) => (
+              <tbody key={row.measure} className="border-b border-border-hairline">
+                <tr>
+                  <th
+                    scope="colgroup"
+                    colSpan={moves.length}
+                    className="pt-2.5 text-left text-caption font-medium wrap-anywhere text-text-secondary"
+                  >
+                    {row.measure}
+                  </th>
+                </tr>
+                <tr>
+                  {row.cells.map((cell, at) => (
+                    <td key={at} className="px-2 pt-1 pb-2.5">
+                      <BarCell text={cell.text} share={cell.share} />
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            ))}
+          </table>
         ) : (
-          <p role="note" className="text-small text-text-secondary">
-            The currency-shock table does not establish two comparable moves.
-          </p>
+          <CompactGap>
+            This page could not read two or more distinct currency moves from the currency-shock
+            table.
+          </CompactGap>
         )
       }
       table={writtenTable(table, href)}
@@ -452,30 +471,37 @@ export function RetainedCoverTile({
   const { before, after, bp, currency, money } = retained;
   const shock = `+${bp} bp`;
   const measure = "Reported EBITDA over debt interest plus rent";
+  const figures = [
+    { name: "Before the shock", text: `${before}x` },
+    { name: shock, text: `${after}x` },
+  ];
   return (
     <LeadFigure
       span={span}
       label="All-in cover"
-      kicker="Rate sensitivity"
-      title={`All-in cover ${before}x before the shock, ${after}x after ${shock}`}
+      title="All-in cover"
+      basis={measure}
       trace={<Trace href={href(retained.coverLine)} name="All-in cover" />}
       figure={
-        <SmallMultiples
-          label="All-in cover"
-          cases={[
-            { name: "Before the shock", role: "other" },
-            { name: shock, role: "chosen" },
-          ]}
-          panels={[
-            {
-              measure,
-              bars: [
-                { text: `${before}x`, value: Number(before) },
-                { text: `${after}x`, value: Number(after) },
-              ],
-            },
-          ]}
-        />
+        <div
+          role="img"
+          aria-label={`All-in cover: ${figures.map(({ name, text }) => `${name} ${text}`).join(", ")}.`}
+          className="flex flex-wrap items-end gap-x-6 gap-y-2"
+        >
+          {figures.map(({ name, text }, at) => (
+            <span key={name} className="flex items-end gap-6">
+              {at > 0 && (
+                <span aria-hidden="true" className="pb-1 text-text-tertiary">
+                  →
+                </span>
+              )}
+              <span aria-hidden="true" className="flex flex-col gap-0.5">
+                <span className="text-caption text-text-tertiary">{name}</span>
+                <Figure className="text-h3 font-medium">{text}</Figure>
+              </span>
+            </span>
+          ))}
+        </div>
       }
       table={{
         head: ["Measure", "Before the shock", shock],
@@ -513,15 +539,19 @@ export function ForeignShareTile({
 }) {
   const reason = fxGap?.cells[3]
     ? readerCell(fxGap.cells[3])
-    : "The handoff states no currency shares.";
+    : "This page could not read a foreign-currency share from the handoff.";
   return (
-    <LeadGap span={span} label="Foreign share" title="Foreign-currency share" reason={reason}>
-      {fxGap && <Trace href={href(fxGap.line)} name="Currency exposure limitation" />}
-    </LeadGap>
+    <LeadGap
+      span={span}
+      label="Foreign share"
+      title="Foreign-currency share"
+      reason={reason}
+      trace={fxGap && <Trace href={href(fxGap.line)} name="Currency exposure limitation" />}
+    />
   );
 }
 
-/** The hedge register and any currency exposure register, as written, in a table tile. */
+/** The hedge register and any currency exposure register, as written, each behind a closed disclosure. */
 export function HedgeTermsTile({
   hedges,
   exposures,
@@ -531,27 +561,24 @@ export function HedgeTermsTile({
   exposures?: Table | undefined;
   href: Href;
 }) {
-  const terms = hedges ? writtenTable(hedges, href) : undefined;
+  const terms: LeadTable | undefined = hedges ? writtenTable(hedges, href) : undefined;
   const currency = exposures ? writtenTable(exposures, href) : undefined;
   if (!terms && !currency) return null;
   return (
     <Tile
       span={12}
       label="Hedge terms"
-      kicker="Hedge terms"
-      title="Hedge terms as the module states them"
+      title="Hedge terms"
       trace={hedges && <Trace href={href(hedges.line)} name="Hedge terms" />}
+      className="w-full self-start"
     >
-      {terms && <ChartTable caption="Hedge terms" {...terms} />}
+      {terms && <Disclosure label="Hedge terms" summary="Show the hedge terms" table={terms} />}
       {currency && (
-        <details className="min-w-0">
-          <summary className="cursor-pointer text-small font-medium text-text-primary">
-            Published currency exposures
-          </summary>
-          <div className="mt-3">
-            <ChartTable caption="Published currency exposures" {...currency} />
-          </div>
-        </details>
+        <Disclosure
+          label="Published currency exposures"
+          summary="Show the published currency exposures"
+          table={currency}
+        />
       )}
     </Tile>
   );

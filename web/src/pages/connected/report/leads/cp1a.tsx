@@ -1,17 +1,14 @@
-import { blocked } from "../../publishedReport";
+import { blocked, type Table } from "../../publishedReport";
+import { writtenTable } from "../Downside";
 import { Bento, Tile } from "../overview/Tile";
 import { withDraws } from "./draws";
-import { LaneTile, LeadGap, MapTile, Prose } from "./parts";
+import { LaneTile, LeadGap, MapTile, Prose, TableRegion, Trace } from "./parts";
 import { eventsOf, leadHref, mapOf, sectionParagraphs } from "./read";
 import type { LeadProps } from "./types";
 
-function Transaction({
-  entry,
-  href,
-}: {
-  entry: LeadProps["entry"];
-  href: (line?: number) => string;
-}) {
+type Href = (line?: number) => string;
+
+function Transaction({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
   const label = "Transaction and new debt";
   const paragraphs = sectionParagraphs(entry, "Transaction summary and new debt issues");
   if (!paragraphs.length)
@@ -20,12 +17,49 @@ function Transaction({
         span={6}
         label={label}
         title={label}
-        reason="The handoff writes no transaction summary."
+        reason="This page could not read a transaction summary from the handoff."
       />
     );
   return (
     <Tile span={6} label={label} title={label} className="w-full self-start">
       <Prose label={label} paragraphs={paragraphs} href={href} />
+    </Tile>
+  );
+}
+
+const MIX = "Revenue mix";
+
+/** The module's revenue and business mix register: the one table under its heading, as written. */
+function mixTable(entry: LeadProps["entry"]) {
+  const tables = entry.sections
+    .filter((section) => /^revenue_business_mix\b/i.test(section.heading.trim()))
+    .flatMap(({ blocks }) => blocks)
+    .filter((block): block is Table => block.type === "table");
+  return tables.length === 1 ? tables[0] : undefined;
+}
+
+/** The revenue mix as the module's register writes it, cell by cell, in a small table tile. */
+function RevenueMix({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
+  const register = mixTable(entry);
+  const table = register ? writtenTable(register, (line) => href(line)) : undefined;
+  if (!register || !table)
+    return (
+      <LeadGap
+        span={4}
+        label={MIX}
+        title={MIX}
+        reason="This page could not read a revenue mix from the handoff."
+      />
+    );
+  return (
+    <Tile
+      span={4}
+      label={MIX}
+      title={MIX}
+      trace={<Trace href={href(register.line)} name={MIX} />}
+      className="w-full self-start"
+    >
+      <TableRegion label={MIX} table={table} />
     </Tile>
   );
 }
@@ -43,28 +77,23 @@ export const BusinessLead = withDraws(
           href={href}
           span={8}
           label="Operating model to credit"
-          kicker="Operating model"
-          title="How the operating model reaches the credit"
-          absent="This handoff has no operating-model map."
+          title="Operating model to credit"
+          absent="This page could not read an operating-model map from the handoff."
         />
-        <LeadGap
-          span={4}
-          label="Revenue mix"
-          title="Revenue mix"
-          reason="This handoff has no revenue-mix table."
-        />
+        <RevenueMix entry={entry} href={href} />
         <MapTile
           map={mapOf(entry, "ownership and control")}
           href={href}
           span={6}
           label="Ownership and control"
-          title="Who owns and controls the issuer"
-          absent="This handoff has no ownership and control map."
+          title="Ownership and control"
+          absent="This page could not read an ownership and control map from the handoff."
         />
         <Transaction entry={entry} href={href} />
+        {/* Third rank: a half-width tile after the maps and the passage, sized to its rows. */}
         <LaneTile
           lane={eventsOf(entry, "Issuer history")}
-          span={12}
+          span={6}
           label="Issuer history"
           title="Issuer history"
           href={href}

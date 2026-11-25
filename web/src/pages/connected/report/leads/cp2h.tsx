@@ -1,10 +1,10 @@
 import { blocked, withUnit } from "../../publishedReport";
 import { Key } from "../overview/figureParts";
-import { basisNotes } from "../overview/figureData";
 import type { HeadroomTest } from "../overview/stressData";
 import { Bullets, leadTests } from "./bullet";
 import { Bento, Figure } from "../overview/Tile";
 import { withDraws } from "./draws";
+import { OtherCharts, rowBasis } from "./moduleCharts";
 import { LeadFigure, LeadGap, Trace } from "./parts";
 import { chartOf, columnOf, leadHref, readerCell, registerTable, rowName, WITHHELD } from "./read";
 import type { LeadProps } from "./types";
@@ -31,13 +31,17 @@ function Triggers({ entry, href }: { entry: LeadProps["entry"]; href: (line?: nu
           chart.state === "gap"
             ? chart.reason
             : chart.state === "ready"
-              ? "The trigger table has no trigger, threshold or current column."
+              ? "This page could not read a trigger, threshold and current value from the trigger table."
               : chart.state === "withheld"
                 ? WITHHELD
-                : "This handoff has no rating trigger table."
+                : "This page could not read rating triggers from the handoff."
         }
         trace={
-          chart.state === "withheld" ? <Trace href={href(chart.line)} name={TRIGGERS} /> : undefined
+          chart.state === "withheld" ? (
+            <Trace href={href(chart.line)} name={TRIGGERS} />
+          ) : chart.state === "ready" ? (
+            <Trace href={href(chart.table.line)} name={TRIGGERS} />
+          ) : undefined
         }
       />
     );
@@ -48,12 +52,12 @@ function Triggers({ entry, href }: { entry: LeadProps["entry"]; href: (line?: nu
     line: table.rowLines?.[at] ?? table.line,
   }));
   const agencies = [...new Set(triggers.map((trigger) => trigger.agency))];
+  const basis = rowBasis(table);
   return (
     <LeadFigure
       span={8}
       label={TRIGGERS}
-      kicker="Agency triggers"
-      title="Where the issuer stands against each agency trigger"
+      title={TRIGGERS}
       legend={
         <>
           <Key tone="primary">Current</Key>
@@ -84,20 +88,21 @@ function Triggers({ entry, href }: { entry: LeadProps["entry"]; href: (line?: nu
         </div>
       }
       table={{
-        head: ["Trigger", "Agency", "Threshold", "Current", "Direction"],
-        rows: triggers.map(({ agency, test, line }) => ({
+        head: ["Trigger", "Agency", "Threshold", "Current", "Direction", ...basis.head],
+        rows: triggers.map(({ agency, test, line }, at) => ({
           label: test.label,
           cells: [
             agency,
             shown(test, test.threshold) || null,
             shown(test, test.current) || null,
             test.direction || null,
+            ...basis.cells(at),
           ],
           end: <Trace href={href(line)} name={test.label} />,
         })),
         endHeading: "Source",
       }}
-      notes={basisNotes(table)}
+      notes={basis.shared}
     />
   );
 }
@@ -110,7 +115,7 @@ function Register({ entry, href }: { entry: LeadProps["entry"]; href: (line?: nu
         span={4}
         label={REGISTER}
         title={REGISTER}
-        reason="This handoff has no rating register."
+        reason="This page could not read a rating register from the handoff."
       />
     );
   const at = {
@@ -125,7 +130,7 @@ function Register({ entry, href }: { entry: LeadProps["entry"]; href: (line?: nu
     <LeadFigure
       span={4}
       label={REGISTER}
-      title="Ratings as the agencies state them"
+      title={REGISTER}
       figure={
         <ul aria-label={REGISTER} className="flex flex-col">
           {found.rows.map(({ cells, line }, index) => (
@@ -170,6 +175,7 @@ export const RatingsLead = withDraws(
       <Bento>
         <Triggers entry={entry} href={href} />
         <Register entry={entry} href={href} />
+        <OtherCharts entry={entry} href={href} drawn={[TRIGGERS]} />
       </Bento>
     );
   },
