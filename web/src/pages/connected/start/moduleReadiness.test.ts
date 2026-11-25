@@ -32,7 +32,8 @@ describe("moduleReadiness", () => {
       ["01", "Sources", ["Source readiness"]],
       ["02", "Financials", ["Financial foundation"]],
       ["03", "Credit", ["Business & governance", "Fundamental credit"]],
-      ["04", "Structure and market", ["Legal & covenants", "Security selection"]],
+      // Within a stage, the stage's own module order (report/stages.ts), not the pathway's.
+      ["04", "Structure and market", ["Security selection", "Legal & covenants"]],
       ["05", "Validation and decision", ["Evidence validation", "Committee decision"]],
     ]);
     expect(shown.groups.flatMap((group) => group.rows.map((row) => row.mark))).toEqual(
