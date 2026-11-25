@@ -1,5 +1,6 @@
 import { type ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
+import { readerReason } from "../report/overview/reason";
 import { ForecastTable } from "./ForecastTable";
 import { PathChart } from "@/components/chart/PathChart";
 import { ChartTable } from "@/components/chart/ChartTable";
@@ -224,7 +225,7 @@ function singleForecastRow(grid: Grid, label: string) {
   return matches.length === 1 ? matches[0] : undefined;
 }
 
-export function ForecastTrends({
+function ForecastTrends({
   grid,
   units,
   source,
@@ -525,6 +526,54 @@ function scopePassages(passages: string[]) {
   );
 }
 
+function basePassages(cashflow: Record<string, unknown>) {
+  return scopePassages(stringsIn(cashflow.notes).filter((note) => note.startsWith("Base case is")));
+}
+
+function limitPassages(cashflow: Record<string, unknown>) {
+  return scopePassages(
+    stringsIn(cashflow.limits).filter((limit) =>
+      /unreviewed|not analytical review|base period|base interest|not comparable|not modelled|standalone|perimeter|machine input.*zero/i.test(
+        limit,
+      ),
+    ),
+  );
+}
+
+/**
+ * The scope qualifications the Forecast page lists: the base case's own notes, then every limit the
+ * model records, in its order, each with the recorded text its trace opens. A limit's words go
+ * through the reader rule; a limit that carries a reference has no words here (null).
+ */
+export function scopeQualifications(model: unknown) {
+  const cashflow = record(record(model).cashflow);
+  // A limit is a line-level ledger entry when it is tied to a statement line: the record carries no
+  // line id, so an entry whose text starts with a row label of the model's own statement, exactly,
+  // then a colon. Those are drawn only in the Evidence record; no word decides it.
+  const rowLabels = new Set(
+    [gridOf(cashflow), gridOf(cashflow.other)].flatMap((grid) =>
+      grid ? grid.rows.map(({ label }) => label) : [],
+    ),
+  );
+  const lineLevel = (limit: string) => {
+    const at = limit.indexOf(":");
+    return at > 0 && rowLabels.has(limit.slice(0, at).trim());
+  };
+  const recorded = [...new Set(stringsIn(cashflow.limits))];
+  return {
+    base: basePassages(cashflow),
+    limits: recorded
+      .filter((limit) => !lineLevel(limit))
+      .map((limit) => ({ recorded: limit, text: readerReason(limit) })),
+    lineLevel: recorded.filter(lineLevel).length,
+  };
+}
+
+/** The base-case qualifications `ForecastScope` promotes, as the reader sees them. */
+export function baseQualifications(model: unknown) {
+  return basePassages(record(record(model).cashflow)).map(({ text }) => text);
+}
+
 export function ForecastScope({
   model,
   source,
@@ -535,16 +584,8 @@ export function ForecastScope({
   children?: (shownQualifications: string[]) => ReactNode;
 }) {
   const cashflow = record(record(model).cashflow);
-  const base = scopePassages(
-    stringsIn(cashflow.notes).filter((note) => note.startsWith("Base case is")),
-  );
-  const limits = scopePassages(
-    stringsIn(cashflow.limits).filter((limit) =>
-      /unreviewed|not analytical review|base period|base interest|not comparable|not modelled|standalone|perimeter|machine input.*zero/i.test(
-        limit,
-      ),
-    ),
-  );
+  const base = basePassages(cashflow);
+  const limits = limitPassages(cashflow);
   function qualification({ text, recorded }: ReturnType<typeof scopePassages>[number]) {
     return (
       <div
@@ -561,14 +602,16 @@ export function ForecastScope({
       {base.map(qualification)}
       {children?.(base.map(({ text }) => text))}
       <section className="min-w-0 wrap-anywhere" aria-label="Model scope and basis">
-        <details className="rounded-ds-md border border-border-hairline bg-surface-subtle px-4 py-3">
-          <summary className="cursor-pointer font-semibold">Model scope and basis</summary>
+        <details className="border-t border-border-hairline pt-3">
+          <summary className="cursor-pointer text-small font-medium text-text-primary">
+            Model scope and basis
+          </summary>
           <div className="mt-3 grid gap-3">
             {limits.map(qualification)}
             {!limits.length && !base.length && (
               <p>No qualifications are available in this summary.</p>
             )}
-            <Button href="#evidence/record" color="link-gray" size="sm" className="w-fit">
+            <Button href="#evidence/record/notes" color="link-gray" size="sm" className="w-fit">
               Full model notes and limitations
             </Button>
           </div>
@@ -1017,7 +1060,7 @@ export function LegacyForecast({
         </>
       )}
       {evidenceOnlyQualifications && (
-        <a className="text-secondary underline" href="#evidence/record">
+        <a className="text-secondary underline" href="#evidence/record/notes">
           Model notes and limitations
         </a>
       )}

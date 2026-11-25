@@ -53,15 +53,15 @@ export function Shell({
         Skip to content
       </a>
       <header className="shrink-0 border-b border-border-hairline bg-surface-card">
-        <div className="flex flex-wrap items-stretch gap-x-6 px-4 sm:px-8">
+        <div className="flex flex-wrap items-stretch gap-x-6 px-4 max-[480px]:gap-x-3 sm:px-8">
           <div className="flex min-h-14 shrink-0 items-center gap-2.5">
             <img src={symbol} alt="" width="22" height="22" className="size-[22px]" />
-            <span className="text-small font-semibold tracking-[-0.01em] text-text-primary">
+            <span className="text-small font-semibold tracking-[-0.01em] text-text-primary max-[480px]:sr-only">
               Credit OS
             </span>
           </div>
           <nav aria-label="Areas" className="flex min-w-0 flex-1">
-            <ul className="flex min-w-0 flex-1 items-stretch gap-1 overflow-x-auto">
+            <ul className="flex min-w-0 flex-1 flex-wrap items-stretch gap-x-1">
               {items.map(({ area, label, href, icon: Icon }) => {
                 const isCurrent = area === current;
                 return (
@@ -69,13 +69,13 @@ export function Shell({
                     <a
                       href={href}
                       aria-current={isCurrent ? "page" : undefined}
-                      className={`flex min-h-9 items-center gap-2 rounded-ds-sm px-3 text-small font-medium outline-focus-ring transition duration-100 ease-linear focus-visible:outline-2 focus-visible:outline-offset-2 max-[480px]:min-h-11 ${
+                      className={`flex min-h-9 items-center gap-2 rounded-ds-sm px-3 text-small font-medium outline-focus-ring max-[480px]:px-2 transition duration-100 ease-linear focus-visible:outline-2 focus-visible:outline-offset-2 max-[480px]:min-h-11 ${
                         isCurrent
                           ? "bg-surface-selected text-text-link"
                           : "text-text-secondary hover:bg-surface-subtle hover:text-text-primary"
                       }`}
                     >
-                      <Icon aria-hidden="true" className="size-4 shrink-0" />
+                      <Icon aria-hidden="true" className="size-4 shrink-0 max-[480px]:hidden" />
                       {label}
                     </a>
                     {isCurrent && (

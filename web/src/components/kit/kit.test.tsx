@@ -86,3 +86,24 @@ it("keeps the figure column at its default width and takes a width class for a l
   expect(container.querySelector(".w-32")).not.toBeNull();
   expect(container.querySelector(".w-20")).toBeNull();
 });
+
+it("floors a small share at the minimum width and marks zero with a tick, not a fill", () => {
+  const { container, rerender } = render(<BarCell text="17" share={17 / 3632} />);
+  const fill = () => container.querySelector("[style]");
+  const tick = () => container.querySelector(".w-px");
+  // A small figure keeps a visible bar: its share, but never narrower than 2 px.
+  expect(fill()).toHaveStyle({ width: `${String((17 / 3632) * 100)}%`, minWidth: "2px" });
+  expect(tick()).toBeNull();
+  rerender(<BarCell text="1" share={1 / 3632} minimum={4} />);
+  expect(fill()).toHaveStyle({ minWidth: "4px" });
+  // Zero draws no fill: a 1 px tick at the track's start, hidden from assistive technology.
+  rerender(<BarCell text="0" share={0} />);
+  expect(fill()).toBeNull();
+  expect(tick()).not.toBeNull();
+  expect(tick()?.closest("[aria-hidden='true']")).not.toBeNull();
+  expect(screen.getByText("0")).toBeInTheDocument();
+  // A missing value draws neither a fill nor a tick.
+  rerender(<BarCell text="Not supplied" share={null} />);
+  expect(fill()).toBeNull();
+  expect(tick()).toBeNull();
+});
