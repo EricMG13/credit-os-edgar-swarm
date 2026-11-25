@@ -155,6 +155,34 @@ export function levelsBreak(rows: readonly WaterfallRow[]) {
 export const allGaps = (rows: readonly WaterfallRow[]) =>
   rows.length > 0 && rows.every((row) => row.kind === "gap");
 
+/** True when a row states a figure: its own, or an earlier period's beneath a gap. */
+const statesFigure = (row: WaterfallRow) =>
+  row.kind !== "gap" || (row.prior !== undefined && "value" in row.prior);
+
+/** True when no row of any drawn ladder states a figure: there is nothing to put on an axis. */
+export const noFigure = (ladders: readonly (readonly WaterfallRow[])[]) =>
+  !ladders.some((rows) => rows.some(statesFigure));
+
+/**
+ * The stated gaps as lines, in handoff order: the rows that share one reason are one line, their
+ * labels joined with "; ", the reason once (as CP-1B writes its unstated pairs).
+ */
+export function gapLines(ladders: readonly (readonly WaterfallRow[])[]) {
+  const lines: { reason: string; labels: string[] }[] = [];
+  for (const row of ladders.flat()) {
+    const reasons = [
+      ...(row.kind === "gap" ? [row.reason] : []),
+      ...(row.prior && "gap" in row.prior ? [row.prior.gap] : []),
+    ];
+    for (const reason of reasons) {
+      const line = lines.find((one) => one.reason === reason);
+      if (!line) lines.push({ reason, labels: [row.label] });
+      else if (!line.labels.includes(row.label)) line.labels.push(row.label);
+    }
+  }
+  return lines;
+}
+
 /** The distinct reasons of an all-gap period, in order, as written. */
 export const gapReasons = (rows: readonly WaterfallRow[]) => [
   ...new Set(rows.flatMap((row) => (row.kind === "gap" ? [row.reason] : []))),

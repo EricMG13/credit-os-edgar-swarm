@@ -1,12 +1,13 @@
 import type { WaterfallRow } from "../kit/marks";
 import { UNORDERED_SENTENCE } from "../kit/tables";
 import { FigureTile, GapTile } from "../kit/LeadFrame";
-import { Measured, Waterfall } from "../kit/marks";
+import { GapChip, Measured, Waterfall } from "../kit/marks";
 import type { LeadProps } from "../types";
 import { cashLadder, figureGap, type CashLadder } from "./foundationData";
 import {
   alone,
   allGaps,
+  gapLines,
   gapReasons,
   LEVELS_AS_STATED,
   ladderKicker,
@@ -15,6 +16,7 @@ import {
   ladderRows,
   ladderTable,
   levelsBreak,
+  noFigure,
   type LadderPeriods,
 } from "./ladderGeometry";
 
@@ -71,6 +73,35 @@ export function CashLadderTile({ lead }: { lead: LeadProps }) {
     each,
     rows: ladderRows(data, each),
   }));
+  if (noFigure(drawn.map(({ rows }) => rows)))
+    // Nothing is stated: no axis, no zero rule, no plot; the stated gaps and the table view.
+    return (
+      <FigureTile
+        props={lead}
+        span={7}
+        label={LABEL}
+        kicker={ladderKicker(data, periods)}
+        title={LABEL}
+        line={data.line}
+        source="cash conversion"
+        table={ladderTable(data)}
+      >
+        <ul data-gap-lines="" className="flex flex-col gap-2">
+          {gapLines(drawn.map(({ rows }) => rows)).map((line) => (
+            <li
+              key={line.reason}
+              data-gap-line={line.labels.join("; ")}
+              className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1"
+            >
+              <span className="text-small font-medium wrap-anywhere text-text-primary">
+                {line.labels.join("; ")}
+              </span>
+              <GapChip reason={line.reason} />
+            </li>
+          ))}
+        </ul>
+      </FigureTile>
+    );
   const breaks = drawn.some(({ rows }) => !allGaps(rows) && levelsBreak(rows));
   return (
     <FigureTile

@@ -7,7 +7,7 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, describe, expect, it } from "vitest";
 import { containsReference, type OutputEntry } from "../../../publishedReport";
 import { cp1Entry, distressedCp1Entry, leadProps, relativeValueCp1Entry } from "../fixtures/load";
-import { dropTable, setLabelled, threePeriodCp1 } from "../fixtures/mutations";
+import { dropTable, edited, setLabelled, threePeriodCp1 } from "../fixtures/mutations";
 import { CashLadderTile } from "./CashLadder";
 
 afterEach(cleanup);
@@ -416,5 +416,64 @@ describe("cash ladder: other real handoffs and mutations", () => {
       "Cash conversion · This page could not read the cash flow statement.",
     );
     expect(tile.querySelector("svg")).toBeNull();
+  });
+});
+
+describe("cash ladder: nothing stated (round 4b)", () => {
+  /** Every numeric cell of every table of the accepted handoff written as a stated gap. */
+  const allGap = () =>
+    edited(cp1Entry(), (table) => ({
+      ...table,
+      rows: table.rows.map((row) => ({
+        ...row,
+        cells: row.cells.map((cell, at) =>
+          at >= 1 && /^-?[\d.,]+$/.test(cell) ? "Not supplied: synthetic" : cell,
+        ),
+      })),
+    }));
+  it("draws no axis, no plot and no break sentence: the gaps as lines, the table view kept", () => {
+    const { tile } = draw(allGap());
+    expect(tile.querySelector("svg[role=img]")).toBeNull();
+    expect(tile.textContent).not.toMatch(/1\.0|0\.2/);
+    expect(tile.querySelectorAll('[data-part="tick"]')).toHaveLength(0);
+    expect(tile.textContent).not.toContain("Levels as stated");
+    // One chip for the one reason, every label in handoff order beside it.
+    const chips = [...tile.querySelectorAll("[data-gap-line]")];
+    // Two reasons, so two chips: the synthetic one for every row, and the repurchases' own dash.
+    expect(
+      [...tile.querySelectorAll("[data-gap-lines] [data-gap]")].map((c) =>
+        c.getAttribute("data-gap"),
+      ),
+    ).toEqual(["Not supplied: synthetic (FY2023 and FY2024)", "— (FY2023 and FY2024)"]);
+    const all = chips.map((chip) => chip.getAttribute("data-gap-line")).join("; ");
+    for (const label of [
+      "Cash Interest Paid",
+      "Cash taxes paid",
+      "Net Cash from Operating Activities",
+      "Capital expenditures",
+      "Levered free cash flow",
+    ])
+      expect(all).toContain(label);
+    expect(openTable(tile)[0]).toEqual(["Step", "FY2023", "FY2024", "Kind"]);
+  });
+  it("draws the axis as before when one figure is stated", () => {
+    const entry = edited(allGap(), (table, heading) =>
+      heading === "T4.5 Cash flow statement"
+        ? {
+            ...table,
+            rows: table.rows.map((row) =>
+              row.cells[0] === "Capital expenditures"
+                ? {
+                    ...row,
+                    cells: row.cells.map((cell, at) => (at === 1 || at === 2 ? "-165" : cell)),
+                  }
+                : row,
+            ),
+          }
+        : table,
+    );
+    const { tile } = draw(entry);
+    expect(tile.querySelector("svg[role=img]")).not.toBeNull();
+    expect(parts(tile, "tick").length).toBeGreaterThan(0);
   });
 });
