@@ -211,20 +211,25 @@ it("C3-015 C3-027 J1-009 attributes the verified credit view to its exact Eviden
   reader(snapshot, "#overview");
   const call = await screen.findByRole("region", { name: "The call" });
   expect(
-    within(call).getByRole("heading", { level: 3, name: "The call · Committee decision" }),
+    within(call).getByRole("heading", { level: 3, name: "The call · Fundamental credit" }),
   ).toBeInTheDocument();
-  const first = within(call).getByText("The credit view is stable.");
-  expect(first).toHaveClass("lg:text-display");
-  const [rest, behind] = within(call).getAllByText("The second paragraph remains qualified.");
-  if (!rest || !behind)
-    throw new Error("the continuation is drawn twice: in full and behind Read on");
-  expect(rest).not.toHaveClass("lg:text-display");
-  expect(rest.closest("details")).toBeNull();
-  expect(behind.closest("details")).toContainElement(within(call).getByText("Read on"));
-  expect(first.compareDocumentPosition(rest) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  // The lead is attributed by the tile's heading and reached through its pipeline node.
+  // The call is the published line of the fundamental module, at display size, traced to it.
+  expect(within(call).getByText("Cash covers interest.")).toHaveClass("lg:text-display");
+  // Checked before the trace drawer opens over the page.
   const nodes = screen.getAllByRole("link", { name: /^Committee decision/ });
   expect(nodes.map((node) => node.getAttribute("href"))).toContain("#modules/CP-6");
+  fireEvent.click(within(call).getByRole("button", { name: "Show sources for the bottom line" }));
+  expect(await screen.findByRole("link", { name: "Open in Evidence" })).toHaveAttribute(
+    "href",
+    `/report/current#evidence/current%2FCP-2~${hashes[0]}-4`,
+  );
+  // The committee's bottom line is on its own page only.
+  expect(screen.queryByText("The credit view is stable.")).toBeNull();
+  // Both modules write the same second paragraph: only the call's copies are drawn (in full, and
+  // behind Read on).
+  const second = screen.getAllByText("The second paragraph remains qualified.");
+  expect(second).toHaveLength(2);
+  for (const copy of second) expect(call).toContainElement(copy);
   expect(screen.queryByText("Decision rationale")).toBeNull();
 });
 

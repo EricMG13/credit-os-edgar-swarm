@@ -42,14 +42,16 @@ export type IssuerGroup = {
 
 export const RUN_STATES: readonly RunState[] = ["Delivered", "Test preview", "No report published"];
 
-/** The pathways the library's runs are of, for the pathway filter. */
-export function libraryPathways(index: LibraryIndex): string[] {
+/** The sectors and pathways of every run in the library, for the filters; a pathway filter does not narrow them. */
+export function libraryChoices(index: LibraryIndex): { sectors: string[]; pathways: string[] } {
   const items = [...issuerGroups(index).values()].flat();
-  return [
-    ...new Set(items.map(({ run, catalogue }) => runPathway(run ?? { pathway: null }, catalogue))),
-  ]
-    .filter(Boolean)
-    .sort();
+  const distinct = (values: string[]) => [...new Set(values)].filter(Boolean).sort();
+  return {
+    sectors: distinct(items.map(({ catalogue }) => catalogue.sector)),
+    pathways: distinct(
+      items.map(({ run, catalogue }) => runPathway(run ?? { pathway: null }, catalogue)),
+    ),
+  };
 }
 
 /**

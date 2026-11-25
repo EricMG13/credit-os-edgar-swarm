@@ -18,15 +18,23 @@ const h = (heading: string, level: number, line: number, blocks: Block[] = []): 
   blocks,
 });
 
-const committee: Section[] = [
+const LEAD = "Leverage is high but liquidity covers the next two years.";
+/** The fundamental credit module: the run's published credit view. */
+const credit: Section[] = [
   h("Findings", 2, 1),
-  h("Bottom line", 3, 3, [text(4, "Leverage is high but liquidity covers the next two years.")]),
+  h("Bottom line", 3, 3, [text(4, LEAD)]),
   h("Key findings", 3, 6, [text(7, "Cover is thin at 2.1x.")]),
   h("Contrary evidence and what would change the view", 3, 9, [text(10, "Cash flow held.")]),
   h("Limitations", 3, 12, [text(13, "The forecast rests on one year of audited figures.")]),
+];
+/** The committee: its decision is shown on its own page only. */
+const committee: Section[] = [
+  h("Findings", 2, 1),
+  h("Bottom line", 3, 3, [text(4, "The secured layer is watched.")]),
   h("Decision", 3, 15, [text(16, "Final Action Bias: Watchlist. The secured layer is watched.")]),
 ];
 
+const SHA2 = "2".repeat(64);
 const SHA6 = "6".repeat(64);
 
 function snapshot({ preview = false }: { preview?: boolean } = {}) {
@@ -37,8 +45,13 @@ function snapshot({ preview = false }: { preview?: boolean } = {}) {
     asOf,
     period: "FY2025",
     pathway: "credit_snapshot",
-    modules: { "CP-6": { outputs: [`${folder}/cp6`], default: `${folder}/cp6` } },
-    record: { steps: [{ module: "CP-6" }] },
+    modules: {
+      "CP-2": { outputs: [`${folder}/cp2`], default: `${folder}/cp2` },
+      "CP-6": { outputs: [`${folder}/cp6`], default: `${folder}/cp6` },
+    },
+    record: { steps: [{ module: "CP-2" }, { module: "CP-6" }] },
+    publicationVerified: true,
+    lead: { module: "CP-2", output: `${folder}/cp2`, sha256: SHA2, line: 4, text: LEAD },
     evidence: { sources: [], unused: [], unrecorded: [], handoffs: [], downloads: [], zip: null },
   });
   return {
@@ -68,6 +81,14 @@ function snapshot({ preview = false }: { preview?: boolean } = {}) {
     workspace: {
       runs: { acmeKey: run("acme", "2026-03-31"), oldKey: run("acme-old", "2025-03-31") },
       outputs: {
+        "acme/cp2": {
+          id: "acme/cp2",
+          run: "acmeKey",
+          module: "CP-2",
+          sha256: SHA2,
+          label: "CP-2",
+          href: "",
+        },
         "acme/cp6": {
           id: "acme/cp6",
           run: "acmeKey",
@@ -77,7 +98,7 @@ function snapshot({ preview = false }: { preview?: boolean } = {}) {
           href: "",
         },
       },
-      handoffs: { [SHA6]: committee },
+      handoffs: { [SHA2]: credit, [SHA6]: committee },
       models: [],
     },
     chips: {},
@@ -226,7 +247,7 @@ it("draws the sections as one segmented control, Calendar included and current w
     "#evidence",
     "#calendar",
   ]);
-  expect(within(nav).getByRole("link", { name: "Modules 1" })).toBeVisible();
+  expect(within(nav).getByRole("link", { name: "Modules 2" })).toBeVisible();
   expect(within(nav).getByRole("link", { current: "page" })).toHaveTextContent("Overview");
   cleanup();
   open("#calendar");
@@ -244,8 +265,9 @@ it("opens this issuer's runs from the issuer crumb, as a timeline", async () => 
   const list = within(runs).getByRole("list", { name: "Runs, newest first" });
   const rows = [...list.children];
   expect(rows[0]).toHaveTextContent("31 March 2026");
-  expect(within(runs).getByText("Watchlist")).toBeVisible();
-  expect(within(runs).getByText("Stance not stated")).toBeVisible();
+  // No run's decision is drawn: the opened run says its decision is not shown.
+  expect(within(runs).getByText("Committee action and size: Not shown")).toBeVisible();
+  expect(within(runs).queryByText("Watchlist")).toBeNull();
   const current = screen.getByRole("navigation", { name: "Breadcrumb" });
   expect(within(current).getAllByRole("listitem").at(-1)).toHaveTextContent("Runs");
 });

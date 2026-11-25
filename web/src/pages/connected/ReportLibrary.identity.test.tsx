@@ -232,7 +232,7 @@ it("prefers the company_description register's Sector cell over the profile's se
 
 it("shows the ratings gap and no sector line with no CP-1A, no catalogue sector and no ratings", async () => {
   const el = await band(fixture());
-  expect(el.querySelector("p")).toBeNull();
+  expect(el.querySelector("h1 + p")).toBeNull();
   expect(ratingChips(el)).toHaveLength(0);
   expect(within(facts(el)).getByText("Ratings not entered")).toBeVisible();
 });
@@ -340,7 +340,7 @@ it("omits a handoff sector that holds a reference", async () => {
   const raw = `Aerospace per ${FILE}`;
   const el = await band(fixture({ handoff: [profile([["Sector and segments", raw]])] }));
   expect(el.innerHTML).not.toContain(FILE);
-  expect(el.querySelector("p")).toBeNull();
+  expect(el.querySelector("h1 + p")).toBeNull();
   expect(facts(el).querySelector("[title]")).toBeNull();
 });
 

@@ -725,15 +725,28 @@ describe("what the overview carries for every module", () => {
           summary: "Leverage is high [CP-1 p. 4].",
           summaryLimit: "Unaudited. 【12†L5-L9】",
         },
-        "CP-3": { summary: "Bonds are cheap 【12†L5-L9】." },
+        "CP-4": { summary: "Covenants are loose 【12†L5-L9】." },
       },
       null,
     );
     expect(moduleBottomLines(view, run).map((row) => row.text)).toEqual([
       "Leverage is high.",
-      "Bonds are cheap.",
+      "Covenants are loose.",
     ]);
     expect(runLimitations(view, run).map((row) => row.text)).toEqual(["Unaudited."]);
+  });
+
+  it("withholds the bottom line of a module that can state the decision, and says it is withheld", () => {
+    const { run, view } = overviewFixture(
+      { "CP-1": { summary: "Leverage is high." }, "CP-3": { summary: "Prefer the 2030 notes." } },
+      null,
+    );
+    expect(
+      moduleBottomLines(view, run).map(({ id, text, withheld }) => ({ id, text, withheld })),
+    ).toEqual([
+      { id: "CP-1", text: "Leverage is high.", withheld: false },
+      { id: "CP-3", text: null, withheld: true },
+    ]);
   });
 
   it("takes the summary's limitation only from a module with no Limitations passage, once, and not from a blocked one", () => {

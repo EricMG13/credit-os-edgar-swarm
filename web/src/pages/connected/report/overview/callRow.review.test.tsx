@@ -290,7 +290,7 @@ it("names the validation module and links its page, showing none of its bottom l
   expect(tile).not.toHaveTextContent(/Pass with Remediation|Four material issues/);
   expect(
     within(tile).getByText(
-      "Evidence validation's bottom line is not shown here: no clearance is recorded for the decision it bears on.",
+      "This page does not show Evidence validation's bottom line: no clearance for it is recorded.",
     ),
   ).toBeVisible();
   expect(within(tile).getByRole("link", { name: "Open Evidence validation" })).toHaveAttribute(

@@ -1,9 +1,12 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, configure, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "./ConnectedApp";
 import { ReportChanges } from "./report/Changes";
 import { buildReportView, runLimitations } from "./reportView";
 import type { PublishedChanges, PublishedRun, Snapshot } from "./publishedReport";
+
+// The first render of the whole reader, with its export formats, can pass the 1 s default.
+configure({ asyncUtilTimeout: 5000 });
 
 const EMPTY_EVIDENCE = {
   sources: [],
@@ -126,7 +129,13 @@ describe("connected library and report design", () => {
       );
     chip("Sector", "Retail");
     chip("Pathway", "Lite credit assessment");
-    expect(screen.queryByRole("heading", { name: "Northbridge" })).toBeNull();
+    // A pathway filter picks that pathway's run for the issuer: the row opens the Lite run.
+    const northRow = screen.getByRole("heading", { name: "Northbridge" }).closest("li");
+    if (!northRow) throw new Error("Expected a row for the selected pathway");
+    expect(within(northRow).getByRole("link", { name: "Open report" })).toHaveAttribute(
+      "href",
+      "/report/northbridge-2025",
+    );
     chip("Sector", "All");
     chip("Pathway", "All");
 
@@ -509,6 +518,7 @@ describe("the overview carries every module's bottom line and the run's limitati
   function overviewSnapshot(
     modules: [string, string | null, string[]][],
     order = modules.map(([module]) => module),
+    verified = true,
   ) {
     const snapshot = librarySnapshot() as unknown as Snapshot;
     const run = snapshot.workspace.runs.north;
@@ -529,6 +539,11 @@ describe("the overview carries every module's bottom line and the run's limitati
         state: { established: true, declared: null },
       };
       snapshot.workspace.handoffs[sha256] = handoff(bottom, limits);
+      // The fundamental module's bottom line is the run's published credit view.
+      if (module === "CP-2" && bottom !== null && verified) {
+        run.publicationVerified = true;
+        run.lead = { module, output: id, sha256, line: 11, text: bottom };
+      }
     }
     return { snapshot, run };
   }
@@ -542,8 +557,9 @@ describe("the overview carries every module's bottom line and the run's limitati
     const { snapshot, run } = overviewSnapshot([
       ["CP-1", "Leverage is high; Liquidity (CP-2D) covers two years.", [BARE, "See debt.xlsx."]],
       ["CP-2D", "Not assessable: no liquidity schedule was supplied.", ["Blocked limitation."]],
-      ["CP-3", null, []],
+      ["CP-2A", null, []],
       ["CP-4", "See debt.xlsx for the view.", []],
+      ["CP-6", "The committee would watch the secured layer.", []],
       ["CP-2", "Credit is stable.", ["cash is shown under CP-2D only", "Lead limitation."]],
     ]);
     useSnapshot(snapshot);
@@ -561,8 +577,18 @@ describe("the overview carries every module's bottom line and the run's limitati
     expect(
       within(bottomLines).getByText(/Leverage is high; Liquidity covers two years\./),
     ).toBeVisible();
-    // CP-3 wrote no bottom line: a gap. CP-4 wrote one that cites a file: a link, not a gap.
+    // CP-2A wrote no bottom line: a gap. CP-4 wrote one that cites a file: a link, not a gap.
     expect(within(bottomLines).getAllByText(/wrote no bottom line/)).toHaveLength(1);
+    // The committee's bottom line stays on its own page: no clearance is recorded for a decision.
+    expect(document.body).not.toHaveTextContent(/would watch the secured layer/);
+    expect(
+      within(bottomLines).getByText(
+        /This page does not show its bottom line: no clearance for it is recorded/,
+      ),
+    ).toBeVisible();
+    expect(
+      within(bottomLines).getByRole("link", { name: "Open Committee decision" }),
+    ).toHaveAttribute("href", "#modules/CP-6");
     expect(
       within(bottomLines).getByRole("link", { name: "Read this bottom line in Evidence" }),
     ).toHaveAttribute(
@@ -570,7 +596,7 @@ describe("the overview carries every module's bottom line and the run's limitati
       expect.stringMatching(/^\/report\/northbridge-2026#evidence\/.*-11$/),
     );
     // One line per other module; the lead's own bottom line is the call's, not repeated here.
-    expect(within(bottomLines).getAllByRole("listitem")).toHaveLength(4);
+    expect(within(bottomLines).getAllByRole("listitem")).toHaveLength(5);
     expect(lines.textContent).not.toMatch(/CP-/);
     expect(within(bottomLines).queryByText(/Credit is stable/)).toBeNull();
 
@@ -614,6 +640,17 @@ describe("the overview carries every module's bottom line and the run's limitati
     expect(
       within(screen.getByRole("region", { name: "The call" })).getByText("Credit is stable."),
     ).toBeVisible();
+  });
+
+  it("draws no credit view for a run whose publication is not verified", async () => {
+    const { snapshot } = overviewSnapshot([["CP-2", "Credit is stable.", []]], ["CP-2"], false);
+    useSnapshot(snapshot);
+    await showOverview();
+    const call = await screen.findByRole("region", { name: "The call" });
+    expect(
+      within(call).getByText(/A verified credit view is unavailable for this run/),
+    ).toBeVisible();
+    expect(within(call).queryByText("Credit is stable.")).toBeNull();
   });
 
   it("draws the summary's limitation for an earlier-format run, and not the empty sentence", async () => {

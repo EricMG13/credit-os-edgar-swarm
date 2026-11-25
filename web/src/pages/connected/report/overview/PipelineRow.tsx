@@ -102,12 +102,13 @@ function LineText({
 
 /**
  * A decision module's bottom line is not shown on a summary page, and neither is its source: no
- * clearance is recorded for the decision it bears on. Its own page shows it.
+ * clearance is recorded for it. Its own page shows it. The line claims only what the page leaves
+ * out: an unheld module's limitations stay listed here and may state the decision.
  */
 function WithheldLine({ id, name }: { id: string; name: string }) {
   return (
     <p className="text-small text-text-secondary">
-      Not shown here: no clearance is recorded for the decision it bears on.{" "}
+      This page does not show its bottom line: no clearance for it is recorded.{" "}
       <TextLink
         href={`#modules/${id}`}
         className="inline-flex min-h-8 items-center max-[480px]:min-h-11"

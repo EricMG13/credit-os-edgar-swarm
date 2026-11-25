@@ -107,19 +107,15 @@ afterEach(() => {
   window.history.replaceState(null, "", "/");
 });
 
-it("keeps Key charts and every module's limitations on an Overview with a front page", async () => {
+it("keeps a decision module's limitations on the Overview and none of its bottom line", async () => {
   vi.stubGlobal("fetch", () => Promise.resolve(Response.json(snapshot())));
   window.history.replaceState(null, "", "/#overview");
   render(<ReportReader id="acme" mode="synthetic" />);
-  const title = await screen.findByRole("heading", { name: "Key charts" });
-  expect(
-    within(title.closest("section") as HTMLElement).getByRole("figure", {
-      name: "credit-risk transmission",
-    }),
-  ).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: "Key charts" })).toBeInTheDocument();
-  expect(screen.getByText(CP6_LIMIT)).toBeInTheDocument();
+  const limits = await screen.findByRole("region", { name: "What this run could not do" });
+  expect(within(limits).getByText(CP6_LIMIT)).toBeInTheDocument();
   expect(screen.queryByText("Add one percent of NAV.")).toBeNull();
+  // The redesigned Overview has no Key charts section: a module's charts are on its own page.
+  expect(screen.queryByRole("heading", { name: "Key charts" })).toBeNull();
 });
 
 type Options = {
@@ -222,14 +218,7 @@ async function overview(options: Options) {
   await screen.findByText(LEAD);
 }
 
-it("shows Key charts once on a Full run whose front page has figures of its own", async () => {
-  await overview({ pathway: "credit_snapshot", foundation: true, maps: true, lead: true });
-  expect(screen.getAllByRole("heading", { name: "Key charts" })).toHaveLength(1);
-  expect(screen.getAllByRole("link", { name: "Key charts" })).toHaveLength(1);
-  expect(document.getElementById("overview-key-charts")).not.toBeNull();
-});
-
-it("shows a limitation once when the front page and an action module both state it", async () => {
+it("shows a limitation once when the lead and an action module both state it", async () => {
   await overview({
     pathway: "credit_snapshot",
     foundation: true,
@@ -239,18 +228,6 @@ it("shows a limitation once when the front page and an action module both state 
   });
   expect(screen.getAllByText(CP2_LIMIT)).toHaveLength(1);
   expect(screen.getByText(CP6_LIMIT)).toBeInTheDocument();
-});
-
-it("shows neither a Key charts link nor a section for a verified front page with no charts", async () => {
-  await overview({ pathway: "earnings_update", lead: true });
-  expect(screen.queryByRole("link", { name: "Key charts" })).toBeNull();
-  expect(screen.queryByRole("heading", { name: "Key charts" })).toBeNull();
-});
-
-it("points the Key charts link at a heading that exists wherever it is shown", async () => {
-  await overview({ pathway: "earnings_update", maps: true, lead: true });
-  expect(screen.getAllByRole("link", { name: "Key charts" })).toHaveLength(1);
-  expect(document.getElementById("overview-key-charts")).not.toBeNull();
 });
 
 const HOLD = "The owner restricted this output and field-specific clearance is unavailable.";
@@ -267,8 +244,7 @@ it("leaves a held decision's limitations out of the Overview list and says where
     hold: HOLD,
     cp6Limit: SIZED_LIMIT,
   });
-  expect(screen.getByText("Withheld")).toBeInTheDocument();
-  expect(screen.getByText(HOLD)).toBeInTheDocument();
+  expect(screen.getByText(`Withheld: ${HOLD}`)).toBeInTheDocument();
   expect(document.body.textContent).not.toMatch(/1\.00% NAV|98\.5/);
   expect(screen.getAllByText(ELSEWHERE)).toHaveLength(1);
   expect(screen.getByText(CP3_LIMIT)).toBeInTheDocument();
@@ -315,7 +291,8 @@ it("does not say a decision is not shown on the page that lists the module's lim
   await overview({ pathway: "credit_snapshot", lead: true, cp6Limit: SIZED_LIMIT });
   // The owner keeps an unheld module's limitations listed, and this one states the action and size.
   expect(screen.getByText(SIZED_LIMIT)).toBeInTheDocument();
-  expect(screen.getByText("Committee decision (1)")).toBeInTheDocument();
+  const limits = screen.getByRole("region", { name: "What this run could not do" });
+  expect(within(limits).getByRole("link", { name: "Committee decision" })).toBeInTheDocument();
   // So the page claims only what it leaves out: the module's bottom line.
   expect(document.body.textContent).not.toMatch(/decision is not shown/i);
   expect(screen.getByText(BOTTOM_LINE_NOT_ON_PAGE)).toBeInTheDocument();
@@ -331,8 +308,9 @@ it("keeps another module's limitation that a held module also states", async () 
     cp6Limit: CP3_LIMIT,
   });
   expect(screen.getAllByText(CP3_LIMIT)).toHaveLength(1);
-  expect(screen.getByText("Security selection (1)")).toBeInTheDocument();
-  expect(screen.queryByText(/^Committee decision \(/)).toBeNull();
+  const limits = screen.getByRole("region", { name: "What this run could not do" });
+  expect(within(limits).getByRole("link", { name: "Security selection" })).toBeInTheDocument();
+  expect(within(limits).queryByRole("link", { name: "Committee decision" })).toBeNull();
   // Nothing the held module recorded is missing from the list, so no line says so.
   expect(screen.queryByText(ELSEWHERE)).toBeNull();
 });

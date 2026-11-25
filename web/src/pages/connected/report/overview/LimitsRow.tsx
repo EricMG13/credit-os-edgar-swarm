@@ -155,9 +155,15 @@ function Recorded({ run, groups }: { run: PublishedRun; groups: Limitation[][] }
 /** What this run could not do, as a first-class tile: blocked modules first, then what the others recorded. */
 export function LimitsRow({ run, view }: RowProps) {
   const blocked = blockedModules(view, run);
-  // A held decision's limitations can restate it, so they stay on that module's page.
+  // A held decision's limitations can restate it, so they stay on that module's page. One it
+  // shares with another module stays listed under that module, so nothing of it is missing.
   const held = heldModules(view, run);
-  const groups = grouped(runLimitations(view, run, held));
+  const listed = runLimitations(view, run, held);
+  const leftOut = runLimitations(view, run).filter(
+    ({ id, text }) => held.includes(id) && !listed.some((row) => row.text === text),
+  );
+  const elsewhere = [...new Set(leftOut.map(({ name }) => name))];
+  const groups = grouped(listed);
   return (
     <Tile span={12} label="What this run could not do">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
@@ -191,9 +197,9 @@ export function LimitsRow({ run, view }: RowProps) {
           <Recorded run={run} groups={groups} />
         </>
       )}
-      {held.map((id) => (
-        <p key={id} className="text-small text-text-secondary">
-          {`Limitations recorded by ${moduleName(id)} are not in this list. That module's page shows what it recorded.`}
+      {elsewhere.map((name) => (
+        <p key={name} className="text-small text-text-secondary">
+          {`Limitations recorded by ${name} are not in this list. That module's page shows what it recorded.`}
         </p>
       ))}
     </Tile>

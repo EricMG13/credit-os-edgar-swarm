@@ -225,7 +225,7 @@ it("draws the call: the published credit view, the decisions not shown, confiden
   const clearance = screen.getByRole("region", { name: "Evidence clearance" });
   expect(
     within(clearance).getByText(
-      "Evidence validation's bottom line is not shown here: no clearance is recorded for the decision it bears on.",
+      "This page does not show Evidence validation's bottom line: no clearance for it is recorded.",
     ),
   ).toBeVisible();
   expect(within(clearance).getByRole("link", { name: "Open Evidence validation" })).toHaveAttribute(

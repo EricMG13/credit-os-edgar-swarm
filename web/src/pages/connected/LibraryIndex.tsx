@@ -10,7 +10,7 @@ import { card } from "./layout";
 import { getLibraryIndex, type LibraryIndex } from "./publishedReport";
 import { isUnreachable } from "./useResource";
 import { ChipGroup } from "@/components/kit/Chip";
-import { groupIssuers, libraryPathways, matchesQuery, RUN_STATES } from "./libraryRows/group";
+import { groupIssuers, libraryChoices, matchesQuery, RUN_STATES } from "./libraryRows/group";
 import { figureName } from "./libraryRows/FigureMark";
 import { IssuerRow, ROW_COLUMNS } from "./libraryRows/IssuerRow";
 import { stated } from "./reportView";
@@ -39,8 +39,7 @@ function MatchRuns({
   const search = useRef<HTMLInputElement>(null);
   // A pathway filter changes which run stands for each issuer, so the groups follow it.
   const groups = groupIssuers(snapshot, filters.pathway);
-  const sectors = [...new Set(groups.map(({ newest }) => newest.sector).filter(Boolean))].sort();
-  const pathways = libraryPathways(snapshot);
+  const { sectors, pathways } = libraryChoices(snapshot);
   const states = RUN_STATES.filter((state) => groups.some((group) => group.state === state));
   const rows = groups.filter(
     (group) =>

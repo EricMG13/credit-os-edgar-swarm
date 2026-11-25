@@ -465,7 +465,7 @@ function ClearanceTile({ view }: Pick<RowProps, "view">) {
         <StatusBadge set="Module state" state={moduleState(entry)} />
       )}
       <p className="text-small text-pretty text-text-secondary">
-        {`${name}'s bottom line is not shown here: no clearance is recorded for the decision it bears on.`}
+        {`This page does not show ${name}'s bottom line: no clearance for it is recorded.`}
       </p>
       <div>
         <Button

@@ -283,6 +283,10 @@ describe("C1-008 original card credit view", () => {
     );
     vi.stubGlobal("fetch", fetch);
     render(<ReportLibrary />);
+    // The credit view is in the opened row.
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Show runs and detail for Northbridge/ }),
+    );
     expect(
       await screen.findByText("A verified finding is unavailable for this report."),
     ).toBeVisible();
