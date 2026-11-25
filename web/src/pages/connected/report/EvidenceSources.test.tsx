@@ -38,6 +38,11 @@ const h1: OutputEntry = {
   },
   sections: [],
 };
+const alt: OutputEntry = {
+  ...h1,
+  selected: false,
+  output: { ...h1.output, id: "case/CP-1-alt.md", sha256: "b".repeat(64) },
+};
 const groups: SourceGroup[] = [
   { label: "Used by a module", rows: [source] },
   {
@@ -47,14 +52,17 @@ const groups: SourceGroup[] = [
   { label: "Not recorded as used", rows: [] },
 ];
 
-it("collects what each file is cited as, from the chips that name it", () => {
+it("collects what each file is cited as, from the chips that name it, with where each sits", () => {
   const cited = citationsByFile(snapshot({ "case/CP-1.md:5": [chip({})] }), [h1]);
-  expect(cited.get("Issuer.txt")).toEqual([{ sha, label: "Cited pages 2–3" }]);
+  expect(cited.byFile.get("Issuer.txt")).toEqual([
+    { sha, label: "Cited pages 2–3", entry: h1, line: 5 },
+  ]);
 });
 
 it("draws the used and the supplied-not-used files as separate tables with exact hashes", () => {
   render(
     <EvidenceSources
+      folder="case"
       entries={[h1]}
       sourceGroups={groups}
       modules={["CP-1", "CP-2"]}
@@ -71,13 +79,14 @@ it("draws the used and the supplied-not-used files as separate tables with exact
   expect(spare.getByText("Not read by any module")).toBeVisible();
   expect(spare.getByText("Spare.txt")).toBeVisible();
   expect(spare.getByText("e".repeat(64))).toBeVisible();
-  expect(spare.getByText("Not cited by a handoff")).toBeVisible();
+  expect(spare.getByText("No citation names this file")).toBeVisible();
   expect(screen.queryByRole("table", { name: "Not recorded as used" })).toBeNull();
 });
 
 it("states a source's missing type, date and hash instead of leaving the cell blank", () => {
   render(
     <EvidenceSources
+      folder="case"
       entries={[h1]}
       sourceGroups={[
         {
@@ -97,6 +106,7 @@ it("states a source's missing type, date and hash instead of leaving the cell bl
 it("names a file read by every module once", () => {
   render(
     <EvidenceSources
+      folder="case"
       entries={[h1]}
       sourceGroups={[
         { label: "Used by a module", rows: [{ ...source, readBy: ["CP-1", "CP-2"] }] },
@@ -111,6 +121,7 @@ it("names a file read by every module once", () => {
 it("filters to one module's files and says so when it has none", () => {
   const view = render(
     <EvidenceSources
+      folder="case"
       entries={[h1]}
       sourceGroups={groups}
       module="CP-2"
@@ -131,6 +142,7 @@ it("ignores citations recorded in another run's or another module's handoffs", (
   };
   render(
     <EvidenceSources
+      folder="case"
       entries={[h1]}
       sourceGroups={groups}
       modules={["CP-1"]}
@@ -145,6 +157,7 @@ it("shows a citation whose page the bridge does not attest as written, not as no
   const unattested = chip({ label: "annual.pdf p. 84", pageHref: null });
   render(
     <EvidenceSources
+      folder="case"
       entries={[h1]}
       sourceGroups={groups}
       modules={["CP-1"]}
@@ -154,9 +167,10 @@ it("shows a citation whose page the bridge does not attest as written, not as no
   expect(screen.getByText("annual.pdf p. 84")).toBeVisible();
 });
 
-it("matches a citation to a source that records no hash by file name alone", () => {
+it("matches a citation to a source that records no hash by file name, and says so", () => {
   render(
     <EvidenceSources
+      folder="case"
       entries={[h1]}
       sourceGroups={[{ label: "Used by a module", rows: [{ ...source, sha256: null }] }]}
       modules={["CP-1"]}
@@ -164,12 +178,14 @@ it("matches a citation to a source that records no hash by file name alone", () 
     />,
   );
   expect(screen.getByText("Cited pages 2–3")).toBeVisible();
+  expect(screen.getByText("Matched by file name; the source has no hash")).toBeVisible();
   expect(screen.getByText("No hash recorded")).toBeVisible();
 });
 
 it("says use was not recorded for files in the unrecorded group, not that no module read them", () => {
   render(
     <EvidenceSources
+      folder="case"
       entries={[h1]}
       sourceGroups={[
         {
@@ -188,6 +204,7 @@ it("says use was not recorded for files in the unrecorded group, not that no mod
 it("states the module scope of the citations when one module is selected", () => {
   render(
     <EvidenceSources
+      folder="case"
       entries={[h1]}
       module="CP-1"
       sourceGroups={groups}
@@ -196,5 +213,91 @@ it("states the module scope of the citations when one module is selected", () =>
     />,
   );
   expect(screen.getByRole("columnheader", { name: "Cited in Financial foundation" })).toBeVisible();
-  expect(screen.getByText("Not cited in Financial foundation")).toBeVisible();
+  expect(screen.getByText("No citation in Financial foundation names this file")).toBeVisible();
+});
+
+it("shows a citation under a different hash, with the cited hash reachable", () => {
+  const other = "9".repeat(64);
+  render(
+    <EvidenceSources
+      folder="case"
+      entries={[h1]}
+      sourceGroups={groups}
+      modules={["CP-1"]}
+      snapshot={snapshot({ "case/CP-1.md:5": [chip({ sha256: other })] })}
+    />,
+  );
+  expect(screen.getByText("Cited as p. 2 under a different hash")).toBeVisible();
+  expect(screen.getByText(other)).toBeVisible();
+  expect(screen.getByText(sha)).toBeVisible();
+  const used = within(screen.getByRole("table", { name: "Used by a module" }));
+  expect(used.queryByText("No citation names this file")).toBeNull();
+});
+
+it("counts only the designated handoffs' citations", () => {
+  render(
+    <EvidenceSources
+      folder="case"
+      entries={[h1, alt]}
+      sourceGroups={groups}
+      modules={["CP-1"]}
+      snapshot={snapshot({ "case/CP-1-alt.md:5": [chip({ pageHref: `${base}?page=9` })] })}
+    />,
+  );
+  expect(screen.queryByText(/9/)).toBeNull();
+  expect(screen.getAllByText("No citation names this file").length).toBeGreaterThan(0);
+});
+
+const gapChip = (reason: string, label: string) =>
+  chip({ file: null, source: null, sha256: null, pageHref: null, href: null, label, reason });
+
+it("counts the citations that name no file or a file not in the inventory, with a link to the first of each", () => {
+  render(
+    <EvidenceSources
+      folder="case"
+      entries={[h1]}
+      sourceGroups={groups}
+      modules={["CP-1"]}
+      snapshot={snapshot({
+        "case/CP-1.md:7": [
+          gapChip("page cited without a source key", "p.1 · no key"),
+          gapChip("page cited without a source key", "p.2 · no key"),
+        ],
+        "case/CP-1.md:9": [
+          gapChip(
+            "the Basis file is not in the Source readiness inventory",
+            "annual.txt p.2 · not in inventory",
+          ),
+          gapChip("the row cites no page or register", "no page"),
+        ],
+      })}
+    />,
+  );
+  const list = within(
+    screen.getByRole("list", { name: "Citations not matched to a supplied file" }),
+  );
+  expect(list.getByText("2 citations give a page and name no file")).toBeVisible();
+  expect(
+    list.getByText("1 citation names a file that is not in the source inventory"),
+  ).toBeVisible();
+  const links = list.getAllByRole("link");
+  expect(links.map((link) => link.getAttribute("href"))).toEqual([
+    `/report/case#evidence/case%2FCP-1.md~${"a".repeat(64)}-7`,
+    `/report/case#evidence/case%2FCP-1.md~${"a".repeat(64)}-9`,
+  ]);
+});
+
+it("draws no such line when every citation names a file", () => {
+  render(
+    <EvidenceSources
+      folder="case"
+      entries={[h1]}
+      sourceGroups={groups}
+      modules={["CP-1"]}
+      snapshot={snapshot({ "case/CP-1.md:5": [chip({})] })}
+    />,
+  );
+  expect(
+    screen.queryByRole("list", { name: "Citations not matched to a supplied file" }),
+  ).toBeNull();
 });

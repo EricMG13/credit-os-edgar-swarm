@@ -100,7 +100,7 @@ function Citation({ citation }: { citation: TraceCitation }) {
 /**
  * The passage the claim rests on and where it was read. A trace that lists its citations says what
  * each holds, and says none were recorded when the list is empty; a trace that does not know its
- * citations draws its excerpt if it has one and otherwise says where to look.
+ * citations draws the excerpt it carries, capped, and otherwise nothing.
  */
 export function TraceSourcePassage({ trace }: { trace: SourcedTrace }) {
   if (trace.citations !== undefined) {
@@ -122,19 +122,17 @@ export function TraceSourcePassage({ trace }: { trace: SourcedTrace }) {
       </div>
     );
   }
-  if (trace.excerpt === null)
-    return (
-      <div className="flex min-w-0 flex-col gap-1.5">
-        <span className={CAPTION}>Source</span>
-        <p className="text-small text-text-secondary">
-          This trace carries no passage. The sources recorded for the item are on its Evidence page.
-        </p>
-      </div>
-    );
+  if (trace.excerpt === null) return null;
   return (
     <div className="flex min-w-0 flex-col gap-1.5">
       <span className={CAPTION}>Source excerpt</span>
-      <blockquote className="reading-copy rounded-ds-sm border-l-2 border-action bg-surface-subtle px-4 py-3 text-small wrap-anywhere text-text-primary">
+      <blockquote
+        role="region"
+        aria-label="Source excerpt"
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+        tabIndex={0}
+        className="reading-copy max-h-60 overflow-y-auto rounded-ds-sm border-l-2 border-action bg-surface-subtle px-4 py-3 text-small wrap-anywhere text-text-primary"
+      >
         {trace.excerpt.quote}
       </blockquote>
       <span className="font-mono text-mono wrap-anywhere text-text-tertiary">

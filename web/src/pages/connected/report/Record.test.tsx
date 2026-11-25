@@ -69,7 +69,7 @@ function showRecord(run: Partial<PublishedRun>, entries: OutputEntry[] = [], tar
     />,
   );
   // The run record is closed by default (screen map, Evidence · Record): open it to read it.
-  const record = screen.getByText("Run record", { selector: "summary" });
+  const record = screen.getByText("Show the run record", { selector: "summary" });
   if (!run.changes?.problem) {
     expect(record.closest("details")).not.toHaveAttribute("open");
     fireEvent.click(record);
@@ -123,7 +123,9 @@ describe("a module's record", () => {
     showRecord(recorded);
     expect(screen.queryByRole("region", { name: "Table" })).toBeNull();
     const record = within(
-      screen.getByText("Run record", { selector: "summary" }).closest("details") as HTMLElement,
+      screen
+        .getByText("Show the run record", { selector: "summary" })
+        .closest("details") as HTMLElement,
     );
     expect(record.getAllByRole("region").map((node) => node.getAttribute("aria-label"))).toEqual([
       "Response provenance",

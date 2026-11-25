@@ -282,3 +282,39 @@ hash; an unused and an unrecorded-use file). No tab or the drawer scrolls the pa
 Test edits this pass that pin layout: the summary figures are asserted on the strip (label and value), the
 Gaps tests read the group heading instead of a severity cell, the file-list row replaces the button row, and
 the derivation heading is "How it was derived".
+
+## Coordinator review cd9e936: third pass (T1–T8)
+
+- T1 The register section is `grid-cols-1 min-w-0`, the model id wraps. `document` and `main` scrollWidth were
+  measured on every Evidence tab and each Record address at 1440 and 390 on the synthetic run, plain and with the
+  fixture: all equal the viewport width.
+- T2 Every drawer on a report page now carries the page's citations: `PublishedTraceProvider` supplies a lookup
+  (`TraceCitations` context) that resolves the trace's own `evidenceItem` address to its handoff line, so callers in
+  other sessions' files change nothing. Opened from Overview, Modules and Forecast on the fixture: a line with no chip
+  says "No source passage was recorded for this item" (as Evidence does); a line with three chips lists all three
+  (label, file, pages, quote, reason, hash), each passage capped at 15 rem and scrolling. A trace outside a report
+  (library fixtures, the Model) draws its own excerpt, capped, or nothing.
+- T3 A citation under a different hash reads "Cited as <label> under a different hash" with the cited hash.
+- T4 Per-row "No citation names this file"; above the tables, plain counts of the recorded reasons "page cited without
+  a source key" and "the Basis file is not in the Source readiness inventory", each with a link to the first line.
+  On the synthetic run: 54 and 13.
+- T5 Record addresses: `#evidence/record/run`, `/comparison` (same block), `/notes`, `/files`, also after a module
+  (`record/CP-2G/notes`); `#evidence/record` still works. The target is scrolled into view and focused after the frame's
+  own scroll reset (verified: the block lands at the top of `main`). The run record is first on the tab again, as in
+  the base, and opens by itself when the run has a comparison note or problem; the notes block is closed unless it is
+  the target. The contracts test title and assertion agree again ("after the run record").
+- T6 A word counts as High, Medium or Low only when the severity is that word (case and surrounding space ignored, an
+  optional parenthetical allowed). "Medium-High", "High/Medium", "Critical", "critical" and "Not recorded" are their
+  own groups and counts; words the page does not rank come first, in the order written; "Not recorded" as written is
+  apart from "No severity stated" (distinct keys).
+- T7 A source without a hash says "Matched by file name; the source has no hash". Only the designated handoffs'
+  citations are read.
+- T8 No selectors reach into `Record.tsx`. The run record sits in a plain disclosure (a boxed summary row; its own
+  "Run record" heading shows inside). "Source row" links are 32 px, 44 px at 480 px and below.
+- S1's request: `PublishedSource`'s fallback is the same trace chip (32 px, 44 px at 480 px and below), same name.
+
+Hrefs for the integration pass (the frame's `useReportPlace` resets `main` to the top on a new address; Evidence
+re-lands after it, so the old hrefs also work, but they open the Record tab at its top):
+- Forecast.tsx:249 "View model records in Evidence", Forecast.tsx:431 "Model notes and limitations",
+  Forecast.tsx:548 the qualification trace control, LegacyForecast.tsx:571 and :1020: `#evidence/record/notes`.
+- Changes.tsx:414 "Review comparison evidence": `#evidence/record/comparison`.

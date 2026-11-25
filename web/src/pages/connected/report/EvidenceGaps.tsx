@@ -97,52 +97,72 @@ export function collectGaps(entries: OutputEntry[], module?: string): GapItem[] 
 
 const RANKED = ["High", "Medium", "Low"] as const;
 type Ranked = (typeof RANKED)[number];
+const NONE = "No severity stated";
+const NONE_KEY = "\u0000none";
 
-/** The stated severity's leading word, read without case or surrounding space: "HIGH", "High (blocking)". */
+/** The severity that IS one of the three words: case and surrounding space ignored, a parenthetical allowed. */
 function rankOf(severity: string | null): Ranked | null {
-  const word = /^[A-Za-z]+/.exec((severity ?? "").trim())?.[0]?.toLowerCase();
+  const word = /^([A-Za-z]+)(?:\s*\([^)]*\))?$/.exec((severity ?? "").trim())?.[1]?.toLowerCase();
   return RANKED.find((ranked) => ranked.toLowerCase() === word) ?? null;
 }
 
-/** Gap groups: High, Medium, Low, any other stated word as written, then none stated. */
+type SeverityGroup = { key: string; label: string; rank: number; items: GapItem[] };
+
+/**
+ * Gaps by the severity they state. Words the page does not rank come first, each under its own
+ * words in the order written; then High, Medium and Low; then gaps with no severity stated.
+ */
 function severityGroups(items: GapItem[]) {
-  const groups = new Map<string, { label: string; rank: number; items: GapItem[] }>();
+  const groups = new Map<string, SeverityGroup>();
   for (const item of items) {
-    const raw = item.gap.severity?.trim() ?? null;
+    const raw = item.gap.severity?.trim() || null;
     const ranked = rankOf(raw);
-    const key = ranked ?? raw?.toLowerCase() ?? "";
-    const rank = ranked ? RANKED.indexOf(ranked) : raw ? RANKED.length : RANKED.length + 1;
-    const group = groups.get(key) ?? { label: ranked ?? raw ?? "Not recorded", rank, items: [] };
+    const key = ranked ?? raw?.toLowerCase() ?? NONE_KEY;
+    const group = groups.get(key) ?? {
+      key,
+      label: ranked ?? raw ?? NONE,
+      rank: ranked ? 1 + RANKED.indexOf(ranked) : raw ? 0 : RANKED.length + 1,
+      items: [],
+    };
     group.items.push(item);
     groups.set(key, group);
   }
-  return [...groups.values()].sort((a, b) => a.rank - b.rank);
+  return [...groups.values()]
+    .map((group, order) => ({ group, order }))
+    .sort((a, b) => a.group.rank - b.group.rank || a.order - b.order)
+    .map(({ group }) => group);
 }
 
 function SeverityLabel({ label }: { label: string }) {
   if (RANKED.includes(label as Ranked))
     return <StatusBadge set="Gap severity" state={label as Ranked} />;
-  return label === "Not recorded" ? <span className="text-text-tertiary">{label}</span> : label;
+  return label === NONE ? <span className="text-text-tertiary">{label}</span> : label;
 }
 
 /**
- * High, Medium and Low counts of the gaps that state one of those; every other stated word and
- * "not stated" are counted apart, and the three are left out when no gap states a rank at all.
+ * One count per severity word the gaps carry: High, Medium and Low when any gap states one of
+ * those, every other word as written, and the gaps that state none. A word no gap carries is not drawn.
  */
 export function GapCounts({ items }: { items: GapItem[] }) {
-  const ranked = items.filter(({ gap }) => rankOf(gap.severity) !== null);
-  const other = items.length - ranked.length;
+  const groups = severityGroups(items);
+  const anyRanked = groups.some(({ rank }) => rank >= 1 && rank <= RANKED.length);
+  const counts = new Map(groups.map(({ label, items: rows }) => [label, rows.length]));
   return (
     <StatsStrip
       label="Gaps by severity"
       stats={[
-        ...(ranked.length > 0
+        ...groups
+          .filter(({ rank }) => rank === 0)
+          .map(({ label, items: rows }) => ({ label, value: String(rows.length) })),
+        ...(anyRanked
           ? RANKED.map((severity) => ({
               label: severity,
-              value: String(ranked.filter(({ gap }) => rankOf(gap.severity) === severity).length),
+              value: String(counts.get(severity) ?? 0),
             }))
           : []),
-        ...(other > 0 ? [{ label: "Other or not stated", value: String(other) }] : []),
+        ...groups
+          .filter(({ rank }) => rank > RANKED.length)
+          .map(({ label, items: rows }) => ({ label, value: String(rows.length) })),
       ]}
     />
   );
@@ -195,8 +215,8 @@ function GapLedger({
     >
       <table role="table" className={STACK.table}>
         <caption className="sr-only">
-          Gaps ordered High, Medium, Low, then any other stated severity as written, then those with
-          none stated
+          Gaps ordered by the severity words the page does not rank, as written, then High, Medium,
+          Low, then those with none stated
         </caption>
         <thead role="rowgroup" className={STACK.head}>
           <tr role="row">
@@ -207,8 +227,8 @@ function GapLedger({
             ))}
           </tr>
         </thead>
-        {severityGroups(items).map(({ label, items: rows }) => (
-          <tbody role="rowgroup" key={label} className={STACK.body}>
+        {severityGroups(items).map(({ key, label, items: rows }) => (
+          <tbody role="rowgroup" key={key} className={STACK.body}>
             <tr role="row" className="border-t border-border-hairline bg-surface-subtle">
               <th
                 role="rowheader"
@@ -286,7 +306,7 @@ export function GapSummary({
       span={12}
       label="Gaps summary"
       className={items.length === 0 ? "gap-2 p-4 sm:p-4" : undefined}
-      kicker="What this run could not establish, ordered High, Medium, Low, then other stated words, then none stated"
+      kicker="What this run could not establish. Severity words the page does not rank come first, as written; then High, Medium, Low; then none stated"
       title={
         <>
           Gaps{" "}

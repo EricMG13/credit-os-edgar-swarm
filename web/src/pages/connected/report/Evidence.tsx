@@ -2,7 +2,7 @@ import { Button } from "@/components/base/buttons/button";
 import { Segmented } from "@/components/kit/Segmented";
 import { StatsStrip } from "@/components/kit/StatsStrip";
 import { citedSourcePages, sourceCitationNote } from "../sourceFiles";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { moduleName, type Mode } from "../api";
 import { field } from "../layout";
 import {
@@ -331,8 +331,16 @@ type EvidenceTab = (typeof tabs)[number];
 
 const tabRoute = (tab: EvidenceTab) => (tab === "Script checks" ? "checks" : tab.toLowerCase());
 
+/** Places on the Record tab a link can land on: the notes, the run record (and the comparison note in it), the files. */
+const RECORD_TARGETS = ["notes", "run", "comparison", "files"] as const;
+type RecordTarget = (typeof RECORD_TARGETS)[number];
+const asRecordTarget = (word: string | undefined) => RECORD_TARGETS.find((item) => item === word);
+
 function evidenceRoute(entries: OutputEntry[], target: string | undefined, hasChecks: boolean) {
-  const [section, module] = (target ?? "").split("/");
+  const [section, second, third] = (target ?? "").split("/");
+  const recordTarget =
+    section === "record" ? (asRecordTarget(second) ?? asRecordTarget(third)) : undefined;
+  const module = asRecordTarget(second) && section === "record" ? undefined : second;
   const location = section ? resolveEvidenceLocation(entries, section) : null;
   const namedTab =
     section === "checks" && !hasChecks
@@ -344,7 +352,17 @@ function evidenceRoute(entries: OutputEntry[], target: string | undefined, hasCh
   const entry = location?.entry;
   const selectedModule = entry?.output.module ?? module;
   const line = location?.line;
-  return { module, location, invalidTraceAddress, tab, selectedIndex, entry, selectedModule, line };
+  return {
+    module,
+    location,
+    invalidTraceAddress,
+    tab,
+    selectedIndex,
+    entry,
+    selectedModule,
+    line,
+    recordTarget,
+  };
 }
 
 function EvidenceNavigation({
@@ -445,6 +463,34 @@ function EvidenceHandoff({
   );
 }
 
+/**
+ * Brings a Record address's target into view and puts focus on it, once the target is drawn: the
+ * page may draw it after the address arrives. A new address lands again; the same one does not.
+ */
+function useLandOnRecordTarget(target: RecordTarget | undefined) {
+  const landed = useRef<RecordTarget | undefined>(undefined);
+  useEffect(() => {
+    if (!target) {
+      landed.current = undefined;
+      return;
+    }
+    if (landed.current === target) return;
+    // After the frame's own "a new address opens at the top" reset, which runs in the same commit.
+    const timer = window.setTimeout(() => {
+      const element = document.getElementById(
+        `evidence-record-${target === "comparison" ? "run" : target}`,
+      );
+      if (!element) return;
+      landed.current = target;
+      element.scrollIntoView({ block: "start" });
+      element.focus({ preventScroll: true });
+    }, 0);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  });
+}
+
 function showHandoffs(tab: EvidenceTab, entry: OutputEntry | undefined, invalid: boolean) {
   return tab === "Summary" || tab === "Record" || (tab === "Trace" && !entry && !invalid);
 }
@@ -485,10 +531,10 @@ function AssumptionRegister({
   return (
     <section
       aria-label={`Assumption register: ${model.id}`}
-      className="grid min-w-0 gap-3 rounded-ds-md border border-border-hairline p-4"
+      className="grid min-w-0 grid-cols-1 gap-3 rounded-ds-md border border-border-hairline p-4"
     >
       <h4 className="text-h4 font-medium text-text-primary">{register.heading}</h4>
-      <p>Model {model.id}</p>
+      <p className="wrap-anywhere">Model {model.id}</p>
       {register.intro && <p>{register.intro}</p>}
       {/* A recorded register can be wider than the viewport. */}
       <div
@@ -528,6 +574,7 @@ function AssumptionRegister({
                         href={evidencePath(folder, handoff, line)}
                         color="link-gray"
                         size="sm"
+                        className="min-h-8 max-[480px]:min-h-11"
                       >
                         Source row
                       </Button>
@@ -563,8 +610,17 @@ export function ReportEvidence({
   models?: ForecastModel[];
 }) {
   const checks = run.evidence.scriptChecks ?? [];
-  const { module, invalidTraceAddress, tab, selectedIndex, entry, selectedModule, line } =
-    evidenceRoute(entries, target, checks.length > 0);
+  const {
+    module,
+    invalidTraceAddress,
+    tab,
+    selectedIndex,
+    entry,
+    selectedModule,
+    line,
+    recordTarget,
+  } = evidenceRoute(entries, target, checks.length > 0);
+  useLandOnRecordTarget(tab === "Record" ? recordTarget : undefined);
   const { evidence } = run;
   const sourceGroups: SourceGroup[] = [
     { label: "Used by a module", rows: evidence.sources },
@@ -636,6 +692,7 @@ export function ReportEvidence({
             modules={[...new Set(entries.map((item) => item.output.module))]}
             entries={entries}
             snapshot={snapshot}
+            folder={run.folder}
           />
         )}
         {tab === "Trace" && !entry && !invalidTraceAddress && (
@@ -646,12 +703,39 @@ export function ReportEvidence({
             </p>
           </Tile>
         )}
+        {tab === "Record" && (
+          <Disclosure
+            id="evidence-record-run"
+            title="Show the run record"
+            hint="calls, cap, spend and models; the comparison note when the run has one"
+            open={
+              recordTarget === "run" ||
+              recordTarget === "comparison" ||
+              Boolean(run.changes?.note || run.changes?.problem)
+            }
+          >
+            <ReportRecord run={run} entries={entries} module={module} mode={mode} />
+          </Disclosure>
+        )}
         {showHandoffs(tab, entry, invalidTraceAddress) && (
           <EvidenceHandoffs entries={entries} module={module} run={run} />
         )}
-        {(tab === "Summary" || tab === "Record") && downloads}
+        {(tab === "Summary" || tab === "Record") && (
+          <div
+            id={tab === "Record" ? "evidence-record-files" : undefined}
+            tabIndex={tab === "Record" ? -1 : undefined}
+            className="min-w-0 outline-none lg:col-span-12"
+          >
+            {downloads}
+          </div>
+        )}
         {tab === "Record" && (!module || module === "CP-2G") && models.length > 0 && (
-          <div className="grid min-w-0 grid-cols-1 gap-4 lg:col-span-12">
+          <Disclosure
+            id="evidence-record-notes"
+            title="Show model notes, limitations and assumption registers"
+            hint={`${String(models.length)} ${models.length === 1 ? "model" : "models"}, as recorded for the forecast`}
+            open={recordTarget === "notes"}
+          >
             <RecordedModelQualifications models={models} />
             {models.map((model) => (
               <AssumptionRegister
@@ -661,18 +745,6 @@ export function ReportEvidence({
                 folder={run.folder}
               />
             ))}
-          </div>
-        )}
-        {tab === "Record" && (
-          <Disclosure
-            label="Run record"
-            title="Run record"
-            hint="calls, cap, spend and models"
-            open={Boolean(run.changes?.note || run.changes?.problem)}
-          >
-            <div className="min-w-0 [&_section]:rounded-none [&_section]:border-0 [&_section]:bg-transparent [&_section]:p-0 [&_section]:shadow-none [&_h3]:text-h4 [&>div>section:first-child>h3]:sr-only">
-              <ReportRecord run={run} entries={entries} module={module} mode={mode} />
-            </div>
           </Disclosure>
         )}
         {tab === "Trace" && !entry && (!module || module === "CP-8") && comparison && (

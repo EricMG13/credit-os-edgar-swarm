@@ -48,11 +48,20 @@ it("draws the source passage with its location", () => {
   expect(screen.getByText("annual-report.pdf · p. 84")).toBeVisible();
 });
 
-it("says where to look, not that nothing was recorded, for a trace that does not know its citations", () => {
-  render(<TraceSourcePassage trace={trace({ excerpt: null })} />);
-  expect(screen.getByText(/This trace carries no passage/)).toBeVisible();
-  expect(screen.queryByText("No source passage was recorded for this item.")).toBeNull();
-  expect(screen.queryByText("Source excerpt")).toBeNull();
+it("draws nothing for a trace that does not know its citations and carries no excerpt", () => {
+  const { container } = render(<TraceSourcePassage trace={trace({ excerpt: null })} />);
+  expect(container).toBeEmptyDOMElement();
+});
+
+it("caps the excerpt of a trace that does not know its citations and lets it scroll", () => {
+  render(
+    <TraceSourcePassage
+      trace={trace({ excerpt: { quote: "x ".repeat(2000), source: "annual-report.pdf" } })}
+    />,
+  );
+  const box = screen.getByRole("region", { name: "Source excerpt" });
+  expect(box).toHaveAttribute("tabindex", "0");
+  expect(box.className).toContain("max-h-60");
 });
 
 it("states that nothing was cited when the trace knows its citations and there are none", () => {

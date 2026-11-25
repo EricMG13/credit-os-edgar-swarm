@@ -4,46 +4,62 @@ import { Badge } from "@/components/base/badges/badges";
 import { FileSearch02 } from "@untitledui/icons";
 import { moduleName } from "../api";
 import { citedSourcePages } from "../sourceFiles";
-import type { OutputEntry, PublishedRun, Snapshot } from "../publishedReport";
+import {
+  evidencePath,
+  type OutputEntry,
+  type PublishedRun,
+  type Snapshot,
+} from "../publishedReport";
 import { GapText } from "@/pages/library/parts/GapText";
 import { STACK } from "./evidenceKit";
+import { handoffName } from "./evidenceLabels";
 import { Tile } from "./overview/Tile";
 
 export type SourceGroup = { label: string; rows: PublishedRun["evidence"]["sources"] };
 type SourceRow = SourceGroup["rows"][number];
 
-type Citation = { sha: string | null; label: string };
+type Citation = { sha: string | null; label: string; entry: OutputEntry; line: number };
+
+const NO_FILE = /without a source key/i;
+const NOT_IN_INVENTORY = /not in the .*inventory/i;
 
 /**
- * What each file is cited as, from the citations recorded in the given handoffs only (the snapshot
- * holds other runs' chips too), keyed by the file's name. A page is shown as attested where the
+ * What the designated handoffs cite, from the given entries only (the snapshot holds other runs'
+ * chips, and alternate handoffs are not the delivered ones): each file's citations keyed by file
+ * name, and apart from them the citations that give a page but name no file or name a file that is
+ * not in the inventory, as the chip's own reason records it. A page is shown as attested where the
  * bridge attests one and otherwise as the citation's own label, as written.
  */
 export function citationsByFile(snapshot: Snapshot, entries: OutputEntry[]) {
-  const ids = new Set(entries.map((entry) => entry.output.id));
-  const cited = new Map<string, Citation[]>();
+  const byId = new Map(entries.map((entry) => [entry.output.id, entry]));
+  const byFile = new Map<string, Citation[]>();
+  const unmatched = { noFile: [] as Citation[], notInInventory: [] as Citation[] };
   for (const [key, chips] of Object.entries(snapshot.chips)) {
-    const id = key.slice(0, key.lastIndexOf(":"));
-    if (!ids.has(id)) continue;
-    const folder = id.split("/")[0] ?? "";
+    const cut = key.lastIndexOf(":");
+    const entry = byId.get(key.slice(0, cut));
+    const line = Number(key.slice(cut + 1));
+    if (!entry || !Number.isSafeInteger(line)) continue;
+    const folder = entry.output.id.split("/")[0] ?? "";
     for (const chip of chips) {
-      if (!chip.file) continue;
       const label = citedSourcePages(folder, chip) ?? chip.label ?? "Cited, no page recorded";
-      cited.set(chip.file, [...(cited.get(chip.file) ?? []), { sha: chip.sha256, label }]);
+      const cited = { sha: chip.sha256, label, entry, line };
+      if (chip.file) byFile.set(chip.file, [...(byFile.get(chip.file) ?? []), cited]);
+      else if (NO_FILE.test(chip.reason ?? "")) unmatched.noFile.push(cited);
+      else if (NOT_IN_INVENTORY.test(chip.reason ?? "")) unmatched.notInInventory.push(cited);
     }
   }
-  return cited;
+  return { byFile, ...unmatched };
 }
 
-/** The distinct citations that can be this file: same name, and the same hash where both record one. */
-function citationsOf(cited: Map<string, Citation[]>, source: SourceRow) {
-  return [
-    ...new Set(
-      (cited.get(source.name) ?? [])
-        .filter(({ sha }) => !source.sha256 || !sha || sha === source.sha256)
-        .map(({ label }) => label),
-    ),
-  ];
+type Cited = ReturnType<typeof citationsByFile>;
+
+/** The citations of one source: same name, and the same hash where both record one; a different hash is kept and said. */
+function citationsOf(cited: Cited, source: SourceRow) {
+  return (cited.byFile.get(source.name) ?? []).map(({ sha, label }) => ({
+    label,
+    sha,
+    kind: !source.sha256 ? "unhashed" : !sha || sha === source.sha256 ? "same" : "different",
+  }));
 }
 
 function UsedBy({
@@ -79,7 +95,7 @@ function SourceTable({
 }: {
   group: SourceGroup;
   modules: string[];
-  cited: Map<string, Citation[]>;
+  cited: Cited;
   scope?: string;
 }) {
   const headings = [
@@ -154,14 +170,34 @@ function SourceTable({
                     className={`${STACK.cell} text-text-secondary`}
                   >
                     {citations.length > 0 ? (
-                      <ul className="grid gap-1">
-                        {citations.map((label) => (
-                          <li key={label}>{label}</li>
+                      <ul className="grid gap-1.5">
+                        {citations.map(({ label, sha, kind }, index) => (
+                          <li key={`${String(index)}-${label}`} className="grid gap-0.5">
+                            {kind === "different" ? (
+                              <>
+                                <span>{`Cited as ${label} under a different hash`}</span>
+                                <code className="font-mono text-mono wrap-anywhere text-text-tertiary">
+                                  {sha}
+                                </code>
+                              </>
+                            ) : (
+                              <>
+                                <span>{label}</span>
+                                {kind === "unhashed" && (
+                                  <span className="text-caption text-text-tertiary">
+                                    Matched by file name; the source has no hash
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </li>
                         ))}
                       </ul>
                     ) : (
                       <GapText>
-                        {scope ? `Not cited in ${moduleName(scope)}` : "Not cited by a handoff"}
+                        {scope
+                          ? `No citation in ${moduleName(scope)} names this file`
+                          : "No citation names this file"}
                       </GapText>
                     )}
                   </td>
@@ -193,6 +229,45 @@ function SourceTable({
   );
 }
 
+function UnmatchedCitations({ cited, folder }: { cited: Cited; folder: string }) {
+  const rows = [
+    {
+      list: cited.noFile,
+      words: (n: number) =>
+        `${String(n)} ${n === 1 ? "citation gives" : "citations give"} a page and ${n === 1 ? "names" : "name"} no file`,
+    },
+    {
+      list: cited.notInInventory,
+      words: (n: number) =>
+        `${String(n)} ${n === 1 ? "citation names" : "citations name"} a file that is not in the source inventory`,
+    },
+  ].filter(({ list }) => list.length > 0);
+  if (rows.length === 0) return null;
+  return (
+    <ul
+      aria-label="Citations not matched to a supplied file"
+      className="grid gap-1 rounded-ds-sm bg-surface-subtle p-3 text-small text-text-secondary"
+    >
+      {rows.map(({ list, words }) => {
+        const first = list[0];
+        return (
+          <li key={words(1)} className="flex flex-wrap items-center gap-x-3">
+            <span>{words(list.length)}</span>
+            {first && (
+              <a
+                href={evidencePath(folder, first.entry, first.line)}
+                className="inline-flex min-h-8 items-center text-text-link underline max-[480px]:min-h-11"
+              >
+                {`First: ${handoffName(first.entry)}, line ${String(first.line)}`}
+              </a>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 /** What was supplied: the files modules used, and apart from them those supplied and not used. */
 export function EvidenceSources({
   sourceGroups,
@@ -200,12 +275,14 @@ export function EvidenceSources({
   modules,
   entries,
   snapshot,
+  folder,
 }: {
   sourceGroups: SourceGroup[];
   module?: string;
   modules: string[];
   entries: OutputEntry[];
   snapshot: Snapshot;
+  folder: string;
 }) {
   const shown = sourceGroups
     .map((group) => ({
@@ -215,7 +292,7 @@ export function EvidenceSources({
     .filter(({ rows }) => rows.length > 0);
   const cited = citationsByFile(
     snapshot,
-    entries.filter((entry) => !module || entry.output.module === module),
+    entries.filter((entry) => entry.selected && (!module || entry.output.module === module)),
   );
   return (
     <Tile
@@ -239,15 +316,18 @@ export function EvidenceSources({
           </EmptyState.Content>
         </EmptyState>
       ) : (
-        shown.map((group) => (
-          <SourceTable
-            key={group.label}
-            group={group}
-            modules={modules}
-            cited={cited}
-            scope={module}
-          />
-        ))
+        <>
+          <UnmatchedCitations cited={cited} folder={folder} />
+          {shown.map((group) => (
+            <SourceTable
+              key={group.label}
+              group={group}
+              modules={modules}
+              cited={cited}
+              scope={module}
+            />
+          ))}
+        </>
       )}
     </Tile>
   );

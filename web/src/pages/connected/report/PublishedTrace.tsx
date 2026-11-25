@@ -1,7 +1,7 @@
 import { FileSearch02 } from "@untitledui/icons";
-import { Button } from "@/components/base/buttons/button";
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 import { TraceButton } from "@/pages/library/parts/TraceControl";
+import { TraceCitations } from "@/pages/library/parts/TraceCitations";
 import { TraceDrawer } from "@/pages/library/parts/TraceDrawer";
 import type { SourcedTrace } from "@/pages/library/parts/TraceParts";
 import { handoffBlockAt, traceForLine } from "../ReportContent";
@@ -84,19 +84,34 @@ export function PublishedTraceProvider({
     },
     [snapshot, folder, entries, route],
   );
+  const citationsFor = useCallback(
+    (item: string) => {
+      const prefix = evidenceHref(folder, "");
+      const location = resolveEvidenceLocation(
+        entries,
+        item.startsWith(prefix) ? item.slice(prefix.length) : item,
+      );
+      return location?.line === undefined
+        ? undefined
+        : citationsAt(snapshot, location.entry, location.line);
+    },
+    [snapshot, folder, entries],
+  );
   return (
     <TraceContext.Provider value={open}>
-      {children}
-      {active && (
-        <TraceDrawer
-          trace={active}
-          evidenceHref={evidenceHref(folder, active.evidenceItem)}
-          isOpen
-          onClose={() => {
-            setSelection({ route, trace: null });
-          }}
-        />
-      )}
+      <TraceCitations.Provider value={citationsFor}>
+        {children}
+        {active && (
+          <TraceDrawer
+            trace={active}
+            evidenceHref={evidenceHref(folder, active.evidenceItem)}
+            isOpen
+            onClose={() => {
+              setSelection({ route, trace: null });
+            }}
+          />
+        )}
+      </TraceCitations.Provider>
     </TraceContext.Provider>
   );
 }
@@ -118,12 +133,12 @@ export function PublishedSource({
   return open ? (
     <TraceButton label={`Show sources for ${name}`} open={open} />
   ) : (
-    <Button
+    <a
       href={href}
       aria-label={linkLabel ?? children}
-      color="tertiary"
-      size="sm"
-      iconLeading={FileSearch02}
-    />
+      className="inline-flex size-8 flex-none items-center justify-center rounded-ds-sm border border-transparent text-text-tertiary transition-colors duration-150 hover:border-border-control hover:bg-action-subtle hover:text-action focus-visible:border-border-control focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 motion-reduce:transition-none max-[480px]:size-11"
+    >
+      <FileSearch02 aria-hidden="true" className="size-4" />
+    </a>
   );
 }

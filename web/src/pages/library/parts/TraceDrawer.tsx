@@ -1,6 +1,7 @@
 import { Button } from "@/components/base/buttons/button";
 import { SlideoutMenu } from "@/components/application/slideout-menus/slideout-menu";
 import { DerivationTree } from "./DerivationTree";
+import { useSourcedTrace } from "./TraceCitations";
 import {
   CAPTION,
   CitedSources,
@@ -17,7 +18,7 @@ import {
  * material shows on a run page.
  */
 export function TraceDrawer({
-  trace,
+  trace: given,
   evidenceHref,
   isOpen,
   onClose,
@@ -27,6 +28,7 @@ export function TraceDrawer({
   isOpen: boolean;
   onClose: () => void;
 }) {
+  const trace = useSourcedTrace(given);
   return (
     <SlideoutMenu
       className="max-[480px]:pl-0"

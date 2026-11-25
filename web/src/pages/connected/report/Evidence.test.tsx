@@ -478,7 +478,7 @@ it("shows the service's comparison note in full on the Record tab", () => {
   );
   // A comparison note opens the run record, so the link that sends a reader to it lands on it.
   expect(
-    screen.getByText("Run record", { selector: "summary" }).closest("details"),
+    screen.getByText("Show the run record", { selector: "summary" }).closest("details"),
   ).toHaveAttribute("open");
   expect(screen.getByText("Comparison note:")).toBeVisible();
   expect(screen.getByText(note)).toBeVisible();

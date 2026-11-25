@@ -3,6 +3,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { OutputEntry, PublishedRun, Snapshot } from "../publishedReport";
 import { evidencePath } from "../publishedReport";
 import { ReportEvidence } from "./Evidence";
+import type { ForecastModel } from "./ForecastRecord";
 
 const sha = "a".repeat(64);
 const entry: OutputEntry = {
@@ -130,6 +131,68 @@ it("keeps the supplied-but-unused file in its own group on the Sources tab", () 
 
 it("closes the run record by default on the Record tab", () => {
   show("record");
-  const summary = screen.getByText("Run record", { selector: "summary" });
+  const summary = screen.getByText("Show the run record", { selector: "summary" });
   expect(summary.closest("details")).not.toHaveAttribute("open");
+});
+
+const model = {
+  id: "m1",
+  cashflow: { notes: ["Base case is a conditional illustration."] },
+  sources: [],
+  register: null,
+} as unknown as ForecastModel;
+
+function showRecord(
+  target: string,
+  extra: Partial<PublishedRun> = {},
+  models: ForecastModel[] = [model],
+) {
+  return render(
+    <ReportEvidence
+      snapshot={snapshot}
+      run={{ ...run, ...extra }}
+      entries={[entry]}
+      target={target}
+      mode="synthetic"
+      models={models}
+    />,
+  );
+}
+
+it.each([
+  ["record/run", "evidence-record-run"],
+  ["record/comparison", "evidence-record-run"],
+  ["record/notes", "evidence-record-notes"],
+  ["record/files", "evidence-record-files"],
+  ["record/CP-2G/notes", "evidence-record-notes"],
+])("brings %s into view and focuses it", async (target, id) => {
+  const scroll = vi.fn();
+  Element.prototype.scrollIntoView = scroll;
+  showRecord(target, {}, [{ ...model, id: "CP-2G" }]);
+  const element = document.getElementById(id);
+  expect(element).not.toBeNull();
+  await vi.waitFor(() => {
+    expect(scroll).toHaveBeenCalled();
+  });
+  expect(document.activeElement).toBe(element);
+});
+
+it("opens only the block the Record address names, and keeps #evidence/record working", () => {
+  const view = showRecord("record");
+  expect(document.getElementById("evidence-record-run")).not.toHaveAttribute("open");
+  expect(document.getElementById("evidence-record-notes")).not.toHaveAttribute("open");
+  view.unmount();
+  showRecord("record/notes");
+  expect(document.getElementById("evidence-record-notes")).toHaveAttribute("open");
+  expect(document.getElementById("evidence-record-run")).not.toHaveAttribute("open");
+});
+
+it("treats a module after record as the module filter, not a target", () => {
+  showRecord("record/CP-2");
+  expect(screen.getByLabelText("Module")).toHaveValue("CP-2");
+});
+
+it("opens the run record on arrival when the run has a comparison note", () => {
+  showRecord("record", { changes: { note: "changes: not produced" } });
+  expect(document.getElementById("evidence-record-run")).toHaveAttribute("open");
 });
