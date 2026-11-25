@@ -23,6 +23,7 @@ const UNDATED_YEAR = 10000;
 const PUNCTUATION = /['’(),.:]/g;
 const SEPARATORS = /[ /\-–—_·|]+/g;
 
+const NEXT_TWELVE = /(?<![A-Z])NTM(?![A-Z])/;
 const PRIOR_YTD = /(?<![A-Z])PYTD(?![A-Z])/;
 // Highest class first. A word may touch digits (`LTM2025`), never another letter.
 const CLASS_WORDS: readonly (readonly [PeriodClass, RegExp])[] = [
@@ -170,7 +171,10 @@ export function parsePeriod(label: string): ParsedPeriod | null {
     const [end, span] = endInYear(year.value, month, part, count);
     return { periodClass, end, span, priorYtd };
   }
-  return periodClass === "actual" ? null : { periodClass, end: null, span: null, priorYtd };
+  // A forecast word alone (`Outlook`, `Target`, `Plan`) names no period; `NTM` is one of its own.
+  if (periodClass === "actual" || (periodClass === "forecast" && !NEXT_TWELVE.test(normal)))
+    return null;
+  return { periodClass, end: null, span: null, priorYtd };
 }
 
 /** (class, year, month, day, span, PYTD-first) of a label; null when it is unparseable. */

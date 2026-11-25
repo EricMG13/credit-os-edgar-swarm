@@ -57,6 +57,15 @@ _CLASS_WORDS: tuple[tuple[PeriodClass, re.Pattern[str]], ...] = (
     (PeriodClass.LTM, re.compile(r"(?<![A-Z])(?:LTM|TTM)(?![A-Z])")),
     (PeriodClass.YTD, re.compile(r"(?<![A-Z])(?:PYTD|YTD)(?![A-Z])")),
 )
+_NEXT_TWELVE = re.compile(r"(?<![A-Z])NTM(?![A-Z])")
+
+
+def _wordy_forecast(period_class: PeriodClass, text: str) -> bool:
+    """Whether an undated label is a forecast by a word alone (`Outlook`, `Target`, `Plan`): such
+    a word without a year names no period. `NTM` is a period of its own."""
+    return period_class is PeriodClass.FORECAST and _NEXT_TWELVE.search(text) is None
+
+
 _COUNT = re.compile(r"(?<![0-9A-Z])([369])M(?![A-Z])")
 
 _ISO_DATE = re.compile(r"(?<![0-9])([0-9]{4})-([0-9]{2})-([0-9]{2})(?![0-9])")
@@ -201,7 +210,7 @@ def parse_period(label: str) -> ParsedPeriod | None:
     The label is read strictly: every token of the rule is taken out of it, at most one date,
     year, month and part, and anything left over makes it unparseable.
     """
-    text = _normalise(label)
+    text = text_before = _normalise(label)
     prior = _PRIOR_YTD.search(text) is not None
     iso, text = _take(_ISO_DATE, text)
     day = _calendar_date(int(iso[1]), int(iso[2]), int(iso[3])) if iso else None
@@ -223,11 +232,9 @@ def parse_period(label: str) -> ParsedPeriod | None:
         return ParsedPeriod(period_class, day, "date", prior_ytd)
     if year:
         return ParsedPeriod(period_class, *_end_in_year(year.value, month, part, count), prior_ytd)
-    return (
-        None
-        if period_class is PeriodClass.ACTUAL
-        else ParsedPeriod(period_class, None, None, prior_ytd)
-    )
+    if period_class is PeriodClass.ACTUAL or _wordy_forecast(period_class, text_before):
+        return None
+    return ParsedPeriod(period_class, None, None, prior_ytd)
 
 
 def _key(

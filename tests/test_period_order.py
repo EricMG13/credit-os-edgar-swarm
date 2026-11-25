@@ -30,7 +30,7 @@ CASES: dict[str, Any] = json.loads(
 
 def test_the_shared_table_has_every_kind_of_case() -> None:
     assert len(CASES["labels"]) == 82
-    assert len(CASES["unparseable"]) == 44
+    assert len(CASES["unparseable"]) == 52
     assert len(CASES["orders"]) == 12
 
 

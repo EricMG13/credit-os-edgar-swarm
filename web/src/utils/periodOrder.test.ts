@@ -24,7 +24,7 @@ const self = (label: string) => label;
 
 it("reads every kind of case from the shared table", () => {
   expect(cases.labels).toHaveLength(82);
-  expect(cases.unparseable).toHaveLength(44);
+  expect(cases.unparseable).toHaveLength(52);
   expect(cases.orders).toHaveLength(12);
 });
 

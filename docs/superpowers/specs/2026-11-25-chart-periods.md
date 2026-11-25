@@ -40,7 +40,9 @@ End, first match wins: the ISO date; else, with a year: the month named; the qua
 3n); the half (month 6n); the `3M`/`6M`/`9M` count; or the year alone (month 12). Fiscal labels
 are placed as if the fiscal year ends in the calendar year it names; a label that carries its
 own date (`FY2024 / 2024-09-30`) goes by that date. A label with a class marker and no year is
-an undated period of its class (`LTM`, `LTM 30 Jun`, `Dec YTD`).
+an undated period of its class (`LTM`, `LTM 30 Jun`, `Dec YTD`). A forecast word
+with no year (`Outlook`, `Target`, `Plan`) names no period and is unparseable; `NTM` alone is
+an undated forecast.
 
 Sort key: class, then end (year, month, day), then span (date or month, quarter, half, year),
 so on one end date the shorter period comes first. Within ytd, ltm and pf an undated label sorts
