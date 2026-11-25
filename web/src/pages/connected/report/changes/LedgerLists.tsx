@@ -12,10 +12,12 @@ export function LedgerList({ group }: { group: LedgerGroup }) {
         {heading} ({items.length})
       </h4>
       <ul className="grid gap-3">
-        {items.map(({ text, note, status, line, href }) => (
+        {items.map(({ text, missing, note, noteLabel, status, line, href }) => (
           <li key={line} className="flex items-start justify-between gap-3">
             <span className="grid min-w-0 gap-0.5">
-              {text === null ? (
+              {text === null && missing ? (
+                <span className="text-small text-gap-text">Limitation not stated</span>
+              ) : text === null ? (
                 <a className={LINK} href={href}>
                   Read this limitation in Evidence
                 </a>
@@ -27,7 +29,7 @@ export function LedgerList({ group }: { group: LedgerGroup }) {
               )}
               {note && (
                 <span className="text-caption text-text-secondary">
-                  {group.status === "Closed" ? "Closed by: " : ""}
+                  {group.status === "Closed" ? "Closed by: " : noteLabel ? `${noteLabel}: ` : ""}
                   {note}
                 </span>
               )}

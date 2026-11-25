@@ -45,29 +45,38 @@ export function PassageBody({
   const List = numbered ? "ol" : "ul";
   return (
     <List className={numbered ? "grid list-decimal gap-3 pl-5 marker:font-mono" : "grid gap-3"}>
-      {items.map((item) => (
-        <li
-          key={item.kind === "text" ? item.line : item.table.line}
-          className={item.kind === "table" ? "list-none -ml-5" : undefined}
-        >
-          {item.kind === "text" ? (
-            <ParagraphLine text={item.text} href={item.href} noun={noun} />
-          ) : (
-            <PublishedTable
-              table={item.table}
-              rowSource={(line, label) => (
-                <PublishedSource
-                  href={evidencePath(folder, entry, line)}
-                  name={label}
-                  linkLabel={`Source for ${label}`}
-                >
-                  Source
-                </PublishedSource>
-              )}
-            />
-          )}
-        </li>
-      ))}
+      {items.map((item) => {
+        const own = item.kind === "text" && item.text !== null && /^\d+[.)]\s/.test(item.text);
+        return (
+          <li
+            key={
+              item.kind === "text" ? item.line : item.kind === "table" ? item.table.line : item.href
+            }
+            className={item.kind === "table" || own ? "-ml-5 list-none" : undefined}
+          >
+            {item.kind === "text" ? (
+              <ParagraphLine text={item.text} href={item.href} noun={noun} />
+            ) : item.kind === "link" ? (
+              <a className={LINK} href={item.href}>
+                Read {item.label} in Evidence
+              </a>
+            ) : (
+              <PublishedTable
+                table={item.table}
+                rowSource={(line, label) => (
+                  <PublishedSource
+                    href={evidencePath(folder, entry, line)}
+                    name={label}
+                    linkLabel={`Source for ${label}`}
+                  >
+                    Source
+                  </PublishedSource>
+                )}
+              />
+            )}
+          </li>
+        );
+      })}
     </List>
   );
 }

@@ -21,7 +21,6 @@ import {
   analysisRows,
   classifyMeasures,
   issuerFacts,
-  labelKey,
   ledgerOf,
   leftovers,
   passageItems,
@@ -209,8 +208,8 @@ function Verdict({
           {verdict?.first.text ? (
             <p
               className={cx(
-                "reading-copy font-display text-balance text-text-primary sm:text-h2",
-                verdict.first.text.length > 240 ? "text-h4" : "text-h3",
+                "reading-copy font-display text-balance text-text-primary",
+                verdict.first.text.length > 240 ? "text-h4 sm:text-h3" : "text-h3 sm:text-h2",
               )}
             >
               {verdict.first.text}
@@ -243,13 +242,15 @@ function Measures({
   change,
   entry,
   trace,
+  folder,
 }: {
   change: PublishedChanges;
   entry: OutputEntry | undefined;
   trace: Trace;
+  folder: string;
 }) {
   const [view, setView] = useState<"list" | "table">("list");
-  const groups = classifyMeasures(change, trace.measure, entry);
+  const groups = classifyMeasures(change, trace.measure, entry, folder);
   const rows = comparisonRows(change, "reader");
   if (!rows.length)
     return (
@@ -348,13 +349,12 @@ function Comparison({
   trace: Trace;
 }) {
   const pack = change.pack;
-  const { unmoved } = classifyMeasures(change, trace.measure, entry);
+  const { unmoved, matchedLines } = classifyMeasures(change, trace.measure, entry, run.folder);
   const folder = run.folder;
-  const labels = new Set((pack?.measures ?? []).map(({ label }) => labelKey(label)));
   return (
     <Bento>
       <Verdict change={change} entry={entry} folder={folder} />
-      <Measures change={change} entry={entry} trace={trace} />
+      <Measures change={change} entry={entry} trace={trace} folder={folder} />
       {Boolean(pack?.modules?.length) && (
         <Tile span={5} label="Modules" title="What changed in the analysis" className="self-start">
           {pack?.prior?.format === "earlier" && (
@@ -371,7 +371,7 @@ function Comparison({
         traces={pack?.maturity_profile ? maturityTraces(snapshot, run, entries, change) : undefined}
       />
       {entry && <Passages entry={entry} folder={folder} />}
-      <FactsTile result={issuerFacts(entry, folder, labels)} />
+      <FactsTile result={issuerFacts(entry, folder, matchedLines)} />
       {unmoved.length > 0 && (
         <Tile span={12} label="Measures that did not move" title="Measures that did not move">
           <details>

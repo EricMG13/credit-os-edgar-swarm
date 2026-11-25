@@ -18,8 +18,10 @@ function CellText({ cell, href }: { cell: Cell; href: string }) {
           Read in Evidence
         </a>
       );
-    default:
+    case "dash":
       return <span className="text-text-tertiary">—</span>;
+    default:
+      return <span className="text-gap-text">Not stated</span>;
   }
 }
 
@@ -31,26 +33,29 @@ function CellText({ cell, href }: { cell: Cell; href: string }) {
 export function FactsTile({ result }: { result: ReturnType<typeof issuerFacts> }) {
   const { facts, noChange } = result;
   if (facts.length === 0 && !noChange) return null;
-  if (facts.length === 0 && noChange)
+  const statement = noChange && (
+    <div className="flex items-start justify-between gap-3">
+      <p className="reading-copy text-body text-text-primary">
+        No material change at the issuer. <CellText cell={noChange.reason} href={noChange.href} />
+      </p>
+      <PublishedSource
+        href={noChange.href}
+        name="This statement"
+        linkLabel="Source for this statement"
+      >
+        Source
+      </PublishedSource>
+    </div>
+  );
+  if (facts.length === 0)
     return (
       <Tile span={12} label="At the issuer" title="At the issuer">
-        <div className="flex items-start justify-between gap-3">
-          <p className="reading-copy text-body text-text-primary">
-            No material change at the issuer.{" "}
-            <CellText cell={noChange.reason} href={noChange.href} />
-          </p>
-          <PublishedSource
-            href={noChange.href}
-            name="This statement"
-            linkLabel="Source for this statement"
-          >
-            Source
-          </PublishedSource>
-        </div>
+        {statement}
       </Tile>
     );
   return (
     <Tile span={12} label="Also changed at the issuer" title="Also changed at the issuer">
+      {statement}
       <ul className="grid">
         {facts.map(({ line, href, label, before, after, cause, effect }) => (
           <li
@@ -68,20 +73,29 @@ export function FactsTile({ result }: { result: ReturnType<typeof issuerFacts> }
             <p className="font-mono text-small text-text-secondary">
               <CellText cell={before} href={href} /> → <CellText cell={after} href={href} />
             </p>
-            {cause.kind !== "absent" && (
-              <p className="reading-copy text-small text-text-secondary">
-                Cause: <CellText cell={cause} href={href} />
-              </p>
-            )}
-            {effect.kind !== "absent" && (
-              <p className="reading-copy text-small text-text-secondary">
-                Effect on the credit view: <CellText cell={effect} href={href} />
-              </p>
-            )}
+            <p className="reading-copy text-small text-text-secondary">
+              <Said cell={cause} href={href} name="Cause" />
+            </p>
+            <p className="reading-copy text-small text-text-secondary">
+              <Said cell={effect} href={href} name="Effect on the credit view" />
+            </p>
           </li>
         ))}
       </ul>
     </Tile>
+  );
+}
+
+/** "Cause: …" where the cell says something; "Cause not stated" where it is a dash or empty. */
+function Said({ cell, href, name }: { cell: Cell; href: string; name: string }) {
+  if (cell.kind === "dash" || cell.kind === "absent")
+    return (
+      <span className="text-gap-text">{name === "Cause" ? "Cause" : "Effect"} not stated</span>
+    );
+  return (
+    <>
+      {name}: <CellText cell={cell} href={href} />
+    </>
   );
 }
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { OutputEntry, PublishedChanges, Section } from "../../publishedReport";
 import {
   analysisRows,
+  words,
   classifyMeasures,
   issuerFacts,
   ledgerOf,
@@ -145,7 +146,7 @@ describe("classifyMeasures", () => {
       ["big", { kind: "written", text: "Unresolved" }, "Weaker cover"],
       ["small", { kind: "written", text: "New period" }, null],
       ["referenced", { kind: "referenced" }, null],
-      ["blank", { kind: "absent" }, null],
+      ["blank", { kind: "dash" }, null],
       ["elsewhere", { kind: "unmatched" }, null],
     ]);
   });
@@ -225,11 +226,11 @@ describe("issuerFacts", () => {
         ],
       ),
     ]);
-    const { facts } = issuerFacts(entry, "cur", new Set(["net leverage"]));
+    const { facts } = issuerFacts(entry, "cur", new Set([12]));
     expect(facts).toHaveLength(1);
     expect(facts[0]).toMatchObject({
       label: { kind: "written", text: "New term loan B of US$600m signed" },
-      before: { kind: "absent" },
+      before: { kind: "dash" },
       after: { kind: "written", text: "Signed" },
     });
     expect(facts[0]?.href).toMatch(/^\/report\/cur#evidence\//);
@@ -321,7 +322,7 @@ describe("issuerFacts placeholders and labels", () => {
       kind: "written",
       text: "New period",
     });
-    expect(issuerFacts(entry, "cur", new Set(["net leverage"])).facts).toEqual([]);
+    expect(issuerFacts(entry, "cur", new Set([12])).facts).toEqual([]);
   });
 });
 
@@ -409,5 +410,142 @@ describe("leftovers and unlisted analysis rows", () => {
       ),
     ]);
     expect(analysisRows(entry, "cur", new Set(["CP-2"])).map((row) => row.line)).toEqual([13]);
+  });
+});
+
+describe("cause matching on the whole label", () => {
+  const rowsOf = (rows: string[][]) =>
+    entryWith([
+      table(
+        "What changed: the issuer",
+        ["Measure or fact", "Earlier", "Current", "Cause", "Effect on the credit view"],
+        rows,
+      ),
+    ]);
+
+  it("gives each of two like-named measures its own cause and leaves neither as a fact", () => {
+    const entry = rowsOf([
+      ["EBITDA (reported)", "100", "110", "New period", "Reported up"],
+      ["EBITDA (adjusted)", "120", "125", "Unresolved", "Adjusted up"],
+    ]);
+    const change: PublishedChanges = {
+      pack: {
+        measures: [
+          measure("ebitda_reported", "100", "110", 10, { label: "EBITDA (reported)" }),
+          measure("ebitda_adjusted", "120", "125", 5, { label: "EBITDA (adjusted)" }),
+        ],
+      },
+      verdicts: verdicts(["ebitda_reported", "ebitda_adjusted"]),
+    };
+    const groups = classifyMeasures(change, () => undefined, entry, "cur");
+    expect(groups.moved.map((m) => [m.key, m.cause])).toEqual([
+      ["ebitda_reported", { kind: "written", text: "New period" }],
+      ["ebitda_adjusted", { kind: "written", text: "Unresolved" }],
+    ]);
+    expect(issuerFacts(entry, "cur", groups.matchedLines).facts).toEqual([]);
+  });
+
+  it("trims a trailing unit only when it is the measure's own unit, and takes the trace from that row", () => {
+    const entry = rowsOf([["Interest cover", "2.1x", "1.7x", "New period", ""]]);
+    const change: PublishedChanges = {
+      pack: {
+        measures: [measure("coverage", "2.1", "1.7", -0.4, { label: "Interest Cover (x)" })],
+      },
+      verdicts: verdicts(["coverage"]),
+    };
+    const [item] = classifyMeasures(change, () => undefined, entry, "cur").moved;
+    expect(item?.cause).toEqual({ kind: "written", text: "New period" });
+    expect(item?.href).toMatch(/^\/report\/cur#evidence\/.*-12$/);
+    const other: PublishedChanges = {
+      pack: {
+        measures: [measure("coverage", "2.1", "1.7", -0.4, { label: "Interest cover (reported)" })],
+      },
+      verdicts: verdicts(["coverage"]),
+    };
+    expect(classifyMeasures(other, () => undefined, entry, "cur").moved[0]?.cause).toEqual({
+      kind: "unmatched",
+    });
+  });
+
+  it("matches none when two rows would match one measure, and draws both rows as facts", () => {
+    const entry = rowsOf([
+      ["Net leverage", "6x", "7x", "New period", ""],
+      ["net leverage", "6x", "7x", "Unresolved", ""],
+    ]);
+    const change: PublishedChanges = {
+      pack: { measures: [measure("net_leverage", "6", "7", 1, { label: "Net leverage" })] },
+      verdicts: verdicts(["net_leverage"]),
+    };
+    const groups = classifyMeasures(change, () => undefined, entry, "cur");
+    expect(groups.moved[0]?.cause).toEqual({ kind: "unmatched" });
+    expect(issuerFacts(entry, "cur", groups.matchedLines).facts).toHaveLength(2);
+  });
+
+  it("keeps the no-change row beside facts, and tells a written dash from an empty cell", () => {
+    const entry = rowsOf([
+      ["No material change", "—", "—", "None", "Nothing else moved."],
+      ["New term loan", "", "Signed", "—", ""],
+    ]);
+    const { facts, noChange } = issuerFacts(entry, "cur", new Set());
+    expect(noChange?.reason).toEqual({ kind: "written", text: "Nothing else moved." });
+    expect(facts[0]).toMatchObject({
+      before: { kind: "absent" },
+      after: { kind: "written", text: "Signed" },
+      cause: { kind: "dash" },
+      effect: { kind: "absent" },
+    });
+  });
+});
+
+describe("words", () => {
+  it("names a module and drops a bracketed code the shared reader does not know", () => {
+    expect(words("Short credit memo (CP-MEMO)")).toBe("Short credit memo");
+    expect(words("Liquidity (CP-2D) and Other (CP-9X)")).toBe("Liquidity and Other");
+  });
+});
+
+describe("handoff content that is off-contract", () => {
+  it("draws a register-pattern Findings section as an Evidence link naming it, and a level-2 extra section as written", () => {
+    const entry = entryWith([
+      { heading: "Findings", level: 2, line: 1, blocks: [] },
+      {
+        heading: "Period table",
+        level: 3,
+        line: 5,
+        blocks: [{ type: "text", line: 6, end: 6, text: "x" }],
+      },
+      {
+        heading: "Comparison notes",
+        level: 2,
+        line: 20,
+        blocks: [{ type: "text", line: 21, end: 21, text: "Notes on how the runs were matched." }],
+      },
+    ]);
+    const rest = leftovers(entry, "cur");
+    expect(rest.map((s) => s.heading)).toEqual(["Period table", "Comparison notes"]);
+    expect(rest[0]?.items[0]).toMatchObject({ kind: "link", label: "Period table" });
+    expect(rest[1]?.items[0]).toMatchObject({
+      kind: "text",
+      text: "Notes on how the runs were matched.",
+    });
+  });
+
+  it("draws a ledger row whose Limitation cell is a dash but which carries a status and a note", () => {
+    const result = ledgerOf(
+      entryWith([
+        table(
+          "Limitations ledger",
+          ["Earlier ref", "Current ref", "Limitation", "Status", "What closed it"],
+          [["E1", "—", "—", "Closed", "Superseded by the new agreement"]],
+        ),
+      ]),
+      "cur",
+    );
+    if (!result || "table" in result) throw new Error("expected groups");
+    expect(result.groups[0]?.items[0]).toMatchObject({
+      missing: true,
+      note: "Superseded by the new agreement",
+      noteLabel: "What closed it",
+    });
   });
 });

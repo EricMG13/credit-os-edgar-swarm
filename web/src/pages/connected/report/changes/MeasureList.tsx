@@ -39,6 +39,7 @@ function CauseLine({ cause, href }: { cause: Cause; href: string | undefined }) 
         </a>
       );
     case "absent":
+    case "dash":
       return <span className="text-caption text-gap-text">Cause not stated</span>;
   }
 }

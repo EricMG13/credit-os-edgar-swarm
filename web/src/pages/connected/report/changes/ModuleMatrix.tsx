@@ -2,7 +2,8 @@ import { ChevronDown } from "@untitledui/icons";
 import { Fragment, useState } from "react";
 import { StatusShape, type Shape } from "@/components/status/shapes";
 import { cx } from "@/utils/cx";
-import { containsReference, readParagraph, readerText } from "../../publishedReport";
+import { containsReference, readParagraph } from "../../publishedReport";
+import { words } from "./model";
 import type { PublishedChanges } from "../../publishedReport";
 import { PublishedSource } from "../PublishedTrace";
 import { statusColumn, type StatusColumn } from "./model";
@@ -19,7 +20,7 @@ function side(ran: boolean, bottomLine: string | null) {
   const { body } = readParagraph(bottomLine);
   return containsReference(body)
     ? "See the retained handoff in Evidence."
-    : readerText(body) || "Not stated";
+    : words(body) || "Not stated";
 }
 
 /** Module × status; each row opens to the earlier and the current conclusion. One list, no second copy. */
@@ -65,9 +66,13 @@ export function ModuleMatrix({
           const column = statusColumn(status);
           const shown = COLUMNS.find((col) => col.key === column);
           const href = source(item.module);
-          const explanation = [verdict?.cause, verdict?.why].filter((value): value is string =>
-            Boolean(value && !containsReference(value)),
+          const stated = [verdict?.cause, verdict?.why].filter((value): value is string =>
+            Boolean(value && value.trim()),
           );
+          const explanation = stated.filter((value) => !containsReference(value));
+          const cited = stated.length > explanation.length;
+          const statusText =
+            status || (stated.length > 0 ? "Status not stated" : "Explanation not stated");
           const panel = `matrix-${item.module}`;
           return (
             <Fragment key={item.module}>
@@ -97,7 +102,7 @@ export function ModuleMatrix({
                             <StatusShape shape={shown.shape} />
                           </span>
                         )}
-                        {status || "Explanation not stated"}
+                        {statusText}
                       </span>
                     </span>
                   </button>
@@ -130,8 +135,16 @@ export function ModuleMatrix({
                     </div>
                     {explanation.length > 0 && (
                       <p className="reading-copy text-small text-text-secondary">
-                        {readerText(explanation.join(" · "))}
+                        {words(explanation.join(" · "))}
                       </p>
+                    )}
+                    {cited && (
+                      <a
+                        className="inline-flex min-h-8 items-center text-link text-small underline underline-offset-2 max-[480px]:min-h-11"
+                        href={href ?? "#evidence/trace/CP-8"}
+                      >
+                        Read the explanation in Evidence
+                      </a>
                     )}
                     {href && (
                       <PublishedSource href={href} name={item.title}>

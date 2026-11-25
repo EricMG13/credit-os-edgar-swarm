@@ -24,6 +24,8 @@ export type Cause =
   | { kind: "referenced" }
   /** The row was found and its cell is empty. */
   | { kind: "absent" }
+  /** The module wrote a dash: it is a dash, not a gap. */
+  | { kind: "dash" }
   /** No row of the issuer table carries this measure's name. */
   | { kind: "unmatched" }
   /** The comparison module has no handoff in this run: said once on the page, not per row. */
@@ -54,31 +56,39 @@ export type MeasureGroups = {
   notAssessable: MeasureChange[];
 };
 
+/** The module's words: a module named where it is cited, and a bracketed code the reader does not know dropped. */
+export const words = (text: string) => readerText(text).replace(/\s*\(CP-[A-Za-z0-9-]+\)/g, "");
+
 const plain = (text = "") =>
   text.replaceAll("**", "").replaceAll("`", "").trim().replace(/\s+/g, " ");
 const nothing = (text: string) => text === "" || /^[—–-]$/.test(text);
 
 function causeOf(cell: string | undefined): Cause {
-  const text = readerText(plain(cell));
-  if (nothing(text)) return { kind: "absent" };
+  const text = words(plain(cell));
+  if (text === "") return { kind: "absent" };
+  if (nothing(text)) return { kind: "dash" };
   return containsReference(text) ? { kind: "referenced" } : { kind: "written", text };
 }
 
 /** A written cell in the module's words; null for a placeholder or a cell that cites a source. */
 function written(cell: string | undefined) {
-  const text = readerText(plain(cell));
+  const text = words(plain(cell));
   return nothing(text) || containsReference(text) ? null : text;
 }
 
-/** A measure's name compared across registers: module names applied, marks, case and a trailing unit dropped. */
-export const labelKey = (text = "") =>
-  readerText(plain(text))
-    .toLowerCase()
-    .replace(/\s*\([^)]*\)\s*$/, "")
-    .trim();
+/** A label compared on the whole: module names applied, marks, case and spacing normalised. */
+const fullKey = (text = "") => words(plain(text)).toLowerCase().replace(/\s+/g, " ").trim();
 
-function issuerRows(entry: OutputEntry | undefined) {
-  const table =
+/** The label without a trailing "(unit)", only where that bracket is the measure's own unit. */
+function withoutUnit(key: string, unit: string | null | undefined) {
+  const own = (unit ?? "").trim().toLowerCase();
+  return own && key.endsWith(`(${own})`) ? key.slice(0, key.length - own.length - 2).trim() : key;
+}
+
+type IssuerRow = { cells: string[]; line: number };
+
+function issuerTable(entry: OutputEntry | undefined) {
+  return (
     entry &&
     namedTable(entry, "What changed: the issuer", [
       "Measure or fact",
@@ -86,8 +96,33 @@ function issuerRows(entry: OutputEntry | undefined) {
       "Current",
       "Cause",
       "Effect on the credit view",
-    ]);
-  return new Map(table?.rows.map(({ cells }) => [labelKey(cells[0]), cells] as const));
+    ])
+  );
+}
+
+type PackMeasure = NonNullable<NonNullable<PublishedChanges["pack"]>["measures"]>[number];
+
+/**
+ * Each pack measure's own row of the issuer table, matched on the whole label (a trailing bracket is
+ * trimmed only where it is the measure's own unit). A measure with two candidate rows, or a row
+ * claimed by two measures, matches none: both stay unmatched rather than take a wrong cause.
+ */
+function matchRows(measures: readonly PackMeasure[], rows: readonly IssuerRow[]) {
+  const candidates = measures.map((measure) => {
+    const unit = measure.unit ?? measure.current?.unit ?? measure.prior?.unit;
+    const wanted = new Set([fullKey(measure.label), withoutUnit(fullKey(measure.label), unit)]);
+    return rows.filter(({ cells }) => {
+      const key = fullKey(cells[0]);
+      return wanted.has(key) || wanted.has(withoutUnit(key, unit));
+    });
+  });
+  const claims = new Map<IssuerRow, number>();
+  for (const list of candidates)
+    for (const row of list) claims.set(row, (claims.get(row) ?? 0) + 1);
+  return candidates.map((list) => {
+    const [only] = list;
+    return list.length === 1 && only && claims.get(only) === 1 ? only : undefined;
+  });
 }
 
 /** The pack's own reading of comparability, as `comparisonRows` applies it. */
@@ -104,19 +139,30 @@ function comparable(
   );
 }
 
+export type MeasureMatches = MeasureGroups & { matchedLines: Set<number> };
+
 /** The pack's measures in the pack's order, grouped by what the pack says about each. */
 export function classifyMeasures(
   change: PublishedChanges,
   trace: (label: string) => string | undefined,
   entry?: OutputEntry,
-): MeasureGroups {
+  folder = "",
+): MeasureMatches {
   const rows = comparisonRows(change, "reader");
-  const causes = issuerRows(entry);
-  const groups: MeasureGroups = { moved: [], revised: [], unmoved: [], notAssessable: [] };
-  (change.pack?.measures ?? []).forEach((measure, index) => {
+  const measures = change.pack?.measures ?? [];
+  const matched = matchRows(measures, issuerTable(entry)?.rows ?? []);
+  const groups: MeasureMatches = {
+    moved: [],
+    revised: [],
+    unmoved: [],
+    notAssessable: [],
+    matchedLines: new Set(),
+  };
+  measures.forEach((measure, index) => {
     const [label = measure.label, before = "", after = "", delta = "—", reason = "", effect = ""] =
       rows[index] ?? [];
-    const issuer = causes.get(labelKey(label));
+    const issuer = matched[index];
+    if (issuer) groups.matchedLines.add(issuer.line);
     const sign = measure.difference == null ? null : changeSign(String(measure.difference));
     const shown = delta !== "—";
     const toned = shown && sign !== null ? tone(measure.key, String(measure.difference)) : "none";
@@ -131,9 +177,13 @@ export function classifyMeasures(
       delta: shown && sign !== null ? delta : null,
       tone: toned === "none" ? null : toned,
       reason: stated(reason.replace(/ · Same-period analysis change$/, "")),
-      cause: !entry ? { kind: "noModule" } : issuer ? causeOf(issuer[3]) : { kind: "unmatched" },
-      effect: written(effect) ?? written(issuer?.[4]),
-      href: trace(label),
+      cause: !entry
+        ? { kind: "noModule" }
+        : issuer
+          ? causeOf(issuer.cells[3])
+          : { kind: "unmatched" },
+      effect: written(effect) ?? written(issuer?.cells[4]),
+      href: entry && issuer ? evidencePath(folder, entry, issuer.line) : trace(label),
     };
     if (!comparable(change, measure) || sign === null) groups.notAssessable.push(item);
     else if (revision && sign !== 0) groups.revised.push(item);
@@ -179,17 +229,9 @@ const cellOf = causeOf;
 export function issuerFacts(
   entry: OutputEntry | undefined,
   folder: string,
-  measureKeys: ReadonlySet<string>,
+  matchedLines: ReadonlySet<number>,
 ) {
-  const table =
-    entry &&
-    namedTable(entry, "What changed: the issuer", [
-      "Measure or fact",
-      "Earlier",
-      "Current",
-      "Cause",
-      "Effect on the credit view",
-    ]);
+  const table = issuerTable(entry);
   const facts: {
     line: number;
     href: string;
@@ -202,10 +244,9 @@ export function issuerFacts(
   let noChange: { reason: Cell; href: string } | null = null;
   if (!entry || !table) return { facts, noChange };
   for (const { cells, line } of table.rows) {
-    const key = labelKey(cells[0]);
-    if (measureKeys.has(key)) continue;
+    if (matchedLines.has(line)) continue;
     const href = evidencePath(folder, entry, line);
-    if (key === "no material change") {
+    if (fullKey(cells[0]) === "no material change") {
       noChange = { reason: cellOf(cells[4]), href };
       continue;
     }
@@ -247,6 +288,10 @@ export function analysisRows(
 /** A ledger row: its text in the module's words, or null where it cites a source (then `href` is the link). */
 type LedgerItem = {
   text: string | null;
+  /** The Limitation cell is empty or a dash, but the row carries a status or a note. */
+  missing: boolean;
+  /** The ledger's own heading of the note column. */
+  noteLabel: string;
   note: string | null;
   /** The status as the row wrote it. */
   status: string;
@@ -281,12 +326,16 @@ export function ledgerOf(
   if (limitation < 0 || status < 0) return { table };
   const byStatus = new Map<string, { heading: string; items: LedgerItem[] }>();
   for (const { cells, line } of table.rows) {
-    if (nothing(plain(cells[limitation]))) continue;
-    const asWritten = readerText(plain(cells[status])) || "Not stated";
+    const empty = nothing(plain(cells[limitation]));
+    const note = closed < 0 ? null : written(cells[closed]);
+    if (empty && !note && nothing(plain(cells[status]))) continue;
+    const asWritten = words(plain(cells[status])) || "Not stated";
     const key = statusKey(asWritten) || "not stated";
     const item: LedgerItem = {
       text: written(cells[limitation]),
-      note: closed < 0 ? null : written(cells[closed]),
+      missing: empty,
+      note,
+      noteLabel: closed < 0 ? "" : (table.headers[closed] ?? ""),
       status: asWritten,
       line,
       href: evidencePath(folder, entry, line),
@@ -317,7 +366,10 @@ function ledgerTable(entry: OutputEntry) {
 }
 
 type Paragraph = { line: number; text: string | null; href: string };
-export type PassageItem = ({ kind: "text" } & Paragraph) | { kind: "table"; table: Table };
+export type PassageItem =
+  | ({ kind: "text" } & Paragraph)
+  | { kind: "table"; table: Table }
+  | { kind: "link"; label: string; href: string };
 
 /** The blocks of one reader passage in order; `text` is null where a paragraph cites a source. */
 export function passageItems(
@@ -339,7 +391,7 @@ export function passageItems(
         {
           kind: "text",
           line: block.line,
-          text: containsReference(body) ? null : readerText(body),
+          text: containsReference(body) ? null : words(body),
           href: evidencePath(folder, entry, block.line),
         },
       ];
@@ -374,7 +426,7 @@ function blockItems(blocks: Block[], entry: OutputEntry, folder: string): Passag
       {
         kind: "text",
         line: block.line,
-        text: containsReference(body) ? null : readerText(body),
+        text: containsReference(body) ? null : words(body),
         href: evidencePath(folder, entry, block.line),
       },
     ];
@@ -384,34 +436,46 @@ function blockItems(blocks: Block[], entry: OutputEntry, folder: string): Passag
 /**
  * Whatever the comparison module wrote that no tile draws: prose under a register, an extra section,
  * a table that does not follow the contract. Drawn as written, so nothing a handoff carries is dropped.
+ * A register-like section under Findings (a period table, a source context) is a link to Evidence.
  */
 export function leftovers(entry: OutputEntry | undefined, folder: string) {
   if (!entry) return [];
   const used = new Set<Block>(
     [
-      namedTable(entry, "What changed: the issuer", [
-        "Measure or fact",
-        "Earlier",
-        "Current",
-        "Cause",
-        "Effect on the credit view",
-      ]),
+      issuerTable(entry),
       namedTable(entry, "What changed: the analysis", ["Module", "Status", "Cause", "Why"]),
       ledgerTable(entry),
     ].filter((block): block is Table => block !== undefined),
   );
-  return classifySections(entry.sections)
-    .filter(
-      ({ section, role }) =>
-        section.level >= 3 && (role === "finding" || REGISTER_HEADINGS.has(section.heading)),
-    )
-    .map(({ section }) => ({
-      heading: section.heading,
-      items: blockItems(
+  const out: { heading: string; items: PassageItem[] }[] = [];
+  let parent = "";
+  for (const { section, role } of classifySections(entry.sections)) {
+    if (section.level === 2) parent = section.heading;
+    const register = REGISTER_HEADINGS.has(section.heading);
+    let items: PassageItem[] = [];
+    if (section.level >= 3 && (role === "finding" || register)) {
+      items = blockItems(
         section.blocks.filter((block) => !used.has(block)),
         entry,
         folder,
-      ),
-    }))
-    .filter(({ items }) => items.length > 0);
+      );
+    } else if (
+      role === "registers" &&
+      !register &&
+      !/^(Reader summary|Confidence inputs)$/.test(section.heading)
+    ) {
+      items =
+        parent === "Findings"
+          ? [
+              {
+                kind: "link",
+                label: section.heading,
+                href: evidencePath(folder, entry, section.line),
+              },
+            ]
+          : blockItems(section.blocks, entry, folder);
+    }
+    if (items.length > 0) out.push({ heading: section.heading, items });
+  }
+  return out;
 }
