@@ -1,0 +1,248 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "enr-1632790-2026-11-18-credit_snapshot-host",
+    "issuer_id": "enr-1632790",
+    "issuer_name": "Energizer Holdings, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-09-30_enr.htm.jsonl": {
+      "path": "source-text/10-K_2024-09-30_enr.htm.jsonl",
+      "sha256": "7530b01f4190b2905317e8943e146a50a051b196e03c4eadb5cdd2a65946ad33"
+    },
+    "10-K_2025-09-30_enr.htm.jsonl": {
+      "path": "source-text/10-K_2025-09-30_enr.htm.jsonl",
+      "sha256": "6e29ef84f083b94a30202f8131291b94ca7970db8d30a0961da8819fa74ba131"
+    },
+    "10-Q_2025-12-31_enr.htm.jsonl": {
+      "path": "source-text/10-Q_2025-12-31_enr.htm.jsonl",
+      "sha256": "8e7a336bca4f44bfc23faa63ab078865638ff203ff56782fa105f71d60b871e2"
+    },
+    "10-Q_2026-03-31_enr.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_enr.htm.jsonl",
+      "sha256": "2c3f9e7135961905fce07fcdb077eebc85f8525c87ee0c173eb300f0af7ef316"
+    },
+    "10-Q_2026-06-30_enr.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_enr.htm.jsonl",
+      "sha256": "c96f70f72f27d029a160097124305aa6ac6ab40786ce146307fc803ebb6c8d97"
+    },
+    "EX99.1_2025-12-31_enr_enrpr123125-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2025-12-31_enr_enrpr123125-htm.htm.jsonl",
+      "sha256": "5a36817b3e925c5f2ff99d7dfccab89ca00f8422612bb0c3fdcc3a80db4b9674"
+    },
+    "EX99.1_2026-03-31_enr_enrpr33126-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_enr_enrpr33126-htm.htm.jsonl",
+      "sha256": "a92dd47025999087a7774e0535703ea6684303c600920a2f3bd272e6eae6fa27"
+    },
+    "EX99.1_2026-06-30_enr_enrpr63026-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_enr_enrpr63026-htm.htm.jsonl",
+      "sha256": "2b69ab8e3fd4b279b27cabd922e49eedf0494f3c6200f13b0717708958546a8f"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1632790-energizer-holdings-inc.json",
+      "sha256": "b82cc031ef482e222ab5eacc20a4e22520d1dd97fc5bf1e2208f5f4843ca32ad"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "c3d1b4fe3467268f09e285acb821a5ba58ad3f7831956b9b6b19242489cf58bc"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "34dda276fc7d61fd3cbc7b5e6931fabbb375aa13df5161cb74e84eccd137902b"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "53071eaf282614429b989c8277c53317ab39f8ba3669a1f72223f80fb36f48ad"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "3a52911796da256db8f5ce93220c24b2a2f3e800fa472dac71c0f3421eda0b75"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Energizer Holdings, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Energizer Holdings, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}
