@@ -692,18 +692,20 @@ function PathChart({ path }: { path: Path }) {
                 </Fragment>,
               ],
         )}
-        {geometry.periods.map(({ period, label }) => (
-          <text
-            key={period}
-            x={label}
-            y={PATH.height - 10}
-            textAnchor="middle"
-            fontSize={TEXT}
-            className="fill-text-tertiary font-body"
-          >
-            {period}
-          </text>
-        ))}
+        {geometry.periods.map(({ period, label }) =>
+          label === null ? null : (
+            <text
+              key={period}
+              x={label}
+              y={PATH.height - 10}
+              textAnchor="middle"
+              fontSize={TEXT}
+              className="fill-text-tertiary font-body"
+            >
+              {period}
+            </text>
+          ),
+        )}
       </svg>
     </div>
   );
