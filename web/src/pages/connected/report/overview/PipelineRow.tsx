@@ -97,7 +97,13 @@ function LineText({
 
 function OpenModules() {
   return (
-    <Button color="secondary" size="sm" href="#modules" iconTrailing={ArrowRight}>
+    <Button
+      color="secondary"
+      size="sm"
+      href="#modules"
+      iconTrailing={ArrowRight}
+      className="max-md:min-h-11"
+    >
       Open Modules
     </Button>
   );

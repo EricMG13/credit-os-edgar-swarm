@@ -118,7 +118,7 @@ const AT = {
   body: "lg:flex lg:flex-1 lg:items-center",
   nodes: "lg:relative lg:block lg:h-(--h) lg:w-full",
   item: "lg:absolute lg:top-(--top) lg:left-(--left) lg:h-(--nh) lg:w-(--w)",
-  box: "lg:h-full lg:px-1.5 lg:py-1 lg:text-caption",
+  box: "lg:h-full lg:min-h-0 lg:px-1.5 lg:py-1 lg:text-caption",
   clamp: "lg:line-clamp-2",
   tag: "lg:sr-only",
   mark: "hidden lg:absolute lg:-top-1 lg:-right-1 lg:z-10 lg:block",
