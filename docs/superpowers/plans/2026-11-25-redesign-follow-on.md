@@ -15,7 +15,7 @@ the sessions found while building.
 
 | # | Change | Unlocks | Found by |
 |---|---|---|---|
-| 1 | Committee decision writes stance and action as typed fields; Security selection writes its recommendation the same way | The call chip on Overview, the stance on History and Library, was → now on Changes. Today the page reads "Final Action Bias: …" from prose and says when it cannot | Screen map; S1 |
+| 1 | Committee decision writes stance and action as typed fields, Security selection its recommendation the same way, and the publication records a clearance for each (the `actionTreatment` of `docs/superpowers/specs/2026-11-24-issuer-front-page-and-report-exports.md`, which today records holds only) | The call chip on Overview, the stance on History and Library, was → now on Changes. Since the merge with main (2026-11-25) no summary page shows a decision: none has a recorded clearance, so each says it is not shown and the module's own page shows it | Screen map; S1; PR #73 |
 | 2 | Evidence validation writes clearance status and committee use as fields | The clearance tile without reading the bottom line | Screen map; S3 |
 | 3 | Financial foundation writes pro forma states as typed rows, a full debt stack, and more than two periods where supplied; period labels the page can order (FY, LTM end, quarter) | Pro forma marks, the capital structure, trend lines. Today a row like "FY2024 pro forma" makes a period set unorderable and the page draws no line | Screen map; S3 |
 | 4 | Forward credit model writes a per-year path per case | The Forecast lead and grid without gaps | Screen map |
@@ -52,7 +52,15 @@ positions) are listed with the handoff field that would let each be drawn honest
 |---|---|---|
 | 17 | A real run of Earnings quality, Liquidity, Ratings migration, Refinancing, Restructuring and Short snapshot | Their pages proven on retained output. Earnings delta, Ratings migration, Market-implied risk and Restructuring are not in the synthetic run, so their leads have been seen only in test renders |
 
-## 5. Shared reader rules (Code, small)
+## 5. Carried over from the merge with main (2026-11-25)
+
+| # | Change | Why |
+|---|---|---|
+| 20 | The on-screen issuer front page of PR #73 (profile, credit view, debt stack, metrics grid, one decision chart first in Overview) | The owner chose the redesigned Overview on screen; the front page composes the Credit Snapshot PDF only. Its spec's "compact brief first in Overview" is not met on screen |
+| 21 | Restyle the PDF preview chrome and the Export PDF control to the redesign | They keep main's markup; the print colours already follow the theme (teal since the redesign) |
+| 22 | Evidence validation's clearance on the Overview | Its bottom line is withheld with the other decision modules; the tile only links its page until item 2 gives typed fields that state no decision |
+
+## 6. Shared reader rules (Code, small)
 
 | # | Change | Why |
 |---|---|---|
