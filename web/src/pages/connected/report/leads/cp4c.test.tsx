@@ -1,5 +1,5 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, expect, it } from "vitest";
 import type { OutputEntry } from "../../publishedReport";
 import { RestructuringLead } from "./cp4c";
 import { leadProps } from "./lead.fixture";
@@ -263,24 +263,12 @@ it("names a plan path without a name by its place", () => {
   expect(within(tile).getByRole("link", { name: "Source for Row 1" })).toBeVisible();
 });
 
-it("puts the scenario switch under the title on a phone, where the control row cannot hold both", () => {
-  const narrow = (query: string) =>
-    ({
-      matches: false,
-      media: query,
-      addEventListener: () => undefined,
-      removeEventListener: () => undefined,
-    }) as unknown as MediaQueryList;
-  vi.stubGlobal("matchMedia", narrow);
-  try {
-    render(<RestructuringLead {...leadProps(restructuring())} />);
-    const tile = screen.getByRole("region", { name: "Value allocation" });
-    expect(within(tile).getByRole("group", { name: "Scenario" }).parentElement).not.toBe(
-      within(tile).getByRole("group", { name: "Value allocation: figure or table" }).parentElement,
-    );
-    fireEvent.click(within(tile).getByRole("button", { name: "Scenario 2" }));
-    expect(within(tile).getByRole("img")).toHaveAccessibleName(/Enterprise value 800/);
-  } finally {
-    vi.unstubAllGlobals();
-  }
+it("puts the scenario switch in the control row beside Figure / Table", () => {
+  render(<RestructuringLead {...leadProps(restructuring())} />);
+  const tile = screen.getByRole("region", { name: "Value allocation" });
+  expect(within(tile).getByRole("group", { name: "Scenario" }).parentElement).toBe(
+    within(tile).getByRole("group", { name: "Value allocation: figure or table" }).parentElement,
+  );
+  fireEvent.click(within(tile).getByRole("button", { name: "Scenario 2" }));
+  expect(within(tile).getByRole("img")).toHaveAccessibleName(/Enterprise value 800/);
 });

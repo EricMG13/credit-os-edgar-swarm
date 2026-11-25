@@ -1,4 +1,4 @@
-import { Fragment, useState, useSyncExternalStore } from "react";
+import { Fragment, useState } from "react";
 import { Segmented } from "@/components/kit/Segmented";
 import { blocked, unitLabel, withUnit } from "../../publishedReport";
 import { ticks, word, type SourceTable } from "../../visuals/visualData";
@@ -39,21 +39,6 @@ const TITLE = "Value allocation";
 const RECOVERY = "Recovery by class";
 const FULCRUM = "This page could not read a fulcrum class from the handoff.";
 
-const WIDE = "(min-width: 640px)";
-
-/** Whether the screen is wide enough for both switches on the tile's control row. */
-function useWide() {
-  return useSyncExternalStore(
-    (change) => {
-      const query = typeof window.matchMedia === "function" ? window.matchMedia(WIDE) : null;
-      query?.addEventListener("change", change);
-      return () => query?.removeEventListener("change", change);
-    },
-    () => (typeof window.matchMedia === "function" ? window.matchMedia(WIDE).matches : true),
-    () => true,
-  );
-}
-
 /** "Value allocation — scenario 1" → "Scenario 1"; the title itself when it names no scenario. */
 function scenarioName(title: string) {
   const rest = title.slice(TITLE.length).replace(/^\s*[—–:-]\s*/, "");
@@ -63,7 +48,6 @@ function scenarioName(title: string) {
 function ValueAllocation({ entry, href }: { entry: Entry; href: Href }) {
   const scenarios = chartsStartingWith(entry, TITLE);
   const [chosen, choose] = useState(scenarios[0]?.title ?? "");
-  const wide = useWide();
   const current = scenarios.find((item) => item.title === chosen) ?? scenarios[0];
   if (!current)
     return (
@@ -94,24 +78,20 @@ function ValueAllocation({ entry, href }: { entry: Entry; href: Href }) {
       title={TITLE}
       basis={read?.unit ? unitLabel(read.unit) : undefined}
       legend={
-        ((!wide && scenario) || (read && !read.why)) && (
+        read &&
+        !read.why && (
           <>
-            {!wide && scenario}
-            {read && !read.why && (
-              <>
-                <Key tone="primary">Value and residual</Key>
-                <Key tone="secondary">Cost or distribution</Key>
-              </>
-            )}
+            <Key tone="primary">Value and residual</Key>
+            <Key tone="secondary">Cost or distribution</Key>
           </>
         )
       }
-      // The scenario switch sits in the tile's one control row, beside Figure / Table; on a phone,
-      // where the row cannot hold both, it goes under the title.
+      // The scenario switch sits in the tile's one control row, beside Figure / Table; the row
+      // wraps on a phone.
       trace={
-        ((wide && scenario) || trace) && (
+        (scenario || trace) && (
           <>
-            {wide && scenario}
+            {scenario}
             {trace}
           </>
         )

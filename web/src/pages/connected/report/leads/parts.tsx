@@ -265,7 +265,7 @@ export function LeadFigure({
   const showing = table && view === "table" ? "table" : "figure";
   const controls =
     table || trace ? (
-      <div className="ml-auto flex flex-none flex-wrap items-center justify-end gap-2">
+      <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
         {table && (
           <Segmented
             label={`${label}: figure or table`}
