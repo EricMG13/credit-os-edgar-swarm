@@ -279,3 +279,23 @@ What I saw and changed:
 
 Not seen: the leads inside S2's real module frame (not merged); a real run of CP-2D, CP-2H, CP-3C,
 CP-3D, CP-4C (none exists).
+
+### 7.1 After the first review (2026-11-25, base d097d0d merged in)
+
+**Checks**: `npx tsc --noEmit` clean; eslint and prettier clean on changed files; `npx vitest run
+src/pages/connected` 174 files, 2,722 tests pass; `npm run build` and `npm run duplication` pass;
+`npm run unused` flags only `src/harness-leads.tsx` (the untracked harness) and exports in
+`coverage/trendLayout.ts` and `runActivityParts.tsx` that came with the merged base.
+
+**Rendered check** (`docs/design/preview/check-render.cjs`, widths 1440, 1280, 1024, 768, 390):
+- Throwaway harness, every lead on its synthetic or contract sample, the retained real shapes
+  (CP-2E h3 and h4, CP-2A T2DS.1, CP-2G sol-high block, CP-3 real recommendation table), an
+  empty and a blocked handoff for each of the 13: 205 renders, no failures.
+- Synthetic run module pages (10 leads, with an uncommitted `Modules.tsx` patch), plain and
+  `--stress`: no sideways page scroll at any width. The failures are all in parts outside S4's
+  files: the 28px trace button, the shell nav scroller, the frame's "Jump to section" select, the
+  shared event-lane buttons, and the generic waterfall chart `Modules.tsx` still draws on CP-2D.
+
+**Looked at**: contact sheets of every lead at 1440, 1024 and 390. Long dated lists were the
+tallest tiles (CP-2E hedge dates, CP-1A issuer history): a lane now shows three rows and keeps the
+rest behind a disclosure. Blocked leads draw nothing.
