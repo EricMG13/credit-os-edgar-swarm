@@ -268,7 +268,7 @@ const REASONS = [
   "the cell says Not supplied",
 ];
 
-it("lists every citation not attached to a supplied file by its recorded reason, as written, with an exact count and the first line", () => {
+it("lists every entry not attached to a supplied file by its recorded reason, as written, with an exact count and the first line", () => {
   const chips: Record<string, ReturnType<typeof gapChip>[]> = {};
   REASONS.forEach((reason, index) => {
     // reason number k is recorded k + 1 times, on lines 10 * k + 1 …
@@ -287,7 +287,7 @@ it("lists every citation not attached to a supplied file by its recorded reason,
     />,
   );
   const list = within(
-    screen.getByRole("list", { name: "Citations not matched to a supplied file" }),
+    screen.getByRole("list", { name: "Entries on handoff lines not attached to a supplied file" }),
   );
   REASONS.forEach((reason, index) => {
     expect(list.getByText(`${String(index + 1)} · ${reason}`)).toBeVisible();
@@ -350,7 +350,9 @@ it("shows an ambiguous citation on the file it names, not as no citation, and no
   ).toBeVisible();
   expect(used.queryByText("No citation names this file")).toBeNull();
   expect(
-    screen.queryByRole("list", { name: "Citations not matched to a supplied file" }),
+    screen.queryByRole("list", {
+      name: "Entries on handoff lines not attached to a supplied file",
+    }),
   ).toBeNull();
 });
 
@@ -365,6 +367,107 @@ it("draws no such line when every citation names a file", () => {
     />,
   );
   expect(
-    screen.queryByRole("list", { name: "Citations not matched to a supplied file" }),
+    screen.queryByRole("list", {
+      name: "Entries on handoff lines not attached to a supplied file",
+    }),
   ).toBeNull();
+});
+
+it("heads the list in words a reader sees, and says it counts by the reason recorded", () => {
+  render(
+    <EvidenceSources
+      folder="case"
+      entries={[h1]}
+      sourceGroups={groups}
+      modules={["CP-1"]}
+      snapshot={snapshot({ "case/CP-1.md:7": [gapChip("key not in inventory", "x")] })}
+    />,
+  );
+  expect(
+    screen.getByRole("heading", {
+      name: "Entries on handoff lines not attached to a supplied file",
+    }),
+  ).toBeVisible();
+  expect(screen.getByText("Counted by the reason recorded, as written.")).toBeVisible();
+});
+
+const cp3: SourceGroup[] = [
+  {
+    label: "Used by a module",
+    rows: [{ ...source, name: "only-cp3.pdf", readBy: ["CP-3"], sha256: null }],
+  },
+];
+
+it("keeps a file's row, and the unmatched list, under a module filter: rows and list hold every designated entry in scope", () => {
+  const chips = {
+    "case/CP-1.md:5": [
+      chip({ file: "only-cp3.pdf", sha256: null, pageHref: null, label: "only-cp3.pdf p.3" }),
+      gapChip(
+        "two inventory keys hold this file with different hashes",
+        "only-cp3.pdf p.9 · ambiguous",
+      ),
+      gapChip("page cited without a source key", "p.1 · no key"),
+    ],
+  };
+  for (const module of [undefined, "CP-1"]) {
+    render(
+      <EvidenceSources
+        folder="case"
+        entries={[h1]}
+        module={module}
+        sourceGroups={cp3}
+        modules={["CP-1", "CP-3"]}
+        snapshot={snapshot(chips)}
+      />,
+    );
+    const rows = within(screen.getByRole("table", { name: "Used by a module" }));
+    expect(rows.getByText("only-cp3.pdf p.3")).toBeVisible();
+    expect(rows.getByText("only-cp3.pdf p.9 · ambiguous")).toBeVisible();
+    expect(screen.getByText("1 · page cited without a source key")).toBeVisible();
+    cleanup();
+  }
+});
+
+it("draws the unmatched list even when no file is listed", () => {
+  render(
+    <EvidenceSources
+      folder="case"
+      entries={[h1]}
+      sourceGroups={[{ label: "Used by a module", rows: [] }]}
+      modules={["CP-1"]}
+      snapshot={snapshot({ "case/CP-1.md:7": [gapChip("no inventory", "p.2 · no key")] })}
+    />,
+  );
+  expect(screen.getByRole("heading", { name: "No source files recorded" })).toBeVisible();
+  expect(screen.getByText("1 · no inventory")).toBeVisible();
+});
+
+it("attaches a label to the longest file name it starts with, once", () => {
+  const files: SourceGroup[] = [
+    {
+      label: "Used by a module",
+      rows: [
+        { ...source, name: "filing.txt", sha256: null },
+        { ...source, name: "filing.txt restated", sha256: null },
+      ],
+    },
+  ];
+  render(
+    <EvidenceSources
+      folder="case"
+      entries={[h1]}
+      sourceGroups={files}
+      modules={["CP-1"]}
+      snapshot={snapshot({
+        "case/CP-1.md:5": [
+          gapChip(
+            "two inventory keys hold this file with different hashes",
+            "filing.txt restated p.4 · ambiguous",
+          ),
+        ],
+      })}
+    />,
+  );
+  expect(screen.getAllByText("filing.txt restated p.4 · ambiguous")).toHaveLength(1);
+  expect(screen.getAllByText("No citation names this file")).toHaveLength(1);
 });

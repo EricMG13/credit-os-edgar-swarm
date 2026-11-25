@@ -112,7 +112,11 @@ it("announces the result counts in a status region and says what is not searched
   expect(screen.getByRole("status")).toHaveTextContent(
     "3 matches: 2 handoff lines, 0 sources, 1 gap",
   );
-  expect(screen.getByText(/Not searched: script check outcomes, the run record/)).toBeVisible();
+  expect(
+    screen.getByText(
+      /Not searched: script check outcomes, the run record, citation labels and cited passages, and the text of the source files\./,
+    ),
+  ).toBeVisible();
 });
 
 it("says so when nothing matches, and restores the summary when the field is cleared", () => {
@@ -156,4 +160,28 @@ it("caps a long list, says so, and keeps document order", () => {
   const links = within(screen.getByRole("region", { name: "Handoff lines" })).getAllByRole("link");
   expect(links).toHaveLength(50);
   expect(screen.getByText("Showing the first 50 of 60, in document order.")).toBeVisible();
+});
+
+it("echoes at most 80 characters of a long query", () => {
+  const box = show();
+  type(box, "z".repeat(5000));
+  const text = screen.getByRole("status").textContent;
+  expect(text.length).toBeLessThan(120);
+  expect(text).toContain("…");
+});
+
+it("drops the query and shows the address when the address changes, as after a click on a result", () => {
+  vi.stubGlobal("fetch", () => new Promise(() => {}));
+  const props = { snapshot, run, entries: [entry], mode: "synthetic" as const };
+  const view = render(<ReportEvidence {...props} target="gaps" />);
+  type(screen.getByRole("searchbox", { name: "Search evidence" }), "leverage");
+  expect(screen.getByRole("heading", { name: "Handoff lines (2)" })).toBeVisible();
+  view.rerender(<ReportEvidence {...props} target={`case%2FCP-2.md~${sha}-4`} />);
+  expect(screen.getByRole("searchbox", { name: "Search evidence" })).toHaveValue("");
+  expect(screen.queryByRole("heading", { name: /^Handoff lines/ })).toBeNull();
+  expect(screen.getByRole("region", { name: "Fundamental credit handoff" })).toBeVisible();
+  type(screen.getByRole("searchbox", { name: "Search evidence" }), "annual");
+  view.rerender(<ReportEvidence {...props} target="sources" />);
+  expect(screen.getByRole("searchbox", { name: "Search evidence" })).toHaveValue("");
+  expect(screen.getByRole("heading", { name: /^Used by a module/ })).toBeVisible();
 });

@@ -346,3 +346,14 @@ re-lands after it, so the old hrefs also work, but they open the Record tab at i
   `Record.tsx` (summary rows 24 px, "Download instructions" 36 px, "Return to Forecast" 20 px), and the derivation
   tree's `summary` rows (34 px at 390) in `library/parts/DerivationTree.tsx`, whose `ROW` class needs
   `min-h-8 max-[480px]:min-h-11`.
+
+## Final review 4333756: B1–B4 and the small ones
+
+- B1 A search query belongs to the address it was typed at; a new address (following a result) clears it.
+- B2 The list under Sources is headed, visibly, "Entries on handoff lines not attached to a supplied file", with the
+  caption "Counted by the reason recorded, as written." (it counts chips, most of which record that nothing is cited).
+- B3 A file's row stays under a module filter when a citation in scope names it; the list is drawn outside the
+  empty-state conditional. Test: rows and list hold every designated entry in scope, with and without a module.
+- B4 A file-less label attaches to the longest supplied name it starts with, once; rows compare by that owner.
+- Search: the not-searched sentence names citation labels and cited passages; rows join cells with a space; the
+  "No match" echo is capped at 80 characters. Evidence.test ties "Critical" to the row's group again.

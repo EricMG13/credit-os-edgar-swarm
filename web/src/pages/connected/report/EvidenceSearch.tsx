@@ -5,6 +5,7 @@ const CAP = 50;
 
 type Found = { lines: SearchHit[]; sources: SearchHit[]; gaps: SearchHit[] };
 
+const echo = (text: string) => (text.length > 80 ? `${text.slice(0, 80)}…` : text);
 const count = (n: number, one: string, many: string) => `${String(n)} ${n === 1 ? one : many}`;
 
 /** The field that leads Evidence: a typed query replaces the page with its matches. */
@@ -36,7 +37,7 @@ export function EvidenceSearchStatus({ query, found }: { query: string; found: F
   const text = !query.trim()
     ? ""
     : found.lines.length + found.sources.length + found.gaps.length === 0
-      ? `No match for “${query.trim()}”`
+      ? `No match for “${echo(query.trim())}”`
       : `${count(found.lines.length + found.sources.length + found.gaps.length, "match", "matches")}: ${count(found.lines.length, "handoff line", "handoff lines")}, ${count(found.sources.length, "source", "sources")}, ${count(found.gaps.length, "gap", "gaps")}`;
   return (
     <p role="status" className="text-small text-text-secondary">
@@ -80,9 +81,8 @@ export function EvidenceSearchResults({ found }: { found: Found }) {
       <Group label="Sources" hits={found.sources} />
       <Group label="Gaps" hits={found.gaps} />
       <p className="text-small text-text-tertiary">
-        Not searched: script check outcomes, the run record, and the text of the source files (the
-        report holds only the passages the handoffs cite). Alternate handoffs are searched for gaps
-        only.
+        Not searched: script check outcomes, the run record, citation labels and cited passages, and
+        the text of the source files. Alternate handoffs are searched for gaps only.
       </p>
     </div>
   );

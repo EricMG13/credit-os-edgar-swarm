@@ -2,6 +2,7 @@
 import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { Badge } from "@/components/base/badges/badges";
 import { FileSearch02 } from "@untitledui/icons";
+import { useId } from "react";
 import { moduleName } from "../api";
 import { citedSourcePages } from "../sourceFiles";
 import {
@@ -19,6 +20,8 @@ export type SourceGroup = { label: string; rows: PublishedRun["evidence"]["sourc
 type SourceRow = SourceGroup["rows"][number];
 
 type Citation = {
+  /** For a file-less citation: the supplied file whose name its label starts with (the longest such name). */
+  owner?: string;
   sha: string | null;
   label: string;
   reason: string | null;
@@ -53,9 +56,13 @@ export function citationsByFile(snapshot: Snapshot, entries: OutputEntry[], name
       if (chip.file && names.has(chip.file))
         byFile.set(chip.file, [...(byFile.get(chip.file) ?? []), cited]);
       else {
-        const named =
-          chip.file === null && [...names].some((name) => chip.label?.startsWith(`${name} `));
-        if (named) fileless.push({ ...cited, label: chip.label ?? label });
+        const owner =
+          chip.file === null
+            ? [...names]
+                .filter((name) => chip.label?.startsWith(`${name} `))
+                .sort((a, b) => b.length - a.length)[0]
+            : undefined;
+        if (owner) fileless.push({ ...cited, owner, label: chip.label ?? label });
         else {
           const why = chip.reason ?? NO_REASON;
           unmatched.set(why, [...(unmatched.get(why) ?? []), cited]);
@@ -78,7 +85,7 @@ function citationsOf(cited: Cited, source: SourceRow) {
       note: null as string | null,
     })),
     ...cited.fileless
-      .filter(({ label }) => label.startsWith(`${source.name} `))
+      .filter(({ owner }) => owner === source.name)
       .map(({ label, reason }) => ({
         label,
         sha: null,
@@ -258,31 +265,37 @@ function SourceTable({
   );
 }
 
+const UNMATCHED = "Entries on handoff lines not attached to a supplied file";
+
 function UnmatchedCitations({ cited, folder }: { cited: Cited; folder: string }) {
+  const id = useId();
   const rows = [...cited.unmatched];
   if (rows.length === 0) return null;
   return (
-    <ul
-      aria-label="Citations not matched to a supplied file"
-      className="grid gap-1 rounded-ds-sm bg-surface-subtle p-3 text-small text-text-secondary"
-    >
-      {rows.map(([reason, list]) => {
-        const first = list[0];
-        return (
-          <li key={reason} className="flex flex-wrap items-center gap-x-3">
-            <span>{`${String(list.length)} · ${reason}`}</span>
-            {first && (
-              <a
-                href={evidencePath(folder, first.entry, first.line)}
-                className="inline-flex min-h-8 items-center text-text-link underline max-[480px]:min-h-11"
-              >
-                {`First: ${handoffName(first.entry)}, line ${String(first.line)}`}
-              </a>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+    <div className="grid min-w-0 gap-2 rounded-ds-sm bg-surface-subtle p-3">
+      <h4 id={id} className="text-small font-medium text-text-primary">
+        {UNMATCHED}
+      </h4>
+      <p className="text-caption text-text-tertiary">Counted by the reason recorded, as written.</p>
+      <ul aria-labelledby={id} className="grid gap-1 text-small text-text-secondary">
+        {rows.map(([reason, list]) => {
+          const first = list[0];
+          return (
+            <li key={reason} className="flex flex-wrap items-center gap-x-3">
+              <span className="wrap-anywhere">{`${String(list.length)} · ${reason}`}</span>
+              {first && (
+                <a
+                  href={evidencePath(folder, first.entry, first.line)}
+                  className="inline-flex min-h-8 items-center text-text-link underline max-[480px]:min-h-11"
+                >
+                  {`First: ${handoffName(first.entry)}, line ${String(first.line)}`}
+                </a>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
@@ -302,17 +315,21 @@ export function EvidenceSources({
   snapshot: Snapshot;
   folder: string;
 }) {
-  const shown = sourceGroups
-    .map((group) => ({
-      ...group,
-      rows: group.rows.filter((source) => !module || source.readBy.includes(module)),
-    }))
-    .filter(({ rows }) => rows.length > 0);
   const cited = citationsByFile(
     snapshot,
     entries.filter((entry) => entry.selected && (!module || entry.output.module === module)),
     new Set(sourceGroups.flatMap(({ rows }) => rows.map(({ name }) => name))),
   );
+  // A row stays when its module read it or when a citation in scope names it.
+  const shown = sourceGroups
+    .map((group) => ({
+      ...group,
+      rows: group.rows.filter(
+        (source) =>
+          !module || source.readBy.includes(module) || citationsOf(cited, source).length > 0,
+      ),
+    }))
+    .filter(({ rows }) => rows.length > 0);
   return (
     <Tile
       span={12}
@@ -320,6 +337,7 @@ export function EvidenceSources({
       kicker="Supplied files, and which modules read them"
       title="Sources"
     >
+      <UnmatchedCitations cited={cited} folder={folder} />
       {shown.length === 0 ? (
         <EmptyState className="py-5">
           <EmptyState.Header>
@@ -335,18 +353,15 @@ export function EvidenceSources({
           </EmptyState.Content>
         </EmptyState>
       ) : (
-        <>
-          <UnmatchedCitations cited={cited} folder={folder} />
-          {shown.map((group) => (
-            <SourceTable
-              key={group.label}
-              group={group}
-              modules={modules}
-              cited={cited}
-              scope={module}
-            />
-          ))}
-        </>
+        shown.map((group) => (
+          <SourceTable
+            key={group.label}
+            group={group}
+            modules={modules}
+            cited={cited}
+            scope={module}
+          />
+        ))
       )}
     </Tile>
   );

@@ -626,7 +626,12 @@ export function ReportEvidence({
     recordTarget,
   } = evidenceRoute(entries, target, checks.length > 0);
   useLandOnRecordTarget(tab === "Record" ? recordTarget : undefined);
-  const [query, setQuery] = useState("");
+  // A query belongs to the address it was typed at: following a result (a new address) clears it.
+  const [typed, setTyped] = useState({ text: "", target });
+  const query = typed.target === target ? typed.text : "";
+  const setQuery = (text: string) => {
+    setTyped({ text, target });
+  };
   const found = searchEvidence(query, entries, run);
   const { evidence } = run;
   const sourceGroups: SourceGroup[] = [

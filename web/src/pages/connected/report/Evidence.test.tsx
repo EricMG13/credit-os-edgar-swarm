@@ -158,10 +158,8 @@ describe("published evidence gaps", () => {
     renderGaps([entry]);
     expect(screen.getByRole("heading", { name: "Gaps 1" })).toBeVisible();
     // The stated word is kept as written, as the heading of the group its row sits in.
-    expect(
-      screen.getByText("Critical", { selector: 'th[scope="rowgroup"] *, th[scope="rowgroup"]' }),
-    ).toBeVisible();
-    expect(screen.getByRole("row", { name: /Missing covenant schedule/ })).toBeVisible();
+    const group = screen.getByRole("row", { name: /Missing covenant schedule/ }).closest("tbody");
+    expect(group?.querySelector('th[scope="rowgroup"]')?.textContent).toBe("Critical1");
     expect(screen.getByRole("row", { name: /Could hide a breach/ })).toHaveTextContent(
       "Effect: Could hide a breach",
     );
@@ -185,9 +183,9 @@ describe("published evidence gaps", () => {
     renderGaps([entry]);
     expect(screen.getByRole("heading", { name: "Gaps 2" })).toBeVisible();
     const row = screen.getByRole("row", { name: /Missing debt/ });
-    expect(
-      screen.getByText("Critical", { selector: 'th[scope="rowgroup"] *, th[scope="rowgroup"]' }),
-    ).toBeVisible();
+    expect(row.closest("tbody")?.querySelector('th[scope="rowgroup"]')?.textContent).toBe(
+      "Critical1",
+    );
     expect(row).toHaveTextContent("ID: G-1 Amount: 0 Reason: Last");
     expect(row).not.toHaveTextContent("Empty:");
     expect(screen.getByRole("row", { name: /Sparse trailing cells/ })).toBeVisible();

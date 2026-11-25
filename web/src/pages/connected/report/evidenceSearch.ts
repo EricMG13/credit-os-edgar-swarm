@@ -56,7 +56,7 @@ export function searchEvidence(query: string, entries: OutputEntry[], run: Publi
       for (const block of section.blocks) {
         if (block.type === "table") {
           for (const row of block.rows) {
-            const text = row.cells.join(" | ");
+            const text = row.cells.join(" ");
             if (holds(text)) add(row.line, `${heading} · ${clean(row.cells[0] ?? "")}`, text);
           }
         } else if ("text" in block && block.text !== undefined && holds(block.text))

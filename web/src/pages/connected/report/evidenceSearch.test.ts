@@ -122,3 +122,7 @@ it("matches no fuzzy spelling", () => {
   const found = searchEvidence("leverge", entries, run);
   expect(found.lines).toEqual([]);
 });
+
+it("does not let a bar match every table row, because cells are joined by a space", () => {
+  expect(searchEvidence("|", entries, run).lines).toEqual([]);
+});
