@@ -1,0 +1,7 @@
+{
+  "issues": [
+    "Fidelity check, line 52: \"2.15x\" appears only in a note beside a different table value, and a note states no value: write the value the table states, or state this figure as a table value with the calculation that gives it.",
+    "Fidelity check, line 52: \"3.07x\" appears only in a note beside a different table value, and a note states no value: write the value the table states, or state this figure as a table value with the calculation that gives it."
+  ],
+  "response_sha256": "ded66a6285bff6d70c23ad32f67c8c1f874e71f4c84acbd85ac0d3f95cbfe6aa"
+}
