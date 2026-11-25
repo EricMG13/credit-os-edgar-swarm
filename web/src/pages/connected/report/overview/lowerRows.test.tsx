@@ -339,9 +339,10 @@ it("shows the next five dated items and says how many more are on the Calendar",
   render(<DatesRow {...props} />);
   const tile = screen.getByRole("region", { name: "Dates to watch" });
   expect(within(within(tile).getByRole("list")).getAllByRole("listitem")).toHaveLength(5);
-  expect(
-    within(tile).getByRole("link", { name: "2 later dates in the Calendar" }),
-  ).toHaveAttribute("href", "#calendar");
+  expect(within(tile).getByRole("link", { name: "2 later dates in the Calendar" })).toHaveAttribute(
+    "href",
+    "#calendar",
+  );
 });
 
 it("groups events of one day under one mark with their count, and names marks only in the numbered list", () => {

@@ -283,28 +283,16 @@ type TileProps = { reading: Reading; href: Href; children: ReactNode };
  * A small tile's head: the 13 px title, which wraps, and the trace, which never leaves the row
  * (Tile's own small head lets the trace wrap below a long title in a narrow tile).
  */
-function SmallHead({ reading, href }: { reading: Reading; href: Href }) {
-  return (
-    <div className="flex items-start justify-between gap-2">
-      <h3 className="min-w-0 text-small font-medium text-pretty text-text-primary">
-        {reading.title}
-      </h3>
-      <div className="flex-none">
-        <Source reading={reading} href={href} />
-      </div>
-    </div>
-  );
-}
-
 function SmallTile({ reading, href, children }: TileProps) {
   return (
     <Tile
       span={12}
       head="small"
       label={reading.title}
+      title={reading.title}
+      trace={<Source reading={reading} href={href} />}
       className="justify-between gap-2 p-4 sm:p-4 lg:col-span-1"
     >
-      <SmallHead reading={reading} href={href} />
       <Level reading={reading} large={false} href={href} />
       <Drawn reading={reading}>{children}</Drawn>
     </Tile>

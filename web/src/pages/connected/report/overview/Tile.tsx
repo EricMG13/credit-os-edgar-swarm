@@ -35,13 +35,14 @@ function SmallHead({
   trace?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+    // The head never wraps: a long title wraps inside itself and the trace keeps its place.
+    <div className="flex items-start justify-between gap-3">
       {title != null && (
-        <Heading className="flex min-w-0 items-center gap-2 text-small font-medium text-text-primary">
+        <Heading className="flex min-w-0 items-center gap-2 text-small font-medium text-pretty text-text-primary">
           {title}
         </Heading>
       )}
-      <div className="ml-auto flex items-center gap-3">
+      <div className="ml-auto flex flex-none items-center gap-3">
         {kicker != null && <p className="text-caption text-text-tertiary">{kicker}</p>}
         {trace}
       </div>
