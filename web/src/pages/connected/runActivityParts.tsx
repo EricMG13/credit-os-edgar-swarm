@@ -13,6 +13,7 @@ import {
 } from "./api";
 import { Figure, Tile } from "./report/overview/Tile";
 import { finishedFigure, stamp } from "./runFigures";
+import { Meter } from "./runMeter";
 
 const ENDED = {
   failed: "Failed",
@@ -73,17 +74,12 @@ export function RunGroup({
   );
 }
 
-/** The module the run is on now, as its record states it. */
+/** Every module the run is on now, as its record states it; the report's own state is its building. */
 function nowRunning(run: LiveRun) {
   const names = run.modules
-    .filter(
-      ([code, state]: [string, ConnectedModuleState]) => code !== "Report" && state === "running",
-    )
-    .map(([code]) => moduleName(code));
-  if (names.length === 0) return null;
-  return names.length > 2
-    ? `${names.slice(0, 2).join(", ")} and ${String(names.length - 2)} more`
-    : names.join(", ");
+    .filter(([, state]: [string, ConnectedModuleState]) => state === "running")
+    .map(([code]) => (code === "Report" ? "building the report" : moduleName(code)));
+  return names.length === 0 ? null : names.join(", ");
 }
 
 /** A run in flight as one compact row: who, what state, how far, and where it is now. */
@@ -115,26 +111,18 @@ export function RunningRow({ run }: { run: LiveRun }) {
         )}
       </div>
       <div className="flex min-w-0 flex-col gap-1.5">
-        {bar && (
+        {bar ? (
           <div className="flex items-center gap-3">
             <span className="flex-none whitespace-nowrap">
               <Figure className="text-body font-medium">{`${String(bar.value)} of ${String(bar.max)}`}</Figure>
               <span className="text-small text-text-tertiary"> modules</span>
             </span>
-            <div
-              role="progressbar"
-              aria-label={bar.label}
-              aria-valuenow={bar.value}
-              aria-valuemin={0}
-              aria-valuemax={bar.max}
-              className="h-2 min-w-0 flex-1 overflow-hidden rounded-ds-full border border-border-container bg-surface-subtle"
-            >
-              <div
-                className="h-full bg-chart-1"
-                style={{ width: `${String((bar.value * 100) / bar.max)}%` }}
-              />
-            </div>
+            <Meter value={bar.value} max={bar.max} name={bar.label} className="flex-1" />
           </div>
+        ) : (
+          <span className="gap-hatch w-fit rounded-ds-sm border border-dashed border-border-gap px-2 py-1 text-small text-gap-text">
+            No analytical modules listed
+          </span>
         )}
         {now && <p className="text-small text-text-secondary">{`Now: ${now}`}</p>}
       </div>
@@ -184,8 +172,14 @@ export function EndedRow({ run }: { run: EndedRun }) {
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <StatusBadge set="Run states" state={ENDED[run.status]} />
           <Badge color="gray">{pathwayName(run.pathway)}</Badge>
-          <span className="text-caption text-text-tertiary tabular-nums">
-            {run.ended_at ? stamp(run.ended_at) : "Not recorded"}
+          <span className="text-caption text-text-tertiary">
+            {run.ended_at ? (
+              <>
+                Ended <time className="tabular-nums">{stamp(run.ended_at)}</time>
+              </>
+            ) : (
+              "Ended: not recorded"
+            )}
           </span>
         </div>
       </div>

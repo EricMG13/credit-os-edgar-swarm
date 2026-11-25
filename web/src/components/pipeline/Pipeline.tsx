@@ -54,15 +54,17 @@ function stateOf(node: PipelineNode): State & { word: string } {
   return { ...(set[word] ?? STATUS_SETS["Run states"].Queued), word };
 }
 
-// Geometry in columns mode, in px: a node is 44 tall (64 where its word is drawn) with an 8 gap; a
-// second sub-column is offset half a pitch so that every edge between sub-columns runs through a
-// gap, never across a node.
-const SHORT = 44;
-const TALL = 64;
+// Geometry in columns mode, in px: a node is 40 tall with an 8 gap. A stage of up to five nodes is
+// one column, where a node whose word is drawn is 60 tall on its own. A longer stage is two
+// sub-columns, the second offset half a pitch so that every edge between them runs through a gap,
+// never across a node; there every node is 40 and a blocked one is marked, outlined and keyed.
+const SHORT = 40;
+const TALL = 60;
 const GAP = 8;
-const WIDE = 4;
+const PITCH = SHORT + GAP;
+const WIDE = 5;
 
-/** A blocked module, or one delivered with gaps, has its word drawn in the node, not only keyed. */
+/** A blocked module, or one delivered with gaps, has its word drawn in its node. */
 const showsWord = (node: PipelineNode) =>
   node.state === "blocked" || node.word === "Delivered with gaps";
 
@@ -70,73 +72,61 @@ type Sub = "S" | "A" | "B";
 interface Placed {
   node: PipelineNode;
   top: number;
+  /** The node's height, and where its edges meet it. */
+  size: number;
   sub: Sub;
 }
 
-function place(nodes: readonly PipelineNode[]): { placed: Placed[]; height: number; node: number } {
-  const node = nodes.some(showsWord) ? TALL : SHORT;
-  const pitch = node + GAP;
-  if (nodes.length <= WIDE)
-    return {
-      placed: nodes.map((entry, i) => ({ node: entry, top: i * pitch, sub: "S" })),
-      height: nodes.length * pitch - GAP,
-      node,
-    };
+function place(nodes: readonly PipelineNode[]): { placed: Placed[]; height: number } {
+  if (nodes.length <= WIDE) {
+    let top = 0;
+    const placed = nodes.map((node): Placed => {
+      const size = showsWord(node) ? TALL : SHORT;
+      const entry: Placed = { node, top, size, sub: "S" };
+      top += size + GAP;
+      return entry;
+    });
+    return { placed, height: top - GAP };
+  }
   const split = Math.ceil(nodes.length / 2);
-  const placed: Placed[] = nodes.map((entry, i) =>
+  const placed: Placed[] = nodes.map((node, i) =>
     i < split
-      ? { node: entry, top: i * pitch, sub: "A" }
-      : { node: entry, top: pitch / 2 + (i - split) * pitch, sub: "B" },
+      ? { node, top: i * PITCH, size: SHORT, sub: "A" }
+      : { node, top: PITCH / 2 + (i - split) * PITCH, size: SHORT, sub: "B" },
   );
-  return { placed, height: Math.max(...placed.map(({ top }) => top + node)), node };
+  return { placed, height: Math.max(...placed.map(({ top, size }) => top + size)) };
 }
 
 /** A stage's share of the width: two sub-columns take two, and a lone short name takes less. */
 function weight(stage: PipelineStage) {
-  if (stage.nodes.length > WIDE) return "2fr";
-  return stage.nodes.every((node) => node.name.length <= 8) ? "0.7fr" : "1fr";
+  if (stage.nodes.length > WIDE) return "minmax(0,2fr)";
+  return stage.nodes.every((node) => node.name.length <= 8) ? "minmax(0,0.7fr)" : "minmax(0,1fr)";
 }
 
 const stops = (node: PipelineNode) => node.state === "blocked" || node.state === "failed";
 
-/** A bus from the stage's middle line out to the centres of the nodes it serves. */
+/** A bus from the stage's middle line out to the centres of the nodes it serves (all in px from the top). */
 function span(centres: readonly number[], middle: number) {
   const top = Math.min(middle, ...centres);
   return { top, height: Math.max(middle, ...centres) - top };
 }
 
-// Written whole for each width at which the stages become columns, so the class scan finds them.
+// Written whole, so the class scan finds them. Stages are columns from lg up.
 const AT = {
-  lg: {
-    list: "lg:grid lg:grid-cols-(--cols) lg:gap-x-6 lg:gap-y-0 lg:border-l-0 lg:pl-0",
-    head: "lg:h-8",
-    body: "lg:flex lg:flex-1 lg:items-center",
-    nodes: "lg:relative lg:block lg:h-(--h) lg:w-full",
-    item: "lg:absolute lg:top-(--top) lg:left-(--left) lg:h-(--nh) lg:w-(--w)",
-    box: "lg:h-full lg:px-1.5 lg:py-1.5 lg:text-caption",
-    clamp: "lg:line-clamp-2",
-    tag: "lg:sr-only",
-    mark: "hidden lg:absolute lg:-top-1 lg:-right-1 lg:z-10 lg:block",
-    corner: "lg:absolute lg:-top-1 lg:-right-1 lg:z-10",
-    detail: "lg:sr-only",
-    show: "hidden lg:block",
-  },
-  xl: {
-    list: "xl:grid xl:grid-cols-(--cols) xl:gap-x-6 xl:gap-y-0 xl:border-l-0 xl:pl-0",
-    head: "xl:h-8",
-    body: "xl:flex xl:flex-1 xl:items-center",
-    nodes: "lg:grid-cols-3 xl:relative xl:block xl:h-(--h) xl:w-full",
-    item: "xl:absolute xl:top-(--top) xl:left-(--left) xl:h-(--nh) xl:w-(--w)",
-    box: "xl:h-full xl:px-1.5 xl:py-1.5 xl:text-caption",
-    clamp: "xl:line-clamp-2",
-    tag: "xl:sr-only",
-    mark: "hidden xl:absolute xl:-top-1 xl:-right-1 xl:z-10 xl:block",
-    corner: "xl:absolute xl:-top-1 xl:-right-1 xl:z-10",
-    detail: "xl:sr-only",
-    show: "hidden xl:block",
-  },
+  list: "lg:grid lg:grid-cols-(--cols) lg:gap-x-6 lg:gap-y-0 lg:border-l-0 lg:pl-0",
+  head: "lg:h-8",
+  body: "lg:flex lg:flex-1 lg:items-center",
+  nodes: "lg:relative lg:block lg:h-(--h) lg:w-full",
+  item: "lg:absolute lg:top-(--top) lg:left-(--left) lg:h-(--nh) lg:w-(--w)",
+  box: "lg:h-full lg:px-1.5 lg:py-1 lg:text-caption",
+  clamp: "lg:line-clamp-2",
+  tag: "lg:sr-only",
+  mark: "hidden lg:absolute lg:-top-1 lg:-right-1 lg:z-10 lg:block",
+  corner: "lg:absolute lg:-top-1 lg:-right-1 lg:z-10",
+  detail: "lg:sr-only",
+  show: "hidden lg:block",
 } as const;
-type Classes = (typeof AT)[keyof typeof AT];
+type Classes = typeof AT;
 
 const STUB = "pipeline-edge absolute top-1/2 h-px";
 
@@ -148,9 +138,8 @@ function Mark({ shape, tone }: { shape: State["shape"]; tone: Tone }) {
   );
 }
 
-function NodeBody({ node, at }: { node: PipelineNode; at: Classes }) {
+function NodeBody({ node, at, drawn }: { node: PipelineNode; at: Classes; drawn: boolean }) {
   const { shape, tone, word } = stateOf(node);
-  const drawn = showsWord(node);
   const quiet = QUIET_WORDS.has(word);
   return (
     <>
@@ -273,19 +262,20 @@ function Bus({
   range,
   moving,
   at,
-  node,
+  forId,
 }: {
   side: "in" | "out";
   range: { top: number; height: number };
   moving: boolean;
   at: Classes;
-  node: number;
+  /** A moving segment laid over the bus: the stretch that leads to this module. */
+  forId?: string;
 }) {
   return (
     <span
       aria-hidden="true"
-      data-bus={side}
-      style={{ top: range.top + node / 2, height: range.height }}
+      {...(forId === undefined ? { "data-bus": side } : { "data-for": forId })}
+      style={{ top: range.top, height: range.height }}
       className={cx(
         "pipeline-edge absolute w-px bg-connector",
         at.show,
@@ -305,7 +295,7 @@ function NodeItem({
   stub: Omit<React.ComponentProps<typeof Stubs>, "node" | "sub" | "at">;
   at: Classes;
 }) {
-  const { node, top, sub } = entry;
+  const { node, top, size, sub } = entry;
   const classes = cx(BOX, boxTone(node), at.box);
   const left = sub === "B" ? "calc(50% + 6px)" : "0px";
   const width = sub === "S" ? "100%" : "calc(50% - 6px)";
@@ -313,13 +303,20 @@ function NodeItem({
     <li
       data-sub={sub}
       aria-current={node.state === "running" ? "step" : undefined}
-      style={{ "--top": `${String(top)}px`, "--left": left, "--w": width } as CSSProperties}
+      style={
+        {
+          "--top": `${String(top)}px`,
+          "--left": left,
+          "--w": width,
+          "--nh": `${String(size)}px`,
+        } as CSSProperties
+      }
       className={cx("relative", at.item)}
     >
       <Stubs node={node} sub={sub} at={at} {...stub} />
       {node.href === undefined ? (
         <div data-node={node.state} className={classes}>
-          <NodeBody node={node} at={at} />
+          <NodeBody node={node} at={at} drawn={sub === "S" && showsWord(node)} />
         </div>
       ) : (
         <a
@@ -330,7 +327,7 @@ function NodeItem({
             "outline-focus-ring transition-colors duration-100 hover:border-border-control focus-visible:outline-2 focus-visible:outline-offset-2",
           )}
         >
-          <NodeBody node={node} at={at} />
+          <NodeBody node={node} at={at} drawn={sub === "S" && showsWord(node)} />
         </a>
       )}
     </li>
@@ -360,45 +357,48 @@ function Stage({
   at: Classes;
 }) {
   const Heading = level === 3 ? "h3" : "h4";
-  const { placed, height, node: nodeHeight } = place(stage.nodes);
-  const middle = height / 2 - nodeHeight / 2;
+  const { placed, height } = place(stage.nodes);
+  const middle = height / 2;
   const centres = (keep: (node: PipelineNode) => boolean) =>
-    placed.filter(({ node }) => keep(node)).map(({ top }) => top);
+    placed.filter(({ node }) => keep(node)).map(({ top, size }) => top + size / 2);
   const emitters = context.last ? [] : centres((node) => !stops(node));
   return (
-    <li className="grid min-w-0 grid-rows-[auto_1fr] gap-3">
+    <li className="grid min-w-0 grid-rows-[auto_1fr] gap-1">
       <Heading className={cx("block text-caption text-text-tertiary", at.head)}>
         <span>{stage.name}</span>
         <span className="ml-2 font-mono tabular-nums">{stage.nodes.length}</span>
       </Heading>
       <div className={at.body}>
         <ul
-          style={
-            { "--h": `${String(height)}px`, "--nh": `${String(nodeHeight)}px` } as CSSProperties
-          }
+          style={{ "--h": `${String(height)}px` } as CSSProperties}
           className={cx("grid min-w-0 gap-2", at.nodes)}
         >
           {context.fed && (
             <Bus
               side="in"
               range={span(
-                placed.map(({ top }) => top),
+                placed.map(({ top, size }) => top + size / 2),
                 middle,
               )}
               moving={context.busIn}
               at={at}
-              node={nodeHeight}
             />
           )}
           {emitters.length > 0 && (
-            <Bus
-              side="out"
-              range={span(emitters, middle)}
-              moving={context.busOut}
-              at={at}
-              node={nodeHeight}
-            />
+            <Bus side="out" range={span(emitters, middle)} moving={context.busOut} at={at} />
           )}
+          {context.flow === "running" &&
+            context.fed &&
+            placed
+              .filter(({ node }) => node.state === "running")
+              .map(({ node, top, size }) => ({
+                id: node.id,
+                range: span([top + size / 2], middle),
+              }))
+              .filter(({ range }) => range.height > 0)
+              .map(({ id, range }) => (
+                <Bus key={`trunk-${id}`} side="in" range={range} moving at={at} forId={id} />
+              ))}
           {placed.map((entry) => (
             <NodeItem
               key={`${String(entry.top)}-${entry.sub}-${entry.node.id}`}
@@ -414,10 +414,7 @@ function Stage({
                       : context.flow === "delivered" &&
                         context.busIn &&
                         entry.node.state !== "blocked",
-                  out:
-                    entry.node.state === "delivered" &&
-                    (context.flow === "delivered" ||
-                      (context.flow === "running" && context.busOut)),
+                  out: context.flow === "delivered" && entry.node.state === "delivered",
                 },
               }}
             />
@@ -429,11 +426,25 @@ function Stage({
 }
 
 /** The states in use, each as the mark the nodes carry and its word. */
-function Key({ words }: { words: readonly (State & { word: string })[] }) {
+export function PipelineKey({
+  stages,
+  className,
+}: {
+  stages: readonly PipelineStage[];
+  className?: string;
+}) {
+  const words = [
+    ...new Map(
+      stages.flatMap((stage) => stage.nodes.map(stateOf)).map((state) => [state.word, state]),
+    ).values(),
+  ];
   return (
     <ul
       aria-label="Pipeline key"
-      className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-caption text-text-secondary"
+      className={cx(
+        "flex flex-wrap items-center gap-x-4 gap-y-1 text-caption text-text-secondary",
+        className,
+      )}
     >
       {words.map(({ shape, tone, word }) => (
         <li key={word} className="flex items-center gap-1.5">
@@ -448,36 +459,28 @@ function Key({ words }: { words: readonly (State & { word: string })[] }) {
 }
 
 /**
- * The staged node graph of a run: stages as columns from `columns` up, one vertical list below.
+ * The staged node graph of a run: stages as columns from lg up, one vertical list below.
  * The same drawing serves the finished run on the Overview and the live run on Run progress.
  */
 export function Pipeline({
   label,
   stages,
   flow = "none",
-  columns = "xl",
   stageLevel = 3,
   legend = true,
 }: {
   label: string;
   stages: readonly PipelineStage[];
   flow?: PipelineFlow;
-  columns?: keyof typeof AT;
   stageLevel?: 3 | 4;
   legend?: boolean;
 }) {
-  const at = AT[columns];
+  const at = AT;
   const shown = stages.filter((stage) => stage.nodes.length > 0);
   const passes = shown.map(
     (stage, i) => i < shown.length - 1 && stage.nodes.some((n) => !stops(n)),
   );
   const delivered = shown.map((stage) => stage.nodes.some((n) => n.state === "delivered"));
-  const running = shown.map((stage) => stage.nodes.some((n) => n.state === "running"));
-  const words = [
-    ...new Map(
-      shown.flatMap((stage) => stage.nodes.map(stateOf)).map((state) => [state.word, state]),
-    ).values(),
-  ];
   return (
     <>
       <ol
@@ -497,18 +500,13 @@ export function Pipeline({
               fed: i > 0 && (passes[i - 1] ?? false),
               flow,
               busIn:
-                flow === "running"
-                  ? (running[i] ?? false)
-                  : flow === "delivered" && (delivered[i - 1] ?? false) && (passes[i - 1] ?? false),
-              busOut:
-                flow === "running"
-                  ? (running[i + 1] ?? false)
-                  : flow === "delivered" && (delivered[i] ?? false),
+                flow === "delivered" && (delivered[i - 1] ?? false) && (passes[i - 1] ?? false),
+              busOut: flow === "delivered" && (delivered[i] ?? false),
             }}
           />
         ))}
       </ol>
-      {legend && <Key words={words} />}
+      {legend && <PipelineKey stages={shown} className="mt-3" />}
     </>
   );
 }

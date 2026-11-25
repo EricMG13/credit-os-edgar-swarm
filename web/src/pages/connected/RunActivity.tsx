@@ -56,7 +56,7 @@ function Empty({ title, children }: { title: string; children: string }) {
         <EmptyState.Description>{children}</EmptyState.Description>
       </EmptyState.Content>
       <EmptyState.Footer>
-        <Button href="/" color="secondary">
+        <Button href="/" color="secondary" className="max-md:min-h-11">
           Open the library
         </Button>
       </EmptyState.Footer>
@@ -137,7 +137,11 @@ export function RunActivity({ mode }: { mode?: Mode }) {
             )}
           </>
         }
-        actions={<Button href="/start">Start a run</Button>}
+        actions={
+          <Button href="/start" className="max-md:min-h-11">
+            Start a run
+          </Button>
+        }
       />
       <div
         ref={content}
@@ -178,7 +182,7 @@ export function RunActivity({ mode }: { mode?: Mode }) {
             tone={read ? "warning" : "error"}
             title={read ? "Run activity could not be refreshed" : "Run activity could not be read"}
             action={
-              <Button href="/" size="sm" color="secondary">
+              <Button href="/" size="sm" color="secondary" className="max-md:min-h-11">
                 Open the library
               </Button>
             }
@@ -244,7 +248,11 @@ export function RunActivity({ mode }: { mode?: Mode }) {
             ))}
           </RunGroup>
         )}
-        {read && !none && <TextLink href="/">Finished runs are in the library</TextLink>}
+        {read && !none && (
+          <TextLink href="/" className="min-h-8 items-center max-[480px]:min-h-11">
+            Finished runs are in the library
+          </TextLink>
+        )}
       </div>
     </>
   );

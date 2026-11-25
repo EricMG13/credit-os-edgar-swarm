@@ -1,9 +1,9 @@
-import { useId } from "react";
 import { Missing } from "@/components/gap/Missing";
 import type { PipelineNode, PipelineStage, PipelineState } from "@/components/pipeline";
 import type { Figure as RunFigure, ModuleStep, ModuleWord } from "../run/slice-activity";
 import { Figure, GapNote, Well } from "./report/overview/Tile";
 import { byStage } from "./report/stages";
+import { Meter } from "./runMeter";
 
 const REPORT = "Report";
 
@@ -59,78 +59,48 @@ export function stoppedAt(steps: readonly ModuleStep[]): {
   };
 }
 
-/** The header's places inside the pipeline tile: spend first in reading order, beside the title from lg up. */
-export const HEADER_BLOCK = "grid min-w-0 gap-3 lg:col-span-6 lg:col-start-1 lg:row-start-1";
-export const SPEND_BLOCK = "min-w-0 lg:col-span-6 lg:col-start-7 lg:row-start-1";
-export const HEADER_GRID = "grid gap-4 lg:grid-cols-12 lg:items-start";
+/** The header band of the pipeline tile: spend first in reading order, beside the title from lg up. */
+export const HEADER_GRID = "grid gap-2 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start";
+export const HEADER_BLOCK = "grid min-w-0 gap-2 lg:col-start-1 lg:row-start-1";
+export const SPEND_BLOCK = "min-w-0 lg:col-start-2 lg:row-start-1";
 
-/** Value against a limit: a track you can see, the spend filled, the cap marked at its end. */
-function CapMeter({ bar }: { bar: { value: number; max: number; label: string } }) {
-  const labelId = useId();
-  const share = (bar.value * 100) / bar.max;
+/** Spend against the cap as one meter, with the amount in mono. */
+export function SpendBlock({ spend, label = "Spend" }: { spend: RunFigure; label?: string }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <div
-        role="progressbar"
-        aria-labelledby={labelId}
-        aria-valuenow={bar.value}
-        aria-valuemin={0}
-        aria-valuemax={bar.max}
-        className="relative h-2.5 w-full overflow-hidden rounded-ds-full border border-border-container bg-surface-subtle"
-      >
-        <div className="h-full rounded-ds-full bg-chart-1" style={{ width: `${String(share)}%` }} />
-        <span aria-hidden="true" className="absolute inset-y-0 right-0 w-0.5 bg-text-primary" />
-      </div>
-      <span id={labelId} className="text-small text-text-secondary tabular-nums">
-        {bar.label}
-      </span>
-    </div>
+    <section aria-label={label} className={SPEND_BLOCK}>
+      <Well className="flex flex-col gap-2 border border-border-hairline p-3">
+        <div className="flex flex-wrap items-baseline gap-x-3">
+          {spend.value !== null && <Figure className="text-h3 font-medium">{spend.value}</Figure>}
+          <p className="text-caption text-text-tertiary">Spend against the cap</p>
+        </div>
+        {spend.value === null ? (
+          <GapNote>{spend.bar === null ? spend.note : "Spend is not known"}</GapNote>
+        ) : spend.bar === null ? (
+          <span className="text-small text-text-tertiary">{spend.note}</span>
+        ) : (
+          <>
+            <Meter
+              value={spend.bar.value}
+              max={spend.bar.max}
+              name="Spend against cap"
+              valueText={spend.bar.label}
+              limit
+            />
+            <span className="text-caption text-text-secondary tabular-nums">{spend.bar.label}</span>
+          </>
+        )}
+      </Well>
+    </section>
   );
 }
 
-/** The cap as the figure states it: the label ends "of USD 25.00 cap usage". */
-function capOf(label: string) {
-  return /of (USD [\d,.]+) cap usage/.exec(label)?.[1];
-}
-
-/** Spend against the cap as the page's one meter, with the amount in mono; then the time. */
-export function SpendBlock({
-  spend,
-  elapsed,
-  label = "Spend",
-}: {
-  spend: RunFigure;
-  elapsed: { value: string | null; note: string };
-  label?: string;
-}) {
-  const cap = spend.bar === null ? undefined : capOf(spend.bar.label);
+/** How long the run has been going, as its record states it. */
+export function ElapsedLine({ elapsed }: { elapsed: { value: string | null; note: string } }) {
   return (
-    <section aria-label={label} className={SPEND_BLOCK}>
-      <Well className="grid gap-x-6 gap-y-3 border border-border-hairline p-4 sm:grid-cols-[minmax(0,1fr)_auto]">
-        <div className="flex min-w-0 flex-col gap-3">
-          <p className="text-caption text-text-tertiary">Spend against the cap</p>
-          {spend.value === null ? (
-            <GapNote>{spend.bar === null ? spend.note : "Spend is not known"}</GapNote>
-          ) : (
-            <div className="flex flex-col gap-3">
-              <Figure className="text-metric font-medium">{spend.value}</Figure>
-              {spend.bar === null ? (
-                <span className="text-small text-text-tertiary">{spend.note}</span>
-              ) : (
-                <>
-                  <CapMeter bar={spend.bar} />
-                  {cap !== undefined && <Figure className="text-small">{`Cap ${cap}`}</Figure>}
-                </>
-              )}
-            </div>
-          )}
-        </div>
-        <p className="flex flex-col gap-1 border-t border-border-hairline pt-3 text-small text-text-secondary sm:border-t-0 sm:border-l sm:pt-0 sm:pl-6">
-          <span className="text-caption text-text-tertiary">Elapsed</span>
-          <Figure className="text-h4 font-medium">{elapsed.value ?? <Missing />}</Figure>
-          <span className="text-text-tertiary">{elapsed.note}</span>
-        </p>
-      </Well>
-    </section>
+    <p className="flex flex-wrap items-baseline gap-x-3 text-small text-text-secondary">
+      <span>Elapsed</span>
+      <Figure className="font-medium">{elapsed.value ?? <Missing />}</Figure>
+      <span className="text-text-tertiary">{elapsed.note}</span>
+    </p>
   );
 }

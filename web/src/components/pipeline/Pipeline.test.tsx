@@ -162,17 +162,69 @@ it("flows nothing on a run that has stopped", () => {
   expect(document.querySelector(".pipeline-flow, .pipeline-flow-y")).toBeNull();
 });
 
-it("flows only along the path into the running node on a run in flight, end to end", () => {
-  render(<Pipeline label="Stages" stages={stages} flow="running" />);
-  const moving = [...document.querySelectorAll(".pipeline-flow")];
-  // The path is continuous: the delivered nodes' edges out of the stage before, the bus, and the edge in.
-  expect(moving.map((edge) => edge.closest("li"))).toEqual([
-    nodeOf("Source readiness"),
-    nodeOf("Model"),
-  ]);
-  expect(moving.map((edge) => edge.getAttribute("data-edge"))).toEqual(["delivered", "running"]);
-  expect(document.querySelectorAll(".pipeline-flow-y").length).toBeGreaterThan(0);
-  expect(nodeOf("Financial foundation").querySelector(".pipeline-flow")).toBeNull();
+const CODES = [
+  ["Sources", ["CP-0"]],
+  ["Financials", ["CP-1", "CP-1B", "CP-1C", "CP-1D", "CP-MODEL"]],
+  ["Credit", ["CP-1A", "CP-DR", "CP-2", "CP-2A", "CP-2D", "CP-2E", "CP-2G", "CP-2H"]],
+  ["Structure and market", ["CP-3", "CP-3C", "CP-3D", "CP-4", "CP-4C"]],
+  ["Validation and decision", ["CP-5", "CP-6", "CP-8"]],
+  ["Report delivery", ["Report"]],
+] as const;
+/** A 22-module run with two modules running, in adjacent stages. */
+const inFlight = (running: readonly string[], done: readonly string[]): PipelineStage[] =>
+  CODES.map(([name, ids]) => ({
+    name,
+    nodes: ids.map((id) => ({
+      id,
+      name: id,
+      state: running.includes(id) ? "running" : done.includes(id) ? "delivered" : "queued",
+    })),
+  }));
+
+it("moves exactly the path into each running module on a run in flight, and nothing else", () => {
+  const done = ["CP-0", "CP-1", "CP-1B", "CP-1C", "CP-1D", "CP-1A", "CP-DR"];
+  render(<Pipeline label="Stages" stages={inFlight(["CP-MODEL", "CP-2"], done)} flow="running" />);
+  const moving = [...document.querySelectorAll(".pipeline-flow, .pipeline-flow-y")];
+  const describe = (el: Element) =>
+    el.classList.contains("pipeline-flow")
+      ? `branch:${el.closest("li")?.querySelector("span.min-w-0 span.min-w-0, span.wrap-break-word")?.textContent ?? ""}`
+      : `trunk:${el.getAttribute("data-for") ?? ""}`;
+  // For each running module: its own branch in, and the bus segment from the trunk to it. The
+  // finished modules' edges out, and the rest of the bus, are still.
+  expect(moving.map(describe).sort()).toEqual(
+    ["branch:CP-MODEL", "branch:CP-2", "trunk:CP-MODEL", "trunk:CP-2"].sort(),
+  );
+  expect(moving.every((el) => el.classList.contains("pipeline-edge"))).toBe(true);
+});
+
+it("draws no moving segment for a running node that sits on the trunk itself", () => {
+  render(
+    <Pipeline
+      label="Stages"
+      stages={[
+        { name: "A", nodes: [{ id: "A", name: "A", state: "delivered" }] },
+        { name: "B", nodes: [{ id: "B", name: "B", state: "running" }] },
+      ]}
+      flow="running"
+    />,
+  );
+  expect(document.querySelectorAll(".pipeline-flow-y")).toHaveLength(0);
+  expect(document.querySelectorAll(".pipeline-flow")).toHaveLength(1);
+});
+
+it("keeps a stage of five nodes in one column, and splits one of six", () => {
+  const sub = (count: number) => {
+    cleanup();
+    render(<Pipeline label="Stages" stages={[{ name: "Credit", nodes: nodes(count) }]} />);
+    return new Set(
+      screen
+        .getAllByRole("listitem")
+        .filter((li) => li.hasAttribute("data-sub"))
+        .map((li) => li.getAttribute("data-sub")),
+    );
+  };
+  expect(sub(5)).toEqual(new Set(["S"]));
+  expect(sub(6)).toEqual(new Set(["A", "B"]));
 });
 
 it("draws every edge as a solid line, with the flow laid over it rather than replacing it", () => {
@@ -220,26 +272,6 @@ it("draws one bus in the gap between two stages, not two a pixel apart", () => {
   expect(buses[1]).toHaveClass("-left-3");
 });
 
-it("splits a stage of more than four nodes into two sub-columns", () => {
-  render(<Pipeline label="Stages" stages={[{ name: "Credit", nodes: nodes(7) }]} />);
-  const items = screen.getAllByRole("listitem").filter((li) => li.hasAttribute("data-sub"));
-  expect(items.map((li) => li.getAttribute("data-sub"))).toEqual([
-    "A",
-    "A",
-    "A",
-    "A",
-    "B",
-    "B",
-    "B",
-  ]);
-});
-
-it("keeps a stage of four nodes or fewer in one column", () => {
-  render(<Pipeline label="Stages" stages={[{ name: "Credit", nodes: nodes(4) }]} />);
-  const items = screen.getAllByRole("listitem").filter((li) => li.hasAttribute("data-sub"));
-  expect(new Set(items.map((li) => li.getAttribute("data-sub")))).toEqual(new Set(["S"]));
-});
-
 it("gives a legend of the states in use, each as a shape and a word", () => {
   render(<Pipeline label="Stages" stages={stages} />);
   const legend = screen.getByRole("list", { name: "Pipeline key" });
@@ -263,7 +295,31 @@ it("gives a blocked node its full name, the slash icon and the word, drawn, not 
   expect(word.parentElement?.querySelector("svg[data-shape='slashed circle']")).not.toBeNull();
 });
 
-it("makes every node of a stage with a drawn word taller, so the sub-columns still line up", () => {
+it("makes only the blocked node taller in a one-column stage, so its word fits", () => {
+  render(
+    <Pipeline
+      label="Stages"
+      stages={[
+        {
+          name: "Structure",
+          nodes: [
+            { id: "A", name: "Security selection", state: "delivered" },
+            { id: "B", name: "Legal & covenants", state: "blocked" },
+            { id: "C", name: "Recovery", state: "queued" },
+          ],
+        },
+      ]}
+    />,
+  );
+  const size = (name: string) => nodeOf(name).style.getPropertyValue("--nh");
+  expect([size("Security selection"), size("Legal & covenants"), size("Recovery")]).toEqual([
+    "40px",
+    "60px",
+    "40px",
+  ]);
+});
+
+it("keeps every node of a two-column stage 40px, marking a blocked one instead of drawing its word", () => {
   render(
     <Pipeline
       label="Stages"
@@ -272,12 +328,17 @@ it("makes every node of a stage with a drawn word taller, so the sub-columns sti
           name: "Credit",
           nodes: [...nodes(5), { id: "B", name: "Legal & covenants", state: "blocked" }],
         },
-        { name: "Other", nodes: nodes(2) },
       ]}
     />,
   );
-  const heights = [...document.querySelectorAll<HTMLElement>("ol ul")].map((ul) =>
-    ul.style.getPropertyValue("--nh"),
-  );
-  expect(heights).toEqual(["64px", "44px"]);
+  const blocked = nodeOf("Legal & covenants");
+  expect(blocked.style.getPropertyValue("--nh")).toBe("40px");
+  expect(blocked.querySelector("[data-node]")).toHaveClass("border-dashed", "border-warning-mark");
+  // The word is still read aloud and keyed, not drawn inside the small node.
+  expect(
+    within(blocked).getByText("Not assessable").closest('[class*="lg:sr-only"]'),
+  ).not.toBeNull();
+  expect(
+    within(screen.getByRole("list", { name: "Pipeline key" })).getByText("Not assessable"),
+  ).toBeVisible();
 });

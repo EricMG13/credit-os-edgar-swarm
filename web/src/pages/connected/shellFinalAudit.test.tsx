@@ -269,7 +269,10 @@ describe("C1-028 published blocked modules", () => {
     const pipeline = await screen.findByRole("list", { name: "Modules in this run" });
     const state = within(pipeline).getByText("Not assessable");
     expect(state.closest("li")).toHaveTextContent("Financial foundation");
-    expect(screen.getByRole("progressbar", { name: "1 of 1 modules" })).toBeVisible();
+    expect(screen.getByRole("progressbar", { name: "Modules finished" })).toHaveAttribute(
+      "aria-valuetext",
+      "1 of 1 modules",
+    );
     expect(screen.getByText("Report", { selector: "span" }).closest("li")).toHaveTextContent(
       "Finished",
     );

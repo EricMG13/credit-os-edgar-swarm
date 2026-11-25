@@ -1851,7 +1851,7 @@ describe("connected activity and reports", () => {
     });
     render(<ConnectedApp path="/runs" mode="synthetic" />);
     const ended = await screen.findByRole("region", { name: "Ended without a report" });
-    expect(within(ended).getByText("Not recorded")).toBeVisible();
+    expect(within(ended).getByText("Ended: not recorded")).toBeVisible();
     expect(within(ended).getByText("Rejected")).toBeVisible();
   });
 
@@ -1977,7 +1977,10 @@ describe("connected activity and reports", () => {
     expect(screen.getByRole("list", { name: "Modules in this run" })).toHaveTextContent(
       /Interrupted/,
     );
-    expect(screen.getByRole("progressbar", { name: "1 of 2 modules" })).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "Modules finished" })).toHaveAttribute(
+      "aria-valuetext",
+      "1 of 2 modules",
+    );
   });
 
   it("waits for report publication after the run has finished", async () => {
@@ -2023,10 +2026,14 @@ describe("connected activity and reports", () => {
       within(screen.getByRole("main")).getByRole("link", { name: "Run activity" }),
     ).toHaveAttribute("href", "/runs");
     expect(screen.getByText("Source readiness")).toBeInTheDocument();
-    expect(
-      screen.getByRole("progressbar", { name: /USD 0.00 of USD 25.00 cap usage/ }),
-    ).toHaveAttribute("aria-valuenow", "0");
-    expect(screen.getByRole("progressbar", { name: "1 of 1 modules" })).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: "Spend against cap" })).toHaveAttribute(
+      "aria-valuenow",
+      "0",
+    );
+    expect(screen.getByRole("progressbar", { name: "Modules finished" })).toHaveAttribute(
+      "aria-valuetext",
+      "1 of 1 modules",
+    );
     expect(screen.getByText("1 min 14 s")).toBeInTheDocument();
     expect(screen.getByText("Report delivered.")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Open report" })).toBeNull();

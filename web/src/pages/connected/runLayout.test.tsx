@@ -51,8 +51,8 @@ describe("Run progress layout", () => {
     expect(running).toHaveTextContent("Running");
     expect(running).toHaveAttribute("aria-current", "step");
     expect(running?.querySelector("[data-edge='running']")).toHaveClass("pipeline-flow");
-    // Only the path into the running module moves: the delivered module's edge out, and the edge in.
-    expect(pipeline.querySelectorAll(".pipeline-flow")).toHaveLength(2);
+    // Only the path into the running module moves: its own edge in (it sits on the trunk).
+    expect(pipeline.querySelectorAll(".pipeline-flow")).toHaveLength(1);
   });
 
   it("makes the pipeline the h2 of its region, with the stage names beneath it", async () => {
@@ -79,21 +79,49 @@ describe("Run progress layout", () => {
     expect(pipeline.querySelector(".pipeline-flow, .pipeline-flow-y")).toBeNull();
   });
 
-  it("draws spend against the cap as one meter with a visible track and the cap marked", async () => {
+  it("draws spend against the cap as one meter with a visible track, the cap marked and stated once", async () => {
     serve(run);
     render(<ConnectedApp path={`/run/${ID}`} mode="live" />);
     const amount = await screen.findByText("USD 7.40");
     expect(amount).toHaveClass("font-mono");
     const region = screen.getByRole("region", { name: "Spend" });
-    const meter = within(region).getByRole("progressbar", {
-      name: /USD 7.40 of USD 25.00 cap usage/,
-    });
+    const meter = within(region).getByRole("progressbar", { name: "Spend against cap" });
+    expect(meter).toHaveAttribute(
+      "aria-valuetext",
+      expect.stringMatching(/USD 7.40 of USD 25.00 cap usage/),
+    );
     expect(meter).toHaveClass("border", "bg-surface-subtle");
-    expect(within(region).getByText("Cap USD 25.00")).toBeVisible();
-    // One meter in the tile; the modules' progress is the pipeline's own.
+    // The cap is in the meter's label once, not again beside it.
+    expect(document.body.textContent?.match(/USD 25\.00/g)).toHaveLength(1);
     expect(within(region).getAllByRole("progressbar")).toHaveLength(1);
-    expect(screen.getByRole("progressbar", { name: "1 of 3 modules" })).toBeVisible();
     expect(screen.queryByText("Synthetic test")).toBeNull();
+  });
+
+  it("gives the page's two meters distinct names, and the module meter says how many modules", async () => {
+    serve(run);
+    render(<ConnectedApp path={`/run/${ID}`} mode="live" />);
+    await screen.findByText("USD 7.40");
+    const meters = screen.getAllByRole("progressbar");
+    expect(meters.map((m) => m.getAttribute("aria-label"))).toEqual([
+      "Spend against cap",
+      "Modules finished",
+    ]);
+    expect(screen.getByRole("progressbar", { name: "Modules finished" })).toHaveAttribute(
+      "aria-valuetext",
+      "1 of 3 modules",
+    );
+    expect(screen.getByText("1 of 3 modules")).toBeVisible();
+  });
+
+  it("draws each module's state on its node (finished, running, queued)", async () => {
+    serve(run);
+    render(<ConnectedApp path={`/run/${ID}`} mode="live" />);
+    const pipeline = await screen.findByRole("list", { name: "Modules in this run" });
+    const node = (name: string) => within(pipeline).getByText(name).closest("li");
+    expect(node("Source readiness")).toHaveTextContent("Finished");
+    expect(node("Financial foundation")).toHaveTextContent("Running");
+    expect(node("Legal & covenants")).toHaveTextContent("Queued");
+    expect(node("Report")).toHaveTextContent("Queued");
   });
 
   it("puts spend before the pipeline in reading order, beside it from lg up", async () => {
@@ -104,11 +132,10 @@ describe("Run progress layout", () => {
     expect(pipeline.contains(spend)).toBe(true);
     const title = within(pipeline).getByRole("heading", { level: 2 });
     expect(spend.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(spend).toHaveClass("lg:col-start-7", "lg:row-start-1");
-    expect(within(pipeline).getByRole("heading", { level: 2 }).parentElement).toHaveClass(
-      "lg:col-start-1",
-      "lg:row-start-1",
-    );
+    expect(spend).toHaveClass("lg:col-start-2", "lg:row-start-1");
+    expect(
+      within(pipeline).getByRole("heading", { level: 2 }).parentElement?.parentElement,
+    ).toHaveClass("lg:col-start-1", "lg:row-start-1");
   });
 
   it("draws the loading page in the same layout as the loaded one", async () => {
@@ -187,6 +214,36 @@ describe("Run progress layout", () => {
     expect(again).toHaveAttribute("href", `/start?from=${ID}`);
     // One such control, not one in the header as well.
     expect(screen.getAllByRole("link", { name: "Use this run’s inputs" })).toHaveLength(1);
+  });
+
+  it("states the gap when the record does not say where a stopped run stopped", async () => {
+    serve({
+      ...stopped,
+      status: "capped",
+      stopped_by: "",
+      modules: [
+        ["CP-0", "done"],
+        ["CP-1", "done"],
+        ["Report", "waiting"],
+      ],
+    });
+    render(<ConnectedApp path={`/run/${ID}`} mode="live" />);
+    const alert = await screen.findByRole("alert");
+    expect(within(alert).getByText("Where it stopped: the run record does not say.")).toBeVisible();
+  });
+
+  it("makes the stop notice compact: one paragraph, then its action", async () => {
+    serve({ ...stopped, reason: "The checks rejected a draft." });
+    render(<ConnectedApp path={`/run/${ID}`} mode="live" />);
+    const alert = await screen.findByRole("alert");
+    expect(alert.querySelectorAll("p")).toHaveLength(1);
+  });
+
+  it("makes the page's buttons and links 44px tall on a phone", async () => {
+    serve({ ...stopped, reason: "x" });
+    render(<ConnectedApp path={`/run/${ID}`} mode="live" />);
+    const again = await screen.findByRole("link", { name: "Use this run’s inputs" });
+    expect(again).toHaveClass("max-md:min-h-11");
   });
 
   it("says where a stopped run stopped and what to do, inside its notice", async () => {
@@ -274,6 +331,78 @@ describe("Run activity layout", () => {
     // The per-module view is Run progress's: the row does not list every module.
     expect(rows[0]).not.toHaveTextContent("Fundamental credit");
     expect(within(running).queryByRole("grid")).toBeNull();
+  });
+
+  it("says what a run is doing when only the report is left, from the record's own state", async () => {
+    serve({
+      ...list,
+      runs: [
+        live("a", "Alder Metals", {
+          modules: [
+            ["CP-0", "done"],
+            ["CP-1", "done"],
+            ["Report", "running"],
+          ],
+        }),
+      ],
+    });
+    render(<ConnectedApp path="/runs" mode="live" />);
+    const row = (await screen.findByRole("link", { name: "Alder Metals" })).closest("li");
+    expect(row).toHaveTextContent("2 of 2");
+    expect(within(row as HTMLElement).getByText("Now: building the report")).toBeVisible();
+  });
+
+  it("names every module that is running, none left to a count", async () => {
+    serve({
+      ...list,
+      runs: [
+        live("a", "Alder Metals", {
+          modules: [
+            ["CP-0", "done"],
+            ["CP-2", "running"],
+            ["CP-2A", "running"],
+            ["CP-2D", "running"],
+            ["CP-2E", "running"],
+          ],
+        }),
+      ],
+    });
+    render(<ConnectedApp path="/runs" mode="live" />);
+    const row = (await screen.findByRole("link", { name: "Alder Metals" })).closest("li");
+    expect(within(row as HTMLElement).getByText(/^Now: /).textContent).toBe(
+      "Now: Fundamental credit, Downside, Liquidity, Rates, FX & hedging",
+    );
+    expect(row).not.toHaveTextContent(/more/);
+  });
+
+  it("draws the gap when a running run lists no modules", async () => {
+    serve({ ...list, runs: [live("a", "Alder Metals", { modules: [] })] });
+    render(<ConnectedApp path="/runs" mode="live" />);
+    const row = (await screen.findByRole("link", { name: "Alder Metals" })).closest("li");
+    expect(within(row as HTMLElement).getByText("No analytical modules listed")).toBeVisible();
+    expect(within(row as HTMLElement).queryByRole("progressbar")).toBeNull();
+  });
+
+  it("labels an end time that was not recorded, and the one that was", async () => {
+    serve({
+      ...list,
+      ended: [{ ...ended("b", "Birch Retail", "x"), ended_at: "" }, ended("c", "Cedar Co", "y")],
+      ended_total: 2,
+    });
+    render(<ConnectedApp path="/runs" mode="live" />);
+    await screen.findByRole("link", { name: "Birch Retail" });
+    const birch = screen.getByRole("link", { name: "Birch Retail" }).closest("li") as HTMLElement;
+    expect(within(birch).getByText("Ended: not recorded")).toBeVisible();
+    const cedar = screen.getByRole("link", { name: "Cedar Co" }).closest("li") as HTMLElement;
+    expect(cedar).toHaveTextContent(/Ended 23 Nov 2026, 10:00 UTC/);
+  });
+
+  it("makes the activity page's controls 44px tall on a phone", async () => {
+    serve(list);
+    render(<ConnectedApp path="/runs" mode="live" />);
+    const library = await screen.findByRole("link", { name: "Finished runs are in the library" });
+    expect(library).toHaveClass("min-h-8", "max-[480px]:min-h-11");
+    expect(screen.getByRole("link", { name: "Start a run" })).toHaveClass("max-md:min-h-11");
   });
 
   it("puts runs in flight first, the runs that stopped directly under them, and waiting runs after", async () => {
