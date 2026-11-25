@@ -11,7 +11,7 @@ from typing import Any
 from credit_os.source import (
     valid_date,
 )
-from deploy_vii.period_order import PeriodClass, order_periods, parse_period
+from deploy_vii.period_order import ParsedPeriod, PeriodClass, order_periods, parse_period
 
 READER_TABLES = [
     ["Bottom line", "Confidence", "Main limitation"],
@@ -295,33 +295,61 @@ def _period_rows(table: dict[str, Any]) -> dict[str, list[int]]:
 REPORTED_CLASSES = (PeriodClass.ACTUAL, PeriodClass.YTD, PeriodClass.LTM)
 
 
-def period_columns(headers: list[str]) -> dict[str, list[int]] | None:
-    """The columns after the first whose header the rule reads as a period, in rule order, and
-    those of them that are reported (not pro forma or forecast); None when no header is a period.
-    The page picks its latest and earlier period columns from these and orders nothing itself."""
-    periods = [at for at in range(1, len(headers)) if parse_period(headers[at]) is not None]
-    if not periods:
+def period_columns(headers: list[str]) -> dict[str, Any] | None:
+    """The columns after the first whose header the rule reads as a period: `order` (rule order),
+    `reported` (those not pro forma or forecast) and `latest` (the latest reported one, or None);
+    None when no header is a period. The page draws these and neither classes nor orders a period.
+    """
+    parsed = {
+        at: period
+        for at in range(1, len(headers))
+        if (period := parse_period(headers[at])) is not None
+    }
+    if not parsed:
         return None
-    order, _ = order_periods(periods, lambda at: headers[at])
-    reported = [at for at in order if _reported(headers[at])]
-    return {"order": list(order), "reported": reported}
+    order, _ = order_periods(list(parsed), lambda at: headers[at])
+    reported = [at for at in order if parsed[at].period_class in REPORTED_CLASSES]
+    return {"order": list(order), "reported": reported, "latest": _latest(reported, parsed)}
 
 
-def _reported(label: str) -> bool:
-    parsed = parse_period(label)
-    return parsed is not None and parsed.period_class in REPORTED_CLASSES
+def _latest(reported: list[int], parsed: dict[int, ParsedPeriod]) -> int | None:
+    """The last reported column in rule order. None when there is none, and when the actual-class
+    columns mix dated labels with fiscal ones (`2025-06-30` beside `FY2025`): which is later
+    depends on the year end, so no column is presented as the latest."""
+    dated = {
+        parsed[at].span == "date"
+        for at in reported
+        if parsed[at].period_class is PeriodClass.ACTUAL
+    }
+    return reported[-1] if reported and len(dated) < 2 else None
+
+
+def _path_row(label: str) -> tuple[str, str] | None:
+    """`<path> / <period>` as (path, period): the period is the longest ` / ` suffix the rule
+    reads (`Base / FY2025 / 2025-09-30` is path `Base`), else the text after the last ` / `.
+    None for a label with no ` / `."""
+    parts = label.split(" / ")
+    for at in range(1, len(parts)):
+        period = " / ".join(parts[at:])
+        if parse_period(period) is not None:
+            return " / ".join(parts[:at]), period
+    return (" / ".join(parts[:-1]), parts[-1]) if len(parts) > 1 else None
 
 
 def path_series(table: dict[str, Any]) -> dict[str, Any]:
     """A path table (`<path> / <period>` in the first column) as its periods in rule order and,
     for each path as first written, the row of each period (None where it has none). A period
-    the rule cannot read is kept last, as written."""
+    the rule cannot read is kept last, as written. A row whose label has no ` / ` is not a path
+    row and is not drawn; ValueError when no row is one, or two name one path and period."""
     cells: dict[tuple[str, str], int] = {}
     for at, row in enumerate(table["rows"]):
-        name, slash, period = str(row["cells"][0]).rpartition(" / ")
-        if not slash or (name, period) in cells:
-            raise ValueError(f"path row {at + 1} does not name one path and period")
-        cells[name, period] = at
+        named = _path_row(str(row["cells"][0]))
+        if named in cells:
+            raise ValueError(f"path row {at + 1} names the path and period of an earlier row")
+        if named is not None:
+            cells[named] = at
+    if not cells:
+        raise ValueError("no row names a path and its period")
     periods, _ = order_periods(list(dict.fromkeys(period for _, period in cells)), str)
     return {
         "periods": list(periods),

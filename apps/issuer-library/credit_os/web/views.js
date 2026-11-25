@@ -1226,8 +1226,8 @@ function cashflowTable(c,rows=c.rows) {
 function cashflowSection(model) {
   const c=model.cashflow;
   if(!c)return '<section class="forecast-cashflow"><h2>Cash flow model</h2><p>This model has no readable calculation record.</p></section>';
-  // The store's placeholder when no downside was computed is the one Downside-case column that is not a forecast year.
-  const periods=c.columns.filter(col=>!(col.group==='Downside case'&&!/^FY\d+E$/.test(col.label)));
+  // The store's placeholder when no downside was computed is the one Downside-case column that is not a forecast year (cashflow.py: `forecast` on each column).
+  const periods=c.columns.filter(col=>!(col.group==='Downside case'&&!col.forecast));
   const na=notAvailableLines(c),first=periods[0],last=periods[periods.length-1];
   const caption=[c.units==null?'Units not recorded':c.units,...first?[`${first.label} to ${last.label}`]:[],'history as retained in the handoffs; forecasts are conditional illustrations from the calculation record'].join(' · ');
   // A line with no figure in any column (the store's `empty`) is folded; its cells stay reachable, and a heading goes with the lines under it.

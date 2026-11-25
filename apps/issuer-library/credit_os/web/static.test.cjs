@@ -1253,6 +1253,8 @@ const REAL_KEY = [`- **Cover is thin.** Interest cover is 2.1x and free cash flo
 const REAL_CONTRARY = [`The view would soften if a signed refinancing removed the 2027 maturity.\nBasis: ${MEMO}, page 2`];
 const REAL_LIMITS = [`- No holdings file was supplied, so portfolio fit is unscored.\nBasis: ${MEMO}, page 3`, '- The chair left relative value unscored.'];
 const METRIC_HEAD = ['Metric', 'FY2024', 'FY2023', 'Definition / identity', 'Source', 'Calculation ID'];
+// Its period columns as the store annotates them (handoff_fields.py period_columns): FY2023 then FY2024 in rule order, FY2024 the latest reported.
+const METRIC_PERIODS = { order: [2, 1], reported: [2, 1], latest: 1 };
 const metricRows = [
   [12, 'Net leverage', '6.01x', '6.40x', 'Net debt over EBITDA', `${FIG}, page 4`, 'C05'],
   [13, 'Interest cover', '2.1x', '2.5x', 'EBITDA over cash interest', `${FIG}, page 5`, 'C06'],
@@ -1266,7 +1268,7 @@ const realSections = (over = {}) => ({
   'CP-1': [
     sec('Findings', 2, 1, 'view', []),
     sec('Bottom line', 3, 2, 'view', [text(3, `Financial position is in the table below.\nBasis: ${FIG}, page 4`)]),
-    ...(over.metric === false ? [] : [sec('Financials and credit metrics', 3, 10, 'view', [table(11, METRIC_HEAD, metricRows)])]),
+    ...(over.metric === false ? [] : [sec('Financials and credit metrics', 3, 10, 'view', [{ ...table(11, METRIC_HEAD, metricRows), periods: METRIC_PERIODS }])]),
     sec('Gaps', 2, 90, 'audit', [table(91, ['Gap', 'Severity'], [[92, 'No peer set', 'Low']])]),
   ],
   'CP-6': [
@@ -3811,7 +3813,7 @@ test('timeline (Task 7): an events table with one "Not supplied" row is the empt
 
 // ---- The Forecast page (reader check of 2026-11-12): lines with no figure fold away; the model picker names the run, not a hash.
 const cell = (status, display, reason = null) => ({ exact: status === 'value' ? display : null, display, reason, status });
-const gridColumns = [{ label: 'FY2024', group: 'Fiscal year', start: null, end: null, ytd: false }, { label: 'FY2025E', group: 'Base case', start: null, end: null, ytd: false }];
+const gridColumns = [{ label: 'FY2024', group: 'Fiscal year', start: null, end: null, ytd: false, forecast: false }, { label: 'FY2025E', group: 'Base case', start: null, end: null, ytd: false, forecast: true }];
 const gridRow = (band, label, empty, cells) => ({ band, label, kind: 'money', total: false, empty, cells });
 // Hand-written grid: Revenue has figures; Capex has none in the main table but one in the Upside table; Closing cash and Gross profit have none anywhere.
 const FOLD_GRID = {
@@ -3823,7 +3825,7 @@ const FOLD_GRID = {
     gridRow('Cash and liquidity', 'Closing cash', true, [cell('na', 'n.a.', 'not reported'), cell('na', 'n.a.', 'not reported')]),
   ],
   other: {
-    columns: [{ label: 'FY2025E', group: 'Upside', start: null, end: null, ytd: false }],
+    columns: [{ label: 'FY2025E', group: 'Upside', start: null, end: null, ytd: false, forecast: true }],
     rows: [
       gridRow('Revenue', 'Revenue', false, [cell('value', '1,100')]),
       gridRow('Profitability', 'Gross profit', true, [cell('nm', 'n.m.')]),
@@ -3847,6 +3849,18 @@ test('Forecast: a line with no figure in any column is folded after the main tab
   assert.ok(fold.includes('Fiscal year') && fold.includes('Base case') && fold.includes('aria-label="n.a.: not reported"') && fold.includes('aria-label="n.m.: not modelled in the calculation record"'), 'same columns and cells, reasons reachable');
   assert.ok(html.indexOf('class="cashflow-empty"') < html.indexOf('class="cashflow-other"') && html.indexOf('</table>') < html.indexOf('class="cashflow-empty"'));
   assert.ok(html.includes('Why cells show n.a. (3 lines)'), 'the n.a. list still counts every line');
+});
+
+// Chart periods review: the caption's range read "is this a forecast year" from the label (^FY\d+E$); the store says it on each column (cashflow.py `forecast`).
+test('Forecast: the caption range ends on the last column that is not the no-downside placeholder, told by the store\'s forecast flag and never by a label', () => {
+  const column = (label, group, forecast) => ({ label, group, start: null, end: null, ytd: false, forecast });
+  const grid = columns => ({ ...FOLD_GRID, columns, other: null, rows: [gridRow('Revenue', 'Revenue', false, columns.map((c, i) => cell('value', String(i))))] });
+  const caption = columns => /<p class="forecast-caption">(.*?)<\/p>/.exec(runPage().cashflowSection({ cashflow: grid(columns) }))[1];
+  const history = [column('FY2024', 'Fiscal year', false), column('FY2025E', 'Base case', true)];
+  assert.ok(caption([...history, column('Downside', 'Downside case', false)]).startsWith('USD millions · FY2024 to FY2025E · '), 'the placeholder is not a period of the range');
+  assert.ok(caption([...history, column('2026 forecast', 'Downside case', true)]).startsWith('USD millions · FY2024 to 2026 forecast · '), 'a forecast column is one, whatever its label');
+  assert.ok(caption([...history, column('FY2026E', 'Downside case', false)]).startsWith('USD millions · FY2024 to FY2025E · '), 'and a label that looks like a forecast year does not make one');
+  assert.ok(!read('views.js').includes('FY\\d+E'), 'no forecast-year pattern on the page');
 });
 
 test('Forecast: when every line has a figure there is no fold', () => {

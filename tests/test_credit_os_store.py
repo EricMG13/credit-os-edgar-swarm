@@ -2105,6 +2105,14 @@ def test_no_downside_is_an_unavailable_column_not_a_missing_one():
     reason = "no downside case was computed in this run"
     assert all(r["cells"][-1]["reason"] == reason for r in grid["rows"])
     assert "Downside case: no downside case was computed in this run." in grid["notes"]
+    # The page reads which columns are forecast years from the store, never from a label.
+    assert [(c["label"], c["forecast"]) for c in grid["columns"]][-4:] == [
+        ("FY2025E", True),
+        ("FY2026E", True),
+        ("FY2027E", True),
+        ("Downside", False),
+    ]
+    assert [c["forecast"] for c in grid["columns"]][:-4] == [False] * (len(grid["columns"]) - 4)
 
 
 def test_the_other_grid_holds_only_forecast_columns_and_prior_year_growth_from_the_history():
@@ -2518,7 +2526,7 @@ def test_a_table_with_period_columns_says_their_order_and_which_are_reported():
         "| Revenue | 130 | 100 | +10 | 120 | 125 | 110 | Net sales |\n"
     )
     # FY2023, FY2024, LTM Jun 2025, PF 2025, FY2025E; pro forma and forecast are not reported.
-    assert block["periods"] == {"order": [2, 6, 4, 5, 1], "reported": [2, 6, 4]}
+    assert block["periods"] == {"order": [2, 6, 4, 5, 1], "reported": [2, 6, 4], "latest": 4}
     assert block["headers"][0] == "Metric" and block["rows"][0]["cells"][1] == "130"
 
 
@@ -2527,6 +2535,62 @@ def test_a_table_without_period_columns_is_left_as_parsed():
         "## Findings\n\n| Item | Value | Basis |\n| --- | --- | --- |\n| FY2024 cash | 5 | S |\n"
     )
     assert "periods" not in block
+
+
+def test_only_pro_forma_or_forecast_period_columns_have_no_latest_reported_column():
+    assert store.period_columns(["Metric", "PF", "FY2026E"]) == {
+        "order": [1, 2],
+        "reported": [],
+        "latest": None,
+    }
+
+
+@pytest.mark.parametrize(
+    ("headers", "expected"),
+    [
+        # A fiscal year beside a dated period: which is later depends on the year end.
+        (
+            ["Metric", "2025-06-30", "FY2025"],
+            {"order": [1, 2], "reported": [1, 2], "latest": None},
+        ),
+        # A fiscal year that carries its own date is a dated label; the plain year beside it is not.
+        (
+            ["Metric", "FY2024 / 2024-09-30", "FY2025"],
+            {"order": [1, 2], "reported": [1, 2], "latest": None},
+        ),
+        # The refusal stands with an LTM column after them, as in the catalogue.
+        (
+            ["Metric", "FY2024", "2025-06-30", "LTM Jun 2025"],
+            {"order": [1, 2, 3], "reported": [1, 2, 3], "latest": None},
+        ),
+        # All dated, or all fiscal: the last in rule order.
+        (
+            ["Metric", "2025-06-30", "2024-12-31"],
+            {"order": [2, 1], "reported": [2, 1], "latest": 1},
+        ),
+        (
+            ["Metric", "FY2024", "Q1 2025", "LTM Mar 2025", "FY2025E"],
+            {"order": [1, 2, 3, 4], "reported": [1, 2, 3], "latest": 3},
+        ),
+        # A dated forecast beside fiscal actuals is not a reported period and mixes nothing.
+        (
+            ["Metric", "FY2024", "2026-12-31 forecast"],
+            {"order": [1, 2], "reported": [1], "latest": 1},
+        ),
+    ],
+)
+def test_the_latest_reported_column_is_refused_when_dated_and_fiscal_actuals_mix(headers, expected):
+    assert store.period_columns(headers) == expected
+
+
+def test_a_header_with_a_word_or_number_the_rule_does_not_know_is_not_a_period_column():
+    headers = ["Metric", "Net debt 1500", "Notes 2031", "Change vs 2023", "Senior Notes 2031"]
+    assert store.period_columns(headers) is None
+    assert store.period_columns([*headers, "FY2024"]) == {
+        "order": [5],
+        "reported": [5],
+        "latest": 5,
+    }
 
 
 PATH_ROWS = [
@@ -2576,10 +2640,35 @@ def test_a_path_visual_keeps_a_period_one_series_lacks_and_one_the_rule_cannot_p
     }
 
 
+def test_a_path_row_is_split_where_the_longest_period_the_rule_reads_begins():
+    rows = [
+        ("Base / FY2026 / 2026-09-30", "2"),
+        ("Base / FY2025 / 2025-09-30", "1"),
+        ("Low / stress / FY2025 / 2025-09-30", "3"),
+    ]
+    visual = pinned_visual({"kind": "paths", "column": 1}, ["Path", "Closing cash"], rows)
+    assert visual["paths"] == {
+        "periods": ["FY2025 / 2025-09-30", "FY2026 / 2026-09-30"],
+        "series": [
+            {"name": "Base", "rows": [1, 0]},
+            {"name": "Low / stress", "rows": [2, None]},
+        ],
+    }
+
+
+def test_a_row_of_a_path_table_that_names_no_path_and_period_is_not_drawn():
+    rows = [("Reference / 2026", "2"), ("Minimum liquidity", "5"), ("Reference / 2025", "1")]
+    visual = pinned_visual({"kind": "paths", "column": 1}, ["Path", "Closing cash"], rows)
+    assert visual["paths"] == {
+        "periods": ["2025", "2026"],
+        "series": [{"name": "Reference", "rows": [2, 0]}],
+    }
+
+
 @pytest.mark.parametrize(
     "rows",
     [
-        [("Reference 2025", "1")],  # no " / " between the path and its period
+        [("Reference 2025", "1")],  # no row has " / " between a path and its period
         [("Reference / 2025", "1"), ("Reference / 2025", "2")],  # one path, one period, twice
     ],
 )
@@ -2619,6 +2708,17 @@ def test_a_comparison_visual_whose_rows_are_periods_is_given_them_in_rule_order(
             [("x", "1", "2")],
         ),
         ({"kind": "bars", "column": 1}, ["Item", "Value"], [("Cash", "1"), ("FY2024 debt", "2")]),
+        # Instruments carry their maturity year in the name: they are not periods.
+        (
+            {"kind": "bars", "column": 1},
+            ["Instrument", "Amount"],
+            [("Senior Notes 2031", "500"), ("Term Loan B 2028", "1,200"), ("RCF 2027", "0")],
+        ),
+        (
+            {"kind": "paired", "rows": [0], "columns": [1, 2]},
+            ["M", "Notes 2031", "Notes 2029"],
+            [("x", "1", "2")],
+        ),
         ({"kind": "matrix", "columns": [0, 1]}, ["Period", "FY2024"], [("FY2023", "1")]),
     ],
 )

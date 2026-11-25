@@ -2993,3 +2993,52 @@ def test_charts_draw_every_period_left_to_right_in_rule_order_cells_as_written(t
     ]
     assert left_to_right(seen["trend"])
     assert [b["height"] for b in seen["trend"]] == sorted(b["height"] for b in seen["trend"])
+
+
+# ---- Chart periods review (2026-11-25): a tile's headline is the latest reported period only.
+PERIOD_TILES = """
+### Tile metrics
+
+| Metric | FY2023 | FY2024 | LTM Jun 2025 | PF LTM Jun 2025 | FY2025E | Definition |
+| --- | --- | --- | --- | --- | --- | --- |
+| Tile sales | 6,585 | 7,940 | 8,400 | 8,650 | 9,000 | Net sales as reported |
+
+### Pro forma tile metrics
+
+| Metric | PF | FY2026E | Definition |
+| --- | --- | --- | --- |
+| Tile cover | 3.4x | 4.0x | EBITDA over cash interest |
+"""
+PERIOD_TILES_PROBE = (
+    Path(__file__).with_name("browser_probe_period_tiles.js").read_text(encoding="utf-8")
+)
+
+
+def with_period_tiles(text: str) -> str:
+    """The synthetic CP-2 handoff with the two metric tables under its Findings part."""
+    marker = "\n## Calculations"
+    assert marker in text
+    return text.replace(marker, PERIOD_TILES + marker, 1)
+
+
+def test_a_tile_headline_is_the_latest_reported_period_never_a_pro_forma_or_forecast(tmp_path):
+    seen = read_probe(
+        synthetic_workspace(tmp_path, with_period_tiles),
+        f"#CP-2/head?c={NEW_FORMAT_RUN}",
+        1440,
+        PERIOD_TILES_PROBE,
+        {"labels": ["Tile sales", "Tile cover"]},
+    )
+    assert seen["width"] == 1440
+    sales, cover = seen["tiles"]["Tile sales"], seen["tiles"]["Tile cover"]
+    # LTM Jun 2025 is the latest reported period: not FY2024, the pro forma or the forecast.
+    assert sales["headline"] == "8,400"
+    assert sales["below"] == ["FY2023 6,585 · FY2024 7,940 · PF LTM Jun 2025 8,650 · FY2025E 9,000"]
+    assert sales["absence"] == []
+    # Only pro forma and forecast columns: no figure is the headline, and each is labelled.
+    assert cover["headline"] == "—"
+    assert cover["below"] == ["PF 3.4x · FY2026E 4.0x"]
+    assert cover["absence"] == ["No reported period: pro forma or forecast only"]
+    for tile in (sales, cover):
+        assert tile["drawn"] is True and tile["clipped"] is False
+        assert tile["headlineSize"] > tile["belowSize"]
