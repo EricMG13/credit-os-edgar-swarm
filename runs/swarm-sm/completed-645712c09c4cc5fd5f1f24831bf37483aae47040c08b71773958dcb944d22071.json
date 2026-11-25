@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for SM Energy Co as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/d24a4bed4189e31cb513976ab96fff56a4b01c427dea97e9aae18623ad2001fa/1.response.md",
+    "CP-1": "requests/CP-1/ea32edbe747a6004596dabf045037e6449fe071a0111c2e848104ec1e4f45579/1.response.md",
+    "CP-1A": "requests/CP-1A/d1b074132f8091c081032f30b7216bb4385c058e75f33f82f9f79a4a4cd655f5/1.response.md",
+    "CP-2": "requests/CP-2/7d72da659487edaa6766a07f33eebe0feee4f357ae6d2df511882f649b91543d/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "e455eae13f3ca592e0784b22bcaa3bc2b1ea760ff463245a7bf69304094cde6c",
+  "delivery_sha256": "19a54570119567511a1cd6e4415425c9658b16c2bb155b0b3278480d0bea19d7"
+}

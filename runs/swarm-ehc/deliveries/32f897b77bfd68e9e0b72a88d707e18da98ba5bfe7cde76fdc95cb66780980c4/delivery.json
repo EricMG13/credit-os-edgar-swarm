@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Encompass Health Corp as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "a728cc30a4f584af664043096e835e8e7f687bc579d51173ade5a7f447818180",
+    "CP-1.md": "f63e944637e61ea81decd44d54a3ab58e1bad6370f6da40f2f333ec9f1ddcbd0",
+    "CP-1A.md": "4d7fb0781b6b5f29e3707316e91ed69fc93be57df09897b9d647a826241fe066",
+    "CP-2.md": "cb263888b7db4a992da831f23eb58b39ea178c9d7358fc6501cc9eb13b654c4a",
+    "coverage.json": "feb034cd77d117705b89058bf71c3789cdcfe626c732d3f2973ccbe9e13dbfc3",
+    "view.json": "9da01931c27d1ef0db10310496ae09e6d3b812f4b830f9ed8cc4ebfac01fe50f",
+    "report-view.json": "9ee2d7c438321eb504f68946aa0026b715d43f77fe8681a42c6a335a5c3b7963"
+  }
+}

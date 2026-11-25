@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Encompass Health Corp as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/b53d363b48edd84ec3fdeca03713786d6d076c7bf8c3cd65cc7328a1aa180d30/1.response.md",
+    "CP-1": "requests/CP-1/0dc5e5e4411bf896aa17692ff1cbd2b99a2206af891bae9143ed6e62c3ff9604/1.response.md",
+    "CP-1A": "requests/CP-1A/b0527c80ee851b01f17acd5be17e46f7b8e324029747972dc1edc163ff0c7719/1.response.md",
+    "CP-2": "requests/CP-2/b78af4e49a1db185a047756d874539f3a6a06852d0abbbc59f4600347486b932/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "853f9013cf32dbae262c920a056a572ccee50cd2f12c3e85eba302e4e3728616",
+  "delivery_sha256": "edda7f9e37fcf8dcdcc1cea7a40b3a5f6548566bd15691fb68587439a45e7cdc"
+}

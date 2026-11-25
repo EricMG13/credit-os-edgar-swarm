@@ -1,0 +1,248 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "crk-23194-2026-11-18-credit_snapshot-host",
+    "issuer_id": "crk-23194",
+    "issuer_name": "Comstock Resources Inc",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_crk.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_crk.htm.jsonl",
+      "sha256": "573187cc759c1ddea7c19cbed85103f9de784b84068ad1f069616d53b3e50b5d"
+    },
+    "10-K_2025-12-31_crk.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_crk.htm.jsonl",
+      "sha256": "12ac885c29363474639ac322947a020de6bb51304e642efc61d014faf9dc6c42"
+    },
+    "10-Q_2026-03-31_crk.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_crk.htm.jsonl",
+      "sha256": "0ab54d7a64d72e20c298d655c35f6bf913d9d4292578a3cf7c1d924042c6f0d1"
+    },
+    "10-Q_2026-06-30_crk.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_crk.htm.jsonl",
+      "sha256": "b32ec30d3a928a0c7e848a82cfe993544f549cf4d36b65127a3d8ded2384f633"
+    },
+    "10-Q_2026-09-30_crk.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_crk.htm.jsonl",
+      "sha256": "ac2df52d79abc76f06043e3b129bdcf68705d2e5a4044e8b86abd40d62a5351a"
+    },
+    "EX99.1_2026-03-31_crk_crk-ex99-1-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_crk_crk-ex99-1-htm.htm.jsonl",
+      "sha256": "07421ce1120c7d1aa01229881aa6226301661e78bad274f77f20b9315c629392"
+    },
+    "EX99.1_2026-06-30_crk_crk-ex99-1-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_crk_crk-ex99-1-htm.htm.jsonl",
+      "sha256": "6e7daf261ae302c5c1acf6af33c14648ece4908285b4f9b8d17c9eaf1b1b92d6"
+    },
+    "EX99.1_2026-09-30_crk_crk-ex99-1-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-09-30_crk_crk-ex99-1-htm.htm.jsonl",
+      "sha256": "713c0c09d0c85716b5e5e1f5fa9c725fe47ad70dbe28a00e48d93cc02a70032e"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/23194-comstock-resources-inc.json",
+      "sha256": "51a2729b36eef49e445e43bc415a164451828e26417424b0766a825f1ec6ea68"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "5dffe79553dfc5a21c62b2830a3a4c0fab2f29ef98d4aceb6caf98705311a32f"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "e642e8f8f7db608c424d1fcb9f07b01591471a71358be694fe9ceb2717ba0c79"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "c161bcb9e8c8b261a19d989b4235bdc7e1bde1775bd040c5383ba45e94d699d6"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "ac1d74019f2cf0d06a2c8f557c93a4f6c03e893d0094a399eea3f30f6d4eb4db"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Comstock Resources Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Comstock Resources Inc — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}
