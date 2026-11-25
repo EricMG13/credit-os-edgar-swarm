@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Builders FirstSource, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/4abc8514dbda84d93d424ce2fcfe93219988fba5b11fff255af640036878e56b/1.response.md",
+    "CP-1": "requests/CP-1/1f37a71c7578776010f77625c5807b6ed1ff637db305e5a57267f7aaf0913694/1.response.md",
+    "CP-1A": "requests/CP-1A/5a0ed2685796ef6a1785bd72ea2a32d6ec79a31c5270430d0841cbae691720d4/1.response.md",
+    "CP-2": "requests/CP-2/f0571de65aed74c9558375403532cb42d8b548ff50253d39b689510f4864d133/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "2e2ebfb497a3b45d420cb70b6a6f1adf2059dfaa9ae20a7ec0325ee34f6e20b5",
+  "delivery_sha256": "350847e3124ee51f319fc6cb82206d74c5c15dee8d7f000ec24efdccb99df163"
+}

@@ -78,6 +78,28 @@
         "CP-2": 1
       },
       "notes": "Final launcher exit 0 with delivery written; defects seen but not fixable: the accepted Source readiness answer wrongly said no revenue or earnings guidance is in the files (the Q1 and Q2 10-Qs give a qualitative 2026 revenue expectation), corrected in the Fundamental credit answer, and the Q3 10-Q states the product-correction cost four ways without reconciling them."
+    },
+    {
+      "issuer_id": "bldr",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "Resumed after a controller pause by a single Sonnet analyst using the workflow brief (all modules accepted on first submission). Defects seen but not fixable: CP-1A's 2026 acquisitions event is dated only to the year although the 10-K says Premium Building Components closed on 2026-01-02, and CP-1A's map text exceeds 60 characters; the 2026 proxy statement, executed credit agreement and indentures, peer and rating data, guarantor names and FY2024 adjusted EBITDA are not in the sources."
+    },
+    {
+      "issuer_id": "uan-1425292",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "Resumed after a controller pause by a single Sonnet analyst using the workflow brief; the earlier analyst's CP-0 draft was rewritten after checking its locators, and no module was rejected."
     }
   ]
 }

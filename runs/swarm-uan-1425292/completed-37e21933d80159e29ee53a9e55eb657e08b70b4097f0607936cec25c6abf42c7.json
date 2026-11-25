@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Cvr Partners, Lp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/5a639103c9352268274193e07fcd3764fc3d4215b2c4c86bb1765abc0b96c281/1.response.md",
+    "CP-1": "requests/CP-1/a560eac8c2f7a530b449165811459c08378c774b6738f9d04788b705469ff3e3/1.response.md",
+    "CP-1A": "requests/CP-1A/c3d671ceca309da21ecdcf2f8787385d8e105efec71dbfe934acf7cfbe1bed59/1.response.md",
+    "CP-2": "requests/CP-2/283d52daf70af6b188ae0edcc30fa54b6940699514d99a10e6e735e463f19030/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "d34372cdc37f6c2cb5048d352eba65e33e5114d8eefe5633d1e8c6dcc408f70b",
+  "delivery_sha256": "c095cc2233ba90bdda7ec1ca5847ce06dd2814cab13c6868e7ae92095ae10988"
+}
