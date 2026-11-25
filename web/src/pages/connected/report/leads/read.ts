@@ -1,13 +1,16 @@
 import {
+  blocked,
   containsReference,
   evidencePath,
   methodNote,
   readParagraph,
   readerText,
+  withUnit,
   type OutputEntry,
   type Table,
 } from "../../publishedReport";
 import { eventRecords } from "../../visuals/EventLane";
+import { readerReason } from "../overview/reason";
 import type { Cell } from "../overview/figureData";
 import { items, publishedTables, record, word, type SourceTable } from "../../visuals/visualData";
 import type { LeadProps } from "./types";
@@ -20,15 +23,17 @@ export const leadHref =
   (line?: number) =>
     evidencePath(run.folder, entry, line);
 
+/**
+ * Whether a lead draws nothing: the module is blocked, or the store could not read its handoff.
+ * The frame states either once.
+ */
+export const drawsNothing = (entry: OutputEntry) =>
+  blocked(entry) || Boolean(entry.output.parseError);
+
 const capital = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
 /** What a cell that names a source shows; the cell itself is in the trace. */
 export const IN_EVIDENCE = "In Evidence";
-
-// A method register's id as the skills number them: "T2F.2", "T2DS.6", "TDR.3", "T4C.5".
-const REGISTER_ID = /(?<![\w.-])T[0-9A-Z]{1,6}\.\d+(?![\w])/;
-// A module code left after `readerText`: one the page has no name for.
-const RAW_CODE = /(?<![\w-])CP-[A-Z0-9]+(?![\w-])/i;
 
 const escaped = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -60,15 +65,76 @@ export function columnOf(table: Pick<Table, "headers">, name: string) {
 }
 
 /**
- * A cell for a working page: as written, with module codes as names. One naming a source, a
- * register id ("T2F.2") or a module code the page has no name for stays in Evidence.
+ * A word that only links a clause to what it cites ("per", "see", "in", "table") or locates a
+ * place in a source ("p.", "page", "section"): never left at the end of the words kept.
+ */
+const LINK_WORD =
+  /(?:^|\s+)(?:per|see|in|from|at|on|of|for|and|by|under|table|register|rows?|pp?\.|pages?|sections?|§|paras?\.?|-|–|—)$/i;
+const DANGLING = /[\s,;:(\-–—]+$/;
+
+/** The longest leading run of a clause's words the reader rule draws, no dangling link word. */
+function leadingWords(clause: string) {
+  const words = clause.split(/\s+/);
+  for (let count = words.length - 1; count > 0; count -= 1) {
+    let lead = words.slice(0, count).join(" ");
+    for (let before = ""; before !== lead;) {
+      before = lead;
+      lead = lead.replace(LINK_WORD, "").replace(DANGLING, "");
+    }
+    const drawn = lead ? readerReason(lead) : null;
+    if (drawn) return drawn;
+  }
+  return "";
+}
+
+/** A bracketed group whose words cite a source or an id: "(credit_agreement.pdf page 3)", "(T2F.2)". */
+const BRACKETED = /\s*(?:\([^()]*\)|\[[^\]]*\])/g;
+const cited = (group: string) => readerReason(group.trim().slice(1, -1)) === null;
+
+/**
+ * A cell for a working page, by the reader rule (`readerReason`): as written, module codes as names;
+ * where it cites a source, a register id or an unnamed code, only that clause goes to the trace and
+ * the readable words and figures stay. "In Evidence" when nothing readable is left.
  */
 export function readerCell(text: string) {
   const plain = text.replaceAll("**", "").replaceAll("`", "").trim();
-  if (containsReference(plain) || REGISTER_ID.test(plain)) return IN_EVIDENCE;
-  const read = readerText(plain);
-  return RAW_CODE.test(read) ? IN_EVIDENCE : read;
+  if (!plain) return "";
+  // The reader rule reads a leading "- " as a list marker; a cell keeps it as written.
+  const marker = /^[-*] /.exec(plain)?.[0] ?? "";
+  const whole = readerReason(plain.slice(marker.length));
+  if (whole !== null) return `${marker}${whole}`;
+  const parts = plain
+    .replace(BRACKETED, (group) => (cited(group) ? "" : group))
+    .split(/\s*([;,])\s+/);
+  const kept: string[] = [];
+  for (let at = 0; at < parts.length; at += 2) {
+    const clause = (parts[at] ?? "").trim();
+    // A later clause that cites is dropped whole ("…, page 7"); the first keeps its leading words.
+    const words = clause ? (readerReason(clause) ?? (at === 0 ? leadingWords(clause) : "")) : "";
+    if (words) kept.push(kept.length ? `${parts[at - 1] ?? ""} ${words}` : words);
+  }
+  const joined = kept.join("").replace(DANGLING, "");
+  return (joined && readerReason(joined)) || IN_EVIDENCE;
 }
+
+const BARE_NUMBER = /^[-−]?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?$/;
+const BRACKETED_NUMBER = /^\(((?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d+)?)\)$/;
+
+/**
+ * A stated cell with its table's unit, once: a bare number takes the unit ("5.0" in x, "5.0x"), an
+ * accounting negative takes it inside its brackets ("(12.3)" in x, "(12.3x)"); a cell that already
+ * carries its unit ("12%", "5.0x") or any other words prints as written.
+ */
+export function withStatedUnit(text: string, unit: string) {
+  const written = text.trim();
+  if (!unit) return written;
+  if (BARE_NUMBER.test(written)) return withUnit(written, unit);
+  const inner = BRACKETED_NUMBER.exec(written)?.[1];
+  return inner ? `(${withUnit(inner, unit)})` : written;
+}
+
+/** Text closed as a sentence: one full stop added unless it already ends with one ("n.m."). */
+export const closed = (text: string) => (/[.!?]$/.test(text.trim()) ? text : `${text}.`);
 
 export type Paragraph = { line: number; text: string | null };
 
@@ -90,9 +156,10 @@ export const rowName = (text: string, index: number) => text || `Row ${String(in
 
 /** A read cell as a working page shows it; its value is read from the cell as written. */
 export function readerCellOf(cell: Cell): Cell {
+  const gap = /^(Not [a-z]+):\s*(\S.*)$/i.exec(cell.text.trim());
   return {
     ...cell,
-    text: readerCell(cell.text),
+    text: gap ? `${gap[1] ?? ""}: ${readerCell(gap[2] ?? "")}` : readerCell(cell.text),
     reason: cell.reason === null ? null : readerCell(cell.reason),
   };
 }
@@ -261,10 +328,12 @@ export type LaneEvent = {
   relevance: string;
   line: number;
 };
+/** A lane row the page could not place by date: its date cell and event as written. */
+export type UnplacedEvent = { date: string; event: string; line: number };
 export type Lane =
   | { state: "gap"; reason: string; line?: number }
-  /** `notDrawn`: rows of the lane's table the page could not place by date. */
-  | { state: "ready"; events: LaneEvent[]; notDrawn: number; line: number };
+  /** `unplaced`: rows of the lane's table the page could not place by date, in the order written. */
+  | { state: "ready"; events: LaneEvent[]; unplaced: UnplacedEvent[]; line: number };
 
 /**
  * The module's dated events of one lane, earliest first (then by end, then as written): from the
@@ -296,7 +365,20 @@ export function eventsOf(entry: OutputEntry, lane: string): Lane | null {
       relevance: readerCell(event.relevance),
       line: table.rowLines?.[event.index] ?? table.line,
     }));
-  return { state: "ready", events, notDrawn: table.rows.length - records.length, line: table.line };
+  const placed = new Set(records.map((event) => event.index));
+  const [date, event] = ["Event date", "Event"].map((name) => columnOf(table, name));
+  const unplaced = table.rows.flatMap((cells, index) =>
+    placed.has(index)
+      ? []
+      : [
+          {
+            date: readerCell(cells[date ?? -1] ?? "") || "Date not stated",
+            event: readerCell(cells[event ?? -1] ?? "") || "Not stated",
+            line: table.rowLines?.[index] ?? table.line,
+          },
+        ],
+  );
+  return { state: "ready", events, unplaced, line: table.line };
 }
 
 const MONEY_LEAD =

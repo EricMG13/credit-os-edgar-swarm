@@ -5,7 +5,7 @@ import { columnAt } from "../overview/figureData";
 import { BULLET, bulletGeometry, headroomTests, type HeadroomTest } from "../overview/stressData";
 import { Figure } from "../overview/Tile";
 import { BarRow, GapCell, statedGap, Trace, type LeadTable } from "./parts";
-import { IN_EVIDENCE, readerCell, readerCellOf } from "./read";
+import { closed, IN_EVIDENCE, readerCell, readerCellOf, withStatedUnit } from "./read";
 
 /** A test as a lead draws it: `headroomGap` is the reason the module gives for no headroom. */
 export type LeadTest = HeadroomTest & { headroomGap?: string | null };
@@ -36,16 +36,16 @@ export function leadTests(
 }
 
 /** A test's cell as written, with the row's unit when it is a number. */
-const shown = (test: HeadroomTest, cell: HeadroomTest["current"]) =>
-  cell.value === null ? cell.text : withUnit(cell.text, test.unit);
+export const shown = (test: HeadroomTest, cell: HeadroomTest["current"]) =>
+  cell.value === null ? cell.text : withStatedUnit(cell.text, test.unit);
 
 /** A position on the bullet's scale as a share of its track. */
 const share = (x: number) => (x - BULLET.left) / (BULLET.right - BULLET.left);
 
 function reading(test: HeadroomTest) {
   const headroom = test.headroom ? `, headroom ${test.headroom}` : "";
-  const direction = test.direction ? ` ${test.direction}.` : "";
-  return `${test.label}: ${shown(test, test.current)} against a threshold of ${shown(test, test.threshold)}${headroom}.${direction}`;
+  const direction = test.direction ? ` ${closed(test.direction)}` : "";
+  return `${closed(`${test.label}: ${shown(test, test.current)} against a threshold of ${shown(test, test.threshold)}${headroom}`)}${direction}`;
 }
 
 /** One stated cell as written, or the gap in its place with the module's reason. */

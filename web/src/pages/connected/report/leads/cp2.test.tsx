@@ -84,6 +84,17 @@ const cp1 = () =>
         ),
       ),
       tableSection(
+        "Period table",
+        table(
+          50,
+          ["Period", "Start", "End"],
+          [
+            ["FY2023", "2023-01-01", "2023-12-31"],
+            ["FY2024", "2024-01-01", "2024-12-31"],
+          ],
+        ),
+      ),
+      tableSection(
         "Chart data: interest cover",
         table(
           70,
@@ -347,4 +358,111 @@ it("lists a materiality row whose direction is not positive or negative as not p
   expect(
     within(screen.getByRole("list", { name: "Negative" })).getByText("Leverage"),
   ).toBeVisible();
+});
+
+const leverageOf = (made: OutputEntry) => {
+  const found = made.sections.find((section) => section.heading === "Chart data: leverage")
+    ?.blocks[0];
+  if (found?.type !== "table") throw new Error("leverage table missing");
+  return found;
+};
+
+// Review 3, P2: latest by period, not by row; the prior only a year earlier per the period table.
+it("draws the latest period's leverage whatever the row order, with the year before", () => {
+  const made = cp1();
+  const leverage = leverageOf(made);
+  leverage.rows = [
+    { line: 61, cells: ["FY2024", "2.80", "2.10", "x", "Synthetic."] },
+    { line: 62, cells: ["FY2023", "3.75", "3.20", "x", "Synthetic."] },
+  ];
+  render(<CreditLead {...leadProps(credit([]), [made, cp4()])} />);
+  const tile = screen.getByRole("region", { name: "Leverage, cover and headroom" });
+  const stat = within(tile).getByText("Total debt / EBITDA").closest("div") as HTMLElement;
+  expect(within(stat).getByText("FY2024, Financial foundation")).toBeVisible();
+  expect(within(stat).getAllByText("2.80x")[0]).toHaveClass("text-h3");
+  expect(within(stat).getByText("from 3.75x in FY2023")).toBeVisible();
+  expect(within(stat).queryByText("FY2023, Financial foundation")).toBeNull();
+});
+
+it("draws each stated leverage figure with its period and no latest when periods cannot be ordered", () => {
+  const made = cp1();
+  const leverage = leverageOf(made);
+  leverage.rows = [
+    { line: 61, cells: ["LTM June 2024", "2.80", "2.10", "x", "Synthetic."] },
+    { line: 62, cells: ["FY2023", "3.75", "3.20", "x", "Synthetic."] },
+  ];
+  render(<CreditLead {...leadProps(credit([]), [made, cp4()])} />);
+  const tile = screen.getByRole("region", { name: "Leverage, cover and headroom" });
+  const stat = within(tile).getByText("Total debt / EBITDA").closest("div") as HTMLElement;
+  expect(within(stat).getByText("Financial foundation")).toBeVisible();
+  const figures = within(stat).getByRole("list", { name: "Total debt / EBITDA by period" });
+  expect(
+    within(figures)
+      .getAllByRole("listitem")
+      .map((item) => item.textContent),
+  ).toEqual(["LTM June 20242.80x", "FY20233.75x"]);
+  expect(within(stat).queryByText(/^from /)).toBeNull();
+  expect(within(stat).queryByText(/, Financial foundation$/)).toBeNull();
+});
+
+// Review 3, P4: the covenant cells print with their unit once.
+it("prints the covenant module's headroom cells with their unit once", () => {
+  const covenants = cp4();
+  const found = covenants.sections[0]?.blocks[0];
+  if (found?.type !== "table") throw new Error("covenant table missing");
+  found.rows = [
+    {
+      line: 81,
+      cells: ["Senior leverage", "5.0x", "(12.3)", "17.3x", "Passes at or below", "x", "S."],
+    },
+  ];
+  render(<CreditLead {...leadProps(credit([]), [cp1(), covenants])} />);
+  const headroom = screen.getByText("Covenant headroom").closest("div") as HTMLElement;
+  expect(within(headroom).getByText("5.0x")).toBeVisible();
+  expect(within(headroom).getByText("(12.3x)")).toBeVisible();
+  expect(headroom.textContent).not.toMatch(/xx|\)x/);
+  cleanup();
+  found.rows = [
+    { line: 81, cells: ["Fixed charge", "12%", "15", "3%", "Passes at or above", "%", "S."] },
+  ];
+  render(<CreditLead {...leadProps(credit([]), [cp1(), covenants])} />);
+  const again = screen.getByText("Covenant headroom").closest("div") as HTMLElement;
+  expect(within(again).getByText("12%")).toBeVisible();
+  expect(within(again).getAllByText("15%")[0]).toBeVisible();
+  expect(again.textContent).not.toMatch(/%%/);
+});
+
+// Review 3, P6: the page's own words for an unreadable source module, not the helper's sentence.
+it("says the financial foundation's output could not be read, in the page's words", () => {
+  const broken = cp1();
+  broken.output.parseError = "Malformed table at line 113";
+  render(<CreditLead {...leadProps(credit([]), [broken, cp4()])} />);
+  const tile = screen.getByRole("region", { name: "Leverage, cover and headroom" });
+  expect(
+    within(tile).getAllByText(
+      "Financial foundation's output could not be read; it is in Evidence.",
+    ),
+  ).toHaveLength(2);
+  expect(tile.textContent).not.toMatch(/handoff|Malformed/);
+});
+
+// Review 3, P11: a mechanism that names a source keeps its words; the row's trace links the source.
+it("keeps a ledger mechanism's words when it names a source, with the row's trace", () => {
+  const made = credit([
+    ledger([
+      row("WEAKNESS", "1", "Leverage", "Fixed-charge drag per annual_report.pdf p. 4"),
+      row("WEAKNESS", "2", "Liquidity", "Per annual_report.pdf p. 9"),
+    ]),
+  ]);
+  render(<CreditLead {...leadProps(made)} />);
+  const weaknesses = screen.getByRole("list", { name: "WEAKNESS" });
+  const [first, second] = within(weaknesses).getAllByRole("listitem");
+  if (!first || !second) throw new Error("ledger rows missing");
+  expect(within(first).getByText("Fixed-charge drag")).toBeVisible();
+  expect(within(first).getByRole("link", { name: "Source for Leverage" })).toHaveAttribute(
+    "href",
+    expect.stringContaining("#evidence/"),
+  );
+  expect(within(second).getByText("In Evidence")).toBeVisible();
+  expect(weaknesses.textContent).not.toMatch(/annual_report/);
 });

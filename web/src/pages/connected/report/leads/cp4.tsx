@@ -1,4 +1,4 @@
-import { blocked, unitLabel } from "../../publishedReport";
+import { unitLabel } from "../../publishedReport";
 import { word } from "../../visuals/visualData";
 import { Key } from "../overview/figureParts";
 import { basisNotes } from "../overview/figureData";
@@ -6,7 +6,16 @@ import { Bento, Tile } from "../overview/Tile";
 import { Bullets, leadTests } from "./bullet";
 import { withDraws } from "./draws";
 import { KeyValues, LeadFigure, LeadGap, MapTile, Trace } from "./parts";
-import { chartOf, columnOf, leadHref, mapOf, readerCell, registerTable, rowName } from "./read";
+import {
+  chartOf,
+  columnOf,
+  leadHref,
+  mapOf,
+  readerCell,
+  registerTable,
+  rowName,
+  drawsNothing,
+} from "./read";
 import type { LeadProps } from "./types";
 import { ChartGap, writtenTable } from "./written";
 
@@ -116,7 +125,7 @@ function Baskets({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
 export const LegalLead = withDraws(
   function LegalLead(props: LeadProps) {
     const { entry } = props;
-    if (blocked(entry)) return null;
+    if (drawsNothing(entry)) return null;
     const href = leadHref(props);
     return (
       <Bento>

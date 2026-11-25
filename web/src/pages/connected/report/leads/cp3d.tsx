@@ -1,5 +1,4 @@
 import { cx } from "@/utils/cx";
-import { blocked, withUnit } from "../../publishedReport";
 import { ticks, type SourceTable } from "../../visuals/visualData";
 import { basisNotes, readCell } from "../overview/figureData";
 import { Key } from "../overview/figureParts";
@@ -14,6 +13,8 @@ import {
   readerCellOf,
   registerTable,
   rowName,
+  drawsNothing,
+  withStatedUnit,
 } from "./read";
 import type { LeadProps } from "./types";
 import { ChartGap, writtenTable } from "./written";
@@ -189,7 +190,7 @@ function Points({ points }: { points: readonly Placed[] }) {
             <span className="font-mono text-caption text-text-tertiary">{point.maturity}</span>
           </span>
           <span className="font-mono text-small font-medium text-text-primary tabular-nums">
-            {withUnit(point.cell.text, point.unit)}
+            {withStatedUnit(point.cell.text, point.unit)}
           </span>
         </li>
       ))}
@@ -227,7 +228,7 @@ function YieldFigure({ entry, href }: { entry: LeadProps["entry"]; href: Href })
   const reading = `Yield against maturity date${unit ? `, in ${unit}` : ""}. ${placed
     .map(
       (point) =>
-        `${point.name} matures ${point.maturity} at ${withUnit(point.cell.text, point.unit)}.`,
+        `${point.name} matures ${point.maturity} at ${withStatedUnit(point.cell.text, point.unit)}.`,
     )
     .join(" ")}`;
   const axis = placed.length >= AXIS_FROM;
@@ -338,7 +339,7 @@ function Implied({ entry, href }: { entry: LeadProps["entry"]; href: Href }) {
 export const MarketLead = withDraws(
   function MarketLead(props: LeadProps) {
     const { entry } = props;
-    if (blocked(entry)) return null;
+    if (drawsNothing(entry)) return null;
     const href = leadHref(props);
     return (
       <Bento>

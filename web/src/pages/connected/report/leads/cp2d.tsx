@@ -1,11 +1,11 @@
-import { blocked, unitLabel } from "../../publishedReport";
+import { unitLabel } from "../../publishedReport";
 import { Key } from "../overview/figureParts";
 import { Bento } from "../overview/Tile";
 import { Bridge, bridgeOf, stepTable, type Step } from "./bridge";
 import { withDraws } from "./draws";
 import { OtherCharts, rowBasis } from "./written";
 import { CompactGap, LaneTile, LeadFigure, LeadGap, Trace, type LeadTable } from "./parts";
-import { chartOf, eventsOf, leadHref } from "./read";
+import { chartOf, eventsOf, leadHref, drawsNothing } from "./read";
 import type { LeadProps } from "./types";
 
 const TITLE = "Liquidity bridge";
@@ -86,7 +86,7 @@ function LiquidityBridge({
 export const LiquidityLead = withDraws(
   function LiquidityLead(props: LeadProps) {
     const { entry } = props;
-    if (blocked(entry)) return null;
+    if (drawsNothing(entry)) return null;
     const href = leadHref(props);
     return (
       <Bento>
@@ -99,7 +99,7 @@ export const LiquidityLead = withDraws(
           href={href}
           absent="This page could not read dated financing events."
         />
-        <OtherCharts entry={entry} href={href} drawn={[TITLE]} />
+        <OtherCharts entry={entry} module="CP-2D" href={href} drawn={[TITLE]} />
       </Bento>
     );
   },

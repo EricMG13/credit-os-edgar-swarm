@@ -12,6 +12,7 @@ import {
   type MapGap,
   type MapRead,
   type Paragraph,
+  type UnplacedEvent,
 } from "./read";
 
 type Span = Parameters<typeof Tile>[0]["span"];
@@ -588,25 +589,27 @@ function publishedText(text = "") {
   return text.trim() && !/^[—–-]$/.test(text.trim()) ? `Published ${text.trim()}` : "";
 }
 
-/**
- * Dated events, earliest first, each date at the precision the module states, with its status,
- * publication date and credit relevance; `notDrawn` rows of the table the page could not place.
- */
 /** How many dated rows a lane shows before the rest go behind a disclosure. */
 const FOLD_AFTER = 3;
+
+/**
+ * Dated events, earliest first, each date at the precision the module states, with its status,
+ * publication date and credit relevance; `unplaced`, the rows of the table the page could not
+ * place by date, listed as written with their traces.
+ */
 
 export function DatedList({
   label,
   events,
-  notDrawn = 0,
+  unplaced = [],
   href,
 }: {
   label: string;
   events: readonly DatedItem[];
-  notDrawn?: number;
+  unplaced?: readonly UnplacedEvent[];
   href?: (line: number) => string;
 }) {
-  const total = events.length + notDrawn;
+  const total = events.length + unplaced.length;
   // A long lane shows its first dated rows and keeps the rest one click away, so a P3 list does
   // not outgrow the figures above it.
   const folded = events.length > FOLD_AFTER + 1;
@@ -657,10 +660,23 @@ export function DatedList({
           </ol>
         </details>
       )}
-      {notDrawn > 0 && (
-        <p className="text-caption text-text-secondary">
-          {`This page could not place ${String(notDrawn)} of the ${String(total)} dated rows.`}
-        </p>
+      {unplaced.length > 0 && (
+        <div className="flex min-w-0 flex-col gap-1 border-t border-border-hairline pt-2">
+          <p className="text-caption text-text-secondary">
+            {`This page could not place ${String(unplaced.length)} of the ${String(total)} dated rows:`}
+          </p>
+          <ul aria-label={`${label}, rows not placed by date`} className="flex flex-col">
+            {unplaced.map((item) => (
+              <li key={item.line} className="grid grid-cols-[6.5rem_minmax(0,1fr)] gap-3 py-1.5">
+                <span className="font-mono text-small text-gap-text">{item.date}</span>
+                <span className="flex items-start justify-between gap-2 text-small wrap-anywhere text-text-primary">
+                  {item.event}
+                  {href && <Trace href={href(item.line)} name={item.event} />}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );
@@ -729,7 +745,7 @@ export function LaneTile({
       label={label}
       title={title}
       trace={trace}
-      figure={<DatedList label={label} events={lane.events} notDrawn={lane.notDrawn} href={href} />}
+      figure={<DatedList label={label} events={lane.events} unplaced={lane.unplaced} href={href} />}
     />
   );
 }

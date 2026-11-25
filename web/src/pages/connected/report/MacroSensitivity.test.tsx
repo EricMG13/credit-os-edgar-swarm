@@ -49,17 +49,25 @@ function dataset(currency: string, net: string): OutputEntry {
   };
 }
 
-it("uses the published reporting currency and retains a verified zero after hedging", () => {
+// Review 3, P9: fewer than three steps is a figure, not a chart: the stated figures in words.
+it("draws one step as stated figures, its verified zero after hedging kept", () => {
   const data = macroView(dataset("USD", "0.00"));
   if (!data) throw new Error("scenario was rejected");
-  const { container } = render(
-    <MacroSensitivity data={data} href={(line) => `#evidence/1-${String(line)}`} />,
-  );
-  expect(container.querySelector('[data-zero][data-case="After hedges"]')).toBeInTheDocument();
+  render(<MacroSensitivity data={data} href={(line) => `#evidence/1-${String(line)}`} />);
   const tile = screen.getByRole("region", { name: "Added annual interest" });
-  const figure = within(tile).getByRole("img");
-  expect(figure).toHaveAccessibleName(/\+100 bp: before hedges USD 8\.00m, after hedges 0\.00/);
-  expect(within(figure).getByText("USD 8.00m")).toBeInTheDocument();
+  expect(within(tile).queryByRole("img")).toBeNull();
+  const steps = within(tile).getByRole("list", { name: "Added annual interest by rate shock" });
+  const [step] = within(steps).getAllByRole("listitem");
+  if (!step) throw new Error("step missing");
+  expect(within(step).getByText("+100 bp")).toBeVisible();
+  expect(within(step).getByText("USD 8.00m")).toBeVisible();
+  // A stated zero is a figure, never a gap.
+  expect(within(step).getByText("0.00")).toBeVisible();
+  expect(within(step).queryByText(/Not supplied|Not stated/)).toBeNull();
+  expect(within(step).getByRole("link", { name: "Source for +100 bp" })).toHaveAttribute(
+    "href",
+    "#evidence/1-13",
+  );
   fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
   expect(within(tile).getByRole("cell", { name: "0.00" })).toBeInTheDocument();
   expect(
@@ -67,6 +75,34 @@ it("uses the published reporting currency and retains a verified zero after hedg
       .getAllByRole("link", { name: /^Source for / })
       .at(-1),
   ).toHaveAttribute("href", "#evidence/1-13");
+});
+
+const steps = (rows: string[][]) => {
+  const made = dataset("USD", "0.00");
+  const rate = made.sections[1]?.blocks[0];
+  if (rate?.type !== "table") throw new Error("rate table missing");
+  rate.rows = rows.map((cells, at) => ({ line: 13 + at, cells: [...cells, "", "", "", "", ""] }));
+  return made;
+};
+
+it("draws three or more steps as the ladder, a stated zero after hedges marked", () => {
+  const data = macroView(
+    steps([
+      ["Reference rate up, first shock", "100", "8.00", "0.00"],
+      ["Reference rate up, second shock", "200", "16.00", "4.00"],
+      ["Reference rate up, third shock", "300", "24.00", "8.00"],
+    ]),
+  );
+  if (!data) throw new Error("scenario was rejected");
+  const { container } = render(<MacroSensitivity data={data} href={() => "#evidence/1"} />);
+  expect(container.querySelector('[data-zero][data-case="After hedges"]')).toBeInTheDocument();
+  const tile = screen.getByRole("region", { name: "Added annual interest" });
+  expect(within(tile).getByRole("img")).toHaveAccessibleName(
+    /\+100 bp: before hedges 8\.00, after hedges 0\.00; \+200 bp: before hedges 16\.00/,
+  );
+  // The table states the currency and no magnitude: the unit is printed as stated.
+  expect(within(tile).getByText("USD")).toBeVisible();
+  expect(tile.textContent).not.toMatch(/US\$m|million/);
 });
 
 it.each([
@@ -143,6 +179,9 @@ it("draws every stated move in one compact table, each measure's cells as writte
   expect(within(debt).getByText("800")).toBeInTheDocument();
   expect(within(debt).getByText("801")).toBeInTheDocument();
   expect(within(figure).getByText("Total leverage after the move (x)")).toBeInTheDocument();
+  // The cells state no magnitude: the currency alone, as the handoff states it.
+  expect(within(figure).getByText("Total debt after the move (USD)")).toBeInTheDocument();
+  expect(tile.textContent).not.toMatch(/US\$m|million/);
   expect(within(figure).getAllByText("0.00")).toHaveLength(2);
   fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
   expect(within(tile).getByRole("cell", { name: "3.01x" })).toBeVisible();

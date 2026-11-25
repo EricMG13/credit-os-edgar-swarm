@@ -1,5 +1,5 @@
 import type { OutputEntry, Table } from "../../publishedReport";
-import { blocked, unitLabel } from "../../publishedReport";
+import { unitLabel } from "../../publishedReport";
 import { ticks } from "../../visuals/visualData";
 import { Ladder } from "../BreakPoints";
 import { share } from "../Downside";
@@ -16,7 +16,15 @@ import { Bento, Figure } from "../overview/Tile";
 import { withDraws } from "./draws";
 import { OtherCharts, sourceOf, writtenTable } from "./written";
 import { LaneTile, LeadFigure, LeadGap, Trace } from "./parts";
-import { columnOf, eventsOf, leadHref, leadingMillions, readerCell, registerTable } from "./read";
+import {
+  columnOf,
+  eventsOf,
+  leadHref,
+  leadingMillions,
+  readerCell,
+  registerTable,
+  drawsNothing,
+} from "./read";
 import type { LeadProps } from "./types";
 
 type Href = (line: number) => string;
@@ -270,7 +278,7 @@ function HedgedTile({ entry, href }: { entry: OutputEntry; href: Href }) {
 export const MacroLead = withDraws(
   function MacroLead(props: LeadProps) {
     const { entry } = props;
-    if (blocked(entry)) return null;
+    if (drawsNothing(entry)) return null;
     const evidence = leadHref(props);
     const href: Href = (line) => evidence(line);
     const data = macroView(entry);
@@ -298,7 +306,7 @@ export const MacroLead = withDraws(
           title="Hedge dates"
           href={evidence}
         />
-        <OtherCharts entry={entry} href={evidence} drawn={[]} />
+        <OtherCharts entry={entry} module="CP-2E" href={evidence} drawn={[]} />
       </Bento>
     );
   },

@@ -253,3 +253,30 @@ it("says the store withheld the headroom table, traces it and opens the table as
   const table = within(tile).getByRole("region", { name: "Covenant headroom table" });
   expect(within(table).getByRole("cell", { name: "0.8x" })).toBeInTheDocument();
 });
+
+// Review 3, P4: a cell that already carries its unit prints as written; a bare number takes it.
+it("prints a cell with its unit once: 12%, (12.3x), 5.0x", () => {
+  const units = SYNTHETIC.replace(
+    "| Net leverage | 5.0 | 4.2 | 0.8x | Passes at or below | x | Synthetic. |",
+    "| Net leverage | 5.0x | (12.3) | 0.8x | Passes at or below | x | Synthetic. |",
+  ).replace(
+    "| Interest cover | 2.0 | 2.6 | 0.6x | Passes at or above | x | Synthetic. |",
+    "| Fixed charge | 12% | 15 | 3% | Passes at or above | % | Synthetic. |",
+  );
+  const made = synthetic();
+  made.sections = sectionsOf(units);
+  render(<LegalLead {...leadProps(made)} />);
+  const tile = screen.getByRole("region", { name: "Covenant headroom" });
+  expect(within(tile).getByText("5.0x")).toBeVisible();
+  expect(within(tile).getByText("(12.3x)")).toBeVisible();
+  expect(within(tile).getByText("12%")).toBeVisible();
+  expect(within(tile).getAllByText("15%")[0]).toBeVisible();
+  const [leverage, charge] = within(tile).getAllByRole("img");
+  expect(leverage).toHaveAccessibleName(
+    "Net leverage: (12.3x) against a threshold of 5.0x, headroom 0.8x. Passes at or below.",
+  );
+  expect(charge).toHaveAccessibleName(
+    "Fixed charge: 15% against a threshold of 12%, headroom 3%. Passes at or above.",
+  );
+  expect(tile.textContent).not.toMatch(/%%|\)x|xx/);
+});

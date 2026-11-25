@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Segmented } from "@/components/kit/Segmented";
-import { containsReference, type OutputEntry, type Table } from "../publishedReport";
+import type { OutputEntry, Table } from "../publishedReport";
 import { namedTable } from "../reportView";
 import { distinct, sharePosition } from "../visuals/visualData";
 import { canReadDownside, registerOrTitled, scenarioShareLabel, share } from "./Downside";
@@ -8,6 +8,7 @@ import { sourceOf, writtenTable } from "./leads/written";
 import { Key } from "./overview/figureParts";
 import { Bento } from "./overview/Tile";
 import { BarRow, CompactGap, LeadFigure, Trace, type LeadTable } from "./leads/parts";
+import { closed, readerCell } from "./leads/read";
 
 const RETAINED = "T2DS.6 Break points";
 const RANKINGS = ["T2B.7 First-break ranking", "First-break ranking"];
@@ -64,9 +65,8 @@ function threshold(text: string) {
   return percent ? (value <= 100 ? value / 100 : null) : sharePosition(text);
 }
 
-function publicText(text: string) {
-  return containsReference(text) ? "In Evidence" : text;
-}
+/** A cell as a working page draws it (`readerCell`): a cited clause to the trace, its words kept. */
+const publicText = (text: string) => readerCell(text);
 
 /** The table's rows as written; only a module-written first-break ranking is ordered by decline. */
 function breakRows(table: Table, basis: Basis, test: number, ranked: boolean, status?: number) {
@@ -249,7 +249,7 @@ export function BreakPointsTile({
     : writtenTable(sourceOf(data.table), href);
   const figure = chart ? (
     <Ladder
-      label={`${TITLE}${basis ? `, ${basis.name.toLowerCase()}` : ""}: ${reading}.`}
+      label={closed(`${TITLE}${basis ? `, ${basis.name.toLowerCase()}` : ""}: ${reading}`)}
       ordered={data.ranked}
       ticks={DECLINE_TICKS}
       rungs={rows.map((row) => ({

@@ -1,6 +1,6 @@
 import { Fragment, useState } from "react";
 import { Segmented } from "@/components/kit/Segmented";
-import { blocked, unitLabel, withUnit } from "../../publishedReport";
+import { unitLabel } from "../../publishedReport";
 import { ticks, word, type SourceTable } from "../../visuals/visualData";
 import { basisNotes, readCell, type Cell } from "../overview/figureData";
 import { Key } from "../overview/figureParts";
@@ -28,6 +28,8 @@ import {
   readerCellOf,
   registerTable,
   rowName,
+  drawsNothing,
+  withStatedUnit,
 } from "./read";
 import type { LeadProps } from "./types";
 import { ChartGap, writtenTable } from "./written";
@@ -146,7 +148,7 @@ function recoveries(table: SourceTable) {
 const percentSpoken = (cell: Cell) =>
   cell.value === null
     ? spoken(cell).replace(/^not supplied/, "% not supplied")
-    : withUnit(cell.text, "%");
+    : withStatedUnit(cell.text, "%");
 
 /** A stated figure as written (`suffix` its unit sign), or its stated gap as the word and reason. */
 function Stated({ cell, suffix = "" }: { cell: Cell; suffix?: string }) {
@@ -155,7 +157,7 @@ function Stated({ cell, suffix = "" }: { cell: Cell; suffix?: string }) {
   if (!cell.text.trim()) return <GapCell word="Not stated" />;
   return (
     <span className="font-mono text-small text-text-primary tabular-nums">
-      {cell.value === null || !suffix ? cell.text : withUnit(cell.text, suffix)}
+      {cell.value === null || !suffix ? cell.text : withStatedUnit(cell.text, suffix)}
     </span>
   );
 }
@@ -319,7 +321,7 @@ function PlanTreatment({ entry, href }: { entry: Entry; href: Href }) {
 export const RestructuringLead = withDraws(
   function RestructuringLead(props: LeadProps) {
     const { entry } = props;
-    if (blocked(entry)) return null;
+    if (drawsNothing(entry)) return null;
     const href = leadHref(props);
     return (
       <Bento>

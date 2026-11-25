@@ -334,7 +334,7 @@ it("shows each event's publication date and credit relevance, and the rows it co
   render(
     <DatedList
       label="Funding dates"
-      notDrawn={3}
+      unplaced={[{ date: "TBD", event: "Unplaced row event", line: 9 }]}
       events={[
         {
           date: "2026",
@@ -351,7 +351,10 @@ it("shows each event's publication date and credit relevance, and the rows it co
   const list = screen.getByRole("list", { name: "Funding dates" });
   expect(within(list).getByText(/Published 2024-11-07/)).toBeVisible();
   expect(within(list).getByText("Refinancing wall")).toBeVisible();
-  expect(screen.getByText("This page could not place 3 of the 4 dated rows.")).toBeVisible();
+  expect(screen.getByText("This page could not place 1 of the 2 dated rows:")).toBeVisible();
+  const unplaced = screen.getByRole("list", { name: "Funding dates, rows not placed by date" });
+  expect(within(unplaced).getByText("TBD")).toBeVisible();
+  expect(within(unplaced).getByText("Unplaced row event")).toBeVisible();
 });
 
 it("puts a table in a named, focusable region whose long cells wrap", () => {

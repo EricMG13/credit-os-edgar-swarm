@@ -21,7 +21,7 @@ import {
   statedGap,
   Trace,
 } from "./leads/parts";
-import { IN_EVIDENCE, readerCell } from "./leads/read";
+import { closed, IN_EVIDENCE, readerCell } from "./leads/read";
 import { sourceOf, writtenTable } from "./leads/written";
 
 const SCENARIOS = [
@@ -232,7 +232,7 @@ function SmallMultiples({
     )
     .join(". ");
   return (
-    <div role="img" aria-label={`${label}. ${reading}.`} className="@container min-w-0">
+    <div role="img" aria-label={closed(`${label}. ${reading}`)} className="@container min-w-0">
       <div
         aria-hidden="true"
         className="grid grid-cols-1 gap-x-6 gap-y-5 @lg:grid-cols-2 @3xl:grid-cols-3"
@@ -307,14 +307,25 @@ function casePanels(matrix: Table, cases: readonly Case[]) {
   return { placed, unplaced };
 }
 
-/** The chosen case as the module states it, with its own trace to the scenario's row. */
-function CaseDetails({ selected, href }: { selected: Case; href: (line: number) => string }) {
+/**
+ * A case as the module states it, each detail under the module's own header, with its own trace
+ * to the scenario's row; the control is named as the control.
+ */
+function CaseDetails({
+  selected,
+  control = false,
+  href,
+}: {
+  selected: Case;
+  control?: boolean;
+  href: (line: number) => string;
+}) {
   const items = (
     [
       ["EBITDA decline", scenarioShareLabel(selected.decline)],
       ["Cash-interest increase", scenarioShareLabel(selected.interest)],
-      ["Assumption basis", selected.anchor],
-      ["Scope limits", selected.scope],
+      ["Anchor", selected.anchor],
+      ["What the assumption leaves out", selected.scope],
       ["Category", selected.category],
       ["Confidence", selected.confidence],
     ] as const
@@ -323,8 +334,17 @@ function CaseDetails({ selected, href }: { selected: Case; href: (line: number) 
     .map(([key, value]) => ({ key, value: readerDetail(value) }));
   const name = `${caseName(selected)} scenario`;
   return (
-    <div className="flex min-w-0 items-start justify-between gap-3">
-      <KeyValues items={items} />
+    <div
+      role="group"
+      aria-label={control ? `${name} (control)` : name}
+      className="flex min-w-0 items-start justify-between gap-3"
+    >
+      <span className="flex min-w-0 flex-col gap-1">
+        <span className="text-caption font-medium text-text-secondary">
+          {control ? `${caseName(selected)} (control)` : caseName(selected)}
+        </span>
+        <KeyValues items={items} />
+      </span>
       <Trace href={href(selected.line)} name={name} />
     </div>
   );
@@ -420,7 +440,11 @@ export function DownsideTile({
         )
       }
       table={resultsTable(matrix, cases, href)}
-      notes={[<CaseDetails key="details" selected={selected} href={href} />, ...unplaced]}
+      notes={[
+        <CaseDetails key="details" selected={selected} href={href} />,
+        <CaseDetails key="control" selected={control} control href={href} />,
+        ...unplaced,
+      ]}
     />
   );
 }

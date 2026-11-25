@@ -135,16 +135,21 @@ it("reads the hedge register by id where the canonical title does not match (h4)
   ).toBeVisible();
 });
 
-it("draws the rate-shock grid first when the handoff carries it, with the after-hedges mark", () => {
+it("draws the rate-shock grid first when the handoff carries it, its two steps as stated figures", () => {
   render(<MacroLead {...leadProps(proof())} />);
   const tile = screen.getByRole("region", { name: "Added annual interest" });
   expect(tile.className).toMatch(/lg:col-span-8/);
-  const figure = within(tile).getByRole("img");
-  expect(figure).toHaveAccessibleName(
-    /\+100 bp: before hedges 8\.00, after hedges 5\.00.*\+200 bp: before hedges 16\.00, after hedges Not supplied: no hedge sensitivity retained/,
-  );
+  // Review 3, P9: two steps are a figure in words, not a two-bar chart.
+  expect(within(tile).queryByRole("img")).toBeNull();
+  const figure = within(tile).getByRole("list", { name: "Added annual interest by rate shock" });
+  const [first, second] = within(figure).getAllByRole("listitem");
+  if (!first || !second) throw new Error("rate steps missing");
+  expect(within(first).getByText("+100 bp")).toBeVisible();
+  expect(within(first).getByText("8.00")).toBeVisible();
+  expect(within(first).getByText("5.00")).toBeVisible();
+  expect(within(second).getByText("+200 bp")).toBeVisible();
+  expect(within(second).getByText("16.00")).toBeVisible();
   expect(within(tile).getByRole("heading")).toHaveTextContent(/^Added annual interest$/);
-  expect(figure.querySelectorAll('[data-case="After hedges"]')).toHaveLength(1);
   // The after-hedges gap is the one gap chip: its word and its reason, never "after Not supplied:".
   expect(within(figure).getByText("Not supplied")).toHaveClass("border-dashed");
   expect(within(figure).getByText("No hedge sensitivity retained")).toBeInTheDocument();

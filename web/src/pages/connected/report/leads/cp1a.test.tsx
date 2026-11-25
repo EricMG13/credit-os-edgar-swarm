@@ -170,8 +170,10 @@ it("draws a map's stated edges with its gap row, and a withheld lane's rows with
   const history = screen.getByRole("region", { name: "Issuer history" });
   expect(within(history).getByText("Listed")).toBeVisible();
   expect(
-    within(history).getByText("This page could not place 1 of the 2 dated rows."),
+    within(history).getByText("This page could not place 1 of the 2 dated rows:"),
   ).toBeVisible();
+  expect(within(history).getByText("Q5 2024")).toBeVisible();
+  expect(within(history).getByText("Unplaced")).toBeVisible();
 });
 
 it("prints a lane's stated gap instead of drawing nothing", () => {
@@ -218,7 +220,8 @@ it("draws no source reference or module code from a map edge or a dated event", 
   const page = document.body.textContent;
   expect(page).not.toMatch(/annual_report|offering_memo|CP-2A/);
   const tile = screen.getByRole("region", { name: "Operating model to credit" });
-  expect(within(tile).getByText("In Evidence")).toBeVisible();
+  // Review 3, P11: the readable words and figure stay; only the cited clause goes to the trace.
+  expect(within(tile).getByText("Drives 60% of EBITDA")).toBeVisible();
   fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
   expect(tile.textContent).not.toMatch(/annual_report|CP-2A/);
 });

@@ -158,7 +158,8 @@ it("reads every drawn text of a test as a working page shows it, keeping the num
   const [test] = read ?? [];
   expect(test).toMatchObject({
     label: "A test named in Evidence",
-    threshold: { text: "In Evidence", value: null, reason: "In Evidence" },
+    // The stated gap keeps its word; its reason cites a source and is in Evidence.
+    threshold: { text: "Not supplied: In Evidence", value: null, reason: "In Evidence" },
     current: { text: "4.2", value: 4.2 },
     headroom: "0.8x",
   });
@@ -166,4 +167,16 @@ it("reads every drawn text of a test as a working page shows it, keeping the num
   render(<Bullets label="Covenant tests" tests={read ?? []} />);
   const list = screen.getByRole("list", { name: "Covenant tests" });
   expect(list.textContent).not.toMatch(/\.pdf|CP-4/);
+});
+
+// Review 3, P10: a reading ends with one full stop, never "n.m..".
+it("ends a bullet's reading with one full stop when the headroom is n.m.", () => {
+  const read = leadTests(
+    source(40, HEAD, [["Net leverage", "5.0", "4.2", "n.m.", "", "x", "Synthetic."]]),
+    ROLES,
+  );
+  render(<Bullets label="Covenant tests" tests={read ?? []} />);
+  expect(screen.getByRole("img")).toHaveAccessibleName(
+    "Net leverage: 4.2x against a threshold of 5.0x, headroom n.m.",
+  );
 });

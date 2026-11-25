@@ -1,8 +1,8 @@
-import { blocked, type Table } from "../../publishedReport";
+import { type Table } from "../../publishedReport";
 import { Bento, Tile } from "../overview/Tile";
 import { withDraws } from "./draws";
 import { LaneTile, LeadGap, MapTile, Prose, TableRegion, Trace } from "./parts";
-import { eventsOf, leadHref, mapOf, sectionParagraphs } from "./read";
+import { eventsOf, leadHref, mapOf, sectionParagraphs, drawsNothing } from "./read";
 import type { LeadProps } from "./types";
 import { sourceOf, writtenTable } from "./written";
 
@@ -63,7 +63,7 @@ function RevenueMix({ entry, href }: { entry: LeadProps["entry"]; href: Href }) 
 export const BusinessLead = withDraws(
   function BusinessLead(props: LeadProps) {
     const { entry } = props;
-    if (blocked(entry)) return null;
+    if (drawsNothing(entry)) return null;
     const href = leadHref(props);
     return (
       <Bento>

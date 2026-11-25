@@ -190,3 +190,22 @@ it("reads the break points under the heading the real handoffs use, header check
   expect(other?.bases).toEqual([]);
   expect(breakPointView(entry("Breakpoints T2DS.6", RETAINED_HEADERS, RETAINED_ROWS))).toBeNull();
 });
+
+// Review 3, P10: a reading ends with one full stop, never "n.m..".
+it("ends the reading with one full stop when the last value is n.m.", () => {
+  const data = breakPointView(
+    entry(
+      "First-break ranking",
+      ["Break point", "Required EBITDA decline"],
+      [
+        ["Cash flow reaches zero", "0.10"],
+        ["Cover below one", "n.m."],
+      ],
+    ),
+  );
+  if (!data) throw new Error("ranking was rejected");
+  render(<BreakPoints data={data} href={(line) => `#evidence/0-${String(line)}`} />);
+  expect(within(tile()).getByRole("img")).toHaveAccessibleName(
+    "EBITDA break points, required ebitda decline: Cash flow reaches zero 10%, Cover below one n.m.",
+  );
+});

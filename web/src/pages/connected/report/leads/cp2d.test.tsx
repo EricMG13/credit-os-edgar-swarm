@@ -126,7 +126,7 @@ it("draws no source reference or module code in a bridge step's label or a gap's
   (named[2] as string[])[0] = "Repayment per indenture.pdf p. 7";
   render(<LiquidityLead {...leadProps(liquidity(named))} />);
   const tile = screen.getByRole("region", { name: "Liquidity bridge" });
-  expect(within(tile).getByRole("img")).toHaveAccessibleName(/In Evidence -450/);
+  expect(within(tile).getByRole("img")).toHaveAccessibleName(/Repayment -450/);
   expect(tile.textContent).not.toMatch(/indenture|CP-2G/);
   fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
   expect(tile.textContent).not.toMatch(/indenture|CP-2G/);

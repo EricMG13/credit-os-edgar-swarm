@@ -123,11 +123,12 @@ it("draws the ladder from the real T2DS.6 heading when its header is the reader'
   expect(within(ladder).getByRole("img")).toHaveAccessibleName(/FCF reaches zero 10%/);
 });
 
-it("gives the store's own reason for a handoff it could not read, and words a wrong module's handoff", () => {
+// Review 3, P3: the frame states an unreadable handoff once; the lead draws nothing.
+it("draws nothing for a handoff the store could not read, and words a wrong module's handoff", () => {
   const broken = proof();
   broken.output.parseError = "the handoff ended inside a table";
-  render(<DownsideLead {...leadProps(broken)} />);
-  expect(screen.getAllByText("the handoff ended inside a table")).toHaveLength(2);
+  const { container } = render(<DownsideLead {...leadProps(broken)} />);
+  expect(container).toBeEmptyDOMElement();
   cleanup();
   const other = entry("CP-2D", [], []);
   render(<DownsideLead {...leadProps(other)} />);

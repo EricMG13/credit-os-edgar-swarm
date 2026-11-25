@@ -16,6 +16,7 @@ import {
   CompactGap,
   Disclosure,
   GapCell,
+  KeyValues,
   LeadFigure,
   LeadGap,
   statedGap,
@@ -240,22 +241,79 @@ function rateRow(cells: readonly string[], currency: string) {
 const AFTER = "After hedges";
 
 /** A row's after-hedges figure as written, or its stated gap as the one gap chip. */
-function AfterHedges({ net, placed }: { net: string; placed: boolean }) {
+function AfterValue({ net, placed }: { net: string; placed: boolean }) {
   const text = readerCell(net);
   const gap = placed ? null : statedGap(text);
+  return placed ? (
+    <span>{text}</span>
+  ) : gap ? (
+    <GapCell word={gap.word} reason={gap.reason} className="font-body" />
+  ) : (
+    <GapCell word={text || "Not stated"} className="font-body" />
+  );
+}
+
+function AfterHedges({ net, placed }: { net: string; placed: boolean }) {
   return (
     <span className="flex flex-wrap items-baseline justify-end gap-x-1.5 text-caption text-text-secondary">
       <span className="font-body">after</span>
-      {placed ? (
-        <span>{text}</span>
-      ) : gap ? (
-        <GapCell word={gap.word} reason={gap.reason} className="font-body" />
-      ) : (
-        <GapCell word={text || "Not stated"} className="font-body" />
-      )}
+      <AfterValue net={net} placed={placed} />
     </span>
   );
 }
+
+const MILLIONS = /\b(?:million|m)$/;
+
+/**
+ * The unit of a grid's money cells as the table states it: the currency and its millions when every
+ * stated cell writes them ("USD 8.00m"), else the reporting currency alone; the page adds no magnitude.
+ */
+function statedMoneyUnit(texts: readonly string[], currency: string) {
+  const stated = texts.map((text) => text.trim()).filter((text) => text && !missingCell(text));
+  return stated.length && stated.every((text) => MILLIONS.test(text))
+    ? unitLabel(`${currency} millions`)
+    : currency;
+}
+
+/** Fewer than three steps: each step's stated figures in words, with its trace; no chart. */
+function StatedSteps({ rows, href }: { rows: readonly RateRow[]; href: Href }) {
+  return (
+    <ul aria-label="Added annual interest by rate shock" className="flex flex-col">
+      {rows.map((row) => (
+        <li
+          key={row.line}
+          className="flex items-start justify-between gap-3 border-t border-border-hairline py-2.5 first:border-t-0 first:pt-0"
+        >
+          <span className="flex min-w-0 flex-col gap-1">
+            <span className="text-small font-medium text-text-primary">{row.step}</span>
+            <KeyValues
+              items={[
+                {
+                  key: "Before hedges",
+                  value: <Figure className="text-small">{readerCell(row.gross)}</Figure>,
+                },
+                {
+                  key: AFTER,
+                  value: (
+                    <Figure className="text-small">
+                      <AfterValue net={row.net} placed={row.after !== null} />
+                    </Figure>
+                  ),
+                },
+              ]}
+            />
+          </span>
+          <Trace href={href(row.line)} name={row.step} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+type RateRow = NonNullable<ReturnType<typeof rateRow>> & { line: number };
+
+/** Fewest steps the ladder draws as a chart; fewer is a figure in words. */
+const LADDER_STEPS = 3;
 
 /** Deploy VII's rate-shock grid: added annual interest per step, before hedges, with the after mark. */
 export function RateLadderTile({
@@ -276,9 +334,13 @@ export function RateLadderTile({
   }));
   const drawn = read.flatMap(({ line, row }) => (row ? [{ line, ...row }] : []));
   const placed = drawn.length > 0 && distinct(drawn.map(({ step }) => step));
+  const ladder = placed && drawn.length >= LADDER_STEPS;
   const scale = ticks([0, ...drawn.map(({ before }) => before)]);
   const top = scale.at(-1)?.value || 1;
-  const unit = unitLabel(`${currency} millions`);
+  const unit = statedMoneyUnit(
+    drawn.flatMap(({ gross, net }) => [gross, net]),
+    currency,
+  );
   const reading = drawn
     .map(
       ({ step, gross, net }) =>
@@ -298,7 +360,7 @@ export function RateLadderTile({
       title="Added annual interest"
       basis={placed ? unit : undefined}
       legend={
-        placed && (
+        ladder && (
           <>
             <Key tone="primary">Before hedges (bar)</Key>
             <span className="flex items-center gap-1.5 text-caption font-normal text-text-secondary">
@@ -310,7 +372,9 @@ export function RateLadderTile({
       }
       trace={<Trace href={href(table.line)} name="Added annual interest" />}
       figure={
-        placed ? (
+        placed && !ladder ? (
+          <StatedSteps rows={drawn} href={href} />
+        ) : ladder ? (
           <Ladder
             label={`Added annual interest by rate shock, in ${unit}: ${reading}.`}
             ticks={scale.map((tick) => ({ at: tick.value / top, label: tick.label }))}
@@ -364,16 +428,22 @@ function fxRows(table: Table, currency: string) {
   return FX.slice(2).map((measure, index) => {
     const column = index + 2;
     const leverage = index === 3;
-    const unit = leverage ? "x" : currency ? `${currency} millions` : "";
+    const unit = leverage ? "x" : currency;
     const read = (text: string) =>
       leverage ? amount(text.replace(/x$/, "")) : moneyPosition(text, currency);
+    const shown = leverage
+      ? unit
+      : statedMoneyUnit(
+          table.rows.map(({ cells: row }) => row[column] ?? ""),
+          currency,
+        );
     const cells = table.rows.map(({ cells: row }) => {
       const text = row[column] ?? "";
       return { text: readerCell(text), value: unit ? read(text) : null };
     });
     const top = Math.max(0, ...cells.map(({ value }) => (value !== null && value > 0 ? value : 0)));
     return {
-      measure: unit ? `${measure} (${unitLabel(unit)})` : measure,
+      measure: shown ? `${measure} (${shown})` : measure,
       cells: cells.map(({ text, value }) => ({
         text,
         share: value === null || value < 0 ? null : top > 0 ? value / top : 0,

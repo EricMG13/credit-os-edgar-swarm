@@ -6,10 +6,9 @@ import { forecastInput } from "../ForecastRecord";
 import { GapPattern } from "../overview/figureParts";
 import { forwardPath } from "../overview/stressData";
 import { Bento, Tile } from "../overview/Tile";
-import { blocked } from "../../publishedReport";
 import { withDraws } from "./draws";
 import { GapCell, LeadFigure, LeadGap, Notes, TableRegion, Trace } from "./parts";
-import { leadHref, readerCell } from "./read";
+import { leadHref, readerCell, drawsNothing } from "./read";
 import type { LeadProps } from "./types";
 
 const PATH_LABEL = "Net leverage path";
@@ -391,13 +390,20 @@ function shockLine(document: Record<string, unknown>) {
   const shock = document.downside_shock;
   if (shock === null || typeof shock !== "object") return "No downside shock is stated.";
   const { ebitda_decline: decline, rate_increase: rate } = record(shock);
-  const share = (value: unknown) =>
+  const recorded = (value: unknown) =>
     typeof value === "number"
-      ? shareText(plainNumber(value))
+      ? plainNumber(value)
       : typeof value === "string" && value.trim()
-        ? shareText(value.trim())
-        : "not stated";
-  return `Downside shock: EBITDA decline ${share(decline)}, interest-rate increase ${share(rate)}.`;
+        ? readerCell(value)
+        : null;
+  const share = (value: unknown) => {
+    const text = recorded(value);
+    return text === null ? "not stated" : shareText(text);
+  };
+  // The block's rate_increase is printed as recorded: whether it is a proportional rise in cash
+  // interest or an additive yield change is the block's own prose, not a unit the page can name.
+  const rise = recorded(rate);
+  return `Downside shock: EBITDA decline ${share(decline)}, rate increase ${rise === null ? "not stated" : `${rise} as recorded`}.`;
 }
 
 /** The forecast block's drivers by case and year, as stated; a case's inherited driver in words. */
@@ -501,7 +507,7 @@ function DriversTile({
 /** CP-2G: where net leverage goes in each case of the published model, and the drivers behind it. */
 export const ForwardLead = withDraws(function ForwardLead(props: LeadProps) {
   const { entry, view } = props;
-  if (blocked(entry)) return null;
+  if (drawsNothing(entry)) return null;
   const href = leadHref(props);
   return (
     <Bento>

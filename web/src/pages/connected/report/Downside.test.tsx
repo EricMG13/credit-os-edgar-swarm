@@ -157,8 +157,9 @@ it("J3-016 labels the chosen stress and displays both shock quantities as percen
     "aria-pressed",
     "true",
   );
-  const decline = screen.getByText("EBITDA decline").closest("div");
-  const interest = screen.getByText("Cash-interest increase").closest("div");
+  const chosen = screen.getByRole("group", { name: "Lower margin scenario" });
+  const decline = within(chosen).getByText("EBITDA decline").closest("div");
+  const interest = within(chosen).getByText("Cash-interest increase").closest("div");
   expect(decline).toHaveTextContent("10%");
   expect(decline).not.toHaveTextContent("0.10");
   expect(interest).toHaveTextContent("0%");
@@ -255,4 +256,42 @@ it("gives a written table cell that reads as nothing as missing, not an empty st
     (line) => `#evidence/${String(line)}`,
   );
   expect(written?.rows[0]?.cells).toEqual([null]);
+});
+
+// Review 3, P10: the module's own headers, and the control row's Category and Confidence reachable.
+it("names each case detail by the module's own header and draws the control's details too", () => {
+  const source = entry("0.10 (10%)", "50.00");
+  const control = source.sections[0]?.blocks[0];
+  if (control?.type !== "table" || !control.rows[0]) throw new Error("scenario table missing");
+  control.rows[0].cells = [
+    "c",
+    "Observed period",
+    "0",
+    "0",
+    "LTM to 2025-03-31",
+    "No forward view",
+    "Documentary Fact",
+    "High",
+  ];
+  const data = downsideView(source);
+  if (!data) throw new Error("Test scenario matrix was rejected");
+  render(<Downside data={data} href={(line) => `#evidence/0-${String(line)}`} />);
+  const chosen = within(tile()).getByRole("group", { name: "Lower margin scenario" });
+  expect(within(chosen).getByText("Anchor")).toBeVisible();
+  expect(within(chosen).getByText("Stress assumption")).toBeVisible();
+  expect(within(chosen).getByText("What the assumption leaves out")).toBeVisible();
+  expect(within(chosen).getByText("Funding unchanged")).toBeVisible();
+  expect(within(chosen).getByText("Analyst Interpretation")).toBeVisible();
+  const observed = within(tile()).getByRole("group", {
+    name: "Observed period scenario (control)",
+  });
+  expect(within(observed).getByText("Category")).toBeVisible();
+  expect(within(observed).getByText("Documentary Fact")).toBeVisible();
+  expect(within(observed).getByText("Confidence")).toBeVisible();
+  expect(within(observed).getByText("High")).toBeVisible();
+  expect(within(observed).getByText("No forward view")).toBeVisible();
+  expect(
+    within(observed).getByRole("link", { name: "Source for Observed period scenario" }),
+  ).toHaveAttribute("href", "#evidence/0-5");
+  expect(tile().textContent).not.toMatch(/Assumption basis|Scope limits/);
 });

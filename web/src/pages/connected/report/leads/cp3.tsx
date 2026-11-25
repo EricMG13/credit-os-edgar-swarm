@@ -1,4 +1,3 @@
-import { blocked } from "../../publishedReport";
 import { runMoneyUnit } from "../../reportView";
 import { Bento, Tile } from "../overview/Tile";
 import {
@@ -10,7 +9,7 @@ import {
 } from "../Securities";
 import { withDraws } from "./draws";
 import { LeadGap, Prose } from "./parts";
-import { leadHref, sectionParagraphs } from "./read";
+import { leadHref, sectionParagraphs, drawsNothing } from "./read";
 import type { LeadProps } from "./types";
 
 const TITLE = "Instrument decisions";
@@ -47,7 +46,7 @@ function Passage({
 export const SecurityLead = withDraws(
   function SecurityLead(props: LeadProps) {
     const { entry, run, view } = props;
-    if (blocked(entry)) return null;
+    if (drawsNothing(entry)) return null;
     const href = leadHref(props);
     const data = securityView(entry, run.asOf);
     const instruments =

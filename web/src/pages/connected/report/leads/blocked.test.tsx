@@ -38,3 +38,11 @@ it.each(LEADS)(
     expect(container.textContent).not.toMatch(/Not assessable/);
   },
 );
+
+// P3: a handoff the store could not read draws nothing here; the frame states it once.
+it.each(LEADS)("%s draws nothing for a handoff the store could not read", (module, Lead) => {
+  const made = entry(module, [], [...bottomLine("Leverage is high.")]);
+  made.output.parseError = "Malformed table at line 113";
+  const { container } = render(<Lead {...leadProps(made)} />);
+  expect(container).toBeEmptyDOMElement();
+});

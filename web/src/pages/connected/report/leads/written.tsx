@@ -107,13 +107,17 @@ export function ChartGap({
  */
 export function OtherCharts({
   entry,
+  module,
   href,
   drawn,
 }: {
   entry: OutputEntry;
+  /** The lead's own module: another module's handoff draws none of its charts here. */
+  module: string;
   href: (line?: number) => string;
   drawn: readonly string[];
 }) {
+  if (entry.output.module !== module) return null;
   const charts = chartsStartingWith(entry, "").filter(({ title }) => !drawn.includes(title));
   return charts.map(({ title, chart }) => {
     const name = readerCell(title) || "Chart";

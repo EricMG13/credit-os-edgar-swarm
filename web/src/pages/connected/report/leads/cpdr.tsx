@@ -1,8 +1,7 @@
-import { blocked } from "../../publishedReport";
 import { Bento, Tile } from "../overview/Tile";
 import { withDraws } from "./draws";
 import { LaneTile, LeadGap, Prose } from "./parts";
-import { eventsOf, leadHref, sectionParagraphs } from "./read";
+import { eventsOf, leadHref, sectionParagraphs, drawsNothing } from "./read";
 import type { LeadProps } from "./types";
 
 const QUESTIONS = "Research questions and answers";
@@ -12,7 +11,7 @@ const SCENARIOS = "Causal synthesis and scenarios";
 export const ResearchLead = withDraws(
   function ResearchLead(props: LeadProps) {
     const { entry } = props;
-    if (blocked(entry)) return null;
+    if (drawsNothing(entry)) return null;
     const href = leadHref(props);
     const answered = entry.sections.some((section) => section.heading === "Executive answer");
     const scenarios = sectionParagraphs(entry, SCENARIOS);

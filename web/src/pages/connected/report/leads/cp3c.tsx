@@ -1,5 +1,5 @@
 import { cx } from "@/utils/cx";
-import { blocked, unitLabel, type Row } from "../../publishedReport";
+import { unitLabel, type Row } from "../../publishedReport";
 import { ticks, type SourceTable } from "../../visuals/visualData";
 import { Key } from "../overview/figureParts";
 import { basisNotes, readCell, type Cell } from "../overview/figureData";
@@ -24,6 +24,7 @@ import {
   readerCellOf,
   registerTable,
   rowName,
+  drawsNothing,
 } from "./read";
 import type { LeadProps } from "./types";
 import { ChartGap, writtenTable } from "./written";
@@ -380,7 +381,7 @@ function Paths({ entry, href }: { entry: LeadProps["entry"]; href: (line?: numbe
 export const RefinancingLead = withDraws(
   function RefinancingLead(props: LeadProps) {
     const { entry } = props;
-    if (blocked(entry)) return null;
+    if (drawsNothing(entry)) return null;
     const href = leadHref(props);
     return (
       <Bento>

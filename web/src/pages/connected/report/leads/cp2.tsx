@@ -1,15 +1,25 @@
 import type { ReactNode } from "react";
+import { cx } from "@/utils/cx";
 import { moduleName } from "../../api";
-import { blocked, evidencePath, withUnit, type OutputEntry } from "../../publishedReport";
+import { evidencePath, type OutputEntry } from "../../publishedReport";
 import { namedTable } from "../../reportView";
 import { figureSource, moduleSource } from "../overview/figureData";
 import { DeltaBar } from "../overview/marks";
-import { lastTwo, periodSeries } from "../overview/read";
+import { figureShown, lastTwo, periodSeries, type Point, type Series } from "../overview/read";
 import { Bento, Figure, Tile } from "../overview/Tile";
 import { Bullets, leadTests } from "./bullet";
 import { withDraws } from "./draws";
 import { GapCell, LeadGap, MapTile, Notes, Prose, statedGap, Trace } from "./parts";
-import { columnOf, leadHref, mapOf, readerCell, registerTable, sectionParagraphs } from "./read";
+import {
+  IN_EVIDENCE,
+  columnOf,
+  leadHref,
+  mapOf,
+  readerCell,
+  registerTable,
+  sectionParagraphs,
+  drawsNothing,
+} from "./read";
 import type { LeadProps } from "./types";
 
 const LEDGER_HEADER = [
@@ -39,9 +49,10 @@ type Ledger = {
 const byRank = (a: Item, b: Item) => a.rank - b.rank;
 const rankOf = (text: string) =>
   /^\d+$/.test(text.trim()) ? Number(text) : Number.POSITIVE_INFINITY;
+/** A ledger cell as written; one whose every word names a source reads "In Evidence" (the row's trace). */
 const written = (text: string) => {
   const cell = readerCell(text);
-  return cell === "" || cell === "—" || cell === "-" || cell === "In Evidence" ? "" : cell;
+  return cell === "" || cell === "—" || cell === "-" ? "" : cell;
 };
 /** A ledger label as written; one naming a source is in Evidence, a missing one not stated. */
 const labelOf = (text: string) => {
@@ -147,7 +158,12 @@ function Column({
                   {item.label}
                 </span>
                 {item.mechanism && (
-                  <span className="text-small wrap-anywhere text-text-secondary">
+                  <span
+                    className={cx(
+                      "text-small wrap-anywhere",
+                      item.mechanism === IN_EVIDENCE ? "text-gap-text" : "text-text-secondary",
+                    )}
+                  >
                     {item.mechanism}
                   </span>
                 )}
@@ -236,21 +252,51 @@ function basisAt(entry: OutputEntry, chart: string, line: number | undefined) {
   return column < 0 || !row ? "" : readerCell(row.cells[column] ?? "");
 }
 
-/** Whether `prior` names the year before `latest`: the same period with its one year less by one. */
-function yearBefore(prior: string, latest: string) {
-  const years = latest.match(/\d{4}/g) ?? [];
-  const [year] = years;
-  if (years.length !== 1 || !year) return false;
-  return latest.replace(year, String(Number(year) - 1)) === prior;
-}
-
 const FINANCIALS = moduleName("CP-1");
 const COVENANTS = moduleName("CP-4");
 
 /**
- * One measure of the Financial foundation: its latest figure with its period, basis cell and owner in
- * words. "from <prior>" and the before-to-after mark only when the row before has the same basis and
- * is the year before; otherwise no comparison.
+ * The module entry a stat reads, or why there is none: as the Overview reads it, but an unreadable
+ * handoff in the page's own words (the frame and Evidence hold the store's reason).
+ */
+function sourceEntry(view: LeadProps["view"], module: string, name: string, owner: string) {
+  const read = moduleSource(view, module, name);
+  return read.entry?.output.parseError
+    ? { entry: read.entry, reason: `${owner}'s output could not be read; it is in Evidence.` }
+    : read;
+}
+
+/** Each stated figure of a series with its period, when no period can be called the latest. */
+function ByPeriod({ name, series }: { name: string; series: Series }) {
+  return (
+    <ul aria-label={`${name} by period`} className="flex flex-col gap-1">
+      {series.points.map((point) => {
+        const figure = figureShown(point, series.unit);
+        const gap = figure === null ? statedGap(readerCell(point.cell)) : null;
+        return (
+          <li key={point.line} className="flex flex-wrap items-baseline gap-x-2">
+            <span className="text-caption text-text-tertiary">
+              {point.period || "Period not stated"}
+            </span>
+            {figure !== null ? (
+              <Figure className="text-small">{figure}</Figure>
+            ) : gap ? (
+              <GapCell word={gap.word} reason={gap.reason} />
+            ) : (
+              <GapCell word={readerCell(point.cell) || "Not stated"} />
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/**
+ * One measure of the Financial foundation: its latest figure by period with its period, basis cell
+ * and owner in words. "from <prior>" and the before-to-after mark only for the period a year earlier
+ * by the handoff's period table, on the same basis; otherwise no comparison. When the periods cannot
+ * be ordered, each stated figure with its period and no latest.
  */
 function SeriesStat({
   props,
@@ -263,7 +309,7 @@ function SeriesStat({
   chart: string;
   heading: RegExp;
 }) {
-  const { entry, reason } = moduleSource(props.view, "CP-1", "The financial foundation");
+  const { entry, reason } = sourceEntry(props.view, "CP-1", "The financial foundation", FINANCIALS);
   const series = entry && !reason ? periodSeries(entry, chart, heading) : null;
   if (!entry || reason || !series)
     return (
@@ -271,22 +317,29 @@ function SeriesStat({
         <Reason>{reason ?? `This page could not read ${name} from ${FINANCIALS}.`}</Reason>
       </Stat>
     );
-  const { latest, prior } = lastTwo(series);
+  const { latest, prior } = lastTwo(series, entry);
   if (!latest)
-    return (
+    return series.points.length ? (
+      <Stat
+        name={name}
+        trace={<Trace href={evidencePath(props.run.folder, entry, series.line)} name={name} />}
+      >
+        <Caption>{FINANCIALS}</Caption>
+        <ByPeriod name={name} series={series} />
+      </Stat>
+    ) : (
       <Stat name={name}>
         <Reason>{`This page could not read ${name} from ${FINANCIALS}.`}</Reason>
       </Stat>
     );
-  const shown = (cell: string) => withUnit(cell, series.unit);
+  const shown = (point: Point) => figureShown(point, series.unit) ?? point.cell;
   const basis = basisAt(entry, chart, latest.line);
   const gap = latest.value === null ? statedGap(readerCell(latest.cell)) : null;
   const before =
     prior &&
     prior.value !== null &&
     latest.value !== null &&
-    basisAt(entry, chart, prior.line) === basis &&
-    yearBefore(prior.period, latest.period)
+    basisAt(entry, chart, prior.line) === basis
       ? { prior, from: prior.value, to: latest.value }
       : null;
   return (
@@ -296,7 +349,7 @@ function SeriesStat({
     >
       <Caption>{`${latest.period}, ${FINANCIALS}`}</Caption>
       {latest.value !== null ? (
-        <Figure className="text-h3 font-medium">{shown(latest.cell)}</Figure>
+        <Figure className="text-h3 font-medium">{shown(latest)}</Figure>
       ) : gap ? (
         <GapCell word={gap.word} reason={gap.reason} />
       ) : (
@@ -305,17 +358,17 @@ function SeriesStat({
       {basis && <Caption>{basis}</Caption>}
       {before && (
         <>
-          <Caption>{`from ${shown(before.prior.cell)} in ${before.prior.period}`}</Caption>
+          <Caption>{`from ${shown(before.prior)} in ${before.prior.period}`}</Caption>
           <div className="w-52 max-w-full">
             <DeltaBar
               from={{
                 label: before.prior.period,
                 value: before.from,
-                text: shown(before.prior.cell),
+                text: shown(before.prior),
               }}
-              to={{ label: latest.period, value: before.to, text: shown(latest.cell) }}
+              to={{ label: latest.period, value: before.to, text: shown(latest) }}
               tone="none"
-              label={`${name}: ${shown(before.prior.cell)} in ${before.prior.period}, ${shown(latest.cell)} in ${latest.period}.`}
+              label={`${name}: ${shown(before.prior)} in ${before.prior.period}, ${shown(latest)} in ${latest.period}.`}
             />
           </div>
         </>
@@ -331,7 +384,7 @@ function SeriesStat({
 function HeadroomStat({ props }: { props: LeadProps }) {
   const name = "Covenant headroom";
   const source = figureSource(props.view, "CP-4", name, COVENANTS);
-  const { reason } = moduleSource(props.view, "CP-4", COVENANTS);
+  const { reason } = sourceEntry(props.view, "CP-4", COVENANTS, COVENANTS);
   if (source.state === "gap")
     return (
       <Stat name={name}>
@@ -364,7 +417,7 @@ function HeadroomStat({ props }: { props: LeadProps }) {
 export const CreditLead = withDraws(
   function CreditLead(props: LeadProps) {
     const { entry } = props;
-    if (blocked(entry)) return null;
+    if (drawsNothing(entry)) return null;
     const href = leadHref(props);
     return (
       <Bento>

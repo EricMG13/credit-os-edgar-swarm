@@ -166,7 +166,7 @@ it("draws a map's edges and dated events without their source references or modu
   const map = mapOf(made, "ownership and control");
   expect(map.state === "ready" && map.edges[0]).toMatchObject({
     from: "Retail",
-    relationship: "In Evidence",
+    relationship: "Drives EBITDA",
     type: "Documentary Fact",
     to: "Downside",
   });
@@ -190,7 +190,7 @@ it("draws a map's edges and dated events without their source references or modu
   made.output.events = [{ lane: "Issuer history", table: 21 }];
   const lane = eventsOf(made, "Issuer history");
   expect(lane?.state === "ready" && lane.events[0]).toMatchObject({
-    event: "In Evidence",
+    event: "Notes issued",
     status: "Historical — Liquidity",
   });
 });
@@ -218,17 +218,29 @@ it("reads the amounts the repo's handoffs write: USD 300m and USD +57.89 million
   });
 });
 
-it("keeps a register id or a module code the page cannot name in Evidence", () => {
+// Review 3, P11: the cited clause goes to the trace, the readable words and figures stay.
+it("keeps a cell's readable words and drops only the clause that cites a register id or a source", () => {
   // tests/fixtures/esg/CP-2E-h4.md T2F.3: "Individual coupons in T2F.2".
   const h4 = fixtureEntry("CP-2E", H4);
   const hedges = registerTable(h4, "T2F.3", ["Hedge Type"]);
   const coupons = hedges?.rows.flatMap(({ cells }) => cells).find((cell) => cell.includes("T2F.2"));
   expect(coupons).toBe("Individual coupons in T2F.2");
-  expect(readerCell(coupons ?? "")).toBe("In Evidence");
+  expect(readerCell(coupons ?? "")).toBe("Individual coupons");
+  expect(readerCell("USD 300m hedged, per T2F.4; matures 2027")).toBe(
+    "USD 300m hedged; matures 2027",
+  );
+  expect(readerCell("Leverage 4.2x (credit_agreement.pdf page 3)")).toBe("Leverage 4.2x");
+  // Nothing readable is left: the whole cell is in Evidence.
   for (const id of ["T2DS.6", "T4C.5", "TDR.3", "T2R.1", "T3E.5", "T2B.7"])
-    expect(readerCell(`See ${id} for the terms`)).toBe("In Evidence");
+    expect(readerCell(`See ${id}`)).toBe("In Evidence");
+  expect(readerCell("Per annual_report.pdf p. 4")).toBe("In Evidence");
+  expect(readerCell("T2F.2")).toBe("In Evidence");
+  // A later clause that only locates a source is dropped whole, never left as "page" or "p.".
+  expect(readerCell("See TDG_10-K.htm, page 7")).toBe("In Evidence");
+  expect(readerCell("Coupons 5.5%, see T2F.2, p. 4")).toBe("Coupons 5.5%");
+  expect(readerCell("Fixed 5.0% (see indenture.pdf, section 4.01)")).toBe("Fixed 5.0%");
+  expect(readerCell("- 5")).toBe("- 5");
   expect(readerCell("Stress CP-2G")).not.toMatch(/CP-2G/);
-  expect(readerCell("Stress CP-ZZ9")).toBe("In Evidence");
   expect(readerCell("Tranche I")).toBe("Tranche I");
   expect(readerCell("Term SOFR +2.75%")).toBe("Term SOFR +2.75%");
 });
@@ -291,7 +303,11 @@ it("reads a map and a lane the store withheld from the handoff's own table", () 
   const map = mapOf(made, "ownership and control");
   expect(map.state === "ready" && map.edges).toHaveLength(1);
   const lane = eventsOf(made, "Financing");
-  expect(lane).toMatchObject({ state: "ready", notDrawn: 1, line: 21 });
+  expect(lane).toMatchObject({
+    state: "ready",
+    unplaced: [{ date: "sometime", event: "Unplaced", line: 25 }],
+    line: 21,
+  });
   expect(lane?.state === "ready" && lane.events.map((event) => event.event)).toEqual([
     "Early",
     "Late",

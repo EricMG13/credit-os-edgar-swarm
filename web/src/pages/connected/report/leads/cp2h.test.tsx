@@ -140,7 +140,9 @@ it("draws the rating register as written, with outlook as a word", () => {
   expect(within(tile).getByText("Negative watch")).toBeVisible();
   expect(within(tile).getByText("Synthetic Issuer")).toBeVisible();
   expect(within(tile).getByText("Ba3")).toBeVisible();
-  expect(within(tile).getAllByRole("link", { name: /Source for/ })).toHaveLength(2);
+  // One trace per register row, and the figure's own.
+  expect(within(tile).getAllByRole("link", { name: /Source for Synthetic/ })).toHaveLength(2);
+  expect(within(tile).getByRole("link", { name: "Source for Rating register" })).toBeVisible();
 });
 
 it("says why when the triggers are a stated gap or the tables are absent", () => {
@@ -232,4 +234,92 @@ it("keeps each trigger's unit and basis in the table view, and one shared basis 
       .map((item) => item.textContent)
       .slice(0, 6),
   ).toEqual(["Synthetic Agency B", "10%", "12%", "Passes at or above", "%", "Synthetic."]);
+});
+
+// Review 3, P4: a cell that already carries its unit prints as written; a bare number takes it.
+it("prints a trigger cell with its unit once: 12%, (12.3x), 5.0x", () => {
+  render(
+    <RatingsLead
+      {...leadProps(
+        ratings({
+          triggers: [
+            [
+              "Synthetic Agency A",
+              "Net leverage",
+              "5.0x",
+              "(12.3)",
+              "Passes at or below",
+              "x",
+              "S.",
+            ],
+            ["Synthetic Agency B", "FFO / debt", "12%", "15", "Passes at or above", "%", "S."],
+          ],
+        }),
+      )}
+    />,
+  );
+  const tile = screen.getByRole("region", { name: "Rating triggers" });
+  expect(
+    within(tile).getByRole("img", {
+      name: /Net leverage: \(12\.3x\) against a threshold of 5\.0x\./,
+    }),
+  ).toBeVisible();
+  expect(
+    within(tile).getByRole("img", { name: /FFO \/ debt: 15% against a threshold of 12%\./ }),
+  ).toBeVisible();
+  expect(tile.textContent).not.toMatch(/%%|\)x|xx/);
+  fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
+  const leverage = within(tile).getByRole("row", { name: /^Net leverage/ });
+  expect(
+    within(leverage)
+      .getAllByRole("cell")
+      .map((item) => item.textContent)
+      .slice(0, 3),
+  ).toEqual(["Synthetic Agency A", "5.0x", "(12.3x)"]);
+  const ffo = within(tile).getByRole("row", { name: /^FFO/ });
+  expect(within(ffo).getAllByRole("cell")[1]).toHaveTextContent(/^12%$/);
+});
+
+// Review 3, P1: a superseded rating must not read as in force: every column of the register is drawn.
+it("draws each rating's effective date and status beside it, and every column in the table view", () => {
+  render(
+    <RatingsLead
+      {...leadProps(
+        ratings({
+          register: [
+            [
+              "Fitch",
+              "Senior notes",
+              "B+",
+              "Rating Watch Positive",
+              "2025-01-15",
+              "Release",
+              "p.1",
+              "Superseded",
+            ],
+            ...REGISTER_ROWS,
+          ],
+        }),
+      )}
+    />,
+  );
+  const tile = screen.getByRole("region", { name: "Rating register" });
+  const [fitch] = within(within(tile).getByRole("list", { name: "Rating register" })).getAllByRole(
+    "listitem",
+  );
+  if (!fitch) throw new Error("register row missing");
+  expect(within(fitch).getByText("B+")).toBeVisible();
+  expect(within(fitch).getByText("Superseded")).toBeVisible();
+  expect(within(fitch).getByText("2025-01-15")).toBeVisible();
+  expect(within(fitch).getByText("Rating Watch Positive")).toBeVisible();
+  expect(within(fitch).getByText("Senior notes")).toBeVisible();
+  fireEvent.click(within(tile).getByRole("button", { name: "Table" }));
+  const row = within(tile).getByRole("row", { name: /^Fitch/ });
+  expect(
+    within(row)
+      .getAllByRole("cell")
+      .map((item) => item.textContent)
+      .slice(0, 5),
+  ).toEqual(["Senior notes", "B+", "Rating Watch Positive", "2025-01-15", "Superseded"]);
+  expect(tile.textContent).not.toMatch(/p\.1|Release/);
 });

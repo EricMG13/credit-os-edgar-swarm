@@ -1,11 +1,11 @@
 import { breakPointView, BreakPointsTile } from "../BreakPoints";
 import { downsideView, DownsideTile } from "../Downside";
-import { blocked, type OutputEntry } from "../../publishedReport";
+import { type OutputEntry } from "../../publishedReport";
 import { Bento } from "../overview/Tile";
 import { withDraws } from "./draws";
 import { OtherCharts } from "./written";
 import { LeadGap, Trace } from "./parts";
-import { IN_EVIDENCE, leadHref, readerCell } from "./read";
+import { drawsNothing, leadHref } from "./read";
 import type { LeadProps } from "./types";
 
 const LADDER = "EBITDA break points";
@@ -21,12 +21,10 @@ function underId(entry: OutputEntry, id: string) {
 }
 
 /**
- * Why the page draws no figure for a register, saying only what it checked: the store's own reason
- * when the handoff could not be read, else whether the handoff has a table under the register's id.
+ * Why the page draws no figure for a register, saying only what it checked: whether the handoff has
+ * a table under the register's id.
  */
 function why(entry: OutputEntry, id: string, subject: string, table: string) {
-  const stored = entry.output.parseError ? readerCell(entry.output.parseError) : "";
-  if (stored && stored !== IN_EVIDENCE) return { reason: stored };
   const found = underId(entry, id);
   return found
     ? { reason: `This page could not read the ${table} table.`, line: found.line }
@@ -37,7 +35,7 @@ function why(entry: OutputEntry, id: string, subject: string, table: string) {
 export const DownsideLead = withDraws(
   function DownsideLead(props: LeadProps) {
     const { entry } = props;
-    if (blocked(entry)) return null;
+    if (drawsNothing(entry)) return null;
     const evidence = leadHref(props);
     const href = (line: number) => evidence(line);
     const breaks = breakPointView(entry);
@@ -71,7 +69,7 @@ export const DownsideLead = withDraws(
             {...gap("T2DS.4", "stressed metrics by scenario", "stressed-metrics", SCENARIOS)}
           />
         )}
-        <OtherCharts entry={entry} href={evidence} drawn={[]} />
+        <OtherCharts entry={entry} module="CP-2A" href={evidence} drawn={[]} />
       </Bento>
     );
   },
