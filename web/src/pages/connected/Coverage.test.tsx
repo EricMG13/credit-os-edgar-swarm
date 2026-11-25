@@ -244,3 +244,69 @@ test("nothing published is said plainly", async () => {
   render(<Coverage />);
   expect(await screen.findByText("No published runs yet")).toBeInTheDocument();
 });
+
+test("the module, confidence, pathway, order, grouping and clear controls act on the dashboard", async () => {
+  const [figure, gap, finding] = data.facts;
+  if (!figure || !gap || !finding) throw new Error("fixture");
+  answer({
+    ...data,
+    fields: [
+      ...data.fields,
+      { id: "conf", module: "CP-1", group: "Reader summary", label: "Confidence", kind: "choice" },
+    ],
+    facts: [
+      figure,
+      gap,
+      finding,
+      { ...finding, field: "conf", text: "High", impact: undefined, confidence: undefined },
+    ],
+  });
+  window.history.replaceState(null, "", "/coverage?view=rank");
+  render(<Coverage />);
+  await screen.findByRole("table");
+  expect(screen.getByRole("combobox", { name: "Order" })).toHaveValue("high");
+  fireEvent.change(screen.getByRole("combobox", { name: "Order" }), { target: { value: "low" } });
+  expect(screen.getByRole("combobox", { name: "Order" })).toHaveValue("low");
+  fireEvent.change(screen.getByRole("combobox", { name: "Group by" }), {
+    target: { value: "sector" },
+  });
+  expect(screen.getByRole("combobox", { name: "Group by" })).toHaveValue("sector");
+
+  expect(screen.queryByRole("combobox", { name: "Module state" })).not.toBeInTheDocument();
+  fireEvent.change(screen.getByRole("combobox", { name: "Module" }), { target: { value: "CP-2" } });
+  fireEvent.change(screen.getByRole("combobox", { name: "Module state" }), {
+    target: { value: "not-assessable" },
+  });
+  expect(screen.getByText("1 of 2 issuers shown")).toBeInTheDocument();
+
+  fireEvent.change(screen.getByRole("combobox", { name: "Module" }), { target: { value: "all" } });
+  fireEvent.change(screen.getByRole("combobox", { name: "Module confidence" }), {
+    target: { value: "conf" },
+  });
+  expect(screen.getByRole("combobox", { name: "Is" })).toHaveValue("all");
+  expect(screen.getByRole("option", { name: "High" })).toBeInTheDocument();
+  fireEvent.change(screen.getByRole("combobox", { name: "Is" }), { target: { value: "High" } });
+  expect(screen.getByText("1 of 2 issuers shown")).toBeInTheDocument();
+
+  fireEvent.change(screen.getByRole("combobox", { name: "Pathway" }), {
+    target: { value: "Short Credit Snapshot" },
+  });
+  expect(screen.getByText("0 of 2 issuers shown")).toBeInTheDocument();
+  expect(screen.getByText("No issuers match these filters.")).toBeInTheDocument();
+  expect(window.location.search).toContain("pathway=Short+Credit+Snapshot");
+  fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+  expect(screen.getByText("2 of 2 issuers shown")).toBeInTheDocument();
+});
+
+test("the trend view draws the figure by period, and only ticked issuers can be kept", async () => {
+  answer(data);
+  window.history.replaceState(null, "", "/coverage?view=trend");
+  render(<Coverage />);
+  expect(await screen.findByText("Net debt / EBITDA by period")).toBeInTheDocument();
+  expect(window.location.search).toContain("field=lev");
+  fireEvent.click(screen.getByRole("radio", { name: "Modules" }));
+  fireEvent.click(screen.getByRole("checkbox", { name: "Compare Beta SA" }));
+  fireEvent.click(screen.getByRole("checkbox", { name: /Only the 1 issuers ticked/ }));
+  expect(screen.getByText("1 of 2 issuers shown")).toBeInTheDocument();
+  expect(window.location.search).not.toContain("view=");
+});
