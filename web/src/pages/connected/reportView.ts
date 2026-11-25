@@ -148,11 +148,35 @@ function passageTexts(entry: OutputEntry, heading: string) {
     .filter((block) => block.type === "text");
 }
 
-/** One bottom line per module that ran, other than the lead; text is null where there is none to show; `referenced` marks one written but citing a source. */
+/**
+ * The modules whose bottom line can state or restate the decision: security selection,
+ * market-implied risk, evidence validation and the committee. No run records a clearance for that
+ * decision, so a summary page shows none of their bottom lines; their own pages do.
+ */
+export const DECISION_MODULES: readonly string[] = ["CP-3", "CP-3D", "CP-5", "CP-6"];
+
+/**
+ * One bottom line per module that ran, other than the lead; text is null where there is none to
+ * show; `referenced` marks one written but citing a source; `withheld` marks a decision module's,
+ * which a summary page does not show.
+ */
 export function moduleBottomLines(view: ReportView, run: PublishedRun) {
   return overviewModules(run).flatMap((id) => {
     const entry = designated(view, id);
     if (!entry || entry === view.lead) return [];
+    if (DECISION_MODULES.includes(id))
+      return [
+        {
+          id,
+          name: moduleName(id),
+          state: moduleState(entry),
+          entry,
+          text: null,
+          referenced: false,
+          withheld: true,
+          line: null,
+        },
+      ];
     const block = passageTexts(entry, "Bottom line").find((item) => !methodNote(item.text));
     const written = block
       ? { line: block.line, body: readParagraph(block.text).body }
@@ -172,6 +196,7 @@ export function moduleBottomLines(view: ReportView, run: PublishedRun) {
         entry,
         text: body && !referenced ? readerText(body) : null,
         referenced,
+        withheld: false,
         line: written?.line ?? null,
       },
     ];

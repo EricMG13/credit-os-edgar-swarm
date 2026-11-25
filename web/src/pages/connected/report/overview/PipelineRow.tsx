@@ -6,6 +6,7 @@ import { Pipeline, type PipelineNode } from "@/components/pipeline";
 import { moduleName } from "../../api";
 import { evidencePath, type PublishedRun, type Snapshot } from "../../publishedReport";
 import { moduleBottomLines, moduleState, type ReportView } from "../../reportView";
+import { TextLink } from "../../../run/TextLink";
 import { PublishedSource } from "../PublishedTrace";
 import { byStage } from "../stages";
 import { Tile, Well } from "./Tile";
@@ -78,7 +79,9 @@ function LineText({
     >
       <div className="grid min-w-0 gap-1">
         <h3 className="text-small font-medium text-text-primary">{line.name}</h3>
-        {line.text !== null ? (
+        {line.withheld ? (
+          <WithheldLine id={line.id} name={line.name} />
+        ) : line.text !== null ? (
           <p className="reading-copy text-small text-text-secondary">{line.text}</p>
         ) : line.referenced ? (
           <Button color="link-gray" size="sm" href={source}>
@@ -88,10 +91,30 @@ function LineText({
           <GapPanel reason="This module wrote no bottom line; its output is in Evidence." />
         )}
       </div>
-      <PublishedSource href={source} name={line.name} linkLabel={`Source for ${line.name}`}>
-        View source
-      </PublishedSource>
+      {!line.withheld && (
+        <PublishedSource href={source} name={line.name} linkLabel={`Source for ${line.name}`}>
+          View source
+        </PublishedSource>
+      )}
     </li>
+  );
+}
+
+/**
+ * A decision module's bottom line is not shown on a summary page, and neither is its source: no
+ * clearance is recorded for the decision it bears on. Its own page shows it.
+ */
+function WithheldLine({ id, name }: { id: string; name: string }) {
+  return (
+    <p className="text-small text-text-secondary">
+      Not shown here: no clearance is recorded for the decision it bears on.{" "}
+      <TextLink
+        href={`#modules/${id}`}
+        className="inline-flex min-h-8 items-center max-[480px]:min-h-11"
+      >
+        {`Open ${name}`}
+      </TextLink>
+    </p>
   );
 }
 

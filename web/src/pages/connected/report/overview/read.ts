@@ -6,6 +6,7 @@ import {
   type OutputEntry,
   type PublishedRun,
   type Row,
+  type Section,
   type Snapshot,
   type Table,
 } from "../../publishedReport";
@@ -68,14 +69,18 @@ function tableOf(table: Table): PassageTable | Passage {
 export function passageBlocks(entry: OutputEntry, heading: string): (Passage | PassageTable)[] {
   return passages(entry.sections)
     .filter((section) => section.heading === heading)
-    .flatMap(({ blocks }) => blocks)
-    .flatMap((block) => {
-      if (block.type === "table") return [tableOf(block)];
-      if (block.type !== "text") return [{ line: block.line, text: null }];
-      if (methodNote(block.text)) return [];
-      const paragraph = paragraphOf(block.line, block.text);
-      return paragraph.text === "" ? [] : [paragraph];
-    });
+    .flatMap(sectionBlocks);
+}
+
+/** What a module wrote under one section, as `passageBlocks` reads it. */
+export function sectionBlocks({ blocks }: Section): (Passage | PassageTable)[] {
+  return blocks.flatMap((block) => {
+    if (block.type === "table") return [tableOf(block)];
+    if (block.type !== "text") return [{ line: block.line, text: null }];
+    if (methodNote(block.text)) return [];
+    const paragraph = paragraphOf(block.line, block.text);
+    return paragraph.text === "" ? [] : [paragraph];
+  });
 }
 
 /**

@@ -53,7 +53,7 @@ type Headline = {
   line: number;
 };
 type DecisionStatus = "withheld" | "not shown" | "unavailable";
-type Action = {
+export type Action = {
   module: "CP-3" | "CP-6";
   label: string;
   reason: string;
@@ -854,7 +854,8 @@ function debtPrincipal(entry: OutputEntry | undefined) {
   };
 }
 
-function actions(view: ReportView, run: PublishedRun): Action[] {
+/** The run's decisions as any summary page treats them: withheld, not shown, or unavailable. */
+export function decisionActions(view: ReportView, run: PublishedRun): Action[] {
   const owners = [
     ["CP-3", "instrument", "Instrument preference"],
     ["CP-6", "committee", "Committee action and size"],
@@ -988,7 +989,7 @@ export function buildIssuerFrontPage(view: ReportView, run: PublishedRun) {
     leadLabel: specialistLabel(run, specialist),
     lead: lead?.passage,
     compactLead,
-    actions: actions(view, run),
+    actions: decisionActions(view, run),
     figures: specialist ? [] : snapshotFigures(foundation),
     headline,
     missingHeadline: missing,

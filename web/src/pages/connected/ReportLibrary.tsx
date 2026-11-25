@@ -52,6 +52,7 @@ import { PipelineRow } from "./report/overview/PipelineRow";
 import { StressRow } from "./report/overview/StressRow";
 import { StructureRow } from "./report/overview/StructureRow";
 import { Bento } from "./report/overview/Tile";
+import { overviewView } from "./report/overview/decision";
 import { useResource } from "./useResource";
 import { ExportMenu, ReportExportPreview } from "./export/ReportExportPreview";
 import { exportRoute, reportExports } from "./export/reportExport";
@@ -199,7 +200,9 @@ function Overview({
   run: PublishedRun;
   view: ReportView;
 }) {
-  const props = { snapshot, run, view };
+  // The Overview's lead is the run's published credit view, never a decision module's passage.
+  const reading = useMemo(() => overviewView(view, run), [view, run]);
+  const props = { snapshot, run, view: reading };
   return (
     <section aria-labelledby="overview-title" className="min-w-0">
       <h2 id="overview-title" className="sr-only">

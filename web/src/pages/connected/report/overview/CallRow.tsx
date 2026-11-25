@@ -1,5 +1,5 @@
-import { ArrowNarrowRight, ArrowRight, ClockRewind } from "@untitledui/icons";
-import { useMemo, type ReactNode } from "react";
+import { ArrowRight, ClockRewind } from "@untitledui/icons";
+import type { ReactNode } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { StatusBadge } from "@/components/status/StatusBadge";
 import { cx } from "@/utils/cx";
@@ -7,7 +7,9 @@ import { moduleName } from "../../api";
 import {
   CONFIDENCE_INPUTS,
   comparisonForRun,
+  evidenceHref,
   evidencePath,
+  evidenceToken,
   runPathway,
   runTiming,
   unitLabel,
@@ -16,14 +18,12 @@ import {
 import { moduleBottomLines, moduleState, runMoneyUnit, type ReportView } from "../../reportView";
 import { TextLink } from "../../../run/TextLink";
 import { PublishedSource } from "../PublishedTrace";
-import { UNREAD_STANCE, committeeStance, earlierStance, type StanceReading } from "./changeData";
+import { decisionActions, type Action } from "../frontPage";
+import { callBlocks } from "./decision";
 import { readerReason } from "./reason";
 import { useSvgScale } from "./svgScale";
 import { bottomLineBlocks, entryOf, type Passage, type PassageTable, type RowProps } from "./read";
 import { Figure, GapNote, Tile } from "./Tile";
-
-/** Stances, bands and outlooks are the modules' words: one neutral style, no good/bad grouping. */
-const NEUTRAL = "border-border-container bg-surface-card text-text-primary";
 
 function Source({
   run,
@@ -168,46 +168,70 @@ function Head({ children, trace }: { children: ReactNode; trace?: ReactNode }) {
   );
 }
 
-/** A stated stance as a word chip, neutral: the word is the committee's, any grouping would be ours. */
-export function StanceChip({ stance, large = false }: { stance: string; large?: boolean }) {
+/**
+ * The run's decisions as a summary page may show them: never the decision itself, which no run
+ * records a clearance for; a recorded hold with its reason and its source, or why it is not shown.
+ */
+function Decisions({ run, decisions }: { run: RowProps["run"]; decisions: Action[] }) {
+  if (!decisions.length) return null;
   return (
-    <span
-      className={cx(
-        "flex items-center rounded-ds-sm border",
-        large ? "min-h-10 px-4 text-h3 font-semibold" : "min-h-6 px-2 text-caption font-medium",
-        NEUTRAL,
-      )}
-    >
-      {stance}
-    </span>
+    <dl aria-label="Decisions" className="flex flex-col gap-2">
+      {decisions.map(({ module, label, status, reason, screenReason, owner }) => (
+        <div key={module} className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <dt className="text-small font-medium text-text-primary">{label}</dt>
+          <dd className="min-w-0 flex-1 text-small text-text-secondary">
+            {status === "withheld" ? `Withheld: ${reason}` : (screenReason ?? reason)}
+          </dd>
+          {owner && (
+            <dd>
+              <PublishedSource
+                href={evidenceHref(run.folder, evidenceToken({ output: owner }))}
+                name={label.toLowerCase()}
+                linkLabel={`Source for the ${label.toLowerCase()} hold`}
+              >
+                View source
+              </PublishedSource>
+            </dd>
+          )}
+        </div>
+      ))}
+    </dl>
   );
 }
 
 function CallTile({ run, view }: Pick<RowProps, "run" | "view">) {
   const lead = view.lead;
-  if (!lead)
+  const decisions = decisionActions(view, run);
+  const { heading, blocks } = callBlocks(view, run);
+  const [first, ...rest] = blocks;
+  if (!lead || !first)
     return (
-      <Tile span={8} label="The call">
+      <Tile span={8} label="The call" className="gap-6 self-start">
         <Head>The call</Head>
-        <GapNote>No credit view is available for this run.</GapNote>
+        <GapNote>
+          A verified credit view is unavailable for this run. Each module's findings are under
+          Modules.
+        </GapNote>
+        <Decisions run={run} decisions={decisions} />
         <RunFacts run={run} view={view} />
       </Tile>
     );
-  const { stance, unread } = committeeStance(lead);
-  const [first, ...rest] = bottomLineBlocks(lead);
   const name = moduleName(lead.output.module);
   return (
     <Tile span={8} label="The call" className="gap-7 self-start">
       <div className="flex flex-col gap-6">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
           <h3 className="text-small font-medium text-text-secondary">The call · {name}</h3>
-          {stance && <StanceChip stance={stance} large />}
-          {unread && <p className="text-small text-text-secondary">{UNREAD_STANCE}</p>}
         </div>
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-caption text-text-secondary">Bottom line</span>
-            <Source run={run} entry={lead} line={first?.line} name="the bottom line" />
+            <span className="text-caption text-text-secondary">{heading}</span>
+            <Source
+              run={run}
+              entry={lead}
+              line={first.line}
+              name={`the ${heading.toLowerCase()}`}
+            />
           </div>
           <Sentence
             run={run}
@@ -220,6 +244,7 @@ function CallTile({ run, view }: Pick<RowProps, "run" | "view">) {
           />
           <Continuation run={run} entry={lead} rest={rest} />
         </div>
+        <Decisions run={run} decisions={decisions} />
       </div>
       <RunFacts run={run} view={view} />
     </Tile>
@@ -419,7 +444,11 @@ function ConfidenceTile({ run, view }: Pick<RowProps, "run" | "view">) {
   );
 }
 
-function ClearanceTile({ run, view }: Pick<RowProps, "run" | "view">) {
+/**
+ * Evidence validation's bottom line can restate the decision, which no run records a clearance
+ * for, so the Overview names the module and links its page; the page shows what it found.
+ */
+function ClearanceTile({ view }: Pick<RowProps, "view">) {
   const entry = entryOf(view, "CP-5");
   const name = moduleName("CP-5");
   if (!entry)
@@ -429,52 +458,31 @@ function ClearanceTile({ run, view }: Pick<RowProps, "run" | "view">) {
         <GapNote>{name} is not part of this run.</GapNote>
       </Tile>
     );
-  const [first, ...rest] = bottomLineBlocks(entry);
   return (
     <Tile span={12} label="Evidence clearance" className="gap-3">
-      <Head
-        trace={<Source run={run} entry={entry} line={first?.line} name="the evidence clearance" />}
-      >
-        Evidence clearance
-      </Head>
+      <Head>Evidence clearance</Head>
       {moduleState(entry) !== "Delivered" && (
         <StatusBadge set="Module state" state={moduleState(entry)} />
       )}
-      <Sentence
-        run={run}
-        entry={entry}
-        passage={first}
-        className="text-body font-medium text-pretty text-text-primary"
-      />
-      {rest.map((passage, at) => (
-        <div key={passage.line} className="flex items-start justify-between gap-3">
-          <Sentence
-            run={run}
-            entry={entry}
-            passage={passage}
-            className="text-small text-pretty text-text-secondary"
-          />
-          <Source
-            run={run}
-            entry={entry}
-            line={passage.line}
-            name={`paragraph ${String(at + 2)} of ${name}`}
-          />
-        </div>
-      ))}
-      <p className="flex items-center gap-2 text-caption text-gap-text">
-        <span
-          aria-hidden="true"
-          className="gap-hatch size-3 flex-none rounded-ds-xs border border-dashed border-border-gap"
-        />
-        Issue counts by severity and committee use are not typed in this run.
+      <p className="text-small text-pretty text-text-secondary">
+        {`${name}'s bottom line is not shown here: no clearance is recorded for the decision it bears on.`}
       </p>
+      <div>
+        <Button
+          className={LINK}
+          color="link-gray"
+          size="sm"
+          href="#modules/CP-5"
+          iconTrailing={ArrowRight}
+        >
+          {`Open ${name}`}
+        </Button>
+      </div>
     </Tile>
   );
 }
 
 function ChangesBody({ snapshot, run, view }: RowProps): ReactNode {
-  const was = useMemo(() => earlierStance(snapshot, run), [snapshot, run]);
   const change = comparisonForRun(run, snapshot.workspace.runs);
   const entry = entryOf(view, "CP-8");
   if (change?.problem) return <GapNote>{change.problem}</GapNote>;
@@ -488,7 +496,6 @@ function ChangesBody({ snapshot, run, view }: RowProps): ReactNode {
       </p>
     );
   const [first, ...more] = bottomLineBlocks(entry);
-  const now: StanceReading = { ...committeeStance(view.lead), held: true };
   return (
     <>
       <Sentence
@@ -498,45 +505,7 @@ function ChangesBody({ snapshot, run, view }: RowProps): ReactNode {
         className="text-body font-medium text-pretty text-text-primary"
       />
       {more.length > 0 && <p className="text-caption text-text-secondary">More in Changes</p>}
-      <StanceMove was={was ?? { unread: false, held: false }} now={now} />
     </>
-  );
-}
-
-/** One side of the stance move in words: the committee's word, or why the page shows none. */
-function sideWords({ stance, unread, held }: StanceReading) {
-  if (stance) return stance;
-  if (!held) return "Not in the run list";
-  return unread ? "Could not be read" : "Not stated";
-}
-
-/** One side of the stance move: the committee's word in its chip, or why the page shows none. */
-function Side({ reading }: { reading: StanceReading }) {
-  if (reading.stance) return <StanceChip stance={reading.stance} />;
-  return (
-    <span className="flex min-h-6 items-center rounded-ds-xs border border-dashed border-border-gap px-2 text-caption text-gap-text">
-      {sideWords(reading)}
-    </span>
-  );
-}
-
-/** The stance in the earlier run and in this one, as two chips; a side the page cannot show says why. */
-function StanceMove({ was, now }: { was: StanceReading; now: StanceReading }) {
-  const words = (reading: StanceReading) => reading.stance ?? sideWords(reading).toLowerCase();
-  return (
-    <span className="flex flex-wrap items-center gap-1.5">
-      <span className="sr-only">{`Earlier stance: ${words(was)}. Current stance: ${words(now)}.`}</span>
-      <span aria-hidden="true" className="text-caption text-text-tertiary">
-        Stance
-      </span>
-      <span aria-hidden="true">
-        <Side reading={was} />
-      </span>
-      <ArrowNarrowRight aria-hidden="true" className="size-3.5 text-text-secondary" />
-      <span aria-hidden="true">
-        <Side reading={now} />
-      </span>
-    </span>
   );
 }
 
@@ -573,7 +542,7 @@ export function CallRow(props: RowProps) {
       <CallTile run={props.run} view={props.view} />
       <div className="flex min-w-0 flex-col gap-4 self-start lg:col-span-4">
         <ConfidenceTile run={props.run} view={props.view} />
-        <ClearanceTile run={props.run} view={props.view} />
+        <ClearanceTile view={props.view} />
         <ChangesTile {...props} />
       </div>
     </>

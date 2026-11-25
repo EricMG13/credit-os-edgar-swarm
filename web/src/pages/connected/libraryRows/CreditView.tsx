@@ -6,7 +6,6 @@ import {
   containsReference,
   evidenceHref,
   evidenceToken,
-  getSnapshot,
   publishedRunForFolder,
   readerText,
   reportPath,
@@ -15,6 +14,7 @@ import { buildReportView } from "../reportView";
 import { plainText, richParts } from "../richText";
 import { issuerPassageBody, leadIdentity, publishedLead } from "../issuerEntry";
 import type { LibraryRun } from "./group";
+import type { LoadSnapshot } from "./rowSnapshot";
 
 type CardFinding = { body: string; href: string };
 
@@ -56,12 +56,15 @@ export function resetCardFindings() {
   cardFindings.clear();
 }
 
-/** One download per publication while it is in flight or has a finding; no finding is asked again. */
-function cachedCardFinding(run: LibraryRun, date: string) {
+/**
+ * One reading per publication while it is in flight or has a finding; no finding is asked again.
+ * The row's own loader is used, so the finding and the row's next event share one request.
+ */
+function cachedCardFinding(run: LibraryRun, date: string, load: LoadSnapshot) {
   const key = cardKey(run, date);
   const cached = cardFindings.get(key);
   if (cached) return cached;
-  const pending = specialistCardFinding(run, date, new AbortController().signal);
+  const pending = specialistCardFinding(run, date, load);
   cardFindings.set(key, pending);
   const evict = () => {
     if (cardFindings.get(key) === pending) cardFindings.delete(key);
@@ -75,9 +78,9 @@ function cachedCardFinding(run: LibraryRun, date: string) {
 async function specialistCardFinding(
   run: LibraryRun,
   date: string,
-  signal: AbortSignal,
+  load: LoadSnapshot,
 ): Promise<CardFinding | null> {
-  const snapshot = await getSnapshot(signal, run.folder);
+  const snapshot = await load(run.folder);
   if (snapshot?.reportFolder !== run.folder) return null;
   const admitted = publishedRunForFolder(snapshot.workspace.runs, run.folder);
   if (!admitted) return null;
@@ -104,10 +107,12 @@ function SpecialistCardFinding({
   run,
   date,
   unavailable,
+  load,
 }: {
   run: LibraryRun;
   date: string;
   unavailable: ReactNode;
+  load: LoadSnapshot;
 }) {
   const root = useRef<HTMLDivElement>(null);
   const [finding, setFinding] = useState<CardFinding | null>();
@@ -115,8 +120,8 @@ function SpecialistCardFinding({
     const target = root.current;
     if (!target) return;
     const controller = new AbortController();
-    const load = async () => {
-      const result = await cachedCardFinding(run, date).catch(() => null);
+    const read = async () => {
+      const result = await cachedCardFinding(run, date, load).catch(() => null);
       if (!controller.signal.aborted) setFinding(result);
     };
     const observer =
@@ -125,15 +130,15 @@ function SpecialistCardFinding({
         : new IntersectionObserver((entries) => {
             if (!entries.some(({ isIntersecting }) => isIntersecting)) return;
             observer?.disconnect();
-            void load();
+            void read();
           });
     if (observer) observer.observe(target);
-    else void load();
+    else void read();
     return () => {
       observer?.disconnect();
       controller.abort();
     };
-  }, [date, run]);
+  }, [date, run, load]);
   return (
     <div ref={root} className="min-h-px">
       {finding === null ? unavailable : finding && <LinkedFinding {...finding} />}
@@ -151,10 +156,12 @@ export function CreditView({
   run,
   date,
   showUnavailableFinding,
+  load,
 }: {
   run: LibraryRun | undefined;
   date: string;
   showUnavailableFinding: boolean;
+  load: LoadSnapshot;
 }) {
   const unavailable = showUnavailableFinding ? (
     <p className="text-small text-text-secondary">
@@ -171,6 +178,7 @@ export function CreditView({
         run={run}
         date={date}
         unavailable={unavailable}
+        load={load}
       />
     );
   const lead = leadIdentity(run);

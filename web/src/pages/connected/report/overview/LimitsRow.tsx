@@ -9,6 +9,7 @@ import {
   type Snapshot,
 } from "../../publishedReport";
 import { moduleBottomLines, moduleState, runLimitations, type ReportView } from "../../reportView";
+import { heldModules } from "./decision";
 import { moduleName } from "../../api";
 import { richParts } from "../../richText";
 import { PublishedSource } from "../PublishedTrace";
@@ -154,7 +155,9 @@ function Recorded({ run, groups }: { run: PublishedRun; groups: Limitation[][] }
 /** What this run could not do, as a first-class tile: blocked modules first, then what the others recorded. */
 export function LimitsRow({ run, view }: RowProps) {
   const blocked = blockedModules(view, run);
-  const groups = grouped(runLimitations(view, run));
+  // A held decision's limitations can restate it, so they stay on that module's page.
+  const held = heldModules(view, run);
+  const groups = grouped(runLimitations(view, run, held));
   return (
     <Tile span={12} label="What this run could not do">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
@@ -188,6 +191,11 @@ export function LimitsRow({ run, view }: RowProps) {
           <Recorded run={run} groups={groups} />
         </>
       )}
+      {held.map((id) => (
+        <p key={id} className="text-small text-text-secondary">
+          {`Limitations recorded by ${moduleName(id)} are not in this list. That module's page shows what it recorded.`}
+        </p>
+      ))}
     </Tile>
   );
 }

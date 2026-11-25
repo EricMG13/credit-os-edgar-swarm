@@ -330,6 +330,7 @@ export function IssuerRow({
               run={published}
               date={newest.date}
               showUnavailableFinding={!group.assessmentUnavailable}
+              load={load}
             />
           </section>
           <section aria-label={`Runs, ${newest.name}`} className="grid min-w-0 content-start gap-2">

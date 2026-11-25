@@ -4,6 +4,7 @@ import { TextLink } from "../../run/TextLink";
 import { moduleName } from "../api";
 import {
   outputEntries,
+  publishedRunForFolder,
   reportPath,
   runLabels,
   runPathway,
@@ -11,9 +12,9 @@ import {
   type PublishedRun,
   type Snapshot,
 } from "../publishedReport";
-import { moduleOrder } from "../reportView";
-import { StanceChip } from "./overview/CallRow";
-import { UNREAD_STANCE, runStanceRead } from "./overview/changeData";
+import { buildReportView, moduleOrder } from "../reportView";
+import { scopeLabel } from "../issuerEntry";
+import { decisionActions, type Action } from "./frontPage";
 import { asOfDate } from "../runFigures";
 import { Bento, Tile } from "./overview/Tile";
 
@@ -55,20 +56,22 @@ const QUIET = `${chip} border-border-container font-normal text-text-secondary`;
  */
 const held = (record: PublishedRun) => !record.history && Object.hasOwn(record, "modules");
 
-/** The run's stance in the Overview's own chip; what is not stated, or not held here, says so. */
-function Stance({
-  record,
-  stance,
-  unread,
-}: {
-  record: PublishedRun;
-  stance: string | undefined;
-  unread: boolean;
-}) {
-  if (!held(record)) return <span className={QUIET}>Stance not in the run list</span>;
-  if (unread) return <span className={QUIET}>{UNREAD_STANCE}</span>;
-  if (stance === undefined) return <span className={QUIET}>Stance not stated</span>;
-  return <StanceChip stance={stance} />;
+/** A run's decisions as a summary page treats them; null when the page has only its summary. */
+function runDecisions(snapshot: Snapshot, key: string, record: PublishedRun): Action[] | null {
+  return held(record) ? decisionActions(buildReportView(snapshot, key, record), record) : null;
+}
+
+const STATUS = { withheld: "Withheld", "not shown": "Not shown", unavailable: "Unavailable" };
+
+/**
+ * The run's decisions, never the decision itself: no run records a clearance for it. Each says
+ * whether it is withheld or not shown; a run the page has only as a summary says so.
+ */
+function Decisions({ decisions }: { decisions: Action[] | null }) {
+  if (decisions === null) return <span className={QUIET}>Decision not in the run list</span>;
+  return decisions.map(({ module, label, status }) => (
+    <span key={module} className={QUIET}>{`${label}: ${STATUS[status]}`}</span>
+  ));
 }
 
 function Node({ current }: { current: boolean }) {
@@ -85,14 +88,14 @@ function Node({ current }: { current: boolean }) {
 
 function RunRow({
   record,
-  stance,
+  decisions,
   current,
   tie,
   catalogue,
   details,
 }: {
   record: PublishedRun;
-  stance: { stance?: string; unread: boolean };
+  decisions: Action[] | null;
   current: boolean;
   /** Another run has the same as-of date: their order is not known. */
   tie: boolean;
@@ -111,7 +114,7 @@ function RunRow({
         ) : (
           <span className="text-h4 text-gap-text">As-of date not recorded</span>
         )}
-        <Stance record={record} stance={stance.stance} unread={stance.unread} />
+        <Decisions decisions={decisions} />
         {tie && <span className={QUIET}>Same as-of date</span>}
         {current && (
           <span className={`${chip} border-action-subtle-hover bg-surface-selected text-text-link`}>
@@ -126,6 +129,7 @@ function RunRow({
           {runPathway(record, catalogue) || "Credit report"}
         </span>
         <StatusBadge set="Run states" state="Finished" />
+        <span className={QUIET}>{scopeLabel(record)}</span>
         {details?.labels.map((label) => (
           <Badge key={label}>{label}</Badge>
         ))}
@@ -161,8 +165,9 @@ export function RunHistory({
 }) {
   const records = Object.entries(snapshot.workspace.runs)
     .filter(
-      ([, record]) =>
-        record === run || Boolean(run.issuerKey && record.issuerKey === run.issuerKey),
+      ([key, record]) =>
+        publishedRunForFolder(snapshot.workspace.runs, record.folder)?.[0] === key &&
+        (record === run || Boolean(run.issuerKey && record.issuerKey === run.issuerKey)),
     )
     .sort(
       ([, a], [, b]) =>
@@ -186,7 +191,7 @@ export function RunHistory({
             <RunRow
               key={key}
               record={record}
-              stance={runStanceRead(snapshot, key, record)}
+              decisions={runDecisions(snapshot, key, record)}
               current={record === run}
               tie={Boolean(record.asOf) && (dates.get(record.asOf ?? "") ?? 0) > 1}
               catalogue={byFolder.get(record.folder)}

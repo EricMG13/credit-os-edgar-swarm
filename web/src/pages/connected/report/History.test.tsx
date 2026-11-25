@@ -98,16 +98,37 @@ it("lists this issuer's runs newest first with the as-of date and the heading", 
   ]);
 });
 
-it("reads the stance of each run the page holds, and sends the reader to the run for the others", () => {
+it("shows no run's decision, only that it is not shown, and which runs it has as summaries", () => {
   const items = rows();
-  expect(within(row(items, 0)).getByText("Watchlist")).toBeTruthy();
-  expect(within(row(items, 1)).getByText("Stance not in the run list")).toBeTruthy();
-  expect(within(row(items, 2)).getByText("Requires More Work")).toBeTruthy();
-  expect(within(row(items, 3)).getByText("Stance not in the run list")).toBeTruthy();
-  expect(screen.queryByText("Stance not stated")).toBeNull();
+  const notShown = "Committee action and size: Not shown";
+  expect(within(row(items, 0)).getByText(notShown)).toBeTruthy();
+  expect(within(row(items, 1)).getByText("Decision not in the run list")).toBeTruthy();
+  expect(within(row(items, 2)).getByText(notShown)).toBeTruthy();
+  expect(within(row(items, 3)).getByText("Decision not in the run list")).toBeTruthy();
+  // The committees' words stay on their own module pages.
+  expect(screen.queryByText(/Watchlist|Requires More Work/)).toBeNull();
 });
 
-it("says a stance is not stated only for a run it holds in full whose committee states none", () => {
+it("names a decision with a recorded hold as withheld", () => {
+  const { snapshot, runs } = setup();
+  const hold = {
+    output: "new/cp6",
+    sha256: "n".repeat(64),
+    state: "withheld",
+    scope: "committee",
+    reason: "Sizing waits for the limit review.",
+  };
+  const held = { ...runs.newKey, actionTreatment: { "CP-6": hold } } as PublishedRun;
+  runs.newKey = held;
+  render(<RunHistory snapshot={snapshot} run={held} issuer="Acme" />);
+  const items = within(screen.getByRole("list", { name: "Runs, newest first" })).getAllByRole(
+    "listitem",
+  );
+  expect(within(row(items, 0)).getByText("Committee action and size: Withheld")).toBeTruthy();
+  expect(within(row(items, 2)).getByText("Committee action and size: Not shown")).toBeTruthy();
+});
+
+it("names no decision for a run it holds in full with no committee module", () => {
   const { snapshot, runs } = setup();
   const bare = published("new", "2026-03-31", { modules: {} });
   runs.newKey = bare;
@@ -115,7 +136,13 @@ it("says a stance is not stated only for a run it holds in full whose committee 
   const items = within(screen.getByRole("list", { name: "Runs, newest first" })).getAllByRole(
     "listitem",
   );
-  expect(within(row(items, 0)).getByText("Stance not stated")).toBeTruthy();
+  expect(within(row(items, 0)).queryByText(/Committee action and size/)).toBeNull();
+  expect(within(row(items, 0)).queryByText("Decision not in the run list")).toBeNull();
+});
+
+it("states each run's scope, unverified unless the publication says otherwise", () => {
+  const items = rows();
+  expect(within(row(items, 0)).getByText("Assessment scope unverified")).toBeTruthy();
 });
 
 it("claims no order between runs of the same as-of date", () => {
@@ -168,17 +195,4 @@ it("lays the runs tile on the report's 12-column grid", () => {
   rows();
   const tile = screen.getByRole("region", { name: "Runs of Acme" });
   expect(tile.parentElement).toHaveClass("lg:grid-cols-12");
-});
-
-it("says it could not read a stance when the decision states one this page does not know", () => {
-  const { snapshot, runs } = setup();
-  snapshot.workspace.handoffs["n".repeat(64)] = decision("Hold");
-  render(<RunHistory snapshot={snapshot} run={runs.newKey as PublishedRun} issuer="Acme" />);
-  const items = within(screen.getByRole("list", { name: "Runs, newest first" })).getAllByRole(
-    "listitem",
-  );
-  expect(
-    within(row(items, 0)).getByText("This page could not read a stance from the decision"),
-  ).toBeTruthy();
-  expect(within(row(items, 0)).queryByText("Stance not stated")).toBeNull();
 });

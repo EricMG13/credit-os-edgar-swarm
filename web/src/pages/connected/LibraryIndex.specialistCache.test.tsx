@@ -1,11 +1,18 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { ReportLibrary, resetCardFindings } from "./LibraryIndex";
 
 type Finding = { owner: { id: string; sha256: string }; line: number; body: string };
-const overview = vi.hoisted(() => ({ finding: ((): Finding | undefined => undefined)() }));
+// `read` counts how often a finding is worked out from a fetched report: once per publication.
+const overview = vi.hoisted(() => ({
+  finding: ((): Finding | undefined => undefined)(),
+  read: 0,
+}));
 vi.mock("./export/reportExport", () => ({
-  reportSpecialistOverview: () => (overview.finding ? { findings: [overview.finding] } : null),
+  reportSpecialistOverview: () => {
+    overview.read += 1;
+    return overview.finding ? { findings: [overview.finding] } : null;
+  },
 }));
 
 const run = {
@@ -46,6 +53,7 @@ const catalogue = {
 
 beforeEach(() => {
   resetCardFindings();
+  overview.read = 0;
   overview.finding = {
     owner: { id: "relative-run/cp7", sha256: "e".repeat(64) },
     line: 4,
@@ -82,25 +90,30 @@ function serve(served: Served) {
   return snapshots;
 }
 
-async function mountOnce() {
+/** The Library with Acme's row opened: the credit view is in the opened row. */
+async function openRow() {
   const view = render(<ReportLibrary />);
-  await screen.findAllByText("Acme");
+  fireEvent.click(await screen.findByRole("button", { name: "Show runs and detail for Acme" }));
+  return view;
+}
+
+async function mountOnce() {
+  const view = await openRow();
   await new Promise((resolve) => setTimeout(resolve, 50));
   view.unmount();
 }
 
-it("fetches a specialist card's report once per publication across remounts", async () => {
+it("reads a specialist row's finding once per publication across remounts", async () => {
   const snapshots = serve({ publishedAt: "2026-04-01T00:00:00Z", reportFolder: "relative-run" });
-  const first = render(<ReportLibrary />);
-  await waitFor(() => {
-    expect(snapshots()).toBe(1);
-  });
+  const first = await openRow();
   await screen.findByText("Prefer the 2030s.");
+  // The finding and the row's next event share the row's one request.
+  expect(snapshots()).toBe(1);
   first.unmount();
-  render(<ReportLibrary />);
+  await openRow();
   await screen.findByText("Prefer the 2030s.");
   await new Promise((resolve) => setTimeout(resolve, 50));
-  expect(snapshots()).toBe(1);
+  expect(overview.read).toBe(1);
 });
 
 it("asks again when the same folder and date are republished", async () => {
@@ -108,15 +121,24 @@ it("asks again when the same folder and date are republished", async () => {
   const snapshots = serve(served);
   await mountOnce();
   expect(snapshots()).toBe(1);
+  expect(overview.read).toBe(1);
   served.publishedAt = "2026-04-02T00:00:00Z";
   await mountOnce();
-  expect(snapshots()).toBe(2);
+  expect(overview.read).toBe(2);
 });
 
 it("asks again after a first result with no finding", async () => {
+  overview.finding = undefined;
+  serve({ publishedAt: "2026-04-01T00:00:00Z", reportFolder: "relative-run" });
+  await mountOnce();
+  expect(overview.read).toBe(1);
+  await mountOnce();
+  expect(overview.read).toBe(2);
+});
+
+it("reads no finding from a report served for another folder", async () => {
   const snapshots = serve({ publishedAt: "2026-04-01T00:00:00Z", reportFolder: "other-run" });
   await mountOnce();
   expect(snapshots()).toBe(1);
-  await mountOnce();
-  expect(snapshots()).toBe(2);
+  expect(overview.read).toBe(0);
 });

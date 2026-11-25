@@ -59,6 +59,7 @@ const snapshot = { workspace: { runs: {} } } as unknown as Snapshot;
 
 function view(entries: OutputEntry[], lead?: OutputEntry): ReportView {
   return {
+    folder: run.folder,
     entries,
     lead,
     modules: entries.map(({ output }) => ({
@@ -74,23 +75,48 @@ function view(entries: OutputEntry[], lead?: OutputEntry): ReportView {
 
 const decision = (bias: string) => text("Decision", `Final Action Bias: ${bias}. Reason.`);
 
-it("draws every stance in one neutral chip with its own word, Avoid and Add Exposure alike", () => {
+/** The run as a verified publication whose published lead is the entry's first bottom-line paragraph. */
+function on(lead: OutputEntry, base: PublishedRun = run): PublishedRun {
+  const block = lead.sections
+    .find((section) => section.heading === "Bottom line")
+    ?.blocks.find((item) => item.type === "text");
+  if (block?.type !== "text") throw new Error("fixture: the lead has no bottom-line paragraph");
+  return {
+    ...base,
+    publicationVerified: true,
+    lead: {
+      module: lead.output.module,
+      output: lead.output.id,
+      sha256: lead.output.sha256,
+      line: block.line,
+      text: block.text,
+    },
+  } as PublishedRun;
+}
+
+it("shows no stance in the call, whatever the committee decides", () => {
   for (const bias of ["Avoid", "Add Exposure", "Watchlist"]) {
-    const lead = entry("CP-6", [text("Bottom line", "The view."), decision(bias)]);
-    const { unmount } = render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
-    const chip = within(screen.getByRole("region", { name: "The call" })).getByText(bias);
-    expect(chip.className).not.toMatch(/warning|success|error/);
-    expect(chip.querySelector("svg")).toBeNull();
+    const lead = entry("CP-2", [text("Bottom line", "The view.")]);
+    const committee = entry("CP-6", [text("Bottom line", "Sized."), decision(bias)]);
+    const { unmount } = render(
+      <CallRow snapshot={snapshot} run={on(lead)} view={view([lead, committee], lead)} />,
+    );
+    const call = screen.getByRole("region", { name: "The call" });
+    expect(within(call).queryByText(new RegExp(bias))).toBeNull();
+    expect(within(call).queryByText("Sized.")).toBeNull();
+    expect(within(call).getByText("Committee action and size")).toBeVisible();
     unmount();
   }
 });
 
 it("draws the confidence band in its own word, neutral, whatever the band", () => {
   for (const band of ["Low", "High", "Moderate"]) {
-    const lead = entry("CP-6", [text("Bottom line", "The view.")], {
+    const lead = entry("CP-2", [text("Bottom line", "The view.")], {
       confidence: { value: 120, band },
     });
-    const { unmount } = render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+    const { unmount } = render(
+      <CallRow snapshot={snapshot} run={on(lead)} view={view([lead], lead)} />,
+    );
     const tile = screen.getByRole("region", { name: "Confidence" });
     const word = within(tile).getByText(band);
     expect(word.className).not.toMatch(/warning|success|error/);
@@ -100,15 +126,15 @@ it("draws the confidence band in its own word, neutral, whatever the band", () =
 });
 
 it("labels the run's own timing as the run states it, never as the financials' date", () => {
-  const lead = entry("CP-6", [text("Bottom line", "The view.")]);
-  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  const lead = entry("CP-2", [text("Bottom line", "The view.")]);
+  render(<CallRow snapshot={snapshot} run={on(lead)} view={view([lead], lead)} />);
   const call = screen.getByRole("region", { name: "The call" });
   expect(within(call).queryByText("Financials as of")).toBeNull();
   expect(within(call).getByText("Timing")).toBeVisible();
 });
 
 it("counts the modules as the pipeline does and names each state that is not delivered in its own words", () => {
-  const lead = entry("CP-6", [text("Bottom line", "The view.")]);
+  const lead = entry("CP-2", [text("Bottom line", "The view.")]);
   const gaps = entry("CP-1", [text("Bottom line", "Figures.")], { chartGaps: ["x"] } as never);
   const broken = entry("CP-2A", [text("Bottom line", "Stress.")], { parseError: "bad" });
   const changes = entry("CP-8", [text("Bottom line", "About the same.")]);
@@ -118,8 +144,8 @@ it("counts the modules as the pipeline does and names each state that is not del
     ...run,
     modules: {
       "CP-1": ran("CP-1"),
+      "CP-2": ran("CP-2"),
       "CP-2A": ran("CP-2A"),
-      "CP-6": ran("CP-6"),
       "CP-8": ran("CP-8"),
     },
   } as unknown as PublishedRun;
@@ -149,7 +175,7 @@ it("shows CP-8's opening words as written and draws no verdict word of its own",
     workspace: { runs: { k0: prior, k1: current }, outputs: {}, handoffs: {}, models: [] },
     chips: {},
   } as unknown as Snapshot;
-  const lead = entry("CP-6", [text("Bottom line", "The view."), decision("Watchlist")]);
+  const lead = entry("CP-2", [text("Bottom line", "The view."), decision("Watchlist")]);
   for (const sentence of [
     "Better — or worse — cannot be judged, the bases differ.",
     "Better; but leverage is worse and the stance moved to Avoid.",
@@ -162,16 +188,14 @@ it("shows CP-8's opening words as written and draws no verdict word of its own",
     const tile = screen.getByRole("region", { name: "Since the earlier run" });
     expect(within(tile).getByText(sentence)).toBeVisible();
     expect(within(tile).queryByText(/^(Better|Worse|About the same)$/)).toBeNull();
-    expect(
-      within(tile).getByText("Earlier stance: not stated. Current stance: Watchlist."),
-    ).toHaveClass("sr-only");
-    expect(within(tile).getByText("Not stated")).toBeVisible();
+    // The stance move is gone; the changes module's own words stay as written.
+    expect(within(tile).queryByText(/Earlier stance|Current stance/)).toBeNull();
     unmount();
   }
 });
 
 it("shows or links every bottom-line paragraph, each with its own trace", () => {
-  const lead = entry("CP-6", [
+  const lead = entry("CP-2", [
     text(
       "Bottom line",
       "Leverage rose.",
@@ -179,7 +203,7 @@ it("shows or links every bottom-line paragraph, each with its own trace", () => 
       "Cover held at 2.1x.",
     ),
   ]);
-  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  render(<CallRow snapshot={snapshot} run={on(lead)} view={view([lead], lead)} />);
   const call = screen.getByRole("region", { name: "The call" });
   expect(call).not.toHaveTextContent(/annual_report/);
   // The desktop copy of the continuation (the phone copy behind Read on holds the same).
@@ -194,14 +218,14 @@ it("shows or links every bottom-line paragraph, each with its own trace", () => 
 });
 
 it("names the second score's band, and says when the second module recorded no score", () => {
-  const lead = entry("CP-6", [text("Bottom line", "The view.")], {
+  const lead = entry("CP-2", [text("Bottom line", "The view.")], {
     confidence: { value: 53, band: "Low" },
   });
   const scored = entry("CP-3", [text("Bottom line", "Pick.")], {
     confidence: { value: 56, band: "Moderate" },
   });
   const { unmount } = render(
-    <CallRow snapshot={snapshot} run={run} view={view([lead, scored], lead)} />,
+    <CallRow snapshot={snapshot} run={on(lead)} view={view([lead, scored], lead)} />,
   );
   expect(
     within(screen.getByRole("region", { name: "Confidence" })).getByText(
@@ -210,7 +234,7 @@ it("names the second score's band, and says when the second module recorded no s
   ).toBeVisible();
   unmount();
   const unscored = entry("CP-3", [text("Bottom line", "Pick.")]);
-  render(<CallRow snapshot={snapshot} run={run} view={view([lead, unscored], lead)} />);
+  render(<CallRow snapshot={snapshot} run={on(lead)} view={view([lead, unscored], lead)} />);
   expect(
     within(screen.getByRole("region", { name: "Confidence" })).getByText(
       "Security selection: no score recorded",
@@ -219,8 +243,8 @@ it("names the second score's band, and says when the second module recorded no s
 });
 
 it("links from the run facts to the limitations and dates on this page", () => {
-  const lead = entry("CP-6", [text("Bottom line", "The view.")]);
-  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  const lead = entry("CP-2", [text("Bottom line", "The view.")]);
+  render(<CallRow snapshot={snapshot} run={on(lead)} view={view([lead], lead)} />);
   const nav = screen.getByRole("navigation", { name: "On this page" });
   expect(within(nav).getByRole("link", { name: "What this run could not do" })).toHaveAttribute(
     "href",
@@ -235,10 +259,10 @@ it("links from the run facts to the limitations and dates on this page", () => {
 // Coordinator review, part 2, items 3–5.
 
 it("makes a short bottom line the display size at desktop and a step smaller on a phone", () => {
-  const lead = entry("CP-6", [
+  const lead = entry("CP-2", [
     text("Bottom line", "Leverage rose.", "Cover held at 2.1x.", "Liquidity covers two years."),
   ]);
-  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  render(<CallRow snapshot={snapshot} run={on(lead)} view={view([lead], lead)} />);
   const call = screen.getByRole("region", { name: "The call" });
   expect(within(call).getByText("Leverage rose.")).toHaveClass("text-h2", "lg:text-display");
   const more = within(call).getByText("Read on");
@@ -247,81 +271,71 @@ it("makes a short bottom line the display size at desktop and a step smaller on 
 });
 
 it("does not repeat the lead module's name as a link in the call tile", () => {
-  const lead = entry("CP-6", [text("Bottom line", "The view.")]);
-  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  const lead = entry("CP-2", [text("Bottom line", "The view.")]);
+  render(<CallRow snapshot={snapshot} run={on(lead)} view={view([lead], lead)} />);
   const call = screen.getByRole("region", { name: "The call" });
   expect(within(call).queryByRole("link", { name: "Committee decision" })).toBeNull();
   expect(
-    within(call).getByRole("heading", { name: "The call · Committee decision" }),
+    within(call).getByRole("heading", { name: "The call · Fundamental credit" }),
   ).toBeVisible();
 });
 
-it("states the untyped clearance counts in one line, not a gap well, and adds no module link", () => {
-  const lead = entry("CP-6", [text("Bottom line", "The view.")]);
-  const validation = entry("CP-5", [text("Bottom line", "Pass with Remediation.")]);
-  render(<CallRow snapshot={snapshot} run={run} view={view([lead, validation], lead)} />);
+it("names the validation module and links its page, showing none of its bottom line", () => {
+  const lead = entry("CP-2", [text("Bottom line", "The view.")]);
+  const validation = entry("CP-5", [
+    text("Bottom line", "Pass with Remediation.", "Four material issues remain."),
+  ]);
+  render(<CallRow snapshot={snapshot} run={on(lead)} view={view([lead, validation], lead)} />);
   const tile = screen.getByRole("region", { name: "Evidence clearance" });
-  const gap = within(tile).getByText(
-    "Issue counts by severity and committee use are not typed in this run.",
+  expect(tile).not.toHaveTextContent(/Pass with Remediation|Four material issues/);
+  expect(
+    within(tile).getByText(
+      "Evidence validation's bottom line is not shown here: no clearance is recorded for the decision it bears on.",
+    ),
+  ).toBeVisible();
+  expect(within(tile).getByRole("link", { name: "Open Evidence validation" })).toHaveAttribute(
+    "href",
+    "#modules/CP-5",
   );
-  expect(gap.tagName).toBe("P");
   expect(tile.querySelector(".min-h-24")).toBeNull();
-  expect(within(tile).queryByRole("link", { name: "Evidence validation" })).toBeNull();
 });
 
 it("gives the confidence score the same trace control as every other tile", () => {
   const lead = entry(
-    "CP-6",
+    "CP-2",
     [text("Bottom line", "The view."), text("Confidence inputs", "Inputs.")],
     {
       confidence: { value: 53, band: "Low" },
     },
   );
-  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  render(<CallRow snapshot={snapshot} run={on(lead)} view={view([lead], lead)} />);
   const tile = screen.getByRole("region", { name: "Confidence" });
   expect(
     within(tile).getByRole("link", { name: "Source for the confidence score" }),
   ).toHaveAttribute("href", expect.stringMatching(/#evidence\//));
 });
 
-it("shows or links every paragraph of the validation module's bottom line, each with its trace", () => {
-  const lead = entry("CP-6", [text("Bottom line", "The view.")]);
-  const validation = entry("CP-5", [
-    text(
-      "Bottom line",
-      "Pass with Remediation.",
-      "Four material issues remain.",
-      "See register EV-1 in ledger.xlsx.",
-    ),
-  ]);
-  render(<CallRow snapshot={snapshot} run={run} view={view([lead, validation], lead)} />);
-  const tile = screen.getByRole("region", { name: "Evidence clearance" });
-  expect(within(tile).getByText("Pass with Remediation.")).toBeVisible();
-  expect(within(tile).getByText("Four material issues remain.")).toBeVisible();
-  expect(within(tile).getByRole("link", { name: "Read this passage in Evidence" })).toBeVisible();
-  expect(tile).not.toHaveTextContent(/ledger\.xlsx/);
-  expect(within(tile).getAllByRole("link", { name: /^Source for / })).toHaveLength(3);
-});
-
 // Coordinator review, round 2, part 2: D2, D4, D8, D9, D10.
 
 it("sizes the bottom line by its length on the ramp, never below the headline figures", () => {
-  const short = entry("CP-6", [text("Bottom line", "Leverage rose.")]);
-  const { unmount } = render(<CallRow snapshot={snapshot} run={run} view={view([short], short)} />);
+  const short = entry("CP-2", [text("Bottom line", "Leverage rose.")]);
+  const { unmount } = render(
+    <CallRow snapshot={snapshot} run={on(short)} view={view([short], short)} />,
+  );
   expect(screen.getByText("Leverage rose.")).toHaveClass("text-h2", "lg:text-display");
   unmount();
   const words =
     "Gross leverage rose to 6.53x despite stronger earnings, and the declared dividend paid in October reverses the apparent year-end net deleveraging.";
-  const long = entry("CP-6", [text("Bottom line", words)]);
-  render(<CallRow snapshot={snapshot} run={run} view={view([long], long)} />);
+  const long = entry("CP-2", [text("Bottom line", words)]);
+  render(<CallRow snapshot={snapshot} run={on(long)} view={view([long], long)} />);
   const shown = screen.getByText(words);
   expect(shown).toHaveClass("text-h3", "lg:text-metric");
   expect(shown.className).not.toMatch(/text-display/);
 });
 
 it("shows the bottom line's continuation in full from md and behind Read on only below md", () => {
-  const lead = entry("CP-6", [text("Bottom line", "Leverage rose.", "Cover held at 2.1x.")]);
-  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  const lead = entry("CP-2", [text("Bottom line", "Leverage rose.", "Cover held at 2.1x.")]);
+  render(<CallRow snapshot={snapshot} run={on(lead)} view={view([lead], lead)} />);
   const call = screen.getByRole("region", { name: "The call" });
   const copies = within(call).getAllByText("Cover held at 2.1x.");
   expect(copies).toHaveLength(2);
@@ -329,19 +343,17 @@ it("shows the bottom line's continuation in full from md and behind Read on only
   expect(within(call).getByText("Read on").closest("details")).toHaveClass("md:hidden");
 });
 
-it("names the clearance trace apart from the validation module's own bottom-line trace", () => {
-  const lead = entry("CP-6", [text("Bottom line", "The view.")]);
+it("draws no trace in the clearance tile: it shows no passage to trace", () => {
+  const lead = entry("CP-2", [text("Bottom line", "The view.")]);
   const validation = entry("CP-5", [text("Bottom line", "Pass with Remediation.")]);
-  render(<CallRow snapshot={snapshot} run={run} view={view([lead, validation], lead)} />);
+  render(<CallRow snapshot={snapshot} run={on(lead)} view={view([lead, validation], lead)} />);
   const tile = screen.getByRole("region", { name: "Evidence clearance" });
-  expect(
-    within(tile).getByRole("link", { name: "Source for the evidence clearance" }),
-  ).toBeVisible();
+  expect(within(tile).queryByRole("link", { name: /^Source for / })).toBeNull();
 });
 
 it("lets no tile in the call row stretch past its content", () => {
-  const lead = entry("CP-6", [text("Bottom line", "The view.")]);
-  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  const lead = entry("CP-2", [text("Bottom line", "The view.")]);
+  render(<CallRow snapshot={snapshot} run={on(lead)} view={view([lead], lead)} />);
   for (const name of ["The call", "Since the earlier run"]) {
     const tile = screen.getByRole("region", { name });
     expect(tile.className).not.toMatch(/\bflex-1\b|justify-between/);
@@ -351,35 +363,25 @@ it("lets no tile in the call row stretch past its content", () => {
 
 it("keeps the meter's scale labels at least 12 px on screen when the meter is drawn small", () => {
   const restore = measuredAt(204);
-  const lead = entry("CP-6", [text("Bottom line", "The view.")], {
+  const lead = entry("CP-2", [text("Bottom line", "The view.")], {
     confidence: { value: 53, band: "Low" },
   });
-  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  render(<CallRow snapshot={snapshot} run={on(lead)} view={view([lead], lead)} />);
   const meter = within(screen.getByRole("region", { name: "Confidence" })).getByRole("img");
   for (const label of meter.querySelectorAll("text"))
     expect(Number(label.getAttribute("font-size")) * (204 / 408)).toBeGreaterThanOrEqual(12);
   restore();
 });
 
-it("says it could not read the stance when the decision states one this page does not know", () => {
-  const lead = entry("CP-6", [text("Bottom line", "The view."), decision("Hold")]);
-  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
-  const call = screen.getByRole("region", { name: "The call" });
-  expect(
-    within(call).getByText("This page could not read a stance from the decision"),
-  ).toBeVisible();
-  expect(within(call).queryByText("Hold")).toBeNull();
-});
-
 it("removes inline source markers from the bottom line and links a passage carrying an unnamed id", () => {
-  const lead = entry("CP-6", [
+  const lead = entry("CP-2", [
     text(
       "Bottom line",
       "Cover is thin [E3].",
       "Leverage of 4.2x [E3] per T4.18 and CP-1 supports Watchlist.",
     ),
   ]);
-  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  render(<CallRow snapshot={snapshot} run={on(lead)} view={view([lead], lead)} />);
   const call = screen.getByRole("region", { name: "The call" });
   expect(within(call).getByText("Cover is thin.")).toBeVisible();
   expect(call).not.toHaveTextContent(/\[E3\]|T4\.18/);
@@ -388,7 +390,7 @@ it("removes inline source markers from the bottom line and links a passage carry
   ).toBeGreaterThan(0);
 });
 
-it("says a bottom line written as a table is a table, with the way to it, and keeps a paragraph before it", () => {
+it("keeps the published paragraph and the way to the table after it, and names no lead for a table alone", () => {
   const tableSection = (heading: string, paragraph?: string): Section => ({
     heading,
     level: 3,
@@ -405,130 +407,27 @@ it("says a bottom line written as a table is a table, with the way to it, and ke
       },
     ],
   });
-  const onlyTable = entry("CP-6", [tableSection("Bottom line")]);
+  // A bottom line that is only a table has no paragraph a publication can name as its lead.
+  const onlyTable = entry("CP-2", [tableSection("Bottom line")]);
   const { unmount } = render(
     <CallRow snapshot={snapshot} run={run} view={view([onlyTable], onlyTable)} />,
   );
   const call = screen.getByRole("region", { name: "The call" });
-  expect(within(call).getByText("The bottom line is a table.")).toBeVisible();
-  expect(
-    within(call).getAllByRole("link", { name: "Read this table in Evidence" }).length,
-  ).toBeGreaterThan(0);
+  expect(within(call).getByText(/A verified credit view is unavailable/)).toBeVisible();
   expect(within(call).queryByText(/has no bottom line/)).toBeNull();
   unmount();
-  const both = entry("CP-6", [tableSection("Bottom line", "Leverage is high.")]);
-  const validation = entry("CP-5", [tableSection("Bottom line")]);
-  render(<CallRow snapshot={snapshot} run={run} view={view([both, validation], both)} />);
+  const both = entry("CP-2", [tableSection("Bottom line", "Leverage is high.")]);
+  render(<CallRow snapshot={snapshot} run={on(both)} view={view([both], both)} />);
   const second = screen.getByRole("region", { name: "The call" });
   expect(within(second).getByText("Leverage is high.")).toBeVisible();
   expect(
     within(second).getAllByRole("link", { name: "Read this table in Evidence" }).length,
   ).toBeGreaterThan(0);
-  const clearance = screen.getByRole("region", { name: "Evidence clearance" });
-  expect(within(clearance).getByText("The bottom line is a table.")).toBeVisible();
-});
-
-it("says each side of the stance move as the page read it, and that more is in Changes", () => {
-  const current = {
-    ...run,
-    issuerKey: "nb",
-    pathway: "full",
-    changes: {
-      pack: {
-        prior: { run: "run-0", as_of: "2025-03-31", pathway: "full" },
-        current: { as_of: "2026-03-31", pathway: "full" },
-      },
-    },
-  } as unknown as PublishedRun;
-  const priorRun = (extra: object) =>
-    ({
-      ...run,
-      folder: "run-0",
-      asOf: "2025-03-31",
-      issuerKey: "nb",
-      pathway: "full",
-      modules: { "CP-6": { outputs: ["run-0/cp6"], default: "run-0/cp6" } },
-      ...extra,
-    }) as unknown as PublishedRun;
-  const snap = (prior: PublishedRun, bias: string) =>
-    ({
-      catalogue: { real: [] },
-      workspace: {
-        runs: { k0: prior, k1: current },
-        outputs: {
-          "run-0/cp6": {
-            id: "run-0/cp6",
-            run: "k0",
-            module: "CP-6",
-            sha256: "p".repeat(64),
-            label: "CP-6",
-            href: "",
-          },
-        },
-        handoffs: { ["p".repeat(64)]: [decision(bias)] },
-        models: [],
-      },
-      chips: {},
-    }) as unknown as Snapshot;
-  const changes = entry("CP-8", [text("Bottom line", "Leverage rose.", "Cover fell.")]);
-  const cases: [Snapshot, string, string, string[]][] = [
-    // Both sides state a stance the page cannot read.
-    [
-      snap(priorRun({}), "Hold"),
-      "Hold",
-      "Earlier stance: could not be read. Current stance: could not be read.",
-      ["Could not be read"],
-    ],
-    // The earlier run is held only as a summary.
-    [
-      snap(
-        priorRun({ history: { modules: [], earlierFormat: true, earlierMethods: false } }),
-        "Hold",
-      ),
-      "Watchlist",
-      "Earlier stance: not in the run list. Current stance: Watchlist.",
-      ["Not in the run list"],
-    ],
-    // Both decisions are read.
-    [snap(priorRun({}), "Avoid"), "Avoid", "Earlier stance: Avoid. Current stance: Avoid.", []],
-  ];
-  for (const [snapshotCase, now, said, shown] of cases) {
-    const lead = entry("CP-6", [text("Bottom line", "The view."), decision(now)]);
-    const { unmount } = render(
-      <CallRow snapshot={snapshotCase} run={current} view={view([lead, changes], lead)} />,
-    );
-    const tile = screen.getByRole("region", { name: "Since the earlier run" });
-    expect(within(tile).getByText(said)).toHaveClass("sr-only");
-    for (const word of shown)
-      for (const chip of within(tile).getAllByText(word)) expect(chip).toBeVisible();
-    expect(within(tile).queryByText("Not stated")).toBeNull();
-    expect(within(tile).getByText("Leverage rose.")).toBeVisible();
-    expect(within(tile).getByText("More in Changes")).toBeVisible();
-    unmount();
-  }
-  const read = (bias: string) =>
-    entry("CP-6", [text("Bottom line", "The view."), text("Decision", bias)]);
-  const silent = read("The committee met and set no bias.");
-  const one = entry("CP-8", [text("Bottom line", "Leverage rose.")]);
-  render(
-    <CallRow
-      snapshot={snap(priorRun({}), "Avoid")}
-      run={current}
-      view={view([silent, one], silent)}
-    />,
-  );
-  const tile = screen.getByRole("region", { name: "Since the earlier run" });
-  expect(within(tile).getByText("Earlier stance: Avoid. Current stance: not stated.")).toHaveClass(
-    "sr-only",
-  );
-  expect(within(tile).getByText("Not stated")).toBeVisible();
-  expect(within(tile).queryByText("More in Changes")).toBeNull();
-  expect(within(tile).queryByText("Could not be read")).toBeNull();
 });
 
 it("says why beside the link when a bottom line is sent to Evidence for a source reference", () => {
-  const lead = entry("CP-6", [text("Bottom line", "Leverage per T4.18 is 4.2x.")]);
-  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  const lead = entry("CP-2", [text("Bottom line", "Leverage per T4.18 is 4.2x.")]);
+  render(<CallRow snapshot={snapshot} run={on(lead)} view={view([lead], lead)} />);
   const call = screen.getByRole("region", { name: "The call" });
   expect(
     within(call).getByText("The bottom line cites a source reference; read it in Evidence."),

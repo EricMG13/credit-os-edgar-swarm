@@ -75,6 +75,7 @@ const snapshot = { workspace: { runs: {} } } as unknown as Snapshot;
 
 function view(entries: OutputEntry[], lead?: OutputEntry): ReportView {
   return {
+    folder: run.folder,
     entries,
     lead,
     modules: entries.map(({ output }) => ({
@@ -87,6 +88,40 @@ function view(entries: OutputEntry[], lead?: OutputEntry): ReportView {
     catalogue: undefined,
   } as unknown as ReportView;
 }
+
+/** The run as a verified publication whose published lead is the entry's first bottom-line paragraph. */
+function published(base: PublishedRun, lead: OutputEntry, heading = "Bottom line"): PublishedRun {
+  const block = lead.sections
+    .find((section) => section.heading === heading)
+    ?.blocks.find((item) => item.type === "text");
+  if (block?.type !== "text") throw new Error("fixture");
+  return {
+    ...base,
+    publicationVerified: true,
+    lead: {
+      module: lead.output.module,
+      output: lead.output.id,
+      sha256: lead.output.sha256,
+      line: block.line,
+      text: block.text,
+    },
+  } as PublishedRun;
+}
+
+const credit = () =>
+  entry(
+    "CP-2",
+    [
+      text("Bottom line", "Gross leverage rose to 6.53x despite stronger earnings."),
+      text(
+        "Key findings",
+        "Distributions exceed free cash flow.",
+        "The view follows annual_report.pdf.",
+      ),
+      text("Contrary evidence and what would change the view", "Cash generation improved."),
+    ],
+    { value: 53, band: "Low" },
+  );
 
 const committee = () =>
   entry(
@@ -138,48 +173,65 @@ const foundation = () =>
     ),
   ]);
 
-it("draws the call: stance, bottom line, confidence, clearance and the changes sentence", () => {
-  const lead = committee();
+it("draws the call: the published credit view, the decisions not shown, confidence, clearance and the changes sentence", () => {
+  const lead = credit();
+  const decision = committee();
   const validation = entry("CP-5", [text("Bottom line", "Pass with Remediation.")]);
   const selection = entry("CP-3", [text("Bottom line", "Requires more work.")], {
     value: 56,
     band: "Low",
   });
   const ran = (id: string) => ({ outputs: [`${id}-1`], default: `${id}-1` });
-  const ranAll = {
-    ...run,
-    modules: { "CP-3": ran("CP-3"), "CP-5": ran("CP-5"), "CP-6": ran("CP-6") },
-  } as unknown as PublishedRun;
+  const ranAll = published(
+    {
+      ...run,
+      modules: {
+        "CP-2": ran("CP-2"),
+        "CP-3": ran("CP-3"),
+        "CP-5": ran("CP-5"),
+        "CP-6": ran("CP-6"),
+      },
+    } as unknown as PublishedRun,
+    lead,
+  );
   render(
-    <CallRow snapshot={snapshot} run={ranAll} view={view([lead, validation, selection], lead)} />,
+    <CallRow
+      snapshot={snapshot}
+      run={ranAll}
+      view={view([lead, decision, validation, selection], lead)}
+    />,
   );
   const call = screen.getByRole("region", { name: "The call" });
   expect(
-    within(call).getByRole("heading", { name: "The call · Committee decision" }),
+    within(call).getByRole("heading", { name: "The call · Fundamental credit" }),
   ).toBeVisible();
-  expect(within(call).getByText("Watchlist")).toBeVisible();
   expect(
     within(call).getByText("Gross leverage rose to 6.53x despite stronger earnings."),
   ).toHaveClass("lg:text-display");
-  expect(within(call).getByText("3 · all delivered")).toBeVisible();
+  // No decision is drawn: no run records a clearance for one, so each says why.
+  expect(screen.queryByText(/Watchlist|Requires more work|Pass with Remediation/)).toBeNull();
+  const decisions = within(call).getByLabelText("Decisions");
+  expect(within(decisions).getByText("Committee action and size")).toBeVisible();
+  expect(within(decisions).getByText("Instrument preference")).toBeVisible();
+  expect(
+    within(decisions).getByText(/does not show a bottom line for the Committee decision module/),
+  ).toBeVisible();
+  expect(within(call).getByText("4 · all delivered")).toBeVisible();
   const confidence = screen.getByRole("region", { name: "Confidence" });
   expect(within(confidence).getByText("53")).toBeVisible();
   expect(within(confidence).getByText("Low").className).not.toMatch(/warning|success|error/);
-  expect(
-    within(confidence).getByRole("img", {
-      name: "Confidence 53 of 100, band Low. Security selection scored 56, band Low.",
-    }),
-  ).toBeVisible();
-  expect(within(confidence).getByText("Committee decision 53")).toBeInTheDocument();
+  expect(within(confidence).getByText("Fundamental credit 53")).toBeInTheDocument();
   expect(within(confidence).getByText("Security selection 56 · Low")).toBeInTheDocument();
   const clearance = screen.getByRole("region", { name: "Evidence clearance" });
-  expect(within(clearance).getByText("Pass with Remediation.")).toBeVisible();
-  expect(within(clearance).queryByText("Delivered")).toBeNull();
   expect(
     within(clearance).getByText(
-      "Issue counts by severity and committee use are not typed in this run.",
+      "Evidence validation's bottom line is not shown here: no clearance is recorded for the decision it bears on.",
     ),
   ).toBeVisible();
+  expect(within(clearance).getByRole("link", { name: "Open Evidence validation" })).toHaveAttribute(
+    "href",
+    "#modules/CP-5",
+  );
   expect(
     within(screen.getByRole("region", { name: "Since the earlier run" })).getByText(
       "No earlier run to compare.",
@@ -189,7 +241,11 @@ it("draws the call: stance, bottom line, confidence, clearance and the changes s
 
 it("draws each missing part of the call as a gap, with no score or stance invented", () => {
   render(<CallRow snapshot={snapshot} run={{ ...run, changes: null }} view={view([])} />);
-  expect(screen.getByText("No credit view is available for this run.")).toBeVisible();
+  expect(
+    screen.getByText(
+      "A verified credit view is unavailable for this run. Each module's findings are under Modules.",
+    ),
+  ).toBeVisible();
   expect(screen.getByText("No confidence score was recorded for this credit view.")).toBeVisible();
   expect(screen.getByText("Evidence validation is not part of this run.")).toBeVisible();
   expect(
@@ -199,11 +255,32 @@ it("draws each missing part of the call as a gap, with no score or stance invent
   expect(screen.queryByText(/^\d+$/)).toBeNull();
 });
 
-it("draws no stance chip for a lead that states no action bias", () => {
+it("draws the published credit view and no stance", () => {
   const lead = entry("CP-2", [text("Bottom line", "Credit is stable.")]);
-  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  render(<CallRow snapshot={snapshot} run={published(run, lead)} view={view([lead], lead)} />);
   expect(screen.getByText("Credit is stable.")).toBeVisible();
   expect(screen.queryByText(/Watchlist|Avoid|Starter Position|Requires More Work/)).toBeNull();
+});
+
+it("draws no credit view the publication does not name, even from the lead module", () => {
+  const lead = entry("CP-2", [text("Bottom line", "Credit is stable.")]);
+  render(<CallRow snapshot={snapshot} run={run} view={view([lead], lead)} />);
+  expect(screen.queryByText("Credit is stable.")).toBeNull();
+  expect(screen.getByText(/A verified credit view is unavailable for this run/)).toBeVisible();
+});
+
+it("starts the call at the published paragraph and names the passage it is from", () => {
+  const lead = entry("CP-2", [text("Credit view", "Leverage is the risk.", "Cover holds.")]);
+  render(
+    <CallRow
+      snapshot={snapshot}
+      run={published(run, lead, "Credit view")}
+      view={view([lead], lead)}
+    />,
+  );
+  const call = screen.getByRole("region", { name: "The call" });
+  expect(within(call).getByText("Credit view")).toBeVisible();
+  expect(within(call).getByText("Leverage is the risk.")).toBeVisible();
 });
 
 it("draws the headline figures from the foundation's chart tables, each with its own mark", () => {
@@ -389,7 +466,7 @@ function compared(currentBias: string | null, priorBias: string | null, bottom: 
   return { snap, current, lead, changes };
 }
 
-it("draws the stance was → now, both read from the handoffs, beside the changes sentence as written", () => {
+it("draws the changes sentence as written and no stance move", () => {
   const { snap, current, lead, changes } = compared(
     "Watchlist",
     "Requires More Work",
@@ -397,31 +474,10 @@ it("draws the stance was → now, both read from the handoffs, beside the change
   );
   render(<CallRow snapshot={snap} run={current} view={view([lead, changes], lead)} />);
   const tile = screen.getByRole("region", { name: "Since the earlier run" });
-  expect(within(tile).queryByText("About the same")).toBeNull();
-  expect(within(tile).getByText("Requires More Work")).toBeVisible();
-  expect(within(tile).getByText("Watchlist")).toBeVisible();
-  expect(
-    within(tile).getByText("Earlier stance: Requires More Work. Current stance: Watchlist."),
-  ).toHaveClass("sr-only");
+  expect(within(tile).queryByText(/Watchlist|Requires More Work|stance/i)).toBeNull();
   expect(
     within(tile).getByText("About the same: the credit picture has not changed."),
   ).toBeVisible();
-});
-
-it("draws no verdict word, and says which stance the handoffs do not state", () => {
-  const { snap, current, lead, changes } = compared(
-    "Watchlist",
-    null,
-    "Leverage rose while cover held.",
-  );
-  render(<CallRow snapshot={snap} run={current} view={view([lead, changes], lead)} />);
-  const tile = screen.getByRole("region", { name: "Since the earlier run" });
-  expect(within(tile).queryByText(/^(Better|Worse|About the same)$/)).toBeNull();
-  expect(
-    within(tile).getByText("Earlier stance: not stated. Current stance: Watchlist."),
-  ).toHaveClass("sr-only");
-  expect(within(tile).getByText("Not stated")).toBeVisible();
-  expect(within(tile).getByText("Leverage rose while cover held.")).toBeVisible();
 });
 
 it("gives the reason in place when the comparison does not stand", () => {

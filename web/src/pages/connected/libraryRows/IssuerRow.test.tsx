@@ -55,11 +55,11 @@ function draw(entries: CatalogueRun[], published: string[]) {
   );
 }
 
-it("draws one row for an issuer with the three figures, a stance gap, chips and report links", () => {
+it("draws one row for an issuer with the three figures, the decision not shown, chips and report links", () => {
   draw([run("acme-2026", "2026-03-31", { metrics: METRICS })], ["acme-2026"]);
   const row = screen.getByRole("listitem");
   expect(within(row).getByRole("heading", { name: "Acme" })).toBeVisible();
-  expect(within(row).getByText("Stance not stated")).toBeVisible();
+  expect(within(row).getByText("Not shown")).toBeVisible();
   expect(within(row).getAllByText("2.25x")[0]).toHaveClass("font-mono");
   expect(within(row).getByText("better")).toBeVisible();
   expect(within(row).getByText("4.19x")).toBeVisible();
@@ -128,10 +128,12 @@ it("says a run without a report has none, and offers no report or Calendar link"
   expect(screen.getByText("Needs a published report")).toBeVisible();
 });
 
-it("draws the stance gap's reason in the opened row, not a guessed stance", () => {
+it("says in the opened row why the decision is not shown, and shows none", () => {
   draw([run("acme-2026", "2026-03-31")], ["acme-2026"]);
   fireEvent.click(screen.getByRole("button", { name: /Show runs and detail/ }));
-  expect(screen.getByText(/does not yet state its stance as a field/)).toBeVisible();
+  expect(
+    screen.getByText(/shows a committee decision only with a recorded clearance/),
+  ).toBeVisible();
 });
 
 it("opens to the figures the row does not show, as one stats strip with its own trace controls", () => {
