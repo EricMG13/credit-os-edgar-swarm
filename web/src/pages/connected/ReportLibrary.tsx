@@ -345,8 +345,8 @@ function Crumbs({ issuer, current }: { issuer: string | null; current: string })
         </li>
         {issuer && (
           <li className={cx("flex min-w-0 items-center", after)}>
-            <a href="#history" title={issuer} className={cx(CRUMB, "block truncate leading-8")}>
-              {issuer}
+            <a href="#history" title={issuer} className={cx(CRUMB, "min-w-0")}>
+              <span className="truncate">{issuer}</span>
             </a>
           </li>
         )}

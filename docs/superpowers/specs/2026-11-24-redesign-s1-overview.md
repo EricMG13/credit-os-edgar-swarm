@@ -247,3 +247,20 @@ follows the breadcrumb, utilities end the header, Confidence starts at about 1,1
 Checks: tsc pass; eslint --max-warnings=0 and prettier --check on every file changed since the
 base pass; vitest src/pages/connected, src/styles, src/shell, src/components — 176 files, 2,500
 tests pass; npm run unused — only LeadProps in the frozen leads/types.ts; npm run build pass.
+
+### Coordinator review round 2 (N1–N12, D1–D13), fixes and re-verification
+
+Rendered after the fixes, raw synthetic and realistic text, at 1440, 1280, 1024 and 390 px, plus
+History at the four widths and one variant run (Legal & covenants blocked, eleven dates over two
+years, no ratings): no sideways page scroll, no console errors at any width. First headline
+figure at 1440x900: y = 863 (raw and realistic). Row heights at 1440, realistic / raw, against the
+mockup's: call 511 / 367 (568); figures 366 (379); judgement 478 / 191 (397); structure 513
+(474); stress 549 (428; 210 for headroom with Legal blocked); limits 598 (280: the synthetic run
+records one limitation in each of twelve modules); pipeline 921 (S10's); dates 357 (230).
+Seen and fixed in this pass: a downside value cut into the next panel (panels now as wide as their
+longest value); the small Revenue figure breaking before its unit; the History collapse at 1280;
+the issuer crumb's baseline at 390.
+
+Checks: tsc pass; eslint --max-warnings=0 and prettier --check on every file changed since the
+base pass; vitest src/pages/connected, src/styles, src/shell, src/components — 178 files, 2,544
+tests pass; npm run unused — only LeadProps in the frozen leads/types.ts; npm run build pass.
