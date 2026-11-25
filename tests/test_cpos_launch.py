@@ -1669,17 +1669,18 @@ def test_the_lite_pathway_runs_end_to_end_to_a_verified_delivery_with_a_syntheti
 # portfolio_decision 942,102 to 943,549 (+1,447); relative_value 1,061,779 to 1,063,824 (+2,045);
 # short_snapshot 156,212 to 157,415 (+1,203).
 # 2026-11-25 (owner: "all credit assessment pathways (lite, full and deep) should include all layer
-# 1 modules"; docs/rulings/2026-11-25-layer-1-in-all-assessment-pathways.md): CP-1B, CP-1C and CP-1D
-# join the lite and full credit assessments. Measured on this file's input before (base 4aaec9d)
-# and after, each ceiling rises by its pathway's increase, as for the modules added on 2026-11-15
-# and 2026-11-16. lite_credit_assessment 416,093 to 596,864 (+180,771: CP-1B 66,907, CP-1C 68,553
-# with its 711-character note for a run without research, CP-1D 45,311), ceiling 421,292 to
-# 602,063. credit_snapshot 1,468,993 to 1,650,316 (+181,323: CP-1B 66,900, CP-1C 68,185, CP-1D
-# 45,304, CP-DR 934 more for the peer pack CP-1C now consumes), ceiling 1,485,996 to 1,667,319.
-# The other seven pathways' instructions are byte-identical and no other ceiling moved.
+# 1 modules" and "lite runs cp-dr too, user only provides comps if they want to at launcher";
+# docs/rulings/2026-11-25-layer-1-in-all-assessment-pathways.md): CP-1B, CP-1C and CP-1D join the
+# lite and full credit assessments and CP-DR joins the lite one. Measured on this file's input
+# before (base 4aaec9d) and after, each ceiling rises by its pathway's increase, as for the modules
+# added on 2026-11-15 and 2026-11-16. lite_credit_assessment 416,093 to 669,952 (+253,859: CP-1B
+# 66,907, CP-DR 73,449, CP-1C 68,192, CP-1D 45,311), ceiling 421,292 to 675,151. credit_snapshot
+# 1,468,993 to 1,650,316 (+181,323: CP-1B 66,900, CP-1C 68,185, CP-1D 45,304, CP-DR 934 more for
+# the peer pack CP-1C now consumes), ceiling 1,485,996 to 1,667,319. The other seven pathways'
+# instructions are byte-identical and no other ceiling moved.
 INSTRUCTION_BUDGET = {
     "deep_credit_assessment": 1_903_059,
-    "lite_credit_assessment": 602_063,
+    "lite_credit_assessment": 675_151,
     "credit_snapshot": 1_667_319,
     "covenant_refinancing": 1_157_279,
     "distressed_restructuring": 1_188_321,

@@ -65,10 +65,11 @@ PURPOSE = (
     "portfolio_decision",
 )
 # Owner, 2026-11-15: "Deep max $40, Full $25 and Lite $15"; the purpose pathways keep USD 20.
+# Owner, 2026-11-25: "raise cap to 20/30/50": Lite USD 20, Full 30, Deep 50; the rest stay at 20.
 CAPS = {
-    "lite_credit_assessment": D(15),
-    "credit_snapshot": D(25),
-    DEEP: D(40),
+    "lite_credit_assessment": D(20),
+    "credit_snapshot": D(30),
+    DEEP: D(50),
     **{p: D(20) for p in PURPOSE},
     "short_snapshot": D(20),
 }
@@ -218,9 +219,9 @@ def test_one_cap_per_pathway() -> None:
     ("pathway", "calls"),
     [
         # Each call holds 5.73 and costs 3.00; a call is made while spent + 5.73 <= cap.
-        ("lite_credit_assessment", 4),  # 9.00 + 5.73 = 14.73 <= 15; 12.00 + 5.73 > 15
-        ("credit_snapshot", 7),  # 18.00 + 5.73 = 23.73 <= 25; 21.00 + 5.73 > 25
-        (DEEP, 12),  # 33.00 + 5.73 = 38.73 <= 40; 36.00 + 5.73 > 40
+        ("lite_credit_assessment", 5),  # 12.00 + 5.73 = 17.73 <= 20; 15.00 + 5.73 > 20
+        ("credit_snapshot", 9),  # 24.00 + 5.73 = 29.73 <= 30; 27.00 + 5.73 > 30
+        (DEEP, 15),  # 42.00 + 5.73 = 47.73 <= 50; 45.00 + 5.73 > 50
         ("relative_value", 5),  # 12.00 + 5.73 = 17.73 <= 20; 15.00 + 5.73 > 20
     ],
 )
@@ -248,7 +249,7 @@ def _context(tmp_path: Path, pathway: str) -> Path:
 
 @pytest.mark.parametrize(
     ("pathway", "cap"),
-    [("lite_credit_assessment", "15"), ("credit_snapshot", "25"), (DEEP, "40")],
+    [("lite_credit_assessment", "20"), ("credit_snapshot", "30"), (DEEP, "50")],
 )
 def test_the_launcher_defaults_to_the_pathways_cap(
     tmp_path: Path, capsys: pytest.CaptureFixture[str], pathway: str, cap: str
@@ -292,9 +293,9 @@ def test_each_submission_carries_and_launches_at_its_pathways_cap(root: Path) ->
     w = Scheduler(settings(root))
     try:
         for pathway, cap in (
-            ("lite_credit_assessment", "15"),
-            ("credit_snapshot", "25"),
-            (DEEP, "40"),
+            ("lite_credit_assessment", "20"),
+            ("credit_snapshot", "30"),
+            (DEEP, "50"),
             ("relative_value", "20"),
         ):
             answers, sid = _answers(pathway), _upload(root)
@@ -316,7 +317,7 @@ def test_a_summary_issued_before_per_pathway_caps_must_be_made_again(root: Path)
     got = submissions.summary(layout(root), sid, answers)
     issued = layout(root).uploads / sid / "issued"
     digest, prior, cap_line = issued.read_text(encoding="ascii").split()[:3]
-    assert cap_line == "cap=40"
+    assert cap_line == "cap=50"
     issued.write_text(f"{digest}\n{prior}\n", encoding="ascii")  # as the earlier service wrote it
     w = Scheduler(settings(root))
     try:
@@ -331,8 +332,8 @@ def test_a_summary_issued_before_per_pathway_caps_must_be_made_again(root: Path)
     ("pathway", "cap"),
     [
         # A record queued before this change: never more than USD 20 (what its summary showed),
-        # nor more than its pathway's cap now.
-        ("lite_credit_assessment", "15"),
+        # nor more than its pathway's cap now (no pathway's cap is below USD 20 since 2026-11-25).
+        ("lite_credit_assessment", "20"),
         ("credit_snapshot", "20"),
         (DEEP, "20"),
         ("portfolio_decision", "20"),
@@ -350,11 +351,11 @@ def test_a_record_queued_before_per_pathway_caps_launches_at_no_more_than_was_ap
 @pytest.mark.parametrize(
     ("pathway", "cap"),
     [
-        (DEEP, "41"),
+        (DEEP, "51"),
         (DEEP, "0"),
         (DEEP, "NaN"),
-        (DEEP, "forty"),
-        ("credit_snapshot", "40"),
+        (DEEP, "fifty"),
+        ("credit_snapshot", "50"),
         (DEEP, 0),
     ],
 )
@@ -387,10 +388,10 @@ def _launch_argv(tmp_path: Path, pathway: str, *extra: str) -> list[str]:
 @pytest.mark.parametrize(
     ("pathway", "asked", "ruled"),
     [
-        ("lite_credit_assessment", "500", "15"),
-        ("lite_credit_assessment", "15.01", "15"),
-        ("credit_snapshot", "40", "25"),  # Deep's cap on a Full context: the context is what runs
-        (DEEP, "40.5", "40"),
+        ("lite_credit_assessment", "500", "20"),
+        ("lite_credit_assessment", "20.01", "20"),
+        ("credit_snapshot", "50", "30"),  # Deep's cap on a Full context: the context is what runs
+        (DEEP, "50.5", "50"),
         ("relative_value", "25", "20"),
     ],
 )
@@ -412,9 +413,9 @@ def test_the_launcher_takes_a_lower_cap_and_names_the_cap_of_a_folder_it_cannot_
     held = manifest.read_bytes()
     assert json.loads(held)["provider_cap_usd"] == "20"
     capsys.readouterr()
-    assert main(_launch_argv(tmp_path, "credit_snapshot")) == 2  # the default is now USD 25
+    assert main(_launch_argv(tmp_path, "credit_snapshot")) == 2  # the default is now USD 30
     refusal = capsys.readouterr().err
-    assert "the folder was started at a cap of USD 20, not USD 25" in refusal
+    assert "the folder was started at a cap of USD 20, not USD 30" in refusal
     assert "resume it with --cap 20" in refusal
     assert manifest.read_bytes() == held
     assert main(_launch_argv(tmp_path, "credit_snapshot", "--cap", "20")) == 0
@@ -434,11 +435,11 @@ def test_start_up_refuses_a_cap_table_above_the_ruled_figures(
         (
             "lite_credit_assessment",
             D(400),
-            "lite_credit_assessment cap USD 400 is above the ruled USD 15",
+            "lite_credit_assessment cap USD 400 is above the ruled USD 20",
         ),
-        (DEEP, D("40.01"), "deep_credit_assessment cap USD 40.01 is above the ruled USD 40"),
+        (DEEP, D("50.01"), "deep_credit_assessment cap USD 50.01 is above the ruled USD 50"),
         ("new_pathway", D(5), "new_pathway cap USD 5 has no ruled figure"),
-        ("credit_snapshot", D("NaN"), "credit_snapshot cap USD NaN is above the ruled USD 25"),
+        ("credit_snapshot", D("NaN"), "credit_snapshot cap USD NaN is above the ruled USD 30"),
     ):
         monkeypatch.setattr(startup, "PATHWAY_CAP_USD", {**CAPS, pathway: cap})
         with pytest.raises(StartupRefused, match=words):

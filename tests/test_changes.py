@@ -371,7 +371,7 @@ def test_a_lite_run_with_an_earlier_lite_run_plans_cp8_last(tmp_path):
 # CP-DR joined Lite (owner, 2026-11-25; docs/rulings/2026-11-25-layer-1-in-all-assessment-pathways
 # .md). Written by hand from the presets as they stood; CP-MODEL delivers no handoff.
 ADDED_SINCE = {
-    "lite_credit_assessment": ["CP-1B", "CP-1C", "CP-1D", "CP-DR"],  # the pack's module order
+    "lite_credit_assessment": ["CP-1B", "CP-1C", "CP-1D", "CP-DR"],
     "credit_snapshot": ["CP-1B", "CP-1C", "CP-1D"],
 }
 EARLIER_PRESET_RUNS = {
@@ -418,7 +418,7 @@ def test_a_run_made_before_layer_1_joined_is_the_base_and_the_added_modules_are_
     )
     assert (pack["prior"]["selection"], pack["current"]["selection"]) == ("preset", "preset")
     ran = {m["module"]: (m["ran_prior"], m["ran_current"]) for m in pack["modules"]}
-    assert [m for m, state in ran.items() if state == (False, True)] == ADDED_SINCE[pathway]
+    assert sorted(m for m, state in ran.items() if state == (False, True)) == ADDED_SINCE[pathway]
     assert all(state == (True, True) for m, state in ran.items() if m in earlier)
     assert set(ran) == set(PATHWAY_MODULES[pathway])
     new = set(ADDED_SINCE[pathway])

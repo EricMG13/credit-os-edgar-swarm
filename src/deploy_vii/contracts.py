@@ -105,11 +105,13 @@ PATHWAY_MODULES: Mapping[PathwayId, tuple[str, ...]] = MappingProxyType(_PRESETS
 # The provider cap per run folder, USD, by pathway: the one table the run start page, its summary,
 # the service's launches and the launcher's default read (owner, 2026-11-15: "restructure the
 # pathways: Deep max $40, Full $25 and Lite $15"; the five purpose pathways keep the USD 20 of
-# ruling 2026-11-11-run-start-submit). Ruling 2026-11-15-pathway-tiers-and-caps.
+# ruling 2026-11-11-run-start-submit). Ruling 2026-11-15-pathway-tiers-and-caps. Owner, 2026-11-25:
+# "raise cap to 20/30/50": Lite USD 20, Full 30, Deep 50; the others stay at USD 20 (ruling
+# 2026-11-25-layer-1-in-all-assessment-pathways).
 _CAPS_USD: dict[PathwayId, Decimal] = {
-    "lite_credit_assessment": Decimal(15),
-    "credit_snapshot": Decimal(25),
-    "deep_credit_assessment": Decimal(40),
+    "lite_credit_assessment": Decimal(20),
+    "credit_snapshot": Decimal(30),
+    "deep_credit_assessment": Decimal(50),
     "earnings_update": Decimal(20),
     "relative_value": Decimal(20),
     "covenant_refinancing": Decimal(20),

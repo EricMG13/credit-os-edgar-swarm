@@ -21,8 +21,8 @@ describe("connected pathway caps", () => {
           ...template,
           copilot_models: { gpt: ["fast", "balanced"], luna: ["xhigh"] },
           submission_caps_usd: {
-            credit_snapshot: "25",
-            lite_credit_assessment: "15.00",
+            credit_snapshot: "30",
+            lite_credit_assessment: "20.00",
             deep_credit_assessment: "Infinity",
             earnings_update: "0",
             relative_value: "-20",
@@ -38,7 +38,7 @@ describe("connected pathway caps", () => {
     expect(result).toEqual({
       template,
       copilotModels: { gpt: ["fast", "balanced"], luna: ["xhigh"] },
-      caps: { credit_snapshot: "25", lite_credit_assessment: "15.00" },
+      caps: { credit_snapshot: "30", lite_credit_assessment: "20.00" },
     });
   });
 
