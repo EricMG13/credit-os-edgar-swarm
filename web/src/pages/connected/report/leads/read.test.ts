@@ -255,7 +255,7 @@ it("keeps a cell's leading words only when a link word introduces what it cites"
     "Coupon step-up; margin ratchet",
   );
   expect(readerCell("Amortisation schedule rows of T2F.2")).toBe("Amortisation schedule");
-  expect(readerCell("Hedged notional for T2F.4")).toBe("In Evidence");
+  expect(readerCell("Hedges and per T2F.4")).toBe("In Evidence");
 });
 
 const PROOF_2D = path.resolve(import.meta.dirname, "../../../../../../proof/handoffs/CP-2D.md");

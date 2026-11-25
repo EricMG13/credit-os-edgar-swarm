@@ -155,7 +155,7 @@ it("draws the yield bars where a last-trade yield reads, each against the larges
   expect(tile.querySelectorAll("[data-bar]")).toHaveLength(2);
   const loan = row("Synthetic term loan");
   expect(loan.querySelector("[data-bar]")).toBeNull();
-  expect(within(loan).getByText("No loan observation")).toBeInTheDocument();
+  expect(within(loan).getAllByText("No loan observation")).toHaveLength(2);
   expect(within(loan).queryByText(/Not supplied: /)).toBeNull();
   // A source cell is for the trace only.
   expect(within(tile).queryByText("Filing p.1")).toBeNull();
@@ -215,11 +215,11 @@ it("gives the lone peer gap the full row", () => {
   expect(peers).toHaveClass("lg:col-span-12");
 });
 
-// Review 4, Q7: a last trade the page cannot read is the one gap cell, with its reason.
-it("gives a last-trade gap its reason, never a bare chip", () => {
+// Review 6, V4: a last trade the market level states as missing carries the module's reason.
+it("gives a last-trade gap the market level's stated reason, never a bare chip", () => {
   render(<SecurityLead {...props(handoff(SYNTHETIC))} />);
   const loan = row("Synthetic term loan");
-  expect(within(loan).getByText("This page could not read a last trade.")).toBeInTheDocument();
-  // The market level's own reason stays once.
-  expect(within(loan).getAllByText("No loan observation")).toHaveLength(1);
+  expect(within(loan).queryByText("This page could not read a last trade.")).toBeNull();
+  // The market level's reason, and the last trade's.
+  expect(within(loan).getAllByText("No loan observation")).toHaveLength(2);
 });
