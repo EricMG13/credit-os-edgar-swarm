@@ -165,7 +165,7 @@ export function proseWithoutMachinery(text: string) {
 
 /** The title without its cited source: a parenthesised reference, then a trailing clause that
  * cites one, then any word that is one. */
-export function withoutReference(title: string) {
+function withoutReference(title: string) {
   if (!containsReference(title)) return title;
   const bare = title.replace(PARENTHESISED, (group) => (containsReference(group) ? "" : group));
   const cuts = [...bare.matchAll(CLAUSE)].filter(({ index }) =>

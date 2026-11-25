@@ -119,7 +119,7 @@ function drawingGaps(entry: OutputEntry): DrawingGap[] {
 }
 
 /** One part of the basis line: the cell as written, or a gap the module stated in its words. */
-export type BasisPart = { name: string; text: string; gap: boolean };
+type BasisPart = { name: string; text: string; gap: boolean };
 
 /** The basis of the module's figures as its handoff states it; nothing is inferred. */
 export type Basis =

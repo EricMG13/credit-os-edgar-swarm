@@ -368,7 +368,7 @@ function PassageTable({
  * A passage the module wrote with no paragraph to read: it says so, keeps the trace of the Basis
  * it holds, and draws the tables it holds.
  */
-export function HollowPassage({
+function HollowPassage({
   section,
   title,
   entry,
