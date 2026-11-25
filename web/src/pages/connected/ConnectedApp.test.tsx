@@ -1145,7 +1145,7 @@ describe("connected run start", () => {
     await advanceToPurpose();
     expect(
       screen.getByText(
-        "Public cases can use approved lookups. Native Copilot web search is unavailable.",
+        "Public cases can use approved lookups. Web search through Copilot is unavailable.",
       ),
     ).toBeInTheDocument();
     expect(

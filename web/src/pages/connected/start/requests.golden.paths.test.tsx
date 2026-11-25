@@ -135,7 +135,9 @@ function service({
 }
 
 async function identify(log: readonly Recorded[], name = "Northbridge Synthetic Group") {
-  fireEvent.change(await screen.findByLabelText("Issuer name"), { target: { value: name } });
+  fireEvent.change(await screen.findByLabelText("Issuer name", {}, { timeout: 10000 }), {
+    target: { value: name },
+  });
   fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2025-03-31" } });
   fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Ana L" } });
   const before = issuerReads(log);
@@ -212,6 +214,50 @@ const filedElsewhere = (id: string) =>
   `Issuer ID "${id}" is filed under the name "Other Co", not "Northbridge Synthetic Group". If that is this issuer under another name, type that name; otherwise use another Issuer ID.`;
 
 // Hashing documents for repeated content is slow in jsdom: each drive gets 30 s.
+/**
+ * Holds the issuer notice's lookup (its 250 ms timer, `intakeHooks.ts`) until released. These
+ * drives were recorded at a pace where that lookup, set off by "Use {id}", is sent after the
+ * second summary; under CPU load the drive's own steps can outlast 250 ms and the lookup moves
+ * ahead of it. Holding it fixes when the drive lets it fire, never what any request is.
+ */
+function holdIssuerNotice() {
+  const realSet = window.setTimeout.bind(window);
+  const realClear = window.clearTimeout.bind(window);
+  const held = new Map<number, () => void>();
+  let next = -1;
+  const set = vi.spyOn(window, "setTimeout").mockImplementation(((
+    handler: TimerHandler,
+    ms?: number,
+    ...args: unknown[]
+  ) => {
+    if (ms !== 250 || typeof handler !== "function") return realSet(handler, ms, ...args);
+    const id = next;
+    next -= 1;
+    held.set(id, () => {
+      (handler as (...rest: unknown[]) => void)(...args);
+    });
+    return id;
+  }) as typeof window.setTimeout);
+  const clear = vi.spyOn(window, "clearTimeout").mockImplementation(((id?: number) => {
+    if (id !== undefined && held.delete(id)) return;
+    realClear(id);
+  }) as typeof window.clearTimeout);
+  return () => {
+    set.mockRestore();
+    clear.mockRestore();
+    for (const run of held.values()) run();
+    held.clear();
+  };
+}
+
+/** Lets the held lookup go once the summary is drawn, and waits for it to be sent. */
+async function releaseIssuerNotice(release: () => void, log: readonly Recorded[]) {
+  release();
+  await waitFor(() => {
+    expect(log.at(-1)?.path).toMatch(/^\/api\/issuers\/northbridge-synthetic-group-/);
+  });
+}
+
 describe("the requests the Start run page sends on the remaining paths", { timeout: 30000 }, () => {
   it("a draft that expired at the summary is made again", async () => {
     const log = service({
@@ -311,10 +357,11 @@ describe("the requests the Start run page sends on the remaining paths", { timeo
     await toContext();
     noAgreement();
     fireEvent.click(screen.getByRole("button", { name: "Review run" }));
-    fireEvent.click(
-      await screen.findByRole("button", { name: /^Use northbridge-synthetic-group-/ }),
-    );
+    const offer = await screen.findByRole("button", { name: /^Use northbridge-synthetic-group-/ });
+    const release = holdIssuerNotice();
+    fireEvent.click(offer);
     await throughToReview();
+    await releaseIssuerNotice(release, log);
     decideAndApprove();
     await submit(navigate);
     await expect(golden(log)).toMatchFileSnapshot("./requests.golden/id-refused-at-summary.golden");
@@ -335,10 +382,11 @@ describe("the requests the Start run page sends on the remaining paths", { timeo
     decideAndApprove();
     fireEvent.click(screen.getByRole("button", { name: "Submit run" }));
     fireEvent.click(await screen.findByRole("button", { name: "Start synthetic run" }));
-    fireEvent.click(
-      await screen.findByRole("button", { name: /^Use northbridge-synthetic-group-/ }),
-    );
+    const offer = await screen.findByRole("button", { name: /^Use northbridge-synthetic-group-/ });
+    const release = holdIssuerNotice();
+    fireEvent.click(offer);
     await throughToReview();
+    await releaseIssuerNotice(release, log);
     decideAndApprove();
     await submit(navigate);
     await expect(golden(log)).toMatchFileSnapshot("./requests.golden/id-refused-at-submit.golden");

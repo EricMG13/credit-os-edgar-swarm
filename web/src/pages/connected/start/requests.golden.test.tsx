@@ -121,7 +121,9 @@ function service({
 
 /** Types the issuer, the case date and the analyst's name, waiting out the issuer notice's lookup. */
 async function identify(log: readonly Recorded[], name = "Northbridge Synthetic Group") {
-  fireEvent.change(await screen.findByLabelText("Issuer name"), { target: { value: name } });
+  fireEvent.change(await screen.findByLabelText("Issuer name", {}, { timeout: 10000 }), {
+    target: { value: name },
+  });
   fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2025-03-31" } });
   fireEvent.change(screen.getByLabelText("Your name"), { target: { value: "Ana L" } });
   await waitFor(() => {
@@ -151,7 +153,7 @@ async function submitWith(button: string, action: string) {
   fireEvent.click(await screen.findByRole("button", { name: action }));
 }
 
-describe("the requests the Start run page sends", () => {
+describe("the requests the Start run page sends", { timeout: 30000 }, () => {
   it("the Northbridge drive: three files, a note, workbook, agreement and a rating, synthetic", async () => {
     const log = service();
     const navigate = vi.fn();
