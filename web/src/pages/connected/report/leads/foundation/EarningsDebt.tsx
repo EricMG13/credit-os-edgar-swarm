@@ -4,7 +4,7 @@ import { Slope } from "../../overview/marks";
 import { Figure, GapNote } from "../../overview/Tile";
 import { FigureTile, GapTile } from "../kit/LeadFrame";
 import { Dumbbell, GapSlot, LINE, SIZE, useFigureWidth, type LegendEntry } from "../kit/marks";
-import { Grid, TickLabels } from "../kit/marks/parts";
+import { Grid, HALO, HALO_CLASS, TickLabels } from "../kit/marks/parts";
 import type { LeadProps } from "../types";
 import { UNORDERED_SENTENCE } from "../kit/tables";
 import { periodsCaption } from "./periodsData";
@@ -19,8 +19,10 @@ import {
   leverageGaps,
   leverageMarks,
   leverageReading,
+  leverageSlope,
   leverageWord,
   lineLayout,
+  pairNamed,
   periodSpan,
 } from "./earningsDebtGeometry";
 import {
@@ -300,6 +302,121 @@ function Money({ data }: { data: EarningsAgainstDebt }) {
   );
 }
 
+/**
+ * Total debt / EBITDA over more than two periods: every stated period a dot on one scale, joined
+ * in time order; only the compared pair's segment (and its later dot) carries the move's tone.
+ */
+function LeverageSlope({
+  leverage,
+  comparison,
+  word,
+  label,
+  width,
+}: {
+  leverage: LeverageSeries;
+  comparison: EarningsAgainstDebt["comparison"];
+  word: "worse" | "better" | null;
+  label: string;
+  width: number;
+}) {
+  const layout = leverageSlope(leverage, comparison, width);
+  const ink = word === "worse" ? "warning-mark" : "chart-1";
+  return (
+    <svg
+      viewBox={`0 0 ${String(width)} ${String(layout.height)}`}
+      width="100%"
+      role="img"
+      aria-label={label}
+      className="block"
+    >
+      {layout.ticks.map((tick) => (
+        <g key={tick.value}>
+          <line
+            x1={layout.left}
+            x2={width}
+            y1={tick.y}
+            y2={tick.y}
+            className="stroke-border-hairline"
+          />
+          <text
+            data-part="tick"
+            x={layout.left - 6}
+            y={tick.y + 4}
+            textAnchor="end"
+            fontSize={SIZE.tick}
+            className="fill-text-tertiary font-mono"
+          >
+            {tick.label}
+          </text>
+        </g>
+      ))}
+      {layout.segments.map((segment) => (
+        <line
+          key={segment.label}
+          data-segment={segment.label}
+          {...(segment.compared && word ? { "data-tone": word } : {})}
+          x1={segment.x1}
+          y1={segment.y1}
+          x2={segment.x2}
+          y2={segment.y2}
+          strokeWidth="2"
+          className={segment.compared && word ? `stroke-${ink}` : "stroke-chart-3"}
+        />
+      ))}
+      {layout.dots.map((dot) => (
+        <g key={dot.label}>
+          {dot.y !== null && dot.value !== null ? (
+            <>
+              <circle
+                data-dot={dot.label}
+                data-value={dot.value}
+                cx={dot.x}
+                cy={dot.y}
+                r="5"
+                className={dot.compared && word ? `fill-${ink}` : "fill-chart-3"}
+              />
+              <text
+                data-part="value"
+                x={dot.x}
+                y={dot.y - 10}
+                textAnchor="middle"
+                fontSize={SIZE.value}
+                className={cx("fill-text-primary font-mono", HALO_CLASS)}
+                {...HALO}
+              >
+                {dot.text}
+              </text>
+            </>
+          ) : (
+            <GapSlot
+              x={dot.x - 7}
+              y={SLOPE_TOP_GAP}
+              width={14}
+              height={layout.bottom - SLOPE_TOP_GAP}
+            />
+          )}
+          <text
+            data-part="period"
+            x={dot.x}
+            y={layout.bottom + 18}
+            textAnchor="middle"
+            fontSize={SIZE.tick}
+            className="fill-text-secondary font-body"
+          >
+            {dot.periodLines.map((line, at) => (
+              <tspan key={`${String(at)}-${line}`} x={dot.x} y={layout.bottom + 18 + at * 13}>
+                {line}
+              </tspan>
+            ))}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+const SLOPE_TOP_GAP = 26;
+
 /** Leverage: the overview Slope on its own scale with the stated values, or figures and a MiniSlope. */
 function Leverage({
   leverage,
@@ -320,7 +437,8 @@ function Leverage({
   const gaps = leverageGaps(leverage);
   // One stated figure is written, not drawn: a slope needs two.
   const drawn = ordered && marks.length > 1 && contiguous(leverage.values);
-  const reading = leverageReading(leverage, comparison);
+  const reading = leverageReading(leverage, comparison, pair);
+  const many = leverage.values.length > 2;
   return (
     <div data-leverage className="flex w-full min-w-0 flex-col gap-2">
       <p className="text-caption font-medium text-text-primary">
@@ -352,6 +470,7 @@ function Leverage({
               {` · ${word}`}
             </span>
           )}
+          {pair && <span className="text-text-secondary">{` · ${pair}`}</span>}
         </p>
       )}
       {gaps.map((gap) => (

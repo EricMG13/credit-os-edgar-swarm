@@ -2,21 +2,9 @@ import { ChevronDown } from "@untitledui/icons";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { cx } from "@/utils/cx";
 import { FigureTile, GapTile, LeadFrame } from "./kit/LeadFrame";
-import { Bullet, GapChip, Measured, textWidth, type BulletSide } from "./kit/marks";
-import {
-  ledger,
-  ledgerCells,
-  limits,
-  watch,
-  watchGap,
-  limitsGap,
-  stance,
-  type Conditions,
-  type Figure,
-  type Limit,
-  type LedgerRow,
-} from "./committeeData";
-import type { LeadKind, LeadProps } from "./types";
+import { GapChip } from "./kit/marks";
+import { ledger, ledgerCells, stance, type Conditions, type LedgerRow } from "./committeeData";
+import type { Lead, LeadProps } from "./types";
 import { IN_EVIDENCE } from "./kit/reader";
 import { saidText, type Said } from "./validationData";
 
@@ -291,185 +279,15 @@ function LedgerTile(props: LeadProps) {
   );
 }
 
-const shown = (item: Figure, unit: string) =>
-  item.kind === "number"
-    ? `${item.text} ${unit}`.trim()
-    : item.kind === "gap"
-      ? `Not supplied: ${item.reason}`
-      : item.text;
-
-/** A stated figure for the kit bullet, or the module's reason it is not stated. */
-const side = (item: Figure, unit: string): BulletSide =>
-  item.kind === "number"
-    ? { value: item.value, text: shown(item, unit) }
-    : item.kind === "gap"
-      ? { gap: `Not supplied: ${item.reason}` }
-      : { gap: item.text };
-
-/** The legend of the limits figure: the kit's own marks. */
-const LIMITS_LEGEND = [
-  { kind: "bar", tone: "primary", text: "Current exposure" },
-  { kind: "ring", tone: "secondary", text: "Proposed exposure" },
-  { kind: "line", tone: "neutral", text: "Limit value" },
-] as const;
-
-/** One limit as the kit bullet: current as a bar, proposed as a ring, the limit as a rule. */
-function LimitBullet({ item, labelWidth }: { item: Limit; labelWidth: number }) {
-  const { unit, reason } = item;
-  if (reason !== null || unit === null || item.limit.kind !== "number")
-    return (
-      <li className="flex min-w-0 flex-col gap-2" data-limit={item.name}>
-        <p className="text-small font-medium text-text-primary wrap-anywhere">{item.name}</p>
-        <GapChip reason={reason ?? "This page could not read the limit value as a number."} />
-      </li>
-    );
-  const limit = { value: item.limit.value, text: shown(item.limit, unit) };
-  return (
-    <li className="min-w-0" data-limit={item.name}>
-      <Measured fallback={520}>
-        {(width) => (
-          <Bullet
-            width={width}
-            name={item.name}
-            unit={unit}
-            value={side(item.current, unit)}
-            proposed={side(item.proposed, unit)}
-            limit={limit}
-            labelWidth={labelWidth}
-            names={{ value: "Current", proposed: "Proposed", limit: "Limit" }}
-          />
-        )}
-      </Measured>
-    </li>
-  );
-}
-
-/** The name column every bullet of the figure shares, so the bars start at one x. */
-const labelWidthOf = (rows: readonly Limit[]) =>
-  Math.min(220, Math.max(...rows.map((item) => textWidth(item.name) + 16), 0));
-
-function LimitsTile(props: LeadProps) {
-  const found = limits(props.entry);
-  if (!found)
-    return (
-      <GapTile span={12} label="Portfolio limits" kicker="Portfolio limits">
-        {limitsGap(props.entry)}
-      </GapTile>
-    );
-  const labelWidth = labelWidthOf(found.rows);
-  return (
-    <FigureTile
-      props={props}
-      span={12}
-      label="Portfolio limits"
-      kicker="Exposure against each limit"
-      title="Portfolio limits"
-      line={found.line}
-      source="the portfolio limits"
-      legend={LIMITS_LEGEND}
-      table={{
-        caption: "Portfolio limits, current and proposed exposure",
-        headers: ["Limit", "Current exposure", "Proposed exposure", "Limit value", "Unit"],
-        rows: found.rows.map((item) => [
-          item.name,
-          shown(item.current, ""),
-          shown(item.proposed, ""),
-          shown(item.limit, ""),
-          item.unit ?? "Not stated",
-        ]),
-      }}
-    >
-      <ul className="flex min-w-0 flex-col gap-5">
-        {found.rows.map((item) => (
-          <LimitBullet key={item.line} item={item} labelWidth={labelWidth} />
-        ))}
-      </ul>
-    </FigureTile>
-  );
-}
-
-const WATCH_ROWS = 8;
-
-/** The module's decision and watch events: a plain list, dates as written, each with its credit relevance. */
-function WatchTile(props: LeadProps) {
-  const found = watch(props.entry);
-  if (found === null)
-    return (
-      <GapTile span={12} label="Watch items" kicker="Watch items">
-        {watchGap(props.entry)}
-      </GapTile>
-    );
-  if (found.kind === "gap")
-    return (
-      <GapTile span={12} label="Watch items" kicker="Watch items">
-        {found.reasons.map((reason) => `Not supplied: ${reason}`).join(" ")}
-      </GapTile>
-    );
-  const visible = found.items.slice(0, WATCH_ROWS);
-  const rest = found.items.slice(WATCH_ROWS);
-  const item = (entry: (typeof found.items)[number]) => (
-    <li key={entry.line} className="flex min-w-0 flex-col gap-0.5" data-watch={entry.event}>
-      <p className="font-mono text-caption text-text-secondary tabular-nums">{entry.date}</p>
-      <p className="text-small text-text-primary text-pretty wrap-anywhere">{entry.event}</p>
-      {entry.status && (
-        <p className="text-caption text-text-secondary wrap-anywhere">{entry.status}</p>
-      )}
-      {entry.relevance && (
-        <p className="text-caption text-text-secondary wrap-anywhere" data-relevance>
-          <span className="text-text-tertiary">Credit relevance</span>
-          {` · ${entry.relevance}`}
-        </p>
-      )}
-    </li>
-  );
-  return (
-    <FigureTile
-      props={props}
-      span={12}
-      label="Watch items"
-      kicker="Decision and watch"
-      title="Watch items"
-      line={found.line}
-      source="the watch items"
-      table={{
-        caption: "Decision and watch events, dates as written",
-        headers: ["Event date", "Event", "Status", "Credit relevance"],
-        rows: found.items.map((entry) => [
-          entry.date,
-          entry.event,
-          entry.status ?? "",
-          entry.relevance ?? "",
-        ]),
-      }}
-    >
-      <ul className="grid min-w-0 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-        {visible.map(item)}
-      </ul>
-      {rest.length > 0 && (
-        <More label={`Show ${String(rest.length)} more`}>
-          <ul className="mt-3 grid min-w-0 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-            {rest.map(item)}
-          </ul>
-        </More>
-      )}
-    </FigureTile>
-  );
-}
-
 /**
- * CP-6: the stance as written, the challenged points, the portfolio limits and the decision-and-
- * watch events. At 1440 the stance and the limits stack in the left column beside the ledger, the
- * watch items run full width below; on a phone the order is the one written: stance, challenged
- * points, limits, watch items (a gap after the P1). A committee decision with nothing readable is
- * one gap tile.
+ * CP-6: the stance as written, with its conditions, and the challenged points. The portfolio limits
+ * and the decision-and-watch events are the frame's (gated on the mandate, with their as-of note
+ * and every column), so this lead draws neither. A committee decision with neither readable is one
+ * gap tile.
  */
-export function CommitteeLead(props: LeadProps) {
+function Committee(props: LeadProps) {
   const { entry } = props;
-  const nothing =
-    stance(entry).state === "gap" &&
-    ledger(entry).state !== "rows" &&
-    limits(entry) === null &&
-    watch(entry) === null;
+  const nothing = stance(entry).state === "gap" && ledger(entry).state !== "rows";
   return (
     <LeadFrame props={props}>
       {nothing ? (
@@ -478,17 +296,11 @@ export function CommitteeLead(props: LeadProps) {
         </GapTile>
       ) : (
         <>
-          <div className="min-w-0 self-start lg:col-span-5 lg:col-start-1 lg:row-start-1">
+          <div className="min-w-0 self-start lg:col-span-5">
             <StanceTile {...props} />
           </div>
-          <div className="min-w-0 self-start lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1">
+          <div className="min-w-0 self-start lg:col-span-7">
             <LedgerTile {...props} />
-          </div>
-          <div className="min-w-0 self-start lg:col-span-5 lg:col-start-1 lg:row-start-2">
-            <LimitsTile {...props} />
-          </div>
-          <div className="min-w-0 lg:col-span-12">
-            <WatchTile {...props} />
           </div>
         </>
       )}
@@ -496,5 +308,6 @@ export function CommitteeLead(props: LeadProps) {
   );
 }
 
-/** This lead draws the portfolio-limits figure and the module's watch events itself. */
-CommitteeLead.draws = ["figures", "events"] as readonly LeadKind[];
+/** This lead draws no typed figure, event lane or map: the frame draws the limits and the events. */
+export const CommitteeLead: Lead = Committee;
+CommitteeLead.draws = [];

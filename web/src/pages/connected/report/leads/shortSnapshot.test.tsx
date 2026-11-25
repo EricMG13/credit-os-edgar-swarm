@@ -166,7 +166,7 @@ describe("shortSnapshotData: one rule for a change", () => {
 });
 
 describe("shortSnapshotData: accounting negatives", () => {
-  it("reads (3.3x) as -3.3 with its x: the change is -0.4x and worse, the marks sit at -2.9 and -3.3", () => {
+  it("reads (3.3x) as -3.3 with its x: the change is -0.4x with no better or worse word, the marks sit at -2.9 and -3.3", () => {
     const [cover] = figuresOf([
       ["Interest cover", "(2.9x)", "FY2023", SOURCE],
       ["Interest cover", "(3.3x)", "FY2024", SOURCE],
@@ -174,9 +174,24 @@ describe("shortSnapshotData: accounting negatives", () => {
     expect(cover).toMatchObject({
       current: { text: "(3.3x)", period: "FY2024" },
       prior: { text: "(2.9x)", period: "FY2023" },
-      change: { text: "-0.4", size: "0.4x", sign: -1, tone: "worse" },
+      change: { text: "-0.4", size: "0.4x", sign: -1, tone: "none" },
       marks: { prior: -2.9, current: -3.3, suffix: "x" },
     });
+  });
+
+  it("gives a multiple no better or worse word when either figure is negative, only for positive pairs", () => {
+    const tones = (rows: string[][]) => figuresOf(rows)[0]?.change?.tone;
+    const pair = (name: string, a: string, b: string) => [
+      [name, a, "FY2023", SOURCE],
+      [name, b, "FY2024", SOURCE],
+    ];
+    expect(tones(pair("Interest cover", "(2.9x)", "(3.3x)"))).toBe("none");
+    expect(tones(pair("Total leverage", "4.88x", "(0.5x)"))).toBe("none");
+    expect(tones(pair("Net leverage", "(0.5x)", "4.88x"))).toBe("none");
+    expect(tones(pair("Total leverage", "0.0x", "0.5x"))).toBe("worse");
+    expect(tones(pair("Interest cover", "2.9x", "3.3x"))).toBe("better");
+    // A measure that is not a multiple keeps its own rule: free cash flow across zero is still read.
+    expect(tones(pair("Free cash flow", "(1,158)", "(1,160)"))).toBe("worse");
   });
 
   it("reads (1,158) to (1,160) as a change of -2, worse for free cash flow", () => {
@@ -190,6 +205,43 @@ describe("shortSnapshotData: accounting negatives", () => {
       change: { text: "-2", size: "2", sign: -1, tone: "worse" },
       marks: { prior: -1158, current: -1160 },
     });
+  });
+
+  it("prints a percent measure's change in percentage points, a multiple or money in its own unit", () => {
+    const [margin, bracket, money] = figuresOf([
+      ["Operating margin", "18.4%", "FY2023", SOURCE],
+      ["Operating margin", "17.2%", "FY2024", SOURCE],
+      ["Net margin", "(2.9%)", "FY2023", SOURCE],
+      ["Net margin", "(3.3%)", "FY2024", SOURCE],
+      ["Liquidity", "USD 1,050m", "FY2023", SOURCE],
+      ["Liquidity", "USD 1,200m", "FY2024", SOURCE],
+    ]);
+    expect(margin?.change).toMatchObject({ text: "-1.2", size: "1.2 percentage points", sign: -1 });
+    expect(bracket?.change).toMatchObject({ size: "0.4 percentage points", sign: -1 });
+    expect(money?.change).toMatchObject({ size: "USD 150m", tone: "better" });
+  });
+
+  it("writes the percent change as percentage points in the strip and the table view, never as a bare %", () => {
+    render(
+      <ShortSnapshotLead
+        {...leadProps(
+          snapshot([
+            ["Operating margin", "18.4%", "FY2023", SOURCE],
+            ["Operating margin", "17.2%", "FY2024", SOURCE],
+          ]),
+        )}
+      />,
+    );
+    const margin = cell("Operating margin, FY2024");
+    expect(margin?.querySelector('[data-part="change"]')).toHaveTextContent(
+      /^−1\.2 percentage points$/,
+    );
+    expect(margin?.querySelector("svg")?.getAttribute("aria-label")).toBe(
+      "Operating margin: 18.4% in FY2023, 17.2% in FY2024",
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Table view/ }));
+    expect(document.body.textContent).toContain("−1.2 percentage points");
+    expect(document.body.textContent).not.toMatch(/−1\.2%/);
   });
 
   it("keeps the positive control: 2.9x to 3.3x is +0.4x, better", () => {
@@ -210,19 +262,19 @@ describe("shortSnapshotData: accounting negatives", () => {
       ["Other measure", "(9)", "FY2024", SOURCE],
     ]);
     expect(x).toMatchObject({
-      change: { text: "-0.4", size: "0.4x", sign: -1, tone: "worse" },
+      change: { text: "-0.4", size: "0.4x", sign: -1, tone: "none" },
       marks: { prior: -2.9, current: -3.3, suffix: "x" },
       current: { text: "(3.3)x" },
     });
     expect(pct).toMatchObject({
-      change: { text: "-0.4", size: "0.4%", sign: -1, tone: "none" },
+      change: { text: "-0.4", size: "0.4 percentage points", sign: -1, tone: "none" },
       marks: { suffix: "%" },
       current: { text: "(3.3%)" },
     });
     expect(other?.change).toMatchObject({ text: "-4", sign: -1, tone: "none" });
   });
 
-  it("draws the ruler without brackets in its ticks, the change as -0.4x worse, the figures as written", () => {
+  it("draws the ruler without brackets in its ticks, the change as -0.4x with no word, the figures as written", () => {
     render(
       <ShortSnapshotLead
         {...leadProps(
@@ -237,7 +289,7 @@ describe("shortSnapshotData: accounting negatives", () => {
     );
     const cover = document.querySelector('li[data-figure="Interest cover, FY2024"]');
     expect(cover).toHaveTextContent("(3.3x)");
-    expect(cover?.querySelector('[data-part="change"]')).toHaveTextContent(/^−0\.4x worse$/);
+    expect(cover?.querySelector('[data-part="change"]')).toHaveTextContent(/^−0\.4x$/);
     expect(cover).toHaveTextContent("from (2.9x) in FY2023");
     const ticks = [...(cover?.querySelectorAll("svg text") ?? [])].map((t) => t.textContent);
     expect(ticks.length).toBeGreaterThan(0);

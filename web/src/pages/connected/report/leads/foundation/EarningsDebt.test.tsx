@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import type { OutputEntry } from "../../../publishedReport";
 import { containsReference } from "../../../publishedReport";
 import { cp1Entry, distressedCp1Entry, leadProps, relativeValueCp1Entry } from "../fixtures/load";
-import { dropTable, ltmCp1, setCell, threePeriodCp1 } from "../fixtures/mutations";
+import { dropTable, edited, ltmCp1, setCell, threePeriodCp1 } from "../fixtures/mutations";
 import { Dumbbell } from "../kit/marks";
 import { EarningsDebtTile } from "./EarningsDebt";
 
@@ -438,5 +438,74 @@ describe("the head: caption and legend (N4, N8)", () => {
     const three = kinds(draw(threePeriodCp1())).map(([kind]) => kind);
     expect(three).toContain("line");
     expect(three).not.toContain("ring");
+  });
+});
+
+describe("a third period: the compared pair is named and carries the tone (round 5 U2)", () => {
+  // The accepted handoff plus `LTM Dec-2024 | 6.90 | 5.95 | x` in Chart data: leverage. Both
+  // orders order in time (FY2023, FY2024, LTM Dec-2024) and compare the same-kind periods exactly
+  // one year apart, FY2023 → FY2024; the LTM row is another kind, so it is never part of a change.
+  const LTM = ["LTM Dec-2024", "6.90", "5.95", "x", "Test mutation."];
+  const withLtm = (where: "append" | "prepend") =>
+    edited(cp1Entry(), (table, heading) =>
+      heading === LEVERAGE
+        ? {
+            ...table,
+            rows:
+              where === "append"
+                ? [...table.rows, { line: 90, cells: LTM }]
+                : [{ line: 90, cells: LTM }, ...table.rows],
+          }
+        : table,
+    );
+  for (const where of ["append", "prepend"] as const) {
+    describe(`the LTM row ${where}ed`, () => {
+      it("draws the slope in time order with the chip naming the pair", () => {
+        const tile = draw(withLtm(where));
+        const slope = within(tile).getByRole("img", { name: /^Total debt \/ EBITDA/ });
+        expect(slope.getAttribute("aria-label")).toBe(
+          "Total debt / EBITDA on its own scale: FY2023 6.27x, FY2024 6.53x, LTM Dec-2024 6.90x, +0.26x, worse (FY2023 → FY2024).",
+        );
+        expect(
+          [...slope.querySelectorAll("[data-dot]")].map((dot) => [
+            dot.getAttribute("data-dot"),
+            attr(dot, "data-value"),
+          ]),
+        ).toEqual([
+          ["FY2023", 6.27],
+          ["FY2024", 6.53],
+          ["LTM Dec-2024", 6.9],
+        ]);
+        expect(tile.querySelector("[data-change]")?.textContent).toBe(
+          "+0.26x · worse · FY2023 → FY2024",
+        );
+      });
+      it("colours the FY2023 → FY2024 segment worse and leaves FY2024 → LTM neutral", () => {
+        const tile = draw(withLtm(where));
+        const segments = [...tile.querySelectorAll("[data-leverage] [data-segment]")];
+        expect(segments.map((line) => line.getAttribute("data-segment"))).toEqual([
+          "FY2023 → FY2024",
+          "FY2024 → LTM Dec-2024",
+        ]);
+        expect(segments[0]?.getAttribute("data-tone")).toBe("worse");
+        expect(segments[0]?.getAttribute("class")).toContain("stroke-warning-mark");
+        expect(segments[1]?.hasAttribute("data-tone")).toBe(false);
+        expect(segments[1]?.getAttribute("class")).not.toContain("stroke-warning-mark");
+      });
+      it("names the pair beside every measure's change in the figure's reading", () => {
+        const tile = draw(withLtm(where));
+        const reading = tile.querySelector("svg[aria-label*='on one scale from zero']");
+        const text = reading?.getAttribute("aria-label") ?? "";
+        expect(text).toContain("Gross debt FY2023 19,750, FY2024 24,880");
+        expect(text).toContain("+5,130 up, worse (FY2023 → FY2024)");
+        expect(text).toContain("Revenue FY2023 6,585, FY2024 7,940");
+        expect(text).toContain("+1,355 up, better (FY2023 → FY2024)");
+      });
+    });
+  }
+  it("keeps two periods unchanged: the chip names no pair", () => {
+    const tile = draw();
+    expect(tile.querySelector("[data-change]")?.textContent).toBe("+0.26x · worse");
+    expect(everything(tile)).not.toContain("(FY2023 → FY2024)");
   });
 });

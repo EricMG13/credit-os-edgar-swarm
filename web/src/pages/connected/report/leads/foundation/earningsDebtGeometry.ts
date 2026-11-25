@@ -69,6 +69,15 @@ function printedChange(
   return change?.reading.kind === "number" ? change.text : null;
 }
 
+/**
+ * The compared pair, named where more than two periods are drawn ("FY2023 → FY2024"): the change
+ * and its tone are that pair's, not the last segment's. Null for two periods and for no change.
+ */
+export const pairNamed = (data: EarningsAgainstDebt) =>
+  data.comparison && data.periods.length > 2
+    ? `${data.comparison.from} → ${data.comparison.to}`
+    : null;
+
 /** The stated change with its sign: "+1,355", "−6,585", "0". */
 export const changeText = (change: string) => signedText(group(change), Number(change));
 
@@ -142,6 +151,7 @@ export const leverageGaps = (leverage: LeverageSeries) =>
 export function leverageReading(
   leverage: LeverageSeries,
   comparison: EarningsAgainstDebt["comparison"],
+  pair: string | null = null,
 ) {
   const figures = leverage.values.map(
     (value) =>
@@ -149,7 +159,10 @@ export function leverageReading(
   );
   const moved = leverageChange(leverage, comparison);
   const word = leverageWord(moved);
-  const change = moved === null ? "" : `, ${changeText(moved)}x${word ? `, ${word}` : ""}`;
+  const change =
+    moved === null
+      ? ""
+      : `, ${changeText(moved)}x${word ? `, ${word}` : ""}${pair ? ` (${pair})` : ""}`;
   return `${leverage.label} on its own scale: ${figures.join(", ")}${change}.`;
 }
 
@@ -378,8 +391,11 @@ export function earningsReading(data: EarningsAgainstDebt, form: string) {
   const parts = data.measures.map((measure) => {
     const figures = measure.values.map((value) => `${value.label} ${cellWords(value.cell)}`);
     const moved = printedChange(measure.values, data.comparison, data.unit);
+    const pair = pairNamed(data);
     const change =
-      moved === null ? "" : `, ${changeText(moved)} ${changeNote(TONE_KEY[measure.key], moved)}`;
+      moved === null
+        ? ""
+        : `, ${changeText(moved)} ${changeNote(TONE_KEY[measure.key], moved)}${pair ? ` (${pair})` : ""}`;
     return `${measure.label} ${figures.join(", ")}${change}`;
   });
   return `${data.unit}, ${form} on one scale from zero: ${parts.join("; ")}.`;
@@ -429,5 +445,90 @@ export function earningsTable(data: EarningsAgainstDebt) {
     caption: `Earnings against debt and leverage, ${data.unit}, ${periodSpan(labels, data.ordered)}`,
     headers: ["Measure", ...labels, ...changeHeader],
     rows: [...rows, ...leverageRow],
+  };
+}
+
+// ---------------------------------------------------------------------------------------------
+// The leverage slope across more than two periods
+// ---------------------------------------------------------------------------------------------
+
+const SLOPE_HEIGHT = 190;
+const SLOPE_TOP = 26;
+const SLOPE_BOTTOM = 128;
+
+export type SlopeDot = {
+  label: string;
+  x: number;
+  /** The mark's y, null where the ratio is not a number. */
+  y: number | null;
+  value: number | null;
+  text: string | null;
+  periodLines: string[];
+  /** The compared pair's later period carries the move's tone. */
+  compared: boolean;
+};
+
+export type SlopeSegment = {
+  label: string;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  compared: boolean;
+};
+
+/**
+ * Total debt / EBITDA over every stated period at `width` px, one scale: the segments between
+ * stated neighbours, the compared pair's (and only that one) carrying the move's tone.
+ */
+export function leverageSlope(
+  leverage: LeverageSeries,
+  comparison: EarningsAgainstDebt["comparison"],
+  width: number,
+) {
+  const numbers = leverage.values.flatMap((value) =>
+    value.cell?.kind === "number" ? [value.cell.value] : [],
+  );
+  const axis = niceAxis(numbers, { zero: false, suffix: "x" });
+  const left = Math.max(...axis.ticks.map((tick) => textWidth(tick.label, SIZE.tick))) + 16;
+  const right = width - 28;
+  const step = leverage.values.length > 1 ? (right - left) / (leverage.values.length - 1) : 0;
+  const y = (value: number) => axis.place(value, SLOPE_BOTTOM, SLOPE_TOP);
+  const dots = leverage.values.map((value, at): SlopeDot => {
+    const x = left + at * step;
+    const cell = value.cell;
+    return {
+      label: value.label,
+      x,
+      y: cell?.kind === "number" ? y(cell.value) : null,
+      value: cell?.kind === "number" ? cell.value : null,
+      text: cell?.kind === "number" ? `${group(cell.text)}x` : null,
+      periodLines: wrap(value.label, Math.max(60, step - 8), SIZE.tick),
+      compared: comparison?.to === value.label,
+    };
+  });
+  const segments = dots.flatMap((dot, at): SlopeSegment[] => {
+    const next = dots[at + 1];
+    return next && dot.y !== null && next.y !== null
+      ? [
+          {
+            label: `${dot.label} → ${next.label}`,
+            x1: dot.x,
+            y1: dot.y,
+            x2: next.x,
+            y2: next.y,
+            compared: comparison?.from === dot.label && comparison.to === next.label,
+          },
+        ]
+      : [];
+  });
+  return {
+    dots,
+    segments,
+    ticks: axis.ticks.map((tick) => ({ ...tick, y: y(tick.value) })),
+    left,
+    right,
+    height: SLOPE_HEIGHT,
+    bottom: SLOPE_BOTTOM,
   };
 }

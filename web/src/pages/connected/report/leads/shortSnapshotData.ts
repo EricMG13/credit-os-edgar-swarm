@@ -113,12 +113,24 @@ function pair(measure: string, a: Row, b: Row) {
     );
     const key = TONE_KEYS[norm(measure)];
     if (made && made.sign !== null) {
-      const size = `${c.prefix}${c.prefix ? " " : ""}${group(made.text.replace(/^-/, ""))}${c.suffix}`;
+      // A percent measure's change is in percentage points, not a relative %; any other unit is its own.
+      const amount = group(made.text.replace(/^-/, ""));
+      const size =
+        c.suffix === "%" && !c.prefix
+          ? `${amount} percentage points`
+          : `${c.prefix}${c.prefix ? " " : ""}${amount}${c.suffix}`;
+      // The owner's better/worse table is not meaningful for a ratio across a sign change.
+      const ratio =
+        key === "leverage" ||
+        key === "net_leverage" ||
+        key === "coverage" ||
+        c.suffix.toLowerCase() === "x";
+      const crossing = ratio && (marks.prior < 0 || marks.current < 0);
       change = {
         text: made.text,
         size,
         sign: made.sign,
-        tone: key ? tone(key, made.text) : "none",
+        tone: key && !crossing ? tone(key, made.text) : "none",
       };
     }
   }

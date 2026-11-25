@@ -18,7 +18,6 @@ import {
   TWICE_RESULTS,
 } from "./earningsDeltaData";
 import { cp1bEntry, leadProps } from "./fixtures/load";
-import { chartTitles } from "./kit/UnreadFigures";
 
 afterEach(cleanup);
 
@@ -1264,27 +1263,63 @@ describe("EarningsDeltaLead with a variance bridge", () => {
     // The rows reach the reader with the module\u2019s reason on the gap chip.
     expect(within(listed).getByText("not split")).toBeVisible();
   });
-  it("lists every published chart heading: none is drawn by neither this lead nor the list", () => {
-    const entryWith = delta(
+  // Every chart title an entry's `Chart data:` headings state, and the region that carries it: the lead
+  // draws it under that plain title (or, for the two pair tables, under the name the lead gives
+  // them), or UnreadFigures lists its rows under the exact title. Titles and names are hand-typed.
+  const unreadable = (heading: string) =>
+    steps(
+      [GOOD[0] ?? [], ["Disposals", "Not supplied: not split", "US$m", "x"], GOOD[3] ?? []],
+      heading,
+    );
+  const TWO_BRIDGES = () =>
+    delta(
       steps(GOOD, "Chart data: EBITDA variance"),
-      steps(
-        [GOOD[0] ?? [], ["Disposals", "Not supplied: not split", "US$m", "x"], GOOD[3] ?? []],
-        "Chart data: revenue variance",
-      ),
+      unreadable("Chart data: revenue variance"),
       results(MONEY),
       kpis([["Gross margin", "FY2023", "58.3", "FY2024", "58.8", "%", "x"]]),
     );
-    lead(entryWith);
-    const regions = screen.getAllByRole("region").map((one) => one.getAttribute("aria-label"));
-    for (const title of chartTitles(entryWith)) {
-      const covered = regions.some(
-        (name) =>
-          name?.toLowerCase().startsWith(title.toLowerCase()) ||
-          (name ?? "") === "Margins and KPIs" ||
-          (name ?? "") === "Prior and current results",
-      );
-      expect(covered, title).toBe(true);
-    }
+  const ADD_BACK = () =>
+    delta(
+      results(MONEY),
+      section(
+        "Chart data: add-back share",
+        60,
+        table(
+          62,
+          ["Add-back", "Share", "Reporting unit", "Basis and limitation"],
+          [["Stock compensation", "5.1", "%", "x"]],
+        ),
+      ),
+    );
+  it.each([
+    // Headings: "Chart data: EBITDA variance", "...revenue variance", "...prior and current results",
+    // "...margin and KPI changes".
+    ["two step tables", TWO_BRIDGES, "EBITDA variance", "EBITDA variance"],
+    ["two step tables", TWO_BRIDGES, "Revenue variance", "Revenue variance"],
+    ["two step tables", TWO_BRIDGES, "Prior and current results", "Prior and current results"],
+    ["two step tables", TWO_BRIDGES, "Margin and KPI changes", "Margins and KPIs"],
+    // Headings: "Chart data: prior and current results", "Chart data: add-back share".
+    ["add-back share", ADD_BACK, "Prior and current results", "Prior and current results"],
+    ["add-back share", ADD_BACK, "Add-back share", "Add-back share"],
+  ])("%s: the chart titled %s is a region named %s", (_name, build, title, region) => {
+    lead(build());
+    const tile = screen.getByRole("region", { name: region });
+    expect(tile, title).toBeInTheDocument();
+  });
+  it("the retained CP-1B handoff states no chart table; its regions are the three the lead names", () => {
+    // The retained sections are Findings, T4.4 Financial performance, T4.6 Variance register, Gaps.
+    expect(cp1bEntry().sections.map((one) => one.heading)).toEqual([
+      "Findings",
+      "T4.4 Financial performance",
+      "T4.6 Variance register",
+      "Gaps",
+    ]);
+    lead(cp1bEntry());
+    expect(screen.getAllByRole("region").map((one) => one.getAttribute("aria-label"))).toEqual([
+      "Variance bridge",
+      "Prior and current results",
+      "Margins and KPIs",
+    ]);
   });
 });
 
