@@ -2,22 +2,23 @@
  * Every request the Start run page sends, in order, for five fixed drives: paths, methods,
  * headers, bodies. Recorded from the form as it stood before the 2026-11-24 redesign (S9) and held
  * here as files, so a change to what the form sends fails this test. A presentation change must
- * leave `requests.golden/*.txt` untouched; only a ruled change to the service contract may
+ * leave `requests.golden/*.golden` untouched; only a ruled change to the service contract may
  * rewrite them, and then by hand, never with `-u`.
  */
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { webcrypto } from "node:crypto";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "../ConnectedApp";
+import {
+  golden,
+  issuerReads,
+  recorded,
+  toContext,
+  toPurpose,
+  setUpConnectedPage,
+  type Recorded,
+} from "./connectedTesting";
 
-Element.prototype.scrollIntoView = vi.fn();
-beforeEach(() => {
-  vi.stubGlobal("crypto", webcrypto);
-});
-afterEach(() => {
-  cleanup();
-  vi.unstubAllGlobals();
-});
+setUpConnectedPage();
 
 import {
   AGREEMENT,
@@ -30,14 +31,6 @@ import {
   WORKBOOK,
 } from "./goldenFixtures";
 import { chooseControl } from "./testControls";
-
-type Recorded = {
-  method: string;
-  path: string;
-  headers?: Record<string, string>;
-  /** A JSON body exactly as sent; a file body as the name of the File object handed to fetch. */
-  body?: string | { file: string };
-};
 
 /**
  * A fetch that answers as the synthetic service would and records every call. `submits` answers
@@ -70,17 +63,9 @@ function service({
   const stored = new Set<string>();
   let submitAt = 0;
   const fetchMock = vi.fn((input: string, init?: RequestInit) => {
-    const method = init?.method ?? "GET";
-    const headers = init?.headers as Record<string, string> | undefined;
-    const body = init?.body;
-    const entry: Recorded = { method, path: input };
-    if (headers) entry.headers = headers;
-    if (typeof body === "string") entry.body = body;
-    else if (body instanceof File) {
-      const at = FILES.indexOf(body);
-      entry.body = { file: at < 0 ? "an unknown File object" : (FILES[at]?.name ?? "") };
-    }
+    const entry = recorded(input, init, FILES);
     log.push(entry);
+    const method = entry.method;
     const url = new URL(input, "http://service.test");
     const name = url.searchParams.get("name") ?? "";
     const reply = (value: unknown, status = 200) =>
@@ -134,9 +119,6 @@ function service({
   return log;
 }
 
-const issuerReads = (log: readonly Recorded[]) =>
-  log.filter(({ path }) => path.startsWith("/api/issuers/")).length;
-
 /** Types the issuer, the case date and the analyst's name, waiting out the issuer notice's lookup. */
 async function identify(log: readonly Recorded[], name = "Northbridge Synthetic Group") {
   fireEvent.change(await screen.findByLabelText("Issuer name"), { target: { value: name } });
@@ -153,16 +135,6 @@ async function addAndInspect(files: readonly File[]) {
   await screen.findByText(/documents? inspected, 0 ignored\./);
 }
 
-async function toPurpose() {
-  fireEvent.click(screen.getByRole("button", { name: "Continue to purpose" }));
-  await screen.findByRole("heading", { name: "Purpose" });
-}
-
-async function toContext() {
-  fireEvent.click(screen.getByRole("button", { name: "Continue to context" }));
-  await screen.findByRole("heading", { name: "More context" });
-}
-
 function choose(label: string, value: string) {
   fireEvent.change(screen.getByLabelText(label), { target: { value } });
 }
@@ -177,10 +149,6 @@ async function reviewAndDecide() {
 async function submitWith(button: string, action: string) {
   fireEvent.click(screen.getByRole("button", { name: button }));
   fireEvent.click(await screen.findByRole("button", { name: action }));
-}
-
-function golden(log: readonly Recorded[]) {
-  return `${JSON.stringify(log, null, 1)}\n`;
 }
 
 describe("the requests the Start run page sends", () => {
@@ -210,7 +178,7 @@ describe("the requests the Start run page sends", () => {
     await waitFor(() => {
       expect(navigate).toHaveBeenCalledWith("/run/20261124-120000-01");
     });
-    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/northbridge-synthetic.txt");
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/northbridge-synthetic.golden");
   });
 
   it("a paid Deep run at the Advanced level: a module left out, another model, effort and turns", async () => {
@@ -236,7 +204,7 @@ describe("the requests the Start run page sends", () => {
     await waitFor(() => {
       expect(navigate).toHaveBeenCalledWith("/run/20261124-120000-01");
     });
-    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/deep-advanced-live.txt");
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/deep-advanced-live.golden");
   });
 
   it("an Earnings Update with periods, a removed file, and a step back and forward", async () => {
@@ -261,7 +229,7 @@ describe("the requests the Start run page sends", () => {
     await waitFor(() => {
       expect(navigate).toHaveBeenCalledWith("/run/20261124-120000-01");
     });
-    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/earnings-update.txt");
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/earnings-update.golden");
   });
 
   it("a run started from an earlier run: its documents carried, a new date, the same issuer", async () => {
@@ -312,7 +280,7 @@ describe("the requests the Start run page sends", () => {
     await waitFor(() => {
       expect(navigate).toHaveBeenCalledWith("/run/20261124-120000-01");
     });
-    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/carried-from-earlier.txt");
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/carried-from-earlier.golden");
   });
 
   it("a Submit with no answer, then the same Submit again", async () => {
@@ -336,6 +304,6 @@ describe("the requests the Start run page sends", () => {
     await waitFor(() => {
       expect(navigate).toHaveBeenCalledWith("/run/20261124-120000-01");
     });
-    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/submit-retry.txt");
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/submit-retry.golden");
   });
 });

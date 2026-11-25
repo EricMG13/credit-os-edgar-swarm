@@ -7,9 +7,20 @@
  * contract, and then by hand, never with `-u`.
  */
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { webcrypto } from "node:crypto";
 import { ConnectedApp } from "../ConnectedApp";
+import {
+  golden,
+  issuerReads,
+  recorded,
+  toContext,
+  toPurpose,
+  setUpConnectedPage,
+  type Recorded,
+} from "./connectedTesting";
+
+setUpConnectedPage();
 import {
   AGREEMENT,
   DOCUMENTS,
@@ -19,15 +30,6 @@ import {
   TEMPLATE,
   WORKBOOK,
 } from "./goldenFixtures";
-
-Element.prototype.scrollIntoView = vi.fn();
-beforeEach(() => {
-  vi.stubGlobal("crypto", webcrypto);
-});
-afterEach(() => {
-  cleanup();
-  vi.unstubAllGlobals();
-});
 
 const TWIN = new File(["Northbridge annual filing"], "northbridge-filing-copy.txt", {
   type: "text/plain",
@@ -39,14 +41,6 @@ const RENAMED = new File(["another filing"], "northbridge-filing (revised).txt",
   type: "text/plain",
 });
 const KNOWN = [FILING, WORKBOOK, AGREEMENT, TWIN, HUGE, RENAMED];
-
-type Recorded = {
-  method: string;
-  path: string;
-  headers?: Record<string, string>;
-  /** A JSON body exactly as sent; a file body as the name of the File object handed to fetch. */
-  body?: string | { file: string };
-};
 
 /** What a drive changes in the service's answers: the n-th call (from 1) to a route. */
 type Override = (call: { route: string; count: number; name: string }) => Response | undefined;
@@ -90,17 +84,9 @@ function service({
   const counts = new Map<string, number>();
   let drafts = 0;
   const fetchMock = vi.fn((input: string, init?: RequestInit) => {
-    const method = init?.method ?? "GET";
-    const headers = init?.headers as Record<string, string> | undefined;
-    const body = init?.body;
-    const entry: Recorded = { method, path: input };
-    if (headers) entry.headers = headers;
-    if (typeof body === "string") entry.body = body;
-    else if (body instanceof File) {
-      const at = KNOWN.indexOf(body);
-      entry.body = { file: at < 0 ? "an unknown File object" : (KNOWN[at]?.name ?? "") };
-    }
+    const entry = recorded(input, init, KNOWN);
     log.push(entry);
+    const method = entry.method;
     const url = new URL(input, "http://service.test");
     const name = url.searchParams.get("name") ?? "";
     const draft = /^\/api\/submissions\/(sub-\d+)\/(\w+)$/.exec(url.pathname);
@@ -148,9 +134,6 @@ function service({
   return log;
 }
 
-const issuerReads = (log: readonly Recorded[]) =>
-  log.filter(({ path }) => path.startsWith("/api/issuers/")).length;
-
 async function identify(log: readonly Recorded[], name = "Northbridge Synthetic Group") {
   fireEvent.change(await screen.findByLabelText("Issuer name"), { target: { value: name } });
   fireEvent.change(screen.getByLabelText("As-of date"), { target: { value: "2025-03-31" } });
@@ -179,16 +162,6 @@ async function inspectionEnded(refusal: RegExp) {
     },
     { timeout: 15000 },
   );
-}
-
-async function toPurpose() {
-  fireEvent.click(screen.getByRole("button", { name: "Continue to purpose" }));
-  await screen.findByRole("heading", { name: "Purpose" });
-}
-
-async function toContext() {
-  fireEvent.click(screen.getByRole("button", { name: "Continue to context" }));
-  await screen.findByRole("heading", { name: "More context" });
 }
 
 function noAgreement() {
@@ -220,10 +193,6 @@ async function throughToReview() {
   await toContext();
   noAgreement();
   await review();
-}
-
-function golden(log: readonly Recorded[]) {
-  return `${JSON.stringify(log, null, 1)}\n`;
 }
 
 function start(search?: string) {
@@ -261,7 +230,7 @@ describe("the requests the Start run page sends on the remaining paths", { timeo
     await review();
     decideAndApprove();
     await submit(navigate);
-    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/expired-at-summary.txt");
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/expired-at-summary.golden");
   });
 
   it("a draft that expired at Submit is made again after a new review", async () => {
@@ -281,7 +250,7 @@ describe("the requests the Start run page sends on the remaining paths", { timeo
     await review();
     decideAndApprove();
     await submit(navigate);
-    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/expired-at-submit.txt");
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/expired-at-submit.golden");
   });
 
   it("a draft that expired at the reading is made again on the next Continue", async () => {
@@ -297,7 +266,7 @@ describe("the requests the Start run page sends on the remaining paths", { timeo
     await throughToReview();
     decideAndApprove();
     await submit(navigate);
-    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/expired-at-reading.txt");
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/expired-at-reading.golden");
   });
 
   it("a summary refusal that names the research cutoff, fixed on its field", async () => {
@@ -324,7 +293,7 @@ describe("the requests the Start run page sends on the remaining paths", { timeo
     await review();
     decideAndApprove();
     await submit(navigate);
-    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/refusal-names-cutoff.txt");
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/refusal-names-cutoff.golden");
   });
 
   it("an Issuer ID refused at the summary, and the offered ID used", async () => {
@@ -348,7 +317,7 @@ describe("the requests the Start run page sends on the remaining paths", { timeo
     await throughToReview();
     decideAndApprove();
     await submit(navigate);
-    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/id-refused-at-summary.txt");
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/id-refused-at-summary.golden");
   });
 
   it("an Issuer ID refused at Submit, the offered ID used and the run reviewed again", async () => {
@@ -372,7 +341,7 @@ describe("the requests the Start run page sends on the remaining paths", { timeo
     await throughToReview();
     decideAndApprove();
     await submit(navigate);
-    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/id-refused-at-submit.txt");
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/id-refused-at-submit.golden");
   });
 
   it("a typed Issuer ID and an issue classification", async () => {
@@ -391,7 +360,7 @@ describe("the requests the Start run page sends on the remaining paths", { timeo
     await throughToReview();
     decideAndApprove();
     await submit(navigate);
-    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/typed-id-and-class.txt");
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/typed-id-and-class.golden");
   });
 
   it("the latest run carried by its button, then 'This is a different issuer'", async () => {
@@ -424,7 +393,7 @@ describe("the requests the Start run page sends on the remaining paths", { timeo
     await throughToReview();
     decideAndApprove();
     await submit(navigate);
-    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/different-issuer.txt");
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/different-issuer.golden");
   });
 
   it("an earlier run whose inputs carry an error, and one whose inputs cannot be read", async () => {
@@ -447,7 +416,7 @@ describe("the requests the Start run page sends on the remaining paths", { timeo
     await throughToReview();
     decideAndApprove();
     await submit(navigate);
-    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/prior-with-error.txt");
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/prior-with-error.golden");
     cleanup();
     vi.unstubAllGlobals();
     vi.stubGlobal("crypto", webcrypto);
@@ -465,7 +434,7 @@ describe("the requests the Start run page sends on the remaining paths", { timeo
     await throughToReview();
     decideAndApprove();
     await submit(navigate);
-    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/prior-unreadable.txt");
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/prior-unreadable.golden");
   });
 
   it("repeated content, an oversized file and a stored-name collision are refused before reading", async () => {
@@ -504,7 +473,7 @@ describe("the requests the Start run page sends on the remaining paths", { timeo
     await throughToReview();
     decideAndApprove();
     await submit(navigate);
-    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/rejected-documents.txt");
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/rejected-documents.golden");
   });
 
   it("a reading that refuses one file, which is then removed", async () => {
@@ -531,7 +500,7 @@ describe("the requests the Start run page sends on the remaining paths", { timeo
     await throughToReview();
     decideAndApprove();
     await submit(navigate);
-    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/reading-refuses-file.txt");
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/reading-refuses-file.golden");
   });
 
   it("an upload that fails midway, and the inspection tried again", async () => {
@@ -550,7 +519,7 @@ describe("the requests the Start run page sends on the remaining paths", { timeo
     await throughToReview();
     decideAndApprove();
     await submit(navigate);
-    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/upload-fails-midway.txt");
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/upload-fails-midway.golden");
   });
 
   it("modules left out from the review, then put back", async () => {
@@ -613,6 +582,6 @@ describe("the requests the Start run page sends on the remaining paths", { timeo
     await review();
     decideAndApprove();
     await submit(navigate);
-    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/leave-out-put-back.txt");
+    await expect(golden(log)).toMatchFileSnapshot("./requests.golden/leave-out-put-back.golden");
   });
 });

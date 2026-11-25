@@ -5,7 +5,7 @@ import { scopeText } from "./limitWords";
 
 /** The outcomes a limit can have, most severe first: the "Run limits" status set's own order. */
 const LIMITS = ["will_refuse", "gap", "limited", "check"] as const;
-export type LimitOutcome = (typeof LIMITS)[number];
+type LimitOutcome = (typeof LIMITS)[number];
 
 /**
  * A module's mark. `unchecked`: before any review the page does not know it (the service judges
@@ -17,7 +17,7 @@ export type ModuleMark = "unchecked" | "none" | LimitOutcome;
 
 export type ModuleRow = { id: string; name: string; mark: ModuleMark };
 
-export type StageGroup = { number?: string; name: string; rows: ModuleRow[] };
+type StageGroup = { number?: string; name: string; rows: ModuleRow[] };
 
 export type ModuleReadiness = {
   /** Whether the marks come from a summary. */

@@ -1,20 +1,13 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { webcrypto } from "node:crypto";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "../ConnectedApp";
+import { setUpConnectedPage } from "./connectedTesting";
 import { chooseControl } from "./testControls";
 
 // The browser checks a step's controls when it is sent. In place of its bubbles the page says what
 // is wrong on the field, in its own words, and focuses it; the step is still not sent.
 
-Element.prototype.scrollIntoView = vi.fn();
-beforeEach(() => {
-  vi.stubGlobal("crypto", webcrypto);
-});
-afterEach(() => {
-  cleanup();
-  vi.unstubAllGlobals();
-});
+setUpConnectedPage();
 
 const file = new File(["sample input"], "filing.txt", { type: "text/plain" });
 

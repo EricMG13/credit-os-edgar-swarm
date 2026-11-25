@@ -1,17 +1,10 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { webcrypto } from "node:crypto";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { ConnectedApp } from "../ConnectedApp";
+import { setUpConnectedPage } from "./connectedTesting";
 import { chooseControl } from "./testControls";
 
-Element.prototype.scrollIntoView = vi.fn();
-beforeEach(() => {
-  vi.stubGlobal("crypto", webcrypto);
-});
-afterEach(() => {
-  cleanup();
-  vi.unstubAllGlobals();
-});
+setUpConnectedPage();
 
 const caps = {
   credit_snapshot: "25",
