@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { Alert } from "@/components/alert/Alert";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { Table } from "@/components/application/table/table";
@@ -267,6 +267,195 @@ function groupForRunPath(activity: Activity, path: string) {
   );
 }
 
+type FocusMemory = { current: { node: Element; href: string } | null };
+
+/** Remembers a focused run link that the next read moves to another group, and parks focus on the region. */
+function useRememberRunFocus(
+  contentRef: RefObject<HTMLDivElement | null>,
+  focusedRunRef: FocusMemory,
+) {
+  return useCallback(
+    (next: Activity) => {
+      focusedRunRef.current = null;
+      const node = document.activeElement;
+      const region = contentRef.current;
+      if (!node || !region?.contains(node)) return;
+      const link =
+        node.closest<HTMLAnchorElement>(RUN_LINK) ??
+        node.closest("tr")?.querySelector<HTMLAnchorElement>(RUN_LINK);
+      const group = link?.closest<HTMLElement>("[data-run-group]")?.dataset.runGroup;
+      if (!link || !group) return;
+      if (groupForRunPath(next, link.pathname) !== group) {
+        focusedRunRef.current = { node, href: link.href };
+        // Leave the departing grid before it assigns focus to a different run.
+        region.focus({ preventScroll: true });
+      }
+    },
+    [contentRef, focusedRunRef],
+  );
+}
+
+/** Once the old row is gone, puts focus on the same run's link in its new group. */
+function watchRunRemoval(region: HTMLElement, previous: { node: Element; href: string }) {
+  const restoreFocus = () => {
+    if (document.activeElement !== region) return;
+    const link = [...region.querySelectorAll<HTMLAnchorElement>(RUN_LINK)].find(
+      (entry) => entry.href === previous.href,
+    );
+    link?.focus();
+  };
+  let frame: number | undefined;
+  // The React Aria collection can remove the old row in a separate commit from the poll.
+  const restoreAfterRemoval = () => {
+    if (previous.node.isConnected) return;
+    observer.disconnect();
+    frame = requestAnimationFrame(restoreFocus);
+  };
+  const observer = new MutationObserver(restoreAfterRemoval);
+  if (previous.node.isConnected) observer.observe(region, { childList: true, subtree: true });
+  else restoreAfterRemoval();
+  return () => {
+    observer.disconnect();
+    if (frame !== undefined) cancelAnimationFrame(frame);
+  };
+}
+
+function useRestoreRunFocus(
+  contentRef: RefObject<HTMLDivElement | null>,
+  focusedRunRef: FocusMemory,
+  read: Activity | undefined,
+) {
+  useEffect(() => {
+    const previous = focusedRunRef.current;
+    focusedRunRef.current = null;
+    const region = contentRef.current;
+    if (!previous || !region) return;
+    return watchRunRemoval(region, previous);
+  }, [read, contentRef, focusedRunRef]);
+}
+
+function Loading() {
+  return (
+    <div role="status" aria-label="Loading run activity" className="grid gap-4 xl:grid-cols-2">
+      {[0, 1].map((key) => (
+        <div key={key} className={`${panel} p-5`}>
+          <Skeleton lines={5} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function FailedRead({ read }: { read: Activity | undefined }) {
+  return (
+    <Alert
+      tone={read ? "warning" : "error"}
+      title={read ? "Run activity could not be refreshed" : "Run activity could not be read"}
+      action={
+        <Button href="/" size="sm" color="secondary">
+          Open the library
+        </Button>
+      }
+    >
+      {read
+        ? `Showing the list from ${stamp(read.updated)}. This page retries every few seconds.`
+        : "Run status is unknown. This page retries every few seconds. Finished reports are in the library."}
+    </Alert>
+  );
+}
+
+function Unreadable({ count }: { count: number }) {
+  return (
+    <Alert tone="warning" title="Some run records could not be read">
+      {count === 1
+        ? "1 run record could not be read and is not listed."
+        : `${String(count)} run records could not be read and are not listed.`}
+    </Alert>
+  );
+}
+
+function NoRuns({ unreadable }: { unreadable: boolean }) {
+  return (
+    <Empty title={unreadable ? "No active runs listed" : "No run in progress"}>
+      {unreadable
+        ? "Other runs may be in progress if their records could not be read."
+        : "No run is running or waiting. Finished runs are in the library."}
+    </Empty>
+  );
+}
+
+/** The notices between the counts and the run lists: the library link, a failed read, held and unreadable records, the empty state. */
+function Notices({
+  read,
+  failed,
+  listed,
+}: {
+  read: Activity | undefined;
+  failed: boolean;
+  listed: number;
+}) {
+  return (
+    <>
+      {read === undefined && !failed && <Loading />}
+      {read && listed > 0 && <TextLink href="/">Finished runs are in the library</TextLink>}
+      {failed && <FailedRead read={read} />}
+      {read?.held && (
+        <Alert tone="warning" title="Held by the service">
+          <span className="wrap-anywhere">{serviceText(read.held)}</span>
+        </Alert>
+      )}
+      {read?.unreadable ? <Unreadable count={read.unreadable} /> : null}
+      {read && listed === 0 && <NoRuns unreadable={Boolean(read.unreadable)} />}
+    </>
+  );
+}
+
+function ActiveGroups({
+  running,
+  waiting,
+  held,
+}: {
+  running: LiveRun[];
+  waiting: LiveRun[];
+  held: string;
+}) {
+  return (
+    <div
+      className={
+        running.length && waiting.length ? "grid items-start gap-6 xl:grid-cols-2" : undefined
+      }
+    >
+      {running.length > 0 && (
+        <Group title="Running" group="running">
+          <ul className="grid gap-4">
+            {running.map((run) => (
+              <RunningCard key={run.id} run={run} />
+            ))}
+          </ul>
+        </Group>
+      )}
+      {waiting.length > 0 && (
+        <Group title="Waiting" group="queued">
+          <WaitingTable runs={waiting} held={held} />
+        </Group>
+      )}
+    </div>
+  );
+}
+
+function EndedGroup({ ended, total }: { ended: EndedRun[]; total: number }) {
+  return (
+    <Group title="Ended without a report" group="ended">
+      {total > ended.length && (
+        <p className="text-sm text-text-secondary">
+          {`Showing the latest ${String(ended.length)} of ${String(total)}.`}
+        </p>
+      )}
+      <EndedTable runs={ended} />
+    </Group>
+  );
+}
+
 /** What is running, waiting and ended without a report. A run's own page has its spend, modules and activity. */
 export function RunActivity() {
   useEffect(() => {
@@ -274,50 +463,9 @@ export function RunActivity() {
   }, []);
   const content = useRef<HTMLDivElement>(null);
   const focusedRun = useRef<{ node: Element; href: string } | null>(null);
-  const rememberRunFocus = useCallback((next: Activity) => {
-    focusedRun.current = null;
-    const node = document.activeElement;
-    const region = content.current;
-    if (!node || !region?.contains(node)) return;
-    const link =
-      node.closest<HTMLAnchorElement>(RUN_LINK) ??
-      node.closest("tr")?.querySelector<HTMLAnchorElement>(RUN_LINK);
-    const group = link?.closest<HTMLElement>("[data-run-group]")?.dataset.runGroup;
-    if (!link || !group) return;
-    if (groupForRunPath(next, link.pathname) !== group) {
-      focusedRun.current = { node, href: link.href };
-      // Leave the departing grid before it assigns focus to a different run.
-      region.focus({ preventScroll: true });
-    }
-  }, []);
+  const rememberRunFocus = useRememberRunFocus(content, focusedRun);
   const { read, failed } = useActivity(rememberRunFocus);
-  useEffect(() => {
-    const previous = focusedRun.current;
-    focusedRun.current = null;
-    const region = content.current;
-    if (!previous || !region) return;
-    const restoreFocus = () => {
-      if (document.activeElement !== region) return;
-      const link = [...region.querySelectorAll<HTMLAnchorElement>(RUN_LINK)].find(
-        (entry) => entry.href === previous.href,
-      );
-      link?.focus();
-    };
-    let frame: number | undefined;
-    // The React Aria collection can remove the old row in a separate commit from the poll.
-    const restoreAfterRemoval = () => {
-      if (previous.node.isConnected) return;
-      observer.disconnect();
-      frame = requestAnimationFrame(restoreFocus);
-    };
-    const observer = new MutationObserver(restoreAfterRemoval);
-    if (previous.node.isConnected) observer.observe(region, { childList: true, subtree: true });
-    else restoreAfterRemoval();
-    return () => {
-      observer.disconnect();
-      if (frame !== undefined) cancelAnimationFrame(frame);
-    };
-  }, [read]);
+  useRestoreRunFocus(content, focusedRun, read);
   const running = read?.runs.filter((run) => run.status === "running") ?? [];
   const waiting = read?.runs.filter((run) => run.status === "queued") ?? [];
   const ended = read?.ended ?? [];
@@ -349,88 +497,15 @@ export function RunActivity() {
             ]}
           />
         )}
-        {read === undefined && !failed && (
-          <div
-            role="status"
-            aria-label="Loading run activity"
-            className="grid gap-4 xl:grid-cols-2"
-          >
-            {[0, 1].map((key) => (
-              <div key={key} className={`${panel} p-5`}>
-                <Skeleton lines={5} />
-              </div>
-            ))}
-          </div>
-        )}
-        {read && running.length + waiting.length + ended.length > 0 && (
-          <TextLink href="/">Finished runs are in the library</TextLink>
-        )}
-        {failed && (
-          <Alert
-            tone={read ? "warning" : "error"}
-            title={read ? "Run activity could not be refreshed" : "Run activity could not be read"}
-            action={
-              <Button href="/" size="sm" color="secondary">
-                Open the library
-              </Button>
-            }
-          >
-            {read
-              ? `Showing the list from ${stamp(read.updated)}. This page retries every few seconds.`
-              : "Run status is unknown. This page retries every few seconds. Finished reports are in the library."}
-          </Alert>
-        )}
-        {read?.held && (
-          <Alert tone="warning" title="Held by the service">
-            <span className="wrap-anywhere">{serviceText(read.held)}</span>
-          </Alert>
-        )}
-        {read?.unreadable ? (
-          <Alert tone="warning" title="Some run records could not be read">
-            {read.unreadable === 1
-              ? "1 run record could not be read and is not listed."
-              : `${String(read.unreadable)} run records could not be read and are not listed.`}
-          </Alert>
-        ) : null}
-        {read && running.length + waiting.length + ended.length === 0 && (
-          <Empty title={read.unreadable ? "No active runs listed" : "No run in progress"}>
-            {read.unreadable
-              ? "Other runs may be in progress if their records could not be read."
-              : "No run is running or waiting. Finished runs are in the library."}
-          </Empty>
-        )}
+        <Notices
+          read={read}
+          failed={failed}
+          listed={running.length + waiting.length + ended.length}
+        />
         {running.length + waiting.length > 0 && (
-          <div
-            className={
-              running.length && waiting.length ? "grid items-start gap-6 xl:grid-cols-2" : undefined
-            }
-          >
-            {running.length > 0 && (
-              <Group title="Running" group="running">
-                <ul className="grid gap-4">
-                  {running.map((run) => (
-                    <RunningCard key={run.id} run={run} />
-                  ))}
-                </ul>
-              </Group>
-            )}
-            {waiting.length > 0 && (
-              <Group title="Waiting" group="queued">
-                <WaitingTable runs={waiting} held={read?.held ?? ""} />
-              </Group>
-            )}
-          </div>
+          <ActiveGroups running={running} waiting={waiting} held={read?.held ?? ""} />
         )}
-        {ended.length > 0 && (
-          <Group title="Ended without a report" group="ended">
-            {endedTotal > ended.length && (
-              <p className="text-sm text-text-secondary">
-                {`Showing the latest ${String(ended.length)} of ${String(endedTotal)}.`}
-              </p>
-            )}
-            <EndedTable runs={ended} />
-          </Group>
-        )}
+        {ended.length > 0 && <EndedGroup ended={ended} total={endedTotal} />}
       </div>
     </>
   );
