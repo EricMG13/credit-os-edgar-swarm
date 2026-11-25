@@ -341,7 +341,7 @@ function GapKey({
 /** The rows a statement opens on, and what they are, in words. */
 export interface KeyRows {
   matches: (row: GridRow) => boolean;
-  /** "Totals, leverage, interest cover and liquidity". */
+  /** "Totals and the rows charted above". */
   description: string;
 }
 

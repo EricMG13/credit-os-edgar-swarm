@@ -83,7 +83,7 @@ const caseShowing = (figure: string) => {
 const selectCase = (name: string) =>
   fireEvent.click(
     within(screen.getByRole("group", { name: "Case" })).getByRole("button", {
-      name: `${name}, no leverage path in the model`,
+      name: `${name}`,
     }),
   );
 
@@ -316,4 +316,25 @@ it("opens on the first listed case when the model marks none as base", () => {
     <Forecast view={viewOf(columns, { [CASH_PROXY]: [value("150"), value("90")] })} run={run} />,
   );
   expect(caseButtons()[0]).toHaveAttribute("aria-pressed", "true");
+});
+
+it("hatches no case when the page reads no net leverage row, and says why once, as the lead does", () => {
+  const columns = ["Base case", "Downside case"].map((group) => ({ label: "FY2025E", group }));
+  render(
+    <Forecast
+      view={viewOf(columns, {
+        [CASH_PROXY]: [value("120"), value("90")],
+        "Net leverage (covenant basis)": [value("2.1"), value("2.6")],
+        "Net leverage (gross)": [value("2.4"), value("2.9")],
+      })}
+      run={run}
+    />,
+  );
+  for (const button of caseButtons()) expect(button.getAttribute("aria-label")).toBeNull();
+  expect(screen.queryByText(/^Hatched/)).toBeNull();
+  expect(
+    within(screen.getByRole("region", { name: "Net leverage path" })).getByText(
+      /^The model publishes 2 net leverage rows/,
+    ),
+  ).toBeInTheDocument();
 });

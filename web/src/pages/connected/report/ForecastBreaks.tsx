@@ -9,6 +9,8 @@ import {
   absentText,
   covenantTests,
   fundingGap,
+  gapContext,
+  NOT_STATED_IN_ROW,
   type MeasureRead,
   type MeasureCell,
   type ScheduleYear,
@@ -87,11 +89,7 @@ function FundingGapPart({ view, folder }: { view: ReportView; folder: string }) 
         {gaps.map((gap) => (
           <li key={gap.module} className="grid gap-1">
             <div className="flex items-start justify-between gap-2">
-              <span className="text-caption text-text-secondary">
-                {[`${gap.name}: ${gap.label}`, gap.horizon, gap.unit ?? "unit not stated"]
-                  .filter(Boolean)
-                  .join(" · ")}
-              </span>
+              <span className="text-caption text-text-secondary">{gapContext(gap)}</span>
               {rowTrace(folder, gap.entry, gap.line, `${gap.name}'s ${gap.label}`)}
             </div>
             <dl className="flex flex-wrap gap-x-5 gap-y-1">
@@ -101,7 +99,8 @@ function FundingGapPart({ view, folder }: { view: ReportView; folder: string }) 
                     <dt className="text-caption text-text-tertiary">{figure.header}</dt>
                   )}
                   <dd>
-                    {figure.value === null ? (
+                    {/* A figure is drawn as written; only a row that states none is a gap. */}
+                    {figure.text === NOT_STATED_IN_ROW ? (
                       <GapChip>{figure.text}</GapChip>
                     ) : (
                       <Figure className="text-h4">{figure.text}</Figure>
@@ -110,6 +109,11 @@ function FundingGapPart({ view, folder }: { view: ReportView; folder: string }) 
                 </div>
               ))}
             </dl>
+            {gap.notes.map((note) => (
+              <p key={note} className="text-caption text-text-secondary">
+                {note}
+              </p>
+            ))}
           </li>
         ))}
       </ul>

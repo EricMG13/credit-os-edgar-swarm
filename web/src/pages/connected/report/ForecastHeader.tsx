@@ -20,6 +20,8 @@ import {
   endOf,
   extremeOf,
   fundingGap,
+  gapContext,
+  NOT_STATED_IN_ROW,
   periodList,
   type MeasureCell,
   type MeasureRead,
@@ -31,7 +33,8 @@ import { Tile } from "./overview/Tile";
 import { PublishedSource } from "./PublishedTrace";
 import type { ForecastSource } from "./ForecastRecord";
 
-export type CaseChoice = { name: string; rawGroup: string; hatched: boolean };
+/** A case the switch offers; `absent` is the lead's words for why a hatched case draws no path. */
+export type CaseChoice = { name: string; rawGroup: string; hatched: boolean; absent?: string };
 type CaseOption = ReturnType<typeof forecastCaseOptions>[number];
 
 const TARGET = "min-h-8 max-[480px]:min-h-11";
@@ -85,6 +88,7 @@ function CaseSwitch({
 }) {
   const { ref, stacked } = useStacked();
   if (cases.length < 2 || current === undefined) return null;
+  const hatchedNote = cases.find(({ hatched }) => hatched)?.absent;
   return (
     <div ref={ref} className="flex w-full min-w-0 flex-col items-start gap-1.5 lg:items-end">
       <Segmented
@@ -92,9 +96,9 @@ function CaseSwitch({
         current={current}
         onSelect={onSelect}
         className={stacked ? STACKED : undefined}
-        segments={cases.map(({ name, hatched }) => ({
+        segments={cases.map(({ name, hatched, absent }) => ({
           key: name,
-          accessibleLabel: hatched ? `${name}, no leverage path in the model` : undefined,
+          accessibleLabel: hatched ? `${name}: ${absent ?? ""}` : undefined,
           label: (
             <>
               <span className="min-w-0">{name}</span>
@@ -108,10 +112,8 @@ function CaseSwitch({
           ),
         }))}
       />
-      {cases.some(({ hatched }) => hatched) && (
-        <span className="text-caption text-text-tertiary">
-          Hatched: no leverage path in the model
-        </span>
+      {hatchedNote && (
+        <span className="text-caption text-text-tertiary">{`Hatched: ${hatchedNote}`}</span>
       )}
     </div>
   );
@@ -375,7 +377,8 @@ function fundingStat(view: ReportView, folder: string): Stat {
   const { gap, figure } = only;
   return {
     label,
-    value: figure.value === null ? null : figure.text,
+    // A figure as written, plain or not; only a row that states none is the gap state.
+    value: figure.text === NOT_STATED_IN_ROW ? null : figure.text,
     gap: figure.text,
     trace: (
       <PublishedSource
@@ -388,9 +391,7 @@ function fundingStat(view: ReportView, folder: string): Stat {
     ),
     mark: (
       <span className="text-caption text-text-secondary">
-        {[`${gap.name}: ${gap.label}`, figure.header, gap.horizon, gap.unit ?? "unit not stated"]
-          .filter(Boolean)
-          .join(" · ")}
+        {[gapContext(gap), figure.header].filter(Boolean).join(" · ")}
       </span>
     ),
   };

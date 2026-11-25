@@ -16,6 +16,7 @@ import {
 } from "../publishedReport";
 import type { ReportView } from "../reportView";
 import { figureSource, moduleSource, unitOf, type Cell } from "./overview/figureData";
+import { readerReason } from "./overview/reason";
 import { headroomTests, type HeadroomTest } from "./overview/stressData";
 import { wallSlots } from "./overview/structureData";
 
@@ -193,7 +194,10 @@ export function readMeasure(
 /** Why a measure has no figure for a case, in the same words in every tile. */
 export function absentText({ measure, rows, what, basis }: MeasureRead, caseName?: string) {
   if (!measure && rows.length > 1)
-    return `The model publishes ${String(rows.length)} ${what} rows: ${periodList(rows)}. None is on ${basis ?? "the page's basis"}, so none is drawn.`;
+    return basis
+      ? `The model publishes ${String(rows.length)} ${what} rows: ${periodList(rows)}. None is on ${basis}, so none is drawn.`
+      : // The page names no basis for this measure, so it does not choose a row.
+        `The model publishes ${String(rows.length)} ${what} rows; this page does not choose between them: ${periodList(rows)}.`;
   if (!measure) return `The model publishes no ${what} figure.`;
   if (measure.cases.length === 0) return `The model's ${what} row has no dated forecast year.`;
   return `No ${what} figure for ${caseName ?? "the selected case"}.`;
@@ -301,15 +305,15 @@ export function modelLimitations(entry: OutputEntry | undefined): Limitation[] {
       const lines = block.text.split("\n");
       const items: { line: number; parts: string[] }[] = [];
       lines.forEach((line, at) => {
+        // A paragraph's Basis line belongs to its trace, never to its words.
+        if (/^\s*Basis:/u.test(line)) return;
         const bullet = /^\s*[-*]\s+(.*)$/u.exec(line);
         const last = items.at(-1);
         if (bullet || !last) items.push({ line: block.line + at, parts: [bullet?.[1] ?? line] });
         else last.parts.push(line.trim());
       });
-      return items.map(({ line, parts }) => {
-        const text = parts.join(" ").replaceAll("**", "").replaceAll("`", "").trim();
-        return { line, text: containsReference(text) ? null : readerText(text) };
-      });
+      // The words through the reader rule the Overview uses: null where they carry a reference.
+      return items.map(({ line, parts }) => ({ line, text: readerReason(parts.join(" ")) }));
     })
     .filter(({ text }) => text !== "");
 }
@@ -394,7 +398,8 @@ export function maturitySchedule(view: ReportView) {
   };
 }
 
-/** One stated figure of a funding-gap row: its column's header and its cell as written. */
+/** One stated figure of a funding-gap row: its column's header and its cell as written; `value`
+ * is null where the cell is not one plain figure (it is then drawn as written, never as a gap). */
 type GapFigure = { header: string; text: string; value: number | null };
 
 export type FundingGap = {
@@ -405,8 +410,12 @@ export type FundingGap = {
   /** The row's own label, in reader words. */
   label: string;
   figures: GapFigure[];
-  /** The unit as the row or its header states it; null when neither does. */
+  /** The unit as the value header or a unit column states it; null when neither does. */
   unit: string | null;
+  /** True where a figure states its own unit ("USD 120m"), so no unit is missing. */
+  unitInFigure: boolean;
+  /** The row's notes, limitations and status cells, through the reader rule. */
+  notes: string[];
   horizon: string | null;
 };
 
@@ -415,24 +424,55 @@ const HORIZON = /^(?:CP-2D\s+)?horizon\b/iu;
 const UNIT_COLUMN = /^(?:Reporting unit|Units?)$/iu;
 const CURRENCY_COLUMN = /^Currency$/iu;
 const SCALE_COLUMN = /^Scale$/iu;
-const NOT_A_FIGURE =
-  /^(?:Source|Evidence|Basis|Basis and limitation|Notes?|Limitations?|Status|Category)$/iu;
-const EMPTY = /^(?:|—|-|–)$/u;
+/** Columns that hold the row's source: they go to its trace, never to the page. */
+const SOURCE_COLUMN = /^(?:Source|Evidence|References?|Ref|Register|Id)$/iu;
+/** Columns that hold words about the row: drawn as its notes, under the figures. */
+const NOTE_COLUMN = /^(?:Basis|Basis and limitation|Notes?|Limitations?|Status|Category)$/iu;
 /** A register id in brackets, such as "(T2E.3.r03)": machinery, never page text. */
 const REGISTER_ID = /\s*\((?:[A-Z]\d[\w]*(?:\.\w+)*)\)/gu;
+/** A cell that states a unit of its own: letters or a currency sign beside its figure. */
+const OWN_UNIT = /[A-Za-z$€£¥]/u;
 
 const plain = (text: string) => readerText(text.replace(REGISTER_ID, "").trim());
 
-function gapUnit(headers: string[], cells: string[], valueAt: number) {
-  const header = /\(([^()]+)\)\s*$/u.exec(headers[valueAt] ?? "")?.[1];
-  if (header) return header;
+function gapUnit(headers: string[], cells: string[], values: number[]) {
+  for (const at of values) {
+    const header = /\(([^()]+)\)\s*$/u.exec(headers[at] ?? "")?.[1];
+    if (header) return header;
+  }
   const at = (pattern: RegExp) => headers.findIndex((name) => pattern.test(name.trim()));
   const unit = cells[at(UNIT_COLUMN)]?.trim();
-  if (unit && !EMPTY.test(unit)) return unit;
+  if (unit) return unit;
   const currency = cells[at(CURRENCY_COLUMN)]?.trim() ?? "";
   const scale = cells[at(SCALE_COLUMN)]?.trim() ?? "";
-  const both = [currency, scale].filter((part) => part && !EMPTY.test(part)).join(" ");
-  return both || null;
+  return [currency, scale].filter(Boolean).join(" ") || null;
+}
+
+/** The table's value columns: every column but the label, unit, source and note columns. */
+function valueColumns(headers: string[]) {
+  return headers.flatMap((header, at) => {
+    const name = header.trim();
+    return at === 0 ||
+      [UNIT_COLUMN, CURRENCY_COLUMN, SCALE_COLUMN, SOURCE_COLUMN, NOTE_COLUMN].some((pattern) =>
+        pattern.test(name),
+      )
+      ? []
+      : [at];
+  });
+}
+
+/** What a row with no stated figure says in place of one. */
+export const NOT_STATED_IN_ROW = "Not stated in the row";
+
+/** The funding gap's line of context, as every tile draws it: module and row, horizon, unit. */
+export function gapContext(gap: FundingGap) {
+  return [
+    `${gap.name}: ${gap.label}`,
+    gap.horizon ?? "horizon not stated",
+    gap.unit ?? (gap.unitInFigure ? null : "unit not stated"),
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 function gapIn(entry: OutputEntry, module: string): FundingGap | null {
@@ -442,16 +482,9 @@ function gapIn(entry: OutputEntry, module: string): FundingGap | null {
   for (const table of tables) {
     const row = table.rows.find(({ cells }) => FUNDING_GAP.test(cells[0] ?? ""));
     if (!row) continue;
-    const columns = table.headers.flatMap((header, at) =>
-      at === 0 ||
-      UNIT_COLUMN.test(header.trim()) ||
-      CURRENCY_COLUMN.test(header.trim()) ||
-      SCALE_COLUMN.test(header.trim()) ||
-      NOT_A_FIGURE.test(header.trim())
-        ? []
-        : [at],
-    );
-    const stated = columns.filter((at) => !EMPTY.test((row.cells[at] ?? "").trim()));
+    const values = valueColumns(table.headers);
+    // A written dash is a figure as written; only an empty cell states nothing.
+    const stated = values.filter((at) => (row.cells[at] ?? "").trim() !== "");
     const figures = stated.map((at) => {
       const text = (row.cells[at] ?? "").trim();
       return {
@@ -462,21 +495,26 @@ function gapIn(entry: OutputEntry, module: string): FundingGap | null {
         value: amount(text.replaceAll("−", "-")),
       };
     });
+    const notes = table.headers.flatMap((header, at) => {
+      if (!NOTE_COLUMN.test(header.trim())) return [];
+      const words = readerReason(row.cells[at] ?? "");
+      return words ? [words] : [];
+    });
+    // The horizon is read from the value columns only; an empty value cell states none.
     const horizon = table.rows.find(({ cells }) => HORIZON.test(cells[0] ?? ""));
-    const horizonText = horizon?.cells
-      .slice(1)
-      .map((cell) => cell.trim())
-      .find((cell) => !EMPTY.test(cell));
+    const horizonText = values
+      .map((at) => (horizon?.cells[at] ?? "").trim())
+      .find((cell) => cell !== "");
     return {
       module,
       name: moduleName(module),
       entry,
       line: row.line,
       label: plain(row.cells[0] ?? ""),
-      figures: figures.length
-        ? figures
-        : [{ header: "", text: "Not stated in the row", value: null }],
-      unit: gapUnit(table.headers, row.cells, stated[0] ?? -1),
+      figures: figures.length ? figures : [{ header: "", text: NOT_STATED_IN_ROW, value: null }],
+      unit: gapUnit(table.headers, row.cells, values),
+      unitInFigure: figures.some(({ text, value }) => value === null && OWN_UNIT.test(text)),
+      notes,
       horizon: horizonText && !containsReference(horizonText) ? plain(horizonText) : null,
     };
   }
@@ -497,7 +535,10 @@ export function fundingGap(view: ReportView) {
     const { entry, reason } = moduleSource(view, module, name);
     if (!entry || reason) {
       looked.push(
-        entry && blocked(entry) ? `${name} is not assessable: ${reason ?? ""}` : (reason ?? ""),
+        // The module's own sentence, once: "Not assessable: …" is not said twice.
+        entry && blocked(entry)
+          ? `${name} is not assessable: ${(reason ?? "").replace(/^not assessable:\s*/iu, "")}`
+          : (reason ?? ""),
       );
       continue;
     }

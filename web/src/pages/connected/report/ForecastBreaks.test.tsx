@@ -370,3 +370,30 @@ it("draws a figure below zero on its own side of zero and tells zero apart from 
   const small = drawing.querySelector('[data-bar="All-in cover (x) 0.04"]');
   expect(Number(small?.getAttribute("width"))).toBeGreaterThanOrEqual(3);
 });
+
+it("draws a funding-gap figure as written with the unit it states, and the row's notes", () => {
+  const liquidity = entryOf("CP-2D", [
+    { heading: "Findings", level: 2, line: 1, blocks: [] },
+    {
+      heading: "T2E.5 Funding gap",
+      level: 4,
+      line: 40,
+      blocks: [
+        table(
+          42,
+          ["Line", "Value", "Notes", "Source"],
+          [["Funding gap", "USD 120m", "uses RCF", "T2E.5.r01"]],
+        ),
+      ],
+    },
+  ]);
+  breaks([liquidity]);
+  const part = within(screen.getByRole("region", { name: "Funding gap" }));
+  // As written: not the gap chip, and no "unit not stated" beside a figure that states its unit.
+  expect(part.getByText("USD 120m")).not.toHaveClass("border-dashed");
+  expect(part.getByText("USD 120m").closest(".gap-hatch")).toBeNull();
+  expect(part.queryByText(/unit not stated/)).toBeNull();
+  expect(part.getByText(/horizon not stated/)).toBeInTheDocument();
+  expect(part.getByText("uses RCF")).toBeInTheDocument();
+  expect(part.queryByText(/T2E\.5/)).toBeNull();
+});

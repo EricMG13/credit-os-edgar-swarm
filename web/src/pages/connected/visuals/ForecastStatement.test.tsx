@@ -517,7 +517,7 @@ it("scrolls both ways in a named focusable region of its own height", () => {
   expect(within(region).getByRole("rowheader", { name: "Revenue" }).className).toContain("sticky");
 });
 
-it("opens a long statement on its totals, leverage, interest cover and liquidity", () => {
+it("opens a long statement on its totals and the exact rows the page charts, no keyword", () => {
   const line = (label: string, kind = "money", total = false) => ({
     label,
     band: kind === "money" ? "Operating" : "Credit metrics",
@@ -525,14 +525,9 @@ it("opens a long statement on its totals, leverage, interest cover and liquidity
     total,
     cells: ["1", "2", "3"].map(value),
   });
-  const key = [
-    line("Revenue", "money", true),
-    line("Accessible liquidity", "money", true),
-    line("Total leverage (debt / Adj EBITDA)", "multiple"),
-    line("Net leverage (net debt / Adj EBITDA)", "multiple"),
-    line("Interest coverage (Adj EBITDA / cash interest)", "multiple"),
-    line("Interest cover", "multiple"),
-  ];
+  const totals = [line("Revenue", "money", true), line("Closing cash", "money", true)];
+  // The rows the page's own measure reading chose for the lead and the stats, by row identity.
+  const charted = [line("Net debt / Adj EBITDA", "multiple"), line("Interest cover", "multiple")];
   const other = [
     "COGS",
     "Opex",
@@ -542,20 +537,31 @@ it("opens a long statement on its totals, leverage, interest cover and liquidity
     "Distributions",
     "Opening cash",
     "Opening debt",
+    "Leverage-neutral buybacks",
+    "Accessible liquidity (incl. RCF)",
   ].map((label) => line(label));
-  renderGrid([
-    ...key.slice(0, 2),
+  const rows = [
+    ...totals,
     ...other,
-    ...key.slice(2),
-    line("Cash proxy / closing debt", "multiple"),
-  ]);
-  for (const { label } of key) expect(grid().getByRole("rowheader", { name: label })).toBeVisible();
+    ...charted,
+    line("Total leverage (debt / Adj EBITDA)", "multiple"),
+  ];
+  render(
+    <ForecastStatement
+      model={gridModel(rows)}
+      selectedCase="Base case"
+      chartedRows={charted.map(({ label }) => label)}
+    />,
+  );
+  for (const { label } of [...totals, ...charted])
+    expect(grid().getByRole("rowheader", { name: label })).toBeVisible();
   for (const { label } of other)
     expect(grid().queryByRole("rowheader", { name: label })).toBeNull();
-  expect(grid().queryByRole("rowheader", { name: "Cash proxy / closing debt" })).toBeNull();
+  // A row named like a measure is not a key row unless the page charts it.
   expect(
-    screen.getByText("Totals, leverage, interest cover and liquidity: 6 of 15 rows."),
-  ).toBeInTheDocument();
+    grid().queryByRole("rowheader", { name: "Total leverage (debt / Adj EBITDA)" }),
+  ).toBeNull();
+  expect(screen.getByText("Totals and the rows charted above: 4 of 15 rows.")).toBeInTheDocument();
   fireEvent.click(
     within(screen.getByRole("group", { name: "Grid rows" })).getByRole("button", {
       name: "All rows",

@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 import type { OutputEntry } from "../publishedReport";
 import type { ReportView } from "../reportView";
 import {
+  absentText,
   cellsOf,
   endOf,
   fiscalYear,
@@ -12,6 +13,7 @@ import {
   maturitySchedule,
   modelLimitations,
   periodList,
+  readMeasure,
   type MeasureCell,
 } from "./forecastData";
 
@@ -283,7 +285,7 @@ it("reads the refinancing module's repeat as written: a Value column, no unit, i
   });
 });
 
-it("draws an empty funding-gap cell as stated nowhere, and shows both modules' figures", () => {
+it("draws a written dash as written, an empty row as stated nowhere, and both modules' figures", () => {
   const liquidity = handoff("CP-2D", [
     tableSection("T2E.5 Funding gap", 40, ["Line", "Value (USD millions)"], [["Funding gap", "—"]]),
   ]);
@@ -297,8 +299,14 @@ it("draws an empty funding-gap cell as stated nowhere, and shows both modules' f
   ]);
   const { gaps } = fundingGap(view([liquidity, refinancing]));
   expect(gaps.map(({ module, figures }) => [module, figures])).toEqual([
-    ["CP-2D", [{ header: "", text: "Not stated in the row", value: null }]],
+    ["CP-2D", [{ header: "Value (USD millions)", text: "—", value: null }]],
     ["CP-3C", [{ header: "Value", text: "180", value: 180 }]],
+  ]);
+  const empty = handoff("CP-2D", [
+    tableSection("T2E.5 Funding gap", 40, ["Line", "Value"], [["Funding gap", ""]]),
+  ]);
+  expect(fundingGap(view([empty])).gaps[0]?.figures).toEqual([
+    { header: "", text: "Not stated in the row", value: null },
   ]);
 });
 
@@ -401,4 +409,113 @@ it("reads the maturity schedule's rows only: a year with no row is neither drawn
     ["FY2028", "Not calculated: schedule incomplete"],
     ["FY2029", "1,250"],
   ]);
+});
+
+const limitationsOf = (text: string) =>
+  modelLimitations(
+    handoff("CP-2G", [
+      { heading: "Findings", level: 2, line: 1, blocks: [] },
+      {
+        heading: "Limitations",
+        level: 3,
+        line: 30,
+        blocks: [{ type: "text", line: 32, end: 34, text }],
+      },
+    ]),
+  );
+
+it("leaves a limitation's Basis line to its trace and reads only its words", () => {
+  expect(
+    limitationsOf(
+      "- The forecast excludes acquisitions.\nBasis: Financial foundation (CP-1); model.xlsx",
+    ),
+  ).toEqual([{ line: 32, text: "The forecast excludes acquisitions." }]);
+  expect(
+    limitationsOf("Refinancing is assumed on current terms.\nBasis: Liquidity (CP-2D)"),
+  ).toEqual([{ line: 32, text: "Refinancing is assumed on current terms." }]);
+  expect(limitationsOf("- Item one plain.\n- Item two plain.\nBasis: calculation C3")).toEqual([
+    { line: 32, text: "Item one plain." },
+    { line: 33, text: "Item two plain." },
+  ]);
+});
+
+const liquidityWith = (headers: string[], rows: string[][]) =>
+  fundingGap(view([handoff("CP-2D", [tableSection("T2E.5 Funding gap", 40, headers, rows)])]));
+
+it("reads the horizon only from value columns, never from a source column", () => {
+  const { gaps } = liquidityWith(
+    ["Line", "Value (USD millions)", "Source"],
+    [
+      ["Funding gap", "50", "T2E.5.r01"],
+      ["Horizon", "", "T2E.3.r03"],
+    ],
+  );
+  expect(gaps[0]?.horizon).toBeNull();
+  expect(gaps[0]?.unit).toBe("USD millions");
+  expect(gaps[0]?.figures).toEqual([{ header: "Value (USD millions)", text: "50", value: 50 }]);
+});
+
+it("keeps a figure the page cannot read as one number as written, with the unit it states", () => {
+  const inCell = liquidityWith(["Line", "Value"], [["Funding gap", "USD 120m"]]);
+  expect(inCell.gaps[0]?.figures).toEqual([{ header: "Value", text: "USD 120m", value: null }]);
+  // The cell states its own unit: the page says no "unit not stated".
+  expect(inCell.gaps[0]?.unit).toBeNull();
+  expect(inCell.gaps[0]?.unitInFigure).toBe(true);
+  const column = liquidityWith(
+    ["Line", "Value", "Unit"],
+    [["Funding gap", "120m", "USD millions"]],
+  );
+  expect(column.gaps[0]?.figures[0]?.text).toBe("120m");
+  expect(column.gaps[0]?.unit).toBe("USD millions");
+  const dash = liquidityWith(["Line", "Value (USD millions)"], [["Funding gap", "—"]]);
+  expect(dash.gaps[0]?.figures).toEqual([
+    { header: "Value (USD millions)", text: "—", value: null },
+  ]);
+  expect(dash.gaps[0]?.unit).toBe("USD millions");
+  const bare = liquidityWith(["Line", "Value"], [["Funding gap", "120"]]);
+  expect(bare.gaps[0]?.unit).toBeNull();
+  expect(bare.gaps[0]?.unitInFigure).toBe(false);
+});
+
+it("draws the row's notes under its figures; only source columns go to the trace", () => {
+  const { gaps } = liquidityWith(
+    ["Line", "Base", "Downside", "Notes", "Source"],
+    [["Funding gap", "0", "35", "uses RCF", "T2E.5.r01"]],
+  );
+  expect(gaps[0]?.figures.map(({ text }) => text)).toEqual(["0", "35"]);
+  expect(gaps[0]?.notes).toEqual(["uses RCF"]);
+});
+
+it("prints a blocked module's sentence once", () => {
+  const blockedLiquidity = handoff("CP-2D", [
+    { heading: "Findings", level: 2, line: 1, blocks: [] },
+    {
+      heading: "Bottom line",
+      level: 3,
+      line: 3,
+      blocks: [
+        {
+          type: "text",
+          line: 5,
+          end: 5,
+          text: "Not assessable: Financial foundation inputs did not validate.",
+        },
+      ],
+    },
+  ]);
+  expect(fundingGap(view([blockedLiquidity])).looked[0]).toBe(
+    "Liquidity is not assessable: Financial foundation inputs did not validate.",
+  );
+});
+
+it("says the page does not choose between two rows of a measure it names no basis for", () => {
+  const twoLiquidity = model(cols("Base case", ["FY2025E"]), {
+    "Accessible liquidity": [value("212")],
+    "Accessible liquidity (incl. RCF)": [value("262")],
+  });
+  const read = readMeasure(twoLiquidity, "accessible liquidity", /^Accessible liquidity\b/);
+  expect(read.measure).toBeNull();
+  expect(absentText(read)).toBe(
+    "The model publishes 2 accessible liquidity rows; this page does not choose between them: Accessible liquidity and Accessible liquidity (incl. RCF).",
+  );
 });

@@ -83,14 +83,15 @@ type ShownColumn = GridColumn & { source: StatementColumn | null; missing?: stri
 const ACTUAL_YEAR = /^FY(\d{4})A?$/u;
 const INTEREST_ROW = /^(?:Interest|Interest coverage(?: \(.*\))?)$/i;
 const NOT_PUBLISHED = "Not published";
-/** The rows a long statement opens on: the statement's own subtotals (the rows the model marks
- * `total`: revenue, profit lines, cash flow, closing cash, liquidity, closing and net debt) and the
- * credit measures a committee reads first. */
-const KEY_ROW = /\b(?:leverage|interest cover(?:age)?|liquidity)\b/i;
-const KEY_ROWS: KeyRows = {
-  matches: (row) => row.total || KEY_ROW.test(row.label),
-  description: "Totals, leverage, interest cover and liquidity",
-};
+/** The rows a long statement opens on: the rows the model marks `total`, and the exact rows the
+ * page's own measure reading charts above (net leverage, interest cover, accessible liquidity),
+ * matched by row identity, never by a word in a label. */
+function keyRowsOf(charted: readonly string[]): KeyRows {
+  return {
+    matches: (row) => row.total || charted.includes(row.label),
+    description: "Totals and the rows charted above",
+  };
+}
 
 function shownOf(column: StatementColumn, band: string, label = column.label): ShownColumn {
   const title = column.start && column.end ? `${column.start} to ${column.end}` : undefined;
@@ -341,7 +342,9 @@ function StatementView({
   caseNames,
   limits,
   source,
+  keyRows,
 }: {
+  keyRows: KeyRows;
   grid: Grid;
   name: string;
   /** A visible heading, only where the grid is not the tile's own. */
@@ -387,7 +390,7 @@ function StatementView({
         columns={facts.shown}
         rows={gridRows(grid, facts.shown, facts.period)}
         gapNotes={{ [NOT_PUBLISHED]: "the case publishes no column for this year." }}
-        keyRows={KEY_ROWS}
+        keyRows={keyRows}
         source={trace && ((row) => trace(row, { row }))}
       />
       <GridQualifications
@@ -406,8 +409,11 @@ export function ForecastStatement({
   selectedCase,
   selectedRawGroup,
   source,
+  chartedRows = [],
 }: {
   model: unknown;
+  /** The exact rows the page charts above the grid, by their labels as the model writes them. */
+  chartedRows?: readonly string[];
   selectedCase?: string;
   /** The selected case's raw group, where the caller knows it: it decides the match. */
   selectedRawGroup?: string;
@@ -425,6 +431,7 @@ export function ForecastStatement({
     caseNames: forecastCaseNames(cashflow),
     limits: stringsIn(cashflow.limits),
     source,
+    keyRows: keyRowsOf(chartedRows),
   };
   return (
     <div className="grid min-w-0 gap-5">

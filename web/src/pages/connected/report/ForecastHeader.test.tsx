@@ -47,7 +47,12 @@ function header(entries: OutputEntry[], onSelect = vi.fn()) {
       handoff={entries[0]}
       cases={[
         { name: "Base case", rawGroup: "Base case", hatched: false },
-        { name: "Downside shock", rawGroup: "Downside case", hatched: true },
+        {
+          name: "Downside shock",
+          rawGroup: "Downside case",
+          hatched: true,
+          absent: "No net leverage figure for this case.",
+        },
       ]}
       current="Base case"
       onSelect={onSelect}
@@ -77,10 +82,11 @@ it("switches case from the header and marks a case with no leverage path", () =>
   const cases = within(screen.getByRole("group", { name: "Case" }));
   expect(cases.getByRole("button", { name: "Base case" })).toHaveAttribute("aria-pressed", "true");
   fireEvent.click(
-    cases.getByRole("button", { name: "Downside shock, no leverage path in the model" }),
+    cases.getByRole("button", { name: "Downside shock: No net leverage figure for this case." }),
   );
   expect(onSelect).toHaveBeenCalledWith("Downside shock");
-  expect(screen.getByText("Hatched: no leverage path in the model")).toBeInTheDocument();
+  // The lead's own words, not the switch's.
+  expect(screen.getByText("Hatched: No net leverage figure for this case.")).toBeInTheDocument();
 });
 
 it("draws the gap in place of the bottom line when the forward model did not run", () => {

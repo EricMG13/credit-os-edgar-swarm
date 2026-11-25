@@ -662,10 +662,10 @@ it.each(["separate grids", "one grid"])(
         <Forecast view={view} run={run} />
       </PublishedTraceProvider>,
     );
-    const first = caseButton("Upside case · Upside, no leverage path in the model");
+    const first = caseButton("Upside case · Upside");
     // "Upside case" would only repeat the label, so the case takes its place by raw-group order;
     // the trace drawer below still identifies the column by its recorded raw group.
-    const second = caseButton("Upside case · second case, no leverage path in the model");
+    const second = caseButton("Upside case · second case");
     expect(caseItem("Upside case · Upside").textContent).toContain("6");
     expect(caseItem("Upside case · second case").textContent).toContain("20");
     fireEvent.click(second);

@@ -39,7 +39,8 @@ import {
   modelCases,
   modelLimitations,
   readMeasure,
-  type Measure,
+  absentText,
+  type MeasureRead,
 } from "./forecastData";
 import { CaseFigure, ForecastHeader, ForecastStats, type CaseChoice } from "./ForecastHeader";
 import { ModuleGap } from "./ForecastGaps";
@@ -253,23 +254,30 @@ const readLeverage = (model: unknown) =>
     basis: "net debt over Adj EBITDA",
   });
 
+/**
+ * The cases the switch offers. A case is hatched only where the page reads a net leverage row and
+ * the case has no figure on it, in the words the lead uses; where the page reads no row at all,
+ * the lead says why and no case is hatched.
+ */
 function caseChoices(
   model: Model,
   options: ReturnType<typeof forecastCaseOptions>,
-  leverage: Measure | null,
+  read: MeasureRead,
 ): CaseChoice[] {
+  const { measure } = read;
   const drawn = (group: string) =>
-    leverage?.cases.some(
+    measure?.cases.some(
       (item) => item.group === group && [...item.own.values()].some(({ value }) => value !== null),
     ) ?? false;
-  if (options.length)
-    return options.map(({ name, rawGroup }) => ({ name, rawGroup, hatched: !drawn(rawGroup) }));
+  const choice = (name: string, rawGroup: string): CaseChoice => {
+    const hatched = measure !== null && !drawn(rawGroup);
+    return hatched
+      ? { name, rawGroup, hatched, absent: absentText(read, "this case") }
+      : { name, rawGroup, hatched };
+  };
+  if (options.length) return options.map(({ name, rawGroup }) => choice(name, rawGroup));
   // Without a cash proxy row, the cases are the model's forecast column groups.
-  return modelCases(model).map(({ name, group }) => ({
-    name,
-    rawGroup: group,
-    hatched: !drawn(group),
-  }));
+  return modelCases(model).map(({ name, group }) => choice(name, group));
 }
 
 function basisItems(model: Model, group?: string) {
@@ -422,6 +430,9 @@ function ModelTiles({
             selectedCase={selectedCase}
             selectedRawGroup={group}
             source={source}
+            chartedRows={[leverage.measure, cover.measure, liquidity.measure].flatMap((measure) =>
+              measure ? [measure.label] : [],
+            )}
           />
         </div>
       </Tile>
@@ -455,8 +466,8 @@ export function Forecast({
   const { models, entries } = view;
   const model = models[selected] ?? models[0];
   const caseOptions = model ? forecastCaseOptions(model) : [];
-  const leverage = model ? readLeverage(model).measure : null;
-  const cases = model ? caseChoices(model, caseOptions, leverage) : [];
+  const leverage = model ? readLeverage(model) : null;
+  const cases = model && leverage ? caseChoices(model, caseOptions, leverage) : [];
   // The case the reader chose; else the one the model marks as its base case; else the first listed.
   const current =
     cases.find(({ name }) => name === chosenCase) ??

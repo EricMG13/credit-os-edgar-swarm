@@ -114,7 +114,7 @@ export function ScopeTile({
             {limitations.map(({ line, text }) => (
               <li key={line} className={`${TRACE_HOST} flex items-start justify-between gap-2`}>
                 <p className="text-small text-text-secondary">
-                  {text ?? "This limitation cites its source by name; read it in Evidence."}
+                  {text ?? "This limitation carries a reference; read it in Evidence."}
                 </p>
                 {limitationHref && (
                   <PublishedSource
