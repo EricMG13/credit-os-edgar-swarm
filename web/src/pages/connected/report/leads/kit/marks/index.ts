@@ -174,7 +174,7 @@
  *   safeText strips `[E3]`-style markers; reasonText(reason): "—" for "source dash".
  */
 export { fittingTicks, niceAxis, type NiceAxis } from "./axis";
-export { Bullet, type BulletSide } from "./Bullet";
+export { Bullet } from "./Bullet";
 export { Dumbbell, type DumbbellRow, type DumbbellSide } from "./Dumbbell";
 export { GapChip, GapSlot, Measured, gapSlotHeight } from "./GapSlot";
 export { Legend, type LegendEntry } from "./Legend";
