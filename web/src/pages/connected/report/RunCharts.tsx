@@ -218,12 +218,13 @@ function ChartRow({
           <button
             type="button"
             aria-expanded={open}
+            aria-label={`Table for ${title}`}
             onClick={() => {
               setOpen(!open);
             }}
             className={`ml-auto min-h-8 cursor-pointer rounded-ds-sm text-small text-text-link ${FOCUS}`}
           >
-            {`Table for ${title}`}
+            Table
           </button>
         )}
       </div>
@@ -287,32 +288,35 @@ export const RunCharts = memo(function RunCharts({
         Chart tables from this run
       </h3>
       {groups.length ? (
-        groups.map(({ id, name, entry, output, tables }) => {
-          const rows = [...output.charts, ...output.chartGaps].sort((a, b) => a.table - b.table);
-          return (
-            <div key={id} className="grid min-w-0 gap-1">
-              <h4 className="text-small font-semibold text-text-secondary">
-                <a
-                  href={`#modules/${encodeURIComponent(id)}`}
-                  className={`inline-flex min-h-8 items-center text-text-link underline-offset-2 hover:underline ${FOCUS}`}
-                >
-                  {name}
-                </a>
-              </h4>
-              <ul className="grid min-w-0">
-                {rows.map((descriptor) => (
-                  <ChartRow
-                    key={`${word(descriptor.title)}-${String(descriptor.table)}`}
-                    descriptor={descriptor}
-                    entry={entry}
-                    folder={folder}
-                    tables={tables}
-                  />
-                ))}
-              </ul>
-            </div>
-          );
-        })
+        // Two columns where the page is wide, each module's group kept whole.
+        <div className="min-w-0 gap-x-10 lg:columns-2 xl:columns-3">
+          {groups.map(({ id, name, entry, output, tables }) => {
+            const rows = [...output.charts, ...output.chartGaps].sort((a, b) => a.table - b.table);
+            return (
+              <div key={id} className="mb-4 grid min-w-0 break-inside-avoid gap-1">
+                <h4 className="text-small font-semibold text-text-secondary">
+                  <a
+                    href={`#modules/${encodeURIComponent(id)}`}
+                    className={`inline-flex min-h-8 items-center text-text-link underline-offset-2 hover:underline ${FOCUS}`}
+                  >
+                    {name}
+                  </a>
+                </h4>
+                <ul className="grid min-w-0">
+                  {rows.map((descriptor) => (
+                    <ChartRow
+                      key={`${word(descriptor.title)}-${String(descriptor.table)}`}
+                      descriptor={descriptor}
+                      entry={entry}
+                      folder={folder}
+                      tables={tables}
+                    />
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
       ) : (
         <p>No charts were published for this run.</p>
       )}

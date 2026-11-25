@@ -279,9 +279,12 @@ it("shows each covenant test as the legal module writes it, with the model's cav
   breaks([legal, forward]);
   const part = within(screen.getByRole("region", { name: "Covenant tests" }));
   expect(part.getByText("Net leverage")).toBeInTheDocument();
-  expect(part.getByText("5.0 x")).toBeInTheDocument();
-  expect(part.getByText("4.2 x")).toBeInTheDocument();
+  // Each cell as written, the unit column once: the page joins no unit to a figure.
+  expect(part.getByText("5.0")).toBeInTheDocument();
+  expect(part.getByText("4.2")).toBeInTheDocument();
   expect(part.getByText("0.8x")).toBeInTheDocument();
+  expect(part.queryByText("5.0 x")).toBeNull();
+  expect(part.getAllByText("Unit x").length).toBeGreaterThan(0);
   expect(part.getByText("Passes at or below")).toBeInTheDocument();
   expect(
     part.getByText("This forecast's figures are not set against the covenant tests above."),
@@ -339,4 +342,31 @@ it("draws every scenario name whole, wrapped onto more lines where the column is
   expect(drawn?.length).toBeGreaterThan(1);
   expect(drawn?.join(" ")).toBe(long);
   expect(drawing.textContent).not.toContain("…");
+});
+
+it("draws a figure below zero on its own side of zero and tells zero apart from a small figure", () => {
+  const entry = downside();
+  const flows = entry.sections.find(
+    ({ heading }) => heading === "T2DS.4 Stressed flows and metrics",
+  );
+  const block = flows?.blocks[0];
+  if (block?.type !== "table") throw new Error("fixture");
+  block.rows.unshift({
+    line: 105,
+    cells: ["Stressed FCF (US$m)", "0.00", "-5.1250", "Filing p.1"],
+  });
+  const cover = block.rows.find(({ cells }) => cells[0] === "All-in cover (x)");
+  if (cover) cover.cells = ["All-in cover (x)", "0.04", "0.00", "Filing p.1"];
+  breaks([entry]);
+  const drawing = within(screen.getByRole("group", { name: "Point-in-time stress" })).getByRole(
+    "img",
+  );
+  // A figure below zero is drawn left of the zero line in its row's own colour, its sign as
+  // written: no signal colour stands without a word.
+  expect(within(drawing).getByText("-5.1250")).toBeInTheDocument();
+  expect(drawing.querySelector(".fill-chart-4")).toBeNull();
+  // Zero is a tick on the zero line; a figure above zero is a bar of its own, however small.
+  expect(drawing.querySelectorAll("[data-zero]").length).toBe(2);
+  const small = drawing.querySelector('[data-bar="All-in cover (x) 0.04"]');
+  expect(Number(small?.getAttribute("width"))).toBeGreaterThanOrEqual(3);
 });

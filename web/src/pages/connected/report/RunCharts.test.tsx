@@ -159,7 +159,7 @@ it("keeps the title, unit, source link and table toggle on one compact line, tab
 it("holds the exact cells and the gap chip in a closed disclosure", () => {
   render(<RunCharts view={viewOf(entry())} folder="current" />);
   const row = rowOf("Debt maturities");
-  fireEvent.click(row.getByText("Table for Debt maturities"));
+  fireEvent.click(row.getByRole("button", { name: "Table for Debt maturities" }));
   const region = row.getByRole("region", { name: "Debt maturities table" });
   expect(region).toHaveAttribute("tabindex", "0");
   expect(region.className).toContain("overflow-x-auto");
@@ -238,7 +238,7 @@ it("draws an events row with its table and a trace to its table line", () => {
     "href",
     `/report/current#evidence/debt~${SHA}-41`,
   );
-  fireEvent.click(row.getByText("Table for Refinancing events"));
+  fireEvent.click(row.getByRole("button", { name: "Table for Refinancing events" }));
   expect(row.getByRole("cell", { name: "2026-03-31" })).toBeInTheDocument();
 });
 
@@ -249,14 +249,14 @@ it("draws a maps row with its table and a trace to its table line", () => {
     "href",
     `/report/current#evidence/debt~${SHA}-51`,
   );
-  fireEvent.click(row.getByText("Table for Creditor map"));
+  fireEvent.click(row.getByRole("button", { name: "Table for Creditor map" }));
   expect(row.getByRole("cell", { name: "Bank B" })).toBeInTheDocument();
 });
 
 it("draws the module-written qualification under its chart table with its own trace", () => {
   render(<RunCharts view={viewOf(withFigures(entry()))} folder="current" />);
   const row = rowOf("Debt maturities");
-  fireEvent.click(row.getByText("Table for Debt maturities"));
+  fireEvent.click(row.getByRole("button", { name: "Table for Debt maturities" }));
   const note = row.getByText("Maturities exclude the revolving facility; it is undrawn.");
   expect(note).toBeInTheDocument();
   expect(row.getByRole("link", { name: "Qualification source" })).toHaveAttribute(
@@ -268,7 +268,7 @@ it("draws the module-written qualification under its chart table with its own tr
 it("traces each table row to its own handoff line", () => {
   render(<RunCharts view={viewOf(entry())} folder="current" />);
   const row = rowOf("Debt maturities");
-  fireEvent.click(row.getByText("Table for Debt maturities"));
+  fireEvent.click(row.getByRole("button", { name: "Table for Debt maturities" }));
   expect(row.getByRole("link", { name: "Show sources for FY2026" })).toHaveAttribute(
     "href",
     `/report/current#evidence/debt~${SHA}-23`,

@@ -38,7 +38,7 @@ const KEYS = ["A", "B", "C", "D", "E", "F"] as const;
 
 const TOP = 28;
 const LEFT = 52;
-const BOTTOM = 268;
+const BOTTOM = 252;
 const AXIS = BOTTOM + 24;
 const LANE_BASE = BOTTOM + 112;
 const LANE_HEIGHT = 44;
@@ -171,8 +171,9 @@ function boxOf({ x, y, anchor }: Spot, width: number, kind: Wanted["kind"]): Box
   return {
     left: left - 2,
     right: left + width + 2,
-    top: y - size * 0.8 - 1,
-    bottom: y + size * 0.25 + 1,
+    // The box the browser draws the text in, ascent and descent, with 2px of air.
+    top: y - size - 2,
+    bottom: y + size * 0.3 + 2,
   };
 }
 

@@ -63,109 +63,114 @@ function CalculationDownload({ folder, model }: { folder: string; model: string 
   );
 }
 
-/** Scope and limits as a visible list, each with its trace; then the published model. */
-export function ForecastScopeTiles({
+/** Scope and limits as a visible list, each with its trace. */
+export function ScopeTile({
   model,
-  folder,
   source,
   note,
   register,
   limitations = [],
   limitationHref,
-  select,
 }: {
   model: { id: string };
-  folder: string;
   source?: ForecastSource;
   note?: ReactNode;
   register: boolean;
   /** The forward model's own Limitations passage, every item, as written. */
   limitations?: Limitation[];
   limitationHref?: (line: number) => string;
-  select?: ReactNode;
 }) {
   const { base, limits } = scopeQualifications(model);
   const passages = [...base, ...limits];
   return (
-    <>
-      <Tile
-        span={8}
-        label="Scope and limits"
-        title="Scope and limits"
-        kicker="What this forecast can and cannot show"
-      >
-        {passages.length ? (
-          <ul className="grid min-w-0 gap-3 wrap-anywhere">
-            {passages.map(({ text, recorded }) => (
-              <li
-                key={JSON.stringify([recorded, text])}
-                className={`${TRACE_HOST} flex items-start justify-between gap-2 border-t border-border-hairline pt-3 first:border-t-0 first:pt-0`}
-              >
-                <p className="text-small text-text-secondary">{text}</p>
-                {source?.("Model scope qualification", { recordedQualification: recorded })}
+    <Tile
+      span={8}
+      label="Scope and limits"
+      title="Scope and limits"
+      kicker="What this forecast can and cannot show"
+      className="lg:self-start"
+    >
+      {passages.length ? (
+        <ul className="grid min-w-0 gap-3 wrap-anywhere">
+          {passages.map(({ text, recorded }) => (
+            <li
+              key={JSON.stringify([recorded, text])}
+              className={`${TRACE_HOST} flex items-start justify-between gap-2 border-t border-border-hairline pt-3 first:border-t-0 first:pt-0`}
+            >
+              <p className="text-small text-text-secondary">{text}</p>
+              {source?.("Model scope qualification", { recordedQualification: recorded })}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <GapNote>No qualifications are available in this summary.</GapNote>
+      )}
+      {limitations.length > 0 && (
+        <section aria-label={`${moduleName("CP-2G")}'s limitations`} className="grid min-w-0 gap-2">
+          <h4 className="text-small font-medium text-text-primary">
+            {`${moduleName("CP-2G")}'s limitations, as it writes them`}
+          </h4>
+          <ul className="grid min-w-0 gap-2 wrap-anywhere">
+            {limitations.map(({ line, text }) => (
+              <li key={line} className={`${TRACE_HOST} flex items-start justify-between gap-2`}>
+                <p className="text-small text-text-secondary">
+                  {text ?? "This limitation cites its source by name; read it in Evidence."}
+                </p>
+                {limitationHref && (
+                  <PublishedSource
+                    href={limitationHref(line)}
+                    name={`${moduleName("CP-2G")} limitation, line ${String(line)}`}
+                    linkLabel={`Source for this ${moduleName("CP-2G")} limitation`}
+                  >
+                    View source
+                  </PublishedSource>
+                )}
               </li>
             ))}
           </ul>
-        ) : (
-          <GapNote>No qualifications are available in this summary.</GapNote>
-        )}
-        {limitations.length > 0 && (
-          <section
-            aria-label={`${moduleName("CP-2G")}'s limitations`}
-            className="grid min-w-0 gap-2"
-          >
-            <h4 className="text-small font-medium text-text-primary">
-              {`${moduleName("CP-2G")}'s limitations, as it writes them`}
-            </h4>
-            <ul className="grid min-w-0 gap-2 wrap-anywhere">
-              {limitations.map(({ line, text }) => (
-                <li key={line} className={`${TRACE_HOST} flex items-start justify-between gap-2`}>
-                  <p className="text-small text-text-secondary">
-                    {text ?? "This limitation cites its source by name; read it in Evidence."}
-                  </p>
-                  {limitationHref && (
-                    <PublishedSource
-                      href={limitationHref(line)}
-                      name={`${moduleName("CP-2G")} limitation, line ${String(line)}`}
-                      linkLabel={`Source for this ${moduleName("CP-2G")} limitation`}
-                    >
-                      View source
-                    </PublishedSource>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-        {note}
-        <div className="flex flex-wrap gap-x-4">
-          <Button
-            href="#evidence/record"
-            color="link-gray"
-            size="sm"
-            iconTrailing={ArrowRight}
-            className={TARGET}
-          >
-            Full model notes and limitations
+        </section>
+      )}
+      {note}
+      <div className="flex flex-wrap gap-x-4">
+        <Button
+          href="#evidence/record"
+          color="link-gray"
+          size="sm"
+          iconTrailing={ArrowRight}
+          className={TARGET}
+        >
+          Full model notes and limitations
+        </Button>
+        {register && (
+          <Button href="#evidence/record" color="link-gray" size="sm" className={TARGET}>
+            View model records in Evidence
           </Button>
-          {register && (
-            <Button href="#evidence/record" color="link-gray" size="sm" className={TARGET}>
-              View model records in Evidence
-            </Button>
-          )}
-        </div>
-      </Tile>
-      <Tile
-        span={4}
-        label="Published model"
-        title="Published model"
-        kicker="The model, its charts and the calculation are part of this report"
-        className="lg:self-start"
-      >
-        <div className="flex flex-wrap items-end gap-3">
-          {select}
-          <CalculationDownload folder={folder} model={model.id} />
-        </div>
+        )}
+      </div>
+    </Tile>
+  );
+}
+
+/** The published model: which model is shown, and its calculation download, on one row. */
+export function PublishedModelTile({
+  model,
+  folder,
+  select,
+}: {
+  model: { id: string };
+  folder: string;
+  select?: ReactNode;
+}) {
+  return (
+    <Tile
+      span={8}
+      label="Published model"
+      title="Published model"
+      kicker="The model, its charts and the calculation are part of this report"
+    >
+      <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
+        {select}
+        <CalculationDownload folder={folder} model={model.id} />
         <Button
           href="#evidence/summary"
           color="link-gray"
@@ -175,7 +180,7 @@ export function ForecastScopeTiles({
         >
           Forecast evidence and artifacts
         </Button>
-      </Tile>
-    </>
+      </div>
+    </Tile>
   );
 }

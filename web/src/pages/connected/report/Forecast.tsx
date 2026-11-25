@@ -1,4 +1,5 @@
 import { Button } from "@/components/base/buttons/button";
+import { ArrowRight } from "@untitledui/icons";
 import { useState, type ReactNode } from "react";
 import { moduleName } from "../api";
 import { field, label } from "../layout";
@@ -45,7 +46,7 @@ import { ModuleGap } from "./ForecastGaps";
 import { WhatBreaks } from "./ForecastBreaks";
 import { AssumptionsByCase } from "./ForecastAssumptions";
 import { UsesOfCash } from "./ForecastCash";
-import { ForecastScopeTiles } from "./ForecastScopeTile";
+import { PublishedModelTile, ScopeTile } from "./ForecastScopeTile";
 import { Bento, GapNote, Tile } from "./overview/Tile";
 
 type Model = ReturnType<typeof buildReportView>["models"][number];
@@ -338,49 +339,78 @@ function ModelTiles({
         source={source}
         basis={`${caseName} · ${earningsBasis(model) ?? "earnings basis not recorded"}`}
       />
-      <LeveragePath
-        measure={leverage.measure}
-        rows={leverage.rows}
-        group={group}
-        caseName={caseName}
-        schedule={{ ...schedule, gap: scheduleGap, trace: scheduleTrace }}
-        trace={
-          leverage.measure
-            ? source("Net leverage path", { row: leverage.measure.label, case: "" })
-            : undefined
-        }
-      />
+      {/* The lead, assumptions, scope and published model beside what breaks and uses of cash,
+          in a grid of their own: its last row takes any height the right column needs, so the
+          left tiles sit one under another with no band between them. */}
+      <div className="grid min-w-0 grid-cols-1 gap-4 lg:col-span-12 lg:grid-cols-12 lg:grid-rows-[auto_auto_auto_1fr]">
+        <LeveragePath
+          measure={leverage.measure}
+          rows={leverage.rows}
+          group={group}
+          caseName={caseName}
+          schedule={{ ...schedule, gap: scheduleGap, trace: scheduleTrace }}
+          trace={
+            leverage.measure
+              ? source("Net leverage path", { row: leverage.measure.label, case: "" })
+              : undefined
+          }
+        />
 
-      <div className="flex min-w-0 flex-col gap-4 lg:col-span-4 lg:row-span-2">
-        <WhatBreaks
-          view={view}
-          folder={run.folder}
-          liquidity={liquidity}
-          group={group}
-          caseName={caseName}
+        {/* Beside the lead, the assumptions, the scope and the published model: what breaks
+          and uses of cash. The page reads in this order at every width. */}
+        <div className="flex min-w-0 flex-col gap-4 lg:col-span-4 lg:row-span-4">
+          <WhatBreaks
+            view={view}
+            folder={run.folder}
+            liquidity={liquidity}
+            group={group}
+            caseName={caseName}
+            source={source}
+            schedule={{ ...schedule, entry: schedule.source.entry, trace: scheduleTrace }}
+          />
+          <UsesOfCash
+            model={model}
+            group={group}
+            caseName={caseName}
+            units={unitLabel(word(cashflow.units))}
+            source={source}
+          />
+        </div>
+        <AssumptionsByCase
+          document={input?.value ?? null}
           source={source}
-          schedule={{ ...schedule, entry: schedule.source.entry, trace: scheduleTrace }}
+          caseNames={forecastCaseNames(cashflow)}
+          downsideNote={stringsIn(cashflow.notes).find((note) =>
+            note.startsWith("Downside case is"),
+          )}
         />
-        <UsesOfCash
+        <ScopeTile
           model={model}
-          group={group}
-          caseName={caseName}
-          units={unitLabel(word(cashflow.units))}
           source={source}
+          note={<BasisNote model={model} handoff={handoff} href={href} />}
+          register={Boolean(model.register)}
+          limitations={modelLimitations(handoff)}
+          limitationHref={href}
         />
+        <PublishedModelTile model={model} folder={run.folder} select={select} />
       </div>
-      <AssumptionsByCase
-        document={input?.value ?? null}
-        source={source}
-        caseNames={forecastCaseNames(cashflow)}
-        downsideNote={stringsIn(cashflow.notes).find((note) => note.startsWith("Downside case is"))}
-      />
       <Tile
         span={12}
         label="Forecast grid"
         title="Forecast grid"
         kicker="Rows by measure, columns by year · only cells the model wrote; the others are the gap cell"
         className="lg:self-start"
+        trace={
+          <Button
+            href="#evidence/record"
+            color="secondary"
+            size="sm"
+            iconTrailing={ArrowRight}
+            className="min-h-8 flex-none max-[480px]:min-h-11"
+          >
+            Model notes and limitations
+          </Button>
+        }
       >
         <div
           id="forecast-model"
@@ -393,26 +423,8 @@ function ModelTiles({
             selectedRawGroup={group}
             source={source}
           />
-          <Button
-            href="#evidence/record"
-            color="link-gray"
-            size="sm"
-            className="min-h-8 w-fit max-[480px]:min-h-11"
-          >
-            Model notes and limitations
-          </Button>
         </div>
       </Tile>
-      <ForecastScopeTiles
-        model={model}
-        folder={run.folder}
-        source={source}
-        note={<BasisNote model={model} handoff={handoff} href={href} />}
-        register={Boolean(model.register)}
-        limitations={modelLimitations(handoff)}
-        limitationHref={href}
-        select={select}
-      />
     </>
   );
 }

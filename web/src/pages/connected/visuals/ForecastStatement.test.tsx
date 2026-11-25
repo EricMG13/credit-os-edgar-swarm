@@ -513,7 +513,7 @@ it("scrolls both ways in a named focusable region of its own height", () => {
   const region = screen.getByRole("region", { name: "Forecast grid table" });
   expect(region).toHaveAttribute("tabindex", "0");
   expect(region.className).toContain("overflow-auto");
-  expect(region.className).toContain("max-h-[70vh]");
+  expect(region.className).toContain("max-h-[50vh]");
   expect(within(region).getByRole("rowheader", { name: "Revenue" }).className).toContain("sticky");
 });
 

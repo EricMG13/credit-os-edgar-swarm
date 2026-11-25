@@ -442,7 +442,7 @@ export function ForecastGrid({
         aria-label={`${name} table`}
         // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- the keyboard scrolls it both ways
         tabIndex={0}
-        className="relative max-h-[70vh] min-w-0 overflow-auto rounded-ds-md border border-border-hairline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+        className="relative max-h-[50vh] min-w-0 overflow-auto rounded-ds-md border border-border-hairline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
       >
         <table className="w-full border-collapse text-small">
           <caption className="sr-only">{name}</caption>

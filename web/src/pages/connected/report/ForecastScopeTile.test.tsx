@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { ForecastScopeTiles } from "./ForecastScopeTile";
+import { PublishedModelTile, ScopeTile } from "./ForecastScopeTile";
 
 const MODEL = "d5c93ecb";
 
@@ -13,14 +13,15 @@ function tiles(files: unknown, ok = true) {
     "fetch",
     vi.fn(() => Promise.resolve({ ok, json: () => Promise.resolve(files) })),
   );
+  const model = {
+    id: MODEL,
+    cashflow: { notes: ["Base case is a conditional illustration."] },
+  } as never;
   render(
-    <ForecastScopeTiles
-      model={
-        { id: MODEL, cashflow: { notes: ["Base case is a conditional illustration."] } } as never
-      }
-      folder="run-1"
-      register={false}
-    />,
+    <>
+      <ScopeTile model={model} register={false} />
+      <PublishedModelTile model={model} folder="run-1" />
+    </>,
   );
 }
 

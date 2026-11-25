@@ -85,7 +85,7 @@ it("draws the designated run figure with a same-output trace even when no model 
     "href",
     `/report/current#evidence/Debt%20maturities~${"d".repeat(64)}-21`,
   );
-  fireEvent.click(row.getByText("Table for Debt maturities"));
+  fireEvent.click(row.getByRole("button", { name: "Table for Debt maturities" }));
   const table = within(row.getByRole("region", { name: "Debt maturities table" }));
   expect(table.getByRole("cell", { name: "0.00" })).toBeInTheDocument();
   expect(table.getByRole("cell", { name: "Not supplied: schedule ends" })).toBeInTheDocument();
@@ -99,7 +99,7 @@ it("draws the designated run figure with a same-output trace even when no model 
   expect(
     within(chartRow("Liquidity bridge")).getByText("Module not assessable."),
   ).toBeInTheDocument();
-  expect(screen.queryByText("Table for Liquidity bridge")).toBeNull();
+  expect(screen.queryByRole("button", { name: "Table for Liquidity bridge" })).toBeNull();
   expect(screen.queryByText("237")).toBeNull();
   expect(screen.queryByText("Retained maturity schedule")).toBeNull();
   // The selected module's events and maps are listed beside its charts.

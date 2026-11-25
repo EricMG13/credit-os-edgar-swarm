@@ -39,7 +39,7 @@ it("scrolls both ways in its own named, focusable region, its labels pinned to t
   const region = screen.getByRole("region", { name: "Forecast grid table" });
   expect(region).toHaveAttribute("tabindex", "0");
   expect(region.className).toContain("overflow-auto");
-  expect(region.className).toContain("max-h-[70vh]");
+  expect(region.className).toContain("max-h-[50vh]");
   // Both header rows stick to the top together, over an opaque ground.
   const head = region.querySelector("thead");
   expect(head?.className).toMatch(/\bsticky\b/);

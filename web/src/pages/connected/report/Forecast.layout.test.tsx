@@ -85,15 +85,16 @@ it("lays the tiles in the screen map's order, the lead first after the figures",
         "Published model",
       ].includes(name ?? ""),
     );
+  // Scope and the published model sit above the grid, not under it.
   expect(names).toEqual([
     "Forecast",
     "Net leverage path",
     "What breaks, and when",
     "Uses of cash",
     "Assumptions by case",
-    "Forecast grid",
     "Scope and limits",
     "Published model",
+    "Forecast grid",
   ]);
   // The case list and its cash proxy tile are gone: the figure is the header's.
   expect(screen.queryByRole("region", { name: "Cash proxy by case" })).toBeNull();

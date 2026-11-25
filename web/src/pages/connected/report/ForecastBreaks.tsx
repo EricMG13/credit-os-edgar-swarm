@@ -248,13 +248,14 @@ function CovenantPart({ view, folder }: { view: ReportView; folder: string }) {
                 `the ${test.label} test`,
               )}
             </span>
+            {/* Each cell as the module writes it; its unit column once, joined to no figure. */}
             <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-caption text-text-secondary">
               <span>
                 Level{" "}
                 {test.threshold.value === null ? (
                   <GapChip>{test.threshold.text}</GapChip>
                 ) : (
-                  <Figure>{`${test.threshold.text}${test.unit ? ` ${test.unit}` : ""}`}</Figure>
+                  <Figure className="text-mono">{test.threshold.text}</Figure>
                 )}
               </span>
               <span>
@@ -262,14 +263,15 @@ function CovenantPart({ view, folder }: { view: ReportView; folder: string }) {
                 {test.current.value === null ? (
                   <GapChip>{test.current.text}</GapChip>
                 ) : (
-                  <Figure>{`${test.current.text}${test.unit ? ` ${test.unit}` : ""}`}</Figure>
+                  <Figure className="text-mono">{test.current.text}</Figure>
                 )}
               </span>
               {test.headroom && (
                 <span>
-                  Headroom <Figure>{test.headroom}</Figure>
+                  Headroom <Figure className="text-mono">{test.headroom}</Figure>
                 </span>
               )}
+              {test.unit && <span>{`Unit ${test.unit}`}</span>}
               {test.direction && <span>{test.direction}</span>}
             </span>
           </li>
@@ -301,7 +303,7 @@ function useMeasuredWidth(fallback: number) {
   return { ref, width };
 }
 
-const ROW = 30;
+const ROW = 27;
 const HEAD = 22;
 const NAMES = 104;
 const LABEL = 56;
@@ -410,26 +412,37 @@ function StressMultiple({
                       Not calculated
                     </text>
                   );
-                const from = Math.min(at(0), at(cell.value));
-                const size = Math.abs(at(cell.value) - at(0));
+                // Zero is a tick on the zero line; any other figure is a bar of at least 3px on its
+                // own side of the line, so a small figure never reads as zero.
+                const zero = cell.value === 0;
+                const size = zero ? 0 : Math.max(3, Math.abs(at(cell.value) - at(0)));
+                const from = cell.value < 0 ? at(0) - size : at(0);
+                const end = cell.value < 0 ? at(0) : at(0) + size;
                 return (
                   <g key={row}>
-                    <rect
-                      x={from}
-                      y={y}
-                      width={Math.max(1, size)}
-                      height="16"
-                      rx="2"
-                      className={
-                        cell.value < 0
-                          ? "fill-chart-4"
-                          : cases[row]?.control
-                            ? "fill-chart-3"
-                            : "fill-chart-1"
-                      }
-                    />
+                    {zero ? (
+                      <rect
+                        data-zero={`${panel.measure} ${cell.text}`}
+                        x={at(0) - 1}
+                        y={y - 2}
+                        width="2"
+                        height="20"
+                        className="fill-text-secondary"
+                      />
+                    ) : (
+                      <rect
+                        data-bar={`${panel.measure} ${cell.text}`}
+                        x={from}
+                        y={y}
+                        width={size}
+                        height="16"
+                        rx="2"
+                        // No signal colour: the figure's sign and its side of zero say it.
+                        className={cases[row]?.control ? "fill-chart-3" : "fill-chart-1"}
+                      />
+                    )}
                     <text
-                      x={Math.max(at(0), at(cell.value)) + 4}
+                      x={end + 4}
                       y={y + 12}
                       className="fill-text-primary font-mono text-caption"
                     >
