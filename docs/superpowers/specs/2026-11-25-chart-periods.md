@@ -79,9 +79,12 @@ type and date, not from a label. `FinancialPeriod.period_type` gains `PF`.
   periods are recognised by the rule, not by `FY\d{4}E` alone. Scenario comparison across cases
   still applies only to forecast periods.
 - **HTML Model charts M1–M3** (`model_handoff_delivery.py`): the model layout is annual by
-  contract, so these charts cannot mix quarters; they show every annual period plus LTM and PF
-  columns when the handoff supplies them, in rule order. This is the one annual-plus-LTM/PF
-  chart family.
+  contract and cannot carry an LTM or PF column at all (`ModelPeriod` has no class; each label
+  must be `FY` and a year of type `Historical duration`; windows may not overlap; a fact id may
+  hold no space). So these charts show every annual period the layout selects, in rule order,
+  and say under the chart that the Model carries annual periods only. The figure builder places
+  LTM and PF columns after the fiscal years if a later layout supplies them. This is the one
+  chart family that cannot mix granularities.
 - **Legacy issuer-library charts**: `screen.js` trend chart and `views.js` path chart read their
   periods from the table (all columns, rule order supplied by Python or by column order after
   ordering), no fixed `[3,2,1]` or FY2025–FY2027 axis. `comparisonChart`, where its categories
@@ -94,6 +97,25 @@ two periods are the legend), cash bridge and EBITDA bridge steps (waterfalls), r
 comparison bars, covenant bullets and limits, stack/row charts keyed by instrument or segment,
 the hedge timeline and calendar (continuous dates, already ordered), and the maturity wall's
 facility legend (its X is fixed by this work).
+
+## Not yet compliant: periods ordered but not on X (owner decision)
+
+These Financial foundation lead figures now order their periods by the rule and never take a
+pro forma or forecast period as the latest, but do not put periods on the X axis. Each is a
+redesign of its figure, left out of this change:
+
+- **Interest cover** (`leads/foundation/InterestCover.tsx`): one row per period, the cover value
+  along a horizontal scale. A time series of one measure, so ruling (2) applies.
+- **Net debt / EBITDA strip** (`NetDebt.tsx`, `Strip`): one row per reported period and per
+  stated pro forma adjustment, on a horizontal value scale. Partly a time series, partly a bridge
+  of adjustments.
+- **Net debt bars** (`NetDebt.tsx`): the latest reported period and its stated adjustments as bars;
+  earlier periods are not drawn as a series.
+- **Periods** (`Periods.tsx`): a time axis of which periods each figure states; it falls back to one
+  period per row when the labels do not fit. A coverage figure, not a measure.
+
+Rightly not time on X: **Segments** (X is the segment; one compared period) and **Cash ladder**
+(X is the ladder step; one ladder per period, in rule order).
 
 ## Tests
 
