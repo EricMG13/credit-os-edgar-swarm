@@ -50,6 +50,7 @@ export function ReadinessRail({
   pathway,
   modules,
   source,
+  stagesInReview = false,
 }: {
   rows: readonly ReadinessRow[];
   /** The selected pathway's cap as the page shows it, "USD 25.00"; null when unavailable. */
@@ -59,6 +60,11 @@ export function ReadinessRail({
   pathway: string;
   modules: ModuleReadiness;
   source: ReadinessSource;
+  /**
+   * Whether the review tile draws the stages itself (below xl, where the rail sits under the
+   * form): the rail's own Modules tile then shows only from xl, so the stages are drawn once.
+   */
+  stagesInReview?: boolean;
 }) {
   const needsId = useId();
   const { ref, scrolls } = useScrolls<HTMLElement>();
@@ -112,6 +118,7 @@ export function ReadinessRail({
         label="Modules by stage"
         kicker={`${String(modules.count)} ${modules.count === 1 ? "module" : "modules"} · ${pathway}`}
         title="Modules"
+        {...(stagesInReview ? { className: "max-xl:hidden" } : {})}
       >
         <p className="text-caption text-text-secondary">{SOURCE_NOTE[source]}</p>
         <StagePipeline readiness={modules} label="Stages" />

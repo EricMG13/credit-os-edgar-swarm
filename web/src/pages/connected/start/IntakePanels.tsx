@@ -205,6 +205,7 @@ export function IntakePanels(props: IntakePanelsProps) {
           pathway={pathwayName(view.run.pathway)}
           modules={moduleReadiness(planned, checked)}
           source={source}
+          stagesInReview={review !== undefined}
         />
       </Bento>
     </div>

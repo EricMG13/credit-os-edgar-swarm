@@ -140,10 +140,12 @@ describe("Documents step: the upload list", () => {
     expect(screen.queryByText(/not reported before review/)).toBeNull();
   });
 
-  it("says once that the modules are checked at review, only while files are listed", () => {
-    renderStep(makeView({ documentRows: [row("a.pdf")] }));
-    expect(screen.getAllByText(/checks the files against each module/)).toHaveLength(1);
-    expect(screen.queryByText("Checked when you review the run.")).toBeNull();
+  // The rail says, on every step, that the modules are checked when the run is reviewed; the
+  // step says only what is not reported yet, so the fact is said once on the page.
+  it("says only what is not reported before review, once, while files are listed", () => {
+    const { container } = renderStep(makeView({ documentRows: [row("a.pdf")] }));
+    expect(screen.getAllByText(/not reported before review/)).toHaveLength(1);
+    expect(container).not.toHaveTextContent(/when you review the run|Checked when you review/);
   });
 
   it("draws no gap note after a review answered it", () => {

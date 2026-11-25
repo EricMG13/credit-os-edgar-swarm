@@ -52,7 +52,7 @@ function ReviewNotes({ synthetic, idNote }: { synthetic: boolean; idNote: string
   );
 }
 
-/** The cap as the tile's largest figure, in mono, and the sentence Submit is described by. */
+/** The cap as the tile's largest figure, in mono, with what it caps. */
 function CostLead({
   synthetic,
   capText,
@@ -63,24 +63,23 @@ function CostLead({
   pathway: string;
 }) {
   const figure = synthetic
-    ? { caption: "What it will cost", amount: "USD 0.00", note: "No-cost test" }
-    : capText && {
+    ? {
+        caption: "What it will cost",
+        amount: "USD 0.00",
+        note: capText ? `A paid run is capped at ${capText}` : undefined,
+      }
+    : {
         caption: "Spending cap",
-        amount: capText,
+        amount: capText ?? "Unavailable",
         note: `Cap · ${pathwayName(pathway)}`,
       };
   return (
     <>
-      {figure && (
-        <div className="grid gap-1">
-          <p className="text-caption text-text-tertiary">{figure.caption}</p>
-          <Figure className="text-metric font-medium">{figure.amount}</Figure>
-          <p className="text-small text-text-secondary">{figure.note}</p>
-        </div>
-      )}
-      <p id="run-submit-cost" className="reading-copy text-small text-text-secondary">
-        <SubmissionCost synthetic={synthetic} capText={capText} />
-      </p>
+      <p className="text-caption text-text-tertiary">{figure.caption}</p>
+      <Figure className={capText || synthetic ? "text-metric font-medium" : "text-h4"}>
+        {figure.amount}
+      </Figure>
+      {figure.note && <p className="text-small text-text-secondary">{figure.note}</p>}
     </>
   );
 }
@@ -130,9 +129,12 @@ function ReviewSubmit({
     <>
       <p className="text-caption text-text-tertiary tabular-nums xl:hidden">{ready}</p>
       {error && <ErrorNotice>{error}</ErrorNotice>}
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-3">
+        <p id="run-submit-cost" className="min-w-48 flex-1 text-small text-text-secondary">
+          <SubmissionCost synthetic={synthetic} capText={capText} />
+        </p>
         <SubmitConfirmation
-          className="w-full sm:w-auto"
+          className="w-full shrink-0 sm:w-auto"
           label={submitLabel}
           confirm={confirmation}
           isDisabled={submitDisabled}
@@ -207,12 +209,14 @@ export function ReviewConfirmation({
           ),
           mode: <ModeChip synthetic={synthetic} />,
           cost: (
+            <CostLead
+              synthetic={synthetic}
+              capText={capText}
+              pathway={review.answers.context.run.pathway}
+            />
+          ),
+          notes: (
             <>
-              <CostLead
-                synthetic={synthetic}
-                capText={capText}
-                pathway={review.answers.context.run.pathway}
-              />
               <ReviewNotes synthetic={synthetic} idNote={idNote} />
               {!synthetic && !modelVerified && (
                 <p className="text-small text-text-secondary">
@@ -224,7 +228,7 @@ export function ReviewConfirmation({
             </>
           ),
           submit: (
-            <div className="grid gap-3 border-t border-border-hairline pt-4">
+            <div className="grid gap-3">
               <ReviewApproval
                 blocker={blocker}
                 approved={approved}

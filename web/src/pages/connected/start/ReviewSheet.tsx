@@ -328,8 +328,8 @@ function LimitRow({
   const affected = moduleNames(group.consequences).filter((name) => !refusing.includes(name));
   const reasonId = useId();
   return (
-    <li className="grid gap-1.5 py-3 text-small text-text-secondary first:pt-0 last:pb-0">
-      <div className="flex flex-wrap items-start gap-x-3 gap-y-1">
+    <li className="grid gap-x-6 gap-y-1 py-2 text-small text-text-secondary first:pt-0 last:pb-0 md:grid-cols-[minmax(0,1fr)_auto]">
+      <div className="flex min-w-0 flex-wrap items-start gap-x-3 gap-y-1">
         <StatusBadge set="Run limits" state={OUTCOME_STATE[group.outcome]} className="shrink-0" />
         <div className="grid min-w-0 flex-1 gap-0.5">
           {group.causes.map((cause, index) => (
@@ -347,7 +347,7 @@ function LimitRow({
           )}
         </div>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-0.5 md:flex-col md:items-end md:justify-start">
         <label
           className={cx("flex items-center gap-2 font-medium text-text-primary", CHECK_TARGET)}
         >
@@ -385,13 +385,34 @@ function LimitsToDecide({
   const { groups, passive } = groupLimits(items);
   const decidedCount = groups.filter((group) => decided(group, accepted)).length;
   return (
-    <section aria-label="Limits to decide" className="grid min-w-0 gap-3 wrap-anywhere">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-        <h3 className="text-h4 font-medium text-text-primary">Limits to decide</h3>
-        {groups.length > 0 && (
-          <p className="font-mono text-small text-text-tertiary tabular-nums">
-            {decidedCount} of {groups.length} decided
-          </p>
+    <section aria-label="Limits to decide" className="grid min-w-0 gap-2 wrap-anywhere">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <div className="flex flex-wrap items-baseline gap-x-3">
+          <h3 className="text-h4 font-medium text-text-primary">Limits to decide</h3>
+          {groups.length > 0 && (
+            <p className="font-mono text-small text-text-tertiary tabular-nums">
+              {decidedCount} of {groups.length} decided
+            </p>
+          )}
+        </div>
+        {/* What needs no decision sits beside the heading; opened, it takes the full width. */}
+        {passive.length > 0 && (
+          <details className="text-small text-text-secondary open:basis-full">
+            <summary className={SUMMARY}>{`No action needed (${String(passive.length)})`}</summary>
+            <ul className="mt-1 mb-2 list-disc space-y-1 pl-5">
+              {passive.map((item) => (
+                <li key={item.id}>
+                  {serviceText(item.reason)
+                    .replace("What changed since the last Report", "Changes since the last run")
+                    .replace(
+                      /^This pathway does not produce the (.+) report section\.$/,
+                      'This pathway does not produce the "$1" section.',
+                    )}
+                  {item.fix ? ` ${serviceText(item.fix)}` : ""}
+                </li>
+              ))}
+            </ul>
+          </details>
         )}
       </div>
       {groups.length === 0 ? (
@@ -409,24 +430,6 @@ function LimitsToDecide({
             />
           ))}
         </ul>
-      )}
-      {passive.length > 0 && (
-        <details className="text-small text-text-secondary">
-          <summary className={SUMMARY}>{`No action needed (${String(passive.length)})`}</summary>
-          <ul className="mt-2 list-disc space-y-1 pl-5">
-            {passive.map((item) => (
-              <li key={item.id}>
-                {serviceText(item.reason)
-                  .replace("What changed since the last Report", "Changes since the last run")
-                  .replace(
-                    /^This pathway does not produce the (.+) report section\.$/,
-                    'This pathway does not produce the "$1" section.',
-                  )}
-                {item.fix ? ` ${serviceText(item.fix)}` : ""}
-              </li>
-            ))}
-          </ul>
-        </details>
       )}
     </section>
   );
@@ -474,19 +477,18 @@ function RunLine({ answers, summary }: { answers: Answers; summary: Summary }) {
   const documents = summary.documents.length;
   const modules = drawnModules(summary.modules).length;
   return (
-    <div className="grid min-w-0 gap-0.5 wrap-anywhere">
-      <p className="text-body font-medium text-text-primary">
+    <p className="min-w-0 text-small text-text-secondary wrap-anywhere">
+      <span className="font-medium text-text-primary">
         {`${pathwayName(run.pathway)} of ${identity.issuer_name}`}
-      </p>
-      <p className="text-small text-text-secondary">
-        {[`As of ${given(run.as_of)}`, view === NOT_GIVEN ? undefined : view]
-          .filter(Boolean)
-          .join(" · ")}
-        {" · "}
-        <Figure>{documents}</Figure> {documents === 1 ? "document" : "documents"} read ·{" "}
-        <Figure>{modules}</Figure> {modules === 1 ? "module" : "modules"}
-      </p>
-    </div>
+      </span>
+      {" · "}
+      {[`As of ${given(run.as_of)}`, view === NOT_GIVEN ? undefined : view]
+        .filter(Boolean)
+        .join(" · ")}
+      {" · "}
+      <Figure>{documents}</Figure> {documents === 1 ? "document" : "documents"} read ·{" "}
+      <Figure>{modules}</Figure> {modules === 1 ? "module" : "modules"}
+    </p>
   );
 }
 
@@ -506,19 +508,23 @@ function inputNames(group: InputGroup): string[] {
   ];
 }
 
-/** The parts of the decision the review step draws: its heading, the cost, the consent and Submit. */
+/**
+ * The parts of the decision the review step draws: its heading and mode, the cap, the notes that
+ * qualify the run, and the consent with Submit.
+ */
 export type DecisionParts = {
   head: ReactNode;
   mode: ReactNode;
   cost: ReactNode;
+  notes: ReactNode;
   submit: ReactNode;
 };
 
 /**
  * Review and start: one decision tile, then everything Submit sends behind one closed disclosure.
- * The tile holds the cap and its sentence, the run's modules by stage, each limit with the control
- * that decides it, what leaves the building, then the consent and Submit. On a phone the limits
- * follow the cap and the stages come last; from md the cost and stages sit beside the limits.
+ * The tile leads with the run and its cap, then each limit with the control that decides it, then
+ * what leaves the building beside the consent and Submit, and last the modules by stage (from xl
+ * the rail beside the tile draws those, so the tile does not draw them twice).
  */
 export function ReviewSheet({
   review,
@@ -548,44 +554,48 @@ export function ReviewSheet({
   const choice = { requested, modules: answers.modules, onModules, onEdit };
   return (
     <>
-      <Tile span={12} label="Review and start" className="gap-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="grid min-w-0 gap-2">
-            {decision?.head}
+      <Tile span={12} label="Review and start" className="gap-4">
+        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+          <div className="grid min-w-0 flex-1 basis-72 gap-1">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              {decision?.head}
+              {decision?.mode}
+            </div>
             <RunLine answers={answers} summary={summary} />
           </div>
-          {decision?.mode}
-        </div>
-        <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-x-8">
           <section
             aria-label="What it will cost"
-            className="grid min-w-0 content-start gap-3 wrap-anywhere md:col-start-1 md:row-start-1"
+            className="grid min-w-0 content-start gap-0.5 wrap-anywhere sm:justify-items-end sm:text-right"
           >
             {decision?.cost}
           </section>
-          <div className="flex min-w-0 flex-col gap-5 md:col-start-2 md:row-span-2 md:row-start-1 md:border-l md:border-border-hairline md:pl-8">
-            <LimitsToDecide
-              items={summary.items}
-              accepted={accepted}
-              disabled={disabled}
-              onAccept={onAccept}
-              choice={choice}
-            />
-            <LeavesTheBuilding summary={summary} />
-            {decision?.submit}
-          </div>
-          <section
-            aria-label="Modules by stage"
-            className="grid min-w-0 content-start gap-2 md:col-start-1 md:row-start-2"
-          >
-            <h3 className="text-small font-medium text-text-primary">Modules by stage</h3>
-            <StagePipeline
-              readiness={moduleReadiness([], { modules: summary.modules, items: summary.items })}
-              label="Stages in this run"
-              named={false}
-            />
-          </section>
         </div>
+        <LimitsToDecide
+          items={summary.items}
+          accepted={accepted}
+          disabled={disabled}
+          onAccept={onAccept}
+          choice={choice}
+        />
+        <div className="grid min-w-0 grid-cols-1 gap-5 border-t border-border-hairline pt-4 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-x-8">
+          <div className="flex min-w-0 flex-col gap-3">
+            <LeavesTheBuilding summary={summary} />
+            {decision?.notes}
+          </div>
+          <div className="flex min-w-0 flex-col gap-3">{decision?.submit}</div>
+        </div>
+        <section
+          aria-label="Modules by stage"
+          className="grid min-w-0 content-start gap-2 border-t border-border-hairline pt-4 xl:hidden"
+        >
+          <h3 className="text-small font-medium text-text-primary">Modules by stage</h3>
+          <StagePipeline
+            readiness={moduleReadiness([], { modules: summary.modules, items: summary.items })}
+            label="Stages in this run"
+            named={false}
+            layout="matrix"
+          />
+        </section>
       </Tile>
       <EverythingSubmitSends
         review={review}

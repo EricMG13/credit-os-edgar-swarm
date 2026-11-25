@@ -61,21 +61,35 @@ export function StagePipeline({
   readiness,
   label,
   named = true,
+  layout = "list",
 }: {
   readiness: ModuleReadiness;
   label: string;
   /** Whether to name the modules carrying a limit under the stages (not where the limits are). */
   named?: boolean;
+  /** One stage a row (a rail), or the stages side by side from md (a wide tile). */
+  layout?: "list" | "matrix";
 }) {
   const limited = limitedRows(readiness);
+  const matrix = layout === "matrix";
+  const cell = cx(
+    "flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1",
+    matrix
+      ? "py-1.5 md:flex-col md:items-start md:border-l md:border-border-hairline md:py-0 md:pl-3 md:first:border-l-0 md:first:pl-0"
+      : "py-1.5",
+  );
   return (
     <div className="flex min-w-0 flex-col gap-3">
-      <ol aria-label={label} className="flex flex-col divide-y divide-border-hairline">
+      <ol
+        aria-label={label}
+        className={cx(
+          "flex flex-col divide-y divide-border-hairline",
+          matrix &&
+            "md:grid md:grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] md:gap-3 md:divide-y-0",
+        )}
+      >
         {readiness.groups.map((group) => (
-          <li
-            key={group.name}
-            className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 py-1.5"
-          >
+          <li key={group.name} className={cell}>
             <span className="flex min-w-0 flex-1 items-baseline gap-2 text-small text-text-primary">
               {group.number && (
                 <span className="font-mono text-caption text-text-tertiary tabular-nums">
@@ -98,7 +112,7 @@ export function StagePipeline({
           </li>
         ))}
         {readiness.other.length > 0 && (
-          <li className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 py-1.5">
+          <li className={cell}>
             <span className="flex-1 text-small text-text-primary">Other limits</span>
             <ul aria-label="Other limits" className="flex flex-wrap items-center gap-0.5">
               {readiness.other.map((row) => (

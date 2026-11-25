@@ -161,7 +161,7 @@ describe("Review and start", () => {
     const decision = screen.getByRole("region", { name: "Review and start" });
     const cost = within(decision).getByRole("region", { name: "What it will cost" });
     expect(within(cost).getByText("USD 0.00", { selector: "span" })).toHaveClass("font-mono");
-    expect(cost).toHaveTextContent("USD 0.00No-cost test");
+    expect(cost).toHaveTextContent("USD 0.00A paid run is capped at USD 25.00");
     expect(within(decision).getByText("No-cost test", { selector: "span" })).toBeInTheDocument();
     expect(within(decision).getByRole("button", { name: "Submit run" })).toBeEnabled();
   });

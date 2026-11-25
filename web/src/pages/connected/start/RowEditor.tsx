@@ -143,6 +143,7 @@ export function RowEditor({
           <Button
             size="sm"
             color="secondary"
+            className="min-h-8 max-[480px]:min-h-11"
             ref={addButtonRef}
             data-field={kind}
             isDisabled={full}
@@ -278,7 +279,7 @@ function EditableRow({
       <Button
         size="sm"
         color="secondary"
-        className="absolute right-3 top-2"
+        className="absolute top-2 right-3 min-h-8 max-[480px]:min-h-11"
         aria-label={`Remove ${title}`}
         ref={removeRef}
         onPress={onRemove}

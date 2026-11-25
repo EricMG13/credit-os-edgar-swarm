@@ -127,4 +127,19 @@ describe("the readiness rail", () => {
     expect(aside).toHaveTextContent("The review names no limit.");
     expect(aside).toHaveTextContent("1 module · Full credit assessment");
   });
+
+  it("on the review, leaves the stages to the review tile below xl, so they are drawn once", () => {
+    render(
+      <ReadinessRail
+        rows={ROWS}
+        cap="USD 25.00"
+        capTitle="Spending cap for this run"
+        pathway="Full credit assessment"
+        modules={moduleReadiness([], { modules: ["CP-0"], items: [] })}
+        source="review"
+        stagesInReview
+      />,
+    );
+    expect(screen.getByRole("region", { name: "Modules by stage" })).toHaveClass("max-xl:hidden");
+  });
 });
