@@ -13,12 +13,7 @@ import {
   unitLabel,
   type OutputEntry,
 } from "../../publishedReport";
-import {
-  moduleBottomLines,
-  moduleState,
-  runMoneyUnit,
-  type ReportView,
-} from "../../reportView";
+import { moduleBottomLines, moduleState, runMoneyUnit, type ReportView } from "../../reportView";
 import { TextLink } from "../../../run/TextLink";
 import { PublishedSource } from "../PublishedTrace";
 import { UNREAD_STANCE, committeeStance, earlierStance } from "./changeData";
