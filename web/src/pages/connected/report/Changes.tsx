@@ -39,15 +39,15 @@ export function ComparisonTable({
   source,
 }: {
   rows: string[][];
-  source?: (label: string) => string | undefined;
+  source?: (label: string, index: number) => string | undefined;
 }) {
   return (
     <PublishedTable
       evidence
       rowSource={
         source &&
-        ((_line, label) => {
-          const href = source(label);
+        ((line, label) => {
+          const href = source(label, line);
           return (
             href && (
               <PublishedSource href={href} name={label}>
@@ -260,7 +260,7 @@ function Measures({
     );
   const hrefs = new Map(
     [...groups.moved, ...groups.revised, ...groups.unmoved, ...groups.notAssessable].map((item) => [
-      item.label,
+      item.index,
       item.href,
     ]),
   );
@@ -288,7 +288,7 @@ function Measures({
     >
       {view === "table" ? (
         <section aria-label="Earlier against current">
-          <ComparisonTable rows={rows} source={(label) => hrefs.get(label)} />
+          <ComparisonTable rows={rows} source={(_label, index) => hrefs.get(index)} />
         </section>
       ) : (
         <>

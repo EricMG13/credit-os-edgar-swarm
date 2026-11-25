@@ -1,9 +1,16 @@
-import type { OutputEntry, Table } from "../../publishedReport";
+import type { OutputEntry } from "../../publishedReport";
 import { PublishedSource } from "../PublishedTrace";
 import { Tile } from "../overview/Tile";
 import { EmptyLedger, LedgerList } from "./LedgerLists";
 import { LINK } from "./PassageTile";
-import type { Cell, issuerFacts, analysisRows, leftovers, ledgerOf } from "./model";
+import {
+  withoutReferenceColumns,
+  type Cell,
+  type issuerFacts,
+  type analysisRows,
+  type leftovers,
+  type ledgerOf,
+} from "./model";
 import { PassageBody } from "./PassageTile";
 import { PublishedTable } from "../../ReportContent";
 import { evidencePath } from "../../publishedReport";
@@ -210,14 +217,4 @@ export function LeftoverTile({
       ))}
     </Tile>
   );
-}
-
-/** The ledger table as written, without its reference columns (E1, C2): they are for Evidence. */
-function withoutReferenceColumns(table: Table): Table {
-  const keep = table.headers.flatMap((header, at) => (/\bref\b/i.test(header) ? [] : [at]));
-  return {
-    ...table,
-    headers: keep.map((at) => table.headers[at] ?? ""),
-    rows: table.rows.map((row) => ({ ...row, cells: keep.map((at) => row.cells[at] ?? "") })),
-  };
 }

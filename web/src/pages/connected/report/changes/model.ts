@@ -32,6 +32,8 @@ export type Cause =
   | { kind: "noModule" };
 
 export type MeasureChange = {
+  /** Where the measure sits in the pack, so a table row finds its own item. */
+  index: number;
   key: string;
   label: string;
   /** The earlier and current figures as the pack states them, period included. */
@@ -172,6 +174,7 @@ export function classifyMeasures(
     const toned = shown && sign !== null ? tone(measure.key, String(measure.difference)) : "none";
     const revision = reason.endsWith("Same-period analysis change");
     const item: MeasureChange = {
+      index,
       key: measure.key,
       label,
       before,
@@ -263,10 +266,11 @@ export function issuerFacts(
       const cause = cellOf(cells[3]);
       const effect = cellOf(cells[4]);
       // The module may write its reason in the Cause cell and leave Effect a dash.
+      const none = cause.kind === "written" && cause.text.toLowerCase() === "none";
       const reason =
         effect.kind === "written"
           ? effect
-          : cause.kind === "written" && cause.text !== "None"
+          : (cause.kind === "written" && !none) || cause.kind === "referenced"
             ? cause
             : effect;
       noChange.push({ reason, href });
@@ -354,7 +358,7 @@ export function ledgerOf(
     const raw = words(plain(cells[status]));
     const asWritten = raw === "" ? "Not stated" : raw;
     const key =
-      raw === "" ? "not stated" : nothing(raw) ? "dash" : statusKey(raw) || raw.toLowerCase();
+      raw === "" ? "not stated" : nothing(raw) ? "—" : statusKey(raw) || raw.toLowerCase();
     const item: LedgerItem = {
       text: written(cells[limitation]),
       missing: empty,
@@ -440,9 +444,27 @@ const REGISTER_HEADINGS = new Set([
   "Limitations ledger",
 ]);
 
-function blockItems(blocks: Block[], entry: OutputEntry, folder: string): PassageItem[] {
+/** A ledger table as written, without its reference columns: they are for Evidence. */
+export function withoutReferenceColumns(table: Table): Table {
+  const keep = table.headers.flatMap((header, at) =>
+    /\bref(?:erence)?\b/i.test(header) ? [] : [at],
+  );
+  return {
+    ...table,
+    headers: keep.map((at) => table.headers[at] ?? ""),
+    rows: table.rows.map((row) => ({ ...row, cells: keep.map((at) => row.cells[at] ?? "") })),
+  };
+}
+
+function blockItems(
+  blocks: Block[],
+  entry: OutputEntry,
+  folder: string,
+  ledger = false,
+): PassageItem[] {
   return blocks.flatMap((block): PassageItem[] => {
-    if (block.type === "table") return [{ kind: "table", table: block }];
+    if (block.type === "table")
+      return [{ kind: "table", table: ledger ? withoutReferenceColumns(block) : block }];
     if (block.type !== "text" || methodNote(block.text)) return [];
     const body = plain(readParagraph(block.text).body);
     if (!body) return [];
@@ -482,6 +504,7 @@ export function leftovers(entry: OutputEntry | undefined, folder: string) {
         section.blocks.filter((block) => !used.has(block)),
         entry,
         folder,
+        section.heading === "Limitations ledger",
       );
     } else if (
       role === "registers" &&

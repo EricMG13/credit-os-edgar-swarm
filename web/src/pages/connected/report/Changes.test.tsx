@@ -1213,4 +1213,67 @@ describe("connected report Changes", () => {
     expect(spy).not.toHaveBeenCalled();
     spy.mockRestore();
   });
+
+  it("opens the right issuer row in the Table view for two measures that share a label, in either pack order", () => {
+    const side = (v: string, unit: string, p: string) => ({ value: v, unit, period: p });
+    const mk = (key: string, unit: string) => ({
+      key,
+      label: "Net leverage",
+      prior: side("6", unit, "FY2025"),
+      current: side("7", unit, "FY2026"),
+      difference: 1,
+      unit,
+    });
+    const lineOf = (el: HTMLElement) => /-(\d+)$/.exec(el.getAttribute("href") ?? "")?.[1];
+    for (const order of [
+      [mk("a", "US$m"), mk("b", "x")],
+      [mk("b", "x"), mk("a", "US$m")],
+    ]) {
+      const entry = cp8([]);
+      entry.sections.push(issuerSection([["Net leverage (x)", "6x", "7x", "New period", ""]]));
+      const { unmount } = renderChanges(
+        {
+          pack: { measures: order },
+          verdicts: {
+            measures: {
+              a: { kind: "comparable", label: "L" },
+              b: { kind: "comparable", label: "L" },
+            },
+          },
+        },
+        [entry],
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Table" }));
+      const table = within(screen.getByRole("region", { name: "Earlier against current" }));
+      const lines = table.getAllByRole("link", { name: "Comparison row" }).map(lineOf);
+      expect(lines).toEqual(order.map((m) => (m.unit === "x" ? "32" : "31")));
+      unmount();
+    }
+  });
+
+  it("draws a written dash effect on a measure as a dash, not as not stated", () => {
+    const entry = cp8([]);
+    entry.sections.push(issuerSection([["A", "1x", "2x", "New period", "—"]]));
+    const side = (v: string, p: string) => ({ value: v, unit: "x", period: p });
+    renderChanges(
+      {
+        pack: {
+          measures: [
+            {
+              key: "a",
+              label: "A",
+              prior: side("1", "FY2025"),
+              current: side("2", "FY2026"),
+              difference: 1,
+              unit: "x",
+            },
+          ],
+        },
+        verdicts: { measures: { a: { kind: "comparable", label: "L" } } },
+      },
+      [entry],
+    );
+    expect(screen.queryByText("Effect not stated")).toBeNull();
+    expect(screen.getAllByText("—").length).toBeGreaterThan(0);
+  });
 });

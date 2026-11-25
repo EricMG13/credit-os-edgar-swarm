@@ -121,6 +121,8 @@ function MeasureRow({
             <a className={LINK} href={href ?? evidence}>
               Read the effect in Evidence
             </a>
+          ) : effect.kind === "dash" ? (
+            <span className="text-text-tertiary">—</span>
           ) : (
             <span className="text-gap-text">Effect not stated</span>
           )}

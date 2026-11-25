@@ -640,3 +640,104 @@ describe("final checks on matching, placeholders and ledger groups", () => {
     ]);
   });
 });
+
+describe("last-round fixes", () => {
+  const ledgerHeaders = ["Earlier ref", "Current ref", "Limitation", "Status", "What closed it"];
+
+  it("draws two ledger tables without their reference columns", () => {
+    const entry = entryWith([
+      { heading: "Findings", level: 2, line: 1, blocks: [] },
+      table("Limitations ledger", ledgerHeaders, [["E1", "C9", "Margins", "Open", ""]]),
+      table("Limitations ledger", ["Reference", "Limitation"], [["E2", "Revolver"]]),
+    ]);
+    const rest = leftovers(entry, "cur");
+    const tables = rest
+      .flatMap((s) => s.items)
+      .flatMap((i) => (i.kind === "table" ? [i.table] : []));
+    expect(tables.map((x) => x.headers)).toEqual([
+      ["Limitation", "Status", "What closed it"],
+      ["Limitation"],
+    ]);
+    expect(tables.flatMap((x) => x.rows.flatMap((r) => r.cells))).toEqual([
+      "Margins",
+      "Open",
+      "",
+      "Revolver",
+    ]);
+  });
+
+  it("gives each measure an index and keeps a same-labelled pair apart", () => {
+    const entry = entryWith([
+      table(
+        "What changed: the issuer",
+        ["Measure or fact", "Earlier", "Current", "Cause", "Effect on the credit view"],
+        [["Net leverage (x)", "6x", "7x", "New period", ""]],
+      ),
+    ]);
+    const mk = (key: string, unit: string) => ({
+      key,
+      label: "Net leverage",
+      prior: { value: "6", unit, period: "FY2025" },
+      current: { value: "7", unit, period: "FY2026" },
+      difference: 1,
+      unit,
+    });
+    for (const order of [
+      [mk("a", "US$m"), mk("b", "x")],
+      [mk("b", "x"), mk("a", "US$m")],
+    ]) {
+      const change: PublishedChanges = {
+        pack: { measures: order },
+        verdicts: verdicts(["a", "b"]),
+      };
+      const groups = classifyMeasures(change, () => undefined, entry, "cur");
+      const byIndex = new Map(groups.moved.map((m) => [m.index, m.href ?? ""]));
+      const xIndex = order.findIndex((m) => m.unit === "x");
+      expect(byIndex.get(xIndex)).toMatch(/-12$/);
+      expect(byIndex.get(1 - xIndex)).toMatch(/-11$/);
+    }
+  });
+
+  it("keeps a written dash effect a dash, and a referenced no-change cause a link", () => {
+    const entry = entryWith([
+      table(
+        "What changed: the issuer",
+        ["Measure or fact", "Earlier", "Current", "Cause", "Effect on the credit view"],
+        [
+          ["A", "1x", "2x", "New period", "—"],
+          ["No material change", "—", "—", "Per filing.pdf p. 3", "—"],
+          ["No material change", "—", "—", "NONE", "Still nothing."],
+        ],
+      ),
+    ]);
+    const change: PublishedChanges = {
+      pack: { measures: [measure("a", "1", "2", 1, { label: "A" })] },
+      verdicts: verdicts(["a"]),
+    };
+    expect(classifyMeasures(change, () => undefined, entry, "cur").moved[0]?.effect).toEqual({
+      kind: "dash",
+    });
+    const { noChange } = issuerFacts(entry, "cur", new Set([12]));
+    expect(noChange.map((row) => row.reason)).toEqual([
+      { kind: "referenced" },
+      { kind: "written", text: "Still nothing." },
+    ]);
+  });
+
+  it("does not file the word Dash with the written dash", () => {
+    const result = ledgerOf(
+      entryWith([
+        table("Limitations ledger", ledgerHeaders, [
+          ["E1", "—", "One", "—", ""],
+          ["E2", "—", "Two", "Dash", ""],
+        ]),
+      ]),
+      "cur",
+    );
+    if (!result || "table" in result) throw new Error("expected groups");
+    expect(result.groups.map((g) => [g.heading, g.items.length]).sort()).toEqual([
+      ["Dash", 1],
+      ["—", 1],
+    ]);
+  });
+});
