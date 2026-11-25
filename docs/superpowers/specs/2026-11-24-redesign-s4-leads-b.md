@@ -299,3 +299,25 @@ src/pages/connected` 174 files, 2,722 tests pass; `npm run build` and `npm run d
 **Looked at**: contact sheets of every lead at 1440, 1024 and 390. Long dated lists were the
 tallest tiles (CP-2E hedge dates, CP-1A issuer history): a lane now shows three rows and keeps the
 rest behind a disclosure. Blocked leads draw nothing.
+
+### 7.2 After the second review (2026-11-25, base with the S2 frame merged in)
+
+**Checks**: `npx tsc --noEmit` clean; eslint and prettier clean on changed files; `npx vitest
+run src/pages/connected` 196 files, 3,226 of 3,229 tests pass. The three failures are frame tests
+outside S4's files: `ReportLibrary.frame.test.tsx` and `Modules.order.test.tsx` pin the frame's
+own drawing of CP-2's transmission map, which the CP-2 lead now draws; `ReportContent.records.test.tsx`
+shows a frame gap — with a lead that lists "figures", `moduleFrame`'s `typedTables: false` drops a
+section's prose and its promoted table (CP-2A "Monitoring sensitivity flags") from both the page
+and the records.
+
+**Rendered check** in the real module frame on the synthetic run (10 leads, 1440/1280/1024/768/390,
+plain and `--stress`): no sideways scroll; the only failures are on CP-3 and CP-4, in the frame's
+own lanes (Instruments, Legal) and the shared 28px trace button. Harness (contract samples, real
+TransDigm shapes, long-text variants of CP-1A, CP-2E, CP-3C, CP-4, empty, blocked, unreadable):
+225 renders, no failures. `--stress` does not reach the harness, hence the long-text variants.
+
+**Drawn once**: on the real page, Downside, Rates & hedging and Security selection each draw their
+figures once, by the lead; the leads no longer repeat the module's passages, which the frame draws.
+
+**Looked at**: every lead in the real frame at 1440 and 390. Left for local validation: CP-1A's
+one-edge map leaves space beside a tall side column.
