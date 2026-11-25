@@ -329,7 +329,7 @@ function YearStrip({
                 aria-label={`${String(year)}, ${events.length === 1 ? "1 event" : `${String(events.length)} events`}`}
                 className="grid gap-1"
               >
-                <div className="flex max-w-[6.5rem] flex-wrap gap-0.5">
+                <div className="flex max-w-[7.5rem] flex-wrap gap-2">
                   {events.map((event) => (
                     <Marker
                       key={event.index}
