@@ -56,7 +56,7 @@ export function ZeroAxisBar({
           style={{ left: `${String(zero)}%` }}
         />
         <span
-          className="absolute top-full -translate-x-1/2 font-mono text-[10px] text-text-tertiary"
+          className="absolute top-full -translate-x-1/2 font-mono text-caption text-text-tertiary"
           style={{ left: `${String(zero)}%` }}
         >
           0

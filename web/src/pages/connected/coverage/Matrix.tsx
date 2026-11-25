@@ -67,7 +67,7 @@ function StageHead({ data }: { data: Data }) {
               scope="col"
               title={named(column)}
               className={cx(
-                "h-28 px-0 pb-2 text-center align-bottom text-[11px] leading-4 font-medium text-text-secondary",
+                "h-32 px-0 pb-2 text-center align-bottom text-caption font-medium text-text-secondary",
                 index === 0 && "border-l border-border-hairline",
               )}
             >
