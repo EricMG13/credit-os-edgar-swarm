@@ -12,12 +12,13 @@ const STAGES = [
 
 const OTHER = "Other";
 
-/** Rows grouped by stage, in stage order; a module no stage names is drawn last under Other. */
+/** Rows grouped by stage, in stage order and, within a stage, in module order; a module no stage names is drawn last under Other. */
 export function byStage<Row extends { id: string }>(rows: readonly Row[]) {
   const known = new Set<string>(STAGES.flatMap((stage) => stage.modules));
-  const groups = STAGES.map((stage) => ({
-    name: stage.name as string,
-    rows: rows.filter((row) => (stage.modules as readonly string[]).includes(row.id)),
+  const groups: { name: string; rows: Row[] }[] = STAGES.map((stage) => ({
+    name: stage.name,
+    // In the stage's own module order, not the order the rows arrived in.
+    rows: stage.modules.flatMap((code) => rows.filter((row) => row.id === code)),
   }));
   groups.push({ name: OTHER, rows: rows.filter((row) => !known.has(row.id)) });
   return groups.filter((group) => group.rows.length > 0);

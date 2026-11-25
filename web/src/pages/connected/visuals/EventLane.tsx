@@ -15,8 +15,45 @@ export const EVENT_HEADERS = [
   "Credit relevance",
 ];
 
-const EVENT_LANES = ["Historical", "Scheduled", "Scenario", "User reminder"] as const;
+export const EVENT_LANES = ["Historical", "Scheduled", "Scenario", "User reminder"] as const;
 const DAY = 86_400_000;
+
+/** A day event is a point; one that only records a period keeps the period's width. */
+export const isPeriod = (event: { from: number; to: number }) => event.to > event.from;
+/** The end of the drawn extent: a period runs to the end of its last day. */
+export const endOf = (event: { from: number; to: number }) =>
+  isPeriod(event) ? event.to + DAY : event.from;
+
+/**
+ * The range the events cover, in the events' own recorded date text: the first event's date and
+ * the date of the event that reaches furthest. Null when they read the same, so a lone event
+ * prints no range. No computed or padded date is ever returned.
+ */
+export function recordedRange(events: { date: string; from: number; to: number }[]) {
+  const first = events.reduce<(typeof events)[number] | null>(
+    (best, event) => (!best || event.from < best.from ? event : best),
+    null,
+  );
+  const last = events.reduce<(typeof events)[number] | null>(
+    (best, event) =>
+      !best ||
+      endOf(event) > endOf(best) ||
+      (endOf(event) === endOf(best) && event.from >= best.from)
+        ? event
+        : best,
+    null,
+  );
+  return first && last && first.date !== last.date ? { first: first.date, last: last.date } : null;
+}
+
+/** How a span is drawn, by recorded status category. */
+export const SPAN_STYLE: Record<(typeof EVENT_LANES)[number], string> = {
+  Historical: "border-text-tertiary bg-surface-subtle",
+  Scheduled: "border-action bg-chart-1/50",
+  Scenario: "border-dashed border-action bg-surface-card",
+  "User reminder": "border-action bg-surface-card",
+};
+
 function dayOf(text: string) {
   const date = Date.parse(text);
   return Number.isFinite(date) && new Date(date).toISOString().slice(0, 10) === text ? date : null;
@@ -79,7 +116,7 @@ export function eventRecords(table: SourceTable) {
   );
 }
 
-type EventRecord = ReturnType<typeof eventRecords>[number];
+export type EventRecord = ReturnType<typeof eventRecords>[number];
 type Active = { index: number; from: "row" | "marker" } | null;
 
 const MARK_SHAPES = {
@@ -88,7 +125,7 @@ const MARK_SHAPES = {
   "User reminder": "ring",
 } as const;
 
-function Mark({ category }: { category: EventRecord["category"] }) {
+export function Mark({ category }: { category: EventRecord["category"] }) {
   const shape = category === "Scenario" ? null : MARK_SHAPES[category];
   const tint = category === "Historical" ? "text-text-tertiary" : "text-action";
   return (
@@ -201,9 +238,10 @@ function Marker({
   );
 }
 
-type Hidden = ReadonlySet<EventRecord["category"]>;
+export type Hidden = ReadonlySet<EventRecord["category"]>;
 
-function Legend({
+/** The one category legend: toggles with 32px targets (44px on a phone). */
+export function Legend({
   events,
   hidden,
   onToggle,
@@ -228,7 +266,7 @@ function Legend({
             aria-pressed={!off}
             aria-label={`${lane}, ${String(count)} ${count === 1 ? "event" : "events"}`}
             className={cx(
-              "flex cursor-pointer items-center gap-1.5 rounded-ds-sm px-1.5 py-0.5 focus-visible:ring-2 focus-visible:ring-focus max-[480px]:min-h-11",
+              "flex min-h-8 min-w-8 cursor-pointer items-center gap-1.5 rounded-ds-sm px-2 focus-visible:ring-2 focus-visible:ring-focus max-[480px]:min-h-11 max-[480px]:min-w-11",
               off ? "text-text-tertiary" : "text-text-secondary",
             )}
             onClick={() => {
