@@ -506,15 +506,79 @@ it("draws the interest basis once, under the table, with its trace", () => {
   expect(calls.some(({ selection }) => selection?.recordedQualification === basis)).toBe(true);
 });
 
-it("scrolls only for width, in a named focusable region", () => {
+it("scrolls both ways in a named focusable region of its own height", () => {
   renderGrid([
     { label: "Revenue", band: "Operating", kind: "money", cells: ["1", "2", "3"].map(value) },
   ]);
   const region = screen.getByRole("region", { name: "Forecast grid table" });
   expect(region).toHaveAttribute("tabindex", "0");
-  expect(region.className).toContain("overflow-x-auto");
-  expect(region.className).not.toMatch(/max-h|overflow-auto|overflow-y/);
+  expect(region.className).toContain("overflow-auto");
+  expect(region.className).toContain("max-h-[70vh]");
   expect(within(region).getByRole("rowheader", { name: "Revenue" }).className).toContain("sticky");
+});
+
+it("opens a long statement on its totals, leverage, interest cover and liquidity", () => {
+  const line = (label: string, kind = "money", total = false) => ({
+    label,
+    band: kind === "money" ? "Operating" : "Credit metrics",
+    kind,
+    total,
+    cells: ["1", "2", "3"].map(value),
+  });
+  const key = [
+    line("Revenue", "money", true),
+    line("Accessible liquidity", "money", true),
+    line("Total leverage (debt / Adj EBITDA)", "multiple"),
+    line("Net leverage (net debt / Adj EBITDA)", "multiple"),
+    line("Interest coverage (Adj EBITDA / cash interest)", "multiple"),
+    line("Interest cover", "multiple"),
+  ];
+  const other = [
+    "COGS",
+    "Opex",
+    "D&A",
+    "Cash interest",
+    "Capex",
+    "Distributions",
+    "Opening cash",
+    "Opening debt",
+  ].map((label) => line(label));
+  renderGrid([
+    ...key.slice(0, 2),
+    ...other,
+    ...key.slice(2),
+    line("Cash proxy / closing debt", "multiple"),
+  ]);
+  for (const { label } of key) expect(grid().getByRole("rowheader", { name: label })).toBeVisible();
+  for (const { label } of other)
+    expect(grid().queryByRole("rowheader", { name: label })).toBeNull();
+  expect(grid().queryByRole("rowheader", { name: "Cash proxy / closing debt" })).toBeNull();
+  expect(
+    screen.getByText("Totals, leverage, interest cover and liquidity: 6 of 15 rows."),
+  ).toBeInTheDocument();
+  fireEvent.click(
+    within(screen.getByRole("group", { name: "Grid rows" })).getByRole("button", {
+      name: "All rows",
+    }),
+  );
+  for (const { label } of other)
+    expect(grid().getByRole("rowheader", { name: label })).toBeVisible();
+});
+
+it("names a history band once where its placeholder column carries the band's name", () => {
+  renderGrid(
+    [{ label: "Revenue", band: "Operating", kind: "money", cells: [gap(NOT_WRITTEN), value("5")] }],
+    [
+      { label: "Quarter", group: "Quarter" },
+      { label: "FY2026E", group: "Base case" },
+    ],
+  );
+  showColumns("History");
+  expect(grid().getAllByRole("columnheader", { name: "Quarter" })).toHaveLength(1);
+  expect(grid().queryByRole("columnheader", { name: "FY2026E" })).toBeNull();
+  expect(within(rowOf("Revenue")).getAllByRole("cell")[0]).toHaveAccessibleName(
+    `n.a. ${NOT_WRITTEN}`,
+  );
 });
 
 it("merges no gaps with different reasons, nor across the Actual and Forecast bands", () => {

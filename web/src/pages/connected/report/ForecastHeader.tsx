@@ -2,7 +2,7 @@ import { Button } from "@/components/base/buttons/button";
 import { Segmented } from "@/components/kit/Segmented";
 import { StatsStrip, type Stat } from "@/components/kit/StatsStrip";
 import { ArrowRight } from "@untitledui/icons";
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { moduleName } from "../api";
 import {
   blocked,
@@ -36,6 +36,44 @@ type CaseOption = ReturnType<typeof forecastCaseOptions>[number];
 
 const TARGET = "min-h-8 max-[480px]:min-h-11";
 
+/** Stacked: one case per row, names wrapping, for when a case name does not fit on one line. */
+const STACKED =
+  "w-full flex-col [&>button]:min-w-0 [&>button]:py-1.5 [&>button]:text-left [&>button]:whitespace-normal";
+
+/**
+ * True while the widest case name, drawn on one line, is wider than the room the switch has. The
+ * names' own width is measured while they sit on one line, so the switch unstacks when room returns.
+ */
+function useStacked() {
+  const ref = useRef<HTMLDivElement>(null);
+  const widest = useRef(0);
+  const [stacked, setStacked] = useState(false);
+  useLayoutEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const measure = () => {
+      // Stacked names wrap, so their one-line width is read only while they are on one line.
+      if (!stacked)
+        widest.current = Math.max(
+          0,
+          ...[...node.querySelectorAll<HTMLElement>("[role=group] > button")].map(
+            ({ scrollWidth }) => scrollWidth,
+          ),
+        );
+      // The frame's padding and border sit around the widest segment.
+      // A switch with no room measured yet (not laid out) is drawn on one row.
+      setStacked(node.clientWidth > 0 && widest.current + 10 > node.clientWidth);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => {
+      observer.disconnect();
+    };
+  }, [stacked]);
+  return { ref, stacked };
+}
+
 function CaseSwitch({
   cases,
   current,
@@ -45,23 +83,25 @@ function CaseSwitch({
   current: string | undefined;
   onSelect: (name: string) => void;
 }) {
+  const { ref, stacked } = useStacked();
   if (cases.length < 2 || current === undefined) return null;
   return (
-    <div className="flex flex-col items-start gap-1.5 lg:items-end">
+    <div ref={ref} className="flex w-full min-w-0 flex-col items-start gap-1.5 lg:items-end">
       <Segmented
         label="Case"
         current={current}
         onSelect={onSelect}
+        className={stacked ? STACKED : undefined}
         segments={cases.map(({ name, hatched }) => ({
           key: name,
           accessibleLabel: hatched ? `${name}, no leverage path in the model` : undefined,
           label: (
             <>
-              {name}
+              <span className="min-w-0">{name}</span>
               {hatched && (
                 <span
                   aria-hidden="true"
-                  className="gap-hatch size-2.5 rounded-ds-xs border border-dashed border-border-gap"
+                  className="gap-hatch size-2.5 flex-none rounded-ds-xs border border-dashed border-border-gap"
                 />
               )}
             </>
@@ -223,17 +263,23 @@ export function ForecastHeader({
   const module = moduleName("CP-2G");
   return (
     <Tile span={12} label="Forecast" className="gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-x-8 gap-y-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
         <div className="flex min-w-0 flex-col gap-1">
-          <h2 className="text-h4 font-semibold text-text-primary lg:text-h3">Forecast</h2>
+          <h2 className="text-h4 font-medium text-balance text-text-primary">Forecast</h2>
           <p className="text-small text-text-secondary">
             {run.issuerHeading || run.issuer}
             {preview && " · Test preview"}
             {hasModel ? ` · ${module}, the cases it publishes` : " · No forward model in this run"}
           </p>
         </div>
-        <div className="flex min-w-0 flex-col items-start gap-3 lg:items-end">
-          <CaseSwitch cases={cases} current={current} onSelect={onSelect} />
+        <div className="flex min-w-0 flex-col items-start gap-3 lg:max-w-[60%] lg:items-end">
+          {/* New case names are measured afresh, on one line. */}
+          <CaseSwitch
+            key={cases.map(({ name }) => name).join("\n")}
+            cases={cases}
+            current={current}
+            onSelect={onSelect}
+          />
           {caseFigure}
         </div>
       </div>
@@ -426,9 +472,12 @@ export function ForecastStats({
     fundingStat(view, folder),
   ];
   return (
-    <div className="flex min-w-0 flex-col gap-2 lg:col-span-12">
+    // The basis line sits inside the strip's tile: the strip's own frame is the tile's.
+    <div className="flex min-w-0 flex-col overflow-hidden rounded-ds-lg border border-border-subtle bg-surface-card lg:col-span-12 [&>dl]:rounded-none [&>dl]:border-0">
       <StatsStrip label="Forecast figures" stats={stats} />
-      <p className="px-1 text-caption text-text-secondary">{basis}</p>
+      <p className="border-t border-border-hairline px-4 py-2 text-caption text-text-secondary sm:px-5">
+        {basis}
+      </p>
     </div>
   );
 }

@@ -267,3 +267,29 @@ it("offers no way to a forward model the run does not have", () => {
   );
   expect(screen.queryByRole("link", { name: "Open module" })).toBeNull();
 });
+
+it("stacks the case switch one case per row when a case name does not fit on one line", () => {
+  // jsdom has no layout: a 600px name in a 390px column is given by its measures.
+  const width = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(390);
+  const natural = vi
+    .spyOn(HTMLElement.prototype, "scrollWidth", "get")
+    .mockImplementation(function (this: HTMLElement) {
+      return this.tagName === "BUTTON" && !this.closest("[role=group].flex-col") ? 600 : 100;
+    });
+  header([forward("The view.")]);
+  const group = screen.getByRole("group", { name: "Case" });
+  expect(group).toHaveClass("flex-col");
+  // Every case is still one press away, with its name whole.
+  expect(within(group).getByRole("button", { name: "Base case" })).toBeInTheDocument();
+  natural.mockRestore();
+  width.mockRestore();
+});
+
+it("keeps the case switch on one row where the names fit", () => {
+  const width = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(800);
+  const natural = vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(120);
+  header([forward("The view.")]);
+  expect(screen.getByRole("group", { name: "Case" })).not.toHaveClass("flex-col");
+  natural.mockRestore();
+  width.mockRestore();
+});

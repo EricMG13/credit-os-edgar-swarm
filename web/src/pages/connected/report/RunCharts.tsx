@@ -1,6 +1,5 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { Missing } from "@/components/gap/Missing";
-import { heading } from "../layout";
 import {
   blocked,
   containsReference,
@@ -201,10 +200,11 @@ function ChartRow({
   const gap = word(descriptor.gap);
   const unit = descriptor.unit === "x" ? "x (times)" : word(descriptor.unit);
   const source = tables.get(descriptor.table);
+  const [open, setOpen] = useState(false);
   if (!title || (!gap && !source)) return null;
   return (
-    <li className="grid min-w-0 gap-2 border-t border-border-hairline py-2">
-      <div className="flex min-h-8 min-w-0 flex-wrap items-center gap-x-3 gap-y-1 max-[480px]:min-h-11">
+    <li className="grid min-w-0 gap-2 border-t border-border-hairline py-1">
+      <div className="flex min-h-8 min-w-0 flex-wrap items-center gap-x-3 gap-y-0 max-[480px]:min-h-11">
         <span className="min-w-0 font-medium text-text-primary first-letter:uppercase">
           {title}
         </span>
@@ -214,45 +214,52 @@ function ChartRow({
             Source table
           </PublishedSource>
         </span>
+        {!gap && source && (
+          <button
+            type="button"
+            aria-expanded={open}
+            onClick={() => {
+              setOpen(!open);
+            }}
+            className={`ml-auto min-h-8 cursor-pointer rounded-ds-sm text-small text-text-link ${FOCUS}`}
+          >
+            {`Table for ${title}`}
+          </button>
+        )}
       </div>
       {gap ? (
-        <div className="gap-hatch grid min-w-0 gap-1 rounded-ds-sm border border-dashed border-border-gap p-3 text-gap-text">
-          <p className="text-small font-semibold">Not established for this run</p>
-          <p role="note" className="text-small first-letter:uppercase">
+        <div className="gap-hatch flex min-w-0 flex-wrap gap-x-2 gap-y-0 rounded-ds-sm border border-dashed border-border-gap px-3 py-2 text-small text-gap-text">
+          <p className="font-semibold">Not established for this run</p>
+          <p role="note" className="min-w-0 first-letter:uppercase">
             {gap}
           </p>
         </div>
       ) : (
         source && (
-          <details className="min-w-0">
-            <summary className={`min-h-8 w-fit cursor-pointer text-small text-text-link ${FOCUS}`}>
-              {`Table for ${title}`}
-            </summary>
-            <div className="grid min-w-0 gap-2 pt-2">
-              <ChartTableView
-                title={title}
-                table={chartTable({
-                  ...source,
-                  evidenceInDrawer: true,
-                  rowSource: (at, label) => (
-                    <PublishedSource
-                      href={evidencePath(folder, entry, at)}
-                      name={label}
-                      linkLabel={`Show sources for ${label}`}
-                    >
-                      Source row
-                    </PublishedSource>
-                  ),
-                })}
-              />
-              <ChartQualifications
-                category={descriptor.category === "chart" ? "chart" : "other"}
-                sections={entry.sections}
-                line={descriptor.table}
-                evidenceHref={(at) => evidencePath(folder, entry, at)}
-              />
-            </div>
-          </details>
+          <div hidden={!open} className="grid min-w-0 gap-2 pb-2 [&[hidden]]:hidden">
+            <ChartTableView
+              title={title}
+              table={chartTable({
+                ...source,
+                evidenceInDrawer: true,
+                rowSource: (at, label) => (
+                  <PublishedSource
+                    href={evidencePath(folder, entry, at)}
+                    name={label}
+                    linkLabel={`Show sources for ${label}`}
+                  >
+                    Source row
+                  </PublishedSource>
+                ),
+              })}
+            />
+            <ChartQualifications
+              category={descriptor.category === "chart" ? "chart" : "other"}
+              sections={entry.sections}
+              line={descriptor.table}
+              evidenceHref={(at) => evidencePath(folder, entry, at)}
+            />
+          </div>
         )
       )}
     </li>
@@ -276,7 +283,9 @@ export const RunCharts = memo(function RunCharts({
   });
   return (
     <section aria-label="Chart tables from this run" className="grid min-w-0 gap-4">
-      <h3 className={heading}>Chart tables from this run</h3>
+      <h3 className="text-h4 font-medium text-balance text-text-primary">
+        Chart tables from this run
+      </h3>
       {groups.length ? (
         groups.map(({ id, name, entry, output, tables }) => {
           const rows = [...output.charts, ...output.chartGaps].sort((a, b) => a.table - b.table);

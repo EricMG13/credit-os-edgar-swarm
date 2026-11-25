@@ -815,10 +815,12 @@ it("shows recorded drivers and the downside shock with a separate facilities not
   const { view } = fixture();
   render(<Forecast view={view} run={run} />);
   expect(screen.getByRole("region", { name: "Assumptions by case" })).toBeInTheDocument();
-  // The recorded drivers are drawn open, under the assumptions table.
-  expect(
-    screen.getByText("Recorded drivers, rationale and limitations").closest("details"),
-  ).toHaveAttribute("open");
+  // The recorded drivers sit closed under the assumptions table, one press away.
+  const recorded = screen
+    .getByText("Recorded drivers, rationale and limitations")
+    .closest("details");
+  expect(recorded).not.toHaveAttribute("open");
+  if (recorded) recorded.open = true;
   expect(screen.getByRole("table", { name: "Recorded forecast drivers" })).toBeInTheDocument();
   expect(screen.getByText("Recorded growth.")).toBeInTheDocument();
   // The table shows the shock as recorded, the fraction 0.20; the recorded shock reads it as 20.00%.

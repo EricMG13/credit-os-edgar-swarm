@@ -21,8 +21,11 @@ const LEFT = 44;
 const RIGHT = 8;
 const TOP = 12;
 const FOOT = 30;
-const STUB = 18;
-const LABEL = 30;
+/** Height of the hatched mark that sits on the baseline for a part with no value. */
+const STUB = 8;
+const LINE = 14;
+/** The widest gap word ("Not published", "Distributions") at 12px mono, plus breathing room. */
+const LABEL_ROOM = 100;
 const MIN_INSIDE = 16;
 
 type Part = { name: string; cell: MeasureCell | undefined };
@@ -76,11 +79,15 @@ function Chart({ slots }: { slots: Slot[] }) {
     0,
     ...slots.map(({ parts }) => parts.filter(({ cell }) => isMissing(cell)).length),
   );
-  const baseline = TOP + missing * (STUB + LABEL) + PLOT;
-  const height = baseline + FOOT;
+  const baseline = TOP + PLOT;
   const scale = PLOT / top;
   const slotWidth = (width - LEFT - RIGHT) / slots.length;
+  // Gap words go under the year, each on its own line; a slot too narrow for them keeps the
+  // hatched mark and the legend's "Not published" key instead of overlapping its neighbours.
+  const words = slotWidth >= LABEL_ROOM;
+  const height = baseline + FOOT + (words ? missing * 2 * LINE : 0);
   const barWidth = Math.min(56, slotWidth * 0.45);
+  const markWidth = Math.min(20, slotWidth * 0.15);
   const description = slots
     .flatMap(({ period, parts }) =>
       parts.map(
@@ -125,7 +132,14 @@ function Chart({ slots }: { slots: Slot[] }) {
         ))}
         {slots.map((slot, at) => {
           const middle = LEFT + slotWidth * at + slotWidth / 2;
-          const x = middle - barWidth / 2;
+          const hasBar = slot.parts.some(({ cell }) => cell?.value != null && !isNegative(cell));
+          const gapParts = slot.parts.filter(({ cell }) => isMissing(cell));
+          // Bar and gap marks sit side by side on the baseline, centred in the slot.
+          const used =
+            (hasBar ? barWidth : 0) +
+            gapParts.length * markWidth +
+            (Number(hasBar) + gapParts.length - 1) * 4;
+          const x = middle - used / 2;
           let level = 0;
           const stated = slot.parts.flatMap(({ name, cell }, index) => {
             if (cell?.value == null || isNegative(cell)) return [];
@@ -133,6 +147,7 @@ function Chart({ slots }: { slots: Slot[] }) {
             const y = baseline - level * scale - barHeight;
             level += cell.value;
             const inside = barHeight >= MIN_INSIDE;
+            const barMiddle = x + barWidth / 2;
             return [
               <g key={name}>
                 <rect
@@ -144,7 +159,7 @@ function Chart({ slots }: { slots: Slot[] }) {
                   className={index === 0 ? "fill-chart-2" : "fill-chart-1"}
                 />
                 <text
-                  x={inside ? middle : x + barWidth + 4}
+                  x={inside ? barMiddle : x + barWidth + 4}
                   y={y + barHeight / 2 + 4}
                   textAnchor={inside ? "middle" : "start"}
                   className={`font-mono text-caption ${inside ? "fill-surface-card" : "fill-text-secondary"}`}
@@ -154,26 +169,24 @@ function Chart({ slots }: { slots: Slot[] }) {
               </g>,
             ];
           });
-          // A part with no value is a hatched block above everything stated, never under it.
-          const gaps = slot.parts
-            .filter(({ cell }) => isMissing(cell))
-            .map(({ name }, index) => {
-              const y = baseline - level * scale - (index + 1) * STUB - index * LABEL;
-              return (
-                <g key={name}>
-                  <rect
-                    data-part={`${name} ${slot.period} not published`}
-                    x={x}
-                    y={y}
-                    width={barWidth}
-                    height={STUB}
-                    fill="url(#uses-of-cash-stub)"
-                    className="stroke-border-gap"
-                    strokeDasharray="3 3"
-                  />
+          // A part with no value is a hatched mark on the baseline, never a height.
+          const gaps = gapParts.map(({ name }, index) => (
+            <g key={name}>
+              <rect
+                data-part={`${name} ${slot.period} not published`}
+                x={x + (hasBar ? barWidth + 4 : 0) + index * (markWidth + 4)}
+                y={baseline - STUB}
+                width={markWidth}
+                height={STUB}
+                fill="url(#uses-of-cash-stub)"
+                className="stroke-border-gap"
+                strokeDasharray="3 3"
+              />
+              {words && (
+                <>
                   <text
                     x={middle}
-                    y={y - 18}
+                    y={baseline + 34 + index * 2 * LINE}
                     textAnchor="middle"
                     className="fill-text-secondary text-caption"
                   >
@@ -181,15 +194,16 @@ function Chart({ slots }: { slots: Slot[] }) {
                   </text>
                   <text
                     x={middle}
-                    y={y - 4}
+                    y={baseline + 34 + (index * 2 + 1) * LINE}
                     textAnchor="middle"
                     className="fill-text-secondary font-mono text-caption"
                   >
                     Not published
                   </text>
-                </g>
-              );
-            });
+                </>
+              )}
+            </g>
+          ));
           return (
             <g key={slot.period}>
               {stated}
@@ -218,7 +232,7 @@ function Chart({ slots }: { slots: Slot[] }) {
   );
 }
 
-function Legend({ debtTrace }: { debtTrace: ReactNode }) {
+function Legend({ debtTrace, gaps }: { debtTrace: ReactNode; gaps: boolean }) {
   const swatch = (color: string) => (
     <span aria-hidden="true" className={`inline-block size-3 rounded-ds-xs ${color}`} />
   );
@@ -233,6 +247,15 @@ function Legend({ debtTrace }: { debtTrace: ReactNode }) {
         Debt repayment
         {debtTrace}
       </li>
+      {gaps && (
+        <li className="flex items-center gap-2">
+          <span
+            aria-hidden="true"
+            className="gap-hatch inline-block size-3 rounded-ds-xs border border-dashed border-border-gap"
+          />
+          Not published
+        </li>
+      )}
     </ul>
   );
 }
@@ -319,16 +342,14 @@ export function UsesOfCash({
         ),
   );
   return (
-    <Tile
-      {...tile}
-      trace={
-        <div className="flex flex-none items-center gap-2">
-          <Segmented label="Uses of cash view" segments={VIEWS} current={view} onSelect={setView} />
-          {tile.trace}
-        </div>
-      }
-    >
-      <Legend debtTrace={trace("Debt repayment")} />
+    <Tile {...tile}>
+      <div className="flex">
+        <Segmented label="Uses of cash view" segments={VIEWS} current={view} onSelect={setView} />
+      </div>
+      <Legend
+        debtTrace={trace("Debt repayment")}
+        gaps={slots.some(({ parts }) => parts.some(({ cell }) => isMissing(cell)))}
+      />
       {view === "chart" ? (
         <>
           <Chart slots={slots} />

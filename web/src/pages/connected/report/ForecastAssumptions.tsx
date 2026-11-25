@@ -1,3 +1,4 @@
+import { ChevronRight, Plus } from "@untitledui/icons";
 import { containsReference, readerText } from "../publishedReport";
 import { driverTable } from "./forecastDrivers";
 import { RecordedForecastAssumptions, type ForecastSource } from "./ForecastRecord";
@@ -35,6 +36,11 @@ function Mark() {
       />
     </svg>
   );
+}
+
+/** The mark that, with the words, says only this case states a driver; the legend uses it too. */
+function OnlyMark() {
+  return <Plus aria-hidden="true" className="size-3 shrink-0 text-text-secondary" />;
 }
 
 /**
@@ -86,7 +92,15 @@ export function AssumptionsByCase({
             </span>
             Differs from base
           </span>
-          <span>Only this case states it: base does not give the driver</span>
+          <span className="flex items-center gap-2">
+            <span
+              aria-hidden="true"
+              className="grid size-4 place-items-center rounded-ds-xs border border-border-hairline bg-surface-card"
+            >
+              <OnlyMark />
+            </span>
+            <span>Only this case states it: base does not give the driver</span>
+          </span>
           <span className="flex items-center gap-2">
             <NotStated />
             the inputs do not give this driver for the case; nothing is assumed
@@ -140,7 +154,7 @@ export function AssumptionsByCase({
                   {row.cells.map((cell, at) => (
                     <td
                       key={cases[at]?.key}
-                      className={`px-3 py-2 font-mono tabular-nums ${
+                      className={`whitespace-nowrap px-3 py-2 font-mono tabular-nums ${
                         cell.differs ? "bg-surface-selected text-text-primary" : "text-text-primary"
                       }`}
                     >
@@ -165,7 +179,8 @@ export function AssumptionsByCase({
                             </span>
                           )}
                           {cell.only && (
-                            <span className="block font-sans text-caption text-text-secondary">
+                            <span className="flex items-center gap-1 font-sans text-caption text-text-secondary">
+                              <OnlyMark />
                               only this case states it
                             </span>
                           )}
@@ -187,8 +202,12 @@ export function AssumptionsByCase({
       {downsideNote !== undefined && cases.some(({ shock }) => shock) && (
         <p className="text-small text-text-secondary">{readerNote(downsideNote)}</p>
       )}
-      <details open>
-        <summary className="flex min-h-8 cursor-pointer items-center rounded-ds-sm text-small font-medium text-text-link outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2 max-[480px]:min-h-11">
+      <details className="group">
+        <summary className="flex min-h-8 cursor-pointer items-center gap-1.5 rounded-ds-sm text-small font-medium text-text-link outline-focus-ring focus-visible:outline-2 focus-visible:outline-offset-2 max-[480px]:min-h-11">
+          <ChevronRight
+            aria-hidden="true"
+            className="size-4 shrink-0 transition-transform group-open:rotate-90"
+          />
           Recorded drivers, rationale and limitations
         </summary>
         <div className="mt-3">

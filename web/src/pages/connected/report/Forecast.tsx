@@ -425,6 +425,8 @@ function caseDisplay(model: Model, group: string | undefined, period: string | u
     : undefined;
 }
 
+const BASE_GROUP = "Base case";
+
 export function Forecast({
   view,
   run,
@@ -443,7 +445,11 @@ export function Forecast({
   const caseOptions = model ? forecastCaseOptions(model) : [];
   const leverage = model ? readLeverage(model).measure : null;
   const cases = model ? caseChoices(model, caseOptions, leverage) : [];
-  const current = cases.find(({ name }) => name === chosenCase) ?? cases[0];
+  // The case the reader chose; else the one the model marks as its base case; else the first listed.
+  const current =
+    cases.find(({ name }) => name === chosenCase) ??
+    cases.find(({ rawGroup }) => rawGroup === BASE_GROUP) ??
+    cases[0];
   const option = caseOptions.find(({ name }) => name === current?.name);
   const selectedCase = option?.name;
   // The selected case's raw group, resolved once here: two raw groups can share one label.

@@ -2,7 +2,13 @@ import { useState } from "react";
 import { Segmented } from "@/components/kit/Segmented";
 import { readerText } from "../publishedReport";
 import type { ForecastSelection, ForecastSource } from "../report/ForecastRecord";
-import { ForecastGrid, GridQualifications, type GridColumn, type GridRow } from "./ForecastGrid";
+import {
+  ForecastGrid,
+  GridQualifications,
+  type GridColumn,
+  type GridRow,
+  type KeyRows,
+} from "./ForecastGrid";
 import { forecastCaseNames, gridOf, type CaseNames, type Grid } from "./LegacyForecast";
 import { record, stringsIn, word } from "./visualData";
 import { analyzeScenarioPeriods, scenarioComparisonNotice } from "./scenarioPeriods";
@@ -77,6 +83,14 @@ type ShownColumn = GridColumn & { source: StatementColumn | null; missing?: stri
 const ACTUAL_YEAR = /^FY(\d{4})A?$/u;
 const INTEREST_ROW = /^(?:Interest|Interest coverage(?: \(.*\))?)$/i;
 const NOT_PUBLISHED = "Not published";
+/** The rows a long statement opens on: the statement's own subtotals (the rows the model marks
+ * `total`: revenue, profit lines, cash flow, closing cash, liquidity, closing and net debt) and the
+ * credit measures a committee reads first. */
+const KEY_ROW = /\b(?:leverage|interest cover(?:age)?|liquidity)\b/i;
+const KEY_ROWS: KeyRows = {
+  matches: (row) => row.total || KEY_ROW.test(row.label),
+  description: "Totals, leverage, interest cover and liquidity",
+};
 
 function shownOf(column: StatementColumn, band: string, label = column.label): ShownColumn {
   const title = column.start && column.end ? `${column.start} to ${column.end}` : undefined;
@@ -373,6 +387,7 @@ function StatementView({
         columns={facts.shown}
         rows={gridRows(grid, facts.shown, facts.period)}
         gapNotes={{ [NOT_PUBLISHED]: "the case publishes no column for this year." }}
+        keyRows={KEY_ROWS}
         source={trace && ((row) => trace(row, { row }))}
       />
       <GridQualifications

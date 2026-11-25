@@ -293,3 +293,27 @@ it("adds no module code or number to a name it generates", () => {
   for (const name of names) expect(name).not.toMatch(/CP-|\d/);
   expect(showComparisonColumns().sort()).toEqual(names);
 });
+
+it("opens on the case the model marks as its base case, whatever order the cases are listed in", () => {
+  const columns = ["Upside: asset sale completed", "Base case", "Downside case"].map((group) => ({
+    label: "FY2025E",
+    group,
+  }));
+  render(
+    <Forecast
+      view={viewOf(columns, { [CASH_PROXY]: [value("150"), value("120"), value("90")] })}
+      run={run}
+    />,
+  );
+  const pressed = caseButtons().find((button) => button.getAttribute("aria-pressed") === "true");
+  expect(pressed).toHaveTextContent("Base case");
+  expect(caseFigure()).toHaveTextContent("120");
+});
+
+it("opens on the first listed case when the model marks none as base", () => {
+  const columns = ["Upside", "Downside case"].map((group) => ({ label: "FY2025E", group }));
+  render(
+    <Forecast view={viewOf(columns, { [CASH_PROXY]: [value("150"), value("90")] })} run={run} />,
+  );
+  expect(caseButtons()[0]).toHaveAttribute("aria-pressed", "true");
+});

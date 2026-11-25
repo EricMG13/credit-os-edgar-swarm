@@ -106,12 +106,57 @@ it("renders the trace control once per row", () => {
   expect(seen).toContain("Downside EBITDA decline assumptions|downside_shock.ebitda_decline");
 });
 
-it("opens the recorded drivers disclosure by default, with a focus-ringed 32px summary", () => {
+it("closes the recorded drivers disclosure by default, with a chevron and a focus-ringed 32px summary", () => {
   render(<AssumptionsByCase document={document} />);
-  const summary = screen.getByText("Recorded drivers, rationale and limitations");
-  expect(summary.closest("details")).toHaveAttribute("open");
+  const summary = screen
+    .getByText("Recorded drivers, rationale and limitations")
+    .closest("summary");
+  expect(summary?.closest("details")).not.toHaveAttribute("open");
   expect(summary).toHaveClass("min-h-8", "max-[480px]:min-h-11", "focus-visible:outline-2");
-  expect(screen.getAllByText("Recorded forecast drivers").length).toBeGreaterThan(0);
+  const chevron = summary?.querySelector("svg");
+  expect(chevron).toHaveAttribute("aria-hidden", "true");
+  expect(chevron).toHaveClass("group-open:rotate-90");
+  expect(summary?.closest("details")).toHaveClass("group");
+});
+
+it("draws the recorded block in the table look, with h4 headings and a named scrollable region", () => {
+  render(<AssumptionsByCase document={document} />);
+  const details = screen
+    .getByText("Recorded drivers, rationale and limitations")
+    .closest("details");
+  details?.setAttribute("open", "");
+  const inner = within(details as HTMLElement);
+  for (const name of [
+    "Recorded forecast drivers",
+    "Recorded downside shock",
+    "Recorded facilities",
+  ])
+    expect(inner.getByRole("heading", { level: 4, name })).toHaveClass("text-small", "font-medium");
+  const scroller = inner.getByRole("region", { name: "Forecast driver values by planning year" });
+  expect(scroller).toHaveAttribute("tabindex", "0");
+  const heads = within(scroller).getAllByRole("columnheader");
+  expect(heads.at(-2)).toHaveTextContent("Limitation");
+  for (const head of heads) {
+    expect(head).toHaveClass("text-caption", "font-medium", "text-text-secondary");
+    expect(head.className).not.toContain("font-bold");
+  }
+  const limitation = heads.at(-2);
+  expect(limitation?.className).toMatch(/min-w-/u);
+});
+
+it("keeps chips and values on one line in the driver table", () => {
+  render(<AssumptionsByCase document={document} />);
+  for (const cell of within(rowOf("Debt repayment")).getAllByRole("cell").slice(0, 3))
+    expect(cell).toHaveClass("whitespace-nowrap");
+});
+
+it("marks a value only one case states with the same icon in the legend and the table", () => {
+  render(<AssumptionsByCase document={document} />);
+  const legend = screen.getByText(/Only this case states it:/u);
+  expect(legend.parentElement?.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+  const cell = within(rowOf("Debt repayment")).getAllByRole("cell")[1] as HTMLElement;
+  expect(cell.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+  expect(cell.textContent).toContain("only this case states it");
 });
 
 it("draws a gap when the inputs are unreadable", () => {

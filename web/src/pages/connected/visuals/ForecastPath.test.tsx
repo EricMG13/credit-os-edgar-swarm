@@ -114,16 +114,79 @@ it("labels every drawn case's end point and marks another case's missing year", 
     ),
   );
   const labels = [...container.querySelectorAll("[data-label]")].map((label) => label.textContent);
-  expect(labels).toEqual(expect.arrayContaining(["1x", "2.8x", "0.4x"]));
+  // In a 600px drawing the names do not fit beside the points: each label carries its case's key,
+  // and the legend names the case beside the same key.
+  expect(labels).toEqual(expect.arrayContaining(["1x A", "2.8x B", "0.4x C"]));
+  const legend = screen.getByRole("list", { name: "Chart key" });
+  expect(within(legend).getByText("Downside case").previousElementSibling).toHaveTextContent("B");
   expect(container.querySelector('[data-case-gap="Downside case FY2026E"]')).not.toBeNull();
   expect(screen.getByText("Downside case, FY2026E: EBITDA is not positive.")).toBeInTheDocument();
-  // The two cases that are not selected are told apart by dash, not by colour alone.
+  // The cases are told apart by dash, not by colour alone.
   const dash = (group: string) =>
     container.querySelector(`[data-segment="${group}"]`)?.getAttribute("stroke-dasharray");
   expect(dash("Base case")).toBeNull();
   expect(dash("Upside")).not.toBeNull();
   expect(dash("Downside case")).not.toBeNull();
   expect(dash("Upside")).not.toBe(dash("Downside case"));
+  // Another case's missing year is a mark of its own kind in the legend, naming the case.
+  expect(within(legend).getByText(/no figure for Downside case/)).toBeInTheDocument();
+});
+
+it("keeps each case's dash whichever case is selected; the selected case is drawn heavier", () => {
+  const measure = measureOf(
+    [
+      ...cols("Base case", ["FY2025E", "FY2026E"]),
+      ...cols("Downside case", ["FY2025E", "FY2026E"]),
+    ],
+    [value("2"), value("1.5"), value("3"), value("2.5")],
+  );
+  const segment = (container: HTMLElement, group: string) =>
+    container.querySelector(`[data-segment="${group}"]`);
+  const base = draw(measure, { group: "Base case" });
+  const dashed = segment(base.container, "Downside case")?.getAttribute("stroke-dasharray");
+  expect(segment(base.container, "Base case")?.getAttribute("stroke-width")).toBe("2.5");
+  base.unmount();
+  const downside = draw(measure, { group: "Downside case", caseName: "Downside case" });
+  expect(segment(downside.container, "Downside case")?.getAttribute("stroke-dasharray")).toBe(
+    dashed,
+  );
+  expect(segment(downside.container, "Base case")?.getAttribute("stroke-dasharray")).toBeNull();
+  expect(segment(downside.container, "Downside case")?.getAttribute("stroke-width")).toBe("2.5");
+});
+
+it("places every label inside the plot, clear of the other labels", () => {
+  const { container } = draw(
+    measureOf(
+      [
+        ...cols("Base case", ["FY2025E", "FY2026E", "FY2027E"]),
+        ...cols("Downside case", ["FY2025E", "FY2026E", "FY2027E"]),
+      ],
+      // Both cases end on the same figure and the selected case peaks where the other starts.
+      [value("2"), value("1.5"), value("1"), value("2"), value("1.6"), value("1")],
+    ),
+  );
+  const labels = [...container.querySelectorAll<SVGTextElement>("[data-label]")].map((label) => ({
+    x: Number(label.getAttribute("x")),
+    y: Number(label.getAttribute("y")),
+    anchor: label.getAttribute("text-anchor"),
+    width: label.textContent.length * 8.4,
+  }));
+  const box = ({ x, y, anchor, width }: (typeof labels)[number]) => {
+    const left = anchor === "start" ? x : anchor === "end" ? x - width : x - width / 2;
+    return { left, right: left + width, top: y - 12, bottom: y + 4 };
+  };
+  const boxes = labels.map(box);
+  for (const one of boxes) {
+    expect(one.left).toBeGreaterThanOrEqual(52);
+    expect(one.right).toBeLessThanOrEqual(600);
+  }
+  boxes.forEach((one, at) => {
+    for (const other of boxes.slice(at + 1)) {
+      const across = Math.min(one.right, other.right) - Math.max(one.left, other.left);
+      const down = Math.min(one.bottom, other.bottom) - Math.max(one.top, other.top);
+      expect(across > 0 && down > 0).toBe(false);
+    }
+  });
 });
 
 it("draws no covenant level on the model's path", () => {

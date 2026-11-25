@@ -55,7 +55,7 @@ it("draws zero as a zero-height segment, not a gap", () => {
   expect(num(part(chart, "Distributions FY2026E"), "height")).toBe(0);
 });
 
-it("draws a missing part as a labelled hatched block above the stated parts, never under them", () => {
+it("draws a missing part as a hatched mark on the baseline, never at a height", () => {
   render(
     view(
       model([
@@ -67,17 +67,54 @@ it("draws a missing part as a labelled hatched block above the stated parts, nev
   const chart = screen.getByRole("img");
   const axis = num(chart.querySelector("[data-axis]") as Element, "y1");
   const repayment = part(chart, "Debt repayment FY2025E");
-  // The stated repayment starts at the baseline, as if distributions were not zero but unknown.
   expect(num(repayment, "y") + num(repayment, "height")).toBeCloseTo(axis, 5);
   const missing = part(chart, "Distributions FY2025E not published");
-  expect(num(missing, "y") + num(missing, "height")).toBeCloseTo(num(repayment, "y"), 5);
-  expect(num(missing, "height")).toBe(18);
+  expect(num(missing, "y") + num(missing, "height")).toBeCloseTo(axis, 5);
+  expect(num(missing, "height")).toBe(8);
+  // Beside the stated bar, not over it.
+  expect(num(missing, "x")).toBeGreaterThanOrEqual(num(repayment, "x") + num(repayment, "width"));
   expect(chart.textContent).toContain("Distributions");
   expect(chart.textContent).toContain("Not published");
   expect(screen.getByText(/FY2025E Distributions: Dividends not modelled/u)).toBeTruthy();
-  // Stated distributions sit first, repayments above them.
   const dist = part(chart, "Distributions FY2026E");
   expect(num(dist, "y") + num(dist, "height")).toBeCloseTo(axis, 5);
+});
+
+it("leaves no empty band above the plot and keeps the drawing at its real width", () => {
+  render(view());
+  const chart = screen.getByRole("img");
+  const axis = num(chart.querySelector("[data-axis]") as Element, "y1");
+  expect(axis).toBe(172);
+  expect(chart.getAttribute("viewBox")).toBe(
+    `0 0 ${chart.getAttribute("width") ?? ""} ${chart.getAttribute("height") ?? ""}`,
+  );
+});
+
+it("gives every label its own line so none overlaps another", () => {
+  render(
+    view(
+      model([
+        row("Distributions", [na("a"), value("20"), value("30")]),
+        row("Debt repayment", [na("b"), value("10"), value("40")]),
+      ]),
+    ),
+  );
+  const chart = screen.getByRole("img");
+  const lines = [...chart.querySelectorAll("text")]
+    .filter((node) =>
+      ["Distributions", "Debt repayment", "Not published"].includes(node.textContent),
+    )
+    .map((node) => `${node.getAttribute("x") ?? ""},${node.getAttribute("y") ?? ""}`);
+  expect(lines.length).toBe(4);
+  expect(new Set(lines).size).toBe(4);
+  expect(num(chart, "height")).toBeGreaterThan(172 + 30);
+});
+
+it("keeps the view switch on its own row under the title", () => {
+  render(view());
+  const heading = screen.getByRole("heading", { name: /Uses of cash/u });
+  const group = screen.getByRole("button", { name: "Chart" }).parentElement as Element;
+  expect(heading.parentElement?.parentElement?.contains(group)).toBe(false);
 });
 
 it("shows a missing value as Not published with its reason in the notes", () => {

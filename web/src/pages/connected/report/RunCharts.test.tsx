@@ -132,8 +132,28 @@ it("is a titled section, open by default, with one row per chart and gap under i
   ).toBeInTheDocument();
   expect(rowOf("Interest cover").getByText("x (times)")).toBeInTheDocument();
   // The disclosures start closed; no table is open until asked.
-  for (const details of document.querySelectorAll("details"))
-    expect(details).not.toHaveAttribute("open");
+  for (const toggle of screen.getAllByRole("button", { name: /^Table for / }))
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+  expect(screen.queryByRole("table")).toBeNull();
+});
+
+it("keeps the title, unit, source link and table toggle on one compact line, table below", () => {
+  render(<RunCharts view={viewOf(entry())} folder="current" />);
+  const row = rowOf("Debt maturities");
+  const toggle = row.getByRole("button", { name: "Table for Debt maturities" });
+  const line = toggle.parentElement as HTMLElement;
+  expect(line.contains(row.getByRole("link", { name: "Source table" }))).toBe(true);
+  expect(line.contains(row.getByText("US$m", { selector: "div > span" }))).toBe(true);
+  expect(toggle.className).toContain("ml-auto");
+  expect(toggle.className).toContain("min-h-8");
+  expect(toggle.className).toContain("max-[480px]:min-h-11");
+  fireEvent.click(toggle);
+  expect(toggle).toHaveAttribute("aria-expanded", "true");
+  const region = row.getByRole("region", { name: "Debt maturities table" });
+  expect(line.contains(region)).toBe(false);
+  expect(screen.getByRole("heading", { name: "Chart tables from this run" }).className).toContain(
+    "text-h4",
+  );
 });
 
 it("holds the exact cells and the gap chip in a closed disclosure", () => {
@@ -236,6 +256,7 @@ it("draws a maps row with its table and a trace to its table line", () => {
 it("draws the module-written qualification under its chart table with its own trace", () => {
   render(<RunCharts view={viewOf(withFigures(entry()))} folder="current" />);
   const row = rowOf("Debt maturities");
+  fireEvent.click(row.getByText("Table for Debt maturities"));
   const note = row.getByText("Maturities exclude the revolving facility; it is undrawn.");
   expect(note).toBeInTheDocument();
   expect(row.getByRole("link", { name: "Qualification source" })).toHaveAttribute(
@@ -247,6 +268,7 @@ it("draws the module-written qualification under its chart table with its own tr
 it("traces each table row to its own handoff line", () => {
   render(<RunCharts view={viewOf(entry())} folder="current" />);
   const row = rowOf("Debt maturities");
+  fireEvent.click(row.getByText("Table for Debt maturities"));
   expect(row.getByRole("link", { name: "Show sources for FY2026" })).toHaveAttribute(
     "href",
     `/report/current#evidence/debt~${SHA}-23`,

@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+import { ChevronDown } from "@untitledui/icons";
+import { useState, type ReactNode } from "react";
+import { Segmented } from "@/components/kit/Segmented";
 import { TRACE_HOST } from "@/pages/library/parts/TraceControl";
 import { cx } from "@/utils/cx";
 import { containsReference, readerText } from "../publishedReport";
@@ -128,43 +130,125 @@ function ValueCell({ cell }: { cell: Cell }) {
   );
 }
 
-function GridHead({ columns, traced }: { columns: GridColumn[]; traced: boolean }) {
-  const head = "bg-surface-subtle px-3 py-2 text-caption text-text-secondary whitespace-nowrap";
+/** A full-width header cell whose words stay at the scroll region's left edge on an opaque
+ * ground, so a band or a control never scrolls away from the rows under it. */
+function PinnedCell({ width, children }: { width: number; children: ReactNode }) {
   return (
-    <thead className="border-b border-border-hairline">
+    <th scope="rowgroup" colSpan={width} className="p-0 text-left text-small font-semibold">
+      <div className="sticky left-0 w-fit max-w-[calc(100vw-2rem)] bg-surface-subtle px-3 py-1.5">
+        {children}
+      </div>
+    </th>
+  );
+}
+
+const HEAD = "bg-surface-subtle px-3 py-2 text-caption text-text-secondary";
+// The header rows stick over the body; the border-collapsed table's own rules would scroll away.
+const HEAD_RULE = "shadow-[inset_0_-1px_0_var(--color-border-hairline)]";
+
+/** A band of one column that carries the band's own name ("Quarter" under "Quarter"). */
+const namedOnce = (items: GridColumn[], band: string) =>
+  items.length === 1 && items[0]?.label === band;
+
+function GridHead({ columns, traced }: { columns: GridColumn[]; traced: boolean }) {
+  const bands = spans(columns, ({ band }) => band);
+  const once = new Set(bands.flatMap(({ key, items }) => (namedOnce(items, key) ? items : [])));
+  return (
+    <thead className="sticky top-0 z-20 bg-surface-subtle">
       <tr>
-        <th scope="col" rowSpan={2} className={cx(head, "sticky left-0 z-10 text-left")}>
+        <th
+          scope="col"
+          rowSpan={2}
+          className={cx(HEAD, HEAD_RULE, "sticky left-0 z-10 text-left whitespace-nowrap")}
+        >
           Measure
         </th>
-        {spans(columns, ({ band }) => band).map(({ key, items }, index) => (
-          <th
-            key={index}
-            scope="colgroup"
-            colSpan={items.length}
-            className={cx(head, "border-l border-border-hairline text-left text-text-primary")}
-          >
-            {key}
-          </th>
-        ))}
+        {bands.map(({ key, items }, index) =>
+          namedOnce(items, key) ? (
+            <th
+              key={index}
+              scope="col"
+              rowSpan={2}
+              title={items[0]?.title}
+              className={cx(HEAD, HEAD_RULE, "border-l border-border-hairline text-right")}
+            >
+              <span className="ml-auto block max-w-[9rem] text-balance text-text-primary">
+                {key}
+              </span>
+            </th>
+          ) : (
+            <th
+              key={index}
+              scope="colgroup"
+              colSpan={items.length}
+              className={cx(
+                HEAD,
+                HEAD_RULE,
+                "border-l border-border-hairline text-left text-text-primary whitespace-normal",
+              )}
+            >
+              <span className="block max-w-[9rem] text-balance">{key}</span>
+            </th>
+          ),
+        )}
         {traced && (
-          <th scope="col" rowSpan={2} className={cx(head, "text-right")}>
+          <th
+            scope="col"
+            rowSpan={2}
+            className={cx(HEAD, HEAD_RULE, "text-right whitespace-nowrap")}
+          >
             Trace
           </th>
         )}
       </tr>
       <tr>
-        {columns.map((column, index) => (
-          <th
-            key={index}
-            scope="col"
-            title={column.title}
-            className={cx(head, "text-right font-mono text-text-primary")}
-          >
-            {column.label}
-          </th>
-        ))}
+        {columns.map((column, index) =>
+          once.has(column) ? null : (
+            <th
+              key={index}
+              scope="col"
+              title={column.title}
+              className={cx(
+                HEAD,
+                HEAD_RULE,
+                "text-right font-mono whitespace-nowrap text-text-primary",
+              )}
+            >
+              {column.label}
+            </th>
+          ),
+        )}
       </tr>
     </thead>
+  );
+}
+
+type DrawnRow = GridRow & { runs: CellRun[] };
+
+function MeasureRow({ row, source }: { row: DrawnRow; source?: (row: string) => ReactNode }) {
+  return (
+    <tr className={cx(TRACE_HOST, "border-b border-border-hairline", row.total && "font-semibold")}>
+      <th
+        scope="row"
+        className="sticky left-0 z-10 min-w-40 max-w-64 bg-surface-card px-3 py-1.5 text-left text-small font-medium wrap-anywhere"
+      >
+        {row.label}
+      </th>
+      {row.runs.map((run) =>
+        run.gap ? (
+          <GapCell key={run.start} run={{ ...run, gap: run.gap }} />
+        ) : (
+          <ValueCell key={run.start} cell={run.cell} />
+        ),
+      )}
+      {source && (
+        <td className="px-2 py-1">
+          <div className="flex min-h-8 items-center justify-end max-[480px]:min-h-11">
+            {source(row.label)}
+          </div>
+        </td>
+      )}
+    </tr>
   );
 }
 
@@ -173,55 +257,61 @@ function GridBody({
   width,
   source,
 }: {
-  rows: (GridRow & { runs: CellRun[] })[];
+  rows: DrawnRow[];
   width: number;
   source?: (row: string) => ReactNode;
 }) {
   return spans(rows, ({ band }) => band).map(({ key, items }, group) => (
     <tbody key={group}>
       <tr className="border-b border-border-hairline bg-surface-subtle">
-        <th
-          scope="rowgroup"
-          colSpan={width}
-          className="px-3 py-1.5 text-left text-small font-semibold"
-        >
+        <PinnedCell width={width}>
           {key && `${key} `}
           <span className="font-normal text-text-secondary">{familyText(items)}</span>
-        </th>
+        </PinnedCell>
       </tr>
       {items.map((row, index) => (
-        <tr
-          key={index}
-          className={cx(
-            TRACE_HOST,
-            "border-b border-border-hairline",
-            row.total && "font-semibold",
-          )}
-        >
-          <th
-            scope="row"
-            className="sticky left-0 z-10 min-w-40 max-w-64 bg-surface-card px-3 py-1.5 text-left text-small font-medium wrap-anywhere"
-          >
-            {row.label}
-          </th>
-          {row.runs.map((run) =>
-            run.gap ? (
-              <GapCell key={run.start} run={{ ...run, gap: run.gap }} />
-            ) : (
-              <ValueCell key={run.start} cell={run.cell} />
-            ),
-          )}
-          {source && (
-            <td className="px-2 py-1">
-              <div className="flex min-h-8 items-center justify-end max-[480px]:min-h-11">
-                {source(row.label)}
-              </div>
-            </td>
-          )}
-        </tr>
+        <MeasureRow key={index} row={row} source={source} />
       ))}
     </tbody>
   ));
+}
+
+/** The measures with no figure in any shown column, drawn as one row that discloses them, each
+ * then drawn as before: its gap cells with their recorded reasons, and its trace. */
+function BlankRows({
+  rows,
+  width,
+  source,
+}: {
+  rows: DrawnRow[];
+  width: number;
+  source?: (row: string) => ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  if (!rows.length) return null;
+  return (
+    <tbody>
+      <tr className="border-b border-border-hairline bg-surface-subtle">
+        <PinnedCell width={width}>
+          <button
+            type="button"
+            aria-expanded={open}
+            onClick={() => {
+              setOpen(!open);
+            }}
+            className="-mx-2 flex min-h-8 cursor-pointer items-center gap-2 rounded-ds-sm px-2 text-left text-small font-semibold outline-focus-ring hover:bg-surface-card focus-visible:outline-2 focus-visible:outline-offset-2 max-[480px]:min-h-11"
+          >
+            <ChevronDown
+              aria-hidden="true"
+              className={cx("size-4 flex-none text-text-secondary", open && "rotate-180")}
+            />
+            {`${String(rows.length)} measures with no figure in any column shown`}
+          </button>
+        </PinnedCell>
+      </tr>
+      {open && rows.map((row, index) => <MeasureRow key={index} row={row} source={source} />)}
+    </tbody>
+  );
 }
 
 function GapKey({
@@ -248,13 +338,78 @@ function GapKey({
   );
 }
 
+/** The rows a statement opens on, and what they are, in words. */
+export interface KeyRows {
+  matches: (row: GridRow) => boolean;
+  /** "Totals, leverage, interest cover and liquidity". */
+  description: string;
+}
+
+/** A statement of at least this many rows opens on its key rows. */
+const KEY_VIEW_FROM = 13;
+/** At least this many rows with no figure in any shown column collapse into one row. */
+const BLANK_FROM = 2;
+
+const blank = ({ runs }: DrawnRow) => runs.length > 0 && runs.every(({ gap }) => gap);
+
+/** The rows the table draws in place, the blank rows it collapses (none where every row is blank),
+ * and the key rows a long statement opens on (none where it is short or every row is key). */
+function rowSets(rows: DrawnRow[], keyRows: KeyRows | undefined) {
+  const blanks = rows.filter(blank);
+  // Where no row has a figure (a case the run did not compute), the gaps are the statement.
+  const collapsed = blanks.length >= BLANK_FROM && blanks.length < rows.length ? blanks : [];
+  const drawn = rows.filter((row) => !collapsed.includes(row));
+  const key = keyRows ? drawn.filter(keyRows.matches) : [];
+  const keyed = drawn.length >= KEY_VIEW_FROM && key.length > 0 && key.length < drawn.length;
+  return { collapsed, drawn, key: keyed ? key : undefined };
+}
+
+function RowSwitch({
+  all,
+  setAll,
+  shown,
+  total,
+  description,
+}: {
+  all: boolean;
+  setAll: (all: boolean) => void;
+  shown: number;
+  total: number;
+  description: string;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <Segmented
+        label="Grid rows"
+        segments={[
+          { key: "key", label: "Key rows" },
+          { key: "all", label: "All rows" },
+        ]}
+        current={all ? "all" : "key"}
+        onSelect={(key) => {
+          setAll(key === "all");
+        }}
+      />
+      <p className="text-caption text-text-secondary">
+        {all
+          ? `All ${String(total)} rows.`
+          : `${description}: ${String(shown)} of ${String(total)} rows.`}
+      </p>
+    </div>
+  );
+}
+
 /** The forecast grid: measures by column, given cells in mono, every other cell the gap cell in
- * place with its reason as its title and accessible name, one trace per row at the row's end, and one gap key under the table. */
+ * place with its reason as its title and accessible name, one trace per row at the row's end, and
+ * one gap key under the table. It scrolls both ways in its own region, its header rows and measure
+ * column pinned; measures with no figure in any shown column collapse into one disclosed row, and
+ * a long statement opens on its key rows, every row one press away. */
 export function ForecastGrid({
   name,
   columns,
   rows: inputRows,
   gapNotes,
+  keyRows,
   source,
 }: {
   name: string;
@@ -262,25 +417,41 @@ export function ForecastGrid({
   rows: GridRow[];
   /** What a gap word means where the grid itself made it ("Not published"). */
   gapNotes?: Readonly<Record<string, string>>;
+  /** The rows a long statement opens on. */
+  keyRows?: KeyRows;
   source?: (row: string) => ReactNode;
 }) {
+  const [all, setAll] = useState(false);
   const rows = inputRows.map((row) => ({ ...row, runs: cellRuns(row.cells, columns) }));
+  const { collapsed, drawn, key } = rowSets(rows, keyRows);
+  const shown = key && !all ? key : drawn;
+  const width = columns.length + (source ? 2 : 1);
   return (
     <div className="grid min-w-0 gap-3">
+      {key && keyRows && (
+        <RowSwitch
+          all={all}
+          setAll={setAll}
+          shown={key.length}
+          total={drawn.length + collapsed.length}
+          description={keyRows.description}
+        />
+      )}
       <div
         role="region"
         aria-label={`${name} table`}
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- a phone scrolls it sideways
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- the keyboard scrolls it both ways
         tabIndex={0}
-        className="relative min-w-0 overflow-x-auto rounded-ds-md border border-border-hairline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
+        className="relative max-h-[70vh] min-w-0 overflow-auto rounded-ds-md border border-border-hairline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus-ring"
       >
         <table className="w-full border-collapse text-small">
           <caption className="sr-only">{name}</caption>
           <GridHead columns={columns} traced={Boolean(source)} />
-          <GridBody rows={rows} width={columns.length + (source ? 2 : 1)} source={source} />
+          <GridBody rows={shown} width={width} source={source} />
+          <BlankRows rows={collapsed} width={width} source={source} />
         </table>
       </div>
-      <GapKey words={gapWords(rows)} notes={gapNotes} />
+      <GapKey words={gapWords([...shown, ...collapsed])} notes={gapNotes} />
     </div>
   );
 }
