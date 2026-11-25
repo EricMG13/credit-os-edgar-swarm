@@ -491,11 +491,14 @@ export function leverageSlope(
   );
   const axis = niceAxis(numbers, { zero: false, suffix: "x" });
   const left = Math.max(...axis.ticks.map((tick) => textWidth(tick.label, SIZE.tick))) + 16;
-  const right = width - 28;
-  const step = leverage.values.length > 1 ? (right - left) / (leverage.values.length - 1) : 0;
+  // The end dots sit inside the plot so their figures and period names are never cut or on a tick.
+  const first = left + 30;
+  const last = width - 50;
+  const right = width - 4;
+  const step = leverage.values.length > 1 ? (last - first) / (leverage.values.length - 1) : 0;
   const y = (value: number) => axis.place(value, SLOPE_BOTTOM, SLOPE_TOP);
   const dots = leverage.values.map((value, at): SlopeDot => {
-    const x = left + at * step;
+    const x = first + at * step;
     const cell = value.cell;
     return {
       label: value.label,
