@@ -42,6 +42,7 @@ from deploy_vii.report_view import (
     _call,
     _ChartPoint,
     _figure_of_points,
+    _figure_with_note,
     _prose_lines,
     _refs_by_fact,
     _Slot,
@@ -519,6 +520,9 @@ def _token_decimals(token: str, chart_unit: str | None) -> int:
     return min(6, max(0, written - 2) if chart_unit == "%" else written)
 
 
+_OPEN_BUCKET = re.compile(r"\bthereafter\b", re.IGNORECASE)
+
+
 def _categories_in_order(
     points: tuple[_ChartPoint, ...],
 ) -> tuple[tuple[str, ...], tuple[str, ...]]:
@@ -542,10 +546,11 @@ def _chronological(points: tuple[_ChartPoint, ...]) -> tuple[_ChartPoint, ...]:
 
 
 def _undated_note(points: tuple[_ChartPoint, ...]) -> str:
-    """The sentence a figure's summary owes for categories drawn outside the period order; empty
-    when every category was placed. A maturity ladder's `Thereafter` bucket is rightly last and
-    is not such a gap."""
-    unplaced = [c for c in _categories_in_order(points)[1] if c.strip().casefold() != "thereafter"]
+    """The sentence a figure owes for categories drawn outside the period order (`_strip_figure`
+    states it under the chart, less the leading space); empty when every category was placed. A
+    maturity ladder's open bucket (any category with the word `thereafter`: `Thereafter`,
+    `2027 and thereafter`) is rightly last and is not such a gap."""
+    unplaced = [c for c in _categories_in_order(points)[1] if not _OPEN_BUCKET.search(c)]
     if not unplaced:
         return ""
     return (
@@ -620,6 +625,42 @@ def _unitless(figure: Figure) -> Figure:
     twin = figure.chart.table_twin.model_copy(update={"scale": None})
     chart = figure.chart.model_copy(update={"unit": None, "table_twin": twin})
     return figure.model_copy(update={"chart": chart})
+
+
+type _StripSpec = tuple[str, str, str, tuple[str, ...], tuple[_ChartPoint, ...], UnitClass]
+
+
+def _strip_figure(
+    block_id: str,
+    module: ModuleView,
+    refs: Mapping[tuple[str, str], tuple[str, ...]],
+    fig_id: str,
+    spec: _StripSpec,
+) -> Figure:
+    """One figure of a chart strip from its (module, title, unit, series, points, unit class).
+
+    The table twin's note carries `_undated_note`: the shell draws that note under the chart,
+    where it draws the summary only for a figure set beside a table."""
+    _, title, unit, series, points, unit_class = spec
+    figure = _figure_of_points(
+        block_id,
+        module,
+        refs,
+        fig_id=fig_id,
+        title=title,
+        kind="grouped" if fig_id in {"S.4", "RV.1"} else "line",
+        unit_class=unit_class,
+        unit=unit or NO_UNIT,
+        series=series,
+        points=points,
+        placement="above",
+        summary=(
+            "Exact selected handoff/Model observations. Dates, definitions and "
+            "limitations remain in the source evidence; gaps are not zero."
+        ),
+    )
+    figure = _figure_with_note(figure, _undated_note(points).strip())
+    return figure if unit else _unitless(figure)
 
 
 def _headed_route(
@@ -1031,9 +1072,7 @@ def markdown_files(  # noqa: C901, PLR0912, PLR0915 - pre-existing complexity
     used: set[tuple[str, str]] = set()
     source_of: dict[tuple[str, str], str] = {}  # typed chart copy -> its source table
     yield_charts: dict[str, tuple[str, tuple[str, ...], tuple[_ChartPoint, ...]]] = {}
-    strip_charts: dict[
-        str, dict[str, tuple[str, str, str, tuple[str, ...], tuple[_ChartPoint, ...], UnitClass]]
-    ] = {}
+    strip_charts: dict[str, dict[str, _StripSpec]] = {}
     for planned in layout.routes:
         module = next(m for m in module_views if m.module_id == planned.module_id)
         route = _headed_route(planned, module, metadata[module.module_id])
@@ -1190,28 +1229,16 @@ def markdown_files(  # noqa: C901, PLR0912, PLR0915 - pre-existing complexity
                         "markdown_chart: supply every requested strip figure, "
                         "preserving explicit gaps"
                     )
-                figures = []
-                for fig_id in STRIP_FIGURES[block_id]:
-                    module_id, title, unit, series, points, unit_class = specs[fig_id]
-                    figure = _figure_of_points(
+                figures = [
+                    _strip_figure(
                         block_id,
-                        next(m for m in module_views if m.module_id == module_id),
+                        next(m for m in module_views if m.module_id == specs[fig_id][0]),
                         refs,
-                        fig_id=fig_id,
-                        title=title,
-                        kind="grouped" if fig_id in {"S.4", "RV.1"} else "line",
-                        unit_class=unit_class,
-                        unit=unit or NO_UNIT,
-                        series=series,
-                        points=points,
-                        placement="above",
-                        summary=(
-                            "Exact selected handoff/Model observations. Dates, definitions and "
-                            "limitations remain in the source evidence; gaps are not zero."
-                        )
-                        + _undated_note(points),
+                        fig_id,
+                        specs[fig_id],
                     )
-                    figures.append(figure if unit else _unitless(figure))
+                    for fig_id in STRIP_FIGURES[block_id]
+                ]
                 blocks.append(
                     Block(
                         block_id=block_id,

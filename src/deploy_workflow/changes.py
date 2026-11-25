@@ -90,9 +90,11 @@ from pydantic import Field
 from deploy_vii.contracts import Contract, Identifier
 from deploy_workflow.credit_os_catalogue import (
     CHART_PREFIX,
+    MixedPeriodForms,
     chart_row,
     definition_key as _definition_key,
     is_reported,
+    mixes_dated_and_fiscal,
     period_order,
 )
 from deploy_workflow.library_index import (
@@ -452,6 +454,8 @@ def _held(row: Mapping[str, str], column: str) -> str | None:
 def _chart_observation(lines: list[str], chart: str, column: str) -> Reading:
     try:
         found = chart_row(lines, chart, prefix="" if chart == NET_DEBT_TABLE else CHART_PREFIX)
+    except MixedPeriodForms:  # Which is later depends on the year end: never a guess.
+        return "mixes dated and fiscal-labelled periods in its table, so the latest is not chosen"
     except ValueError:  # Unplaceable or repeated periods, or no reported one: never a guess.
         return "has periods in its table that cannot be ordered, or no reported period"
     if found is None:
@@ -482,6 +486,8 @@ def _latest_reported_column(header: Sequence[str]) -> int | str:
     reported = [item for item in columns if is_reported(item[0])]
     if not reported:
         return "has only pro forma or forecast periods in its row"
+    if mixes_dated_and_fiscal(header[i] for _, i in columns):
+        return "mixes dated and fiscal-labelled periods in its row, so the latest is not chosen"
     return max(reported)[1]
 
 

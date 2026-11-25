@@ -102,9 +102,19 @@ def test_a_maturity_ladder_thereafter_bucket_is_last_and_not_a_stated_gap():
         "Thereafter",
     ]
     assert markdown_delivery._undated_note(written) == ""
-    later = points("2026", "2027 and thereafter", "Thereafter", "Beyond")
+    # The strict rule reads no period from `2027 and thereafter`: it is the ladder's open bucket,
+    # drawn last as written and not stated as a gap. `Hereafter` only contains the letters.
+    later = points("2027 and thereafter", "2026", "THEREAFTER (2031+)", "Beyond", "Hereafter")
+    assert drawn(markdown_delivery._chronological(later)) == [
+        "2026",
+        "2027 and thereafter",
+        "THEREAFTER (2031+)",
+        "Beyond",
+        "Hereafter",
+    ]
     assert markdown_delivery._undated_note(later) == (
-        " Drawn last, in the order written, because no period could be read from the label: Beyond."
+        " Drawn last, in the order written, because no period could be read from the label: "
+        "Beyond, Hereafter."
     )
 
 
@@ -228,6 +238,31 @@ def test_a_table_of_only_pro_forma_and_forecast_rows_has_no_latest_period():
 @pytest.mark.parametrize(
     "rows",
     [
+        ("FY2024 | 5.0", "2025-06-30 | 4.8"),
+        ("2024-09-30 | 5.0", "Q1 2025 | 4.9", "LTM Jun 2025 | 4.7"),
+        ("FY2023 / 2023-09-30 | 5.4", "FY2024 | 5.0", "PF FY2024 | 4.6"),
+    ],
+)
+def test_the_latest_period_is_refused_when_reported_rows_mix_dated_and_fiscal_labels(rows):
+    lines = chart(*rows)
+    assert catalogue.chart_rows(lines, "leverage") is not None  # charts still draw both
+    refusal = "^the reported rows mix dated and fiscal-labelled periods$"
+    with pytest.raises(ValueError, match=refusal):
+        catalogue.chart_row(lines, "leverage")
+
+
+def test_the_latest_period_of_dated_rows_and_a_fiscal_pro_forma_row_is_the_latest_date():
+    """`FY2024 / 2024-09-30` carries its date; a pro forma row is not a reported one."""
+    lines = chart("2025-06-30 | 4.8", "FY2024 / 2024-09-30 | 5.0", "PF FY2025 | 4.4")
+    found = catalogue.chart_row(lines, "leverage")
+    assert found is not None
+    assert (found[0]["Period"], found[0]["Total debt / EBITDA"]) == ("2025-06-30", "4.8")
+    assert found[1] == 5
+
+
+@pytest.mark.parametrize(
+    "rows",
+    [
         ("FY2024 | 5.0", "FY2024 | 5.1"),
         ("FY 2024 | 5.0", "FY2024 | 5.1"),  # two spellings of one period
         ("FY2024 | 5.0", "2024 | 5.1"),
@@ -288,12 +323,42 @@ def test_a_statement_row_of_only_pro_forma_and_forecast_columns_gives_its_reason
     "periods",
     [
         ("Reported", "Restated"),  # no period in any header cell
-        ("FY2024", "FY 2024"),
-        ("FY2024", "Change vs FY2024"),  # a second column with the key of the first
+        ("FY2024", "FY 2024"),  # two spellings of one period
+        ("FY2023", "FY2024", "2024"),
     ],
 )
 def test_a_statement_row_with_no_period_or_a_repeated_one_is_not_guessed(periods):
     assert free_cash_flow(*periods) == (None, "has periods in its row that cannot be ordered")
+
+
+def test_a_header_that_is_not_a_period_is_not_a_period_column():
+    """`Change vs FY2024` has words the strict rule does not know: it is no period column, so
+    the row's latest reported column is FY2024 and the change column is never read as one."""
+    found, reason = free_cash_flow("FY2023", "FY2024", "Change vs FY2024")
+    assert reason is None
+    assert (found.period, found.value) == ("FY2024", "20")
+
+
+@pytest.mark.parametrize(
+    "periods",
+    [
+        ("FY2024", "2025-06-30"),
+        ("2024-09-30", "Q1 2025", "LTM Jun 2025"),
+        ("FY2023 / 2023-09-30", "FY2024"),
+    ],
+)
+def test_a_statement_row_mixing_dated_and_fiscal_labelled_columns_has_no_latest(periods):
+    """Which of `FY2024` and `2025-06-30` is later depends on the year end: never a guess."""
+    assert free_cash_flow(*periods) == (
+        None,
+        "mixes dated and fiscal-labelled periods in its row, so the latest is not chosen",
+    )
+
+
+def test_a_statement_row_of_dated_columns_alone_reads_the_latest_date():
+    found, reason = free_cash_flow("2025-06-30", "FY2024 / 2024-09-30", "FY2025E")
+    assert reason is None
+    assert (found.period, found.value) == ("2025-06-30", "10")
 
 
 def maturities(*rows: str) -> str:
@@ -383,11 +448,15 @@ def test_model_figures_draw_every_annual_period_oldest_first():
     # opex_magnitude is the sixth key: its facts are numbers 16 to 18 as written (FY2024 first).
     assert [mark.ref_id for mark in m3] == ["S17", "S18", "S16"]
     assert [mark.label for mark in figures[0].chart.marks] == ["FY2022", "FY2023", "FY2024"] * 3
-    assert figures[0].summary == (
+    # The shell draws a plotted chart's table-twin note under it, never an `above` figure's summary.
+    stated = (
         "Every selected fiscal year, oldest first. This Model carries annual periods only: no "
         "year-to-date, LTM or pro forma column. Distinct definitions and missing observations "
         "retained."
     )
+    assert [(f.placement, f.chart.reason, f.chart.table_twin.note) for f in figures] == [
+        ("above", None, stated)
+    ] * 3
 
 
 def test_model_figures_would_place_ltm_and_pf_columns_after_the_fiscal_years():

@@ -3803,15 +3803,14 @@ def test_the_strip_draws_every_period_in_the_one_order_and_states_the_unplaced(t
     ]
     net = [m.value for m in leverage.chart.marks if m.series == "Net debt / EBITDA"]
     assert net == [Decimal(v) for v in ("3.00", "2.25", "2.15", "2.05", "1.60", "2.00")]
-    assert leverage.summary == (
-        "Exact selected handoff/Model observations. Dates, definitions and limitations remain in "
-        "the source evidence; gaps are not zero. Drawn last, in the order written, because no "
-        "period could be read from the label: Run-rate."
+    # The shell draws a plotted chart's twin note under it; the summary of a figure placed above
+    # is not drawn (tests/test_model_shell_browser.py reads both in Chrome).
+    assert (leverage.placement, leverage.chart.reason) == ("above", None)
+    assert leverage.chart.table_twin.note == (
+        "Drawn last, in the order written, because no period could be read from the label: "
+        "Run-rate."
     )
-    assert cover.summary == (  # every period placed: nothing more is said
-        "Exact selected handoff/Model observations. Dates, definitions and limitations remain in "
-        "the source evidence; gaps are not zero."
-    )
+    assert cover.chart.table_twin.note is None  # every period placed: nothing more is said
 
 
 def test_an_all_gaps_non_usd_issuer_passes_with_no_chart_values(tmp_path, monkeypatch):
@@ -8133,8 +8132,8 @@ def test_each_stated_form_of_the_net_debt_period_is_accepted(period):
 @pytest.mark.parametrize(
     "periods",
     [
-        ("FY2024", "2025-06-30"),  # a fiscal year and an interim date order together
-        ("FY2023 / 2023-09-30", "FY2024", "LTM Jun 2025"),
+        ("FY2024 / 2024-09-30", "2025-06-30"),  # each carries its date
+        ("FY2023", "FY2024", "LTM Jun 2025"),
         ("2024-09-30 reported",),  # the date is read; the extra word no longer stops the order
         ("PF FY2024", "FY2024 / 2024-09-30"),  # the reported row is the latest, not the pro forma
         ("Q3 2025", "FY2024", "FY2025E"),
@@ -8154,15 +8153,21 @@ def test_net_debt_periods_the_one_rule_orders_are_accepted_whatever_their_forms(
         (("FY2024", "FY2024"), "FY2024"),
         (("FY2024", "2025-06-30", "FY 2024"), "FY 2024"),  # a second spelling of one period
         (("PF FY2024", "FY2025E"), "PF FY2024"),  # no reported row: neither is the latest
+        # Which of a fiscal year and a date is later depends on the year end (refused on main too).
+        (("FY2024", "2025-06-30"), "2025-06-30"),
+        (("FY2023 / 2023-09-30", "PF FY2024", "FY2024", "LTM Jun 2025"), "FY2024"),
+        (("Q1 2025", "FY2024", "2024-12-31"), "2024-12-31"),
     ],
 )
 def test_a_net_debt_period_the_pack_cannot_order_is_refused_with_the_form_to_write(periods, cell):
     (issue,) = cpos_launch._net_debt_issues(_net_debt_text(*periods))
     assert issue == (
-        f"`### Net debt data` Period `{cell}` cannot be ordered: write "
-        "`FY2024 / 2024-09-30` for a fiscal year end or the date alone (`2025-06-30`) for an "
-        "interim balance sheet, one form for the whole table and each period once; put any "
-        "other word in the Basis and limitation cell."
+        f"`### Net debt data` Period `{cell}` keeps the latest reported row from being read. A "
+        "Period is refused when no period can be read from it, when it states a period an "
+        "earlier row states, when no row is a reported period (each is pro forma or a "
+        "forecast), or when some reported rows carry their date and others do not (which is "
+        "later then depends on the year end). Write `FY2024 / 2024-09-30` for a fiscal year end "
+        "or the date alone (`2025-06-30`) for an interim balance sheet, each period once."
     )
 
 

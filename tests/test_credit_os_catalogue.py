@@ -368,6 +368,20 @@ def test_fiscal_year_with_its_date_is_ordered_by_the_date(tmp_path):
     assert result["issues"] == []
 
 
+def test_reported_rows_mixing_a_fiscal_year_and_a_date_give_no_latest_metric(tmp_path):
+    """Whether FY2023 or 2023-06-30 is later depends on the year end: no latest row is chosen."""
+    make_run(tmp_path, "run-a", cp1_extra=combined_periods("2023-06-30", "FY2023"))
+    result = built(tmp_path)
+    metrics = result["real"][0]["metrics"]
+    assert "leverage" not in metrics and "net_leverage" not in metrics
+    assert {"coverage", "cash", "undrawn"} <= set(metrics)
+    (issue,) = [i for i in result["issues"] if "leverage" in i]
+    assert issue == (
+        "run-a: CP-1 leverage table has no metric "
+        "(the reported rows mix dated and fiscal-labelled periods)"
+    )
+
+
 def test_fiscal_year_and_date_that_disagree_give_no_metric_and_an_issue(tmp_path):
     charts = combined_periods("FY2023 / 2023-09-30", "FY2024 / 2023-09-30")
     make_run(tmp_path, "run-a", cp1_extra=charts)

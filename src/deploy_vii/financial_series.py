@@ -11,8 +11,8 @@ boundary; a ModuleView alone is not that proof.
 from __future__ import annotations
 
 import hashlib
-from collections import Counter
-from dataclasses import dataclass
+from collections.abc import Sequence
+from dataclasses import dataclass, replace
 from datetime import date
 from decimal import Decimal
 from itertools import pairwise
@@ -61,16 +61,20 @@ class _Period:
     row: dict[str, Fact]
 
 
+# What start date a column's facts state, beside the period's end (`_start_agrees`).
+type _StartRule = Literal["own", "own_or_unbuilt", "contains"]
+
+
 @dataclass(frozen=True)
 class _Column:
     """One T4.10 column of a T4.14 period: `column_id` is financial_model's column identity,
-    `kind` the period type it is ordered as, `own` whether it states the period's own dates."""
+    `kind` the period type it is ordered as, `start` the start date its facts state."""
 
     period: _Period
     column_id: str
     kind: str
     category: str
-    own: bool
+    start: _StartRule
 
 
 _PERIOD_FIELDS = (
@@ -86,18 +90,33 @@ _PERIOD_FIELDS = (
     "entity_perimeter",
 )
 # The T4.10 columns a T4.14 period of each type (financial_contracts.FinancialPeriod.period_type)
-# can carry, as (column-id prefix, period type it is ordered as, states the period's own dates).
+# can carry, as (column-id prefix, period type it is ordered as, the start its facts state).
 # model.periods builds them: a period's own column (`Q:`, `FY:`, `YTD:` or `PYTD:`, `LTM:`; `PF:`
 # is model.frame's pro forma column id) and the host-built columns that carry the id of the
 # period they end at (`LTM:<anchor>`, and `YTD:`/`PYTD:` summed to a quarter). A PERIOD_END row is
 # a balance date: no KPI column exists for it.
-_HOST_LTM = ("LTM", "LTM", False)
-_COLUMN_KINDS: dict[str, tuple[tuple[str, str, bool], ...]] = {
-    "QUARTER": (("Q", "QUARTER", True), ("YTD", "YTD", False), ("PYTD", "YTD", False), _HOST_LTM),
-    "FY": (("FY", "FY", True), _HOST_LTM),
-    "YTD": (("YTD", "YTD", True), ("PYTD", "YTD", True), _HOST_LTM),
-    "LTM": (("LTM", "LTM", True),),
-    "PF": (("PF", "PF", True),),
+# The start: financial_model._bases dates a basis as end - days + 1 (`null` without an end or a
+# day count), and financial_adapter._periods gives a period with both dates their day count.
+# - `own`: the column's days are the period's own (model.periods._quarter_spec, _period_spec),
+#   so the period's start. The LTM at a fiscal-year end is that year (_host_ltm), so the same.
+# - `own_or_unbuilt`: an LTM row's column takes the host's summed span (_host_ltm), `null` where
+#   a component is missing; a sum that differs from the row's dates (UNSPANNED) contradicts
+#   the row and raises.
+# - `contains`: quarters summed to date (_summed) and the LTM rolled to a quarter or YTD
+#   (_rolled) end with the period and start at or before it, or `null` where a day count is
+#   unknown.
+_HOST_LTM: tuple[str, str, _StartRule] = ("LTM", "LTM", "contains")
+_COLUMN_KINDS: dict[str, tuple[tuple[str, str, _StartRule], ...]] = {
+    "QUARTER": (
+        ("Q", "QUARTER", "own"),
+        ("YTD", "YTD", "contains"),
+        ("PYTD", "YTD", "contains"),
+        _HOST_LTM,
+    ),
+    "FY": (("FY", "FY", "own"), ("LTM", "LTM", "own")),
+    "YTD": (("YTD", "YTD", "own"), ("PYTD", "YTD", "own"), _HOST_LTM),
+    "LTM": (("LTM", "LTM", "own_or_unbuilt"),),
+    "PF": (("PF", "PF", "own"),),
     "PERIOD_END": (),
 }
 # The period types a facility snapshot (T4.18) is read at.
@@ -110,7 +129,7 @@ _SERIES = (
     ("S.5", "Net revenues and Adjusted EBITDA", ("revenue", "adjusted_ebitda")),
 )
 _MONEY_FIGURES = frozenset({"S.3", "S.5"})
-_NO_FACTS = "No reported period carries a fact for this figure; no periods were fabricated."
+_NO_FACTS = "No reported period has a value for this chart."
 
 
 def _text(fact: Fact) -> str:
@@ -254,44 +273,83 @@ def _category(period: _Period, prefix: str) -> str:
     return f"{prefix} {period.end.isoformat()}"
 
 
+def _distinct(columns: Sequence[_Column]) -> tuple[_Column, ...]:
+    """The columns with distinct categories. Columns that share one are told apart by their own
+    periods' start dates (`LTM 2025-06-30 (from 2024-07-01)`) where each states a different one,
+    else numbered in the order drawn; a period id is never part of a label a reader sees."""
+    groups: dict[str, list[_Column]] = {}
+    for column in columns:
+        groups.setdefault(column.category, []).append(column)
+    labels: dict[str, str] = {}
+    for category, group in groups.items():
+        starts = [None if c.start == "contains" else c.period.start for c in group]
+        dated = None not in starts and len(set(starts)) == len(group)
+        for place, (column, start) in enumerate(zip(group, starts, strict=True), 1):
+            suffix = f" (from {start})" if dated else f" ({place})"
+            labels[column.column_id] = category + (suffix if len(group) > 1 else "")
+    return tuple(replace(column, category=labels[column.column_id]) for column in columns)
+
+
 def _columns(
     periods: tuple[_Period, ...], metrics: dict[str, dict[str, Fact]]
 ) -> tuple[_Column, ...]:
-    """The chart columns in the one period order, with distinct categories: each column of a
-    period that any T4.10 metric carries, and for a period none carries, its own first column
-    (a stated gap). Two columns that would share a category also name their period id."""
+    """The chart columns in the one period order, with distinct categories (`_distinct`): each
+    column of a period that any T4.10 metric carries, and for a period none carries, its own
+    first column (a stated gap)."""
     carried = {field for row in metrics.values() for field in row}
     columns: list[_Column] = []
     for period in periods:
         candidates = [
-            _Column(period, f"{prefix}:{period.identity}", kind, _category(period, prefix), own)
-            for prefix, kind, own in _COLUMN_KINDS[period.kind]
+            _Column(period, f"{prefix}:{period.identity}", kind, _category(period, prefix), start)
+            for prefix, kind, start in _COLUMN_KINDS[period.kind]
         ]
         found = [c for c in candidates if _basis(c.column_id) in carried]
         columns.extend(found or candidates[:1])
     columns.sort(key=lambda c: (structured_period_key(c.kind, c.period.end), c.column_id))
-    shared = {k for k, n in Counter(c.category for c in columns).items() if n > 1}
-    return tuple(
-        _Column(c.period, c.column_id, c.kind, f"{c.category} ({c.period.identity})", c.own)
-        if c.category in shared
-        else c
-        for c in columns
-    )
+    return _distinct(columns)
+
+
+def _stated_span(stated: str) -> tuple[date | None, str] | None:
+    """(start, end text) of a fact's `<label>: <start> to <end>`, a `null` start as None; None
+    when it states no span or a start that is not a date."""
+    start, separator, end = stated.rsplit(": ", 1)[-1].partition(" to ")
+    if not separator:
+        return None
+    if start == "null":
+        return None, end
+    try:
+        return date.fromisoformat(start), end
+    except ValueError:
+        return None
+
+
+def _start_agrees(start: date | None, column: _Column) -> bool:
+    """Whether a start a fact states (None for `null`) is one its column can state (`_StartRule`).
+    A start is dated only from an end, and is never after it; a period that states no start binds
+    no date; otherwise the column's rule decides against the period's own start."""
+    period = column.period
+    if period.end is None:
+        return start is None
+    if start is not None and start > period.end:
+        return False
+    if period.start is None:
+        return True
+    own = date.fromisoformat(period.start)
+    if column.start == "contains":
+        return start is None or start <= own
+    return start == own or (start is None and column.start == "own_or_unbuilt")
 
 
 def _states_dates(stated: str | None, column: _Column, *, trailing: bool) -> bool:
-    """Whether a chart fact states its column's period. Every column states a span ending at the
-    period's end; a period's own column also states the period's start, or `null` where the
-    register gives no day count to date it from (a period with no start of its own binds none).
-    A quarter's leverage and coverage (`trailing`) state the twelve months ending it instead
-    (S13 C01)."""
+    """Whether a chart fact states its column's period: a span ending at the period's end whose
+    start the column can state (`_start_agrees`). A quarter's leverage and coverage (`trailing`)
+    state the twelve months ending it instead (S13 C01)."""
     if stated is None:
         return False
     period = column.period
     end = "null" if period.end is None else period.end.isoformat()
-    start, separator, stated_end = stated.rsplit(": ", 1)[-1].partition(" to ")
-    binds_start = column.own and period.start is not None
-    if separator and stated_end == end and (not binds_start or start in {period.start, "null"}):
+    span = _stated_span(stated)
+    if span is not None and span[1] == end and _start_agrees(span[0], column):
         return True
     return trailing and period.end is not None and states_trailing_period(stated, end)
 

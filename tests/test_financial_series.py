@@ -287,9 +287,7 @@ def test_a_period_no_column_reports_is_a_stated_gap_and_the_rest_is_plotted() ->
 def test_no_period_with_a_fact_is_an_unavailable_figure_not_an_error() -> None:
     item = figure(module(PERIODS, {}), "S.3")
     assert item.points == ()
-    assert item.reason == (
-        "No reported period carries a fact for this figure; no periods were fabricated."
-    )
+    assert item.reason == "No reported period has a value for this chart."
 
 
 def test_trailing_ratio_of_a_quarter_column_and_host_built_columns_are_plotted() -> None:
@@ -338,7 +336,32 @@ def test_two_periods_of_one_kind_and_end_keep_distinct_categories() -> None:
         "ltm-b": ("LTM", "2025", None, "2024-07-01", "2025-06-30"),
     }
     item = figure(module(periods, {"LTM:ltm-a": "ltm-a", "LTM:ltm-b": "ltm-b"}), "S.2")
-    assert categories(item) == ["LTM 2025-06-30 (ltm-a)", "LTM 2025-06-30 (ltm-b)"]
+    # Numbered in the order drawn: a reader is never shown a period id.
+    assert categories(item) == ["LTM 2025-06-30 (1)", "LTM 2025-06-30 (2)"]
+
+
+def test_two_periods_of_one_kind_and_end_are_told_apart_by_their_start_dates() -> None:
+    periods = {
+        "ltm-b": ("LTM", "2025", None, "2024-07-01", "2025-06-30"),
+        "ltm-a": ("LTM", "2025", None, "2024-06-29", "2025-06-30"),
+        "fy-2024": PERIODS["fy-2024"],
+    }
+    columns = {"LTM:ltm-b": "ltm-b", "LTM:ltm-a": "ltm-a", "FY:fy-2024": "fy-2024"}
+    item = figure(module(periods, columns), "S.2")
+    assert categories(item) == [
+        "FY2024",
+        "LTM 2025-06-30 (from 2024-06-29)",
+        "LTM 2025-06-30 (from 2024-07-01)",
+    ]
+
+
+def test_two_periods_sharing_a_label_with_one_start_not_stated_are_numbered() -> None:
+    periods = {
+        "ltm-a": ("LTM", "2025", None, None, "2025-06-30"),
+        "ltm-b": ("LTM", "2025", None, "2024-07-01", "2025-06-30"),
+    }
+    item = figure(module(periods, {"LTM:ltm-a": "ltm-a", "LTM:ltm-b": "ltm-b"}), "S.3")
+    assert categories(item) == ["LTM 2025-06-30 (1)", "LTM 2025-06-30 (2)"]
 
 
 def test_a_trailing_period_without_dates_is_plotted_last_of_its_kind() -> None:
@@ -368,6 +391,136 @@ def test_a_period_without_a_start_date_does_not_bind_the_fact_start() -> None:
     )
     item = figure(view.model_copy(update={"facts": facts}), "S.3")
     assert categories(item) == ["LTM 2025-06-30"]
+
+
+def restated(view: ModuleView, column_id: str, period: str) -> ModuleView:
+    """The view with every metric's fact of one column stating `period`."""
+    facts = tuple(
+        fact.model_copy(update={"period": period})
+        if fact.fact_id.startswith("T4.10:") and fact.fact_id.endswith(f":{column_id}")
+        else fact
+        for fact in view.facts
+    )
+    assert facts != view.facts
+    return view.model_copy(update={"facts": facts})
+
+
+def hosted(periods: dict, columns: dict[str, str], column_id: str, stated: str) -> ModuleView:
+    """`periods` and `columns` plus a host-built column (no T4.14 row of its own) stating
+    `stated` on every metric."""
+    extra = tuple(
+        Fact(
+            fact_id=f"T4.10:{key}:{column_id}",
+            label=key,
+            table_id="T4.10",
+            row_id=key,
+            field=basis(column_id),
+            amount=Decimal(7),
+            unit="MILLIONS" if key in MONEY else "MULTIPLE",
+            currency="USD" if key in MONEY else None,
+            scale=Decimal(1000000) if key in MONEY else Decimal(1),
+            period=stated,
+            basis=SCOPE,
+        )
+        for key in (*RATIOS, *MONEY)
+    )
+    return module(periods, columns, extra=extra)
+
+
+MISMATCH = "Chart fact does not match its period dates"
+QUARTER_2 = {"q2-2025": PERIODS["q2-2025"]}
+YEAR_2024 = {"fy-2024": PERIODS["fy-2024"]}
+
+
+@pytest.mark.parametrize(
+    ("column_id", "stated"),
+    [
+        # A period's own column is dated from the period's own day count, which the adapter
+        # derives from the two dates: it never states `null` or another start.
+        ("FY:fy-2024", "FY24: null to 2024-12-31"),
+        ("FY:fy-2024", "FY24: 2024-02-01 to 2024-12-31"),
+        ("Q:q2-2025", "Q2 25: null to 2025-06-30"),
+        ("YTD:ytd-2025", "YTD H1 25: null to 2025-06-30"),
+        ("PYTD:ytd-2024", "PYTD H1 24: 2023-12-31 to 2024-06-30"),
+        ("PF:pf-2025", "PF: null to 2025-06-30"),
+        # An LTM row's column is dated from the host's own sum: `null` where it cannot be summed,
+        # never another start than the row states.
+        ("LTM:ltm-2025", "LTM Q2 25: 2024-06-30 to 2025-06-30"),
+        ("LTM:ltm-2025", "LTM Q2 25: 2024-07-02 to 2025-06-30"),
+        ("LTM:ltm-2025", "LTM Q2 25: last year to 2025-06-30"),
+    ],
+)
+def test_an_own_column_stating_another_start_than_its_period_raises(column_id, stated) -> None:
+    with pytest.raises(ValueError, match=MISMATCH):
+        cp1_chart_series(restated(module(PERIODS, COLUMNS), column_id, stated))
+
+
+def test_an_ltm_row_whose_column_the_host_could_not_sum_states_a_null_start() -> None:
+    view = restated(module(PERIODS, COLUMNS), "LTM:ltm-2025", "LTM Q2 25: null to 2025-06-30")
+    assert categories(figure(view, "S.3")) == ALL_CATEGORIES
+
+
+@pytest.mark.parametrize(
+    "stated",
+    ["FY24: 2025-01-01 to 2024-12-31", "FY24: yesterday to 2024-12-31", "FY24:  to 2024-12-31"],
+)
+def test_a_start_that_is_no_date_or_is_after_the_end_raises_without_a_period_start(stated) -> None:
+    periods = {"fy-2024": ("FY", "2024", None, None, "2024-12-31")}
+    view = restated(module(periods, {"FY:fy-2024": "fy-2024"}), "FY:fy-2024", stated)
+    with pytest.raises(ValueError, match=MISMATCH):
+        cp1_chart_series(view)
+
+
+def test_an_undated_period_binds_a_null_start() -> None:
+    """The basis dates a start only from an end date: with no end there is none to state."""
+    periods = {"ltm-undated": ("LTM", "2025", None, None, None)}
+    view = module(periods, {"LTM:ltm-undated": "ltm-undated"})
+    assert categories(figure(view, "S.3")) == ["LTM 2025 (no end date)"]
+    with pytest.raises(ValueError, match=MISMATCH):
+        cp1_chart_series(restated(view, "LTM:ltm-undated", "LTM: 2024-07-01 to null"))
+
+
+@pytest.mark.parametrize(
+    ("column_id", "stated"),
+    [
+        # Quarters summed to date, and the LTM ending at the quarter, start at or before it.
+        ("YTD:q2-2025", "YTD H1 25: 2025-04-02 to 2025-06-30"),
+        ("PYTD:q2-2025", "PYTD H1 25: 2025-05-01 to 2025-06-30"),
+        ("LTM:q2-2025", "LTM Q2 25: 2025-04-02 to 2025-06-30"),
+        ("LTM:q2-2025", "LTM Q2 25: a year before to 2025-06-30"),
+        ("YTD:q2-2025", "YTD H1 25: 2025-01-01 to 2025-05-31"),
+    ],
+)
+def test_a_host_built_column_starting_after_its_quarter_starts_raises(column_id, stated) -> None:
+    with pytest.raises(ValueError, match=MISMATCH):
+        cp1_chart_series(hosted(QUARTER_2, {"Q:q2-2025": "q2-2025"}, column_id, stated))
+
+
+@pytest.mark.parametrize(
+    ("column_id", "stated", "category"),
+    [
+        ("YTD:q2-2025", "YTD H1 25: 2025-01-01 to 2025-06-30", "YTD 2025-06-30"),
+        ("YTD:q2-2025", "YTD H1 25: 2025-04-01 to 2025-06-30", "YTD 2025-06-30"),
+        ("PYTD:q2-2025", "PYTD H1 25: null to 2025-06-30", "PYTD 2025-06-30"),
+        ("LTM:q2-2025", "LTM Q2 25: 2024-07-01 to 2025-06-30", "LTM 2025-06-30"),
+        ("LTM:q2-2025", "LTM Q2 25: null to 2025-06-30", "LTM 2025-06-30"),
+    ],
+)
+def test_a_host_built_column_containing_its_quarter_is_plotted(column_id, stated, category) -> None:
+    view = hosted(QUARTER_2, {"Q:q2-2025": "q2-2025"}, column_id, stated)
+    assert categories(figure(view, "S.5")) == ["Q2 2025", category]
+
+
+@pytest.mark.parametrize(
+    "stated", ["LTM Q4 24: 2024-02-01 to 2024-12-31", "LTM Q4 24: null to 2024-12-31"]
+)
+def test_the_ltm_at_a_fiscal_year_end_is_that_year_and_states_its_start(stated) -> None:
+    with pytest.raises(ValueError, match=MISMATCH):
+        cp1_chart_series(hosted(YEAR_2024, {"FY:fy-2024": "fy-2024"}, "LTM:fy-2024", stated))
+    view = hosted(
+        YEAR_2024, {"FY:fy-2024": "fy-2024"}, "LTM:fy-2024", "LTM Q4 24: 2024-01-01 to 2024-12-31"
+    )
+    assert categories(figure(view, "S.5")) == ["FY2024", "LTM 2024-12-31"]
 
 
 def test_a_balance_date_period_is_not_a_chart_period_and_not_a_gap() -> None:

@@ -11,14 +11,14 @@ from __future__ import annotations
 
 import os
 import re
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from datetime import UTC, datetime
 from decimal import Decimal, localcontext
 from pathlib import Path, PurePath
 from typing import Any
 from urllib.parse import quote
 
-from deploy_vii.period_order import PeriodClass, period_key
+from deploy_vii.period_order import PeriodClass, parse_period, period_key
 from deploy_workflow.context import CONTEXT_SOURCE_ID, ContextRefused, RunContext, load_context
 from deploy_workflow.library_index import (
     Library,
@@ -119,13 +119,39 @@ def is_reported(key: tuple[int, ...]) -> bool:
     return key[0] <= PeriodClass.LTM
 
 
+class MixedPeriodForms(ValueError):
+    """The actual rows mix dated and fiscal-labelled periods: no latest reported row is chosen."""
+
+    def __init__(self) -> None:
+        super().__init__("the reported rows mix dated and fiscal-labelled periods")
+
+
+def carries_date(cell: str) -> bool | None:
+    """Whether an actual-class period carries its own date (`2025-06-30`, `FY2024 / 2024-09-30`)
+    or is fiscal-labelled (`FY2025`, `Q3 2025`, `Jun 2025`); None for a cell of another class or
+    one the rule cannot place."""
+    parsed = parse_period(cell)
+    if parsed is None or parsed.period_class is not PeriodClass.ACTUAL:
+        return None
+    return parsed.span == "date"
+
+
+def mixes_dated_and_fiscal(periods: Iterable[str]) -> bool:
+    """Whether the actual-class periods among these mix dated and fiscal-labelled ones. Which of
+    `FY2025` and `2025-06-30` is later depends on the year end, so no latest reported figure is
+    chosen from such a set; charts still draw both, in rule order."""
+    return {carries_date(cell) for cell in periods} >= {True, False}
+
+
 def latest_reported(ranked: list[RankedRow]) -> RankedRow:
     """The latest reported row: the last in rule order among the actual, YTD and LTM classes. A
     pro forma or forecast row is never the latest reported figure; ValueError when every row is
-    one."""
+    one, or when the actual rows mix dated and fiscal-labelled periods (never a guess)."""
     reported = [item for item in ranked if is_reported(item[0])]
     if not reported:
         raise ValueError("no row is a reported period: each is pro forma or a forecast")
+    if mixes_dated_and_fiscal(row.get("Period", "") for _, row, _ in ranked):
+        raise MixedPeriodForms
     return max(reported, key=lambda item: item[0])
 
 
@@ -135,7 +161,8 @@ def chart_row(
     """The latest reported row of ``### <prefix><chart>`` (``Chart data: <chart>``) as {column:
     cell}, with its 1-based line: the last in rule order among the actual, YTD and LTM rows,
     whatever the row order, never a pro forma or forecast row. None when the table is absent;
-    ValueError when its periods cannot be ordered or none is a reported period (never a guess)."""
+    ValueError when its periods cannot be ordered, none is a reported period, or the actual rows
+    mix dated and fiscal-labelled periods (never a guess)."""
     ranked = chart_rows(lines, chart, prefix)
     if ranked is None:
         return None

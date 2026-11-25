@@ -41,6 +41,7 @@ from deploy_vii.report_view import (
     ReportView,
     _ChartPoint,
     _figure_of_points,
+    _figure_with_note,
     build,
     pathways,
 )
@@ -1103,26 +1104,31 @@ def _chart_periods(periods: tuple[str, ...]) -> tuple[str, ...]:
 def _model_figures(
     module: ModuleView, refs: Mapping[tuple[str, str], tuple[str, ...]], periods: tuple[str, ...]
 ) -> tuple[Figure, ...]:
-    """M1 to M3: each series' `history` fact of every period column, in period order."""
+    """M1 to M3: each series' `history` fact of every period column, in period order. Each
+    table twin's note is `MODEL_FIGURE_SUMMARY`: the shell draws that note under the chart, where
+    it draws a figure's summary only for a figure set beside a table."""
     shown = _chart_periods(periods)
     return tuple(
-        _figure_of_points(
-            "financials-credit-metrics",
-            module,
-            refs,
-            fig_id=figid,
-            title=title,
-            kind="line",
-            unit_class="amount",
-            unit="USDm",
-            series=tuple(name for name, _ in series),
-            points=tuple(
-                _ChartPoint(name, period, f"history.{key}.{period}")
-                for name, key in series
-                for period in shown
+        _figure_with_note(
+            _figure_of_points(
+                "financials-credit-metrics",
+                module,
+                refs,
+                fig_id=figid,
+                title=title,
+                kind="line",
+                unit_class="amount",
+                unit="USDm",
+                series=tuple(name for name, _ in series),
+                points=tuple(
+                    _ChartPoint(name, period, f"history.{key}.{period}")
+                    for name, key in series
+                    for period in shown
+                ),
+                placement="above",
+                summary=MODEL_FIGURE_SUMMARY,
             ),
-            placement="above",
-            summary=MODEL_FIGURE_SUMMARY,
+            MODEL_FIGURE_SUMMARY,
         )
         for figid, title, series in MODEL_FIGURES
     )

@@ -2851,6 +2851,16 @@ def _figure_of_points(
     )
 
 
+def _figure_with_note(figure: Figure, note: str | None) -> Figure:
+    """The figure with `note` on its table twin: the shell draws a plotted chart's twin note under
+    the chart, which is where a figure states what a reader must know about what is drawn. A
+    figure's `summary` is drawn only for a figure set beside a table."""
+    if not note:
+        return figure
+    twin = figure.chart.table_twin.model_copy(update={"note": note})
+    return figure.model_copy(update={"chart": figure.chart.model_copy(update={"table_twin": twin})})
+
+
 # RV.3: two panels, one unit class each (a ChartSpec has one). (fig_id, unit class, unit, metrics)
 _RV3_PANELS: tuple[tuple[str, UnitClass, str, tuple[str, ...]], ...] = (
     ("RV.3a", "percent", "%", ("adjusted_ebitda_margin", "ffo_to_debt")),
