@@ -59,7 +59,7 @@ function KeyFigureCell({ item }: { item: KeyFigure }) {
             ? `from ${prior.text} in ${prior.period}`
             : `${prior.period}: not supplied`)}
       </p>
-      <div>
+      <div className="w-[184px] max-w-full">
         {prior && marks && change && (
           <Ruler
             from={{ label: prior.period, value: marks.prior, text: stated(prior) }}
@@ -106,7 +106,7 @@ function Strip({ props }: { props: LeadProps }) {
     >
       <ul
         aria-label="Key figures"
-        className="grid min-w-0 grid-cols-2 overflow-hidden rounded-ds-lg border border-border-subtle bg-surface-card md:grid-cols-3 xl:grid-cols-4"
+        className="grid min-w-0 grid-cols-1 overflow-hidden sm:grid-cols-2 rounded-ds-lg border border-border-subtle bg-surface-card md:grid-cols-3 xl:grid-cols-4"
       >
         {read.figures.map((item) => (
           <KeyFigureCell key={`${String(item.line)}-${item.measure}`} item={item} />

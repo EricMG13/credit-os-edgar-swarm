@@ -206,16 +206,19 @@ describe("ModelLead", () => {
     expect(document.body.textContent).not.toMatch(/CP-MODEL|CP-2G/);
   });
 
-  it("links to the Forecast page in a compact tile that holds just the link", () => {
+  it("puts the link to the Forecast page in the chart tile's head: one tile, spanning the row", () => {
     render(<ModelLead {...props([TWO])} />);
-    const tile = screen.getByRole("region", { name: "Open the forecast" });
-    expect(within(tile).getByRole("link", { name: "Open the forecast" })).toHaveAttribute(
-      "href",
-      "#forecast",
-    );
-    expect(tile.querySelectorAll("a, button")).toHaveLength(1);
-    expect(within(tile).queryByRole("heading")).toBeNull();
-    expect(within(tile).queryAllByRole("listitem")).toHaveLength(0);
+    expect(screen.queryByRole("region", { name: "Open the forecast" })).toBeNull();
+    const tile = screen.getByRole("region", { name: "Forward net leverage" });
+    expect(tile.className).toContain("lg:col-span-12");
+    const link = within(tile).getByRole("link", { name: "Open the forecast" });
+    expect(link).toHaveAttribute("href", "#forecast");
+    // In the head, above the legend and the figure.
+    const head = tile.querySelector("h3")?.parentElement;
+    expect(head?.contains(link)).toBe(true);
+    expect(tile.querySelectorAll("section")).toHaveLength(0);
+    // No arbitrary radius anywhere: the swatches are the kit's.
+    expect(tile.querySelector('ul [class*="rounded-["], svg [class*="rounded-["]')).toBeNull();
   });
 
   it("says the true condition: no model at all, or a model without a net leverage row; the link stays", () => {

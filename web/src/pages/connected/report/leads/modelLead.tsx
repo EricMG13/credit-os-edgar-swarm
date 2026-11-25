@@ -1,8 +1,7 @@
 import type { FC } from "react";
 import { forwardPath, pathGeometry, PATH } from "../overview/stressData";
-import { Tile } from "../overview/Tile";
 import { FigureTile, GapTile, LeadFrame, Link } from "./kit/LeadFrame";
-import { GapSlot, LINE, Measured, NARROW, SIZE, textWidth, wrap } from "./kit/marks";
+import { BAR, GapSlot, Legend, LINE, Measured, NARROW, SIZE, textWidth, wrap } from "./kit/marks";
 import { safeText } from "./kit/reader";
 import type { LeadProps } from "./types";
 
@@ -207,9 +206,9 @@ function PathFigure({ path, width }: { path: Path; width: number }) {
                 <g key={`${group}-${cell.period}-gap`} data-gap-mark={`${group} ${cell.period}`}>
                   <GapSlot
                     x={cell.x - 13}
-                    y={near.figure.y - 8}
+                    y={near.figure.y - BAR / 2}
                     width={26}
-                    height={16}
+                    height={BAR}
                     reason={cell.reason}
                   />
                 </g>,
@@ -257,7 +256,7 @@ function PathFigure({ path, width }: { path: Path; width: number }) {
 }
 
 /** The legend: each case's own line, dash and marker, then the hatched slot when a period has no figure. */
-function Legend({ path, gaps }: { path: Path; gaps: boolean }) {
+function CaseLegend({ path, gaps }: { path: Path; gaps: boolean }) {
   return (
     <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-caption text-text-secondary">
       {path.cases.map(({ group }, at) => {
@@ -281,12 +280,8 @@ function Legend({ path, gaps }: { path: Path; gaps: boolean }) {
         );
       })}
       {gaps && (
-        <li className="flex items-center gap-1.5">
-          <span
-            aria-hidden="true"
-            className="gap-hatch size-3 flex-none rounded-[3px] border border-dashed border-border-gap"
-          />
-          No figure read
+        <li>
+          <Legend items={[{ kind: "hatch", text: "No figure read" }]} />
         </li>
       )}
     </ul>
@@ -302,9 +297,10 @@ function ForwardTile({ props, path }: { props: LeadProps; path: Path }) {
   return (
     <FigureTile
       props={props}
-      span={8}
+      span={12}
       label="Forward net leverage"
       kicker={`${path.measure}, from zero`}
+      caption={<Link href="#forecast">Open the forecast</Link>}
       title="Net leverage by case"
       source="the forward path"
       notes={[...gaps, ...path.limits]}
@@ -320,18 +316,9 @@ function ForwardTile({ props, path }: { props: LeadProps; path: Path }) {
         ),
       }}
     >
-      <Legend path={path} gaps={gaps.length > 0} />
+      <CaseLegend path={path} gaps={gaps.length > 0} />
       <Measured fallback={640}>{(width) => <PathFigure path={path} width={width} />}</Measured>
     </FigureTile>
-  );
-}
-
-/** Just the way to the Forecast page: a compact tile beside the chart. */
-function OpenForecast() {
-  return (
-    <Tile span={4} label="Open the forecast" className="self-start">
-      <Link href="#forecast">Open the forecast</Link>
-    </Tile>
   );
 }
 
@@ -343,13 +330,13 @@ function Content(props: LeadProps) {
       {path ? (
         <ForwardTile props={props} path={path} />
       ) : (
-        <GapTile span={8} label="Forward net leverage" kicker="Net leverage by case">
+        <GapTile span={12} label="Forward net leverage" kicker="Net leverage by case">
           {model
             ? "This page could not read a net leverage path from the published model."
-            : "This page could not read a published model for this run."}
+            : "This page could not read a published model for this run."}{" "}
+          <Link href="#forecast">Open the forecast</Link>
         </GapTile>
       )}
-      <OpenForecast />
     </>
   );
 }

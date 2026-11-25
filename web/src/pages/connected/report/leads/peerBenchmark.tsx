@@ -1,6 +1,7 @@
 import type { FC } from "react";
 import { FigureTile, GapTile, LeadFrame } from "./kit/LeadFrame";
 import {
+  BAR,
   GapSlot,
   Measured,
   SIZE,
@@ -70,7 +71,7 @@ function reading(row: PeerRow) {
   if (drawing.kind === "conflict")
     return `${row.metric}: ${drawing.message}, so no range is drawn. ${count}.`;
   const stated = (label: string, value: PeerRow["low"]) =>
-    `${label} ${value.kind === "number" ? withUnit(shown(value), unit) : `${shown(value)}`}`;
+    `${label} ${value.kind === "number" ? withUnit(shown(value), unit) : shown(value)}`;
   const parts = [
     stated("peer low", row.low),
     stated("median", row.median),
@@ -142,7 +143,9 @@ function Strip({ row, axis, width }: { row: PeerRow; axis: NiceAxis; width: numb
     Math.max(150, textWidth(issuerSlot, SIZE.label) + 24),
   );
   const height =
-    bandY + 16 + (drawing.issuer === null ? 12 + gapSlotHeight(slotWidth, 20, issuerSlot) + 6 : 34);
+    bandY +
+    BAR +
+    (drawing.issuer === null ? 12 + gapSlotHeight(slotWidth, 20, issuerSlot) + 6 : 34);
   const bandFrom = x(drawing.low);
   const bandTo = x(drawing.high);
   const issuerX = drawing.issuer === null ? null : x(drawing.issuer);
@@ -174,7 +177,7 @@ function Strip({ row, axis, width }: { row: PeerRow; axis: NiceAxis; width: numb
         x={bandFrom}
         y={bandY}
         width={Math.max(3, bandTo - bandFrom)}
-        height="16"
+        height={BAR}
         rx="3"
         className="fill-chart-3"
       />
@@ -309,9 +312,7 @@ const KIND_NAME = { percent: "percent metrics", multiples: "multiples" } as cons
 
 /** A stated cell as the table shows it: a number as written, a gap, words or a count as written. */
 const cellOf = (value: PeerRow["issuer"] | PeerRow["count"]) =>
-  "value" in value && value.kind === "number" && "written" in value && value.written
-    ? value.written
-    : safeText(value.text);
+  "written" in value && value.written ? value.written : safeText(value.text);
 
 function PeerTile({
   props,
