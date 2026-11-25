@@ -52,10 +52,12 @@ PathwayId = Literal[
 # without CP-MODEL (ruling 2026-11-13).
 _PRESETS: dict[PathwayId, tuple[str, ...]] = {
     # Owner, 2026-11-15: CP-3C is part of the full credit assessment; it requires CP-2D (ruling
-    # 2026-11-15-full-assessment-cp3c-cp6a).
+    # 2026-11-15-full-assessment-cp3c-cp6a). Owner, 2026-11-25: "all credit assessment pathways
+    # (lite, full and deep) should include all layer 1 modules": CP-1B, CP-1C and CP-1D join, in
+    # Deep's order (docs/rulings/2026-11-25-layer-1-in-all-assessment-pathways.md).
     "credit_snapshot": (
-        *("CP-0", "CP-1", "CP-MODEL", "CP-1A", "CP-DR", "CP-2", "CP-2A", "CP-2D", "CP-2E"),
-        *("CP-2G", "CP-4", "CP-3C", "CP-3", "CP-5", "CP-6"),
+        *("CP-0", "CP-1", "CP-MODEL", "CP-1A", "CP-1B", "CP-DR", "CP-1C", "CP-1D", "CP-2"),
+        *("CP-2A", "CP-2D", "CP-2E", "CP-2G", "CP-4", "CP-3C", "CP-3", "CP-5", "CP-6"),
     ),
     # Owner, 2026-11-16: "Cp-1a should run most of the time. It describes the issuer." and "Add it
     # to Earnings Update" (docs/rulings/2026-11-16-earnings-update-cp1a.md).
@@ -81,10 +83,16 @@ _PRESETS: dict[PathwayId, tuple[str, ...]] = {
     "short_snapshot": ("CP-0", "CP-1", "CP-L10"),
     # The lite credit assessment: the credit snapshot's CP-1, CP-1A and CP-2 sections plus CP-2A's
     # two downside blocks. No CP-MODEL, so no forecast is published; the chart strip and credit
-    # metrics blocks are routed to CP-1 (ruling 2026-11-13).
-    "lite_credit_assessment": ("CP-0", "CP-1", "CP-1A", "CP-2", "CP-2A"),
+    # metrics blocks are routed to CP-1 (ruling 2026-11-13). Owner, 2026-11-25: the other layer 1
+    # modules, CP-1B, CP-1C and CP-1D, join, and "lite runs cp-dr too, user only provides comps if
+    # they want to at launcher": CP-DR joins, so CP-1C reads its peer pack as in Full and Deep
+    # (ruling 2026-11-25-layer-1-in-all-assessment-pathways). Still no CP-2E.
+    "lite_credit_assessment": (
+        *("CP-0", "CP-1", "CP-1A", "CP-1B", "CP-DR", "CP-1C", "CP-1D", "CP-2", "CP-2A"),
+    ),
     # Owner, 2026-11-15: "Deep = all" (ruling 2026-11-15-pathway-tiers-and-caps): the full credit
-    # assessment plus every specialist module, in the registry's planned order. CP-1C and CP-DR
+    # assessment plus the specialist modules it does not run (CP-2H, CP-3D and CP-4C since
+    # 2026-11-25), in the registry's planned order. CP-1C and CP-DR
     # come before CP-2 and CP-3, so CP-3 reads CP-1C's peer multiples; CP-2H waits for CP-2G,
     # CP-3D for CP-2H, CP-3C for CP-2D and CP-4C for CP-4, CP-2G, CP-2A and CP-3C.
     "deep_credit_assessment": (

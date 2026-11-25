@@ -13,8 +13,10 @@ from proof import DUMMY_KEY, launcher, launcher_command
 from proof.launcher import AGREEMENT, FILING, HANDOFFS, canned_handoff, verify_upload
 
 PROJECT = Path(__file__).resolve().parents[1]
+# The full credit assessment's modules. Owner, 2026-11-25: with CP-1B, CP-1C and CP-1D
+# (docs/rulings/2026-11-25-layer-1-in-all-assessment-pathways.md).
 MODULES = (
-    *("CP-0", "CP-1", "CP-1A", "CP-2", "CP-2A", "CP-2D", "CP-2E"),
+    *("CP-0", "CP-1", "CP-1A", "CP-1B", "CP-1C", "CP-1D", "CP-2", "CP-2A", "CP-2D", "CP-2E"),
     *("CP-2G", "CP-3", "CP-3C", "CP-4", "CP-5", "CP-6", "CP-DR"),
 )
 
@@ -154,7 +156,7 @@ def assert_legal_handoffs(layout, reader, legal):
         row["module"]: (layout.engine / "library" / row["href"]).read_text()
         for row in reader["evidence"]["handoffs"]
     }
-    assert len(delivered) == 14
+    assert len(delivered) == len(MODULES) == 17
     gated = legal == "none"
     assert ("module_status: Blocked" in delivered["CP-4"]) == gated
     assert ("Not assessable: no executed governing document was supplied" in delivered["CP-4"]) == (

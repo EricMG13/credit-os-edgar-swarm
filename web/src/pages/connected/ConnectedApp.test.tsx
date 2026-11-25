@@ -3662,9 +3662,9 @@ describe("connected run start: module choices sent", () => {
       "Deep credit assessment": "20 base modules",
       "Relative Value": "11 base modules",
       "Portfolio Decision": "8 base modules",
-      "Full credit assessment": "14 base modules",
+      "Full credit assessment": "17 base modules",
       "Earnings Update": "8 base modules",
-      "Lite credit assessment": "5 base modules",
+      "Lite credit assessment": "9 base modules",
     };
     for (const [name, text] of Object.entries(counts)) {
       const card = screen.getByRole("radio", { name: new RegExp(name) }).closest("label");
@@ -4280,7 +4280,7 @@ describe("connected run start: the review sheet shows every input Submit sends",
     });
     expect(sentSummary(fetchMock)).toMatchObject({ modules: run });
     const purpose = part(sheet, "Purpose and modules");
-    expect(within(purpose).getByRole("heading", { name: "Modules (13)" })).toBeInTheDocument();
+    expect(within(purpose).getByRole("heading", { name: "Modules (16)" })).toBeInTheDocument();
     expect(within(purpose).getByText("Fundamental credit")).toBeInTheDocument();
     expect(purpose).toHaveTextContent("Left out: Committee decision");
     expect(purpose).not.toHaveTextContent("Cash flow model");

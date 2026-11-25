@@ -1,5 +1,6 @@
-"""Lite, Full and Deep credit assessments and the cap per pathway (ruling
-2026-11-15-pathway-tiers-and-caps). Every expectation is written by hand: module lists, orders and
+"""Lite, Full and Deep credit assessments and the cap per pathway (rulings
+2026-11-15-pathway-tiers-and-caps and 2026-11-25-layer-1-in-all-assessment-pathways). Every
+expectation is written by hand: module lists, orders and
 caps are copied from the owner's choices and the registry's dependency text, not from the code under
 test. Offline: the launcher prepares, nothing is sent to any provider; spend is a test budget."""
 
@@ -32,14 +33,20 @@ ROOT = Path(__file__).resolve().parents[1]
 DEEP = "deep_credit_assessment"
 D = Decimal
 
-# Owner, 2026-11-13 and 2026-11-15: Lite and Full as they were.
-LITE = ("CP-0", "CP-1", "CP-1A", "CP-2", "CP-2A")
+# Owner, 2026-11-25: "all credit assessment pathways (lite, full and deep) should include all layer
+# 1 modules" (docs/rulings/2026-11-25-layer-1-in-all-assessment-pathways.md). Layer 1 is the five
+# modules tagged `Layer L1` in docs/reuse/selected-methods/skills: CP-1, CP-1A, CP-1B, CP-1C, CP-1D.
+LAYER_1 = ("CP-1", "CP-1A", "CP-1B", "CP-1C", "CP-1D")
+# Lite and Full as the owner left them on 2026-11-13 and 2026-11-15, with CP-1B, CP-1C and CP-1D
+# added. Owner, 2026-11-25: "lite runs cp-dr too, user only provides comps if they want to at
+# launcher", so Lite gains CP-DR as well. Lite still has no CP-2E or CP-MODEL.
+LITE = ("CP-0", "CP-1", "CP-1A", "CP-1B", "CP-DR", "CP-1C", "CP-1D", "CP-2", "CP-2A")
 FULL = (
-    *("CP-0", "CP-1", "CP-MODEL", "CP-1A", "CP-DR", "CP-2", "CP-2A", "CP-2D", "CP-2E"),
-    *("CP-2G", "CP-4", "CP-3C", "CP-3", "CP-5", "CP-6"),
+    *("CP-0", "CP-1", "CP-MODEL", "CP-1A", "CP-1B", "CP-DR", "CP-1C", "CP-1D", "CP-2"),
+    *("CP-2A", "CP-2D", "CP-2E", "CP-2G", "CP-4", "CP-3C", "CP-3", "CP-5", "CP-6"),
 )
-# Owner, 2026-11-15: "Deep = all": Full plus every specialist module.
-SPECIALISTS = {"CP-1B", "CP-1C", "CP-1D", "CP-2H", "CP-3D", "CP-4C"}
+# Owner, 2026-11-15: "Deep = all": Full plus every specialist module Full does not run.
+SPECIALISTS = {"CP-2H", "CP-3D", "CP-4C"}
 # The order worked out from methodology.json's required and optional inputs: CP-1B and CP-DR after
 # CP-1; CP-1C after CP-DR (optional, its peers); CP-1D after CP-1B; CP-2 after CP-1A, CP-1B, CP-1C,
 # CP-1D and CP-DR; CP-4 after CP-1A and CP-1D; CP-2A after CP-2; CP-2E after CP-2; CP-2D after CP-2;
@@ -72,12 +79,43 @@ SOL_HOLD = D("5.73")
 _NOW = datetime(2026, 11, 15, 12, 0, tzinfo=UTC)
 
 
-def test_lite_and_full_keep_their_modules() -> None:
+# Lite's and Full's order, worked out from the same dependency text: Full's is Deep's with the three
+# modules only Deep runs left out. Lite's is Full's as far as CP-2, then CP-2A.
+LITE_ORDER = ("CP-0", "CP-1", "CP-1A", "CP-1B", "CP-DR", "CP-1C", "CP-1D", "CP-2", "CP-2A")
+FULL_ORDER = (
+    *("CP-0", "CP-1", "CP-1A", "CP-1B", "CP-DR", "CP-1C", "CP-1D", "CP-2", "CP-4", "CP-2A"),
+    *("CP-2E", "CP-2D", "CP-2G", "CP-3C", "CP-3", "CP-5", "CP-6"),
+)
+
+
+def test_lite_and_full_are_their_modules_with_every_layer_1_module() -> None:
     assert PATHWAY_MODULES["lite_credit_assessment"] == LITE
     assert PATHWAY_MODULES["credit_snapshot"] == FULL
+    assert len(FULL) == len(set(FULL)) == 18
 
 
-def test_deep_is_full_plus_every_specialist() -> None:
+@pytest.mark.parametrize("pathway", ["lite_credit_assessment", "credit_snapshot", DEEP])
+def test_every_credit_assessment_lists_the_five_layer_1_modules_in_one_order(pathway: str) -> None:
+    preset = PATHWAY_MODULES[cast(PathwayId, pathway)]
+    assert tuple(m for m in preset if m in LAYER_1) == LAYER_1
+    assert "CP-L10" not in preset  # deactivated: not a layer 1 module of any assessment
+
+
+def test_lite_runs_research_before_the_peer_benchmark_and_gains_no_macro_or_model_module() -> None:
+    lite = PATHWAY_MODULES["lite_credit_assessment"]
+    assert len(lite) == len(set(lite)) == 9
+    assert lite.index("CP-DR") < lite.index("CP-1C")
+    assert not {"CP-2E", "CP-MODEL"} & set(lite)
+
+
+def test_lite_and_full_run_in_the_registrys_planned_order() -> None:
+    assert plan(PATHWAY_MODULES["lite_credit_assessment"]) == LITE_ORDER
+    full = plan(PATHWAY_MODULES["credit_snapshot"])
+    assert tuple(m for m in full if m != "CP-MODEL") == FULL_ORDER
+    assert FULL_ORDER == tuple(m for m in DEEP_ORDER if m not in SPECIALISTS)
+
+
+def test_deep_is_full_plus_every_specialist_full_does_not_run() -> None:
     deep = PATHWAY_MODULES[DEEP]
     assert len(deep) == len(set(deep)) == 21
     assert set(deep) == set(FULL) | SPECIALISTS
@@ -117,6 +155,38 @@ def test_cp3_is_sent_cp1cs_handoff_and_cp5_and_cp6_close_the_run() -> None:
     assert DEEP_ORDER[-2:] == ("CP-5", "CP-6")
 
 
+# One lead section for each layer 1 module added on 2026-11-25, titled as Deep titles it.
+LAYER_1_SECTIONS = ("headline-results", "earnings-quality", "peer-positioning")
+
+
+@pytest.mark.parametrize(
+    ("pathway", "count"),
+    [("lite_credit_assessment", 12), ("credit_snapshot", 15), (DEEP, 24)],
+)
+def test_every_credit_assessment_shows_one_section_per_layer_1_module(
+    pathway: str, count: int
+) -> None:
+    """Placed as in Deep: after the credit metrics, before strengths and weaknesses."""
+    blocks = {p.id: p for p in pathways()}[pathway].blocks
+    assert len(blocks) == len(set(blocks)) == count
+    at = blocks.index("financials-credit-metrics")
+    assert blocks[at + 1 : at + 5] == (*LAYER_1_SECTIONS, "strengths-weaknesses")
+
+
+def test_the_peer_range_figure_is_drawn_wherever_peer_positioning_is_shown() -> None:
+    """RV.3 reads CP-1C alone; CR.1 needs CP-4's block, which Lite and Full do not show, and
+    stays where it was."""
+    from deploy_vii import report_view
+
+    shown = {p.id for p in pathways() if "peer-positioning" in p.blocks}
+    assert shown == {"relative_value", "lite_credit_assessment", "credit_snapshot", DEEP}
+    assert report_view._FIGURE_PRODUCERS["peer-positioning"][1] == shown
+    assert report_view._FIGURE_PRODUCERS["covenant-tests-headroom"][1] == {
+        "covenant_refinancing",
+        DEEP,
+    }
+
+
 def test_deeps_report_has_fulls_sections_and_one_per_added_module() -> None:
     by_id = {p.id: p for p in pathways()}
     full, deep = by_id["credit_snapshot"].blocks, by_id[DEEP].blocks
@@ -125,9 +195,6 @@ def test_deeps_report_has_fulls_sections_and_one_per_added_module() -> None:
     added = {
         "downside-stress",
         "break-points",
-        "headline-results",
-        "earnings-quality",
-        "peer-positioning",
         "liquidity-runway",
         "forward-credit-path",
         "rating-triggers",

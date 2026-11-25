@@ -70,6 +70,27 @@ describe("connected module names", () => {
     expect(moduleName("CP-1")).toBe("Financial foundation");
     expect(moduleName("CP-99")).toBe("CP-99");
   });
+  it("runs every layer 1 module in the lite, full and deep assessments (owner, 2026-11-25)", () => {
+    const layer1 = ["CP-1", "CP-1A", "CP-1B", "CP-1C", "CP-1D"];
+    for (const id of ["lite_credit_assessment", "credit_snapshot", "deep_credit_assessment"])
+      expect(PATHWAYS[id]?.modules).toEqual(expect.arrayContaining(layer1));
+    expect(PATHWAYS.lite_credit_assessment?.modules).toEqual(
+      "CP-0 CP-1 CP-1A CP-1B CP-DR CP-1C CP-1D CP-2 CP-2A".split(" "),
+    );
+    expect(PATHWAYS.credit_snapshot?.modules).toEqual(
+      (
+        "CP-0 CP-1 CP-MODEL CP-1A CP-1B CP-DR CP-1C CP-1D CP-2 CP-2A CP-2D CP-2E CP-2G CP-4 " +
+        "CP-3C CP-3 CP-5 CP-6"
+      ).split(" "),
+    );
+    // Lite runs research too, so its peer benchmark has public peers as in Full and Deep.
+    for (const id of ["lite_credit_assessment", "credit_snapshot", "deep_credit_assessment"]) {
+      const modules = PATHWAYS[id]?.modules ?? [];
+      expect(modules.indexOf("CP-DR")).toBeGreaterThan(-1);
+      expect(modules.indexOf("CP-DR")).toBeLessThan(modules.indexOf("CP-1C"));
+    }
+    for (const { modules } of Object.values(PATHWAYS)) expect(modules).not.toContain("CP-L10");
+  });
   it("has a plain name for every module the run start can schedule", () => {
     for (const { modules } of Object.values(PATHWAYS))
       for (const id of modules) expect(moduleName(id)).not.toMatch(/^CP-/);
