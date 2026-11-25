@@ -545,7 +545,7 @@ describe("pairs from the chart tables", () => {
     expect(
       movers.groups.map((one) => [one.axis, one.noFigure, one.drawn.map((pair) => pair.label)]),
     ).toEqual([
-      [{ from: "\u2212500", to: "0" }, false, ["Loss"]],
+      [{ from: "\u2212400", to: "0" }, false, ["Loss"]],
       [null, true, ["Both zero", "Zero and a gap"]],
     ]);
   });
@@ -797,8 +797,8 @@ describe("EarningsDeltaLead on the retained handoff", () => {
     expect(drawings).toHaveLength(2);
     // Each group states its own scale in its head.
     expect(drawings.map((one) => textOf(one as unknown as Element, "caption").join(""))).toEqual([
-      "US$m, larger figure 1,000 to under 10,000",
-      "US$m, larger figure 100 to under 1,000",
+      "US$m, axis \u22122,000 to 8,000",
+      "US$m, axis \u2212500 to 1,000",
     ]);
     expect(
       drawings.map((one) =>
@@ -830,9 +830,9 @@ describe("EarningsDeltaLead on the retained handoff", () => {
   });
   it("writes the two split rows as one compact line, the module's reason once on a chip", () => {
     const { container } = lead(cp1bEntry());
-    const line = container.querySelector('[data-gap-line="Maintenance capex, Growth capex"]');
+    const line = container.querySelector('[data-gap-line="Maintenance capex; Growth capex"]');
     expect(line).not.toBeNull();
-    expect(line?.textContent).toBe("Maintenance capex, Growth capexNot supplied: no split");
+    expect(line?.textContent).toBe("Maintenance capex; Growth capexNot supplied: no split");
     expect(line?.querySelectorAll("[data-gap]")).toHaveLength(1);
     // Not drawn in the dumbbell, not drawn twice.
     expect(container.querySelector('g[data-row="Maintenance capex"]')).toBeNull();
@@ -1259,9 +1259,10 @@ describe("EarningsDeltaLead with a variance bridge", () => {
       ),
     ).toBeVisible();
     const listed = screen.getByRole("region", { name: "Revenue variance" });
-    expect(within(listed).getByText("Revenue FY2023")).toBeVisible();
+    expect(within(listed).getAllByText("Revenue FY2023").length).toBeGreaterThan(0);
     expect(within(listed).getAllByText("Disposals").length).toBeGreaterThan(0);
-    expect(within(listed).getByText("Not supplied: not split")).toBeVisible();
+    // The rows reach the reader with the module\u2019s reason on the gap chip.
+    expect(within(listed).getByText("not split")).toBeVisible();
   });
   it("lists every published chart heading: none is drawn by neither this lead nor the list", () => {
     const entryWith = delta(
@@ -1313,7 +1314,7 @@ describe("rows with no stated unit and screened text", () => {
   });
   it("draws each such row in its own drawing, captioned", () => {
     lead(delta(results(NO_UNIT_ROWS)));
-    expect(screen.getAllByText("unit not read")).toHaveLength(2);
+    expect(screen.getAllByText(/^unit not read, axis /)).toHaveLength(2);
     expect(
       within(screen.getByRole("region", { name: RESULTS_NAME })).getAllByRole("img"),
     ).toHaveLength(2);
@@ -1361,6 +1362,71 @@ describe("rows with no stated unit and screened text", () => {
     );
     expect(screen.getByRole("heading", { name: RESULTS_NAME })).toBeVisible();
     expect(screen.queryByText(/tied|moved most/)).toBeNull();
+  });
+});
+
+describe("merged gap lines", () => {
+  const same = "Not supplied: not split";
+  const gapRows = (rows: string[][]) =>
+    // Measure | Prior period | Prior | Current period | Current | Reporting unit | Basis
+    rows.map(([label, priorPeriod, prior, currentPeriod, current, unit, basis]) => [
+      label ?? "",
+      priorPeriod ?? "",
+      prior ?? "",
+      currentPeriod ?? "",
+      current ?? "",
+      unit ?? "",
+      basis ?? "",
+    ]);
+  it("joins the labels of one line with '; ' and shows the shared reason on one chip", () => {
+    const { container } = lead(
+      delta(
+        results(
+          gapRows([
+            ["Cash interest paid, net", "FY2023", same, "FY2024", same, "US$m", "x"],
+            ["Capex", "FY2023", same, "FY2024", same, "US$m", "x"],
+            ["Leases", "FY2023", same, "FY2024", same, "US$m", "x"],
+          ]),
+        ),
+      ),
+    );
+    const line = container.querySelector(
+      '[data-gap-line="Cash interest paid, net; Capex; Leases"]',
+    );
+    expect(line).not.toBeNull();
+    expect(line?.querySelectorAll("[data-gap]")).toHaveLength(1);
+    expect(line?.textContent).toBe("Cash interest paid, net; Capex; LeasesNot supplied: not split");
+  });
+  it("keeps a row of another unit or another kind of period on its own line", () => {
+    const { container } = lead(
+      delta(
+        results(
+          gapRows([
+            ["Capex", "FY2023", same, "FY2024", same, "US$m", "x"],
+            ["Leases", "Q1 2024", same, "Q1 2025", same, "EURm", "x"],
+            ["Tax", "FY2023", same, "FY2024", same, "US$m", "x"],
+          ]),
+        ),
+      ),
+    );
+    expect(
+      [...container.querySelectorAll("[data-gap-line]")].map((one) =>
+        one.getAttribute("data-gap-line"),
+      ),
+    ).toEqual(["Capex; Tax", "Leases"]);
+    // The same unit but another kind of period is not merged either.
+    cleanup();
+    const other = lead(
+      delta(
+        results(
+          gapRows([
+            ["Capex", "FY2023", same, "FY2024", same, "US$m", "x"],
+            ["Leases", "Q1 2024", same, "Q1 2025", same, "US$m", "x"],
+          ]),
+        ),
+      ),
+    );
+    expect(other.container.querySelectorAll("[data-gap-line]")).toHaveLength(2);
   });
 });
 

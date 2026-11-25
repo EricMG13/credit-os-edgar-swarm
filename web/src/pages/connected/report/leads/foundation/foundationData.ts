@@ -11,6 +11,7 @@ import {
   normalLabel,
   UNORDERED_SENTENCE,
   orderByPeriod,
+  periodLabel,
   periodOf,
   periodRows,
   rowStarting,
@@ -333,7 +334,10 @@ export type LeverageSeries = {
 
 export type EarningsAgainstDebt = {
   unit: string;
+  /** Every stated period: in time order, or as first stated when `ordered` is false. */
   periods: Period[];
+  /** False when the periods cannot be put in time order: no line, no change, the sentence once. */
+  ordered: boolean;
   comparison: Comparison;
   measures: EarningsMeasure[];
   /** Measures the handoff does not carry on this unit, with the reason in words. */
@@ -344,7 +348,9 @@ export type EarningsAgainstDebt = {
   tableLine: number;
 };
 
-type Read = { label: string; values: PeriodCell[]; unit: string | null; line: number } | string;
+type Read =
+  | { label: string; values: PeriodCell[]; unit: string | null; line: number; ordered: boolean }
+  | string;
 
 function chartMeasure(entry: OutputEntry, heading: string, column: string, label: string): Read {
   const read = periodTable(entry, heading, label);
@@ -352,7 +358,7 @@ function chartMeasure(entry: OutputEntry, heading: string, column: string, label
   const values = columnCells(read, column);
   if (!values) return NOT_IN(label);
   if (!read.unit) return NOT_IN(`${label} in one unit`);
-  return { label, values, unit: read.unit, line: read.table.line };
+  return { label, values, unit: read.unit, line: read.table.line, ordered: read.ordered };
 }
 
 function reportedEbitda(entry: OutputEntry): Read {
@@ -395,11 +401,11 @@ function readEarnings(entry: OutputEntry): EarningsAgainstDebt | string {
   });
   const lev = periodTable(entry, "Chart data: leverage", "Leverage");
   const levValues = typeof lev === "string" ? null : columnCells(lev, "Total debt / EBITDA");
-  const periods = unionPeriods([
-    ...ready.map(({ read }) => periodsOf(read.values)),
-    levValues ? periodsOf(levValues) : [],
-  ]);
-  const comparison = comparisonOf(periods);
+  const { periods, ordered } = combine(
+    [...ready.map(({ read }) => periodsOf(read.values)), levValues ? periodsOf(levValues) : []],
+    ready.every(({ read }) => read.ordered) && (typeof lev === "string" || lev.ordered),
+  );
+  const comparison = ordered ? comparisonOf(periods) : null;
   const measures = ready.map(({ key, read }): EarningsMeasure => {
     const values = onto(periods, read.values);
     return {
@@ -434,6 +440,7 @@ function readEarnings(entry: OutputEntry): EarningsAgainstDebt | string {
   return {
     unit,
     periods,
+    ordered,
     comparison,
     measures,
     absent,
@@ -481,6 +488,8 @@ export type LadderStep = {
 export type CashLadder = {
   unit: string;
   periods: Period[];
+  /** False when the periods cannot be put in time order: each is drawn as stated, none compared. */
+  ordered: boolean;
   comparison: Comparison;
   steps: LadderStep[];
   line: number;
@@ -632,8 +641,9 @@ function readLadder(entry: OutputEntry): CashLadder | string {
         ? BECAUSE(read.label, "it is in another unit than the other rows")
         : read,
   }));
-  const periods = unionPeriods(
+  const { periods, ordered } = combine(
     usable.map(({ read }) => (typeof read === "string" ? [] : periodsOf(read.values))),
+    usable.every(({ read }) => typeof read === "string" || read.ordered),
   );
   const steps = usable.map(({ spec, read }): LadderStep => {
     const found = typeof read !== "string";
@@ -648,7 +658,8 @@ function readLadder(entry: OutputEntry): CashLadder | string {
       line: found ? read.line : null,
     };
   });
-  return { unit, periods, comparison: comparisonOf(periods), steps, line: cash.table.line };
+  const comparison = ordered ? comparisonOf(periods) : null;
+  return { unit, periods, ordered, comparison, steps, line: cash.table.line };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -683,8 +694,15 @@ export type LiquidityPeriod = { label: string; cash: Reading; undrawn: Reading; 
 
 export type NetDebtView = {
   unit: string;
-  /** Every period of `Net debt data`, by year. */
+  /** Every period of `Net debt data`: by year, or as stated when `ordered` is false. */
   periods: NetDebtPeriod[];
+  /**
+   * Net debt / EBITDA for every period of `Net debt data` and of the leverage table (a leverage
+   * row with no net debt row, such as "FY2024 pro forma", is kept with its period as written).
+   */
+  leverageStrip: PeriodCell[];
+  /** False when the periods cannot be put in time order: nothing joined, nothing compared. */
+  ordered: boolean;
   comparison: Comparison;
   /** The stated adjustments in handoff order; none is chosen or ranked here. */
   adjustments: ProForma[];
@@ -778,10 +796,27 @@ function readNetDebt(entry: OutputEntry): NetDebtView | string {
               ];
         });
   const { adjustments, none } = adjustmentsOf(entry);
+  const levCells =
+    typeof lev === "string" || levAt < 0
+      ? []
+      : lev.rows.map(({ period, row }): PeriodCell => ({
+          label: period.label,
+          cell: readCell(row.cells[levAt] ?? ""),
+          line: row.line,
+        }));
+  const strip = combine(
+    [
+      read.rows.map(({ period }) => period),
+      levCells.map(({ label }) => asWritten(label, periodOf(label))),
+    ],
+    read.ordered && (typeof lev === "string" || lev.ordered),
+  );
   return {
     unit: read.unit,
     periods,
-    comparison: comparisonOf(read.rows.map(({ period }) => period)),
+    leverageStrip: onto(strip.periods, levCells),
+    ordered: strip.ordered,
+    comparison: strip.ordered ? comparisonOf(read.rows.map(({ period }) => period)) : null,
     adjustments,
     noAdjustments: none !== null,
     noAdjustmentsWords: none,
@@ -934,6 +969,8 @@ export type Segment = {
 export type SegmentView = {
   unit: string;
   periods: Period[];
+  /** False when the periods cannot be put in time order: none is compared. */
+  ordered: boolean;
   comparison: Comparison;
   /** The measures' names as the handoff writes them ("Net sales", "EBITDA As Defined"). */
   salesLabel: string;
@@ -955,6 +992,7 @@ type SegmentRead = {
   table: Table;
   cells: SegmentCell[];
   periods: Period[];
+  ordered: boolean;
   unit: string;
   salesLabel: string;
   ebitdaLabel: string;
@@ -999,14 +1037,15 @@ function longSchedule(table: Table, at: (name: string) => number): SegmentRead |
   if ([nameAt, periodAt, salesAt, ebitdaAt, unitAt].some((index) => index < 0))
     return BECAUSE("the segment schedule", NOT_A_SHAPE);
   const labels = [...new Set(table.rows.map((row) => (row.cells[periodAt] ?? "").trim()))];
-  const ordered = orderByPeriod(labels.map((cell) => ({ cell, item: cell })));
+  const ordered = inOrder(orderByPeriod(labels.map((cell) => ({ cell, item: cell }))));
   const units = new Set(table.rows.map((row) => row.cells[unitAt] ?? ""));
   const [unit] = [...units];
-  if ("reason" in ordered) return periodsGap("the segment schedule", ordered.reason);
+  if (typeof ordered === "string") return periodsGap("the segment schedule", ordered);
   if (units.size !== 1 || !unit) return SEGMENT_UNITS;
   const cells = table.rows.flatMap((row): SegmentCell[] => {
     const name = (row.cells[nameAt] ?? "").trim();
-    const label = periodOf(row.cells[periodAt] ?? "")?.label ?? "";
+    const written = row.cells[periodAt] ?? "";
+    const label = periodOf(written)?.label ?? periodLabel(written);
     return [
       { name, measure: "sales", label, cell: readCell(row.cells[salesAt] ?? ""), line: row.line },
       { name, measure: "ebitda", label, cell: readCell(row.cells[ebitdaAt] ?? ""), line: row.line },
@@ -1015,7 +1054,8 @@ function longSchedule(table: Table, at: (name: string) => number): SegmentRead |
   return {
     table,
     cells,
-    periods: ordered.periods.map(({ period }) => period),
+    periods: ordered.items.map(({ period }) => period),
+    ordered: ordered.ordered,
     unit: unitLabel(unit),
     salesLabel: table.headers[salesAt] ?? "Net sales",
     ebitdaLabel: table.headers[ebitdaAt] ?? "EBITDA",
@@ -1023,9 +1063,9 @@ function longSchedule(table: Table, at: (name: string) => number): SegmentRead |
 }
 
 function wideSchedule(table: Table): SegmentRead | string {
-  const columns = statementColumns(table);
+  const columns = inOrder(statementColumns(table));
   const unitAt = columnOf(table, "Unit");
-  if ("reason" in columns) return periodsGap("the segment schedule", columns.reason);
+  if (typeof columns === "string") return periodsGap("the segment schedule", columns);
   if (unitAt < 0) return SEGMENT_UNITS;
   const read = table.rows.flatMap((row) => {
     const parsed = wideLabel((row.cells[0] ?? "").trim());
@@ -1036,7 +1076,7 @@ function wideSchedule(table: Table): SegmentRead | string {
   if (read.length === 0) return NOT_IN("a net sales or EBITDA row of the segment schedule");
   if (units.size !== 1 || !unit) return SEGMENT_UNITS;
   const cells = read.flatMap(({ row, name, measure }) =>
-    columns.periods.map(({ period, item }): SegmentCell => ({
+    columns.items.map(({ period, item }): SegmentCell => ({
       name,
       measure,
       label: period.label,
@@ -1051,7 +1091,8 @@ function wideSchedule(table: Table): SegmentRead | string {
   return {
     table,
     cells,
-    periods: columns.periods.map(({ period }) => period),
+    periods: columns.items.map(({ period }) => period),
+    ordered: columns.ordered,
     unit: unitLabel(unit),
     salesLabel: salesWord ? salesWord.charAt(0).toUpperCase() + salesWord.slice(1) : "Sales",
     ebitdaLabel: ebitdaLabel ?? "EBITDA",
@@ -1103,7 +1144,8 @@ function readSegments(entry: OutputEntry): SegmentView | string {
   return {
     unit: read.unit,
     periods: read.periods,
-    comparison: comparisonOf(read.periods),
+    ordered: read.ordered,
+    comparison: read.ordered ? comparisonOf(read.periods) : null,
     salesLabel: read.salesLabel,
     ebitdaLabel: read.ebitdaLabel,
     segments: all.filter((segment) => !isApart(segment.name)),
@@ -1158,30 +1200,20 @@ export type InterestCover = {
 const COVER = "Chart data: interest cover";
 const COVER_COLUMN = "EBITDA / cash interest";
 
-/** The rows of a period-rows table in time order, or as stated when no time order can be told. */
-function statedRows(
-  table: Table,
-): { rows: { label: string; period: Period | null; row: Row }[]; ordered: boolean } | string {
-  const read = periodRows(table);
-  if ("periods" in read)
-    return {
-      rows: read.periods.map(({ period, item }) => ({ label: period.label, period, row: item })),
-      ordered: true,
-    };
-  if (isUnordered(read))
-    return {
-      rows: read.stated.map(({ label, period, item }) => ({ label, period, row: item })),
-      ordered: false,
-    };
-  return read.reason;
-}
-
 /** See the exported reader below; a string is the reason the figure is not drawn. */
 function readCover(entry: OutputEntry): InterestCover | string {
   const table = tableUnder(entry, COVER);
   if (!table) return NOT_IN("interest cover");
-  const read = statedRows(table);
-  if (typeof read === "string") return periodsGap("interest cover", read);
+  const given = inOrder(periodRows(table));
+  if (typeof given === "string") return periodsGap("interest cover", given);
+  const read = {
+    rows: given.items.map(({ period, item }) => ({
+      label: period.label,
+      period: Number.isNaN(period.year) ? null : period,
+      row: item,
+    })),
+    ordered: given.ordered,
+  };
   const [at, unitAt, basisAt] = [COVER_COLUMN, "Reporting unit", "Basis and limitation"].map(
     (header) => columnOf(table, header),
   );

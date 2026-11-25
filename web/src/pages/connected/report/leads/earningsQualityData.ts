@@ -12,7 +12,9 @@ import { allTables, tableWith } from "./kit/tables";
  * Nothing else is read; whatever is not recognised is a gap in words.
  */
 
-/** A text a working page may draw: no source reference, module codes as names. */
+/** The text closed by one full stop; one the module already wrote is not doubled. */
+const end = (text: string) => (text.endsWith(".") ? text : `${text}.`);
+
 const norm = (text: string) => text.trim().replace(/\s+/g, " ").toLowerCase();
 
 type Support = "Supported" | "Partly supported" | "Not supported" | "Insufficient evidence";
@@ -158,7 +160,7 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
   if (bad)
     return gapOf(
       bad.reading.kind === "gap"
-        ? `This page could not read the bridge because ${bad.label} is not supplied: ${reasonText(bad.reading.reason)}.`
+        ? `This page could not read the bridge because ${bad.label} is not supplied: ${end(reasonText(bad.reading.reason))}`
         : `This page could not read “${safeText(bad.reading.text)}” as an amount for ${bad.label}, so the bridge is not drawn.`,
       stated,
       heading,

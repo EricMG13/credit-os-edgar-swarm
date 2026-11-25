@@ -28,6 +28,9 @@ const LOOKS = [
 type Look = (typeof LOOKS)[number];
 const lookOf = (at: number): Look => LOOKS[at % LOOKS.length] ?? LOOKS[0];
 
+/** The text closed by one full stop; one the model already wrote is not doubled. */
+const end = (text: string) => (text.endsWith(".") ? text : `${text}.`);
+
 const reasonOf = (text: string) =>
   text.trim() ? safeText(text) : "this page could not read a figure";
 
@@ -292,7 +295,7 @@ function ForwardTile({ props, path }: { props: LeadProps; path: Path }) {
   const gaps = path.cases.flatMap(({ group, points }) =>
     points
       .filter((point) => point.value === null)
-      .map((point) => `${group}, ${point.period}: ${reasonOf(point.reason)}.`),
+      .map((point) => end(`${group}, ${point.period}: ${reasonOf(point.reason)}`)),
   );
   return (
     <FigureTile

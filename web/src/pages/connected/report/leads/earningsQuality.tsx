@@ -207,7 +207,10 @@ function Content(props: LeadProps) {
         <GapTile span={7} label="Earnings quality" kicker="Earnings quality">
           {bridge.reason}
           {bridge.stated.length > 0 &&
-            ` Stated steps: ${bridge.stated.map((step) => `${step.label} ${step.text}`).join("; ")}.`}
+            ` Stated steps: ${bridge.stated.map((step) => `${step.label} ${step.text}`).join("; ")}`.replace(
+              /\.*$/,
+              ".",
+            )}
         </GapTile>
       )}
       <LeverageTile props={props} />
