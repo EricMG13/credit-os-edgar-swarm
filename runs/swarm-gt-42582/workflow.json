@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "gt-42582-2026-11-18-credit_snapshot-host",
+    "issuer_id": "gt-42582",
+    "issuer_name": "Goodyear Tire & Rubber Co /Oh/",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_gt-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_gt-20241231.htm.jsonl",
+      "sha256": "a5360ee2eab38450ae1c8f6bc2feb8b19e54c43cf9a2a3a1b2357ec66219e555"
+    },
+    "10-K_2025-12-31_gt-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_gt-20251231.htm.jsonl",
+      "sha256": "3ca8c6f92d0d915e89ee3bcd3ba9f157ba24bfbe5989c496c957f4f984dda7ff"
+    },
+    "10-Q_2026-03-31_gt-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_gt-20260331.htm.jsonl",
+      "sha256": "82805386cb6403db70ca793376a231e1709230c4cbf4fe1aa1831a711bb4548e"
+    },
+    "10-Q_2026-06-30_gt-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_gt-20260630.htm.jsonl",
+      "sha256": "9b3e3ddd1f16a0c91a310b6002089e0223b3d6d85de0fe4f8762f02ef36dffc0"
+    },
+    "10-Q_2026-09-30_gt-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_gt-20260930.htm.jsonl",
+      "sha256": "38d73bc27890bf356d002c4ca2526cd0230a2b94102ac683b975d82d31becc76"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/42582-goodyear-tire-rubber-co-oh-gt.json",
+      "sha256": "8575bec710a61777683634594978c1133c865934af3337e35fb8d4efb2dd91fc"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "ecb136d0d8808dca9f7631280fe34425a311779efdeacd1940d4fc3449e8f83e"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "d6844e7db4df3ee60ddccec91ee295695166c0913a1b6f64d6b04f1aca7cdccb"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "e2054f1c58d7cc23eaba7a2cdd695b2e49a3cb0621bd20fc1d8e8cfd7968db9f"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "9256e14c25f5788b7900e9a00be620aeb2fc9c832d0d5f7dab90e35a75c3a0ae"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Goodyear Tire & Rubber Co /Oh/ as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Goodyear Tire & Rubber Co /Oh/ — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

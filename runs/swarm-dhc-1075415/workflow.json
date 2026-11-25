@@ -1,0 +1,256 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "dhc-1075415-2026-11-18-credit_snapshot-host",
+    "issuer_id": "dhc-1075415",
+    "issuer_name": "Diversified Healthcare Trust",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_dhc.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_dhc.htm.jsonl",
+      "sha256": "8e0abfbf7a5501d6eaeda5f85b1b60959476fb86bc2c71df191b70b1168edcbf"
+    },
+    "10-K_2025-12-31_dhc.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_dhc.htm.jsonl",
+      "sha256": "cfad5f9f5422a1046760e925f84a18919a79b744b4393adfe8d7cfe1c2769b27"
+    },
+    "10-Q_2026-03-31_dhc.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_dhc.htm.jsonl",
+      "sha256": "60f38629d23c2568d2bba4202fff5c05fdcc47cc54fdcbfef907ec4c5ac8595a"
+    },
+    "10-Q_2026-06-30_dhc.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_dhc.htm.jsonl",
+      "sha256": "94be0bd7491c825ac3a0611627994cde2c2ae867ab0e08ea2416d925ec72965c"
+    },
+    "10-Q_2026-09-30_dhc.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_dhc.htm.jsonl",
+      "sha256": "465b70adfb3e1ab97c83a0c9c1368922e67558c824d86afd0a6dc085820824c9"
+    },
+    "EX99.1_2026-03-31_dhc_dhc-033126x8-kxexhibitx991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_dhc_dhc-033126x8-kxexhibitx991-htm.htm.jsonl",
+      "sha256": "f0abcff04191fd81940feaf8a26277f8968ac8f4953d77a2242f262fd216b3e7"
+    },
+    "EX99.1_2026-03-31_dhc_tm2613539d1-ex99-1-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_dhc_tm2613539d1-ex99-1-htm.htm.jsonl",
+      "sha256": "8c17534a74f2e19a17832aede754410212ed42d345ff08ddf36f3bae82b95938"
+    },
+    "EX99.1_2026-06-30_dhc_dhc-063026x8-kxexhibitx991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_dhc_dhc-063026x8-kxexhibitx991-htm.htm.jsonl",
+      "sha256": "b5546ebb94df058475afd3fab66db616425c2912882098bce33785891adc80cc"
+    },
+    "EX99.1_2026-09-30_dhc_dhc-093026x8-kxexhibitx991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-09-30_dhc_dhc-093026x8-kxexhibitx991-htm.htm.jsonl",
+      "sha256": "269e067a89e3e54d9b8e3cf8613774990bccf5fbc1228f331a881091b22b92da"
+    },
+    "EX99.1_2026-09-30_dhc_tm2629915d1-ex99-1-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-09-30_dhc_tm2629915d1-ex99-1-htm.htm.jsonl",
+      "sha256": "bc50615ca73566c1cafe81fc1d880d9da7426fb7227e168aa619a7660b0fd998"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1075415-diversified-healthcare-trust.json",
+      "sha256": "41d46ebfa033c529eb8cf5e136da63a3fc9e4f204a497f3ccd03253741b3c3ea"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "6a6842cf69e40ed1546358416a2422754d6ae6a4fcb9db92635f7d8ae3b1e276"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "98f1ec73b4efafd5c8a2f51dd1640b5b6c3d06ee1a53eef1730ba0e950b14e82"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "76b67bd89cafb7c23a2be6dce4e2008315516cca3068a8010998f98c81cd6c8e"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "04b0d0a54595487814d03666a53a1687ae4df2d337b9b2aedd3d35df1d6c7bde"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Diversified Healthcare Trust as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Diversified Healthcare Trust — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

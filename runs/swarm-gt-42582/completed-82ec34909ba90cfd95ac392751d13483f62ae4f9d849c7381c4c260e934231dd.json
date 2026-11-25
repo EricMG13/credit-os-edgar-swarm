@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Goodyear Tire & Rubber Co /Oh/ as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/09f455cb1a43289f7692e5022e0ed6c2767c9c55472a1a3efc55e1ce3eca720b/1.response.md",
+    "CP-1": "requests/CP-1/09e77d29ae048b7e317c7c7797fe43162e5d5461d01fbc97db042d22856872af/1.response.md",
+    "CP-1A": "requests/CP-1A/08b38eed1c8e1626432058549294da8df658692a8c8efaa32526d2a2a8c105c4/1.response.md",
+    "CP-2": "requests/CP-2/75abe9ce15cde6bb157d390a78410c33f5522e0199f3d35d85a1c5b43b500ab0/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "ffb0b7db48ba4bc63a80958e27c0f65625fcb19d54e0e4ccee14604c1ff99da8",
+  "delivery_sha256": "5d295decf691ee010708449652eb7a920fc169a6767110c0e37613cf4ae79918"
+}

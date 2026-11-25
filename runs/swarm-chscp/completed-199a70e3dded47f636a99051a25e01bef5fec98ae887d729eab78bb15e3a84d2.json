@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for CHS INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/59d5b33c2c8c122808fa7cbf8b8d5c2de6b2e9d75c11f97736f2498099fa4cd5/1.response.md",
+    "CP-1": "requests/CP-1/3237983a5fc78f06fef1c96bfe4b78547ce2937fbce1042f37cd28184b24665a/1.response.md",
+    "CP-1A": "requests/CP-1A/3fe4bfa88fdf6d2e305a30557e088ea985ab469c778782d8e4f3924f4ed0ab36/1.response.md",
+    "CP-2": "requests/CP-2/1a55c2df94cc6d1342fedecd381ce38ea095ae127f7bcd09e31e03bad5e2dda4/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "60262e0832d994ff5f12f8cf8fce4c537ce4de3ef22b7aa87e3faadbfac28d3c",
+  "delivery_sha256": "e66f5ac3f863dbed79c374afb0da189886a9169c6d9c1ca0f6dbd97c7f76973e"
+}

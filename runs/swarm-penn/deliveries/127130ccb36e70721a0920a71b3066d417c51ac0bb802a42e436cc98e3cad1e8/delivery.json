@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for PENN Entertainment, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "d0f9a97508764e127ecaee247b1c61b613f773e432de0e0cfd1c674fec86a0b1",
+    "CP-1.md": "0a799b1288738610fb0b3f6b9f7564af21a4ddc45ddba0f3a4a03219e4fc6825",
+    "CP-1A.md": "f938b2d9b350d8971cdb3b1e9d356b7f0abcbe590ef3863e310b089371e47d05",
+    "CP-2.md": "82ba35972d7ed9cff7f79ace16066bd8c4fa37c523d550abedbdc225c0358831",
+    "coverage.json": "b397dfdd1397cccff89e351f25fbac5917bf1dc3565d6c4f14292aa9368931ab",
+    "view.json": "0abb4259aa3704c6cb6fabb00e7355d8a18daa18708e78f7205307a7dc9f882d",
+    "report-view.json": "6b5eb7837afed109708735212e4f8c3db42b3f1a7b7dd326fa8870407bc09097"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for VSE CORP as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/d8d671060182583d09647acbf4f57e1111a6c6b03f2cf780d4212629bef9603e/1.response.md",
+    "CP-1": "requests/CP-1/e71921cebbc4cf89d46aeb30d67d1c79cc7d85f351fd7476feb08e1c5da44b5e/1.response.md",
+    "CP-1A": "requests/CP-1A/4fa8afa27543a7a5253a0b8e1168f30dd2c09ae4d86560d79b65250f886ac2ee/1.response.md",
+    "CP-2": "requests/CP-2/354b404d37dab7896d3d16abbedea4b5adf18a8863961762bb9688ec02dae9d6/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "af2cb79a08456bbeda847ff1b2c18a733d67e4b4a754aca0e40d5d9913255eef",
+  "delivery_sha256": "5958c4223d8f97748b7f15e658ebb86dedac19870d7ef42ee88013c193f935a2"
+}
