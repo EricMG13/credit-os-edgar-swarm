@@ -1,3 +1,5 @@
+import { orderPeriods, parsePeriod } from "@/utils/periodOrder";
+
 export interface ScenarioPeriodObservation {
   period: string;
   group: string;
@@ -12,8 +14,82 @@ interface ComparableScenarioPeriod {
   end?: string;
 }
 
-export function isDatedForecastPeriod(period: string) {
-  return /^FY\d{4}E$/u.test(period);
+/** A forecast period, as the one period rule reads the label: `FY2025E`, `26E`, `Budget 2026`. */
+export function isForecastPeriod(period: string) {
+  return parsePeriod(period)?.periodClass === "forecast";
+}
+
+/** Period labels in the one period order; a label the rule cannot read stays last, as written. */
+export function periodsInOrder(periods: readonly string[]) {
+  return orderPeriods(periods, (period) => period).ordered;
+}
+
+/** Periods joined in reader words: "FY2025E", "FY2025E and FY2027E", "A, B and C". */
+export function periodList(periods: readonly string[]) {
+  if (periods.length < 2) return periods.join("");
+  return `${periods.slice(0, -1).join(", ")} and ${periods.at(-1) ?? ""}`;
+}
+
+/** One published cell of a row, as a chart reads it: its period, its text and its figure. */
+type PeriodCell = { period: string; display: string; value: number | null; reason: string };
+
+/** What a row publishes before the forecast and a chart does not draw. */
+export type HistoryGaps<T extends PeriodCell = PeriodCell> = {
+  /** Columns that state no figure, in period order. */
+  blank: T[];
+  /** Periods the grid publishes more than once. */
+  repeated: string[];
+  /** Figures under a label the period rule cannot read. */
+  unread: T[];
+};
+
+/**
+ * A row's cells before the forecast: every actual, year to date, last twelve months and pro forma
+ * column that states a figure, in the one period order. `gaps` are what is not drawn.
+ */
+export function historyOf<T extends PeriodCell>(cells: readonly T[]) {
+  const placed = cells.filter(({ period }) => parsePeriod(period) && !isForecastPeriod(period));
+  const count = (cell: T) => placed.filter((other) => other.period === cell.period).length;
+  const once = orderPeriods(
+    placed.filter((cell) => count(cell) === 1),
+    ({ period }) => period,
+  ).ordered;
+  const gaps: HistoryGaps<T> = {
+    blank: once.filter(({ value }) => value === null),
+    repeated: [...new Set(placed.filter((cell) => count(cell) > 1).map(({ period }) => period))],
+    unread: cells.filter(({ period, value }) => !parsePeriod(period) && value !== null),
+  };
+  return { history: once.filter(({ value }) => value !== null), gaps };
+}
+
+/**
+ * What the reader is told of the periods before the forecast that a chart does not draw, each
+ * fact once: a column with no figure (its reason as written), a period published twice, and a
+ * figure under a label that cannot be placed in time. `drawn` are blank periods the chart does
+ * show and says so itself.
+ */
+export function historyNotes(
+  { blank, repeated, unread }: HistoryGaps,
+  drawn: ReadonlySet<string> = new Set(),
+) {
+  const undrawn = blank.filter(({ period }) => !drawn.has(period));
+  const unexplained = undrawn.filter(({ reason }) => !reason).map(({ period }) => period);
+  return [
+    ...undrawn.flatMap(({ period, reason }) =>
+      reason ? [`Before the forecast, ${period}: ${reason}.`] : [],
+    ),
+    ...(unexplained.length
+      ? [`Before the forecast, no figure for ${periodList(unexplained)}.`]
+      : []),
+    ...(repeated.length
+      ? [`Published more than once before the forecast, so not drawn: ${periodList(repeated)}.`]
+      : []),
+    ...(unread.length
+      ? [
+          `Also published, not placed in time order and not drawn: ${periodList(unread.map((cell) => `${cell.period} ${cell.display}`))}.`,
+        ]
+      : []),
+  ];
 }
 
 const MODULE_CODE = /\bCP-[A-Z0-9]+/iu;
@@ -88,10 +164,10 @@ export function scenarioGroupLabels(
   return names;
 }
 
-function byDatedPeriod<T extends ScenarioPeriodObservation>(observations: T[]) {
+function byForecastPeriod<T extends ScenarioPeriodObservation>(observations: T[]) {
   const byPeriod = new Map<string, T[]>();
   for (const observation of observations) {
-    if (!isDatedForecastPeriod(observation.period)) continue;
+    if (!isForecastPeriod(observation.period)) continue;
     const list = byPeriod.get(observation.period) ?? [];
     list.push(observation);
     byPeriod.set(observation.period, list);
@@ -140,7 +216,7 @@ function comparablePeriod(
  * recorded dates do not match between scenarios, or are incomplete or invalid), and `noSharedPeriod`:
  * several scenarios publish periods and no kept period belongs to two of them. */
 export function analyzeScenarioPeriods<T extends ScenarioPeriodObservation>(observations: T[]) {
-  const byPeriod = byDatedPeriod(observations);
+  const byPeriod = byForecastPeriod(observations);
   const severalScenarios = scenarioCount(byPeriod) > 1;
   const periods: ComparableScenarioPeriod[] = [];
   const uniqueObservations: T[] = [];
@@ -161,9 +237,15 @@ export function analyzeScenarioPeriods<T extends ScenarioPeriodObservation>(obse
     if (comparison) periods.push(comparison);
     else incompatiblePeriods.push(period);
   }
-  periods.sort((left, right) => left.period.localeCompare(right.period));
-  const noSharedPeriod = severalScenarios && !periods.some(({ groups }) => groups.length > 1);
-  return { periods, uniqueObservations, ambiguousPeriods, incompatiblePeriods, noSharedPeriod };
+  const inOrder = orderPeriods(periods, ({ period }) => period).ordered;
+  const noSharedPeriod = severalScenarios && !inOrder.some(({ groups }) => groups.length > 1);
+  return {
+    periods: inOrder,
+    uniqueObservations,
+    ambiguousPeriods,
+    incompatiblePeriods,
+    noSharedPeriod,
+  };
 }
 
 type ScenarioPeriodFacts = Pick<
@@ -177,7 +259,7 @@ type ScenarioPeriodFacts = Pick<
 export function scenarioComparisonNotice(facts: ScenarioPeriodFacts) {
   const leftOut: string[] = [];
   const leaveOut = (periods: string[], reason: string) => {
-    if (periods.length) leftOut.push(`${[...periods].sort().join(", ")} (${reason})`);
+    if (periods.length) leftOut.push(`${periodsInOrder(periods).join(", ")} (${reason})`);
   };
   leaveOut(facts.ambiguousPeriods, "published more than once by a case");
   leaveOut(

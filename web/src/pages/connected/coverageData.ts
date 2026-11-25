@@ -1,5 +1,5 @@
 import { request } from "./ahead";
-import { periodOrder } from "./reportView";
+import { comparePeriodKeys, periodKey } from "@/utils/periodOrder";
 
 /**
  * Coverage's reply (`react_frontend/coverage.py`). Every `text` is the module's own; `at` only
@@ -125,22 +125,21 @@ export function factAt(
 }
 
 /**
- * Period labels in time order by the reader's own rule (`periodOrder`), which orders one form of
- * label only. `ordered` is true only when every distinct label has a key and all keys share one
- * form (or there is one label); then the labels are sorted. Otherwise the order is the modules'
- * own, as first written, and `ordered` is false: nothing may be drawn that depends on the order.
- * Labels are compared as written; two periods match only when equal.
+ * Period labels in the one period order (`periodKey`): fiscal years oldest first, then year to
+ * date, last twelve months, pro forma and forecast periods. `ordered` is true only when the rule
+ * reads every distinct label (or there is one label); then the labels are sorted. Otherwise the
+ * order is the modules' own, as first written, and `ordered` is false: nothing may be drawn that
+ * depends on the order. Labels are compared as written; two periods match only when equal.
  */
 function inOrder(periods: readonly string[]): { periods: string[]; ordered: boolean } {
   const distinct = [...new Set(periods)];
-  const keys = new Map(distinct.map((period) => [period, periodOrder(period)]));
-  const forms = new Set([...keys.values()].map((key) => key?.[0]));
-  if (forms.size !== 1 || forms.has(undefined))
-    return { periods: distinct, ordered: distinct.length <= 1 };
-  return {
-    periods: distinct.sort((a, b) => (keys.get(a) ?? "").localeCompare(keys.get(b) ?? "")),
-    ordered: true,
-  };
+  const keyed = distinct.flatMap((period) => {
+    const key = periodKey(period);
+    return key ? [{ period, key }] : [];
+  });
+  if (keyed.length !== distinct.length) return { periods: distinct, ordered: distinct.length <= 1 };
+  keyed.sort((a, b) => comparePeriodKeys(a.key, b.key));
+  return { periods: keyed.map(({ period }) => period), ordered: true };
 }
 
 function newestFacts(data: Coverage, issuers: readonly Issuer[], field: string): Fact[] {

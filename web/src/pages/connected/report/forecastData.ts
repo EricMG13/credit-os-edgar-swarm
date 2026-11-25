@@ -1,8 +1,11 @@
 import { moduleName } from "../api";
 import { forecastCaseNames, gridOf, type Grid } from "../visuals/LegacyForecast";
+import { orderPeriods, parsePeriod } from "@/utils/periodOrder";
 import {
   analyzeScenarioPeriods,
-  isDatedForecastPeriod,
+  historyOf,
+  isForecastPeriod,
+  periodList,
   scenarioComparisonNotice,
 } from "../visuals/scenarioPeriods";
 import { amount, record, word } from "../visuals/visualData";
@@ -44,13 +47,16 @@ export type MeasureCase = {
   own: Map<string, MeasureCell>;
 };
 
-const FISCAL = /^FY(\d{4})E?$/u;
-
-/** The fiscal year of an actual (`FY2024`) or forecast (`FY2025E`) column label. */
+/** The fiscal year of an actual (`FY2024`) or forecast (`FY2025E`) column label that the period
+ * rule reads as one whole year; null for any other period (a quarter, a last twelve months). */
 export function fiscalYear(label: string) {
-  const year = FISCAL.exec(label)?.[1];
-  return year ? Number(year) : null;
+  const parsed = parsePeriod(label);
+  const whole = parsed?.span === "year" && ["actual", "forecast"].includes(parsed.periodClass);
+  return whole ? (parsed.end?.[0] ?? null) : null;
 }
+
+const byPeriod = <T extends { period: string }>(cells: readonly T[]) =>
+  orderPeriods(cells, ({ period }) => period).ordered;
 
 function measureCell(
   column: Grid["columns"][number],
@@ -96,9 +102,15 @@ const byBaseFirst = (a: string, b: string) => Number(b === BASE) - Number(a === 
 const toEntry = ({ period, start, end, display, value, reason }: MeasureCell) =>
   [period, { period, start, end, display, value, reason }] as const;
 
+const toPeriod = ({ period }: MeasureCell) => period;
+
+export { periodList };
+
 /**
  * One measure of the published model, by case: the cells of the grid's row for it in each
- * forecast column of the main grid and the `other` grid. Where a grid has several matching rows,
+ * forecast column of the main grid and the `other` grid, and `history`, the row's reported and pro
+ * forma figures before them, with `historyGaps`, what it publishes there and is not drawn
+ * (`historyOf`). Where a grid has several matching rows,
  * the one `prefer` names is read; none is chosen otherwise. Periods go through the same
  * eligibility as the cash proxy comparison (`analyzeScenarioPeriods`): a period a case does not
  * publish is absent from that case, never filled. Null when no grid has one such row.
@@ -113,7 +125,7 @@ export function forecastMeasure(model: unknown, pattern: RegExp, prefer?: RegExp
   if (!first) return null;
   const observations = read.flatMap(({ grid, row }) =>
     grid.columns.flatMap((column, at) =>
-      isDatedForecastPeriod(column.label)
+      isForecastPeriod(column.label)
         ? [{ ...measureCell(column, row.cells[at]), group: column.group }]
         : [],
     ),
@@ -141,24 +153,20 @@ export function forecastMeasure(model: unknown, pattern: RegExp, prefer?: RegExp
   });
   const single = cases.length === 1 ? cases[0] : undefined;
   const periods = single
-    ? [...single.cells.keys()].sort()
+    ? byPeriod([...single.cells.values()]).map(toPeriod)
     : analysis.periods.map(({ period }) => period);
-  // The latest actual fiscal year with a value: an actual, never mixed into a forecast selection.
-  const actual =
-    first.grid.columns
-      .flatMap((column, at) =>
-        /^FY\d{4}$/u.test(column.label) ? [measureCell(column, first.row.cells[at])] : [],
-      )
-      .filter(({ value }) => value !== null)
-      .sort((a, b) => a.period.localeCompare(b.period))
-      .at(-1) ?? null;
+  // Reported and pro forma figures: drawn before the forecast, never mixed into a case's cells.
+  const { history, gaps: historyGaps } = historyOf(
+    first.grid.columns.map((column, at) => measureCell(column, first.row.cells[at])),
+  );
   return {
     label: first.row.label,
     /** Other rows the model publishes for this measure, not read here. */
     others: measureRows(model, pattern).filter((label) => label !== first.row.label),
     cases,
     periods,
-    actual,
+    history,
+    historyGaps,
     compared: !analysis.noSharedPeriod,
     notice: scenarioComparisonNotice(analysis),
   };
@@ -199,7 +207,7 @@ export function absentText({ measure, rows, what, basis }: MeasureRead, caseName
       : // The page names no basis for this measure, so it does not choose a row.
         `The model publishes ${String(rows.length)} ${what} rows; this page does not choose between them: ${periodList(rows)}.`;
   if (!measure) return `The model publishes no ${what} figure.`;
-  if (measure.cases.length === 0) return `The model's ${what} row has no dated forecast year.`;
+  if (measure.cases.length === 0) return `The model's ${what} row has no forecast period.`;
   return `No ${what} figure for ${caseName ?? "the selected case"}.`;
 }
 
@@ -207,13 +215,13 @@ export function absentText({ measure, rows, what, basis }: MeasureRead, caseName
 export function caseYears(model: unknown, group: string | undefined) {
   const columns = grids(model).flatMap((grid) =>
     grid.columns.filter(
-      (column) =>
-        isDatedForecastPeriod(column.label) && (group === undefined || column.group === group),
+      (column) => isForecastPeriod(column.label) && (group === undefined || column.group === group),
     ),
   );
-  const sorted = [...new Map(columns.map((column) => [column.label, column])).values()].sort(
-    (a, b) => a.label.localeCompare(b.label),
-  );
+  const sorted = orderPeriods(
+    [...new Map(columns.map((column) => [column.label, column])).values()],
+    ({ label }) => label,
+  ).ordered;
   return { first: sorted[0], last: sorted.at(-1) };
 }
 
@@ -223,9 +231,7 @@ export function modelCases(model: unknown) {
   const groups = [
     ...new Set(
       grids(model).flatMap((grid) =>
-        grid.columns
-          .filter((column) => isDatedForecastPeriod(column.label))
-          .map(({ group }) => group),
+        grid.columns.filter((column) => isForecastPeriod(column.label)).map(({ group }) => group),
       ),
     ),
   ].sort(byBaseFirst);
@@ -239,7 +245,7 @@ export function modelCases(model: unknown) {
 export function cellsOf(measure: Measure, group: string | undefined) {
   const found =
     group === undefined ? measure.cases[0] : measure.cases.find((item) => item.group === group);
-  return found ? [...found.own.values()].sort((a, b) => a.period.localeCompare(b.period)) : [];
+  return found ? byPeriod([...found.own.values()]) : [];
 }
 
 /** Forecast years inside a case's span that it publishes no column for. */
@@ -274,14 +280,7 @@ export function extremeOf(cells: MeasureCell[], kind: "highest" | "lowest") {
 }
 
 /** The last period's cell, whatever its state. */
-export const endOf = (cells: MeasureCell[]) =>
-  [...cells].sort((a, b) => a.period.localeCompare(b.period)).at(-1) ?? null;
-
-/** Periods joined in reader words: "FY2025E", "FY2025E and FY2027E", "A, B and C". */
-export function periodList(periods: readonly string[]) {
-  if (periods.length < 2) return periods.join("");
-  return `${periods.slice(0, -1).join(", ")} and ${periods.at(-1) ?? ""}`;
-}
+export const endOf = (cells: MeasureCell[]) => byPeriod(cells).at(-1) ?? null;
 
 /** The model's earnings basis as its grid names it: the Adj EBITDA row label. */
 export function earningsBasis(model: unknown) {

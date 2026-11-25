@@ -241,8 +241,9 @@ describe("headlineSources for a figure the catalogue lacks", () => {
   });
 
   it.each([
-    ["periods that cannot be ordered", ["Q3 FY2023", "Q3 FY2024"]],
-    ["periods that mix forms", ["FY2023", "2024-09-30"]],
+    ["a period the period rule cannot read", ["First half", "FY2024"]],
+    ["one period written two ways", ["FY2024", "2024"]],
+    ["only pro forma and forecast periods", ["PF FY2024", "FY2025E"]],
     ["a period that repeats", ["FY2024", "FY2024"]],
     ["a year that disagrees with its date", ["FY2023 / 2024-09-30", "FY2024 / 2024-09-30"]],
     ["an impossible date", ["2024-02-30", "2024-09-30"]],
@@ -255,6 +256,35 @@ describe("headlineSources for a figure the catalogue lacks", () => {
     const sources = headlineSources(source, catalogue({ net_leverage: figure("2.25") }), "run");
     expect(sources.adjusted_ebitda).toBeUndefined();
     expect(sources.net_leverage).toBeDefined();
+  });
+
+  // Owner's ruling, 2026-11-25: quarters, year to date, last twelve months, pro forma and forecast
+  // periods order by one rule; the latest reported row is never a pro forma or forecast one.
+  it.each([
+    ["a last twelve months period after the fiscal years", ["LTM Jun 2025", "FY2023", "FY2024"], 0],
+    ["quarters in time order", ["Q3 FY2024", "Q1 FY2024", "Q2 FY2024"], 0],
+    ["a year to date before a last twelve months", ["LTM Jun 2025", "FY2024", "YTD Jun 2025"], 0],
+    ["a fiscal year and a dated period", ["2024-09-30", "FY2023"], 0],
+    [
+      "the last reported period, not the pro forma or forecast ones after it",
+      ["FY2026E", "PF LTM Jun 2025", "FY2024", "LTM Jun 2025", "FY2025E"],
+      3,
+    ],
+  ])("reads the latest reported row of a chart with %s", (_, periods, latest) => {
+    const source = entry([
+      leverage(["FY2023", "FY2024"]),
+      revenue(periods.map((period, at) => stated(`Not supplied: row ${String(at)}`, period))),
+    ]);
+    const gap = headlineSources(
+      source,
+      catalogue({ net_leverage: figure("2.25") }),
+      "run",
+    ).adjusted_ebitda;
+    expect(gap).toEqual({
+      href: evidencePath("run", source, 34 + latest),
+      period: periods[latest],
+      reason: `Not supplied: row ${String(latest)}`,
+    });
   });
 
   it("has no source for it when a row of its chart has fewer cells than the headings", () => {

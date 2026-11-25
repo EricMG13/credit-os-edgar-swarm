@@ -11,7 +11,12 @@ import {
 } from "./ForecastGrid";
 import { forecastCaseNames, gridOf, type CaseNames, type Grid } from "./LegacyForecast";
 import { record, stringsIn, word } from "./visualData";
-import { analyzeScenarioPeriods, scenarioComparisonNotice } from "./scenarioPeriods";
+import {
+  analyzeScenarioPeriods,
+  isForecastPeriod,
+  scenarioComparisonNotice,
+} from "./scenarioPeriods";
+import { orderPeriods } from "@/utils/periodOrder";
 
 const families = {
   accounts: "Accounts",
@@ -67,7 +72,7 @@ function statementColumns(
     rawGroup: column.group,
     group: caseNames.get(column.group) ?? column.group,
     forecast:
-      /^FY\d{4}E\b/u.test(column.label) ||
+      isForecastPeriod(column.label) ||
       /^(?:Base case|Downside\b|Upside\b)/u.test(column.group) ||
       (selectedRawGroup !== undefined
         ? column.group === selectedRawGroup
@@ -144,9 +149,10 @@ function caseColumns(lead: StatementColumn[], kept: Kept) {
         source: null,
         missing: `This case publishes no ${period} column.`,
       }));
-    return [...own.map((column) => shownOf(column, band)), ...absent].sort((a, b) =>
-      a.label.localeCompare(b.label),
-    );
+    return orderPeriods(
+      [...own.map((column) => shownOf(column, band)), ...absent],
+      ({ label }) => label,
+    ).ordered;
   });
 }
 
