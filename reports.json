@@ -1,0 +1,68 @@
+[
+  {
+    "issuer_id": "magn",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "Unfixable source defects: the filings do not supply revolver availability or letters of credit, interim cash interest, receivable-program balances, executed debt documents or the proxy statement, and the 10-K names the 4.75% notes \"Senior Notes\" in its exhibit index but \"First Priority Senior Secured Notes\" in the debt note, so security and priority are unestablished (I also pre-checked each draft offline with the repository's own read-only check functions before submitting, which used no launcher attempts)."
+  },
+  {
+    "issuer_id": "ual-100517",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "All four modules were accepted on the first submission, but the fixed-header map, confidence and register tables cannot carry a source column, so the library will show \"no page\" markers on those rows, and the shared scratchpad held another issuer's helper scripts, whose first fifty lines I viewed by accident and did not use."
+  },
+  {
+    "issuer_id": "clh-822818",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "All four modules were accepted on first submission and delivery was written (exit 0); one defect remains unfixed because it sits in the supplied filings, not the answers: figures that do not reconcile across documents (Terra Nova five sites versus four permitted facilities, differing prices for the Depot Connect, Terra Nova and ES&H deals, and repurchase totals that differ from the cash flow statements) are logged as unreconciled in the CP-1A conflict register, while the missing proxy statement, covenant levels and ratings are recorded as gaps."
+  },
+  {
+    "issuer_id": "ego",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The file set holds only the 40-F cover with no audited 2025 statements, management discussion or debt documents, so trailing-twelve-month leverage, instrument ranking and covenant headroom stay recorded as gaps rather than fixed, and the library's quote chips will flag unit-restated or calculated table figures as not found on the cited page."
+  },
+  {
+    "issuer_id": "pag-1019849",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Source readiness answer (CP-0) wrongly says fourth-quarter 2025 revenue is not printed as a quarter (the 2025 10-K prints it on page 157), which could not be edited after acceptance and is corrected in the CP-1 limitations and gaps."
+  },
+  {
+    "issuer_id": "cnc",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Business & governance handoff (CP-1A) calls state-level revenue concentration \"not quantified\" although the 10-K (page 15) states Florida and New York each supplied about 10% or more of Medicaid premium revenues, and it could not be replaced once accepted (CP-2 uses the disclosed figure), while the sources also lack issuer EBITDA, agency ratings, executed debt documents and a proxy statement."
+  }
+]

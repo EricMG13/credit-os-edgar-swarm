@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for ELDORADO GOLD CORP /FI as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/1e76cce0f5f86f4d0dcf8590f206d52fc5b3b6831201c686c6fccfd8f2408fe5/1.response.md",
+    "CP-1": "requests/CP-1/42d4c4e57e4addd18b50a94093e02ad893094a8fd559d83e2fba03fe0c740c7a/1.response.md",
+    "CP-1A": "requests/CP-1A/4c0b4f87c30a8bbbe9b0a8d9e460ad8b1abc34a4b123af100a43045d2649af0e/1.response.md",
+    "CP-2": "requests/CP-2/4c8ca260f6b8126da2a099bc167fde8ebdb1dee137bc42a6c279d6e3d86306a4/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "cc00dfede07e36c3398e68546e8bc171152124b06b348a979d1e1d8ddb5c526a",
+  "delivery_sha256": "0cda34c029afdc51b1d18928a5923eec2c779bca9e824bdac5ec6aa2de082339"
+}

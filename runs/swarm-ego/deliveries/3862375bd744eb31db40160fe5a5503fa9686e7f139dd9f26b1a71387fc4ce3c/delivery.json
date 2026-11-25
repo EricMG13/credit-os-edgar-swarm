@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for ELDORADO GOLD CORP /FI as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "2500bd3b9d60cbb84f5d39415406aefbce054110bc709f3fa6066488bf15f4d6",
+    "CP-1.md": "f1a049b40c847c0cebad94275ae2975aa0aeb4fde955076ea4f3d2cf2b8dac73",
+    "CP-1A.md": "262ab0d74cfd2366b8b1803df44fdb3e6824fc84fc4fc2456abc22b89a10089c",
+    "CP-2.md": "a6678809a4f21df2cb4f902312901b97d7173e7119e9ed69792511a020c43d4a",
+    "coverage.json": "fc7c7c062e8d3b88fd90f5d489667e0cafb981775614e2923beb6090ef5c028d",
+    "view.json": "d72059f8b29e99b0b6e8fa17541332740389e5cf8dbbbd1f606bec78ea4ad1cf",
+    "report-view.json": "03a9ddb445a55a88e6fd1a448e786cd3e984ce7434914ea4c5d2b3026f82bd0e"
+  }
+}

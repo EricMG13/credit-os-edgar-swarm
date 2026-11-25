@@ -1,0 +1,248 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "pag-1019849-2026-11-18-credit_snapshot-host",
+    "issuer_id": "pag-1019849",
+    "issuer_name": "Penske Automotive Group, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_pag-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_pag-20241231.htm.jsonl",
+      "sha256": "17bf761d8914f37437933cc6e0c391c1edd8490912526109a86f959f235f8ca9"
+    },
+    "10-K_2025-12-31_pag-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_pag-20251231.htm.jsonl",
+      "sha256": "3cddf1ef29860f6cc6ab31106612adaab908c1f9f7ff1429937cabf328722fd7"
+    },
+    "10-Q_2026-03-31_pag-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_pag-20260331.htm.jsonl",
+      "sha256": "54e820081d579fb08e1031284d2365fdd24462024a585c34feaf7fa5b4466ee7"
+    },
+    "10-Q_2026-06-30_pag-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_pag-20260630.htm.jsonl",
+      "sha256": "ba4308aeb225bc8e721e6e4bc2dacdf66bde14b6429987db0111b7fbe972f803"
+    },
+    "10-Q_2026-09-30_pag-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_pag-20260930.htm.jsonl",
+      "sha256": "f12eee02de5c01d85e8a2cbb930432c1b3722bfc446f7748a516d96a721111ce"
+    },
+    "EX-99.1_2026-04-29_q126exhibit99_1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-04-29_q126exhibit99_1.htm.jsonl",
+      "sha256": "5d007aa4b679f160aac847f084a74251bc459b1f6f3dd706a94b23f6e81b211e"
+    },
+    "EX-99.1_2026-07-29_q226exhibit99_1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-07-29_q226exhibit99_1.htm.jsonl",
+      "sha256": "111508b89a42f8e67fe4d1335c6b853fead2163cde8161f397196f0075325159"
+    },
+    "EX-99.1_2026-10-28_q326exhibit99_1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-10-28_q326exhibit99_1.htm.jsonl",
+      "sha256": "1a7cdd1ee9a371cbc2f0b5b97e27511371ea53cc55b6ab81086c0604c3b5ed9a"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1019849-penske-automotive-group-inc.json",
+      "sha256": "2a31ffb6b9a0dfbf3c00056a0ff5851681fc05ee89f3e65962f03c4598390a3e"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "46e6ea27056d8ffecca146176291903864c5a5522424bfdda864f17daf5f53c0"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "905723c013cdd579ca95b1f71587cef1e7c1970cdcfcaed71a369b59e411a881"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "3808f5d040d1567becc1a0118280b4202cef28378cbeb75e84d538e24a88e220"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "440f5e57fe5401c237061064c34e029ddc2eaa8bef4ad683cd3060d801c5499c"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Penske Automotive Group, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Penske Automotive Group, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}
