@@ -337,21 +337,25 @@ function Crumbs({ issuer, current }: { issuer: string | null; current: string })
   const after = "before:mr-2 before:text-text-disabled before:content-['/']";
   return (
     <nav aria-label="Breadcrumb" className="min-w-0">
-      <ol className="flex flex-wrap items-center gap-x-2 text-small text-text-tertiary">
+      <ol className="flex min-w-0 flex-nowrap items-center gap-x-2 text-small whitespace-nowrap text-text-tertiary">
         <li>
           <a href="/" className={CRUMB}>
             Library
           </a>
         </li>
         {issuer && (
-          <li className={cx("flex items-center", after)}>
-            <a href="#history" className={cx(CRUMB, "wrap-anywhere")}>
+          <li className={cx("flex min-w-0 items-center", after)}>
+            <a href="#history" title={issuer} className={cx(CRUMB, "block truncate leading-8")}>
               {issuer}
             </a>
           </li>
         )}
-        <li aria-current="page" className={cx("flex items-center text-text-primary", after)}>
-          {current}
+        <li
+          aria-current="page"
+          title={current}
+          className={cx("flex min-w-0 items-center text-text-primary", after)}
+        >
+          <span className="truncate">{current}</span>
         </li>
       </ol>
     </nav>
@@ -470,7 +474,8 @@ function ReportHeader({
         <div className="flex flex-wrap items-baseline gap-x-3.5 gap-y-1">
           <h1
             id="report-title"
-            className="font-display text-h1 font-semibold tracking-tight text-balance wrap-anywhere text-text-primary"
+            title={issuer}
+            className="font-display text-h1 font-semibold tracking-tight text-balance wrap-anywhere text-text-primary max-sm:line-clamp-2"
           >
             {issuer}
           </h1>

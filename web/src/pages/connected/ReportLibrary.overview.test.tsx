@@ -178,6 +178,11 @@ it("heads every report page with the breadcrumb, the name, the sector line and q
   );
   expect(items[2]).toHaveAttribute("aria-current", "page");
   expect(within(header).getByRole("heading", { level: 1, name: "Acme Holdings" })).toBeVisible();
+  // On a phone: the breadcrumb keeps to one line and the name to two, its full text in the title.
+  expect(within(crumbs).getByRole("list")).toHaveClass("flex-nowrap");
+  const name = within(header).getByRole("heading", { level: 1 });
+  expect(name).toHaveClass("max-sm:line-clamp-2");
+  expect(name).toHaveAttribute("title", "Acme Holdings");
   expect(within(header).getByText("Industrial machinery")).toBeVisible();
   const facts = within(within(header).getByRole("list", { name: "Run facts" })).getAllByRole(
     "listitem",
