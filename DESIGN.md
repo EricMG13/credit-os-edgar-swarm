@@ -1,14 +1,15 @@
 # Design
 
 Started 2026-11-24 (owner: redesign the frontend design language and system from scratch).
-**Status: direction chosen (§ Direction); theme tokens and shell implemented, screens not yet rebuilt.** Mockups of the settled
-Overview, a module page and Forecast are with the owner. Product, personas and the insight map are in
+**Status: built (2026-11-25).** Every screen in `docs/design/screen-map.md` is rebuilt in this
+language and merged on `claude/exciting-albattani-v1zoug`; what is left for the owner's own check
+is listed in `VERIFICATION.md` (2026-11-25 entry). Product, personas and the insight map are in
 `PRODUCT.md`.
 
-This file replaces `docs/design/design-system.md` (v0.8) and `docs/design/brand-tokens.md` as
-the design authority. `design-system.md` stays as the token register: twelve test files and
-`web/scripts/kit-chrome.mjs` parse its tables, which now carry the new values. Its prose and
-`brand-tokens.md` describe the previous design and are removed when the last screen is rebuilt.
+This file is the design authority. It replaced `docs/design/design-system.md` (v0.8) and
+`docs/design/brand-tokens.md` (removed). `design-system.md` stays as the token register only:
+twelve test files and `web/scripts/kit-chrome.mjs` parse its tables, which carry the values below.
+Where its remaining prose disagrees with this file, this file wins.
 
 ## What carries over
 
@@ -83,9 +84,12 @@ The form is chosen from the data's shape and the question, never from a default.
 | Module × status | Can it run, did it run | Matrix or pipeline | Paragraph |
 | Missing, blocked, not supplied | What is not known | The designed gap state, in place | Zero, blank, or a hidden block |
 
-Rules: label the basis once (reported, as defined, pro forma); direct-label series; state the
-reading in the figure title; every figure has a table view and a trace control; a chart with
-fewer than three marks is a figure, not a chart.
+Rules: label the basis once (reported, as defined, pro forma); direct-label series; a figure's
+title is its plain subject ("Liquidity bridge", "Net leverage by case"), never a reading the page
+assembles; the reading is the figure's text alternative and table view; every figure has a table
+view and a trace control; a chart with fewer than three marks is a figure, not a chart; periods
+the page cannot put in time order are drawn as stated, with no connecting line, and the page says
+so.
 
 ## Component sources
 
@@ -149,7 +153,7 @@ Teal scale (`brand-50` to `brand-950`): `#F0FDFA`, `#CCFBF1`, `#99F6E4`, `#5EEAD
 |---|---|---|---|---|---|
 | Success | `#115E59` | `#F0FDFA` | `#99F6E4` | `#0F766E` | Delivered, better |
 | Warning (signal) | `#9A3412` | `#FFF7ED` | `#FED7AA` | `#EA580C` | Worse, pro forma, blocked, not tested |
-| Error | `#991B1B` | `#FEF2F2` | `#FECACA` | `#DC2626` | A failed run or an invalid field only; hover `#7F1D1D` |
+| Error | `#991B1B` | `#FEF2F2` | `#FECACA` | `#DC2626` | A failed run, an invalid field, or a limit the service will refuse at run start; hover `#7F1D1D` |
 | Info | `#1E3A5F` | `#EFF4FA` | `#C7D6E8` | `#3B6591` | Notes, the counter-argument surface |
 
 | Chart series | Value | Use |
@@ -167,8 +171,14 @@ first three series cannot each reach 3:1 on white and stay 2:1 apart in greyscal
 (`chart-lightness.test.ts`). Label text is `#6B6B74`, not the mockups' `#71717A`, to hold 4.5:1
 on the well surface. Tooltip supporting text is `#D4D4D8`.
 
-- "Better" is teal with the word; "worse" is orange with the word. Signal colour never appears
-  without a word or icon. Red is kept for failures and invalid input, never for a finding.
+- "Better" is teal with the word; "worse" is orange with the word, and only where the direction
+  is established (no better or worse for a negative leverage multiple). Signal colour never
+  appears without a word or icon. Red is kept for failures, invalid input and a refusal at run
+  start, never for a finding.
+- **Gaps:** one pattern (a plain tile or cell with the gap note). A gap says only what the page
+  checked ("This page could not read the rating history.") or the module's own reason as written.
+  Reader words only: no "handoff", "the module", "register", "passage" outside Evidence. A
+  module-written word ("n.m.", "—") is drawn as written; a written dash is not a missing value.
 - **Type:** Geist 400/500/600 for text and headings; Geist Mono 400/500 with tabular numerals for
   figures, codes and axis labels. Ramp (size / line): display 44/48, h1 32/38, h2 24/30,
   h3 20/28, h4 18/26, lead 18/28, body 15/24, small 14/22, caption 12/16, metric 36/40,
@@ -179,7 +189,8 @@ on the well surface. Tooltip supporting text is `#D4D4D8`.
 - **Shell:** one top bar — symbol, product name, areas — over the page. The current area has the
   accent tint and an underline.
 - **Motion:** one animation, a slow dash along delivered pipeline edges; off under reduced motion.
-- **Trace control:** one small icon button, the same everywhere, per paragraph, row or figure.
+- **Trace control:** one icon button, the same everywhere, per paragraph, row or figure: 32 px,
+  with a 44 px touch area on a phone. Every other control is at least 32 px, 44 px on a phone.
 
 ## Migration
 
@@ -188,3 +199,8 @@ together: `web/src/styles/theme.css` and `theme.test.ts`; `chart-lightness.test.
 `web/scripts/classes.mjs` and `kit-chrome.mjs`; the `*.designReference.test.tsx`,
 `*.design.test.tsx` and `*finalAudit*.test.tsx` files; `tests/test_brand_tokens.py` for the
 HTML Model. A presentation change needs a fidelity check recorded in VERIFICATION.md.
+
+A screen is checked in a real browser before it is reported done:
+`docs/design/preview/check-render.cjs` renders it at 1440, 1280, 1024, 768 and 390 and fails on
+sideways scroll, unnamed scroll boxes, cut text, small targets, text under 12 px and overlapping
+chart labels (`docs/design/preview/README.md`). It does not replace looking at the screenshots.
