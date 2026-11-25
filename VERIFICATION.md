@@ -4,6 +4,51 @@ Keep one running record here. A pass applies only to the stated scope. Earlier v
 engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflow)'s
 `VERIFICATION.md`, which also keeps the retained runs this copy leaves out.
 
+## 2026-11-25 — Chart periods: every supplied period, one order, periods on X
+
+- Scope: the owner's ruling of 2026-11-25 (all periods; oldest fiscal year → latest → YTD/PYTD →
+  LTM → PF → forecasts; periods on X), desktop only. Spec
+  `docs/superpowers/specs/2026-11-25-chart-periods.md`. One rule, `src/deploy_vii/period_order.py`
+  and `web/src/utils/periodOrder.ts`, both tested against the hand-written
+  `tests/fixtures/period-order-cases.json` (82 labels, 52 unparseable, 12 orders). Labels are read
+  strictly: any unknown word or number makes a label a stated gap, drawn last as written.
+- Changed: CP-1 strips S.1–S.3, S.5 plot every T4.14 period with a fact (no four-quarter rule);
+  S.4 in maturity-date order; `PF` period type; Markdown chart routes, the catalogue and Changes
+  order by the rule and take the latest reported period (never PF or forecast; refused when
+  dated and fiscal-labelled actuals mix); HTML Model M1–M3 rule order, annual only by contract;
+  issuer-library reader charts, tiles and legacy trend/path/comparison charts take order and the
+  latest from the store; connected trend, path, forecast, Overview and foundation lead charts.
+- Gates on the final tree, all exit 0: `tools/quality_gate.py` (0 findings, 27 files, 5,201
+  lines); pytest period_order, financial_series, chart_period_delivery, credit_os_catalogue,
+  credit_os_store, cash_bridge, cpos_cp1_check (875), changes and model_shell_browser (694),
+  cpos_launch `-k "period or net_debt or chart or strip or figure or model"` (241); issuer-library
+  node tests (830); web typecheck, lint, format:check, unused, duplication; vitest
+  `connected/report` (2,560), the rest of `connected` (2,038), components, utils, model, library,
+  styles, App, data (2,571). Python/TypeScript differential: 2,450,436 labels, 0 differences.
+- Before/after: the branch's tests run against a `main` checkout at `4aaec9d1` (only the new rule
+  module and a one-class stand-in added where a test imports them) fail as expected: strip and
+  maturity-order tests, Markdown ordering, store and node chart tests (14), five web "LTM and PF"
+  tests (34 of 90 in their files). The M1–M3 and shell-note tests fail there only on a missing
+  helper; their behaviour was shown by a mutation run. The mixed-form refusal was already a
+  refusal on `main` and is a guard. Issuer-library browser tests on the final tree: 103 passed,
+  1 skipped.
+- Fidelity check, synthetic data only: CP-1 strips with 11 periods rendered through `render_svg`
+  with the shell CSS and viewed (labels turn 45°, all present, rule order, values equal the facts);
+  the shell shows the unplaced-period and annual-only notes (headless Chrome test); issuer library
+  at 1440 (reader chart and Forecast card X order, values equal cells; tiles headline LTM, a
+  PF/forecast-only tile shows a dash and says why); connected trend chart and leverage path in a
+  scratch build at 1440 (X order, values against ticks). Foundation leads checked in jsdom only.
+- Open, not fixed: on an 11-period S.1/S.2 strip the Y tick labels lose a character on the left;
+  interest cover, net debt strip and bars, and Periods still show periods as rows (spec, "Not yet
+  compliant"); `NET_DEBT.rules` asks one form per table, stricter than the check now enforced;
+  `financial_reconciliation.py` and `statement_validation.py` can still pick a PF balance by date.
+- Not verified: any real or retained issuer run; a desktop browser on the connected foundation
+  leads; `tests/test_financial_workflow.py` (exceeds the 5-minute limit); the weekly suite;
+  Windows. No paid execution.
+- After merging `main` (PRs 79, 80 and 81, to `0b18fdb`): quality gate 0 findings; targeted
+  pytest 1,705; whole `test_cpos_launch.py` 1,077 passed, 1 skipped; web typecheck; vitest 578
+  (PR 81's, `ConnectedApp`, period rule); the K6 CI timeout in `ConnectedApp.test.tsx` was PR 80's fix.
+
 ## 2026-11-25 — Deliverables, Credit Snapshot workbook and recommendations: rulings and methodology
 
 - Scope: documentation only; no code, test, instruction or presentation changed, no provider
@@ -248,7 +293,6 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
 
 - On the branch based on main `96bd0ef3`, the connected reader and chart suite passed 2,178 tests, and 371 targeted offline Python checks passed across the scheduler, publication and service runs. TypeScript, changed-file lint and formatting, the production build, the unused and duplication checks, and the changed-code Python gate passed. Chrome rechecked the retained TransDigm Overview, exact CP-1 row trace and 390 px layout. The saved A4 PDF preserved all four tranche terms and gross funded debt on page one, with zero link annotations.
 - Integration confidence review checked older-run admissions, direct PDF routes, existing source traces and receipt stability across scheduler widths. A fixed publication clock preserves the scheduler test's byte comparison. The rewrite tournament kept the same-run export resolver beside the reader and kept exact metric identity for on-demand Evidence. No provider was called.
-
 
 - Chrome verified TransDigm's retained 28 December 2024 debt stack with tranches I–L on A4 page one and the same desktop and 390 px Overview. Principal, floating margin, maturity and the CP-1 row trace matched the handoff. Tranches replace the USD 8,702 million aggregate only when the owning section, unit, count, individual fields and principal reconcile. Total funded debt of USD 25,228 million, liquidity restrictions and the leverage chart stayed on page one. Astra and the rewrite tournament kept the validated replacement, and the production build, scoped lint and 90 focused tests passed. The broader Python gate still reports findings outside this TypeScript and CSS change.
 
@@ -951,43 +995,3 @@ Scope: PR 2b of `docs/superpowers/plans/2026-11-16-connected-reader-high-gaps.md
 Scope: `npm --prefix web run proof:connected` on the merged tree at `ab661d8d`, after `uv sync --locked`, `npm --prefix web ci` and `npm --prefix web run build`. Synthetic Northbridge case with canned model responses; no provider, no paid run, no credentials.
 - Result: pass. Exit code 0; 2 of 2 browsers run and passed (tests 2, pass 2, fail 0, skipped 0). Google Chrome 157.0.8103.78 completed run `20261116-132537-01`; Microsoft Edge 157.0.4341.60 completed run `20261116-132612-01`. No check failed, so the `checkForecastEvidence` failure that #21's body reports on a tree with `main` merged did not occur here.
 - Not verified: Windows; the proof drives no row control of the typed-row editor (#20, #21); the proof ran once.
-
-## 2026-11-16 — Start a run: context as typed rows (PRs #20 and #21, merged to `main` as `b18d6a7c` and `ab661d8d`)
-
-Scope: the More context step of Start a run (PR C of `docs/superpowers/plans/2026-11-16-start-run-review-and-rows.md`, Task 5, split in two): `web/src/pages/connected/start/{rows.ts,RowEditor.tsx,RowEditor.test.tsx}` (#20, 602 added lines, nothing an analyst sees until #21) and `web/src/pages/connected/{StartRun.tsx,ConnectedApp.test.tsx}` (#21, 249 changed lines). The pathway cap, review, acceptance and submit code is not changed.
-- Changed: facilities and deal terms, quotes, ratings and research questions are typed, repeatable, labelled rows with add and remove, with labels, hints, placeholders and options ported from `docs/templates/context-form.html`, in place of four JSON text boxes. Each row sends every key of the service's model for its kind (17 facility, 9 quote, 5 rating, 2 question) as trimmed strings, `""` when blank; new-issue-only facility keys are `""` when the run is not a new issue; a row still exactly as "Add" created it is not sent; keys the page does not know are kept. Valuation, scenario assumptions and module options stay as JSON, drawn only at the Advanced level or at any level while they hold an edit. A kind the analyst did not edit is sent exactly as the prior run held it.
-- Gates: #20, `npm --prefix web run gates` exit 0 with current `main` merged in. #21, web gates and `tools/quality_gate.py` exit 0 with current `main` merged in. Chrome proof on #21: exit 0 before `main` was merged in; with `main` merged it failed in `checkForecastEvidence` (`connected-proof.mjs:990`), and `main` failed at the same assertion without the change. The proof on merged `main` at `ab661d8d` is in the entry above.
-- Reviews: task review, sweep discovery, confidence-review, ponytail-review, rewrite-tournament and a whole-branch adversarial review on the whole of PR C. The whole-branch review failed the first head on one High (rows sent with blank keys left out, refused by the service) and one Medium (values sent untrimmed); both were fixed test-first and the re-review approved with no High or Medium open. #21's final head was approved with no High or Medium finding open. Looked at in Chrome at 1440 and 390 px against the synthetic service.
-- Rulings / Known, parked for PR D: a row's open or closed state follows its position after a row above is removed (values stay on the right row); focus falls to the page when the last row is removed; no required marks or checks before review, so a refused value is learned at review; an all-blank prior facility is dropped when another facility is edited.
-- For the owner: #21's body owes this entry as the fidelity-check record for PR C (what the rows send against the service's reader and the static form); the record is the scope above and the reviews' probes, which called the service's reader directly.
-- Not verified: Edge and Windows; real keyboard and screen-reader use; a live request to the service (the service's reader was called directly by the review probes); paid mode against a live service; the Chrome proof drives no row control; #21's branch was updated with `main` (head `737d0758`) before merge and only CI ran on that head.
-
-## 2026-11-16 — Reader and Start: one rule for module codes on screen (PR #23, merged to `main` as `bbb5b3dd`)
-
-Scope: module codes drawn on the connected issuer report reader and Start, under `web/src/pages/connected/` (`publishedReport.ts`, `api.ts`, `ReportContent.tsx`, `report/{Changes,ModuleTable,calculations}`, `start/{plain,ReviewSheet}`) with tests, `moduleCodes.cases.json` and `moduleCodes.test.ts`, and `docs/rulings/2026-11-11-reader-and-issuer-report.md`. Fifteen files. Two sessions had written two module-code strippers for the 2026-11-16 ruling (#6 for Start, #13 for the reader); this makes one rule with a named function per kind of text.
-- Changed: findings pages use `readerText` (new, in `publishedReport.ts`): it drops " (CP-x)" after a name and replaces a standalone module code with the module's name; a run of codes joined by "/" is replaced code by code; a code inside a register id, a file name or a path, and an unknown code, stay as stored. Used by prose, tables, bottom lines and trace-control labels in `ReportContent.tsx`, the Changes cards, and the typed table cells in `report/ModuleTable.tsx`, including the limitations ledger's "What closed it" cell that raised the question in #18. The Evidence page and trace drawer keep `plainModuleNames`, drawn as on `main`; `PublishedTable` picks the function from its `evidence` flag; `report/calculations.ts` now cleans each part before the app's own " · " join. Service text on Start is `serviceText` in `api.ts` (the old `plainText` from `start/plain.ts`, moved and renamed, behaviour identical). The literal "Confidence inputs" uses the `CONFIDENCE_INPUTS` constant; an unreachable alternative in `RECORD_CODE` is removed. The ruling file gains the owner's 2026-11-16 amendment, which supersedes ruling 2 of the reader plan ("a bare code is drawn as stored").
-- Answer key: `moduleCodes.cases.json`, 26 literal `[surface, input, expected]` rows written by the PR-manager session, not the implementer; `moduleCodes.test.ts` asserts each exactly. A second key of six rows from the reader session, never shown to the implementer, also passes.
-- Gates: at `5c775e5e`, from `web/`, exit 0 (implementer): lint, format:check, typecheck, unused, duplication, test. The reviewer ran the full suite at `5c91ef9e` (3,424 passed) and the affected files plus probes at `5c775e5e` (67 passed).
-- Reviews: task review (`mx-precise`) at `5c91ef9e`: two Medium (Evidence tables and the trace-drawer statement went through the new rule; the second came from the brief), one Low (a code next to a slash); all fixed in `5c775e5e`; scoped re-review approved. Of 19 hand mutants, 11 are killed by committed tests, 5 more by the reviewer's probes, 3 survive (each needs a backslash, digit, underscore or unspaced bracket directly before the code). The whole-branch adversarial pass, `confidence-review` and `rewrite-tournament` were not run.
-- Rulings / Known: one expectation changed: `ReportContent.drawings.test.tsx` asserted a bare "CP-2" stays on a findings page; it now expects "Fundamental credit", per the ruling. `plainModuleNames` drops any " (CP-x)" even with no module name before it ("The haircut (CP-3) holds." loses the code and gains nothing); older than this change, not altered. `CP-4A`, `CP-4B` and `CP-4D` have no name in the web table, so they stay as codes.
-- Not verified: any page in a browser; the retained runs (fixtures and literal cases only); a table whose cell is only a module code beside a name column on a findings page; the whole-branch adversarial pass, `confidence-review` and `rewrite-tournament`; Windows. `proof:connected` was not run on #23's own head; it ran on merged `main` at `ab661d8d` (entry above).
-
-## 2026-11-16 — Reader: CP-8 limitations ledger on Changes; passages in fixed order with gaps (PR #18, merged to `main` as `32260ab1`)
-
-Scope: the connected issuer report reader only, under `web/src/pages/connected/` (`ReportContent.tsx`, `publishedReport.ts`, `report/ModuleTable.tsx`) with their tests; PR 2a (Tasks 5 and 6) of `docs/superpowers/plans/2026-11-16-connected-reader-high-gaps.md`. Seven files, 594 changed lines against the 800 cap.
-- Changed: on Changes, the comparison module's "Limitations ledger" is drawn as a typed card grouped by status (Closed, Still open, New, then others), one trace control per row, the two ref columns not drawn, and it no longer appears under "Statements and records". On module pages and Changes, the four reader passages (Bottom line, Key findings, Contrary evidence and what would change the view, Limitations) are drawn in that order, then the other sections in handoff order; a prose module that lacks a passage, or whose passage has nothing drawable, gets a gap card; data modules owe only the bottom line; Overview draws no gap cards. Passage slots are picked by role and line, so a nested or repeated section named like a passage cannot displace the real one.
-- Gates on `daf62560`, exit 0: `npm run lint`, `format:check`, `typecheck`, `unused`, `duplication`; `npm test` 160 files, 3,388 tests.
-- Reviews: task reviews, one fix round each (Task 5: three Medium; Task 6: one High, one Medium), both re-reviewed clean with mutation checks; whole-branch adversarial review: CLEAN, no High or Medium, 11 Low (parked for the end batch).
-- Rulings / Known: the ledger's "What closed it" cell can hold a bare module code (the method requires a code there; a retained run wrote "CP-2A: …"); a bare code is drawn as stored, per the plan's ruling 2.
-- For the owner: the 2026-11-12 amendment says a reader sees no module code, which conflicts with the bare code above; not changed here.
-- Not verified: `/sweep refactoring discover`, `confidence-review`, `rewrite-tournament`, the browser proof and the fidelity check were not run; no live CP-8 handoff parsed end to end (fixtures are hand-built from the method); a passage drawn as a map or events table; the fallback generic table still draws the ledger's ref columns when a column is missing or a cell holds a reference; `ReportLibrary.wayfinding.test.tsx` (untouched) failed under heavy machine load during review and passed at normal load.
-
-## 2026-11-16 — Start a run: state before Submit that the research module searches the web (PR #17, merged to `main` as `f41ab956`)
-
-Scope: the run-start summary and review: `src/deploy_workflow/owners/cpos_launch.py`, `src/deploy_workflow/run_start/submissions.py`, `web/src/pages/connected/{api.ts,start/ReviewSheet.tsx}` with tests, and root `.gitignore`. The Submit gate, cap, digest and submit request (`StartRun.tsx` is not in the diff) and the `Web:` line's text do not change.
-- Changed: the summary gains `web_search` (boolean), from a new `web_search_on` in `cpos_launch.py` that the launcher's `Web:` line now also uses, so the line and the summary share one rule. When true, the review ("What will run") shows above the limits and the approval: "The research module will search the web. The issuer's name and the questions it researches go to OpenAI's search." Nothing is drawn when it is false or absent. Root `.gitignore` now ignores `/node_modules/`. The digest does not cover summary output fields, so no existing digest changed.
-- Gates at `86f1d169`, exit 0: `uv run python tools/quality_gate.py`; `pytest tests/test_run_start_submissions.py` (141 passed); from `web/`: lint, format:check, typecheck, vitest `ConnectedApp.test.tsx` (51 passed). `tests/test_cpos_launch.py` passed on the pre-amend commit with the same `cpos_launch.py` diff, not re-run after.
-- Reviews: `mx-adversary` (paid launch path): the summary's flag matched the executor's own search decision on 180 combinations (pathway, case kind, model, effort, module set); the `Web:` line is identical to `main` on 336 cases; four hand mutants of the sentence all caught. One Medium (six generated vitest cache files, two holding a local absolute path, in the first commit) fixed by rewriting the unpushed commit without them; no commit on the branch contains `node_modules` (checked from git). One Low (no public-case test), added. Both reviewer probes exit 0.
-- Rulings / Known: from `docs/rulings/2026-11-11-run-start-submit.md`, amendment 2026-11-12 (for a private case the page states this before Submit; no such text existed under `web/src`). Ruling by the PR-manager session, for the owner to confirm or reverse: the statement shows whenever search will run (public and private), not only for private cases.
-- For the owner: confirm or reverse that ruling. The Start plan's unstarted PRs C and D will edit `ReviewSheet.tsx` and `ConnectedApp.test.tsx` and must branch after this merge.
-- Not verified: a live or paid launch (no provider called); a browser render; the three web tests were not seen failing before the component existed (covered by the mutants); a ruling file or pause changing between summary and launch; Windows; the gates and CI ran on the branch head, not re-run on the merged tree.
