@@ -1,0 +1,46 @@
+[
+  {
+    "issuer_id": "ach-75252",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Business & governance answer, which cannot be replaced, wrongly says the sale-proceeds use and the 2026 payor mix are not stated (the Q1 and Q3 filings do state them) and misses the debt fair-value discount (second lien notes at 35.81% of principal), so those three points are corrected only in the Fundamental credit answer's Gaps."
+  },
+  {
+    "issuer_id": "ese",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "All four modules were accepted on the first attempt and the launcher exited 0, but the supplied sources end with filings dated 2026-08-10 and omit the proxy statement, the credit agreements and Megger's financials, so the Megger closing, covenant headroom and pro forma leverage could not be established, and the filings' two wordings of the USD 20 million current portion (non-contractual versus obligated) cannot be resolved from the documents."
+  },
+  {
+    "issuer_id": "svc",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Business & governance handoff says the January and May split of the 4.95% 2027 note redemption is not stated although the annual report gives USD 300 million for January, which I could not edit and flagged in the Fundamental credit gaps; separately, while listing the shared scratchpad I briefly printed the first lines of another issuer's scratch script (verify_1a.py) and did not use it."
+  },
+  {
+    "issuer_id": "uis-746838",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The five filings contain no credit agreement, indenture, covenant level, ABL borrowing base, proxy statement or issuer-defined EBITDA, so covenant headroom, board and holder data and issuer EBITDA are not established (CP-1 uses a house-derived EBITDA) and the delivery carries the launcher's \"automated checks only\" caveat."
+  }
+]

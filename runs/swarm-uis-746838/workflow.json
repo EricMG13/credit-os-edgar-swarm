@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "uis-746838-2026-11-18-credit_snapshot-host",
+    "issuer_id": "uis-746838",
+    "issuer_name": "Unisys Corp",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_uis-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_uis-20241231.htm.jsonl",
+      "sha256": "eae6d97f35782a79b6bdbd04f047fe54b7c311037defb6c6765066b0d5d01059"
+    },
+    "10-K_2025-12-31_uis-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_uis-20251231.htm.jsonl",
+      "sha256": "928ebd9731c9ee357fd961f0d58974898f10a66b0cafd9b47ec3b42d5fc59480"
+    },
+    "10-Q_2026-03-31_uis-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_uis-20260331.htm.jsonl",
+      "sha256": "d09d8eff289af2e5c9f0a3b6d5fdf04ea21ad1784012eee7a221c3f4085cec32"
+    },
+    "10-Q_2026-06-30_uis-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_uis-20260630.htm.jsonl",
+      "sha256": "a6ce4dfa9b48e4ab2a997ff11c595dde51306982915b3c4f310bf9d24e0dd38d"
+    },
+    "10-Q_2026-09-30_uis-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_uis-20260930.htm.jsonl",
+      "sha256": "b4db927423314831657abfb4a4e8e47de8ad829f8e833f971ecb4627a2ea5a41"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/746838-unisys-corp-uis.json",
+      "sha256": "eca135d3fe8968e8f7b32b4dc93e318d5042a270e8bac91097d9045e9f4009f0"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "ec0a282c2efb59d34ec3b129542e51e9bee9d35c0946c8ffd3b1e433cdfea170"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "2c170dc269b0ff98774a7aff43e23ab3d441f6393b207a79137368e9c3940731"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "11c204d817d4e778ea94a70c975c0d1ce4540b9c6428caf1aa8c2302b78d704a"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "f4a1201c785e6b34309ce44d70f711798695b9fda3408530eacbb673e15de416"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Unisys Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Unisys Corp — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

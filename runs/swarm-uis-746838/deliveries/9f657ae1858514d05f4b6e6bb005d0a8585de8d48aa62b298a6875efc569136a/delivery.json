@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Unisys Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "e2fb1cba1f3c97c383f13e1245d8285e099d3975153d78efcc3298259a11ac10",
+    "CP-1.md": "76f5d35b2df3f3737aade0f94a4882346f99e4af8409a3a4bc7faf76d368adf3",
+    "CP-1A.md": "d0dffba8c3c8c6ac6784f7bd722eb97e74c6e5ab915c5dafc60d956111d6d2cc",
+    "CP-2.md": "d1b869235eeb31262d5bb151f7678c2ce8508474ea8406f4cb494f4655931105",
+    "coverage.json": "af14f691a18a961cd3a233e7d6d8d92ce137aeb3c0ae3b989a5e17630f8e9d5c",
+    "view.json": "4e9ea9c20ca8045b3155edb41342ff7afe18ee242ad26a4fc650bf3cd1ffcd68",
+    "report-view.json": "bebd4023cc7d3246c26b75a6e2a0c7c52c7d8e731a54dce1149e723388835958"
+  }
+}

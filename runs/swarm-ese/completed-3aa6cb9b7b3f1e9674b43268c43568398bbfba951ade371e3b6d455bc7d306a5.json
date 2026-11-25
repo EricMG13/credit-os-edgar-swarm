@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for ESCO TECHNOLOGIES INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/36b404060699cfcf0cb3be1ee9b65a4f3af20d26d5d8a54c84fe0e2601d9690d/1.response.md",
+    "CP-1": "requests/CP-1/4351d4cf9ef8ef9eebf718f7c0c11d68dac157bde0ca8cadcad98096605c223b/1.response.md",
+    "CP-1A": "requests/CP-1A/2a219d93473dd61b38022b6f9946e2bb2a811fde94686b1f65cee3bea266c7d1/1.response.md",
+    "CP-2": "requests/CP-2/9046abec88ca01130a6e41ce7630e55f65cee85a1ffd9c766762535bf195350a/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "73e5e87dd87006c33857dbfc670def0b43dc8f952bdfbd2e8cfe2370b0316923",
+  "delivery_sha256": "60e3876ac245f5c016ca130a36a5b9575c93c9b834ff4d18e9e105b06136dfeb"
+}

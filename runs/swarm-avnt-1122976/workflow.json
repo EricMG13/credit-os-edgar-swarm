@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "avnt-1122976-2026-11-18-credit_snapshot-host",
+    "issuer_id": "avnt-1122976",
+    "issuer_name": "Avient Corp",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_avnt_avnt-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_avnt_avnt-20241231.htm.jsonl",
+      "sha256": "f21009ad72e39430bdb6ac74e66b513554d05915174084fd994f9780c6b54d5d"
+    },
+    "10-K_2025-12-31_avnt_avnt-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_avnt_avnt-20251231.htm.jsonl",
+      "sha256": "9e3a992976aa0b97bec6955c8c3eac3ec4063d7ee1b13ee4f2ec903ec3a29845"
+    },
+    "10-Q_2026-03-31_avnt_avnt-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_avnt_avnt-20260331.htm.jsonl",
+      "sha256": "6ce61423a045e89660047448242189f1c02759fad24af064f9abce73d4010d18"
+    },
+    "10-Q_2026-06-30_avnt_avnt-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_avnt_avnt-20260630.htm.jsonl",
+      "sha256": "480a772de4ca694d3312678b9cda629440c3e81c35c5b2caadeaa6a0c0506dbf"
+    },
+    "10-Q_2026-09-30_avnt_avnt-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_avnt_avnt-20260930.htm.jsonl",
+      "sha256": "18c4bb686a8163d9e83cbe290ac66757579459c9a66885d10029469db6de24a4"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1122976-avient-corp.json",
+      "sha256": "da7dafab07a1572c7b2f422900fdf7f23e81d81407140345f0e7db76f4104596"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "42197fbce924027280cec779ddaff4ab50676a8744806eed4c6606e3da48c18a"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "73a4daa4f4050fff83bdb8158b569edfa4a1ba35f7fbe5716d23a43756e533f2"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "3e073011f5ca2215e945f8d71c06c9808b24f661b88f6eb4456bf69a4726da53"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "b0c65f4cbbca24519ae273e3d44fc2c3ae7ffaa9ec3bafb4e12e7a898e282ff1"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Avient Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Avient Corp — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}
