@@ -6,12 +6,7 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { containsReference, type OutputEntry } from "../../../publishedReport";
-import {
-  cp1Entry,
-  distressedCp1Entry,
-  leadProps,
-  relativeValueCp1Entry,
-} from "../fixtures/load";
+import { cp1Entry, distressedCp1Entry, leadProps, relativeValueCp1Entry } from "../fixtures/load";
 import { dropTable, setLabelled, threePeriodCp1 } from "../fixtures/mutations";
 import { CashLadderTile } from "./CashLadder";
 
@@ -28,9 +23,19 @@ function draw(entry: OutputEntry) {
 
 const num = (element: Element | undefined, name: string) => Number(element?.getAttribute(name));
 const spans = (elements: Element[]) =>
-  elements.map((bar) => [bar.getAttribute("data-label"), num(bar, "data-from"), num(bar, "data-to")]);
+  elements.map((bar) => [
+    bar.getAttribute("data-label"),
+    num(bar, "data-from"),
+    num(bar, "data-to"),
+  ]);
 const parts = (tile: HTMLElement, part: string) =>
   [...tile.querySelectorAll(`[data-part="${part}"]`)].map((node) => node.textContent);
+
+/** Row labels, each wrapped label's lines joined with a space. */
+const labels = (tile: HTMLElement) =>
+  [...tile.querySelectorAll('[data-part="label"]')].map((label) =>
+    [...label.querySelectorAll("tspan")].map((line) => line.textContent).join(" "),
+  );
 
 function openTable(tile: HTMLElement) {
   fireEvent.click(within(tile).getByRole("button", { name: /Table view/ }));
@@ -91,7 +96,7 @@ describe("cash ladder: the accepted CP-1, FY2024 bars and FY2023 beneath", () =>
       "−158",
       "−2,347",
     ]);
-    expect(parts(tile, "label")).toContain("Repurchases of common stock");
+    expect(labels(tile)).toContain("Repurchases of common stock");
   });
 
   it("is proportional: one scale for every bar, current and earlier", () => {
@@ -142,7 +147,12 @@ describe("cash ladder: the accepted CP-1, FY2024 bars and FY2023 beneath", () =>
       "1,198",
       "−762",
     ]);
-    expect(parts(tile, "legend-text")).toEqual(["FY2024 level", "Deduction", "Not stated", "FY2023"]);
+    expect(parts(tile, "legend-text")).toEqual([
+      "FY2024 level",
+      "Deduction",
+      "Not stated",
+      "FY2023",
+    ]);
   });
 
   it("draws the stated repurchase gap as the hatched slot with its reason, never dropped", () => {
@@ -300,10 +310,19 @@ describe("cash ladder: other real handoffs and mutations", () => {
   });
 
   it("an FY2023 gap is written beneath with its period and reason", () => {
-    const entry = setLabelled(cp1Entry(), CASH, "Capital expenditures", "FY2023", "Not supplied: restated");
+    const entry = setLabelled(
+      cp1Entry(),
+      CASH,
+      "Capital expenditures",
+      "FY2023",
+      "Not supplied: restated",
+    );
     const { tile } = draw(entry);
     expect(parts(tile, "prior-reason")).toEqual(["FY2023: Not supplied: restated"]);
-    expect(parts(tile, "prior-unplaced")).toEqual(["1,236 · not placed: an earlier step is not stated"].slice(0, 0));
+    // The next earlier level is stated, so the FY2023 walk picks up again there.
+    expect(parts(tile, "prior-unplaced")).toEqual([]);
+    const fcf = tile.querySelector('[data-prior="Levered free cash flow"]');
+    expect(num(fcf ?? undefined, "data-to")).toBe(1236);
   });
 
   it("words where a number is expected are a gap with the words, never zero", () => {
@@ -325,7 +344,7 @@ describe("cash ladder: other real handoffs and mutations", () => {
     const entry = setLabelled(cp1Entry(), CASH, "Capital expenditures", "Unit", "EUR millions");
     const { tile } = draw(entry);
     expect(parts(tile, "reason")).toContain("Capital expenditures is stated in another unit.");
-    expect(parts(tile, "label")).toContain("Capital expenditures");
+    expect(labels(tile)).toContain("Capital expenditures");
   });
 
   it("without a cash flow statement: the one gap tile with the true reason", () => {

@@ -72,7 +72,9 @@ function layoutOf(strip: PeriodStrip, width: number) {
   const stripBottom = 52 + (Math.max(1, ...lines.map((line) => line.length)) - 1) * 13 + 8;
   const rowsTop = stripBottom + 18;
   const rowHeight = wide ? MATRIX_ROW - 10 : MATRIX_ROW;
-  const height = matrix ? rowsTop + strip.figures.length * rowHeight + 4 : stripBottom;
+  const height = matrix
+    ? rowsTop + (strip.figures.length - 1) * rowHeight + (wide ? 10 : 22)
+    : stripBottom;
   return { matrix, wide, labelWidth, slot, centre, lines, stripBottom, rowsTop, rowHeight, height };
 }
 
@@ -80,15 +82,24 @@ function Mark({ period, x }: { period: StripPeriod; x: number }) {
   const state = period.state.kind;
   if (state === "gap")
     return (
-      <GapSlot x={x - 24} y={23} width={48} height={14} reason={`${period.label}: ${stateWords(period)}`} />
+      <GapSlot
+        x={x - 24}
+        y={23}
+        width={48}
+        height={14}
+        reason={`${period.label}: ${stateWords(period)}`}
+      />
     );
   if (state === "unstated")
     return <line x1={x} x2={x} y1={25} y2={35} strokeWidth="1.5" className="stroke-border-gap" />;
   if (period.compared)
     return <circle data-mark="compared" cx={x} cy={30} r={6} className="fill-chart-1" />;
+  // Stated in full: a solid dot; partly stated: a ring; words only or no figure: a dashed ring.
+  if (state === "figures" && !period.partly)
+    return <circle data-mark="stated" cx={x} cy={30} r={5} className="fill-chart-3" />;
   return (
     <circle
-      data-mark={state === "figures" ? "stated" : state}
+      data-mark={state === "figures" ? "partly" : state}
       cx={x}
       cy={30}
       r={5}
@@ -99,10 +110,22 @@ function Mark({ period, x }: { period: StripPeriod; x: number }) {
   );
 }
 
-function MatrixCell({ state, x, y, name }: { state: PeriodState | undefined; x: number; y: number; name: string }) {
+function MatrixCell({
+  state,
+  x,
+  y,
+  name,
+}: {
+  state: PeriodState | undefined;
+  x: number;
+  y: number;
+  name: string;
+}) {
   const kind = state?.kind ?? "none";
   if (kind === "figures")
-    return <circle data-cell={name} data-state={kind} cx={x} cy={y} r={4} className="fill-chart-1" />;
+    return (
+      <circle data-cell={name} data-state={kind} cx={x} cy={y} r={4} className="fill-chart-1" />
+    );
   if (kind === "gap")
     return (
       <g data-cell={name} data-state={kind}>
@@ -131,7 +154,9 @@ function stripReading(strip: PeriodStrip) {
         (figure) =>
           `${figure.figure}: ${strip.axis
             .filter((period) => period.state.kind !== "unstated")
-            .map((period) => `${period.label} ${cellWords(figure.states[period.label]).toLowerCase()}`)
+            .map(
+              (period) => `${period.label} ${cellWords(figure.states[period.label]).toLowerCase()}`,
+            )
             .join(", ")}`,
       )
     : [];
@@ -175,7 +200,11 @@ function Strip({ strip, width }: { strip: PeriodStrip; width: number }) {
             textAnchor="middle"
             fontSize={SIZE.label}
             fontWeight={period.compared ? 600 : 400}
-            className={period.state.kind === "unstated" ? "fill-text-tertiary font-mono" : "fill-text-primary font-mono"}
+            className={
+              period.state.kind === "unstated"
+                ? "fill-text-tertiary font-mono"
+                : "fill-text-primary font-mono"
+            }
           >
             {period.label}
           </text>
@@ -184,7 +213,11 @@ function Strip({ strip, width }: { strip: PeriodStrip; width: number }) {
             data-part="state"
             textAnchor="middle"
             fontSize={SIZE.tick}
-            className={period.state.kind === "gap" ? "fill-gap-text font-body" : "fill-text-secondary font-body"}
+            className={
+              period.state.kind === "gap"
+                ? "fill-gap-text font-body"
+                : "fill-text-secondary font-body"
+            }
           >
             {(l.lines[at] ?? []).map((line, n) => (
               <tspan key={`${line}-${String(n)}`} x={l.centre(at)} y={52 + n * 13}>
@@ -196,7 +229,13 @@ function Strip({ strip, width }: { strip: PeriodStrip; width: number }) {
       ))}
       {l.matrix && (
         <>
-          <line x1={0} x2={width} y1={l.stripBottom + 4} y2={l.stripBottom + 4} className="stroke-border-hairline" />
+          <line
+            x1={0}
+            x2={width}
+            y1={l.stripBottom + 4}
+            y2={l.stripBottom + 4}
+            className="stroke-border-hairline"
+          />
           {strip.figures.map((figure, row) => {
             const top = l.rowsTop + row * l.rowHeight;
             const markY = l.wide ? top : top + 14;
@@ -233,7 +272,9 @@ function Strip({ strip, width }: { strip: PeriodStrip; width: number }) {
 
 function tableOf(strip: PeriodStrip) {
   const labels = [
-    ...strip.axis.filter((period) => period.state.kind !== "unstated").map((period) => period.label),
+    ...strip.axis
+      .filter((period) => period.state.kind !== "unstated")
+      .map((period) => period.label),
     ...strip.apart.map((period) => period.label),
   ];
   return {
@@ -254,6 +295,23 @@ function notCarried(strip: PeriodStrip) {
   return stated.length === 2
     ? "A longer trend, last twelve months and a full debt stack are not in this handoff."
     : "A second period, a longer trend, last twelve months and a full debt stack are not in this handoff.";
+}
+
+/** The stated gaps the matrix hatches, with their words: "Cash conversion and Net debt, FY2022: …". */
+function matrixGaps(strip: PeriodStrip) {
+  if (!showsMatrix(strip)) return [];
+  return strip.axis.flatMap((period) => {
+    const byReason = new Map<string, string[]>();
+    for (const figure of strip.figures) {
+      const state = figure.states[period.label];
+      if (state?.kind !== "gap") continue;
+      const reason = state.reasons.join(" ");
+      byReason.set(reason, [...(byReason.get(reason) ?? []), figure.figure]);
+    }
+    return [...byReason].map(
+      ([reason, figures]) => `${listOf(figures)}, ${period.label}: ${reason}`,
+    );
+  });
 }
 
 function apartLine(strip: PeriodStrip) {
@@ -281,6 +339,7 @@ export function PeriodsTile({ lead }: { lead: LeadProps }) {
     : "No figure states a number for any period.";
   const missing = notCarried(strip);
   const apart = apartLine(strip);
+  const hatched = matrixGaps(strip);
   return (
     <FigureTile
       props={lead}
@@ -290,12 +349,24 @@ export function PeriodsTile({ lead }: { lead: LeadProps }) {
       title={LABEL}
       line={strip.line ?? undefined}
       source="the period tables"
+      legend={
+        showsMatrix(strip)
+          ? [
+              { tone: "primary", text: "Numbers stated" },
+              ...(hatched.length ? [{ tone: "gap" as const, text: "Stated gap" }] : []),
+            ]
+          : []
+      }
       notes={gaps}
       table={strip.figures.length ? tableOf(strip) : undefined}
     >
       <Measured fallback={FALLBACK}>{(width) => <Strip strip={strip} width={width} />}</Measured>
       <div className="flex flex-col gap-1 text-small text-text-secondary">
         <p>{shown}</p>
+        {hatched.map((line) => (
+          <p key={line}>{line}</p>
+        ))}
+        {showsMatrix(strip) && <p>A dash: the figure's table does not state the period.</p>}
         {apart && <p>{apart}</p>}
       </div>
       {missing && <GapNote>{missing}</GapNote>}

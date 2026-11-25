@@ -93,9 +93,7 @@ function columnLayout(
   const needUndated = Math.max(0, ...undated.map(columnNeed)) + 8;
   const even = room / (dated.length + undated.length);
   const undatedSlot = Math.max(even, needUndated);
-  const datedSlot = dated.length
-    ? (room - undated.length * undatedSlot) / dated.length
-    : 0;
+  const datedSlot = dated.length ? (room - undated.length * undatedSlot) / dated.length : 0;
   if ((dated.length && datedSlot < needDated) || undatedSlot * undated.length > room) return null;
   const base = TOP + PLOT;
   const y = (value: number) => axis.place(value, base, TOP);
@@ -143,7 +141,8 @@ function rowLayout(dated: WallSlot[], undated: WallSlot[], width: number, axis: 
   const slots = [...dated, ...undated];
   const labelWidth = Math.max(...slots.map((slot) => textWidth(slot.label, SIZE.label))) + 10;
   // A gap row's slot and words start at zero, so only the amounts need room past the bars.
-  const valueWidth = Math.max(0, ...slots.map((slot) => textWidth(textOf(slot) ?? "", SIZE.value))) + 8;
+  const valueWidth =
+    Math.max(0, ...slots.map((slot) => textWidth(textOf(slot) ?? "", SIZE.value))) + 8;
   const from = labelWidth;
   const to = Math.max(from + 60, width - valueWidth);
   const x = (value: number) => axis.place(value, from, to);

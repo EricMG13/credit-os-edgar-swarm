@@ -168,7 +168,7 @@ function PeriodLines({ data, width }: { data: EarningsAgainstDebt; width: number
           >
             {panel.label}
           </text>
-          {layout.axis.ticks.map((tick) => {
+          {layout.ticks.map((tick) => {
             const y = layout.y(tick.value) + panel.top;
             return (
               <g key={tick.value}>

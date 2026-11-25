@@ -34,7 +34,8 @@ function measureWords(
   const current = segmentValue(values, periods.drawn).text;
   const prior = periods.prior ? segmentValue(values, periods.prior) : null;
   // A prior cell with the same words as the drawn one (the same stated gap) is said once.
-  const before = prior && periods.prior && prior.text !== current ? ` (${periods.prior} ${prior.text})` : "";
+  const before =
+    prior && periods.prior && prior.text !== current ? ` (${periods.prior} ${prior.text})` : "";
   return `${label} ${current}${before}`;
 }
 
@@ -109,7 +110,9 @@ function Row({ row, layout, name }: { row: MeasureRow; layout: SegmentLayout; na
         <text
           data-part="reason"
           fontSize="11"
-          className={row.current.kind === "gap" ? "fill-gap-text font-body" : "fill-text-secondary font-body"}
+          className={
+            row.current.kind === "gap" ? "fill-gap-text font-body" : "fill-text-secondary font-body"
+          }
         >
           {row.lines.map((line, at) => (
             <tspan key={`${line}-${String(at)}`} x={row.labelX} y={textY + at * 13}>
@@ -237,7 +240,9 @@ function periodNote(periods: SegmentPeriods) {
   const drawn = periods.prior
     ? `Bars show ${periods.drawn}; ticks show ${periods.prior}.`
     : `Bars show ${periods.drawn}.`;
-  return [`${drawn} The schedule also states ${listOf(periods.notDrawn)}; it is in the table view.`];
+  return [
+    `${drawn} The schedule also states ${listOf(periods.notDrawn)}; it is in the table view.`,
+  ];
 }
 
 /** Tile 5 of the financial foundation: net sales and EBITDA per segment, as the module states them. */

@@ -18,10 +18,7 @@ import {
 
 /** How one figure (or the lead) states one period. */
 export type PeriodState =
-  | { kind: "figures" }
-  | { kind: "gap"; reasons: string[] }
-  | { kind: "words" }
-  | { kind: "none" };
+  { kind: "figures" } | { kind: "gap"; reasons: string[] } | { kind: "words" } | { kind: "none" };
 
 export type FigurePeriods = { figure: string; states: Record<string, PeriodState> };
 
@@ -124,7 +121,15 @@ function withUnstated(periods: readonly Period[]): (Period & { unstated?: true }
     const found = periods.filter((period) => period.year === year);
     return found.length
       ? found
-      : [{ label: `${prefix}${String(year)}`, year, form: first.form, kind: first.kind, unstated: true as const }];
+      : [
+          {
+            label: `${prefix}${String(year)}`,
+            year,
+            form: first.form,
+            kind: first.kind,
+            unstated: true as const,
+          },
+        ];
   });
 }
 
@@ -154,18 +159,18 @@ export function periodStrip(entry: OutputEntry): PeriodStrip {
     figures.some((figure) => figure.states[label]?.kind === "gap");
   const annual = stated.periods.filter((period) => period.kind === "annual");
   const onAxis = annual.length ? annual : stated.periods;
-  const apartPeriods = annual.length ? stated.periods.filter((period) => period.kind !== "annual") : [];
+  const apartPeriods = annual.length
+    ? stated.periods.filter((period) => period.kind !== "annual")
+    : [];
   const compared = (label: string) =>
     stated.comparison?.from === label ? "from" : stated.comparison?.to === label ? "to" : null;
-  const axis = withUnstated(onAxis).map(
-    (period): StripPeriod => ({
-      label: period.label,
-      year: period.year,
-      state: "unstated" in period ? { kind: "unstated" } : overall(period.label),
-      partly: "unstated" in period ? false : partly(period.label),
-      compared: compared(period.label),
-    }),
-  );
+  const axis = withUnstated(onAxis).map((period): StripPeriod => ({
+    label: period.label,
+    year: period.year,
+    state: "unstated" in period ? { kind: "unstated" } : overall(period.label),
+    partly: "unstated" in period ? false : partly(period.label),
+    compared: compared(period.label),
+  }));
   const apart = apartPeriods.map((period) => ({
     label: period.label,
     figures: figures

@@ -5,7 +5,13 @@ import { GapSlot, Measured, SIZE } from "../kit/marks";
 import { IN_EVIDENCE, namesSource, safeText } from "../kit/reader";
 import { unitLabel } from "../../../publishedReport";
 import type { LeadProps } from "../types";
-import { GAP_WORDS, wallLayout, type WallLayout, type WallMark, type WallSlot } from "./maturityGeometry";
+import {
+  GAP_WORDS,
+  wallLayout,
+  type WallLayout,
+  type WallMark,
+  type WallSlot,
+} from "./maturityGeometry";
 
 const LABEL = "Debt maturities";
 /** The figure's width before the first measure (and in jsdom): the span-5 tile at 1128 px. */
@@ -51,7 +57,15 @@ function wallReading(marks: readonly WallMark[], unit: string) {
   return `Debt maturities${unit ? `, ${unit}` : ""}: ${parts.join(", ")}.`;
 }
 
-function Bar({ mark, layout, undatedFill }: { mark: WallMark; layout: WallLayout; undatedFill: string }) {
+function Bar({
+  mark,
+  layout,
+  undatedFill,
+}: {
+  mark: WallMark;
+  layout: WallLayout;
+  undatedFill: string;
+}) {
   if (mark.kind !== "bar") {
     const columns = layout.layout === "columns";
     const box = columns
@@ -174,7 +188,13 @@ function BreakGlyph({ layout }: { layout: WallLayout }) {
       ? `M${String(b - 8)} ${String(layout.base + 7)} ${String(b - 1)} ${String(layout.base - 7)}M${String(b + 1)} ${String(layout.base + 7)} ${String(b + 8)} ${String(layout.base - 7)}`
       : `M${String(layout.base - 7)} ${String(b + 2)} ${String(layout.base + 7)} ${String(b - 4)}M${String(layout.base - 7)} ${String(b + 6)} ${String(layout.base + 7)} ${String(b)}`;
   return (
-    <path data-axis-break d={path} strokeWidth="1.25" fill="none" className="stroke-text-tertiary" />
+    <path
+      data-axis-break
+      d={path}
+      strokeWidth="1.25"
+      fill="none"
+      className="stroke-text-tertiary"
+    />
   );
 }
 
@@ -253,7 +273,15 @@ function Grid({ layout }: { layout: WallLayout }) {
   );
 }
 
-function Wall({ slots, unit, width }: { slots: { dated: WallSlot[]; undated: WallSlot[] }; unit: string; width: number }) {
+function Wall({
+  slots,
+  unit,
+  width,
+}: {
+  slots: { dated: WallSlot[]; undated: WallSlot[] };
+  unit: string;
+  width: number;
+}) {
   const layout = wallLayout(slots.dated, slots.undated, width);
   const Labels = layout.layout === "columns" ? ColumnLabels : RowLabels;
   return (

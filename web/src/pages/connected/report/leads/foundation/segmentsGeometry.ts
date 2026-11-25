@@ -105,7 +105,9 @@ export function segmentLayout(
     priorEbitda: periods.prior ? segmentValue(segment.ebitda, periods.prior) : null,
   }));
   const all = cells.flatMap((cell) => [cell.sales, cell.ebitda]);
-  const priors = cells.flatMap((cell) => [cell.priorSales, cell.priorEbitda]).flatMap((v) => v ?? []);
+  const priors = cells
+    .flatMap((cell) => [cell.priorSales, cell.priorEbitda])
+    .flatMap((v) => v ?? []);
   const axis = niceAxis(numbers([...all, ...priors]), { zero: true });
   const names = view.segments.map((segment) => safeText(segment.name));
   const nameWidth =
@@ -171,7 +173,12 @@ export function segmentLayout(
       layout === "wide" ? wrap(name, nameWidth - 10, 13) : wrap(name, width - 4, 13);
     const rowsTop = layout === "narrow" ? top + nameLines.length * SEG.nameLine + 3 : top;
     const sales = row("sales", cell.sales, cell.priorSales, rowsTop);
-    const ebitda = row("ebitda", cell.ebitda, cell.priorEbitda, rowsTop + sales.height + SEG.rowGap);
+    const ebitda = row(
+      "ebitda",
+      cell.ebitda,
+      cell.priorEbitda,
+      rowsTop + sales.height + SEG.rowGap,
+    );
     const rowsBottom = ebitda.y + ebitda.height;
     const nameTop = layout === "narrow" ? top : rowsTop;
     const block: SegmentBlock = {

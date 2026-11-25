@@ -200,10 +200,11 @@ export function barLayout(data: EarningsAgainstDebt, width: number) {
 // ---------------------------------------------------------------------------------------------
 
 const PLOT_TOP = 40;
-const PLOT_HEIGHT = 96;
+/** The plot's height: lower when the panels stack one per row, on a phone. */
+const PLOT_HEIGHT = { side: 96, stacked: 72 } as const;
 const GUTTER = 16;
 const MARGIN = 50;
-const PAD = 26;
+const PAD = 32;
 
 export type LinePoint = {
   label: string;
@@ -239,7 +240,11 @@ export function lineLayout(data: EarningsAgainstDebt, width: number) {
   const axis: NiceAxis = niceAxis(values, { zero: true });
   const columns = columnsFor(width, data.measures.length);
   const panelWidth = (width - GUTTER * (columns - 1)) / columns;
-  const y = (value: number) => axis.place(value, PLOT_TOP + PLOT_HEIGHT, PLOT_TOP);
+  const plotHeight = columns === 1 ? PLOT_HEIGHT.stacked : PLOT_HEIGHT.side;
+  const y = (value: number) => axis.place(value, PLOT_TOP + plotHeight, PLOT_TOP);
+  // Tick labels at least 18 px apart: every second or third is kept on a low plot.
+  const every = Math.ceil(18 / (plotHeight / Math.max(1, axis.ticks.length - 1)));
+  const ticks = axis.ticks.filter((_, index) => index % every === 0);
   const count = data.periods.length;
   const spacing = (panelWidth - MARGIN - 2 * PAD) / Math.max(1, count - 1);
   const xOf = (left: number, index: number) => left + MARGIN + PAD + index * spacing;
@@ -276,7 +281,9 @@ export function lineLayout(data: EarningsAgainstDebt, width: number) {
       width: panelWidth,
       points,
       segments,
-      periodLines: points.map((point) => wrap(point.label, Math.max(spacing - 6, 40), SIZE.tick)),
+      periodLines: points.map((point) =>
+        wrap(point.label, Math.min(spacing - 6, 2 * PAD - 4), SIZE.tick),
+      ),
       reasons,
       ticks: column === 0,
     };
@@ -289,7 +296,7 @@ export function lineLayout(data: EarningsAgainstDebt, width: number) {
         .map(
           (panel) =>
             PLOT_TOP +
-            PLOT_HEIGHT +
+            plotHeight +
             8 +
             Math.max(1, ...panel.periodLines.map((lines) => lines.length)) * 13 +
             panel.reasons.length * LINE +
@@ -325,7 +332,8 @@ export function lineLayout(data: EarningsAgainstDebt, width: number) {
     y,
     panels,
     height,
-    plot: { top: PLOT_TOP, height: PLOT_HEIGHT, margin: MARGIN },
+    ticks,
+    plot: { top: PLOT_TOP, height: plotHeight, margin: MARGIN },
   };
 }
 
