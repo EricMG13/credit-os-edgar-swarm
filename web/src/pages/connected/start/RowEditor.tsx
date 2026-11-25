@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { ChevronDown } from "@untitledui/icons";
 import { Button } from "@/components/base/buttons/button";
 import { moduleName } from "../api";
 import { field, label } from "../layout";
@@ -198,8 +199,12 @@ function RowItem({
   const [open] = useState(startOpen);
   const groups = [...new Set(fields.map((item) => item.group ?? ""))];
   return (
-    <details open={open || undefined} className="min-w-0">
-      <summary className="flex min-h-8 cursor-pointer flex-wrap items-center gap-x-2 pr-24 text-small max-[480px]:min-h-11">
+    <details open={open || undefined} className="group/row min-w-0">
+      <summary className="flex min-h-8 cursor-pointer list-none flex-wrap items-center gap-x-2 pr-24 text-small max-[480px]:min-h-11 [&::-webkit-details-marker]:hidden">
+        <ChevronDown
+          aria-hidden="true"
+          className="size-4 shrink-0 text-text-tertiary transition-transform group-open/row:rotate-180"
+        />
         <span className="font-medium">{title}</span>
         <span className="text-text-secondary">{summary}</span>
       </summary>
