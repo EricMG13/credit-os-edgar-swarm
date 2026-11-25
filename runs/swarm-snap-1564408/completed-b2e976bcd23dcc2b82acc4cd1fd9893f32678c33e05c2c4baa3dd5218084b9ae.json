@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Snap Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/a59723c97a1cfdf7086e9434eb4d183a64d472e56a101a9c8b06b8f3df8cbcb3/1.response.md",
+    "CP-1": "requests/CP-1/503a0cc73d0cc75b08abd043c2a37b24d820506e4aaebe3cfd6aaf077a34a1e0/1.response.md",
+    "CP-1A": "requests/CP-1A/22cc5a3536133266f81d2ede6235a82def1bc91f86e20ec95c8d25ff9fb78d4c/1.response.md",
+    "CP-2": "requests/CP-2/6e1ad472c4a5ba95aa402c6c6a0ca4714341f586616d6e68a2b05c95afe5696d/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "aa8f4846c3314d224d2c51a05b6bc614e5a317bd5d8b7351ed0b757e337e5815",
+  "delivery_sha256": "1b6aaa96bc7601c31d140ae63fcfd878fb332817c1fb85f30ca2bd937721af1a"
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Nexstar Media Group, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/f9793bcbc55654d6a35e9e4c53dcd77c1b11373ab9cbe163ea06445329ace464/1.response.md",
+    "CP-1": "requests/CP-1/427641cbbb996aec8a92c84bf50438d8addf418dd95b8dbd96c4870a2812f6c3/1.response.md",
+    "CP-1A": "requests/CP-1A/1781156419c0d620911dbf3bcb123ebab0d9978d2f044425e23d1ab57b8c9387/1.response.md",
+    "CP-2": "requests/CP-2/ed9014340ae0576108b288cfade672c1761b7519fdf6fd381eb722db6ed4e012/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "6d77ec3d9ef81f347a088564b6faa5ea8faed93d2ec78eed18882e4ad92af1e1",
+  "delivery_sha256": "ebe9514ffa441ab097192df6b9048c19a05c30eafd98daeeedde6ff575721903"
+}

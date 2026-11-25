@@ -44,6 +44,50 @@
         "CP-2": 1
       },
       "notes": "The source set lacks the executed credit agreement and indenture and the 2026 proxy statement, so covenant headroom, the ranking and security of the senior notes and board independence stay unestablished (logged as gaps), and two source conflicts (the Hunt-related lease expiry date and the 2025 repurchase quantum) are unresolvable from the files; CP-0 and CP-1 were already accepted when I started, each with one submission on record."
+    },
+    {
+      "issuer_id": "issuer-1040765",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The accepted Financial foundation and Business & governance handoffs say no source totals the debt of unconsolidated joint ventures, but the market-risk table in all five filings prints it (USD 2,732.55 million at 2026-09-30), so I stated that correction in the CP-2 answer because the earlier handoffs cannot be edited; separately, a shared-scratchpad helper file of another parallel session overwrote mine and, when I ran it once, opened that other issuer's source-text file but printed only \"(none)\", so I read none of its content and moved my helpers to an issuer-specific subfolder."
+    },
+    {
+      "issuer_id": "nxst-1142417",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The accepted Financial foundation answer says the first coupons on both the 2033 and 2034 notes fell after the nine-month cash flow statement, but the filing shows the 2033 coupon was due 2026-09-15, inside it. The CP-2 answer states this correction, and also adds the August 2026 CW put exercise (USD 110 million) and Nexstar's own pension deficit (USD 154 million), which the earlier answers omit. The earlier answers cannot be edited."
+    },
+    {
+      "issuer_id": "snap-1564408",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "All four modules were accepted on the first submission and the last launcher run finished with exit 0 and a delivery. CP-0 and CP-1 were already accepted in the resumed folder, so I did not resubmit them. Defect I could not fix: the CP-2 method asks for the phrase \"Quantitative threshold not available in provided materials\" where a threshold is unsupported, but the same method's completeness rules disqualify that phrase in a critical cell, so I wrote observable signals tied to reported values instead. The launcher needed uv 0.12.5 first on PATH (it was at /usr/local/bin, behind a 0.11.32 copy), and I had to prepend that directory myself. The uv-version failure was not counted as an attempt because no module request was written."
+    },
+    {
+      "issuer_id": "novelis-inc",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The workflow was stopped on the controller's pause after CP-1A was accepted, and a separate analyst at the same model and effort finished CP-2, accepted at the first submission. Defect I could not fix: the accepted CP-1A uses non-standard Basis page lists (\"pages 190 and 188\") that the library's Basis parser will not recognise. The earlier answers also missed that the 10-K exhibit index names the term loan borrower as Novelis Holdings Inc. and AV Minerals (Netherlands) N.V. as a third-party security provider under the ABL; CP-2's Gaps flag this because accepted answers cannot be edited."
     }
   ]
 }

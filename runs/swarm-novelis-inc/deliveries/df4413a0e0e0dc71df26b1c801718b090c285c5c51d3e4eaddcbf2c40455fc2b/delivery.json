@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Novelis Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "a10c41b728b1e929fb50330add6b0aa8ee35db8ba1b08aa08a2e6255fb4d9dbb",
+    "CP-1.md": "94e4315145b5c5380a2dfb428ad48068a69fee4da4e1ad8f711e7cdd8d5e780c",
+    "CP-1A.md": "3f0e076b0b87e37c30420f10ffefa3e049c96e33f8a563556a1b5a33e07023f3",
+    "CP-2.md": "8fe2b812b8678fca685f5314a6f7e94afa4a74405f56712cf283394c12b9f4bb",
+    "coverage.json": "cd8c6503bcc68156d8fedea125f4dc346515df113254d3f7739c52aec9ac2710",
+    "view.json": "9b6cf809d395b3a780aa7d0a109ca7893cd71966a375c077a8b506b1f1dee471",
+    "report-view.json": "2c02a2cd377d2b1c324fbed1c825754484e56b669b185921d5d359dd9570d83c"
+  }
+}
