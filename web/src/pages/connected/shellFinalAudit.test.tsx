@@ -127,10 +127,10 @@ describe("Library batch findings", () => {
 });
 
 describe("Run activity batch findings", () => {
-  it("C1-018 draws the module name beside a visible state word", async () => {
+  it("C1-018 draws the module a run is on, in words, beside a visible state word", async () => {
     reply({ updated: "2026-11-17T08:00:00Z", held: "", runs: [running], ended: [] });
     render(<RunActivity />);
-    const item = (await screen.findByText("Financial foundation")).closest("li");
+    const item = (await screen.findByText("Now: Financial foundation")).closest("li");
     expect(item).not.toBeNull();
     expect(within(item as HTMLElement).getByText("Running")).not.toHaveClass("sr-only");
   });
@@ -175,9 +175,15 @@ describe("Run progress batch findings", () => {
   it("S6-037 names the delivery step alongside analytical modules and formats the case date", async () => {
     reply(run);
     render(<RunProgress id={run.id} mode="synthetic" />);
+    const pipeline = await screen.findByRole("list", { name: "Modules in this run" });
+    // The delivery step is its own last stage, named beside the analytical stages.
     expect(
-      await screen.findByRole("heading", { name: "Modules and report delivery" }),
-    ).toBeVisible();
+      within(pipeline)
+        .getAllByRole("heading", { level: 3 })
+        .map((heading) => heading.textContent)
+        .at(-1),
+    ).toBe("Report delivery1");
+    expect(within(pipeline).getByText("Report", { selector: "span" })).toBeVisible();
     expect(screen.getByText("31 March 2026")).toBeVisible();
     await waitFor(() => {
       expect(document.title).toBe("Northbridge run — Credit OS");
@@ -260,9 +266,14 @@ describe("C1-028 published blocked modules", () => {
       ),
     );
     render(<RunProgress id={run.id} mode="synthetic" />);
-    const state = await screen.findByText("Not assessable");
+    const pipeline = await screen.findByRole("list", { name: "Modules in this run" });
+    const state = within(pipeline).getByText("Not assessable");
     expect(state.closest("li")).toHaveTextContent("Financial foundation");
-    expect(screen.getByRole("progressbar", { name: "1 of 1 modules" })).toBeVisible();
+    expect(screen.getByRole("progressbar", { name: "Modules finished" })).toBeVisible();
+    expect(screen.getByRole("progressbar", { name: "Modules finished" })).toHaveAttribute(
+      "aria-valuetext",
+      "1 of 1 modules",
+    );
     expect(screen.getByText("Report", { selector: "span" }).closest("li")).toHaveTextContent(
       "Finished",
     );
