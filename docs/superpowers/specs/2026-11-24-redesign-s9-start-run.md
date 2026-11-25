@@ -19,385 +19,357 @@ critique of 2026-11-16; `DESIGN.md`; `PRODUCT.md`; the Overview and Module CP-1 
 
 From "Start run" (all eight rows) and the "On every screen" elements that appear on it.
 
-| Step | Rank | What to show | How | Where | Needs |
-|---|---|---|---|---|---|
-| All | P1 | Readiness per module for the chosen pathway, and the cap | Persistent panel: module list by stage with ready, conditional, blocked; "USD x of USD cap" | Right rail, every step | Code |
-| All | P2 | Where I am | Four-step stepper | Top | Code |
-| Documents | P1 | Drop zone; each file's detected type and what it unlocks | Upload list with a type chip and "unlocks: covenants, liquidity…" | Main | Code |
-| Documents | P2 | What is missing for the modules I will want | Gap rows with the module they block | Under the list | Code |
-| Purpose | P1 | Eight pathways as what they answer, their module count and cap | Cards: question, modules, cap. Not a dropdown | Main | Code |
-| More context | P2 | Questions for deep research, legal document status, portfolio workbook, ratings | Short form in groups | Main | Code |
-| Review and start | P1 | What the run will do, what it will not do, and what it will cost | Three blocks; each limit is a checkbox the analyst accepts | Main | Code |
-| Review and start | P1 | Submit with the cap in the button label | One primary button; confirmation dialog | Bottom | Code |
-| Review and start | P2 | For a private issuer: what leaves the building | Plain statement before Submit | Above the button | Code |
+| Step             | Rank | What to show                                                                    | How                                                                                         | Where                  | Needs |
+| ---------------- | ---- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ---------------------- | ----- |
+| All              | P1   | Readiness per module for the chosen pathway, and the cap                        | Persistent panel: module list by stage with ready, conditional, blocked; "USD x of USD cap" | Right rail, every step | Code  |
+| All              | P2   | Where I am                                                                      | Four-step stepper                                                                           | Top                    | Code  |
+| Documents        | P1   | Drop zone; each file's detected type and what it unlocks                        | Upload list with a type chip and "unlocks: covenants, liquidity…"                           | Main                   | Code  |
+| Documents        | P2   | What is missing for the modules I will want                                     | Gap rows with the module they block                                                         | Under the list         | Code  |
+| Purpose          | P1   | Eight pathways as what they answer, their module count and cap                  | Cards: question, modules, cap. Not a dropdown                                               | Main                   | Code  |
+| More context     | P2   | Questions for deep research, legal document status, portfolio workbook, ratings | Short form in groups                                                                        | Main                   | Code  |
+| Review and start | P1   | What the run will do, what it will not do, and what it will cost                | Three blocks; each limit is a checkbox the analyst accepts                                  | Main                   | Code  |
+| Review and start | P1   | Submit with the cap in the button label                                         | One primary button; confirmation dialog                                                     | Bottom                 | Code  |
+| Review and start | P2   | For a private issuer: what leaves the building                                  | Plain statement before Submit                                                               | Above the button       | Code  |
 
-| On every screen | What | How | Where |
-|---|---|---|---|
-| Gap state | What is not known and why | Hatched, dashed panel with the reason in words (`GapNote`) | In the place the figure would be |
-| Blocked | A module that could not run | Dashed orange outline, slash icon, "Not assessable" and the reason | Wherever the module appears (the rail) |
-| Synthetic test mode | A persistent chip so a test is never mistaken for a real run | The existing "Synthetic test" badge in the page header | Page header, every step |
-| Top bar | Areas, Start run as the primary action | Frozen shell (`web/src/shell/**`); not changed here | Top |
+| On every screen     | What                                                         | How                                                                | Where                                  |
+| ------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------ | -------------------------------------- |
+| Gap state           | What is not known and why                                    | Hatched, dashed panel with the reason in words (`GapNote`)         | In the place the figure would be       |
+| Blocked             | A module that could not run                                  | Dashed orange outline, slash icon, "Not assessable" and the reason | Wherever the module appears (the rail) |
+| Synthetic test mode | A persistent chip so a test is never mistaken for a real run | The existing "Synthetic test" badge in the page header             | Page header, every step                |
+| Top bar             | Areas, Start run as the primary action                       | Frozen shell (`web/src/shell/**`); not changed here                | Top                                    |
 
 The report header, section control, basis label, trace control and better/worse marks do not
 appear on Start run.
 
 ## 2. Blocks: component, props, data, states, place
 
+Round 2 (2026-11-25) rebuilt the blocks after the coordinator's review (K1–K13, Q1–Q4); this
+section states what is built now.
+
 The page keeps one route (`/start`, lazy chunk `StartRun-*`, which the proof script checks) and one
-form state (`IntakeForm`); the blocks below are views over it. Grid: at `lg` (≥1024 px) a
-12-column grid, 16 px gap: the step column spans 8, the rail spans 4 and is sticky. Below `lg` one
-column: stepper, step, then the rail; the one-line readiness summary stays above the step action.
-At 390 px nothing scrolls sideways; Submit is full width and last.
+form state (`IntakeForm`); the blocks below are views over it. Grid: from `xl` (≥1280 px) a
+12-column bento, the step column 8 and the rail 4, sticky. Below `xl` one column: stepper, step,
+then the rail; the one-line readiness summary ("2 of 4 ready · Cap USD 25.00") stays above the
+step action. At 1024 the stepper keeps its labels and the pathway cards keep two columns. At
+390 px nothing scrolls sideways, every control is at least 44 px tall, Submit is full width. The
+stepper strip and the step form are kit `Tile`s. While the run options load, the same layout is
+drawn as quiet tiles (hidden from assistive technology; the status "Loading run options" is what
+is said).
 
-### 2.1 Readiness rail — `start/ReadinessRail.tsx` (P1, every step)
+### 2.1 Readiness rail — `start/ReadinessRail.tsx`, `start/StagePipeline.tsx` (P1, every step)
 
-`<aside aria-label="Readiness">`, `lg:col-span-4`, sticky. Three parts, in order:
+`<aside aria-label="Readiness">`, sticky from `xl`, scrolling on its own (and then focusable) when
+taller than the window.
 
-1. **Cap.** Kicker "Spending cap for this run" (live) or "Configured cap for paid runs"
-   (synthetic). One mono line, exactly `USD 0.00 of USD 25.00` (the run has spent nothing before
-   Submit; the cap is the selected pathway's, from `submission_caps_usd`), and under it the
-   existing `ProgressBar` named by the same text. Cap missing: "Unavailable".
-2. **Before Submit.** `<ul aria-label="Before Submit">`, the four existing condition rows as
-   status (`StatusBadge` "Met or not met"): Documents inspected; Purpose chosen; Decisions made
-   (`n of m` or "None needed"); Summary approved. Data: unchanged `readinessRows`.
-3. **Modules by stage.** A list named by its heading "Modules", grouped by the five stages with
-   `byStage` (`report/stages.ts`, read only): "01 Sources", "02 Financials", "03 Credit", "04
-   Structure and market", "05 Validation and decision"; module names, never codes; the forecast
-   (`CP-MODEL`) is never drawn. Header: "{n} modules · {pathway label}". Rows and states:
-   - **Not checked yet** (before a review): the planned modules (`pathwayModules`, or the
-     Advanced selection), names only, and one line: "Each module is checked against your
-     documents when you review the run." Readiness before a review is not known to the page: the
-     service computes it only for the summary, and the page adds no request.
-   - **Checked** (on the review, from `summary.modules` and `summary.items`): per module the most
-     severe item scoped to it. No item: `Ready` ("Source readiness" set). `gap`, `limited` or
-     `check`: `Conditional` ("Source readiness" set) with the service's reason (`serviceText`).
-     `will_refuse`: the blocked state — dashed orange outline, `Not assessable` ("Module state"
-     set, slashed circle) and the reason. Items scoped to `run` are one "Whole run" row first.
-     Passive items (`information`, `ready`) do not change a module's state. A module the service
-     added (Changes since the last run) is drawn in its stage. Each stage is a sub-list named by the
-     stage; the whole-run row is the list "Limits on the whole run".
-   - **From your last review** (after leaving a review by Edit, the stepper or Back): the last
-     summary's states, marked "From your last review. Review the run again to check changes.",
-     shown only while the pathway and Issuer ID are those of that review; otherwise Not checked
-     yet. Kept in page state only; it changes no request.
-
-The one-line summary "`2 of 4 ready · USD 0.00 of USD 25.00`" (or "· Cap unavailable") stays
-above each step action below `lg`. At `lg` the rail is sticky and, when taller than the window,
-scrolls on its own (`max-h` with `overflow-y-auto`, keyboard-focusable), so the cap and what
-Submit needs stay in view on every step.
+1. **Cap.** "Spending cap for this run" (live) or "Configured cap for paid runs" (synthetic); the
+   cap as the rail's largest figure in mono (`text-metric`), "USD 25.00", and "Cap · {pathway}".
+   No meter: nothing is spent before Submit. Cap missing: "Unavailable".
+2. **Before Submit.** `<ul aria-label="Before Submit">`, four rows in the "Met or not met" set:
+   Documents inspected; Purpose chosen (met from the Purpose step on, where a card is always
+   selected; back to not met on a carry-over or reset); Decisions made (`n of m`); Summary
+   approved.
+3. **Modules.** "{n} modules · {pathway}", then the five stages as a compact pipeline: stage
+   number, name, module count, and one mark per module. Before a review every mark is a quiet
+   ring ("not checked yet") and the rail says once "Each module is checked against your documents
+   when you review the run." After a review, from the summary alone, each module's mark is its
+   most severe limit in the "Run limits" set (Will refuse, Gap, Limited, Check), or a quiet dot
+   ("no limit in this review"); the page never calls a module ready. A limit on something not
+   drawn as a module (the cash-flow model, say) is marked under "Other limits", so the rail never
+   reads as limit-free while one exists. Under the stages, the list "Carrying a limit" names each
+   limited row (Whole run first) with its word; the reasons are the review's to give, not the
+   rail's. Kept from the last review, the marks say "From your last review. Review the run again
+   to check changes." On Review below `xl` this tile is hidden, because the review tile draws the
+   stages itself; from `xl` the rail beside the tile draws them and the tile does not.
 
 ### 2.2 Stepper — `run/start/Stepper.tsx` (P2, top)
 
-Four steps, `<ol aria-label="Steps in this run">`: Documents (Add files), Purpose (Choose one),
-More context (Optional, or "Periods required" for Earnings Update), Review and start (Paid step,
-or "No-cost test" in synthetic mode). Current step tinted with the accent and underlined, marker
-numbered; done steps checked and, when the form allows, buttons "Go back to {step}" (behaviour
-unchanged: forward only through the step action). Below 620 px the labels are visually hidden and
-"Step 2 of 4 · Purpose" is shown. Place: the top of the step column, in its own strip above the
-step tile.
+Unchanged from round 1: four steps, `<ol aria-label="Steps in this run">`, done steps are
+"Go back to {step}" buttons when the form allows; below 620 px "Step n of 4 · {step}".
 
 ### 2.3 Documents — `start/DocumentsStep.tsx` (P1 drop zone and list; P2 missing)
 
-One tile, h2 "Documents" and its guidance line; inside the existing `<form>`.
-- **Drop zone** (`FileUpload.DropZone`, input "Documents", `data-dropzone`), larger, full width;
-  hint "Add PDF, HTML, DOCX, TXT, Markdown, XLSX, CSV, JSON and JSONL. Up to 50 MB per file."
-  "Choose a folder" and "Inspect documents" beside it. The status line "3 documents inspected, 0
-  ignored." stays a live region.
-- **Upload list** `<ul aria-label="Documents added">`, one row per file: name; a **type chip**
-  with the service's detected kind in words ("credit agreement", "unrecognised"); the existing
-  state badge (Selected, Inspected, Ignored, Repeated content, Will be copied, Copied); the
-  service's facts (period end, executed or draft, the signal it found) or the reason it was
-  ignored; Remove. Empty: "No documents yet."
-- **What each file unlocks**: drawn as the gap state under the list — "What each file unlocks is
-  not reported before review: the service checks the files against each module when you review
-  the run." (§ 5).
-- **What is missing for the modules** (P2): after a review of this pathway and issuer, the last
-  summary's limit causes as gap rows: the module (or Whole run) they block, the service's reason
-  and its fix line, headed "Missing at your last review". Before any review the same gap note
-  stands in their place.
-- Then the issuer block, as today and in the same order of controls: Issuer name, Issuer ID, As-of
-  date, Issue classification, Your name, "Use inputs from latest run" / "This is a different
-  issuer", the carried-run intro and "Open source run".
+- **Drop zone**, large and dashed, input "Documents", `data-dropzone`; its one action is the link
+  "Click to upload" (the step's one primary is Continue). A file refused at selection (type or
+  size) is said in a bordered alert directly under the zone. "Choose a folder" and "Inspect
+  documents" are secondary.
+- **Upload list** `<ul aria-label="Documents added">`: name; the service's detected kind as a
+  static chip; state (Uploading from the "File state" set while a chosen file is being sent, then
+  Selected, Inspected, Ignored, Repeated content, Will be copied, Copied); facts; Remove (focus
+  then moves to the next Remove, else the previous, else the drop zone).
+- **Gap note** "Which modules each file serves is not reported before review." only while files
+  are listed and no review has answered it (the rail says when modules are checked).
+- **Missing for the modules** (after a review only): limit causes headed "Missing for the
+  modules"; causes that only need checking under their own heading "To check".
+- **Issuer and case date**: Issuer name, Issuer ID, As-of date and Your name each carry
+  "Required" in words beside the label.
 
-### 2.4 Purpose — `start/PurposeStep.tsx` with `run/start/Purpose.tsx` `PurposeCards` (P1)
+### 2.4 Purpose — `start/PurposeStep.tsx`, `run/start/Purpose.tsx` (P1)
 
-Eight cards, still a react-aria `RadioGroup` named "Pathway" whose radios are named by the
-pathway's title, in the order Lite, Full, Deep, then the five purpose pathways. Two columns in the
-step column at `lg`, one below. Each card: title and radio mark; **the question it answers**
-(the page's fixed copy, one per pathway, describing the pathway, not the issuer); its module count
-as today ("14 base modules", from `drawnModules`); its cap in mono, "Cap USD 25.00" (or "Cap
-unavailable"). Selected: accent ring and tint. Then, as short fields with one line of help each:
-Market view, Case kind, Run form level; and the synthetic-limits line in synthetic mode.
+Eight cards in the react-aria `RadioGroup` "Pathway": title, the question it answers (every line
+is a question; Deep's now reads "Beyond the full assessment: how do earnings, peers, ratings,
+market prices and recoveries change the view?"), module count in mono, "Cap USD x" in mono;
+selected by the filled mark, accent edge and tint. Under them one kit `Well`, "Options", with
+Market view, Case kind and Run form level as kit `Segmented` groups named by those labels.
 
-### 2.5 More context — `start/ContextStep.tsx` (P2)
+### 2.5 More context — `start/ContextStep.tsx`, `start/contextSummary.ts` (P2)
 
-The same controls, regrouped into short titled groups (each a `fieldset` with a legend, no
-change to any label or `data-field`): **For the research** (Anything the analysis should know;
-Research questions rows); **Dates and periods** (Date of your newest file, Research cutoff,
-Current period, Prior period); **Legal documents** (Legal documents, The agreement); **Files with
-a role** (Management EBITDA bridge, Portfolio workbook, Prior decision record, where drawn today);
-**Ratings, quotes and facilities** (Ratings, Observed quotes, Facilities and deal terms rows);
-**Issuer details** (the closed disclosure); the Advanced groups (Valuation and peers, Module
-options, Scenario assumptions, Model, Reasoning effort, Turns per module, Requested modules) as
-today, Advanced only. Which controls are drawn, when, stays exactly as today.
+One accordion: each section a native `details` sharing one name, so one is open at a time;
+closed by default, its summary the title (h3) and one line from the form ("Note given · 1
+question", "Cutoff 2025-03-31 · periods not given", "Not given"). Sections: For the research,
+Dates and periods, Legal documents, Files with a role (when drawn), Ratings, quotes and
+facilities, Issuer details; at Advanced, Valuation and peers, Module options, Scenario
+assumptions, Model and modules. Two columns at `lg`. Which controls are drawn, and their labels,
+are unchanged. The step opens the section that holds a problem field; for an Earnings Update,
+Dates and periods opens.
 
 ### 2.6 Review and start — `start/ReviewStep.tsx`, `start/ReviewSheet.tsx` (P1)
 
-h2 "Review and start", then three blocks in this order, each a tile:
-1. **What the run will do** — the existing region "What will run" with its Edit buttons ("Edit
-   issuer and documents", "Edit purpose and modules", "Edit context", and the Advanced ones).
-   Drawn open, two to a row at `xl`: Issuer and documents (issuer, Issuer ID, as-of date,
-   classification, submitted by, documents read and ignored), Purpose and modules (pathway,
-   market view, case kind, form level, modules (n) by name in two columns, left out, omitted
-   sections), Context (periods, cutoff, changes, file roles, source lookup) and Advanced choices
-   (model and effort, turns). Folded under one closed disclosure, "More inputs Submit sends: …"
-   naming each group: Issuer details, Context details, and at Advanced Valuation and peers, Module
-   options, Scenario assumptions — the groups that are mostly "Not given", whose length pushed the
-   limits 2,700 px down before (audit finding C2-007).
-2. **What it will not do** — the existing region "Limits to decide" ("n of m decided"): one
-   decision per shared cause with its status badge, the modules affected, the fix, "Leave out"
-   where offered, and the acceptance checkbox ("I accept this limit…", "I have checked this").
-   "No limits found for this run." when none; passive items under "No action needed (n)".
-3. **What it will cost** — region "What it will cost": the cap in large mono ("USD 25.00",
-   "Up to USD 25.00 on this pathway"; synthetic: "USD 0.00", "No-cost test"); the existing cost
-   sentence ("Submit opens a confirmation…"); **what leaves the building**, moved here from the
-   context block so it sits directly above the button: the OpenAI web-search sentence, the Yahoo
-   Finance sentence and the native search status, each only when the summary says so; the
-   unverified-model sentence; the blocker line ("2 decisions left before you can approve.");
-   the consent checkbox "Approve: I have read this summary and want this run started"; the
-   one-line readiness summary below `lg`; the error notice; and the one primary button —
-   "Submit, spend up to USD 25.00" (live) or "Submit run" (synthetic) — which opens the existing
-   confirmation dialog. The synthetic and Issuer-ID notes stay beside it.
+One decision tile, region "Review and start", then one closed disclosure.
 
-The dialog keeps its titles ("Start a paid run?" / "Start a synthetic test?"), sentences and
-actions ("Start run, up to USD 25.00" / "Start synthetic run", Cancel), and returns focus to
-Submit on Cancel. Its mark is the warning triangle for a paid run and a ring in the accent for
-the no-cost test (the critique of 2026-11-16 noted a warning on a USD 0.00 test). The lock icon
-on Submit is dropped (it read as "locked"). Gating is unchanged: Submit is disabled until every decision is accepted and
-the summary approved; in live mode also until the cap is known and the model pair is verified.
+The tile, in reading order:
+
+1. **Head.** h2 "Review and start" (focused on arrival) with the mode chip ("Paid run" or
+   "No-cost test"), and the run in one line: "{pathway} of {issuer} · As of {date} · {market
+   view} · n documents read · m modules".
+2. **Cost** (region "What it will cost", top right from `sm`): "Spending cap", the cap as the
+   tile's largest figure in mono, "Cap · {pathway}"; synthetic: "What it will cost", "USD 0.00",
+   "A paid run is capped at USD 25.00".
+3. **Limits to decide** (full width; "n of m decided"; "No action needed (n)" beside the heading,
+   taking the full width when opened). One row per shared cause: the "Run limits" badge, what it
+   limits and the service's reason on one line where it fits, "Will also refuse" / "Also
+   affects"; at the right its control ("I accept this limit…", "I have checked this") and, where
+   there is one, "How to lift it" (the fixes, "Choose the Portfolio workbook", "Leave out …").
+4. **Footer** (two columns from `md`, 4:8): what leaves the building (always drawn: the service's
+   statements, else the gap "The service does not say what leaves."; never "nothing leaves") and
+   the synthetic, Issuer-ID and unverified-model notes; beside it the blocker line, the consent
+   "Approve: I have read this summary and want this run started", the error, and the cost
+   sentence (`#run-submit-cost`) beside Submit ("Submit, spend up to USD 25.00" / "Submit run").
+5. **Modules by stage** below `xl` only (§ 2.1).
+
+On a phone the order is the same, so the cap and the limits come first.
+
+**Everything Submit sends**: one closed `details` under the tile ("n groups of inputs · k not
+given"), holding the region "What will run" with every block and its Edit button: Issuer and
+documents, Purpose and modules, Context, Issuer details, Context details, at Advanced Valuation and
+peers, Module options and Scenario assumptions, and Advanced choices (model and effort, turns —
+only here). A block whose every input is not given is one line naming each input ("Context
+details · Not given: Facilities and deal terms, Observed quotes, Ratings, Research questions").
+Nothing is left out of it.
+
+The dialog keeps its titles, sentences and actions, restates Issuer, Pathway and Cap (synthetic:
+"Cost USD 0.00 · No-cost test"), and focuses Cancel when it opens; Cancel returns focus to
+Submit. Its mark is the warning triangle for a paid run and a ring in the accent for the no-cost
+test. The Submit button keeps its lock icon (restored in round 2; round 1 had dropped it, which
+also changed the static `run/start` page). Gating is unchanged.
+
+When a step is sent the browser checks its controls. A control in a closed section is opened;
+for Issuer name, Issuer ID, As-of date, Your name and Turns per module the page cancels the
+browser's bubble and puts its own words on the field, marks it and focuses it; the step is still
+not sent. A service refusal names its field the same way, now including Current period and Prior
+period.
 
 ## 3. Request shapes held fixed
 
-Held by `web/src/pages/connected/start/requests.golden.test.tsx` (five jsdom drives; files under
-`start/requests.golden/`, written from the form before any change and never rewritten with `-u`)
-and by `2026-11-24-redesign-s9-start-run/capture-requests.cjs`, a Playwright drive of the real
-synthetic service whose output `golden-requests.json` was recorded twice on fresh roots with
-identical results (13 requests; stored upload hashes equal the proof files').
+Held by `web/src/pages/connected/start/requests.golden.test.tsx` (five jsdom drives, written from
+the form before any change) and `requests.golden.paths.test.tsx` (13 drives of the paths those
+five did not record, written on round 1's head before the round-2 rebuild); the files are under
+`start/requests.golden/` and are never rewritten with `-u`. A Playwright drive of the real
+synthetic service (13 requests, upload hashes equal to the proof files') was compared with its
+recorded capture after each structural step; that driver and its capture are kept outside the
+repository (review K13), and can be committed under `docs/design/preview/` if wanted (§ 8).
 
-| # | Request | Method | Headers | Body |
-|---|---|---|---|---|
-| 1 | `/connected/context` | GET | — | — |
-| 2 | `/api/runs/{from}/inputs` (only with `?from=`) | GET | — | — |
-| 3 | `/api/issuers/{id}` (issuer notice, 250 ms after typing; holder lookup at review and carry) | GET | — | — |
-| 4 | `/api/submissions` | POST | — | — |
-| 5 | `/api/submissions/{id}/files?name={name}` per new file, in selection order | POST | — | the `File` itself |
-| 6 | `/api/submissions/{id}/files?name={name}` on Remove of an uploaded or carried file | DELETE | — | — |
-| 7 | `/api/submissions/{id}/carry` once per draft when carrying | POST | `Content-Type: application/json` | `{"run":"{from}"}` |
-| 8 | `/api/submissions/{id}/reading` after uploads, after Remove, and on each Continue/Review | GET | — | — |
-| 9 | `/api/submissions/{id}/summary` on Review run | POST | `Content-Type: application/json`, `X-Shown-Cap: {pathway cap}` | `JSON.stringify(answers)`: `context`, `modules`, `max_turns`, `level`, `model`, `effort`, `submitted_by`, `newest_document_date` when set |
-| 10 | `/api/submissions/{id}/submit` on the dialog's confirm (again, identical, on retry) | POST | `Content-Type: application/json`, `X-Shown-Cap: {cap}` | `JSON.stringify({answers, digest})`, the reviewed answers and the summary's digest |
+| #   | Request                                                                                     | Method | Headers                                                        | Body                                                                                                                                      |
+| --- | ------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `/connected/context`                                                                        | GET    | —                                                              | —                                                                                                                                         |
+| 2   | `/api/runs/{from}/inputs` (only with `?from=`)                                              | GET    | —                                                              | —                                                                                                                                         |
+| 3   | `/api/issuers/{id}` (issuer notice, 250 ms after typing; holder lookup at review and carry) | GET    | —                                                              | —                                                                                                                                         |
+| 4   | `/api/submissions`                                                                          | POST   | —                                                              | —                                                                                                                                         |
+| 5   | `/api/submissions/{id}/files?name={name}` per new file, in selection order                  | POST   | —                                                              | the `File` itself                                                                                                                         |
+| 6   | `/api/submissions/{id}/files?name={name}` on Remove of an uploaded or carried file          | DELETE | —                                                              | —                                                                                                                                         |
+| 7   | `/api/submissions/{id}/carry` once per draft when carrying                                  | POST   | `Content-Type: application/json`                               | `{"run":"{from}"}`                                                                                                                        |
+| 8   | `/api/submissions/{id}/reading` after uploads, after Remove, and on each Continue/Review    | GET    | —                                                              | —                                                                                                                                         |
+| 9   | `/api/submissions/{id}/summary` on Review run                                               | POST   | `Content-Type: application/json`, `X-Shown-Cap: {pathway cap}` | `JSON.stringify(answers)`: `context`, `modules`, `max_turns`, `level`, `model`, `effort`, `submitted_by`, `newest_document_date` when set |
+| 10  | `/api/submissions/{id}/submit` on the dialog's confirm (again, identical, on retry)         | POST   | `Content-Type: application/json`, `X-Shown-Cap: {cap}`         | `JSON.stringify({answers, digest})`, the reviewed answers and the summary's digest                                                        |
 
 Order, per drive, is exactly as recorded in the golden files. Nothing in the redesign adds,
 removes, reorders or alters a request.
 
 ## 4. Control names held fixed
 
-Every one is used by a test, the proof script or the preview driver; none is renamed.
+Every label, button, checkbox, radio, landmark and region name the tests, the proof script and
+the preview driver use is kept, with these round-2 changes (each made with its script and test in
+one commit):
 
-- Labels: Documents, Document folder, Issuer name, Issuer ID, As-of date, Issue classification,
-  Your name, Pathway (radio group), Market view, Case kind, Run form level, Anything the analysis
-  should know, Date of your newest file, Research cutoff, Current period, Prior period, Legal
-  documents, The agreement, Management EBITDA bridge, Portfolio workbook, Prior decision record,
-  Listed equity, Ticker, Model, Reasoning effort, Turns per module, and every row-editor field
-  (Agency, Scope, Rating, Outlook, As-of, Facility ID, Bid, Peer source, Focus module…).
-- Buttons: Choose files, Choose a folder, Inspect documents / Reading documents…, Remove {file},
-  Use inputs from latest run, This is a different issuer, Open source run, Use {id}, Continue to
-  purpose, Continue to context, Review run / Preparing review…, Previous, Go back to {step}, Add
-  rating / facility / quote / research question / peer / precedent / scenario, Remove {row},
-  Edit issuer and documents, Edit purpose and modules, Edit context, Edit {block}, Leave out …,
-  Put back, Choose the Portfolio workbook, 1 problem to fix: …, Submit run / Submit, spend up to
-  USD {cap} / Submitting…, Cancel, Start synthetic run, Start run, up to USD {cap}.
-- Checkboxes: I accept this limit…, I have checked this, Approve: I have read this summary and
-  want this run started, Requested modules by module name, Pin {module}.
-- Radios: each pathway title (Lite credit assessment, Full credit assessment, Deep credit
-  assessment, Earnings Update, Relative Value, Covenant & Refinancing, Distressed &
-  Restructuring, Portfolio Decision).
-- Landmarks and regions: complementary "Readiness"; list "Steps in this run"; list "Documents
-  added"; regions "What will run", "Limits to decide", "Ratings" and the other row sections; groups
-  "Context", "Issuer and documents", "Purpose and modules" and the input groups; dialog "Start a
-  paid run?" / "Start a synthetic test?".
-- Text the tests and scripts read: "Step n of 4 · {step}", "n of 4 ready · USD 0.00 of USD 25.00",
-  "USD 0.00 of USD 25.00", "Spending cap for this run", "Paid step", "No-cost test", "{n} base
-  modules", "Cap USD {cap}", "1 document inspected, 0 ignored.", "Selected", "Will be copied",
-  "No documents yet.", "Documents inspected", "Purpose chosen", "Decisions made", "Summary
-  approved", "None needed", "No limits found for this run.", the web-search and Yahoo sentences.
-- Headings: h2 per step ("Documents", "Purpose", "More context", "Review and start"), focused on a
-  step change.
+- The drop zone's "Choose files" button is now the link "Click to upload" (no test or script used
+  "Choose files").
+- The rail's text "USD 0.00 of USD 25.00" and its progress bar are gone; the cap is the figure
+  "USD 25.00". `connected-proof.mjs` now waits for "USD 25.00" in Readiness (commit 974cd49).
+- The summary line reads "n of 4 ready · Cap USD 25.00".
+- More context's fields sit in closed sections: `connected-proof.mjs` and
+  `docs/design/preview/drive-synthetic-run.cjs` open "For the research", "Files with a role",
+  "Legal documents" and "Ratings, quotes and facilities" before filling them (commit 995cf5f).
+- The Purpose step's Market view, Case kind and Run form level are segmented groups of buttons,
+  named by the same labels; tests choose them through `start/testControls.ts`.
+- On Review, region "What will run" is inside the closed disclosure "Everything Submit sends";
+  the web-search and Yahoo sentences are in region "What leaves the building".
 
-Added names (new, not yet used by any script): list "Before Submit", list "Modules" and its
-sub-lists named by stage, list "Limits on the whole run", region "What it will cost", heading
-"What leaves the building", heading and list "Missing for the modules" on Documents, and the five
-More context group titles ("For the research", "Dates and periods", "Legal documents", "Files
-with a role", "Ratings, quotes and facilities"). No existing name was removed or renamed.
+Removed headings: "Context details" (the More context group), "Confirm a synthetic test" and
+"Confirm a paid run" were dropped in round 1; round 2 does not restore them (the sections and the
+dialog title say the same).
+
+Added names: list "Before Submit", list "Stages" (rail) and "Stages in this run" (review), the
+lists "{stage} modules", "Other limits" and "Carrying a limit", regions "Review and start", "What
+it will cost", "What leaves the building", "Modules by stage", the disclosure "Everything Submit
+sends", "How to lift it", "To check", and the More context section titles.
 
 ## 5. Files
 
-Add:
-- `start/requests.golden.test.tsx`, `start/requests.golden/*.txt` (done, phase 0).
-- `start/ReadinessRail.tsx` (+ `ReadinessRail.test.tsx`), `start/moduleReadiness.ts` (+ test):
-  the per-module state from summary items.
-- `start/DocumentsStep.tsx`, `start/PurposeStep.tsx`, `start/ContextStep.tsx`,
-  `start/ReviewStep.tsx`, `start/fields.tsx` (SelectField, FieldMessage, problem attributes),
-  `start/intake.ts` (pure helpers moved out of `StartRun.tsx`), each with the tests its block
-  needs; `start/pathways.ts` (the card questions).
-
-Change:
-- `StartRun.tsx`: keeps `StartRun`, `IntakeForm`'s state and handlers, and the exports the tests
-  import (`SelectField`, `carriedModules`, `stepOfField`, re-exported where moved); the views move
-  out by step. Target under 1,400 lines.
-- `start/ReviewSheet.tsx`: three blocks in the new order; disclosure sentences move to the cost
-  block. `start/StartReadiness.tsx` is replaced by `ReadinessRail.tsx`.
-- `run/start/Purpose.tsx` (`PurposeCards`), `run/start/Stepper.tsx`, `run/start/Start.tsx`
-  (`SubmitConfirmation`): restyled to the new tokens; props and accessible structure unchanged, so
-  the static `run/start` pages and their tests keep working.
-
-Delete: `start/StartReadiness.tsx` once nothing imports it.
-
-Tests kept unchanged: every behaviour test in `ConnectedApp.test.tsx`'s run-start suites,
-`start/*.test.*`, `run/start/*.test.tsx`. Tests to rewrite, because they pin layout only:
-- "reads readiness as four status rows": counts the rail's list items; it will count the items of
-  the list "Before Submit".
-- "web search statement" and "Yahoo Finance statement" (8 cases): look for the sentences inside
-  "What will run"; they will look inside the review's cost block, still exactly once and still
-  adjacent. Each rewrite is listed in the report with its reason.
-Tests to add: the rail (states, stage grouping, no codes, no forecast, last-review marking, cap
-line), the module-readiness mapping, the pathway card (question, count, cap), the document row
-(type chip), the context groups (every control still drawn under the same conditions), the review
-order (three blocks, consent and Submit last), and 390 px layout classes where they matter.
+`StartRun.tsx` keeps the page, `IntakeForm`'s state and handlers and the re-exports the tests use.
+The steps are `start/DocumentsStep.tsx`, `PurposeStep.tsx`, `ContextStep.tsx` (with
+`contextSummary.ts`), `ReviewStep.tsx` and `ReviewSheet.tsx`; the frame is `IntakePanels.tsx`;
+the rail is `ReadinessRail.tsx`, `StagePipeline.tsx` and `moduleReadiness.ts`; helpers are in
+`intake.ts`, `fields.tsx`, `plain.ts`, `limits.ts`, `limitWords.ts`, `pathways.ts`,
+`reviewInputs.ts`. Test helpers: `goldenFixtures.ts`, `testControls.ts`. The kit `Chip` was
+copied unchanged from S8 into `components/kit/Chip.tsx` (commit 7aa59c5); no kit file was edited.
 
 ## 6. Drawn as a gap, and why
 
-| What | Why it is a gap | What would fill it |
-|---|---|---|
-| "What it unlocks" per file (Documents, P1) | The reading the page receives gives each file's detected kind, period end and executed state, not which modules it serves; that is decided by the service's readiness rules (`deploy_workflow/run_expectations.py`) only when the summary is made. Copying those rules into the page would be a second, drifting statement of them | The reading endpoint returning, per document, the modules that read it (a service change outside the frontend) |
-| What is missing, before the first review (Documents, P2) | Same: the service states it only with the summary. After a review the page shows the last summary's causes, marked as such | The same service change, or a readiness call before review (a new request: outside this package, and a change to what the page sends) |
-| Per-module readiness before the first review (rail, P1) | Same; the rail lists the planned modules by stage and says when they are checked | The same |
-| The cap in the synthetic Submit label | A synthetic test spends USD 0.00; the label "Submit run" is pinned by the tests, the proof script and the preview driver, and showing the paid cap on a no-cost test would mislead. The paid label carries the cap | — |
+| What                                                                   | Why it is a gap                                                                                                                                                                                                                                                                                                                    | What would fill it                                                                                                                    |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| "What it unlocks" per file (Documents, P1)                             | The reading the page receives gives each file's detected kind, period end and executed state, not which modules it serves; that is decided by the service's readiness rules (`deploy_workflow/run_expectations.py`) only when the summary is made. Copying those rules into the page would be a second, drifting statement of them | The reading endpoint returning, per document, the modules that read it (a service change outside the frontend)                        |
+| What is missing, before the first review (Documents, P2)               | Same: the service states it only with the summary. Before a review the block is not drawn (the gap note and the rail say it is checked at review); after one it shows the last summary's causes, marked as such                                                                                                                    | The same service change, or a readiness call before review (a new request: outside this package, and a change to what the page sends) |
+| What leaves the building, when the summary states nothing (Review, P2) | The summary says what the research module sends only when it searches the web or reads Yahoo Finance; it does not say what else leaves (the documents go to the model provider on a paid run). The page says "The service does not say what leaves." and never "nothing leaves"                                                    | A statement from the service of everything a run sends out                                                                            |
+| Per-module readiness before the first review (rail, P1)                | Same; the rail lists the planned modules by stage and says when they are checked                                                                                                                                                                                                                                                   | The same                                                                                                                              |
+| The cap in the synthetic Submit label                                  | A synthetic test spends USD 0.00; the label "Submit run" is pinned by the tests, the proof script and the preview driver, and showing the paid cap on a no-cost test would mislead. The paid label carries the cap                                                                                                                 | —                                                                                                                                     |
 
-## 7. Sub-agent plan
+## 7. Sub-agents, round 2
 
-| Part | Model · effort | Why |
-|---|---|---|
-| Spec, golden capture, the split of `StartRun.tsx`, the rail and its readiness mapping, the review blocks, consent and Submit | Opus · xhigh (this session) | They touch what is sent, what is shown about limits and money, and the consent gating |
-| Pathway cards, stepper restyle, document row and type chip, context groups | Sonnet · high, one sub-agent per new file with a fixed prop contract | Presentational; the golden and behaviour tests guard them |
-| Test rewrites listed above, layout tests | Sonnet · medium | Mechanical against stated intent |
-| Independent review of the whole diff (requests, gating, labels, tests weakened, 390 px, contrast) | Opus · high, given the code and the rules, not this spec's conclusions | One review before reporting |
+| Part                                                                                                                                                       | Model · effort                                        |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Rail and stage pipeline, review decision tile and disclosure, consent and Submit, dialog, invalid-control handling, loading layout, merges and every check | Opus · high (this session)                            |
+| Documents step (K7, K8, K12, Q2)                                                                                                                           | Sonnet · medium, worktree, reviewed and cherry-picked |
+| Purpose step (K5)                                                                                                                                          | Sonnet · medium, worktree, reviewed and cherry-picked |
+| More context accordion (K2)                                                                                                                                | Sonnet · high, worktree, reviewed and cherry-picked   |
 
 ## 8. Requests to the coordinator
 
-1. A "Run readiness" status set (Ready, Conditional, Blocked) in `components/status/sets.ts`, if
-   the screen map's exact words are wanted; until then the rail uses "Source readiness" (Ready,
-   Conditional) and "Module state" (Not assessable) for a module that will refuse.
-2. The top bar on `/start` tints "Run activity"; the screen map has Start run as the primary
-   action. The shell is frozen; please decide whether `/start` should tint Start run.
-3. The service change in § 6 for "what it unlocks" belongs in the follow-on plan (outside the
-   frontend).
-4. `capture-requests.cjs` could move beside `docs/design/preview/drive-synthetic-run.cjs` as the
-   shared request regression for the integrated branch; I have not touched that folder.
+1. The top bar on `/start` tints "Run activity"; the screen map has Start run as the primary
+   action (shell, frozen).
+2. `layout.tsx` (not mine): the breadcrumb link "Library" is 20 px tall (the render check flags it
+   at every width), and at 390 the top bar's nav list scrolls sideways without a name or tab stop.
+3. `ConnectedApp.tsx:166` (not mine): the read-only preview of `/start` shows only a title.
+   Proposed sentence under it: "This preview has no Credit OS service behind it, so it cannot
+   start or follow a run. Library and Coverage show the saved reports."
+4. The service change for "what each file unlocks" (§ 6) belongs in the follow-on plan.
+5. Whether to commit the step-by-step render driver (it runs check-render's `measure` on every
+   step and state, and reports where the decision falls) and the request-capture driver under
+   `docs/design/preview/`. Not committed until you say.
 
 ## 9. Verification
 
-Phase 2, 2026-11-24, branch `claude/redesign-s9-start-run`. Synthetic mode only; no provider was
-called and no paid run was made.
+Round 2, 2026-11-25, branch `claude/redesign-s9-start-run`, head 689bc68 before this spec
+commit. Synthetic mode only; no provider was called and no paid run was made (the "paid" shots
+are the page in live mode against the offline synthetic service, with every Submit request
+aborted, as `connected-proof.mjs` does).
 
 ### What is sent: unchanged
 
-- **jsdom goldens** (`web/src/pages/connected/start/requests.golden.test.tsx`, files
-  `start/requests.golden/*.txt`): five drives recorded from the form before any change (commit
-  02d4049) and never rewritten: the Northbridge drive (three files, a note, workbook, agreement,
-  a rating); a paid Deep run at Advanced with a module left out, another model, effort and turns;
-  an Earnings Update with periods, a removed file and a step back; a run carried from an earlier
-  one; an uncertain Submit and its retry. Each records path, method, headers (`Content-Type`,
-  `X-Shown-Cap`) and the exact body string of every request in order. Mutation check: changing
-  one sent value (`max_turns` 32 → 33) fails four of the five. Green after every commit.
-- **Real drive** (`2026-11-24-redesign-s9-start-run/capture-requests.cjs` against `proof.serve`
-  on a fresh root): the same 13 requests and bodies as `golden-requests.json`, compared with
-  `diff` after the split, after the frame and rail, after the review rebuild and on the final
-  build; the stored upload bytes hash to the proof files.
-- **Independent review** (Opus, given the code and the rules): every named declaration of the
-  old `StartRun.tsx` compared with the split, parsed with the TypeScript compiler: identical
-  except three type annotations; after the split `StartRun.tsx` and `intake.ts` changed only by
-  the display-only last review. It found no change to what is sent and none to the gating.
+- **jsdom goldens**: 18 drives (`requests.golden.test.tsx`, 5, recorded before any change;
+  `requests.golden.paths.test.tsx`, 13, recorded on round 1's head before the rebuild), 19
+  transcripts in `start/requests.golden/`. Green after every commit; never rewritten. In the last
+  commit the transcripts were renamed `.txt` → `.golden` (git: pure renames, content identical)
+  and run in CI mode, where no snapshot can be written: all 18 match, and changing one byte of a
+  transcript fails its drive.
+- **Real drive** against `proof.serve` on a fresh root (driver kept outside the repository):
+  13 requests, identical to the recorded capture, after the rail rebuild, after the accordion and
+  review rebuild (cos-r2c), and after the invalid-control change (cos-r2f).
 
 ### Checks run
 
-| Check | Result |
-|---|---|
-| `npx tsc --noEmit` | pass |
-| `npx eslint --max-warnings=0` on `connected/start`, `StartRun.tsx`, `run/start` | pass. Repo-wide `npm run lint` has one error, in `report/stages.ts:19`, a file unchanged from the base commit and not in this package |
-| `npm run format:check` (repo) | pass |
-| `npx vitest run` ConnectedApp, `connected/start`, `run/start`, `styles` | 29 files, 688 tests pass (599 run-start tests before; none removed) |
-| `npx vitest run` App tests, `pages/library`, `pages/run`, `styles` | 77 files, 1,465 tests pass |
-| `npm run unused` (knip) | only `LeadProps` in `report/leads/types.ts` (coordinator's, pre-existing); `Bento` is now used |
-| `npm run duplication` | pass (2.48 %, threshold 3) |
-| `npm run build` | pass |
-| Class coverage (`scripts/classes.mjs` on the build) | 0 problems |
-| `uv run python tools/quality_gate.py` | 0 findings (no Python changed) |
-| `web/scripts/connected-proof.mjs`, full | pass on the preinstalled Chromium, with only its browser list changed in a throwaway copy (branded Chrome and Edge are not installed here); this covers the rail beside the form, the 390 px drop zone, the stepper, the paid dialog and the shown caps `["25", "25"]` |
-| `docs/design/preview/drive-synthetic-run.cjs` steps | the same steps run inside `capture-requests.cjs` and `shoot-steps.cjs`; pass |
+| Check                                                                           | Result                                                                                                                                                                                                             |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `npx tsc --noEmit -p .`                                                         | pass                                                                                                                                                                                                               |
+| `npx eslint --max-warnings=0` on `connected/start`, `StartRun.tsx`, `run/start` | pass                                                                                                                                                                                                               |
+| `npm run lint` (repo)                                                           | one error, `report/stages.ts:19`, unchanged from the base commit, not in this package                                                                                                                              |
+| `npm run format:check`                                                          | pass                                                                                                                                                                                                               |
+| `npx vitest run` ConnectedApp, `connected/start`, `run/start`                   | 31 files, 709 tests pass (594 on the base commit 1265838, counted there the same way); every base test name is still present except two renamed rewrites (below)                                                   |
+| `npm run unused` (knip)                                                         | only `LeadProps` in `report/leads/types.ts` (not mine, pre-existing)                                                                                                                                               |
+| `npm run duplication`                                                           | 2.32 % (threshold 3; round 1 2.48 %). It was 3.46 % before the last commit: 2,500 of the 2,780 lines round 2 added were the request transcripts, which jscpd read as code                                          |
+| `npm run build`; `scripts/classes.mjs` on the build                             | pass; no problem reported                                                                                                                                                                                          |
+| `tools/quality_gate.py`                                                         | `uv run` refused (the repo pins uv 0.12.5; 0.11.32 is installed); run with the repo venv's Python: 0 findings in 16 changed files                                                                                  |
+| `connected-proof.mjs`                                                           | not run in round 2. Round 1 ran it only from an edited throwaway copy (its browser list changed to the preinstalled Chromium); branded Chrome and Edge, which it requires, are not installed here and are untested |
 
-Not run: `npm run test` with coverage over all of `web/`, `npm audit`, `npm run test:scripts`,
-`npm run test:file:gates`, the proof on branded Chrome and Edge.
+Not run: `npm run test` with coverage over all of `web/`, `npm audit`, `npm run test:scripts`.
 
-### Tests rewritten (layout only) and added
+### Tests rewritten and added in round 2
 
-Rewritten, each keeping its behaviour check:
-1. "reads readiness as four status rows": counts the items of the list "Before Submit" (the rail
-   now also lists modules).
-2. "carries a prior run's documents and answers…": the limit's reason is looked for in "Limits to
-   decide" and in the rail (it appears in both now), instead of once on the page.
-3. "web search statement" (3) and "Yahoo Finance statement" (5): the sentences are looked for in
-   the cost block, still exactly once on the page and still adjacent; the negative cases check
-   the cost block too.
-4. `ReviewSheet.test` "C2-007 draws the limits to decide before the echoed inputs": its original
-   assertion, plus the run summary first, the cost last and no echoed input folded.
-5. `Purpose.focusRing.test`: `outline-brand` → `outline-focus`.
-6. `Steps.test` "draws the Purpose card header as a strip…" → "…an unselected Purpose card as a
-   hairline-bordered surface".
+Rewritten (layout or pinned wording; the behaviour each checks is kept):
 
-Added: `requests.golden.test.tsx` (5), `moduleReadiness.test.ts` (5), `ReadinessRail.test.tsx`
-(6), `ReviewStep.test.tsx` (4), `DocumentsStep.test.tsx` (9), `ContextStep.test.tsx` (7),
-`Purpose.cards.test.tsx` (4), `Stepper.test.tsx` (3).
+1. ConnectedApp: two cap assertions read the rail's cap figure, not the removed progress bar;
+   the summary-line regex reads "Cap USD 25.00".
+2. ConnectedApp "carries a prior run's documents…": the rail names the limit ("Whole run ·
+   Limited"), not its reason (K3).
+3. ConnectedApp "Purpose chosen" (two tests): met on the Purpose step, where a card is selected
+   (K3: a behaviour change the review asked for).
+4. ConnectedApp: four step helpers choose Run form level, Case kind and Market view through
+   `testControls.ts` (the selects are segmented buttons).
+5. ConnectedApp web-search and Yahoo tests (8): read region "What leaves the building".
+6. ConnectedApp S8: opens "Everything Submit sends" before checking "Modules (8)" is visible;
+   V15: reads the one not-given line that names each row section.
+7. `ReviewSheet.test` C2-007: renamed; its limits-before-inputs assertion kept, and the round-1
+   assertion "no echoed input folded" replaced by the closed disclosure K1 asks for.
+8. `ReviewSheet.finalAudit.test`: six tests open the disclosure (or "How to lift it") before
+   checking visibility. `StartRun.finalAudit` Luna: opens "Model and modules".
+9. `ReviewStep.test`, `ReadinessRail.test`, `moduleReadiness.test`, `DocumentsStep.test`,
+   `ContextStep.test`: this package's own round-1 tests, rewritten to the new blocks.
+
+Added: `invalidControls.test.tsx` (3), `loading.test.tsx` (1), `PurposeStep.test.tsx` (1),
+`contextSummary.test.ts` (37), period-refusal cases in `plain.test.ts` (2), Q1 "Other limits"
+and the stages-said-once case in the rail tests, and the K9, K11 and dialog cases in
+`ReviewStep.test.tsx`.
 
 ### Screens looked at
 
-Shot with `shoot-steps.cjs` on the synthetic Northbridge drive at 1440 and 390 px (and with
-`PAID=1` for the paid wording); kept in `2026-11-24-redesign-s9-start-run/screens/`. No console
-error and no horizontal scroll on any step at either width.
+A scratchpad driver walks the synthetic Northbridge drive and, at each step and state, runs
+check-render's `measure` (sideways scroll, unnamed scroll boxes, cut text, targets under 32 px or
+44 px at phone width, text under 11.5 px) and records where the review's decision falls. Run at
+1440, 1280, 1024, 768 and 390 px, synthetic with and without the context filled, and paid at
+1440 and 390: no failure in this package's files in any state. Two failures outside it, at every
+width: the breadcrumb link "Library" is 20 px tall, and at 390 the top bar's nav list scrolls
+without a name or tab stop (`layout.tsx`, shell; § 8). No console error.
 
-- Documents (1440, 390): stepper strip on top with the current step underlined; the drop zone
-  large; each file a hairline row with its kind chip ("credit agreement", "unrecognised") and
-  state badge, the agreement's facts on one line; the hatched gap note for what each file
-  unlocks; "Missing for the modules: Checked when you review the run."; the issuer block. The
-  rail beside it: Readiness with "USD 0.00 of USD 25.00" in mono, the four rows, and the 14
-  modules by stage, unchecked, with when they are checked. At 390 the stepper is four markers
-  with "Step 1 of 4 · Documents", Remove targets 44 px, the rail after the form.
-- Purpose (1440, 390): eight cards, two columns at 1440 and one at 390, each with its question,
-  "{n} base modules" and "Cap USD x" in mono; Full selected with the accent edge, tint and filled
-  mark; Market view, Case kind, Run form level below with their help lines.
-- More context (1440, 390): five titled groups; the rating row open; Issuer details closed; the
-  one-line readiness summary above the actions at 390.
-- Review and start (1440, 390): the run summary ("Full credit assessment of Northbridge Synthetic
-  Group", as of, market view, "3 documents read · 14 modules"); the limits start 290 px under the
-  step heading at 1440 and 354 px at 390 (2,694 and 3,602 px in audit finding C2-007); three
-  limit cards with their badges and checkboxes; every input open in two columns; the cost block
-  with "USD 0.00 · No-cost test" (paid: "USD 25.00 · Spending cap · Full credit assessment"), the
-  sentence, the synthetic note, the consent and Submit last, full width at 390. The rail shows
-  Whole run and Financial foundation and Security selection as Conditional with the service's
-  reasons, the rest "No limit stated".
-- Dialog (1440, 390): "Start a synthetic test?" with a ring mark and its unchanged sentence and
-  actions; paid: "Start a paid run?", warning mark, "Start run, up to USD 25.00".
+Where the decision falls (three-limit run, context filled; the screen is 900 px tall, 844 at 390):
 
-One defect was found only by looking: the review stack was a grid, and the kit Tile's 12-column
-span made implicit columns that squeezed the step heading into one word per line; the stack is
-a flex column now.
+| Width, mode    | Cap ends | Last limit ends     | Submit ends (approved)     |
+| -------------- | -------- | ------------------- | -------------------------- |
+| 1440 synthetic | 419      | 731                 | 890 (856)                  |
+| 1440 paid      | 385      | 697                 | 865 (831)                  |
+| 1280 paid      | 385      | 697                 | 912 (878)                  |
+| 390 synthetic  | 537      | limits start at 655 | 1,646 (two screens: 1,688) |
+| 390 paid       | 503      | limits start at 621 | 1,446                      |
+
+At 1440×900 the cap, every limit and Submit are on the first screen in both modes; at 1280 the
+paid Submit is 12 px below it until approved. With the context left empty the review has six
+limits and Submit ends at 1,099 px at 1440.
+
+What the PNGs showed, step by step:
+
+- Documents: the dashed drop zone with "Click to upload or drag and drop" on one line; Choose a
+  folder and Inspect documents as secondary buttons; each file a row with its kind chip and state;
+  the gap note only with files; Issuer name, Issuer ID, As-of date, Your name with "Required"; the
+  rail beside it at 1440 with the cap figure, the four rows and the 14 modules as rings.
+- Purpose: at 1024 the labelled stepper and two columns of cards; each card's question, module
+  count and cap in mono; Full selected by mark and tint; the Options well under them.
+- More context: five closed sections with their one-line summaries; one opened at a time.
+- Review: one tile; the run line and the cap top right; three limits each on one line with its
+  control at the right; what leaves the building as a gap beside the consent and Submit; at 390
+  the stages last in the tile and not repeated in the rail; the disclosure closed below.
+- Dialog (1440, 390): "Start a paid run?" with the warning mark, Issuer, Pathway and Cap
+  restated, Cancel focused; the synthetic one with the ring mark and "Cost USD 0.00 · No-cost
+  test".
+
+Defects found only by looking, and fixed: the grid row of the cost column stretched with the
+limits and pushed the stages down a screen; the tile repeated the rail's stages beside it at
+1440 and under it at 390; the paid Submit wrapped under its sentence (912 px); the upload link
+sat below its sentence's baseline. Found by the measurement: the drop zone's upload link and the
+row editors' Add buttons were under the target size.
