@@ -1,4 +1,4 @@
-import { blocked, containsReference, readerText, type OutputEntry } from "../../publishedReport";
+import { blocked, type OutputEntry } from "../../publishedReport";
 import type { ReportView } from "../../reportView";
 import {
   cellAmount,
@@ -8,6 +8,7 @@ import {
   word,
   type SourceTable,
 } from "../../visuals/visualData";
+import { readerReason } from "./reason";
 
 type Descriptor = Record<string, unknown>;
 
@@ -33,9 +34,7 @@ function blockedReason(entry: OutputEntry) {
     .find((section) => section.heading === "Bottom line")
     ?.blocks.find((block) => block.type === "text");
   const text = first?.type === "text" ? first.text : "";
-  return text && !containsReference(text)
-    ? readerText(text)
-    : "Not assessable; the reason is recorded in Evidence.";
+  return readerReason(text) ?? "Not assessable; the reason is recorded in Evidence.";
 }
 
 /** The module entry a tile reads, or the gap that takes its place. */
@@ -94,14 +93,19 @@ export function readCell(text: string, scope: readonly string[], unit: string): 
   };
 }
 
-/** The table's own notes on its basis, each once; a note that names a source stays in Evidence. */
+/** The table's own notes on its basis, each once, in the reader's words; one that cites a source stays in Evidence. */
 export function basisNotes(table: SourceTable) {
+  return [...new Set(basisNotesRaw(table).flatMap((note) => readerReason(note) ?? []))];
+}
+
+/**
+ * The table's own notes on its basis, each once, as the module wrote them (trimmed), a note that
+ * cites a source included: for a drawer that draws each through `Reason` (`FigureNotes`).
+ */
+export function basisNotesRaw(table: SourceTable) {
   const column = table.headers.findIndex((header) => /^Basis and limitation$/i.test(header));
   if (column < 0) return [];
-  const notes = table.rows
-    .map((row) => row[column] ?? "")
-    .filter((note) => note.trim() && !containsReference(note))
-    .map(readerText);
+  const notes = table.rows.map((row) => (row[column] ?? "").trim()).filter(Boolean);
   return [...new Set(notes)];
 }
 

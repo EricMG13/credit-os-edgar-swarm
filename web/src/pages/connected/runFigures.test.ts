@@ -97,6 +97,19 @@ describe("the module the checks stopped at", () => {
     ).toEqual(["Finished", "Not assessable", "Interrupted", "Not run"]);
   });
 
+  it("is the module the record says the checks rejected, even when an earlier one in plan order is still open", () => {
+    // CP-1 and CP-1A are both open; only CP-1A's drafts were rejected, so the run stopped at CP-1A.
+    expect(
+      states([
+        { kind: "module_started", at: "2026-11-16T12:01:01Z", module: "CP-1" },
+        { kind: "module_started", at: "2026-11-16T12:01:02Z", module: "CP-1A" },
+        { kind: "draft_rejected", at: "2026-11-16T12:01:40Z", module: "CP-1A" },
+        { kind: "draft_rejected", at: "2026-11-16T12:01:50Z", module: "CP-1A" },
+        { kind: "stopped", at: "2026-11-16T12:02:01Z" },
+      ]),
+    ).toEqual(["Finished", "Interrupted", "Not assessable", "Not run"]);
+  });
+
   it("does not blame an earlier module that was accepted after its last start", () => {
     expect(
       states([
