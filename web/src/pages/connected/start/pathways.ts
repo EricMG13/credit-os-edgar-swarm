@@ -4,7 +4,7 @@ export const PATHWAY_QUESTIONS: Readonly<Record<string, string>> = {
   credit_snapshot:
     "Is the credit sound, and does it hold through its downside, covenants, refinancing and forward cash flow?",
   deep_credit_assessment:
-    "Everything the full assessment answers, plus earnings changes, peers, earnings quality, rating triggers, market pricing and recovery.",
+    "Beyond the full assessment: how do earnings, peers, ratings, market prices and recoveries change the view?",
   earnings_update: "What changed in the latest results against an earlier period, and why?",
   relative_value:
     "Which instrument offers the better value for its risk, against peers and the market?",

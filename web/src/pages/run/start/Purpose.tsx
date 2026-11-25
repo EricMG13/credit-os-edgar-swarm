@@ -71,7 +71,7 @@ export function PurposeCards({
             {({ isSelected }) => (
               <>
                 <div className="flex items-center gap-3">
-                  <span className="text-body font-medium text-text-primary">{p.title}</span>
+                  <span className="text-h4 font-medium text-text-primary">{p.title}</span>
                   <span
                     aria-hidden="true"
                     className={cx(
@@ -92,8 +92,8 @@ export function PurposeCards({
                   className="flex min-w-0 flex-1 flex-col justify-between gap-3"
                 >
                   <p className="text-small text-text-secondary">{p.description}</p>
-                  <span className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="rounded-ds-xs border border-border-hairline px-1.5 py-0.5 text-caption font-medium text-text-secondary">
+                  <span className="flex flex-wrap items-center justify-between gap-2 border-t border-border-hairline pt-3">
+                    <span className="rounded-ds-xs border border-border-hairline px-1.5 py-0.5 font-mono text-caption text-text-secondary">
                       {p.modules}
                     </span>
                     {p.cap ? <Figure className="text-caption">{p.cap}</Figure> : null}
