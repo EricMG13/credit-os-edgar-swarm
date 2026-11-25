@@ -1,3 +1,4 @@
+import { UNORDERED_SENTENCE } from "../kit/tables";
 import { FigureTile, GapTile } from "../kit/LeadFrame";
 import { GapSlot, Measured, NARROW, SIZE, textWidth, wrap } from "../kit/marks";
 import { safeText } from "../kit/reader";
@@ -446,7 +447,7 @@ export function PeriodsTile({ lead }: { lead: LeadProps }) {
             ]
           : []
       }
-      notes={gaps}
+      notes={[...gaps, ...(strip.ordered ? [] : [UNORDERED_SENTENCE])]}
       table={strip.figures.length ? tableOf(strip) : undefined}
     >
       <Measured fallback={FALLBACK}>{(width) => <Strip strip={strip} width={width} />}</Measured>

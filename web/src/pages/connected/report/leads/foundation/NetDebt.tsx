@@ -1,6 +1,7 @@
 import { useId, useState } from "react";
 import { cx } from "@/utils/cx";
 import { Figure, Well } from "../../overview/Tile";
+import { UNORDERED_SENTENCE } from "../kit/tables";
 import { FigureTile, GapTile } from "../kit/LeadFrame";
 import { GapSlot, LINE, SIZE, useFigureWidth } from "../kit/marks";
 import { Grid, HALO, HALO_CLASS, TickLabels } from "../kit/marks/parts";
@@ -229,8 +230,16 @@ function StripRowMark({ row }: { row: StripRow }) {
 }
 
 /** The rows of net debt / EBITDA on one axis: the periods joined, then a labelled mark per adjustment. */
-function StripFigure({ entries, width }: { entries: readonly StripEntry[]; width: number }) {
-  const layout = stripLayout(entries, width);
+function StripFigure({
+  entries,
+  width,
+  joined,
+}: {
+  entries: readonly StripEntry[];
+  width: number;
+  joined: boolean;
+}) {
+  const layout = stripLayout(entries, width, joined);
   return (
     <svg
       data-strip=""
@@ -298,7 +307,7 @@ function Strip({ view }: { view: NetDebtView }) {
         <span className="font-normal text-text-tertiary"> · own scale</span>
       </h4>
       {stripDrawn(entries) ? (
-        <StripFigure entries={entries} width={width} />
+        <StripFigure entries={entries} width={width} joined={view.ordered} />
       ) : (
         <>
           <ul
@@ -486,12 +495,13 @@ export function NetDebtTile({ lead }: { lead: LeadProps }) {
       props={lead}
       span={5}
       label={LABEL}
-      kicker={`Net debt, ${view.unit} · ${view.periods.map((p) => p.label).join(" → ")}`}
+      kicker={`Net debt, ${view.unit} · ${view.periods.map((p) => p.label).join(view.ordered ? " → " : ", ")}`}
       title={LABEL}
       line={view.tableLine}
       source="net debt"
       legend={legendOf(view, proForma)}
       table={netDebtTable(view)}
+      notes={view.ordered ? [] : [UNORDERED_SENTENCE]}
     >
       <Bars view={view} proForma={proForma} />
       <Strip view={view} />

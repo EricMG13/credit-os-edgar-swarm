@@ -13,7 +13,7 @@ import {
   leadProps,
   relativeValueCp1Entry,
 } from "../fixtures/load";
-import { dropTable, edited, threePeriodCp1 } from "../fixtures/mutations";
+import { addRow, dropTable, edited, threePeriodCp1 } from "../fixtures/mutations";
 import { section, table } from "../../overview/rows.fixture";
 import { FoundationLead } from "./Foundation";
 
@@ -190,4 +190,108 @@ describe("every published chart of Financial foundation is drawn by the lead", (
         expect(`${tile.textContent} ${reading}`, `${name}: ${title}`).toMatch(drawn.shows);
       }
     });
+});
+
+// Coordinator input T3 (mutations of the accepted handoff): a real-looking "FY2024 pro forma" row
+// the kit cannot put in time order beside FY2024. Every stated figure is drawn with its period as
+// written, in the handoff's order: no line, no change, no better/worse, the sentence once per tile.
+const UNORDERED = "Periods are in the order stated; this page could not put them in time order.";
+const proFormaLeverage = () =>
+  addRow(cp1Entry(), "Chart data: leverage", [
+    "FY2024 pro forma",
+    "7.10",
+    "6.02",
+    "x",
+    "Test row.",
+  ]);
+const proFormaNetDebt = () =>
+  addRow(cp1Entry(), "Net debt data", [
+    "FY2024 pro forma",
+    "24880",
+    "1913",
+    "22967",
+    "US$m",
+    "Test row.",
+  ]);
+
+/** Everything a reader gets from a tile: its text and every SVG's aria-label. */
+const said = (tile: HTMLElement) =>
+  [
+    tile.textContent,
+    ...[...tile.querySelectorAll("svg[role='img'], [aria-label]")].map(
+      (node) => node.getAttribute("aria-label") ?? "",
+    ),
+  ].join(" ");
+const count = (text: string, part: string) => text.split(part).length - 1;
+
+describe("periods the kit cannot put in time order (mutations)", () => {
+  it("leverage with FY2024 pro forma: 6.27, 6.53 and 7.10 written with their periods, no slope, no change", () => {
+    render(<FoundationLead {...leadProps(proFormaLeverage())} />);
+    const tile = screen.getByRole("region", { name: "Earnings and debt" });
+    const leverage = tile.querySelector("[data-leverage]") as HTMLElement;
+    const list = within(leverage).getByRole("list");
+    expect(
+      within(list)
+        .getAllByRole("listitem")
+        .map((item) => item.textContent),
+    ).toEqual(["FY20236.27x", "FY20246.53x", "FY2024 pro forma7.10x"]);
+    expect(tile.querySelector("[data-change]")).toBeNull();
+    expect(tile.querySelectorAll("[data-segment]")).toHaveLength(0);
+    expect(said(tile)).not.toMatch(/better|worse|This page could not read total debt/);
+    expect(count(tile.textContent, UNORDERED)).toBe(1);
+  });
+
+  it("leverage with FY2024 pro forma: the net debt strip writes 5.17, 4.88 and 6.02, not joined", () => {
+    render(<FoundationLead {...leadProps(proFormaLeverage())} />);
+    const tile = screen.getByRole("region", { name: "Net debt" });
+    const strip = tile.querySelector("svg[data-strip]");
+    expect(strip?.getAttribute("aria-label")).toContain(
+      "FY2023 5.17x, FY2024 4.88x, FY2024 pro forma 6.02x",
+    );
+    expect(tile.querySelectorAll("[data-join]")).toHaveLength(0);
+    expect(said(tile)).not.toMatch(/not stated|better|worse/);
+    expect(count(tile.textContent, UNORDERED)).toBe(1);
+  });
+
+  it("net debt data with FY2024 pro forma: the tile draws all three periods, 22,967 among them", () => {
+    render(<FoundationLead {...leadProps(proFormaNetDebt())} />);
+    const tile = screen.getByRole("region", { name: "Net debt" });
+    expect(tile.textContent).not.toMatch(/This page could not read/);
+    const bars = tile.querySelector("svg[role='img']")?.getAttribute("aria-label") ?? "";
+    expect(bars).toMatch(/FY2023[^;]*16,278/);
+    expect(bars).toMatch(/FY2024[^;]*18,619/);
+    expect(bars).toMatch(/FY2024 pro forma[^;]*22,967/);
+    expect(tile.querySelectorAll("[data-join]")).toHaveLength(0);
+    expect(said(tile)).not.toMatch(/better|worse/);
+    expect(count(tile.textContent, UNORDERED)).toBe(1);
+    // The earnings tile draws its gross debt in all three periods as written, with no change.
+    const earnings = screen.getByRole("region", { name: "Earnings and debt" });
+    expect(said(earnings)).toMatch(/Gross debt[^;]*FY2024 pro forma 24,880/);
+    expect(earnings.querySelector("[data-change]")).toBeNull();
+    expect(count(earnings.textContent, UNORDERED)).toBe(1);
+  });
+
+  it("the periods tile says the sentence once, exactly as the kit writes it", () => {
+    render(<FoundationLead {...leadProps(proFormaLeverage())} />);
+    const tile = screen.getByRole("region", { name: "Periods" });
+    expect(count(tile.textContent, UNORDERED)).toBe(1);
+    expect(tile.textContent).not.toMatch(/because Periods/);
+  });
+
+  it("no text or aria-label of the lead has a doubled full stop, on any fixture or mutation", () => {
+    for (const make of [
+      cp1Entry,
+      relativeValueCp1Entry,
+      distressedCp1Entry,
+      earningsUpdateCp1Draft1Entry,
+      threePeriodCp1,
+      proFormaLeverage,
+      proFormaNetDebt,
+    ]) {
+      const { container, unmount } = render(<FoundationLead {...leadProps(make())} />);
+      for (const region of within(container).getAllByRole("region"))
+        expect(said(region), region.getAttribute("aria-label") ?? "").not.toMatch(/\.\./);
+      unmount();
+    }
+  });
 });

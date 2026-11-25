@@ -1,4 +1,5 @@
 import type { WaterfallRow } from "../kit/marks";
+import { UNORDERED_SENTENCE } from "../kit/tables";
 import { FigureTile, GapTile } from "../kit/LeadFrame";
 import { Measured, Waterfall } from "../kit/marks";
 import type { LeadProps } from "../types";
@@ -80,7 +81,7 @@ export function CashLadderTile({ lead }: { lead: LeadProps }) {
       title={LABEL}
       line={data.line}
       source="cash conversion"
-      notes={breaks ? [LEVELS_AS_STATED] : []}
+      notes={[...(breaks ? [LEVELS_AS_STATED] : []), ...(data.ordered ? [] : [UNORDERED_SENTENCE])]}
       table={ladderTable(data)}
     >
       {drawn.map(({ each, rows }) =>

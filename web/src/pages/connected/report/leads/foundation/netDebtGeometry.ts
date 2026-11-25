@@ -192,7 +192,7 @@ export type StripEntry = { label: string; cell: Reading | null; proForma: boolea
  */
 export function stripEntries(view: NetDebtView): StripEntry[] {
   return [
-    ...view.periods.map((p) => ({ label: p.label, cell: p.leverage, proForma: false })),
+    ...view.leverageStrip.map((p) => ({ label: p.label, cell: p.cell, proForma: false })),
     ...view.adjustments.map((item) => ({
       label: `Pro forma · ${safeText(item.event)}`,
       cell: item.leverage,
@@ -260,7 +260,12 @@ export type StripLayout = {
 };
 
 /** The strip's rows at `width` px: one row per stated entry, on one scale, nothing overlapping. */
-export function stripLayout(entries: readonly StripEntry[], width: number): StripLayout {
+export function stripLayout(
+  entries: readonly StripEntry[],
+  width: number,
+  /** False for periods that cannot be put in time order: nothing is joined. */
+  joined = true,
+): StripLayout {
   const numbers = entries.flatMap((entry) =>
     entry.cell?.kind === "number" ? [entry.cell.value] : [],
   );
@@ -307,7 +312,12 @@ export function stripLayout(entries: readonly StripEntry[], width: number): Stri
   });
   const joins = rows.flatMap((row, at) => {
     const next = rows[at + 1];
-    return next && !row.entry.proForma && !next.entry.proForma && row.x !== null && next.x !== null
+    return joined &&
+      next &&
+      !row.entry.proForma &&
+      !next.entry.proForma &&
+      row.x !== null &&
+      next.x !== null
       ? [{ from: at, to: at + 1 }]
       : [];
   });

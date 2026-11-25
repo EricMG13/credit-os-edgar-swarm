@@ -6,6 +6,7 @@ import { FigureTile, GapTile } from "../kit/LeadFrame";
 import { Dumbbell, GapSlot, LINE, SIZE, useFigureWidth, type LegendEntry } from "../kit/marks";
 import { Grid, TickLabels } from "../kit/marks/parts";
 import type { LeadProps } from "../types";
+import { UNORDERED_SENTENCE } from "../kit/tables";
 import { periodsCaption } from "./periodsData";
 import {
   barLayout,
@@ -304,10 +305,13 @@ function Leverage({
   leverage,
   basis,
   comparison,
+  ordered,
 }: {
   leverage: LeverageSeries;
   basis: string | null;
   comparison: EarningsAgainstDebt["comparison"];
+  /** False for periods that cannot be put in time order: the figures are written, never a slope. */
+  ordered: boolean;
 }) {
   const marks = leverageMarks(leverage);
   const moved = leverageChange(leverage, comparison);
@@ -315,7 +319,7 @@ function Leverage({
   const slopeTone = moved === null ? "none" : tone("leverage", moved);
   const gaps = leverageGaps(leverage);
   // One stated figure is written, not drawn: a slope needs two.
-  const drawn = marks.length > 1 && contiguous(leverage.values);
+  const drawn = ordered && marks.length > 1 && contiguous(leverage.values);
   const reading = leverageReading(leverage, comparison);
   return (
     <div data-leverage className="flex w-full min-w-0 flex-col gap-2">
@@ -371,7 +375,8 @@ function legendOf(data: EarningsAgainstDebt): LegendEntry[] {
   const compared = data.comparison && labels.length === 2 ? data.comparison : null;
   const latest = data.comparison?.to ?? labels[0] ?? "";
   // One period is bars; two compared periods a ring to a dot; any other set a line per measure.
-  const kind: LegendEntry["kind"] = labels.length === 1 ? "bar" : compared ? "dot" : "line";
+  const kind: LegendEntry["kind"] =
+    labels.length === 1 ? "bar" : compared || !data.ordered ? "dot" : "line";
   const named = labels.length === 1 || compared;
   const gap = data.measures.some((measure) =>
     measure.values.some((value) => value.cell?.kind !== "number"),
@@ -422,12 +427,13 @@ export function EarningsDebtTile({ lead }: { lead: LeadProps }) {
       props={lead}
       span={12}
       label={LABEL}
-      kicker={`${KICKER} · ${data.unit}, ${periodSpan(labels)}`}
+      kicker={`${KICKER} · ${data.unit}, ${periodSpan(labels, data.ordered)}`}
       title={LABEL}
       line={data.tableLine}
       source="the earnings and debt figures"
       legend={legendOf(data)}
       caption={periodsCaption(lead.entry)}
+      notes={data.ordered ? [] : [UNORDERED_SENTENCE]}
       table={earningsTable(data)}
     >
       <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_408px]">
@@ -437,6 +443,7 @@ export function EarningsDebtTile({ lead }: { lead: LeadProps }) {
             leverage={data.leverage}
             basis={data.leverageBasis}
             comparison={data.comparison}
+            ordered={data.ordered}
           />
         ) : (
           <p className="text-caption text-gap-text">

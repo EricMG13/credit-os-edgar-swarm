@@ -1345,3 +1345,87 @@ describe("figureGap: why a figure is not drawn, true of this handoff", () => {
     );
   });
 });
+
+// ------------------------------------------------------------------------------------------------
+
+// Coordinator input T3 (mutations): a "FY2024 pro forma" period beside FY2024, which the kit cannot
+// put in time order. Every reader keeps every stated figure, in the handoff's order, with its period
+// as written, and compares nothing (no change, no tone): never a gap.
+describe("periods the kit cannot put in time order: drawn as stated, never a gap", () => {
+  const leverage = addRow(accepted, "Chart data: leverage", [
+    "FY2024 pro forma",
+    "7.10",
+    "6.02",
+    "x",
+    "Test row.",
+  ]);
+  const netDebt = addRow(accepted, "Net debt data", [
+    "FY2024 pro forma",
+    "24880",
+    "1913",
+    "22967",
+    "US$m",
+    "Test row.",
+  ]);
+  it("earnings: leverage 6.27, 6.53, 7.10 with their periods; no comparison, no change", () => {
+    const view = earningsAgainstDebt(leverage);
+    expect(view?.ordered).toBe(false);
+    expect(view?.periods.map((p) => p.label)).toEqual(["FY2023", "FY2024", "FY2024 pro forma"]);
+    expect(view?.comparison).toBeNull();
+    expect(cells(view?.leverage?.values)).toEqual([
+      ["FY2023", "6.27"],
+      ["FY2024", "6.53"],
+      ["FY2024 pro forma", "7.10"],
+    ]);
+    expect([view?.leverage?.change, view?.leverage?.tone]).toEqual([null, "none"]);
+    expect(view?.measures.every((measure) => measure.change === null)).toBe(true);
+    expect(figureGap(leverage, "earnings")).toBeNull();
+  });
+  it("net debt: the strip keeps 5.17, 4.88 and the pro forma 6.02; the net debt rows as stated", () => {
+    const view = netDebtView(leverage);
+    expect(cells(view?.leverageStrip)).toEqual([
+      ["FY2023", "5.17"],
+      ["FY2024", "4.88"],
+      ["FY2024 pro forma", "6.02"],
+    ]);
+    expect([view?.ordered, view?.comparison]).toEqual([false, null]);
+    const rows = netDebtView(netDebt);
+    expect(rows?.periods.map((p) => [p.label, shown(p.net)])).toEqual([
+      ["FY2023", "16278"],
+      ["FY2024", "18619"],
+      ["FY2024 pro forma", "22967"],
+    ]);
+    expect([rows?.ordered, rows?.comparison]).toEqual([false, null]);
+    expect(figureGap(netDebt, "netDebt")).toBeNull();
+  });
+  it("cash ladder and segments: a column or period the kit cannot place is read as stated", () => {
+    const edit = edited(accepted, (table, heading) =>
+      heading === "T4.5 Cash flow statement"
+        ? {
+            ...table,
+            headers: table.headers.map((h) => (h === "FY2023" ? "FY2024 pro forma" : h)),
+          }
+        : table,
+    );
+    const ladder = cashLadder(edit);
+    // EBITDA's row (income statement, FY2023 and FY2024 in time order) first, then the cash flow
+    // statement's pro forma column: the periods as first stated across the ladder's rows.
+    expect(ladder?.periods.map((p) => p.label)).toEqual(["FY2023", "FY2024", "FY2024 pro forma"]);
+    expect([ladder?.ordered, ladder?.comparison]).toEqual([false, null]);
+    const segments = segmentView(setCell(accepted, "Segment schedule", 0, "Period", "YTD 2024"));
+    expect(segments?.ordered).toBe(false);
+    expect(segments?.comparison).toBeNull();
+    expect(segments?.periods.map((p) => p.label)).toContain("YTD 2024");
+  });
+  it("the stated periods: every label, no gap, not ordered, nothing compared", () => {
+    const periods = statedPeriods(leverage);
+    expect(periods.labels).toEqual(["FY2023", "FY2024", "FY2024 pro forma"]);
+    expect([periods.ordered, periods.comparison, periods.gaps]).toEqual([false, null, []]);
+    expect(showPeriodsTile(leverage)).toBe(true);
+  });
+  it("a gap reason ends with one full stop", () => {
+    expect(figureGap(withRows(accepted, "Chart data: leverage", []), "earnings")).toBeNull();
+    const twice = addRow(accepted, "Net debt data", ["FY2024", "1", "1", "0", "US$m", "-"]);
+    expect(figureGap(twice, "netDebt")).not.toMatch(/\.\.$/);
+  });
+});

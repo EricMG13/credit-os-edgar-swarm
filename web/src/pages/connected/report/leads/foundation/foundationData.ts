@@ -1340,7 +1340,12 @@ function readStack(entry: OutputEntry): DebtStack | string {
  */
 export function showPeriodsTile(entry: OutputEntry): boolean {
   const periods = statedPeriods(entry);
-  return periods.labels.length >= 3 || periods.gaps.length > 0 || periods.kind === "other";
+  return (
+    periods.labels.length >= 3 ||
+    periods.gaps.length > 0 ||
+    periods.kind === "other" ||
+    !periods.ordered
+  );
 }
 
 // ---------------------------------------------------------------------------------------------

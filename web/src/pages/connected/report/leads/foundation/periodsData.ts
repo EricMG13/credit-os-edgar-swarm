@@ -50,6 +50,8 @@ export type PeriodStrip = {
   shown: string[];
   /** Figure tables whose periods cannot be read, with the reason. */
   gaps: { table: string; reason: string }[];
+  /** False when the periods cannot be put in time order: they are as first stated, none compared. */
+  ordered: boolean;
   line: number | null;
 };
 
@@ -171,7 +173,7 @@ export function periodStrip(entry: OutputEntry): PeriodStrip {
     : [];
   const compared = (label: string) =>
     stated.comparison?.from === label ? "from" : stated.comparison?.to === label ? "to" : null;
-  const axis = withUnstated(onAxis).map((period): StripPeriod => ({
+  const axis = (stated.ordered ? withUnstated(onAxis) : onAxis).map((period): StripPeriod => ({
     label: period.label,
     year: period.year,
     state: "unstated" in period ? { kind: "unstated" } : overall(period.label),
@@ -195,6 +197,7 @@ export function periodStrip(entry: OutputEntry): PeriodStrip {
     figures,
     shown,
     gaps: stated.gaps,
+    ordered: stated.ordered,
     line: found[0]?.line ?? null,
   };
 }
@@ -213,6 +216,7 @@ export function periodsCaption(entry: OutputEntry): string | null {
     strip.axis.length <= 2 &&
     strip.apart.length === 0 &&
     strip.gaps.length === 0 &&
+    strip.ordered &&
     strip.axis.every((period) => period.state.kind === "figures" && !period.partly);
   return plain
     ? `Each figure in its stated period: ${strip.axis.map((p) => p.label).join(", ")}`

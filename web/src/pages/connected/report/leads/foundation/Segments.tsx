@@ -1,3 +1,4 @@
+import { UNORDERED_SENTENCE } from "../kit/tables";
 import { FigureTile, GapTile } from "../kit/LeadFrame";
 import { GapSlot, Measured, SIZE, textWidth } from "../kit/marks";
 import { safeText } from "../kit/reader";
@@ -287,7 +288,7 @@ export function SegmentsTile({ lead }: { lead: LeadProps }) {
           ? [{ tone: "gap" as const, text: "Not supplied" }]
           : []),
       ]}
-      notes={periodNote(periods)}
+      notes={[...periodNote(periods), ...(view.ordered ? [] : [UNORDERED_SENTENCE])]}
       table={tableOf(view)}
     >
       <Measured fallback={FALLBACK}>

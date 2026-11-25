@@ -154,7 +154,8 @@ export function leverageReading(
 }
 
 /** The kicker's span: one period by name, otherwise the first to the last. */
-export function periodSpan(labels: readonly string[]) {
+export function periodSpan(labels: readonly string[], ordered = true) {
+  if (!ordered) return labels.join(", ");
   const [first] = labels;
   const last = labels.at(-1);
   if (!first || !last) return "";
@@ -292,9 +293,10 @@ export function lineLayout(data: EarningsAgainstDebt, width: number) {
         reason: cell?.kind === "number" ? null : `${value.label}: ${cellWords(cell)}`,
       };
     });
+    // Periods that cannot be put in time order are never joined: each figure stands as stated.
     const segments = points.slice(1).flatMap((point, at) => {
       const before = points[at];
-      return before?.value && point.value
+      return data.ordered && before?.value && point.value
         ? [{ x1: before.x, y1: before.value.y, x2: point.x, y2: point.value.y }]
         : [];
     });
@@ -424,7 +426,7 @@ export function earningsTable(data: EarningsAgainstDebt) {
       ]
     : [];
   return {
-    caption: `Earnings against debt and leverage, ${data.unit}, ${periodSpan(labels)}`,
+    caption: `Earnings against debt and leverage, ${data.unit}, ${periodSpan(labels, data.ordered)}`,
     headers: ["Measure", ...labels, ...changeHeader],
     rows: [...rows, ...leverageRow],
   };
