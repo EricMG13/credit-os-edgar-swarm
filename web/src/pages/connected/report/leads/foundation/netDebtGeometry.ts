@@ -8,8 +8,7 @@ import type { LiquidityPeriod, NetDebtPeriod, NetDebtView, ProForma } from "./fo
 // bars place stated numbers and never make them add up; nothing here prints a sum or an equation.
 
 /** A cell as the page writes it: the figure grouped, or a gap or words exactly as written. */
-export const words = (cell: Reading) =>
-  cell.kind === "number" ? group(cell.text) : safeText(cell.text);
+const words = (cell: Reading) => (cell.kind === "number" ? group(cell.text) : safeText(cell.text));
 
 /** A ratio cell: "4.88x", or the gap or words as written. */
 const ratioWords = (cell: Reading | null) =>

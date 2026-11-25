@@ -63,7 +63,7 @@ export type MeasureRow = {
   height: number;
 };
 
-export type SegmentBlock = {
+type SegmentBlock = {
   segment: Segment;
   name: string;
   nameLines: string[];

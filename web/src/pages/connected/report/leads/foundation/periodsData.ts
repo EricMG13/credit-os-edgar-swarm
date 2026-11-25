@@ -20,7 +20,7 @@ import {
 export type PeriodState =
   { kind: "figures" } | { kind: "gap"; reasons: string[] } | { kind: "words" } | { kind: "none" };
 
-export type FigurePeriods = { figure: string; states: Record<string, PeriodState> };
+type FigurePeriods = { figure: string; states: Record<string, PeriodState> };
 
 export type StripPeriod = {
   label: string;

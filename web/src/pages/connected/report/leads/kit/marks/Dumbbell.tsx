@@ -52,7 +52,7 @@ const finite = (rows: readonly DumbbellRow[]) =>
 const GAP = 12;
 const MARK = 24;
 
-export function dumbbellAxis(rows: readonly DumbbellRow[], axisStart?: number | "auto") {
+function dumbbellAxis(rows: readonly DumbbellRow[], axisStart?: number | "auto") {
   const values = rows.flatMap((row) => [row.prior, row.current].filter(known).map((s) => s.value));
   if (axisStart === undefined) return niceAxis(values, { zero: true });
   return niceAxis(values, { zero: false, start: axisStart === "auto" ? undefined : axisStart });
@@ -61,7 +61,7 @@ export function dumbbellAxis(rows: readonly DumbbellRow[], axisStart?: number | 
 const sideReading = (side: DumbbellSide, period: string) =>
   known(side) ? `${side.text} in ${period}` : `${period} not stated: ${side.gap}`;
 
-export function dumbbellReading(
+function dumbbellReading(
   rows: readonly DumbbellRow[],
   periods: DumbbellProps["periods"],
   unit: string,

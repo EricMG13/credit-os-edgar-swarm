@@ -9,8 +9,8 @@ import {
 } from "./sourceReadinessData";
 import type { LeadProps } from "./types";
 
-export const ABSENT = "This page could not read the readiness by area from the handoff.";
-export const NOT_HERE =
+const ABSENT = "This page could not read the readiness by area from the handoff.";
+const NOT_HERE =
   "This page could not read the key evidence located or the conflicts from the handoff.";
 
 // The state columns of the matrix, by their grid line at lg and above; the last two lines hold the

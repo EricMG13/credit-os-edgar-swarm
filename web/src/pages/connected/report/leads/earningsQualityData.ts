@@ -24,7 +24,7 @@ const SUPPORT_WORDS: Support[] = [
 ];
 
 /** The accepted and not accepted amounts the assessment states for a step, when they make up the step. */
-export type Split = { accepted: string; notAccepted: string };
+type Split = { accepted: string; notAccepted: string };
 
 type Step = { label: string; amount: string; value: number; line: number };
 

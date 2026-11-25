@@ -21,7 +21,7 @@ export const NO_PERCENT =
   "This page could not read the margins from the handoff because their cells carry no percent sign.";
 export const TWICE_RESULTS =
   "This page could not read the table of prior and current results from the handoff because it appears more than once.";
-export const TWICE_KPIS =
+const TWICE_KPIS =
   "This page could not read the table of margin and KPI changes from the handoff because it appears more than once.";
 export const TWICE_EARNINGS =
   "This page could not read the earnings table from the handoff because it appears more than once.";
@@ -31,7 +31,7 @@ export const FEW_PERIODS =
   "This page could not read two annual periods of the earnings table from the handoff.";
 export const MIXED_PERIODS =
   "This page could not compare the two latest annual periods of the earnings table because they are different kinds of period.";
-export const SAME_YEAR =
+const SAME_YEAR =
   "This page could not compare the two latest annual periods of the earnings table because they are the same year.";
 
 /** Handoff words for the page, or the Evidence pointer where they name a source or are empty. */
@@ -49,7 +49,7 @@ export type Side = {
   reason: string | null;
 };
 
-export type Change = {
+type Change = {
   /** The change in the unit's own words with its sign: `+1,355`, `−0.5 percentage points`. */
   text: string;
   /** `stated`: the module wrote the change; `derived`: the exact prior to current difference. */
@@ -63,7 +63,7 @@ export type Change = {
 type Tone = "better" | "worse" | "flat" | "none";
 
 /** A period the handoff states beside the two compared, listed as its own: `LTM Dec-2024`. */
-export type OtherPeriod = { period: string; text: string };
+type OtherPeriod = { period: string; text: string };
 
 export type Pair = {
   label: string;
@@ -510,7 +510,7 @@ function statementPairs(entry: OutputEntry, margins: boolean): PairFigure {
 // ---------------------------------------------------------------------------------------------
 // The variance bridge
 
-export type Step = {
+type Step = {
   /** The step's name as the handoff writes it. */
   label: string;
   role: "opening" | "change" | "closing";

@@ -42,7 +42,7 @@ function isBeyond(figure: BulletSide | undefined, limit: number, kind: "max" | "
 }
 
 /** The default reading: the value, the proposed, the limit, and the word for one beyond it. */
-export function bulletReading(props: BulletProps) {
+function bulletReading(props: BulletProps) {
   const { name, value, limit, proposed, unit, limitKind = "max" } = props;
   const word = props.beyond ?? (limitKind === "max" ? "above the limit" : "below the limit");
   const names = { value: "Current", limit: "Limit", proposed: "Proposed", ...props.names };

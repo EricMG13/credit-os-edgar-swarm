@@ -25,12 +25,10 @@ import {
 // number the module did not write. The one computed figure is `change`: the exact difference of one
 // measure between the two periods of `comparison`, on one unit (ruling (i), 2026-11-24).
 
-export type { Period } from "../kit/tables";
-
 /** One period's figure as written (a number, a stated gap with its reason, or words), or null where the table states nothing for that period. */
 export type PeriodCell = { label: string; cell: Reading | null; line: number | null };
 /** The two periods a comparison is drawn between, earlier first; null with fewer than two of one form. */
-export type Comparison = { from: string; to: string } | null;
+type Comparison = { from: string; to: string } | null;
 
 /** The one form of a gap: what this page could not read from the handoff, and the cause it found. */
 const inSentence = (what: string) =>
@@ -367,7 +365,7 @@ function readEarnings(entry: OutputEntry): EarningsAgainstDebt | string {
 // Tile 2: cash conversion ladder
 // ---------------------------------------------------------------------------------------------
 
-export type LadderKey =
+type LadderKey =
   | "ebitda"
   | "interest"
   | "taxes"

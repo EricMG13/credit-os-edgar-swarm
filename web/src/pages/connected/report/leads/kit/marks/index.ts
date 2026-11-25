@@ -124,32 +124,16 @@
  *   TableView: the same button and panel, standalone. Link: `<Link href="#forecast">Open the
  *   forecast</Link>` at 32 px (44 px at 480 px and below).
  */
-export { fittingTicks, niceAxis, type AxisTick, type NiceAxis } from "./axis";
-export {
-  Bullet,
-  bulletReading,
-  type BulletFigure,
-  type BulletProps,
-  type BulletSide,
-} from "./Bullet";
-export {
-  Dumbbell,
-  dumbbellAxis,
-  dumbbellReading,
-  type DumbbellProps,
-  type DumbbellRow,
-  type DumbbellSide,
-} from "./Dumbbell";
+export { fittingTicks, niceAxis, type NiceAxis } from "./axis";
+export { Bullet, type BulletSide } from "./Bullet";
+export { Dumbbell, type DumbbellRow, type DumbbellSide } from "./Dumbbell";
 export { GapSlot, Measured } from "./GapSlot";
-export { Legend, legendHeight, type LegendItem, type LegendTone } from "./parts";
 export { LINE, NARROW, SIZE, signedText, textWidth, wrap } from "./text";
 export {
   Waterfall,
   waterfallAxis,
   waterfallReading,
   type WaterfallPrior,
-  type WaterfallProps,
   type WaterfallRow,
-  type WaterfallSplit,
 } from "./Waterfall";
 export { useFigureWidth } from "../useWidth";

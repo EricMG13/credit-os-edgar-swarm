@@ -47,11 +47,6 @@ export function LeadFrame({ props, children }: { props: LeadProps; children: Rea
   return reason ? null : <Bento>{children}</Bento>;
 }
 
-/** A figure that is derived (an exact difference or sum of stated figures), said as a word. */
-export function Derived() {
-  return <span className="font-mono text-[11px] text-text-tertiary"> derived</span>;
-}
-
 const NUMERIC = /^[−-]?[\d,]+(?:\.\d+)?[x%]?$/;
 
 export type TableViewData = {

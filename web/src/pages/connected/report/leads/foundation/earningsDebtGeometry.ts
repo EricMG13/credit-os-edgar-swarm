@@ -41,13 +41,13 @@ const seriesOf = (measure: EarningsMeasure) =>
   measure.key === "grossDebt" ? ("secondary" as const) : ("primary" as const);
 
 /** A cell as the page writes it: the figure grouped, a gap or words as written, or "not stated …". */
-export function cellWords(cell: Reading | null) {
+function cellWords(cell: Reading | null) {
   if (cell === null) return NOT_IN_TABLE;
   return cell.kind === "number" ? group(cell.text) : safeText(cell.text);
 }
 
 /** The cell of one period, or null. */
-export const at = (values: readonly PeriodCell[], label: string) =>
+const at = (values: readonly PeriodCell[], label: string) =>
   values.find((value) => value.label === label)?.cell ?? null;
 
 /** The stated change with its sign: "+1,355", "−6,585", "0". */
@@ -212,7 +212,7 @@ export type LinePoint = {
   reason: string | null;
 };
 
-export type LinePanel = {
+type LinePanel = {
   label: string;
   series: "primary" | "secondary";
   left: number;

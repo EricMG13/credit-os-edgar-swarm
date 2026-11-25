@@ -246,7 +246,7 @@ export function limits(entry: OutputEntry): Limits | null {
 // ---------------------------------------------------------------------------------------------
 // Watch items
 
-export type WatchItem = {
+type WatchItem = {
   date: string;
   event: string;
   status: string | null;

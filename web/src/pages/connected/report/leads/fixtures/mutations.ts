@@ -87,7 +87,7 @@ export const addRow = (entry: OutputEntry, heading: string, cells: string[]) =>
   );
 
 /** A period column inserted before `before`, each row's cell given by `cell`. */
-export const addColumn = (
+const addColumn = (
   entry: OutputEntry,
   heading: string,
   header: string,

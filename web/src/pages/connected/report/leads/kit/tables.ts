@@ -60,9 +60,9 @@ export function rowStarting(
 }
 
 /** A period label as the handoff writes it ("FY2024 / 2024-09-30" → "FY2024"). */
-export const periodLabel = (cell: string) => (cell.split(" / ")[0] ?? "").trim();
+const periodLabel = (cell: string) => (cell.split(" / ")[0] ?? "").trim();
 
-export type PeriodKind = "annual" | "other";
+type PeriodKind = "annual" | "other";
 
 /**
  * One period a table states. `label` is as written (before any " / date"); `year` is the four-digit

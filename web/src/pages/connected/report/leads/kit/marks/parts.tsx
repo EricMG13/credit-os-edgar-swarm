@@ -3,7 +3,7 @@ import { GapSlot } from "./GapSlot";
 import { SIZE, textWidth } from "./text";
 
 /** The swatch kinds a mark's legend can show; each is drawn as the mark itself is. */
-export type LegendTone =
+type LegendTone =
   "level" | "step" | "closing" | "gap" | "prior" | "current" | "worse" | "limit" | "proposed";
 
 export type LegendItem = { tone: LegendTone; text: string };
