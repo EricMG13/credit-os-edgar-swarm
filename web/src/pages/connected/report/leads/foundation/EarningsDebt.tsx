@@ -388,6 +388,10 @@ function legendOf(data: EarningsAgainstDebt) {
   ];
 }
 
+/** The absent measures' sentences in order, an identical sentence once. */
+const absentText = (data: { absent: { reason: string }[] }) =>
+  [...new Set(data.absent.map((item) => item.reason))].join(" ");
+
 /** Tile 1: earnings and gross debt on one US$ scale from zero, and leverage on its own scale. */
 export function EarningsDebtTile({ lead }: { lead: LeadProps }) {
   const data = earningsAgainstDebt(lead.entry);
@@ -414,7 +418,7 @@ export function EarningsDebtTile({ lead }: { lead: LeadProps }) {
         {data.measures.length ? (
           <Money data={data} />
         ) : (
-          <GapNote>{data.absent.map((item) => item.reason).join(" ")}</GapNote>
+          <GapNote>{absentText(data)}</GapNote>
         )}
         {data.leverage ? (
           <Leverage leverage={data.leverage} basis={data.leverageBasis} />
@@ -426,7 +430,7 @@ export function EarningsDebtTile({ lead }: { lead: LeadProps }) {
       </div>
       {data.measures.length > 0 && data.absent.length > 0 && (
         <p data-absent className="text-caption wrap-anywhere text-gap-text">
-          {data.absent.map((item) => item.reason).join(" ")}
+          {absentText(data)}
         </p>
       )}
     </FigureTile>

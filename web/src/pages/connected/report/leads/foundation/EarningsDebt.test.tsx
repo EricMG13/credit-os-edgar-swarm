@@ -31,7 +31,7 @@ function everything(tile: HTMLElement) {
 
 function noAnalysis(tile: HTMLElement) {
   const text = everything(tile);
-  expect(text).not.toMatch(/÷|derived|growth|%/i);
+  expect(text).not.toMatch(/÷|deriv|growth|%/i);
   expect(text).not.toMatch(/\b(rose|fell)\b/);
   expect(text).not.toMatch(/ while /);
   expect(containsReference(text)).toBe(false);
@@ -309,6 +309,32 @@ describe("Earnings and debt: three or more periods, gaps and absences", () => {
     expect(within(tile).queryByRole("link")).toBeNull();
     expect(tile.textContent).toContain("This page could not read revenue from the handoff.");
     expect(tile.textContent).toContain("This page could not read gross debt from the handoff.");
+  });
+
+  it("says an identical gap sentence once when several measures are absent for the same reason", () => {
+    let none = cp1Entry();
+    for (const heading of [
+      "Chart data: revenue and EBITDA",
+      "Net debt data",
+      "T4.4 Income statement",
+    ])
+      none = dropTable(none, heading);
+    const text = draw(none).textContent ?? "";
+    const sentences = text.match(/This page could not read [^.]*\./g) ?? [];
+    expect(sentences.length).toBeGreaterThan(0);
+    expect(new Set(sentences).size).toBe(sentences.length);
+    // Revenue and Adjusted EBITDA are both read from the one revenue-and-EBITDA table.
+    expect(text.split("could not read the revenue and EBITDA").length - 1).toBeLessThanOrEqual(1);
+  });
+
+  it("says each absent-measure sentence once beside the measures that are drawn", () => {
+    let some = dropTable(cp1Entry(), "Chart data: revenue and EBITDA");
+    some = dropTable(some, "T4.4 Income statement");
+    const tile = draw(some);
+    const note = tile.querySelector("[data-absent]")?.textContent ?? "";
+    const sentences = note.match(/This page could not read [^.]*\./g) ?? [];
+    expect(sentences.length).toBeGreaterThan(0);
+    expect(new Set(sentences).size).toBe(sentences.length);
   });
 });
 
