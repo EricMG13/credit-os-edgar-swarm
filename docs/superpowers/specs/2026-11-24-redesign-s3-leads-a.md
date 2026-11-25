@@ -266,3 +266,13 @@ Run from `web/` unless stated. Evidence: retained TransDigm FY2024 handoffs (acc
 Looked at: every case above at 1440 and 390 (PNGs in the session scratchpad). Defects found by looking and fixed: pips squeezed, clipped ticks, stretched gap tiles, a CP-1B change label wider than its slot (Dumbbell now wraps the change), maturity wall falling to rows at 12 px (span 6), the false "not in the handoff" ladder gap.
 
 Known limits: the Overview `Slope`/`DotStrip` are fixed 408-unit viewBoxes, so on a phone the tiles write the figures as HTML instead and the strip's last tick label sits about 4 px outside its SVG; the real accepted CP-1 lists five stated adjustments, so no real fixture draws the single solid pro forma bar (proved on a one-adjustment mutation); CP-1C/1D/L10 and CP-5/6 are contract-built, unproven on a real run.
+
+### Verification (round 3: L1–L13, N1–N8, wording ruling; merged with d097d0d)
+
+Scope: retained TransDigm FY2024 handoffs (outdated; shape only) and synthetic inputs built from the module contracts; no real run, no paid call.
+
+- Merged `origin/claude/exciting-albattani-v1zoug` (S1 Overview, d097d0d). Overview marks now take `Slot[]`, a measured width and 12 px, so the HTML fallback below 408 px for the leverage Slope is removed (`EarningsDebt.tsx`).
+- Gates on the merged tree: `tsc --noEmit` 0 errors; `eslint --max-warnings=0 src` clean; `prettier --check src` clean; `vitest run src/pages/connected src/styles` 188 files / 3,251 tests pass; `npm run unused` clean; `scripts/duplication.mjs` exit 0; `npm run build` ok.
+- Rendered check (`docs/design/preview/check-render.cjs`, widths 1440/1280/1024/768/390, plain and stress text, harness `web/.lead-preview`, 15 lead entries): no failures. PNGs looked at: CP-1 accepted (1440, 390), CP-1B retained (1440, 390), CP-6 (1440, 390).
+- Seen and left (rendering only): at 390 the cash-ladder connector touches the "1,236" label, and on net debt the dotted pro forma rule crosses the first pro forma label; the Debt maturities tile sits alone in the last CP-1 row when two periods are stated (five span-6 tiles).
+- Not verified: any real handoff for CP-1C, CP-1D, CP-L10, CP-MODEL, CP-5, CP-6 (none retained); the CP-6 ledger subject when the CP-2 cell is a register id.
