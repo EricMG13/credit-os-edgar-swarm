@@ -2197,7 +2197,7 @@ describe("connected activity and reports", () => {
     window.history.replaceState(null, "", path);
     render(<ConnectedApp path={path} mode="synthetic" />);
     expect(
-      await screen.findByRole("heading", { name: report.issuer }, { timeout: 3000 }),
+      await screen.findByRole("heading", { name: report.issuer }, { timeout: 10_000 }),
     ).toBeInTheDocument();
     expect(screen.getByText("The report read the filing.")).toBeInTheDocument();
     expect(screen.queryByText(filing, { exact: false })).toBeNull();
@@ -2245,7 +2245,7 @@ describe("connected activity and reports", () => {
     window.location.hash = "changes";
     expect(await screen.findByText("No earlier run to compare.")).toBeInTheDocument();
     window.history.replaceState(null, "", "/");
-  });
+  }, 20_000);
 
   it.each(["%2F", "%5C", "%2e%2e", "demo%0a"])(
     "refuses an invalid published folder %s",

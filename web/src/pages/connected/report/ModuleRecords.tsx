@@ -385,15 +385,21 @@ function RecordTabs({
   run,
   entry,
   tables,
+  initialTable,
 }: {
   run: Run;
   entry: OutputEntry;
   tables: RecordTable[];
+  /** A table title the address names; the records open on it when it is held here. */
+  initialTable?: string;
 }) {
   const kinds = kindSegments(tables);
+  const named = initialTable
+    ? tables.find(({ title }) => title.toLowerCase() === initialTable.toLowerCase())
+    : undefined;
   const [choice, setChoice] = useState<{ kind: string; table: string | null }>({
-    kind: kinds[0]?.key ?? "",
-    table: null,
+    kind: named?.kind ?? kinds[0]?.key ?? "",
+    table: named ? tableKey(named) : null,
   });
   const kind = kinds.find(({ key }) => key === choice.kind)?.key ?? kinds[0]?.key;
   const own = tables.filter((record) => record.kind === kind);
@@ -481,12 +487,18 @@ export function ModuleRecords({
   run,
   entry,
   anchorId,
+  initiallyOpen = false,
+  initialTable,
 }: {
   run: Run;
   entry: OutputEntry;
   anchorId?: string;
+  /** Open on first draw, as an address that names the records asks. */
+  initiallyOpen?: boolean;
+  /** The table the address names, shown first. */
+  initialTable?: string;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initiallyOpen);
   const body = useId();
   const { tables, evidence } = moduleRecords(entry);
   if (!tables.length && !evidence.length) return null;
@@ -523,7 +535,9 @@ export function ModuleRecords({
       </p>
       {open && (
         <div id={body} className="flex min-w-0 flex-col gap-4">
-          {tables.length > 0 && <RecordTabs run={run} entry={entry} tables={tables} />}
+          {tables.length > 0 && (
+            <RecordTabs run={run} entry={entry} tables={tables} initialTable={initialTable} />
+          )}
           {evidence.length > 0 && <HeldInEvidence run={run} entry={entry} held={evidence} />}
         </div>
       )}

@@ -1,6 +1,7 @@
 """Rebuild the lead-visual test fixtures from retained handoffs.
 
-Run from the repository root:  python3 web/src/pages/connected/report/leads/fixtures/build_fixtures.py
+Run from the repository root:
+    python3 web/src/pages/connected/report/leads/fixtures/build_fixtures.py
 Then format the JSON: cd web && npx prettier --write src/pages/connected/report/leads/fixtures
 
 Each fixture is the handoff parsed the way the published report parses it (`sections_of`), with the

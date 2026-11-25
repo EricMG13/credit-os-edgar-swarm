@@ -296,7 +296,7 @@ const ReportPage = memo(function ReportPage({
               run={run}
               view={view}
               module={parts[0]}
-              output={parts[1]}
+              {...moduleAddress(parts.slice(1))}
             />
           )}
           {tab === "forecast" && (
@@ -664,6 +664,16 @@ export function ReportReader({ id, mode }: { id: string; mode: Mode }) {
     setAttempt((count) => count + 1);
   }, []);
   return <ReportReaderPage key={attempt} id={id} mode={mode} retry={retry} />;
+}
+
+/** A module address after its code: an output index, then `records` and a table title, each optional. */
+function moduleAddress(rest: string[]) {
+  const at = rest.indexOf("records");
+  const output = at === 0 ? undefined : rest[0];
+  if (at === -1) return { output, records: false };
+  const named = rest[at + 1];
+  const table = named ? decodeURIComponent(named) : undefined;
+  return { output, records: true, table };
 }
 
 function reportRoute(hash: string): { tab: Tab; parts: string[] } {

@@ -147,6 +147,8 @@ function ModulePage({
   current,
   entry,
   page,
+  records,
+  table,
 }: {
   snapshot: Snapshot;
   run: PublishedRun;
@@ -154,6 +156,8 @@ function ModulePage({
   current: ModuleItem;
   entry: OutputEntry;
   page: Page;
+  records: boolean;
+  table?: string;
 }) {
   const [open, setOpen] = useState<string | null>(null);
   const { figures, Lead, kinds, frame, gaps, limitations } = page;
@@ -210,7 +214,13 @@ function ModulePage({
           folder={run.folder}
         />
         <ProseTiles prose={frame.prose} entry={entry} folder={run.folder} />
-        <ModuleRecords run={run} entry={entry} anchorId={ANCHOR.records} />
+        <ModuleRecords
+          run={run}
+          entry={entry}
+          anchorId={ANCHOR.records}
+          initiallyOpen={records}
+          initialTable={table}
+        />
         <ModuleLimitations
           section={frame.limitations}
           hollow={frame.hollow.Limitations}
@@ -285,12 +295,18 @@ export function Modules({
   view,
   module,
   output,
+  records = false,
+  table,
 }: {
   snapshot: Snapshot;
   run: PublishedRun;
   view: ReportView;
   module?: string;
   output?: string;
+  /** The address asks for the module's records open (`#modules/<module>/records`). */
+  records?: boolean;
+  /** The records table the address names (`#modules/<module>/records/<table>`). */
+  table?: string;
 }) {
   const current =
     module === undefined
@@ -327,6 +343,8 @@ export function Modules({
             current={current}
             entry={entry}
             page={page}
+            records={records}
+            table={table}
           />
         ) : (
           <UnavailableHandoff current={current} next={nextModule(view, current.id)} />

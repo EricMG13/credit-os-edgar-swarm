@@ -58,7 +58,7 @@ const FINANCIALS: Sections[number] = {
   ],
 };
 
-function renderModule(sections: Sections, module = "CP-2") {
+function renderModule(sections: Sections, module = "CP-2", records = false, table?: string) {
   const entry: OutputEntry = {
     selected: true,
     output: {
@@ -84,6 +84,8 @@ function renderModule(sections: Sections, module = "CP-2") {
       view={view}
       run={{ folder: "case", issuer: "Issuer", asOf: "2026-10-31" } as PublishedRun}
       snapshot={{ chips: {} } as Snapshot}
+      records={records}
+      table={table}
     />,
   );
 }
@@ -153,6 +155,39 @@ it("draws only the header and the records when only the bottom line is owed", ()
   expect(
     within(records).getByRole("heading", { name: "Financials and credit metrics" }),
   ).toBeInTheDocument();
+});
+
+it("opens the records on first draw when the address names them", () => {
+  renderModule([passage("Bottom line", 4), FINANCIALS], "CP-1", true);
+  const records = screen.getByRole("region", { name: "Statements and records" });
+  expect(within(records).getByRole("button", { name: "Hide records" })).toBeInTheDocument();
+  expect(
+    within(records).getByRole("heading", { name: "Financials and credit metrics" }),
+  ).toBeInTheDocument();
+});
+
+it("opens the records on the table the address names", () => {
+  const PRINCIPAL = {
+    heading: "Debt principal to carrying value",
+    level: 3,
+    line: 50,
+    blocks: [
+      {
+        type: "table" as const,
+        headers: ["Period", "Contractual principal", "Carrying value"],
+        line: 51,
+        rows: [{ line: 52, cells: ["FY2024", "Not supplied: not calculable", "1400"] }],
+      },
+    ],
+  };
+  renderModule(
+    [passage("Bottom line", 4), FINANCIALS, PRINCIPAL],
+    "CP-1",
+    true,
+    "debt principal to carrying value",
+  );
+  const records = screen.getByRole("region", { name: "Statements and records" });
+  expect(within(records).getByText("Not supplied: not calculable")).toBeInTheDocument();
 });
 
 it("still draws the header and the way to Evidence when the handoff has no sections", () => {
