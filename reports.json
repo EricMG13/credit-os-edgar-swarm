@@ -1,0 +1,68 @@
+[
+  {
+    "issuer_id": "tdw-98222",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "All four modules were accepted on the first submission and the run finished with exit 0; the only defect seen and not fixed (no repository edits allowed) is the launcher's UV_NATIVE_TLS deprecation warning, and the sources give no EBITDA, rating or executed covenant agreement, so EBITDA is derived and covenant headroom is left as a stated gap."
+  },
+  {
+    "issuer_id": "dbd-28823",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Financial foundation (CP-1) text says order entry and backlog are carried only in words, but the FY2025 10-K states product backlog of USD 733.1m vs USD 790.1m (the later modules use the stated figures), and an accepted answer cannot be replaced."
+  },
+  {
+    "issuer_id": "ccl",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "Source gaps remain that I could not fix (no debt agreements, rating levels, fiscal 2025 adjusted EBITDA or interim cash interest, and some filing totals that differ from their parts by USD 1 million to USD 2 million, left as Not supplied), and separately I inadvertently displayed the first 60 lines and a keyword search of another issuer's stray script (gen_cp2.py for dbd-28823) in the shared scratchpad, which I did not use or touch further."
+  },
+  {
+    "issuer_id": "bdc",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "All four modules were accepted on the first attempt and the run finished with delivery written, but the sources contain no credit agreements or indentures, ratings, interim cash interest or Ruckus pro forma EBITDA, so leverage, covenant headroom and recovery ranking remain recorded gaps that no answer could fix, and the launcher's checks are structural only, so page locators had to be checked by hand against the source text."
+  },
+  {
+    "issuer_id": "cnx",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Source readiness answer rates the missing proxy statement a minor gap while the accepted Business & governance answer rates the same gap high, and neither can be edited after acceptance (Fundamental credit treats it as medium and says so)."
+  },
+  {
+    "issuer_id": "opch-1014739",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted CP-1 KPI table, which cannot be replaced, labels the ambulatory infusion suite counts (182 against 188) as not comparable although they are probably like-for-like, and the scratchpad was shared with other issuers' runs, so I opened another issuer's builder script by mistake and did not use it."
+  }
+]

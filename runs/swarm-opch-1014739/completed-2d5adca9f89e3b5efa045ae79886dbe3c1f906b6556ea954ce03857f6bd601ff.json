@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Option Care Health, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/d7573ed3fc796869f34e5a8460e32e69277bcbebbfc6f5dde22458d7c34c04f8/1.response.md",
+    "CP-1": "requests/CP-1/e5a3dd7fed7612093a5d3e41939dac2720a071201e405a2a52f06c9144a2c572/1.response.md",
+    "CP-1A": "requests/CP-1A/0a788e92afb3c0e70b90246bb3193d8149976a0b48b90cb478fd17efbca82826/1.response.md",
+    "CP-2": "requests/CP-2/66a5715627188bf995969fa1dfc7b6476cd78f86db7b587bb0be639f2fab64a4/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "ea2f59576e1b440db8e2804ca5577389b0165d927c4a15145597aac5b8743a6b",
+  "delivery_sha256": "972346ceb23c5e532754eb5d3b3cc1f0f0e8e6e4fae8f6aad3054b20640edd49"
+}

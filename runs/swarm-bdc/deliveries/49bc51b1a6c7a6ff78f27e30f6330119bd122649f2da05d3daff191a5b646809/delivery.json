@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for BELDEN INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "aea75c9c31fd715d31aed594e729ef96b997b04bba10951711274bcd033daeee",
+    "CP-1.md": "112107a0aceed8a6bb20da0bc3d8bc7b66b262bb3428871cc61c0f89e7fb9cfa",
+    "CP-1A.md": "fc4fab6c447b8d289aaabc2163105c67d70261045d0625858e08c773a7af9ab5",
+    "CP-2.md": "b27f28491cc2e4d9f7b98d58537c64aa21781b9505c5707db89b35b4fcf9bae7",
+    "coverage.json": "f862487f7b98cabec4c6bf0254fd1625c75d1c7776d870aed51365e7fcd7ba7c",
+    "view.json": "9f616e121d7d035e1bac227bc8d09522b2f7abf6cddbd74ed953166371fc31be",
+    "report-view.json": "6b7e5a7078ff62bf786057848107d03c6a95043aceca41e2a919e9a38259322e"
+  }
+}

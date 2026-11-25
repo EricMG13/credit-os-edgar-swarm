@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Tidewater Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "21c520fc23ce3fb1f87a3455bc17a1eef6e2f580a49223f557c8bdf11ac4fe26",
+    "CP-1.md": "1d81608ee8a8e4db2288bdbd80a5cf2c87e457f71a28e8adc9f65a96edebb4fc",
+    "CP-1A.md": "92292d3d207b4ee69645a4fe0b5adaef11e83d097370ea5cd602e7bdcfc629f4",
+    "CP-2.md": "2bf5cd30562376c69bd0d871a6b4fb2dc367972b50cb920300589fc38188ee44",
+    "coverage.json": "8faf670907a6d347cc5697624ac64ea6f1e1a51a674807141970aec2716d89cd",
+    "view.json": "cdd52d247776c42ce230d671fc6598ec4aaa9872cde317726b09a5584eee466a",
+    "report-view.json": "0a81db7451d29a74d47261a9a63fa3bde0d8ae4b0722ca32d1d4bff1a6d2f7c6"
+  }
+}

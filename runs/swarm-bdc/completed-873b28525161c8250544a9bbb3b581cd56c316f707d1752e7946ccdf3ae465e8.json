@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for BELDEN INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/ec0e2426e9f630a5b01b9d8912bdc184551ad4e70ef247306df58e469138dbb6/1.response.md",
+    "CP-1": "requests/CP-1/0fd437a39eac573cd0472d6f8ac256382caaa743c6833a14215748080b6ee26a/1.response.md",
+    "CP-1A": "requests/CP-1A/1d09468350e26eb60233c630f3d7eca99bda2150dd3f916ccc45ba019966ed5a/1.response.md",
+    "CP-2": "requests/CP-2/5b54b7218a6261425d7710ca32f09fcae576c14c6c94cddb2ad4e7d71510b197/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "a5770bf0e231467fb4dfbd2f1941789b3eeaba2c3068fb46241b83738b4d958a",
+  "delivery_sha256": "a9f7cc80961af7c36e6a383b6f7024a7eecf282f5a5dd5b33be44e0cdfebdffd"
+}
