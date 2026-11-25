@@ -77,6 +77,17 @@
         "CP-2": 1
       },
       "notes": "The launcher finished with exit 0 and delivery was written; it needed uv 0.12.5 (/usr/local/bin) first on PATH, the default 0.11.32 was refused. CP-0 was already accepted from the partial folder (attempt 1, not resubmitted here); CP-1, CP-1A and CP-2 were each accepted on the first launcher submission after an offline dry-run copy of the checks. Defect I could not fix: the Q3 2025 10-Q is not among the sources, so there is no 2025-10-04 balance sheet or prior-year interim store count. The host check also cannot order the form \"FY2025 / 2026-01-03\", so the FY2025 net-debt Period cells use the date alone."
+    },
+    {
+      "issuer_id": "hpp-1482512",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "No defect left unfixed; earlier modules were not edited, and CP-2 states three corrections to them (CP-1 said venture guarantee exposure and the Element LA termination fee amount were not established, although the 10-Q gives USD 190.5 million of carve-out guarantees and the FY2025 10-K attributes a USD 39.7 million revenue increase to the fee; CP-1A read scheduled expiry rent as rollover upside)."
     }
   ],
   "partial": true
