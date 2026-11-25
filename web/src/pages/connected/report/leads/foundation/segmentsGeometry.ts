@@ -1,144 +1,205 @@
-import { ticks } from "../../../visuals/visualData";
-import { linear } from "../kit/geometry";
-import type { Reading } from "../kit/numbers";
-import type { Segment } from "./legacyData";
+import { fittingTicks, NARROW, niceAxis, SIZE, textWidth, wrap } from "../kit/marks";
+import { group } from "../kit/numbers";
+import { safeText } from "../kit/reader";
+import type { PeriodCell, Segment, SegmentView } from "./foundationData";
 
-const DECIMAL = /^(-?)(\d+)(?:\.(\d+))?$/;
+// The segments figure at its measured width: per segment a net-sales bar and an EBITDA bar beneath
+// it on one scale from zero, the drawn period's figures as written, and, when the handoff states a
+// comparison, a thin tick beneath each bar at the prior period's figure with that figure written.
+// No ratio, no sum, no group figure (ruling i).
 
-/**
- * A decimal string rounded half up (away from zero) to one decimal, from its digits alone:
- * "56.74" → "56.7", "51.55" → "51.6", "-12.35" → "-12.4". Null for anything but a plain decimal.
- */
-export function oneDecimal(text: string) {
-  const match = DECIMAL.exec(text.trim());
-  if (!match) return null;
-  const [, sign = "", whole = "", fraction = ""] = match;
-  const tenths =
-    BigInt(`${whole}${fraction[0] ?? "0"}`) + (Number(fraction[1] ?? "0") >= 5 ? 1n : 0n);
-  const digits = tenths.toString().padStart(2, "0");
-  const negative = sign === "-" && tenths !== 0n;
-  return `${negative ? "-" : ""}${digits.slice(0, -1)}.${digits.slice(-1)}`;
+/** Which periods the figure draws: bars for `drawn`, ticks for `prior`; the rest are named in a note. */
+export type SegmentPeriods = { drawn: string; prior: string | null; notDrawn: string[] };
+
+export function segmentPeriods(view: SegmentView): SegmentPeriods | null {
+  const annual = view.periods.filter((period) => period.kind === "annual");
+  const drawn = view.comparison?.to ?? annual.at(-1)?.label ?? view.periods.at(-1)?.label;
+  if (drawn === undefined) return null;
+  const prior = view.comparison?.from ?? null;
+  const notDrawn = view.periods
+    .map((period) => period.label)
+    .filter((label) => label !== drawn && label !== prior);
+  return { drawn, prior, notDrawn };
 }
 
-/** A plain decimal as an integer and its count of decimals. */
-function scaled(text: string) {
-  const match = DECIMAL.exec(text);
-  if (!match) return null;
-  const [, sign = "", whole = "", fraction = ""] = match;
-  return { negative: sign === "-", digits: BigInt(`${whole}${fraction}`), scale: fraction.length };
-}
+/** One cell of the figure: a stated number, a stated gap with its words, or other words. */
+export type SegmentValue =
+  | { kind: "number"; value: number; text: string }
+  | { kind: "gap"; text: string }
+  | { kind: "words"; text: string };
 
-/**
- * `part ÷ whole` as a percentage to one decimal, exactly: the percentage is truncated to two
- * decimals by integer division and then rounded half up by `oneDecimal`, so a value such as
- * 56.746% is never rounded twice (56.75 → 56.8). Null unless both are numbers and the whole is not 0.
- */
-export function ratioPercent(part: Reading, whole: Reading) {
-  if (part.kind !== "number" || whole.kind !== "number") return null;
-  const [p, w] = [scaled(part.text), scaled(whole.text)];
-  if (!p || !w || w.digits === 0n) return null;
-  // part / whole * 100 * 100, as integers: p.digits / 10^p.scale over w.digits / 10^w.scale.
-  const hundredths =
-    (p.digits * 10n ** BigInt(w.scale) * 10000n) / (w.digits * 10n ** BigInt(p.scale));
-  const text = hundredths.toString().padStart(3, "0");
-  const negative = p.negative !== w.negative && hundredths !== 0n;
-  return oneDecimal(`${negative ? "-" : ""}${text.slice(0, -2)}.${text.slice(-2)}`);
-}
-
-/** A name broken into lines of at most `width` characters, at spaces where it can be. */
-export function wrapName(name: string, width = 17) {
-  const lines: string[] = [];
-  let line = "";
-  for (const word of name.split(/\s+/).filter(Boolean)) {
-    const pieces = word.match(new RegExp(`.{1,${String(width)}}`, "g")) ?? [];
-    for (const piece of pieces) {
-      if (line && line.length + 1 + piece.length <= width) line = `${line} ${piece}`;
-      else {
-        if (line) lines.push(line);
-        line = piece;
-      }
-    }
-  }
-  if (line) lines.push(line);
-  return lines.length ? lines : [""];
+/** A cell as the figure draws it; a period the schedule states nothing for is a gap, never zero. */
+export function segmentValue(values: readonly PeriodCell[], period: string): SegmentValue {
+  const cell = values.find((value) => value.label === period)?.cell ?? null;
+  if (!cell) return { kind: "gap", text: `Not in the segment schedule for ${period}.` };
+  if (cell.kind === "number") return { kind: "number", value: cell.value, text: group(cell.text) };
+  return { kind: cell.kind === "gap" ? "gap" : "words", text: safeText(cell.text) };
 }
 
 export const SEG = {
-  width: 516,
-  plotStart: 140,
-  plotEnd: 400,
-  top: 26,
   bar: 12,
-  /** The EBITDA bar sits this far beneath the top of the sales bar. */
-  pair: 16,
-  gap: 18,
-  lineHeight: 16,
-  axis: 24,
-  gapSlot: 44,
+  /** The prior tick row under a bar: tick, then its figure in 11 px. */
+  tickRow: 14,
+  rowGap: 5,
+  blockGap: 16,
+  nameLine: 15,
+  gapSlot: 40,
+  axis: 22,
   /** A stated amount too small to see is drawn this wide; a stated zero is drawn as zero. */
   thinnest: 2,
 } as const;
 
-export type BarMark =
-  | { kind: "bar"; text: string; x: number; width: number; y: number; labelX: number }
-  | { kind: "gap"; text: string; x: number; y: number };
+export type MeasureRow = {
+  measure: "sales" | "ebitda";
+  current: SegmentValue;
+  y: number;
+  /** The bar for a number (width 0 for a stated zero). */
+  bar: { x: number; width: number } | null;
+  /** Where the figure, or the gap's words, start. */
+  labelX: number;
+  /** The words beside a gap slot or in place of a bar, wrapped. */
+  lines: string[];
+  prior: { x: number | null; text: string } | null;
+  height: number;
+};
 
 export type SegmentBlock = {
   segment: Segment;
-  lines: string[];
-  top: number;
+  name: string;
+  nameLines: string[];
   nameY: number[];
-  sales: BarMark;
-  ebitda: BarMark;
-  ratio: string | null;
+  rows: MeasureRow[];
 };
 
-const numberOfReading = (reading: Reading) => (reading.kind === "number" ? reading.value : null);
+export type SegmentLayout = {
+  layout: "wide" | "narrow";
+  width: number;
+  height: number;
+  from: number;
+  to: number;
+  zero: number;
+  top: number;
+  bottom: number;
+  ticks: { value: number; label: string; x: number }[];
+  blocks: SegmentBlock[];
+};
 
-/** Segment blocks on one scale from zero (or from the most negative stated amount). */
-export function segmentGeometry(segments: readonly Segment[]) {
-  const values = segments.flatMap((segment) => [
-    numberOfReading(segment.sales),
-    numberOfReading(segment.ebitda),
-  ]);
-  const scale = ticks(values);
-  const low = scale[0]?.value ?? 0;
-  const high = scale.at(-1)?.value ?? 1;
-  const x = linear([low, high], [SEG.plotStart, SEG.plotEnd]);
+const numbers = (values: readonly SegmentValue[]) =>
+  values.flatMap((value) => (value.kind === "number" ? [value.value] : []));
+
+const priorText = (prior: string, value: SegmentValue) =>
+  value.kind === "number" ? `${prior} ${value.text}` : `${prior}: ${value.text}`;
+
+/** Segment blocks on one scale from zero at `width` px; names left (wide) or above (narrow). */
+export function segmentLayout(
+  view: SegmentView,
+  periods: SegmentPeriods,
+  width: number,
+): SegmentLayout {
+  const layout = width < NARROW ? "narrow" : "wide";
+  const cells = view.segments.map((segment) => ({
+    segment,
+    sales: segmentValue(segment.sales, periods.drawn),
+    ebitda: segmentValue(segment.ebitda, periods.drawn),
+    priorSales: periods.prior ? segmentValue(segment.sales, periods.prior) : null,
+    priorEbitda: periods.prior ? segmentValue(segment.ebitda, periods.prior) : null,
+  }));
+  const all = cells.flatMap((cell) => [cell.sales, cell.ebitda]);
+  const priors = cells.flatMap((cell) => [cell.priorSales, cell.priorEbitda]).flatMap((v) => v ?? []);
+  const axis = niceAxis(numbers([...all, ...priors]), { zero: true });
+  const names = view.segments.map((segment) => safeText(segment.name));
+  const nameWidth =
+    layout === "wide"
+      ? Math.min(width * 0.3, Math.max(...names.map((name) => textWidth(name, 13))) + 14)
+      : 0;
+  // Room right of the longest bar for its figure and for the prior tick's words.
+  const labels = [
+    ...all.flatMap((value) => (value.kind === "number" ? [textWidth(value.text, SIZE.value)] : [])),
+    ...(periods.prior
+      ? priors.flatMap((value) =>
+          value.kind === "number" ? [textWidth(priorText(periods.prior ?? "", value), 11)] : [],
+        )
+      : []),
+  ];
+  const from = nameWidth + 2;
+  const to = Math.max(from + 80, width - Math.max(40, ...labels) - 10);
+  const x = (value: number) => axis.place(value, from, to);
   const zero = x(0);
-  const mark = (reading: Reading, y: number): BarMark => {
-    if (reading.kind !== "number") return { kind: "gap", text: reading.text, x: zero, y };
-    const end = x(reading.value);
-    const span = Math.abs(end - zero);
-    const width = reading.value === 0 ? 0 : Math.max(SEG.thinnest, span);
-    const left = reading.value < 0 ? zero - width : zero;
-    // A loss is labelled just right of zero so its label never runs into the names.
-    const labelX = reading.value < 0 ? zero + 6 : zero + width + 6;
-    return { kind: "bar", text: reading.text, x: left, width, y, labelX };
-  };
-  let top = SEG.top;
-  const blocks = segments.map((segment): SegmentBlock => {
-    const lines = wrapName(segment.name);
-    const content = Math.max(SEG.pair + SEG.bar, lines.length * SEG.lineHeight);
-    const first = top + (content - lines.length * SEG.lineHeight) / 2 + 12;
-    const block: SegmentBlock = {
-      segment,
+
+  const row = (
+    measure: MeasureRow["measure"],
+    current: SegmentValue,
+    prior: SegmentValue | null,
+    y: number,
+  ): MeasureRow => {
+    let bar: MeasureRow["bar"] = null;
+    let labelX = zero + 6;
+    let lines: string[] = [];
+    if (current.kind === "number") {
+      const span = Math.abs(x(current.value) - zero);
+      const size = current.value === 0 ? 0 : Math.max(SEG.thinnest, span);
+      bar = { x: current.value < 0 ? zero - size : zero, width: size };
+      labelX = current.value < 0 ? zero + 6 : zero + size + 6;
+    } else {
+      labelX = zero + (current.kind === "gap" ? SEG.gapSlot + 6 : 4);
+      lines = wrap(current.text, Math.max(60, width - labelX), 11);
+    }
+    const priorMark =
+      prior && periods.prior
+        ? {
+            x: prior.kind === "number" ? x(prior.value) : null,
+            text: priorText(periods.prior, prior),
+          }
+        : null;
+    const body = Math.max(SEG.bar, lines.length * 13);
+    return {
+      measure,
+      current,
+      y,
+      bar,
+      labelX,
       lines,
-      top,
-      nameY: lines.map((_, at) => first + at * SEG.lineHeight),
-      sales: mark(segment.sales, top + (content - SEG.pair - SEG.bar) / 2),
-      ebitda: mark(segment.ebitda, top + (content - SEG.pair - SEG.bar) / 2 + SEG.pair),
-      ratio: ratioPercent(segment.ebitda, segment.sales),
+      prior: priorMark,
+      height: body + (priorMark ? SEG.tickRow : 0),
     };
-    top += content + SEG.gap;
+  };
+
+  let top = 6;
+  const blocks = cells.map((cell, at): SegmentBlock => {
+    const name = names[at] ?? "";
+    const nameLines =
+      layout === "wide" ? wrap(name, nameWidth - 10, 13) : wrap(name, width - 4, 13);
+    const rowsTop = layout === "narrow" ? top + nameLines.length * SEG.nameLine + 3 : top;
+    const sales = row("sales", cell.sales, cell.priorSales, rowsTop);
+    const ebitda = row("ebitda", cell.ebitda, cell.priorEbitda, rowsTop + sales.height + SEG.rowGap);
+    const rowsBottom = ebitda.y + ebitda.height;
+    const nameTop = layout === "narrow" ? top : rowsTop;
+    const block: SegmentBlock = {
+      segment: cell.segment,
+      name,
+      nameLines,
+      nameY: nameLines.map((_, line) => nameTop + 11 + line * SEG.nameLine),
+      rows: [sales, ebitda],
+    };
+    const nameBottom = nameTop + nameLines.length * SEG.nameLine;
+    top = Math.max(rowsBottom, nameBottom) + SEG.blockGap;
     return block;
   });
-  const bottom = top - SEG.gap + 8;
+  const bottom = top - SEG.blockGap + 6;
+  const ticks = fittingTicks(axis, from, to, (text) => textWidth(text, SIZE.tick)).map((tick) => ({
+    ...tick,
+    x: x(tick.value),
+  }));
   return {
-    blocks,
-    ticks: scale.map((tick) => ({ ...tick, x: x(tick.value) })),
-    zero,
-    bottom,
+    layout,
+    width,
     height: bottom + SEG.axis,
+    from,
+    to,
+    zero,
+    top: 2,
+    bottom,
+    ticks,
+    blocks,
   };
 }

@@ -1,7 +1,18 @@
 import type { Mark, MarkTone } from "../../overview/marks";
 import { tone } from "../../../signal";
-import { fittingTicks, niceAxis, type DumbbellRow, type DumbbellSide, type NiceAxis } from "../kit/marks";
-import { LINE, NARROW, SIZE, signedText, textWidth, wrap } from "../kit/marks/text";
+import {
+  LINE,
+  NARROW,
+  SIZE,
+  fittingTicks,
+  niceAxis,
+  signedText,
+  textWidth,
+  wrap,
+  type DumbbellRow,
+  type DumbbellSide,
+  type NiceAxis,
+} from "../kit/marks";
 import { group, type Reading } from "../kit/numbers";
 import { safeText } from "../kit/reader";
 import type {
@@ -150,7 +161,11 @@ export function barLayout(data: EarningsAgainstDebt, width: number) {
   const axis = niceAxis(values, { zero: true });
   const longest = Math.max(0, ...data.measures.map((measure) => textWidth(measure.label)));
   const labelWidth = narrow ? width : Math.min(longest + 16, Math.round(width * 0.3));
-  const figureRoom = Math.max(0, ...values.map((value) => textWidth(group(String(value))))) + 12;
+  const figureRoom =
+    Math.max(
+      0,
+      ...cells.map((cell) => (cell?.kind === "number" ? textWidth(group(cell.text)) : 0)),
+    ) + 12;
   const plot = [narrow ? 0 : labelWidth, Math.max(labelWidth + 60, width - figureRoom)] as const;
   const left = narrow ? 0 : plot[0];
   const right = narrow ? width - figureRoom : plot[1];
@@ -160,8 +175,7 @@ export function barLayout(data: EarningsAgainstDebt, width: number) {
     const cell = cells[index] ?? null;
     const labelLines = wrap(measure.label, labelWidth - (narrow ? 0 : 12));
     const labelHeight = narrow ? labelLines.length * LINE : 0;
-    const reason =
-      cell?.kind === "number" ? [] : wrap(cellWords(cell), right - left, SIZE.label);
+    const reason = cell?.kind === "number" ? [] : wrap(cellWords(cell), right - left, SIZE.label);
     const markHeight = reason.length ? BAR + 4 + reason.length * LINE : BAR;
     const height = Math.max(narrow ? 0 : labelLines.length * LINE, labelHeight + markHeight);
     const row: BarRow = {
@@ -188,7 +202,7 @@ export function barLayout(data: EarningsAgainstDebt, width: number) {
 const PLOT_TOP = 40;
 const PLOT_HEIGHT = 96;
 const GUTTER = 16;
-const MARGIN = 44;
+const MARGIN = 50;
 const PAD = 26;
 
 export type LinePoint = {
@@ -213,8 +227,9 @@ export type LinePanel = {
   ticks: boolean;
 };
 
+/** Panels about 260 px wide at the least, so three or more periods' labels sit apart. */
 const columnsFor = (width: number, count: number) =>
-  Math.max(1, Math.min(count, width >= NARROW ? 4 : width >= 360 ? 2 : 1));
+  Math.max(1, Math.min(count, 4, Math.floor((width + GUTTER) / (260 + GUTTER))));
 
 /** The small multiple at `width`: every measure's panel on the one axis, gaps in place. */
 export function lineLayout(data: EarningsAgainstDebt, width: number) {

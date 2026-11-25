@@ -110,7 +110,7 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
   const table = stepTable(entry);
   if (table === "several")
     return gapOf("The handoff has more than one table of steps, so no bridge is drawn.");
-  if (!table) return gapOf("The handoff has no bridge table with Step and Amount columns.");
+  if (!table) return gapOf("The handoff has no bridge table.");
   const unitAt = table.headers.indexOf("Reporting unit");
   const amountAt = table.headers.indexOf("Amount");
   const basisAt = table.headers.indexOf("Basis and limitation");
@@ -187,53 +187,6 @@ export function readBridge(entry: OutputEntry): Bridge | BridgeGap {
   };
 }
 
-/** The first 1, 2 or 5 times a power of ten that is at least `raw`. */
-function niceStep(raw: number) {
-  const power = 10 ** Math.floor(Math.log10(raw));
-  const factor = raw / power;
-  return (factor <= 1 ? 1 : factor <= 2 ? 2 : factor <= 5 ? 5 : 10) * power;
-}
-
-export const BRIDGE = { left: 6, right: 400, width: 520, height: 30 } as const;
-
-/**
- * The waterfall's axis and bars. When every level is above zero the axis starts at a round number
- * below the lowest level (the opening total, unless a deduction goes lower), leaving half the
- * add-backs' spread of bar to show, and both totals are marked as cut; otherwise it includes zero.
- */
-export function bridgeGeometry(bridge: Bridge) {
-  const levels = [bridge.opening.value];
-  for (const step of bridge.changes) levels.push((levels.at(-1) ?? 0) + step.value);
-  const closing = bridge.closing.value;
-  const all = [...levels, closing];
-  const low = Math.min(...all);
-  const high = Math.max(...all);
-  const spread = high - low;
-  // Half the spread (or a step, with no add-backs) of room below the lowest level, then a round number.
-  const step = niceStep(spread / 2 || Math.abs(high) / 2 || 1);
-  const cut = Math.floor((low - (spread / 2 || step)) / step) * step;
-  const truncated = low > 0 && cut > 0;
-  const lo = truncated ? cut : Math.min(0, Math.floor(low / step) * step);
-  const hi = Math.max(Math.ceil(high / step) * step, lo + step);
-  const x = (value: number) =>
-    BRIDGE.left + ((value - lo) / (hi - lo)) * (BRIDGE.right - BRIDGE.left);
-  const rows = [
-    { kind: "total" as const, step: bridge.opening, from: lo, to: bridge.opening.value },
-    ...bridge.changes.map((change, at) => ({
-      kind: "change" as const,
-      step: change,
-      from: levels[at] ?? 0,
-      to: levels[at + 1] ?? 0,
-    })),
-    { kind: "total" as const, step: bridge.closing, from: lo, to: closing },
-  ].map((row) => ({
-    ...row,
-    x0: x(Math.min(row.from, row.to)),
-    x1: x(Math.max(row.from, row.to)),
-  }));
-  return { lo, hi, truncated, x, rows };
-}
-
 type Reported = { text: string; value: number };
 export type LeverageMeasure =
   | {
@@ -270,8 +223,7 @@ export function readLeverage(entry: OutputEntry): Leverage {
   if (!table)
     return {
       state: "gap",
-      reason:
-        "The handoff has no table of leverage by earnings basis (Total leverage and Net leverage).",
+      reason: "The handoff has no table of leverage on the statements and on supported earnings.",
     };
   const rowOf = (basis: string) =>
     table.rows.filter((row) => norm(row.cells[0] ?? "").replace(/\s*\(cp-1\)$/, "") === basis);

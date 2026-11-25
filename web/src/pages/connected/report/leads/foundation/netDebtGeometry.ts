@@ -1,363 +1,308 @@
-import { tone } from "../../../signal";
-import { linear } from "../kit/geometry";
-import { difference, group, readCell, signOf, sum, type Reading } from "../kit/numbers";
-import { clean, direction, ratioAxis, reasonOf, valueScale } from "./earningsDebtGeometry";
-import type { NetDebtPeriod, NetDebtView, ProForma } from "./legacyData";
+import type { Mark } from "../../overview/marks";
+import { LINE, SIZE, fittingTicks, niceAxis, textWidth, wrap } from "../kit/marks";
+import { group, type Reading } from "../kit/numbers";
+import { safeText } from "../kit/reader";
+import type { LiquidityPeriod, NetDebtPeriod, NetDebtView, ProForma } from "./foundationData";
 
-/** Where a reading line starts: under the bars, or at the left edge when it is long. */
-export const readingX = (text: string) => (text.length > 46 ? 0 : ND.x0);
+// The words and positions of the net debt tile. Every figure drawn is one the handoff states; the
+// bars place stated numbers and never make them add up; nothing here prints a sum or an equation.
 
-/** Layout of the bars, in viewBox units. Text is 11 px or more at the 1440 layout. */
-export const ND = {
-  width: 420,
-  x0: 84,
-  x1: 404,
-  top: 10,
-  row: 54,
-  bar: 16,
-  gapSlot: 44,
-} as const;
+/** A cell as the page writes it: the figure grouped, or a gap or words exactly as written. */
+export const words = (cell: Reading) =>
+  cell.kind === "number" ? group(cell.text) : safeText(cell.text);
+
+/** A ratio cell: "4.88x", or the gap or words as written. */
+export const ratioWords = (cell: Reading | null) =>
+  cell === null ? "not stated" : cell.kind === "number" ? `${group(cell.text)}x` : words(cell);
+
+/** A date as written, the stated gap with its reason included; null when the cell is empty. */
+export const dateWords = (cell: Reading) => (cell.text.trim() ? safeText(cell.text) : null);
+
+/**
+ * The adjustment the pro forma bar draws: only when exactly one adjustment states a pro forma net
+ * debt, and it states its amount. With several, none is chosen (by size or otherwise): they are
+ * listed in handoff order.
+ */
+export function proFormaOf(view: NetDebtView): ProForma | null {
+  const priced = view.adjustments.filter((item) => item.netDebt.kind === "number");
+  const [only] = priced;
+  return priced.length === 1 && only?.amount.kind === "number" ? only : null;
+}
+
+/** "Net 16,278 · cash 3,472 · gross debt 19,750"; a stated gap as written, once when all share it. */
+export function periodReading(period: NetDebtPeriod) {
+  const cells = [period.net, period.cash, period.gross];
+  const [first] = cells;
+  if (first && cells.every((cell) => cell.kind !== "number" && cell.text === first.text))
+    return words(first);
+  return [
+    period.net.kind === "number" ? `Net ${words(period.net)}` : `Net debt ${words(period.net)}`,
+    `cash ${words(period.cash)}`,
+    `gross debt ${words(period.gross)}`,
+  ].join(" · ");
+}
+
+/** "Net 22,967 · Special dividend … · 2024-10-18 · amount 4,348": the stated facts, no equation. */
+export function proFormaReading(item: ProForma) {
+  const date = dateWords(item.date);
+  return [
+    `Net ${words(item.netDebt)}`,
+    safeText(item.event),
+    ...(date ? [date] : []),
+    `amount ${words(item.amount)}`,
+  ].join(" · ");
+}
+
+/** The order the list writes an adjustment's stated facts in, named once in its heading. */
+export const ADJUSTMENT_ORDER = "date · amount · pro forma net debt · pro forma net leverage";
+
+/** One adjustment's stated facts, for the list, in `ADJUSTMENT_ORDER`: every one, as written. */
+export function adjustmentFacts(item: ProForma) {
+  return [
+    dateWords(item.date) ?? "date not stated",
+    words(item.amount),
+    words(item.netDebt),
+    ratioWords(item.leverage),
+  ];
+}
+
+// ---------------------------------------------------------------------------------------------
+// The bars
+// ---------------------------------------------------------------------------------------------
+
+const BAR = 16;
+const ROW_GAP = 12;
+const LABEL_WIDTH = 76;
+/** From this measured width the period label sits beside its bar; below it, above. */
+export const BESIDE = 360;
 
 type Span = { x: number; width: number };
-const span = (at: (value: number) => number, from: number, to: number): Span => ({
-  x: Math.min(at(from), at(to)),
-  width: Math.abs(at(to) - at(from)),
-});
 
-const valueOf = (cell: Reading) => (cell.kind === "number" ? cell.value : null);
-const stated = (cell: Reading, name: string) =>
-  cell.kind === "number" ? `${name} ${group(cell.text)}` : `${name} not supplied`;
-const capital = (text: string) => `${text.charAt(0).toUpperCase()}${text.slice(1)}`;
-
-export type PeriodBar = {
-  label: string;
-  kind: "prior" | "current";
-  y: number;
-  /** The net debt bar; width zero for a stated zero, which is still drawn as a value. */
-  net: (Span & { zero: boolean }) | null;
-  netGap: Span | null;
-  /** Cash drawn beyond net debt, its stated length; only where net debt and cash are zero or more. */
-  cash: Span | null;
-  cashGap: Span | null;
-  /** Where gross debt, as stated, sits. */
-  gross: number | null;
-  reading: string;
-  reasons: string[];
-};
-
-export type ProFormaBar = {
-  y: number;
-  /** The part up to the base period's net debt, where the pro forma keeps it. */
-  base: Span | null;
-  /** From the base period's net debt to the pro forma: the event's part. */
-  change: (Span & { reduces: boolean }) | null;
-  /** The whole pro forma bar, when the base period's net debt is not a number. */
-  whole: Span | null;
-  end: number;
-  reading: string;
-};
-
-/** Whether the base period's net debt plus the event's amount is the stated pro forma, exactly. */
-function proFormaAdds(base: Reading, proForma: ProForma) {
-  if (base.kind !== "number" || proForma.netDebt.kind !== "number") return false;
-  const total = sum([base.text, proForma.amount.text]);
-  return total !== null && Number(total) === proForma.netDebt.value;
-}
-
-const plusAmount = (amount: Reading) =>
-  amount.text.startsWith("-") ? `− ${group(amount.text.slice(1))}` : `+ ${group(amount.text)}`;
-
-/** "net debt 22,967 = 18,619 + 4,348", or the three stated numbers without "=" when they do not add. */
-export function proFormaEquation(base: NetDebtPeriod | undefined, proForma: ProForma) {
-  const net = group(proForma.netDebt.text);
-  if (base && proFormaAdds(base.net, proForma))
-    return `net debt ${net} = ${group(base.net.text)} ${plusAmount(proForma.amount)}, derived`;
-  const from = base?.net.kind === "number" ? `; ${base.label} ${group(base.net.text)}` : "";
-  return `net debt ${net}${from}; amount ${group(proForma.amount.text)}`;
-}
-
-export const eventOf = (proForma: ProForma) => clean(proForma.event);
-export function dateOf(proForma: ProForma) {
-  const cell = readCell(proForma.date);
-  return cell.kind === "gap" || !proForma.date.trim() ? "date not stated" : clean(proForma.date);
-}
-
-/** The bars on one scale from zero (or through it, for a net cash position); widths proportional to the stated figures. */
-export function netDebtLayout(view: NetDebtView) {
-  const last = view.periods.length - 1;
-  const segmented = (p: NetDebtPeriod) =>
-    p.net.kind === "number" && p.cash.kind === "number" && p.net.value >= 0 && p.cash.value >= 0;
-  const values = [
-    ...view.periods.flatMap((p) => [
-      valueOf(p.net),
-      valueOf(p.gross),
-      segmented(p) ? (valueOf(p.net) ?? 0) + (valueOf(p.cash) ?? 0) : null,
-    ]),
-    view.proForma ? valueOf(view.proForma.netDebt) : null,
-  ].filter((value): value is number => value !== null);
-  const scale = valueScale(values, [ND.x0, ND.x1]);
-  const at = scale.at;
-  const bars = view.periods.map((p, index): PeriodBar => {
-    const y = ND.top + index * ND.row;
-    const net = valueOf(p.net);
-    const cash = valueOf(p.cash);
-    const gross = valueOf(p.gross);
-    // A cash gap is drawn past the net debt bar on the positive side, never over it.
-    const netEnd = net === null ? at(0) + ND.gapSlot : at(Math.max(net, 0));
-    const parts = [stated(p.net, "net"), stated(p.cash, "cash"), stated(p.gross, "gross debt")];
-    const named = [
-      ["net debt", p.net],
-      ["cash", p.cash],
-      ["gross debt", p.gross],
-    ] as const;
-    return {
-      label: p.label,
-      kind: index === last ? "current" : "prior",
-      y,
-      net: net === null ? null : { ...span(at, 0, net), zero: net === 0 },
-      netGap: net === null ? { x: at(0), width: ND.gapSlot } : null,
-      cash: segmented(p) && net !== null && cash !== null ? span(at, net, net + cash) : null,
-      cashGap: p.cash.kind === "number" ? null : { x: netEnd + 2, width: ND.gapSlot - 8 },
-      gross: gross === null ? null : at(gross),
-      reading: capital(parts.join(" · ")),
-      reasons: named.flatMap(([name, cell]) =>
-        cell.kind === "number" ? [] : [`${p.label} ${name} not supplied: ${reasonOf(cell)}.`],
-      ),
-    };
-  });
-  const base = view.periods.at(-1);
-  const proForma = view.proForma ? proFormaBar(view.proForma, base, at, bars.length) : null;
-  const axisY = ND.top + (bars.length + (proForma ? 1 : 0)) * ND.row - 6;
-  return { bars, proForma, ticks: scale.ticks, zero: at(0), axisY, height: axisY + 24 };
-}
-
-function proFormaBar(
-  proForma: ProForma,
-  base: NetDebtPeriod | undefined,
-  at: (value: number) => number,
-  index: number,
-): ProFormaBar {
-  const y = ND.top + index * ND.row;
-  const pf = valueOf(proForma.netDebt) ?? 0;
-  const from = base ? valueOf(base.net) : null;
-  const reading = capital(proFormaEquation(base, proForma).replace(/^net debt/, "net"));
-  if (from === null)
-    return { y, base: null, change: null, whole: span(at, 0, pf), end: at(pf), reading };
-  // The base part is what the pro forma keeps of the base period's net debt, on the same side of zero.
-  const sameSide = Math.sign(from) === Math.sign(pf);
-  const kept = sameSide ? Math.sign(pf) * Math.min(Math.abs(from), Math.abs(pf)) : 0;
-  return {
-    y,
-    base: kept === 0 ? null : span(at, 0, kept),
-    change: pf === from ? null : { ...span(at, from, pf), reduces: Math.abs(pf) < Math.abs(from) },
-    whole: null,
-    end: at(pf),
-    reading,
-  };
-}
-
-// ---------------------------------------------------------------------------------------------
-// The net debt / EBITDA strip
-// ---------------------------------------------------------------------------------------------
-
-export const NL = { width: 420, x0: 84, x1: 392, top: 14, row: 26 } as const;
-
-export type StripMark = {
+export type NetBar = {
   label: string;
   kind: "prior" | "current" | "proForma";
-  y: number;
-  value: { x: number; text: string; labelX: number; anchor: "start" | "end" } | null;
-  reason: string | null;
+  top: number;
+  barY: number;
+  /** The stated net debt's bar (a stated zero is a hairline, still a value). */
+  net: (Span & { value: number }) | null;
+  /** Where the net debt is not stated: the hatched slot, with the cell as written. */
+  netGap: (Span & { reason: string }) | null;
+  /** Cash drawn beyond net debt at its own stated length; only where both are zero or more. */
+  cash: Span | null;
+  cashGap: (Span & { reason: string }) | null;
+  /** Where the stated gross debt sits. */
+  gross: number | null;
+  /** The pro forma's seam: where the reported net debt ends inside the pro forma bar. */
+  seam: number | null;
+  reading: string[];
 };
 
-/** Net debt / EBITDA per period and pro forma on its own axis, not from zero; null if none is a number. */
-export function leverageStrip(view: NetDebtView) {
+const value = (cell: Reading) => (cell.kind === "number" ? cell.value : null);
+
+function spanOf(x: (v: number) => number, from: number, to: number): Span {
+  return { x: Math.min(x(from), x(to)), width: Math.abs(x(to) - x(from)) };
+}
+
+/** The net debt bars at `width`, on one scale from zero (through it for a net cash position). */
+export function barsLayout(view: NetDebtView, proForma: ProForma | null, width: number) {
+  const beside = width >= BESIDE;
+  const left = beside ? LABEL_WIDTH : 0;
+  const segmented = (p: NetDebtPeriod) => {
+    const [net, cash] = [value(p.net), value(p.cash)];
+    return net !== null && cash !== null && net >= 0 && cash >= 0 ? net + cash : null;
+  };
+  const positions = [
+    ...view.periods.flatMap((p) => [value(p.net), value(p.gross), segmented(p)]),
+    proForma ? value(proForma.netDebt) : null,
+  ].filter((v): v is number => v !== null);
+  const axis = niceAxis(positions, { zero: true });
+  // The last tick's label is centred on its line, inside the figure.
+  const right = width - textWidth(axis.ticks.at(-1)?.label ?? "", SIZE.tick) / 2 - 2;
+  const x = (v: number) => axis.place(v, left, right);
+  const slot = Math.min(96, (right - left) * 0.3);
   const last = view.periods.length - 1;
-  const entries = [
-    ...view.periods.map((p, index) => ({
-      label: p.label,
-      kind: index === last ? ("current" as const) : ("prior" as const),
-      cell: p.leverage,
-    })),
-    ...(view.proForma
-      ? [{ label: "Pro forma", kind: "proForma" as const, cell: view.proForma.leverage }]
-      : []),
+  let y = 2;
+  const take = (bar: Omit<NetBar, "top" | "barY" | "reading">, text: string): NetBar => {
+    const reading = wrap(text, right - left, SIZE.label);
+    const barY = beside ? y : y + LINE;
+    const laid = { ...bar, top: y, barY, reading };
+    y = barY + BAR + 4 + reading.length * LINE + ROW_GAP;
+    return laid;
+  };
+  const bars = view.periods.map((p, index) => {
+    const [net, cash, gross] = [value(p.net), value(p.cash), value(p.gross)];
+    const netEnd = net === null ? x(0) + slot : x(Math.max(net, 0));
+    return take(
+      {
+        label: p.label,
+        kind: index === last ? "current" : "prior",
+        net: net === null ? null : { ...spanOf(x, 0, net), value: net },
+        netGap: net === null ? { x: x(0), width: slot, reason: words(p.net) } : null,
+        cash:
+          net !== null && cash !== null && net >= 0 && cash >= 0
+            ? spanOf(x, net, net + cash)
+            : null,
+        cashGap:
+          cash === null && net !== null
+            ? { x: netEnd + 2, width: Math.min(40, slot), reason: words(p.cash) }
+            : null,
+        gross: gross === null ? null : x(gross),
+        seam: null,
+      },
+      periodReading(p),
+    );
+  });
+  const pf = proForma ? value(proForma.netDebt) : null;
+  const base = view.periods.at(-1);
+  const reported = base ? value(base.net) : null;
+  const inside =
+    pf !== null && reported !== null && reported !== 0 && Math.sign(reported) === Math.sign(pf)
+      ? Math.abs(reported) < Math.abs(pf)
+      : false;
+  const proBar =
+    proForma && pf !== null
+      ? take(
+          {
+            label: "Pro forma",
+            kind: "proForma",
+            net: { ...spanOf(x, 0, pf), value: pf },
+            netGap: null,
+            cash: null,
+            cashGap: null,
+            gross: null,
+            seam: inside && reported !== null ? x(reported) : null,
+          },
+          proFormaReading(proForma),
+        )
+      : null;
+  const plotBottom = y - ROW_GAP;
+  const ticks = fittingTicks(axis, left, right, (text) => textWidth(text, SIZE.tick));
+  return {
+    beside,
+    bars: proBar ? [...bars, proBar] : bars,
+    axis,
+    x,
+    ticks,
+    plotBottom,
+    height: plotBottom + 22,
+  };
+}
+
+// ---------------------------------------------------------------------------------------------
+// The leverage strip, liquidity and the table
+// ---------------------------------------------------------------------------------------------
+
+export type StripEntry = { label: string; cell: Reading | null; proForma: boolean };
+
+/** Net debt / EBITDA per period, then the drawn pro forma's, as stated. */
+export function stripEntries(view: NetDebtView, proForma: ProForma | null): StripEntry[] {
+  return [
+    ...view.periods.map((p) => ({ label: p.label, cell: p.leverage, proForma: false })),
+    ...(proForma ? [{ label: "Pro forma", cell: proForma.leverage, proForma: true }] : []),
   ];
-  const values = entries.flatMap(({ cell }) => (cell?.kind === "number" ? [cell.value] : []));
-  if (!values.length) return null;
-  const axis = ratioAxis(values);
-  const x = linear([axis.lo, axis.hi], [NL.x0, NL.x1]);
-  const marks = entries.map(({ label, kind, cell }, index): StripMark => {
-    const y = NL.top + index * NL.row;
-    if (cell?.kind !== "number")
-      return {
-        label,
-        kind,
-        y,
-        value: null,
-        reason: cell ? `not supplied: ${reasonOf(cell)}` : "not stated",
-      };
-    const at = x(cell.value);
-    const text = `${group(cell.text)}x${kind === "proForma" ? " pro forma" : ""}`;
-    const right = at + 10 + text.length * 7.3 <= NL.width;
+}
+
+export const stripMarks = (entries: readonly StripEntry[]): Mark[] =>
+  entries.flatMap((entry) =>
+    entry.cell?.kind === "number"
+      ? [{ label: entry.label, value: entry.cell.value, text: `${group(entry.cell.text)}x` }]
+      : [],
+  );
+
+/** True when the stated figures are adjacent: the strip never joins across an unstated period. */
+export function adjacent(entries: readonly StripEntry[]) {
+  const stated = entries.flatMap((entry, at) => (entry.cell?.kind === "number" ? [at] : []));
+  const [first] = stated;
+  const last = stated.at(-1);
+  return first === undefined || last === undefined || last - first + 1 === stated.length;
+}
+
+export const stripGaps = (entries: readonly StripEntry[]) =>
+  entries.flatMap((entry) =>
+    entry.cell?.kind === "number" ? [] : [`${entry.label}: ${ratioWords(entry.cell)}`],
+  );
+
+export function stripReading(entries: readonly StripEntry[]) {
+  const parts = entries.map(
+    (entry) => `${entry.proForma ? "pro forma" : entry.label} ${ratioWords(entry.cell)}`,
+  );
+  return `Net debt / EBITDA on its own scale: ${parts.join(", ")}.`;
+}
+
+/** A stated figure as written, and whether it is a number (a gap or words is drawn in the gap ink). */
+export type Stated = { text: string; number: boolean };
+
+const stated = (cell: Reading): Stated => ({ text: words(cell), number: cell.kind === "number" });
+
+export type LiquidityLine = {
+  label: string;
+  /** The handoff's own stated total for the period, as written; null where it writes none. */
+  total: Stated | null;
+  cash: Stated | null;
+  undrawn: Stated | null;
+};
+
+/** Liquidity per period: the stated total where the handoff writes one, and the stated parts. */
+export function liquidityLines(view: NetDebtView): LiquidityLine[] {
+  const parts = new Map<string, LiquidityPeriod>(view.liquidity.map((row) => [row.label, row]));
+  const totals = view.liquidityTotal?.values ?? [];
+  const labels = [
+    ...view.liquidity.map((row) => row.label),
+    ...totals.map((total) => total.label).filter((label) => !parts.has(label)),
+  ];
+  return labels.map((label) => {
+    const row = parts.get(label);
+    const total = totals.find((item) => item.label === label)?.cell ?? null;
     return {
       label,
-      kind,
-      y,
-      value: { x: at, text, labelX: right ? at + 10 : at - 10, anchor: right ? "start" : "end" },
-      reason: null,
+      total: total ? stated(total) : null,
+      cash: row ? stated(row.cash) : null,
+      undrawn: row ? stated(row.undrawn) : null,
     };
   });
-  const axisY = NL.top + entries.length * NL.row - 10;
-  return {
-    axis,
-    fromZero: axis.lo === 0,
-    marks,
-    ticks: axis.ticks.map((value) => ({ value, x: x(value), label: axis.label(value) })),
-    axisY,
-    height: axisY + 22,
-  };
 }
 
-// ---------------------------------------------------------------------------------------------
-// Words: title, readings, notes and table
-// ---------------------------------------------------------------------------------------------
-
-/** Net debt from the first to the last period, derived, with the owner's tone for net debt. */
-export function netDebtChange(view: NetDebtView) {
-  const [first, ...rest] = view.periods;
-  const last = rest.at(-1);
-  if (!first || !last) return null;
-  const change = difference(last.net.text, first.net.text);
-  if (change === null) return null;
-  const judged = tone("net_debt", change);
-  return {
-    from: first,
-    to: last,
-    change,
-    word: direction(change),
-    tone: judged === "worse" || judged === "better" ? judged : null,
-  };
+/** The bars' reading: every period's stated figures and the drawn pro forma's. */
+export function barsReading(view: NetDebtView, proForma: ProForma | null) {
+  const periods = view.periods.map((p) => `${p.label} ${periodReading(p)}`);
+  const pro = proForma ? [`pro forma ${proFormaReading(proForma)}`] : [];
+  return `Net debt, ${view.unit}, on one scale from zero: ${[...periods, ...pro].join("; ")}.`;
 }
 
-/** "Net debt rose from 16,278 to 18,619; pro forma for <event> it is 22,967": only what the data supports. */
-export function netDebtTitle(view: NetDebtView) {
-  const moved = netDebtChange(view);
-  const only = view.periods.filter((p) => p.net.kind === "number");
-  const verb = moved && signOf(moved.change) === 1 ? "rose" : "fell";
-  const head = moved
-    ? signOf(moved.change) === 0
-      ? `Net debt was unchanged at ${group(moved.to.net.text)}`
-      : `Net debt ${verb} from ${group(moved.from.net.text)} to ${group(moved.to.net.text)}`
-    : only.length === 1 && only[0]
-      ? `Net debt was ${group(only[0].net.text)} at ${only[0].label}`
-      : null;
-  const pf = view.proForma;
-  const tail = pf ? `pro forma for ${eventOf(pf)} it is ${group(pf.netDebt.text)}` : null;
-  if (head && tail) return `${head}; ${tail}`;
-  if (head) return head;
-  if (pf) return `Pro forma for ${eventOf(pf)}, net debt is ${group(pf.netDebt.text)}`;
-  return `Net debt, ${view.periods.map((p) => p.label).join(" → ")}`;
-}
+const NOT_APPLICABLE = "Not applicable";
 
-/** The figure's reading, every stated number in it. */
-export function netDebtReading(view: NetDebtView, crossesZero: boolean) {
-  const periods = view.periods.map(
-    (p) =>
-      `${p.label} ${[stated(p.net, "net"), stated(p.cash, "cash"), stated(p.gross, "gross debt")].join(", ")}`,
-  );
-  const pf = view.proForma;
-  const base = view.periods.at(-1);
-  const proForma = pf
-    ? [
-        `pro forma for ${eventOf(pf)}, ${dateOf(pf)}: ${proFormaEquation(base, pf)}; gross debt pro forma is not stated`,
-      ]
-    : [];
-  const scale = crossesZero ? "on one scale through zero" : "on one scale from zero";
-  return `Net debt, ${view.unit}, ${scale}: ${[...periods, ...proForma].join("; ")}.`;
-}
-
-/** The strip's reading. */
-export function stripReading(strip: NonNullable<ReturnType<typeof leverageStrip>>) {
-  const start = strip.axis.label(strip.axis.lo);
-  const scale = strip.fromZero ? "from zero" : `from ${start}, not from zero`;
-  const parts = strip.marks.map(
-    (mark) =>
-      `${mark.kind === "proForma" ? "pro forma" : mark.label} ${mark.value ? mark.value.text.replace(" pro forma", "") : (mark.reason ?? "")}`,
-  );
-  return `Net debt to EBITDA on its own scale ${scale}: ${parts.join(", ")}.`;
-}
-
-/** The figure's notes: gap reasons, an unreconciled net debt, and what the pro forma does not state. */
-export function netDebtNotes(view: NetDebtView, layout: ReturnType<typeof netDebtLayout>) {
-  const unreconciled = view.periods.some((p) => {
-    if (p.net.kind !== "number") return false;
-    const net = difference(p.gross.text, p.cash.text);
-    return net !== null && Number(net) !== p.net.value;
-  });
-  return [
-    ...layout.bars.flatMap((bar) => bar.reasons),
-    ...(unreconciled ? ["Net debt is not gross debt less cash in the handoff."] : []),
-    ...(view.proForma ? ["Gross debt pro forma is not stated."] : []),
-  ];
-}
-
-const ratioCell = (cell: Reading | null) =>
-  cell === null
-    ? "Not stated"
-    : cell.kind === "number"
-      ? `${group(cell.text)}x`
-      : `Not supplied: ${reasonOf(cell)}`;
-const moneyCell = (cell: Reading) =>
-  cell.kind === "number" ? group(cell.text) : `Not supplied: ${reasonOf(cell)}`;
-
-/** The table view: the periods and the pro forma row. */
+/** The table view: every period, then every stated adjustment in handoff order. */
 export function netDebtTable(view: NetDebtView) {
-  const pf = view.proForma;
   return {
     caption: `Net debt, ${view.unit}`,
-    headers: ["Period", "Gross debt", "Cash", "Net debt", "Net debt / EBITDA"],
+    headers: [
+      "Period or adjustment",
+      "Date",
+      "Amount",
+      "Gross debt",
+      "Cash",
+      "Net debt",
+      "Net debt / EBITDA",
+    ],
     rows: [
       ...view.periods.map((p) => [
         p.label,
-        moneyCell(p.gross),
-        moneyCell(p.cash),
-        moneyCell(p.net),
-        ratioCell(p.leverage),
+        NOT_APPLICABLE,
+        NOT_APPLICABLE,
+        words(p.gross),
+        words(p.cash),
+        words(p.net),
+        ratioWords(p.leverage),
       ]),
-      ...(pf
-        ? [
-            [
-              `Pro forma: ${eventOf(pf)}, ${dateOf(pf)}; amount ${group(pf.amount.text)}`,
-              "Not stated",
-              "Not stated",
-              moneyCell(pf.netDebt),
-              ratioCell(pf.leverage),
-            ],
-          ]
-        : []),
+      ...view.adjustments.map((item) => [
+        `Pro forma: ${safeText(item.event)}`,
+        dateWords(item.date) ?? "Not stated",
+        words(item.amount),
+        "Not stated",
+        "Not stated",
+        words(item.netDebt),
+        ratioWords(item.leverage),
+      ]),
     ],
   };
-}
-
-/** One other stated adjustment in words: only its stated facts. */
-export function adjustmentText(item: ProForma) {
-  const leverage =
-    item.leverage.kind === "number"
-      ? `${group(item.leverage.text)}x`
-      : "pro forma leverage not supplied";
-  return `${eventOf(item)}, ${dateOf(item)}: amount ${group(item.amount.text)}, pro forma net debt ${group(item.netDebt.text)}, ${leverage}.`;
-}
-
-/** Liquidity per period: the two stated parts and, when both are numbers, their exact sum (derived). */
-export function liquidityLines(view: NetDebtView) {
-  return view.liquidity.map((row) => ({
-    label: row.label,
-    cash: row.cash.kind === "number" ? group(row.cash.text) : "cash not supplied",
-    undrawn: row.undrawn.kind === "number" ? group(row.undrawn.text) : "undrawn not supplied",
-    total:
-      row.cash.kind === "number" && row.undrawn.kind === "number"
-        ? group(sum([row.cash.text, row.undrawn.text]) ?? "")
-        : null,
-  }));
 }

@@ -1,446 +1,429 @@
 import { cx } from "@/utils/cx";
-import { GapPattern } from "../../overview/figureParts";
-import { GapNote, Tile } from "../../overview/Tile";
-import { FigureTile, ScrollFigure } from "../kit/LeadFrame";
+import { MiniSlope, Slope } from "../../overview/marks";
+import { Figure, GapNote } from "../../overview/Tile";
+import { FigureTile, GapTile } from "../kit/LeadFrame";
+import { Dumbbell, GapSlot, LINE, SIZE, useFigureWidth } from "../kit/marks";
+import { Grid, TickLabels } from "../kit/marks/parts";
 import type { LeadProps } from "../types";
 import {
-  ED,
-  LEV,
-  dumbbellLayout,
+  barLayout,
+  changeText,
+  contiguous,
+  dumbbellRows,
   earningsReading,
   earningsTable,
-  earningsTitle,
-  leverageLayout,
+  leverageGaps,
+  leverageMarks,
   leverageReading,
   leverageWord,
-  signed,
-  type DumbbellMark,
-  type DumbbellRow,
-  type RatioMark,
+  lineLayout,
+  periodSpan,
 } from "./earningsDebtGeometry";
-import { earningsAgainstDebt, type EarningsAgainstDebt } from "./legacyData";
+import {
+  earningsAgainstDebt,
+  figureGap,
+  type EarningsAgainstDebt,
+  type LeverageSeries,
+} from "./foundationData";
 
-const LABEL = "Earnings against debt and leverage";
-export const NO_EARNINGS =
-  "The handoff states no net sales and EBITDA chart data for two periods in one unit.";
-const NO_MEASURES = "No earnings or debt measure is stated for both periods.";
-export const NO_LEVERAGE = "Total debt / EBITDA is not in the handoff.";
-const NO_RATIO = "Total debt / EBITDA is not stated as a number for either period.";
-const DERIVED_NOTE =
-  "Changes and growth are derived from the stated figures. Leverage is on reported EBITDA.";
-const DERIVED_ONLY = "Changes and growth are derived from the stated figures.";
+const LABEL = "Earnings and debt";
+const KICKER = "Earnings against debt and leverage";
+/** Below this measured width the overview Slope's fixed text would shrink under 11 px. */
+const SLOPE_WIDTH = 400;
 
-const TICK = "fill-text-tertiary font-mono";
-const PRIOR_RING = "fill-surface-card stroke-chart-3";
-const GAP_ID = "earnings-debt-gap";
+const FILL = { primary: "fill-chart-1", secondary: "fill-chart-2" } as const;
+const STROKE = { primary: "stroke-chart-1", secondary: "stroke-chart-2" } as const;
 
-function Mark({ mark, row, side }: { mark: DumbbellMark; row: DumbbellRow; side: string }) {
-  if (mark.kind === "gap")
-    return (
-      <rect
-        data-gap={`${row.label} ${side}`}
-        x={mark.x}
-        y={row.y - 7}
-        width={ED.gapMark}
-        height="14"
-        rx="3"
-        fill={`url(#${GAP_ID})`}
-        strokeDasharray="3 3"
-        className="stroke-border-gap"
-      />
-    );
-  const current = side === "current";
-  return (
-    <>
-      {current ? (
-        <circle
-          data-mark={`${row.label} ${side}`}
-          cx={mark.x}
-          cy={row.y}
-          r="5"
-          className="fill-chart-1"
-        />
-      ) : (
-        <circle
-          data-mark={`${row.label} ${side}`}
-          cx={mark.x}
-          cy={row.y}
-          r="4.5"
-          strokeWidth="2"
-          className={PRIOR_RING}
-        />
-      )}
-      <text
-        x={mark.label.x}
-        y={mark.label.y}
-        textAnchor={mark.label.anchor}
-        fontSize="12"
-        className={cx(
-          "font-mono",
-          current ? "fill-text-primary font-medium" : "fill-text-secondary",
-        )}
-      >
-        {mark.text}
-      </text>
-    </>
-  );
-}
-
-function DumbbellRowMarks({ row }: { row: DumbbellRow }) {
-  const { prior, current, growth } = row;
-  return (
-    <g data-row={row.label}>
-      <text x="0" y={row.y + 4} fontSize="13" className="fill-text-primary font-body">
-        {row.label}
-      </text>
-      {prior.kind === "value" && current.kind === "value" && (
-        <line
-          x1={prior.x}
-          x2={current.x}
-          y1={row.y}
-          y2={row.y}
-          strokeWidth="2"
-          className="stroke-chart-1"
-        />
-      )}
-      <Mark mark={prior} row={row} side="prior" />
-      <Mark mark={current} row={row} side="current" />
-      {growth?.kind === "bar" && (
-        <>
-          <rect
-            data-growth={row.label}
-            x={growth.x}
-            y={row.y - 5}
-            width={growth.width}
-            height="10"
-            rx="2"
-            className="fill-chart-1"
-          />
-          <text
-            x={growth.label.x}
-            y={growth.label.y}
-            textAnchor={growth.label.anchor}
-            fontSize="12"
-            className="fill-text-primary font-mono"
-          >
-            {growth.text}
-          </text>
-        </>
-      )}
-      {growth?.kind === "none" && (
-        <text x={ED.g0} y={row.y + 4} fontSize="11" className="fill-gap-text font-body">
-          {growth.text}
-        </text>
-      )}
-      {row.reasonLine && (
-        <text x="0" y={row.y + 20} fontSize="11" className="fill-gap-text font-body">
-          {row.reasonLine}
-        </text>
-      )}
-    </g>
-  );
-}
-
-type Dumbbells = ReturnType<typeof dumbbellLayout>;
-
-function DumbbellPanel({ data, layout }: { data: EarningsAgainstDebt; layout: Dumbbells }) {
-  const top = 30;
-  return (
-    <ScrollFigure label="Earnings and debt figure" size="wide">
-      <svg
-        viewBox={`0 0 ${String(ED.width)} ${String(layout.height)}`}
-        width="100%"
-        role="img"
-        aria-label={earningsReading(data)}
-        className="block"
-      >
-        <defs>
-          <GapPattern id={GAP_ID} />
-        </defs>
-        <text x={ED.x0} y="16" fontSize="11" className="fill-text-tertiary font-body">
-          {`${data.unit} · one scale from zero`}
-        </text>
-        {layout.growthTicks.length > 0 && (
-          <text x={ED.g0} y="16" fontSize="11" className="fill-text-tertiary font-body">
-            Growth, derived
-          </text>
-        )}
-        {layout.ticks.map((tick) => (
-          <g key={`m${String(tick.value)}`}>
-            <line
-              x1={tick.x}
-              x2={tick.x}
-              y1={top}
-              y2={layout.axisY}
-              className={tick.value === 0 ? "stroke-border-container" : "stroke-border-hairline"}
-            />
-            <text
-              x={tick.x}
-              y={layout.axisY + 18}
-              textAnchor="middle"
-              fontSize="11"
-              className={TICK}
-            >
-              {tick.label}
-            </text>
-          </g>
-        ))}
-        {layout.growthTicks.map((tick) => (
-          <line
-            key={`g${String(tick.value)}`}
-            x1={tick.x}
-            x2={tick.x}
-            y1={top}
-            y2={layout.axisY}
-            className={tick.value === 0 ? "stroke-border-container" : "stroke-border-hairline"}
-          />
-        ))}
-        {layout.growthLabels.map((tick) => (
-          <text
-            key={`gl${String(tick.value)}`}
-            x={tick.x}
-            y={layout.axisY + 18}
-            textAnchor="middle"
-            fontSize="11"
-            className={TICK}
-          >
-            {tick.label}
-          </text>
-        ))}
-        {layout.separator !== null && (
-          <line
-            x1="0"
-            x2={ED.width}
-            y1={layout.separator}
-            y2={layout.separator}
-            className="stroke-border-hairline"
-          />
-        )}
-        {layout.rows.map((row) => (
-          <DumbbellRowMarks key={row.key} row={row} />
-        ))}
-      </svg>
-    </ScrollFigure>
-  );
-}
-
-const INK = {
-  worse: { fill: "fill-warning-mark", stroke: "stroke-warning-mark", word: "fill-warning-text" },
-  better: { fill: "fill-chart-1", stroke: "stroke-chart-1", word: "fill-success-text" },
-  plain: { fill: "fill-chart-1", stroke: "stroke-chart-1", word: "fill-text-primary" },
-} as const;
-
-function RatioPoint({ mark, side, fill }: { mark: RatioMark; side: string; fill: string }) {
-  if (mark.kind === "gap")
-    return (
-      <>
-        <rect
-          data-gap={`leverage ${side}`}
-          x={mark.x - 22}
-          y={LEV.bottom - 24}
-          width="44"
-          height="14"
-          rx="3"
-          fill={`url(#${GAP_ID}-ratio)`}
-          strokeDasharray="3 3"
-          className="stroke-border-gap"
-        />
-        <text
-          x={mark.x}
-          y={LEV.bottom - 32}
-          textAnchor="middle"
-          fontSize="11"
-          className="fill-gap-text font-body"
-        >
-          not supplied
-        </text>
-      </>
-    );
-  const current = side === "current";
-  return (
-    <>
-      {current ? (
-        <circle data-ratio={side} cx={mark.x} cy={mark.y} r="6" className={fill} />
-      ) : (
-        <circle
-          data-ratio={side}
-          cx={mark.x}
-          cy={mark.y}
-          r="5"
-          strokeWidth="2"
-          className={PRIOR_RING}
-        />
-      )}
-      <text
-        x={mark.x}
-        y={mark.labelY}
-        textAnchor="middle"
-        fontSize={current ? 14 : 13}
-        className={cx(
-          "font-mono",
-          current ? "fill-text-primary font-medium" : "fill-text-secondary",
-        )}
-      >
-        {mark.text}
-      </text>
-    </>
-  );
-}
-
-type LeverageView = NonNullable<ReturnType<typeof leverageLayout>>;
-
-function LeveragePanel({
-  data,
-  leverage,
-  layout,
-}: {
-  data: EarningsAgainstDebt;
-  leverage: NonNullable<EarningsAgainstDebt["leverage"]>;
-  layout: LeverageView;
-}) {
-  const start = layout.axis.label(layout.axis.lo);
-  const word = leverageWord(leverage);
-  const ink = INK[word === "worse" || word === "better" ? word : "plain"];
+/** One period: one bar per measure from zero, earnings teal, debt navy, gaps hatched with the reason. */
+function PeriodBars({ data, width }: { data: EarningsAgainstDebt; width: number }) {
+  const layout = barLayout(data, width);
+  const period = data.periods[0]?.label ?? "";
   return (
     <svg
-      viewBox={`0 0 ${String(LEV.width)} ${String(LEV.height)}`}
+      viewBox={`0 0 ${String(width)} ${String(layout.height)}`}
       width="100%"
       role="img"
-      aria-label={leverageReading(leverage, start, layout.fromZero)}
+      aria-label={earningsReading(data, period)}
+      data-layout={layout.narrow ? "narrow" : "wide"}
       className="block"
     >
-      <defs>
-        <GapPattern id={`${GAP_ID}-ratio`} />
-      </defs>
-      <text x="0" y="16" fontSize="12" className="fill-text-primary font-body font-medium">
-        Total debt / EBITDA
-      </text>
-      <text data-axis-start x="0" y="32" fontSize="11" className="fill-text-tertiary font-body">
-        {layout.fromZero ? "own scale, from zero" : `own scale, from ${start}, not from zero`}
-      </text>
-      {layout.ticks.map((tick) => (
-        <g key={tick.value}>
-          <line
-            x1={LEV.gridFrom}
-            x2={LEV.width}
-            y1={tick.y}
-            y2={tick.y}
-            className={
-              tick.value === layout.axis.lo ? "stroke-border-container" : "stroke-border-hairline"
-            }
-          />
-          <text x="0" y={tick.y + 4} fontSize="11" className={TICK}>
-            {tick.label}
+      <Grid
+        ticks={layout.ticks}
+        x={layout.x}
+        strong={0}
+        bands={
+          layout.narrow
+            ? layout.rows.map((row) => [row.barY - 3, row.barY + 19] as const)
+            : [[0, layout.plotBottom] as const]
+        }
+      />
+      {layout.rows.map((row) => (
+        <g key={row.label} data-row={row.label}>
+          <text
+            data-part="label"
+            x="0"
+            y={row.top + 12}
+            fontSize={SIZE.label}
+            className="fill-text-primary font-body font-medium"
+          >
+            {row.labelLines.map((line, at) => (
+              <tspan key={`${String(at)}-${line}`} x="0" y={row.top + 12 + at * LINE}>
+                {line}
+              </tspan>
+            ))}
           </text>
+          {row.value ? (
+            <>
+              <rect
+                data-bar={row.label}
+                data-value={row.value.value}
+                data-series={row.series}
+                x={layout.x(0)}
+                y={row.barY}
+                width={Math.max(layout.x(row.value.value) - layout.x(0), 1)}
+                height="16"
+                rx="2"
+                className={FILL[row.series]}
+              />
+              <text
+                data-part="value"
+                x={layout.x(row.value.value) + 6}
+                y={row.barY + 12}
+                fontSize={SIZE.value}
+                className="fill-text-primary font-mono font-medium"
+              >
+                {row.value.text}
+              </text>
+            </>
+          ) : (
+            <>
+              <GapSlot
+                x={layout.left}
+                y={row.barY + 2}
+                width={Math.min(120, layout.right - layout.left)}
+                height={12}
+                reason={row.reason.join(" ")}
+              />
+              <text
+                data-part="reason"
+                x={layout.left}
+                y={row.barY + 32}
+                fontSize={SIZE.label}
+                className="fill-gap-text font-body"
+              >
+                {row.reason.map((line, at) => (
+                  <tspan
+                    key={`${String(at)}-${line}`}
+                    x={layout.left}
+                    y={row.barY + 32 + at * LINE}
+                  >
+                    {line}
+                  </tspan>
+                ))}
+              </text>
+            </>
+          )}
         </g>
       ))}
-      {!layout.fromZero && (
-        <path
-          data-axis-break
-          d={`M${String(LEV.gridFrom - 4)} ${String(LEV.bottom + 9)} l8 -5 M${String(LEV.gridFrom - 4)} ${String(LEV.bottom + 14)} l8 -5`}
-          fill="none"
-          strokeWidth="1.25"
-          className="stroke-text-tertiary"
-        />
-      )}
-      {layout.arrow && (
-        <>
-          <line {...layout.arrow.line} strokeWidth="2" className={ink.stroke} />
-          <polygon data-arrow points={layout.arrow.head} className={ink.fill} />
-        </>
-      )}
-      <RatioPoint mark={layout.prior} side="prior" fill={ink.fill} />
-      <RatioPoint mark={layout.current} side="current" fill={ink.fill} />
-      {[data.priorLabel, data.currentLabel].map((period, at) => (
-        <text
-          key={period}
-          x={at === 0 ? LEV.prior : LEV.current}
-          y={LEV.bottom + 24}
-          textAnchor="middle"
-          fontSize="12"
-          className="fill-text-secondary font-body"
-        >
-          {period}
-        </text>
-      ))}
-      {leverage.change !== null && (
-        <text
-          data-direction={word ?? ""}
-          x={LEV.width / 2 + 20}
-          y={LEV.bottom + 50}
-          textAnchor="middle"
-          fontSize="12"
-          className="fill-text-secondary font-body"
-        >
-          <tspan className="fill-text-primary font-mono">{`${signed(leverage.change)}x`}</tspan>
-          {" derived"}
-          {word && <tspan className={cx("font-medium", ink.word)}>{` · ${word}`}</tspan>}
-        </text>
-      )}
+      <TickLabels ticks={layout.ticks} x={layout.x} y={layout.plotBottom + 16} width={width} />
     </svg>
   );
 }
 
-function leverageNotes(data: EarningsAgainstDebt, layout: LeverageView | null) {
-  if (!layout) return [];
-  const sides = [
-    [data.priorLabel, layout.prior],
-    [data.currentLabel, layout.current],
-  ] as const;
-  return sides.flatMap(([period, mark]) =>
-    mark.kind === "gap" ? [`Total debt / EBITDA, ${period} not supplied: ${mark.reason}.`] : [],
+/** The module's reasons for the periods a panel does not draw, under it, in the gap ink. */
+function Reasons({ lines, x, y }: { lines: readonly string[]; x: number; y: number }) {
+  if (!lines.length) return null;
+  return (
+    <text data-part="reason" x={x} y={y} fontSize={SIZE.label} className="fill-gap-text font-body">
+      {lines.map((line, at) => (
+        <tspan key={`${String(at)}-${line}`} x={x} y={y + at * LINE}>
+          {line}
+        </tspan>
+      ))}
+    </text>
   );
 }
 
-/** Tile 1: the four money measures as dumbbells on one scale from zero, and leverage on its own axis. */
+/** Three or more periods: a line per measure across every stated period, one scale from zero. */
+function PeriodLines({ data, width }: { data: EarningsAgainstDebt; width: number }) {
+  const layout = lineLayout(data, width);
+  const labels = data.periods.map((period) => period.label);
+  const { top, height, margin } = layout.plot;
+  return (
+    <svg
+      viewBox={`0 0 ${String(width)} ${String(layout.height)}`}
+      width="100%"
+      role="img"
+      aria-label={earningsReading(data, labels.join(", "))}
+      className="block"
+    >
+      {layout.panels.map((panel) => (
+        <g key={panel.label} data-panel={panel.label}>
+          <text
+            data-part="label"
+            x={panel.left}
+            y={panel.top + 12}
+            fontSize={SIZE.label}
+            className="fill-text-primary font-body font-medium"
+          >
+            {panel.label}
+          </text>
+          {layout.axis.ticks.map((tick) => {
+            const y = layout.y(tick.value) + panel.top;
+            return (
+              <g key={tick.value}>
+                <line
+                  x1={panel.left + margin}
+                  x2={panel.left + panel.width}
+                  y1={y}
+                  y2={y}
+                  className={tick.value === 0 ? "stroke-text-tertiary" : "stroke-border-hairline"}
+                />
+                {panel.ticks && (
+                  <text
+                    data-part="tick"
+                    x={panel.left + margin - 6}
+                    y={y + 4}
+                    textAnchor="end"
+                    fontSize={SIZE.tick}
+                    className="fill-text-tertiary font-mono"
+                  >
+                    {tick.label}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+          {panel.segments.map((segment) => (
+            <line
+              key={`${String(segment.x1)}-${String(segment.x2)}`}
+              data-segment={panel.label}
+              {...segment}
+              strokeWidth="2"
+              className={STROKE[panel.series]}
+            />
+          ))}
+          {panel.points.map((point, at) => (
+            <g key={point.label}>
+              {point.value ? (
+                <>
+                  <circle
+                    data-point={`${panel.label} ${point.label}`}
+                    data-value={point.value.value}
+                    cx={point.x}
+                    cy={point.value.y}
+                    r={at === panel.points.length - 1 ? 5 : 4}
+                    className={FILL[panel.series]}
+                  />
+                  <text
+                    data-part="value"
+                    x={point.x}
+                    y={point.value.y - 9}
+                    textAnchor="middle"
+                    fontSize={SIZE.value}
+                    className="fill-text-primary font-mono"
+                  >
+                    {point.value.text}
+                  </text>
+                </>
+              ) : (
+                <GapSlot
+                  x={point.x - 7}
+                  y={panel.top + top}
+                  width={14}
+                  height={height}
+                  reason={`${panel.label} ${point.label}`}
+                />
+              )}
+              <text
+                data-part="period"
+                x={point.x}
+                y={panel.top + top + height + 18}
+                textAnchor="middle"
+                fontSize={SIZE.tick}
+                className="fill-text-secondary font-body"
+              >
+                {(panel.periodLines[at] ?? []).map((line, n) => (
+                  <tspan
+                    key={`${String(n)}-${line}`}
+                    x={point.x}
+                    y={panel.top + top + height + 18 + n * 13}
+                  >
+                    {line}
+                  </tspan>
+                ))}
+              </text>
+            </g>
+          ))}
+          <Reasons
+            lines={panel.reasons}
+            x={panel.left}
+            y={
+              panel.top +
+              top +
+              height +
+              24 +
+              Math.max(1, ...panel.periodLines.map((lines) => lines.length)) * 13
+            }
+          />
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+function Money({ data }: { data: EarningsAgainstDebt }) {
+  const [ref, width] = useFigureWidth(640);
+  const comparison = data.comparison;
+  const figure =
+    data.periods.length === 1 ? (
+      <PeriodBars data={data} width={width} />
+    ) : data.periods.length === 2 && comparison ? (
+      <Dumbbell
+        rows={dumbbellRows(data)}
+        width={width}
+        periods={{ prior: comparison.from, current: comparison.to }}
+        unit={data.unit}
+        legend={false}
+      />
+    ) : (
+      <PeriodLines data={data} width={width} />
+    );
+  return (
+    <div ref={ref} className="w-full min-w-0">
+      {figure}
+    </div>
+  );
+}
+
+/** Leverage: the overview Slope on its own scale with the stated values, or figures and a MiniSlope. */
+function Leverage({ leverage, basis }: { leverage: LeverageSeries; basis: string | null }) {
+  const [ref, width] = useFigureWidth(408);
+  const marks = leverageMarks(leverage);
+  const word = leverageWord(leverage);
+  const gaps = leverageGaps(leverage);
+  // One stated figure is written, not drawn: a slope needs two.
+  const drawn = marks.length > 1 && contiguous(leverage.values);
+  const reading = leverageReading(leverage);
+  return (
+    <div ref={ref} data-leverage className="flex w-full min-w-0 flex-col gap-2">
+      <p className="text-caption font-medium text-text-primary">
+        {leverage.label}
+        <span className="font-normal text-text-tertiary"> · own scale</span>
+      </p>
+      {drawn && width >= SLOPE_WIDTH && (
+        <Slope marks={marks} tone={leverage.tone} suffix="x" label={reading} />
+      )}
+      {(!drawn || width < SLOPE_WIDTH) && (
+        <div className="flex flex-col gap-2">
+          <ul aria-label={reading} className="flex flex-wrap gap-x-4 gap-y-1 text-small">
+            {marks.map((mark) => (
+              <li key={mark.label} className="flex items-baseline gap-1.5">
+                <span className="text-caption text-text-secondary">{mark.label}</span>
+                <Figure>{mark.text}</Figure>
+              </li>
+            ))}
+          </ul>
+          {drawn && marks.length > 1 && (
+            <div className="max-w-60">
+              <MiniSlope marks={marks} tone={leverage.tone} label={reading} />
+            </div>
+          )}
+        </div>
+      )}
+      {leverage.change !== null && (
+        <p data-change className="text-small text-text-secondary">
+          <Figure className="font-medium">{`${changeText(leverage.change)}x`}</Figure>
+          {word && (
+            <span
+              data-tone={word}
+              className={cx(
+                "font-medium",
+                word === "worse" ? "text-warning-text" : "text-success-text",
+              )}
+            >
+              {` · ${word}`}
+            </span>
+          )}
+        </p>
+      )}
+      {gaps.map((gap) => (
+        <p key={gap} data-gap-reason className="text-caption wrap-anywhere text-gap-text">
+          {gap}
+        </p>
+      ))}
+      {basis && (
+        <p data-basis className="text-caption wrap-anywhere text-text-tertiary">
+          {basis}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function legendOf(data: EarningsAgainstDebt) {
+  const labels = data.periods.map((period) => period.label);
+  const debt = data.measures.some((measure) => measure.key === "grossDebt");
+  const earnings = data.measures.some((measure) => measure.key !== "grossDebt");
+  const latest = data.comparison?.to ?? labels[0] ?? "";
+  const series =
+    labels.length > 2 || (labels.length === 2 && !data.comparison)
+      ? { earnings: "Earnings", debt: "Gross debt" }
+      : { earnings: `${latest} earnings`, debt: `${latest} gross debt` };
+  const gap = data.measures.some((measure) =>
+    measure.values.some((value) => value.cell?.kind !== "number"),
+  );
+  return [
+    ...(data.comparison && labels.length === 2
+      ? [{ tone: "prior" as const, text: data.comparison.from }]
+      : []),
+    ...(earnings ? [{ tone: "primary" as const, text: series.earnings }] : []),
+    ...(debt ? [{ tone: "secondary" as const, text: series.debt }] : []),
+    ...(data.leverage?.tone === "worse"
+      ? [{ tone: "signal" as const, text: "Leverage, worse" }]
+      : []),
+    ...(gap ? [{ tone: "gap" as const, text: "Not stated" }] : []),
+  ];
+}
+
+/** Tile 1: earnings and gross debt on one US$ scale from zero, and leverage on its own scale. */
 export function EarningsDebtTile({ lead }: { lead: LeadProps }) {
   const data = earningsAgainstDebt(lead.entry);
   if (!data)
     return (
-      <Tile span={12} label={LABEL} kicker={LABEL} tone="gap">
-        <GapNote>{NO_EARNINGS}</GapNote>
-      </Tile>
+      <GapTile span={12} label={LABEL} kicker={LABEL}>
+        {figureGap(lead.entry, "earnings") ?? ""}
+      </GapTile>
     );
-  const layout = data.measures.length ? dumbbellLayout(data) : null;
-  const reported = data.measures.some((m) => m.key === "reportedEbitda");
-  const ratio = data.leverage ? leverageLayout(data.leverage) : null;
-  const notes = [
-    ...(layout?.rows.flatMap((row) => row.longReasons) ?? []),
-    ...leverageNotes(data, ratio),
-  ];
+  const labels = data.periods.map((period) => period.label);
   return (
     <FigureTile
       props={lead}
       span={12}
       label={LABEL}
-      kicker={`${LABEL} · ${data.unit}, ${data.priorLabel} → ${data.currentLabel}`}
-      title={earningsTitle(data)}
+      kicker={`${KICKER} · ${data.unit}, ${periodSpan(labels)}`}
+      title={LABEL}
       line={data.tableLine}
       source="the earnings and debt figures"
-      legend={[
-        { tone: "prior", text: data.priorLabel },
-        { tone: "primary", text: data.currentLabel },
-      ]}
-      notes={notes}
+      legend={legendOf(data)}
       table={earningsTable(data)}
     >
-      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,800fr)_minmax(0,296fr)] lg:gap-6">
-        {layout ? <DumbbellPanel data={data} layout={layout} /> : <GapNote>{NO_MEASURES}</GapNote>}
-        {!data.leverage ? (
-          <GapNote>{NO_LEVERAGE}</GapNote>
-        ) : ratio ? (
-          <LeveragePanel data={data} leverage={data.leverage} layout={ratio} />
+      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_408px]">
+        {data.measures.length ? (
+          <Money data={data} />
         ) : (
-          <GapNote>{NO_RATIO}</GapNote>
+          <GapNote>{data.absent.map((item) => item.reason).join(" ")}</GapNote>
+        )}
+        {data.leverage ? (
+          <Leverage leverage={data.leverage} basis={data.leverageBasis} />
+        ) : (
+          <p className="text-caption text-gap-text">Total debt / EBITDA is not in the handoff.</p>
         )}
       </div>
-      {data.absent.length > 0 && (
+      {data.measures.length > 0 && data.absent.length > 0 && (
         <p data-absent className="text-caption wrap-anywhere text-gap-text">
-          {`Not in this handoff: ${data.absent.map((item) => item.reason).join(" ")}`}
+          {data.absent.map((item) => item.reason).join(" ")}
         </p>
-      )}
-      {data.measures.length > 0 && (
-        <p className="text-caption text-text-secondary">{reported ? DERIVED_NOTE : DERIVED_ONLY}</p>
       )}
     </FigureTile>
   );

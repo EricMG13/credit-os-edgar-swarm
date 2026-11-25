@@ -1,168 +1,123 @@
-import { ArrowRight } from "@untitledui/icons";
-import { Button } from "@/components/base/buttons/button";
-import { containsReference, readerText, unitLabel } from "../../../publishedReport";
 import { basisNotes, figureSource, unitOf, type FigureSource } from "../../overview/figureData";
-import { GapPattern } from "../../overview/figureParts";
-import { WALL, wallGeometry, wallSlots } from "../../overview/structureData";
-import { GapNote, Tile } from "../../overview/Tile";
-import { FigureTile, ScrollFigure } from "../kit/LeadFrame";
-import { group, sum } from "../kit/numbers";
+import { wallSlots } from "../../overview/structureData";
+import { FigureTile, GapTile, Link } from "../kit/LeadFrame";
+import { GapSlot, Measured, SIZE } from "../kit/marks";
+import { IN_EVIDENCE, namesSource, safeText } from "../kit/reader";
+import { unitLabel } from "../../../publishedReport";
 import type { LeadProps } from "../types";
+import { GAP_WORDS, wallLayout, type WallLayout, type WallMark, type WallSlot } from "./maturityGeometry";
 
 const LABEL = "Debt maturities";
-const UNDATED = "cp1-wall-undated";
-const GAP = "cp1-wall-gap";
-
-/** The compact wall: the Overview wall's geometry, scaled into a smaller box. */
-const BOX = { width: 520, height: 220, base: 186, top: 52, gapMark: 24, thinnest: 2 } as const;
-const SX = BOX.width / WALL.width;
-const SY = (BOX.base - BOX.top) / (WALL.base - WALL.top);
-/** Below this slot width an amount label would run into its neighbour; the table view has it. */
-const CROWDED = 44;
+/** The figure's width before the first measure (and in jsdom): the span-5 tile at 1128 px. */
+const FALLBACK = 412;
 /** A dated period label, as the wall reads it (`structureData`). */
 const YEAR = /^\D*(\d{4})\D?$/;
 
 type Ready = Extract<FigureSource, { state: "ready" }>;
-type WallMark = ReturnType<typeof wallGeometry>["marks"][number];
-type Mark = WallMark & {
-  x: number;
-  width: number;
-  centreX: number;
-  drawn: number | null;
-  least: boolean;
-};
 
-const reader = (text: string) =>
-  containsReference(text) ? "Detail is in Evidence." : readerText(text);
+// Words that cite a filing the library's `containsReference` does not catch ("…annual Form 10-K
+// debt note."): such a note is a source reference and stays in Evidence.
+const FILING = /\b(?:Form\s+)?10-?[KQ]\b|\bannual report\b|\bprospectus\b/i;
+
+/** True when handoff text cites a source: a file, page, register, calculation or a named filing. */
+export const citesSource = (text: string) => namesSource(text) || FILING.test(text);
+
+/** Handoff words for the page, or "Detail is in Evidence." when they cite a source. */
+const words = (text: string) => (citesSource(text) ? IN_EVIDENCE : safeText(text));
+
 /** A sentence ends with one full stop, even when the handoff's words already carry it. */
 const sentence = (text: string) => (/[.!?]$/.test(text) ? text : `${text}.`);
 
-/** Each Overview mark placed in the compact box; a stated small amount keeps a 2 px minimum. */
-function compact(marks: WallMark[], bar: number): Mark[] {
-  return marks.map((mark) => {
-    const scaled = mark.height === null ? null : mark.height * SY;
-    return {
-      ...mark,
-      label: reader(mark.label),
-      centreX: mark.centre * SX,
-      x: (mark.centre - bar / 2) * SX,
-      width: bar * SX,
-      drawn: scaled === null ? null : Math.max(BOX.thinnest, scaled),
-      least: scaled !== null && scaled < BOX.thinnest,
-    };
-  });
-}
+/** "A", "A and B", "A, B and C". */
+const listOf = (labels: readonly string[]) =>
+  labels.length > 1
+    ? `${labels.slice(0, -1).join(", ")} and ${labels.at(-1) ?? ""}`
+    : (labels[0] ?? "");
 
-const amountText = (mark: Mark) =>
-  mark.cell === null
+const reasonOf = (mark: WallMark) => words(mark.cell?.reason ?? "no amount in the handoff");
+
+const amountText = (mark: WallMark) =>
+  mark.kind === "none"
     ? "No row in the schedule"
-    : mark.drawn === null
-      ? `Not supplied: ${reader(mark.cell.reason ?? "no amount in the handoff")}`
-      : group(mark.cell.text);
+    : mark.kind === "gap"
+      ? `Not supplied: ${reasonOf(mark)}`
+      : (mark.text ?? "");
 
-/** The first three dated slots summed exactly, only when the table has three dated amounts. */
-function bracketOf(marks: Mark[]) {
-  const dated = marks.filter((mark) => !mark.undated);
-  const stated = dated.filter((mark) => mark.cell !== null);
-  const three = dated.slice(0, 3);
-  const [first, , third] = three;
-  if (stated.length < 3 || !first || !third || three.some((mark) => mark.drawn === null))
-    return null;
-  const total = sum(three.map((mark) => mark.cell?.text ?? ""));
-  if (total === null) return null;
-  const top = Math.min(...three.map((mark) => BOX.base - (mark.drawn ?? 0) - 20));
-  const span = `${first.label}–${third.label}`;
-  return {
-    total,
-    span,
-    text: `${group(total)} in ${span}, derived`,
-    x1: first.x,
-    x2: third.x + third.width,
-    y: Math.max(28, top - 6),
-  };
-}
-
-/** "FY2028 6,637 is the largest dated amount" only when one dated amount is strictly the largest. */
-function titleOf(marks: Mark[]) {
-  const dated = marks.filter((mark) => !mark.undated);
-  const values = dated.flatMap((mark) =>
-    mark.drawn === null || mark.cell?.value == null ? [] : [mark.cell.value],
+function wallReading(marks: readonly WallMark[], unit: string) {
+  const parts = marks.map(
+    (mark) =>
+      `${mark.label} ${mark.kind === "none" ? "no row" : mark.kind === "gap" ? "not supplied" : (mark.text ?? "")}`,
   );
-  if (!dated.length || values.length !== dated.length) return "Debt maturing by period";
-  const top = Math.max(...values);
-  const largest = dated.filter((mark) => mark.cell?.value === top);
-  const [only] = largest;
-  return largest.length === 1 && only?.cell
-    ? `Debt maturing: ${only.label} ${group(only.cell.text)} is the largest dated year`
-    : "Debt maturing by period";
+  return `Debt maturities${unit ? `, ${unit}` : ""}: ${parts.join(", ")}.`;
 }
 
-function Shape({ mark }: { mark: Mark }) {
-  if (mark.drawn === null)
+function Bar({ mark, layout, undatedFill }: { mark: WallMark; layout: WallLayout; undatedFill: string }) {
+  if (mark.kind !== "bar") {
+    const columns = layout.layout === "columns";
+    const box = columns
+      ? { x: mark.x, y: layout.base - mark.height, width: mark.width, height: mark.height }
+      : { x: layout.base, y: mark.y, width: 40, height: mark.height };
     return (
-      <rect
-        data-gap={mark.label}
-        x={mark.x + 0.5}
-        y={BOX.base - BOX.gapMark}
-        width={mark.width - 1}
-        height={BOX.gapMark}
-        rx="3"
-        fill={`url(#${GAP})`}
-        strokeDasharray="3 3"
-        className="stroke-border-gap"
+      <GapSlot
+        x={box.x}
+        y={box.y}
+        width={box.width}
+        height={box.height}
+        reason={`${mark.label}: ${amountText(mark)}`}
       />
     );
-  return mark.undated ? (
+  }
+  return (
     <rect
       data-bar={mark.label}
-      x={mark.x + 0.75}
-      y={BOX.base - mark.drawn + 0.75}
-      width={mark.width - 1.5}
-      height={Math.max(0.5, mark.drawn - 0.75)}
-      rx="2"
-      fill={`url(#${UNDATED})`}
-      strokeWidth="1.5"
-      className="stroke-chart-1"
-    />
-  ) : (
-    <rect
-      data-bar={mark.label}
-      x={mark.x}
-      y={BOX.base - mark.drawn}
-      width={mark.width}
-      height={mark.drawn}
-      rx={Math.min(2, mark.drawn / 2)}
-      className="fill-chart-1"
+      data-value={mark.cell?.value ?? undefined}
+      x={mark.undated ? mark.x + 0.75 : mark.x}
+      y={mark.undated ? mark.y + 0.75 : mark.y}
+      width={Math.max(0, mark.undated ? mark.width - 1.5 : mark.width)}
+      height={Math.max(0, mark.undated ? mark.height - 1.5 : mark.height)}
+      rx={Math.min(2, mark.height / 2, mark.width / 2)}
+      strokeWidth={mark.undated ? 1.5 : undefined}
+      className={mark.undated ? `${undatedFill} stroke-chart-1` : "fill-chart-1"}
     />
   );
 }
 
-function Labels({ mark, crowded }: { mark: Mark; crowded: boolean }) {
-  const top = BOX.base - (mark.drawn ?? BOX.gapMark) - 6;
+/** The figure above a column, or the gap's words above its slot. */
+function ColumnLabels({ mark, layout }: { mark: WallMark; layout: WallLayout }) {
+  const top = mark.cell?.value != null && mark.cell.value < 0 ? layout.base : mark.y;
   return (
     <>
-      {!crowded && (
+      {mark.kind === "bar" ? (
         <text
-          x={mark.centreX}
-          y={top}
+          data-part="value"
+          x={mark.centre}
+          y={top - 5}
           textAnchor="middle"
-          fontSize={mark.drawn === null ? 11 : 12}
-          className={
-            mark.drawn === null ? "fill-gap-text font-body" : "fill-text-primary font-mono"
-          }
+          fontSize={SIZE.value}
+          className="fill-text-primary font-mono"
         >
-          {mark.drawn === null
-            ? mark.cell
-              ? "Not supplied"
-              : "No row"
-            : group(mark.cell?.text ?? "")}
+          {mark.text}
+        </text>
+      ) : (
+        <text
+          data-part="reason"
+          textAnchor="middle"
+          fontSize={SIZE.tick}
+          className="fill-gap-text font-body"
+        >
+          {GAP_WORDS[mark.kind].map((word, at, all) => (
+            <tspan key={word} x={mark.centre} y={top - 5 - (all.length - 1 - at) * 13}>
+              {word}
+            </tspan>
+          ))}
         </text>
       )}
       <text
-        x={mark.centreX}
-        y={BOX.base + 18}
+        data-part="label"
+        x={mark.centre}
+        y={layout.height - 8}
         textAnchor="middle"
-        fontSize="11"
+        fontSize={SIZE.tick}
         className="fill-text-secondary font-body"
       >
         {mark.label}
@@ -171,186 +126,243 @@ function Labels({ mark, crowded }: { mark: Mark; crowded: boolean }) {
   );
 }
 
-function Axis({ breakAt }: { breakAt: number | null }) {
-  const y = BOX.base;
-  if (breakAt === null)
-    return <line x1="0" y1={y} x2={BOX.width} y2={y} className="stroke-connector" />;
-  const b = breakAt * SX;
+/** A row's period at the left and its figure (or the gap's words) beside the bar. */
+function RowLabels({ mark, layout }: { mark: WallMark; layout: WallLayout }) {
+  const y = mark.centre + 4;
+  const negative = mark.cell?.value != null && mark.cell.value < 0;
   return (
     <>
-      <line x1="0" y1={y} x2={b - 6} y2={y} className="stroke-connector" />
-      <line x1={b + 6} y1={y} x2={BOX.width} y2={y} className="stroke-connector" />
-      <path
-        data-axis-break
-        d={`M${String(b - 9)} ${String(y + 7)} ${String(b - 1)} ${String(y - 7)}M${String(b + 1)} ${String(y + 7)} ${String(b + 9)} ${String(y - 7)}`}
-        strokeWidth="1.25"
-        fill="none"
-        className="stroke-text-tertiary"
-      />
+      <text
+        data-part="label"
+        x="0"
+        y={y}
+        fontSize={SIZE.label}
+        className="fill-text-secondary font-body"
+      >
+        {mark.label}
+      </text>
+      {mark.kind === "bar" ? (
+        <text
+          data-part="value"
+          x={negative ? layout.base + 6 : mark.x + mark.width + 6}
+          y={y}
+          fontSize={SIZE.value}
+          className="fill-text-primary font-mono"
+        >
+          {mark.text}
+        </text>
+      ) : (
+        <text
+          data-part="reason"
+          x={layout.base + 46}
+          y={y}
+          fontSize={SIZE.tick}
+          className="fill-gap-text font-body"
+        >
+          {mark.kind === "gap" ? "Not supplied" : "No row"}
+        </text>
+      )}
     </>
   );
 }
 
-function wallReading(marks: Mark[], unit: string, bracket: ReturnType<typeof bracketOf>) {
-  const parts = marks.map(
-    (mark) =>
-      `${mark.label} ${mark.cell === null ? "no row" : mark.drawn === null ? "not supplied" : group(mark.cell.text)}`,
+function BreakGlyph({ layout }: { layout: WallLayout }) {
+  if (layout.breakAt === null) return null;
+  const b = layout.breakAt;
+  const path =
+    layout.layout === "columns"
+      ? `M${String(b - 8)} ${String(layout.base + 7)} ${String(b - 1)} ${String(layout.base - 7)}M${String(b + 1)} ${String(layout.base + 7)} ${String(b + 8)} ${String(layout.base - 7)}`
+      : `M${String(layout.base - 7)} ${String(b + 2)} ${String(layout.base + 7)} ${String(b - 4)}M${String(layout.base - 7)} ${String(b + 6)} ${String(layout.base + 7)} ${String(b)}`;
+  return (
+    <path data-axis-break d={path} strokeWidth="1.25" fill="none" className="stroke-text-tertiary" />
   );
-  return `Debt maturing by period${unit ? `, ${unit}` : ""}: ${parts.join(", ")}.${bracket ? ` ${bracket.text}.` : ""}`;
 }
 
-/** "A", "A and B", "A, B and C". */
-function listOf(labels: string[]) {
-  return labels.length > 1
-    ? `${labels.slice(0, -1).join(", ")} and ${labels.at(-1) ?? ""}`
-    : (labels[0] ?? "");
+function Axis({ layout }: { layout: WallLayout }) {
+  const b = layout.breakAt;
+  if (layout.layout === "columns") {
+    const y = layout.base;
+    return b === null ? (
+      <line x1={layout.from} y1={y} x2={layout.to} y2={y} className="stroke-connector" />
+    ) : (
+      <>
+        <line x1={layout.from} y1={y} x2={b - 9} y2={y} className="stroke-connector" />
+        <line x1={b + 9} y1={y} x2={layout.to} y2={y} className="stroke-connector" />
+      </>
+    );
+  }
+  const x = layout.base;
+  return b === null ? (
+    <line x1={x} y1={layout.from} x2={x} y2={layout.to} className="stroke-connector" />
+  ) : (
+    <>
+      <line x1={x} y1={layout.from} x2={x} y2={b - 6} className="stroke-connector" />
+      <line x1={x} y1={b + 8} x2={x} y2={layout.to} className="stroke-connector" />
+    </>
+  );
 }
 
-function slotWidth(marks: Mark[]) {
-  const widths = marks.slice(1).flatMap((mark, at) => {
-    const before = marks[at];
-    return before && before.undated === mark.undated ? [mark.centreX - before.centreX] : [];
-  });
-  return widths.length ? Math.min(...widths) : Infinity;
+function Grid({ layout }: { layout: WallLayout }) {
+  const columns = layout.layout === "columns";
+  return (
+    <>
+      {layout.ticks.map((tick) =>
+        columns ? (
+          <g key={tick.label}>
+            <line
+              x1={layout.from}
+              x2={layout.to}
+              y1={tick.at}
+              y2={tick.at}
+              className="stroke-border-hairline"
+            />
+            <text
+              data-part="tick"
+              x={layout.from - 8}
+              y={tick.at + 4}
+              textAnchor="end"
+              fontSize={SIZE.tick}
+              className="fill-text-tertiary font-mono"
+            >
+              {tick.label}
+            </text>
+          </g>
+        ) : (
+          <g key={tick.label}>
+            <line
+              x1={tick.at}
+              x2={tick.at}
+              y1={layout.from}
+              y2={layout.to}
+              className="stroke-border-hairline"
+            />
+            <text
+              data-part="tick"
+              x={tick.at}
+              y={layout.height - 5}
+              textAnchor="middle"
+              fontSize={SIZE.tick}
+              className="fill-text-tertiary font-mono"
+            >
+              {tick.label}
+            </text>
+          </g>
+        ),
+      )}
+    </>
+  );
+}
+
+function Wall({ slots, unit, width }: { slots: { dated: WallSlot[]; undated: WallSlot[] }; unit: string; width: number }) {
+  const layout = wallLayout(slots.dated, slots.undated, width);
+  const Labels = layout.layout === "columns" ? ColumnLabels : RowLabels;
+  return (
+    <svg
+      viewBox={`0 0 ${String(width)} ${String(layout.height)}`}
+      width="100%"
+      role="img"
+      aria-label={wallReading(layout.marks, unit)}
+      data-layout={layout.layout}
+    >
+      <Grid layout={layout} />
+      {layout.marks.map((mark) => (
+        <Bar key={mark.label} mark={mark} layout={layout} undatedFill="fill-surface-selected" />
+      ))}
+      <Axis layout={layout} />
+      <BreakGlyph layout={layout} />
+      {layout.marks.map((mark) => (
+        <Labels key={mark.label} mark={mark} layout={layout} />
+      ))}
+    </svg>
+  );
+}
+
+/** The marks the wall draws, independent of width: for the notes, the legend and the table. */
+function marksOf(slots: { dated: WallSlot[]; undated: WallSlot[] }) {
+  return wallLayout(slots.dated, slots.undated, FALLBACK).marks;
 }
 
 function MaturityFigure({ lead, source }: { lead: LeadProps; source: Ready }) {
-  const unit = unitOf(source.descriptor);
-  const kicker = unitLabel(unit) ? `${LABEL} · ${unitLabel(unit)}` : LABEL;
+  const unit = unitLabel(unitOf(source.descriptor));
+  const kicker = unit ? `${LABEL} · ${unit}` : LABEL;
   const labels = source.table.rows.map((row) => row[0] ?? "");
   // The wall places a dated row by its year, so "FY2026" and "2026" are the same period.
   const periods = labels.map((label) => YEAR.exec(label)?.[1] ?? label);
   const twice = labels.find((_, at) => periods.indexOf(periods[at] ?? "") !== at);
-  const slots = wallSlots(source.table, source.descriptor, unit);
+  const raw = wallSlots(source.table, source.descriptor, unitOf(source.descriptor));
   const common = {
     props: lead,
     span: 5 as const,
     label: LABEL,
     kicker,
+    title: LABEL,
     line: source.table.line,
     source: "the maturity wall",
   };
   // The wall keeps one row per period; a period stated twice would silently lose a row.
   if (twice !== undefined)
     return (
-      <FigureTile {...common} title="Debt maturing by period">
-        <GapNote>
-          The maturity schedule states {reader(twice)} more than once; the wall is not drawn.
-        </GapNote>
-      </FigureTile>
+      <GapTile span={5} label={LABEL} kicker={kicker}>
+        The maturity schedule states {words(twice)} more than once; the wall is not drawn.
+      </GapTile>
     );
-  if (!slots)
+  if (!raw)
     return (
-      <FigureTile {...common} title="Debt maturing by period">
-        <GapNote>The maturity schedule states no amount for any period.</GapNote>
-      </FigureTile>
+      <GapTile span={5} label={LABEL} kicker={kicker}>
+        The maturity schedule states no amount for any period.
+      </GapTile>
     );
-  const geometry = wallGeometry(slots.dated, slots.undated);
-  const marks = compact(geometry.marks, geometry.bar);
-  const bracket = bracketOf(marks);
-  const crowded = slotWidth(marks) < CROWDED;
+  const label = (slot: WallSlot): WallSlot => ({ ...slot, label: words(slot.label) });
+  const slots = { dated: raw.dated.map(label), undated: raw.undated.map(label) };
+  const marks = marksOf(slots);
   const least = marks.filter((mark) => mark.least).map((mark) => mark.label);
   const notes = [
     ...marks
-      .filter((mark) => mark.drawn === null)
+      .filter((mark) => mark.kind !== "bar")
       .map((mark) =>
-        mark.cell === null
+        mark.kind === "none"
           ? `${mark.label}: no row in the schedule for this year.`
-          : sentence(`${mark.label}: ${reader(mark.cell.reason ?? "no amount in the handoff")}`),
+          : sentence(`${mark.label}: ${reasonOf(mark)}`),
       ),
     ...(least.length ? [`${listOf(least)} drawn at a 2 px minimum.`] : []),
-    ...(crowded ? ["The amounts are in the table view."] : []),
-    ...basisNotes(source.table),
+    ...basisNotes(source.table).filter((note) => !citesSource(note)),
   ];
   const legend = [
     { tone: "primary" as const, text: "Dated period" },
     ...(slots.undated.length
       ? [{ tone: "undated" as const, text: "After the axis break: no single year" }]
       : []),
-    ...(marks.some((mark) => mark.drawn === null)
+    ...(marks.some((mark) => mark.kind !== "bar")
       ? [{ tone: "gap" as const, text: "Not supplied" }]
       : []),
   ];
   return (
     <FigureTile
       {...common}
-      title={titleOf(marks)}
       legend={legend}
       notes={notes}
       table={{
-        caption: `Debt maturing by period${unitLabel(unit) ? `, ${unitLabel(unit)}` : ""}`,
+        caption: `Debt maturities${unit ? `, ${unit}` : ""}`,
         headers: ["Period", "Amount"],
-        rows: [
-          ...marks.map((mark) => [mark.label, amountText(mark)]),
-          ...(bracket ? [[`${bracket.span}, derived`, group(bracket.total)]] : []),
-        ],
+        rows: marks.map((mark) => [mark.label, amountText(mark)]),
       }}
     >
-      <ScrollFigure label="Maturity wall figure" size="narrow">
-        <svg
-          viewBox={`0 0 ${String(BOX.width)} ${String(BOX.height)}`}
-          width="100%"
-          role="img"
-          aria-label={wallReading(marks, unitLabel(unit), bracket)}
-        >
-          <defs>
-            <pattern
-              id={UNDATED}
-              width="6"
-              height="6"
-              patternUnits="userSpaceOnUse"
-              patternTransform="rotate(45)"
-            >
-              <rect width="6" height="6" className="fill-surface-selected" />
-              <line x1="0" y1="0" x2="0" y2="6" strokeWidth="2" className="stroke-chart-1" />
-            </pattern>
-            <GapPattern id={GAP} />
-          </defs>
-          {marks.map((mark) => (
-            <Shape key={mark.label} mark={mark} />
-          ))}
-          <Axis breakAt={geometry.breakAt} />
-          {marks.map((mark) => (
-            <Labels key={mark.label} mark={mark} crowded={crowded} />
-          ))}
-          {bracket && (
-            <g data-bracket={bracket.total}>
-              <path
-                d={`M${String(bracket.x1)} ${String(bracket.y + 4)}V${String(bracket.y)}H${String(bracket.x2)}V${String(bracket.y + 4)}`}
-                strokeWidth="1"
-                fill="none"
-                className="stroke-text-tertiary"
-              />
-              <text
-                x={(bracket.x1 + bracket.x2) / 2}
-                y={bracket.y - 6}
-                textAnchor="middle"
-                fontSize="11"
-                className="fill-text-secondary font-body"
-              >
-                {bracket.text}
-              </text>
-            </g>
-          )}
-        </svg>
-      </ScrollFigure>
-      <div>
-        <Button color="link-gray" size="sm" href="#overview" iconTrailing={ArrowRight}>
-          Full wall on Overview
-        </Button>
-      </div>
+      <Measured fallback={FALLBACK}>
+        {(width) => <Wall slots={slots} unit={unit} width={width} />}
+      </Measured>
+      <Link href="#overview">Full wall on Overview</Link>
     </FigureTile>
   );
 }
 
-/** Tile 6 of the financial foundation: the compact maturity wall, the full one is on Overview. */
+/** Tile 6 of the financial foundation: the compact maturity wall; the full one is on Overview. */
 export function MaturityTile({ lead }: { lead: LeadProps }) {
   const source = figureSource(lead.view, "CP-1", "Debt maturities", "Financial foundation");
   if (source.state === "gap")
     return (
-      <Tile span={5} label={LABEL} kicker={LABEL} tone="gap" className="self-start">
-        <GapNote>{source.reason}</GapNote>
-      </Tile>
+      <GapTile span={5} label={LABEL} kicker={LABEL}>
+        {source.reason}
+      </GapTile>
     );
   return <MaturityFigure lead={lead} source={source} />;
 }

@@ -1,8 +1,6 @@
 import type { FC } from "react";
 import { GapNote } from "../overview/Tile";
 import {
-  BRIDGE,
-  bridgeGeometry,
   readBridge,
   readLeverage,
   type Bridge,
@@ -10,7 +8,15 @@ import {
   type Support,
 } from "./earningsQualityData";
 import { FigureTile, GapTile, LeadFrame } from "./kit/LeadFrame";
-import { fittingTicks, Measured, niceAxis, SIZE, textWidth } from "./kit/marks";
+import {
+  fittingTicks,
+  Measured,
+  niceAxis,
+  SIZE,
+  textWidth,
+  Waterfall,
+  type WaterfallRow,
+} from "./kit/marks";
 import { group } from "./kit/numbers";
 import type { LeadProps } from "./types";
 
@@ -23,149 +29,72 @@ import type { LeadProps } from "./types";
  * the drawing places stated figures, and the table view lists them.
  */
 
-const FILL: Record<Support | "none", string> = {
-  Supported: "fill-chart-1",
-  "Partly supported": "fill-chart-2",
-  "Not supported": "fill-warning-mark",
-  "Insufficient evidence": "fill-warning-mark",
-  none: "fill-chart-3",
+type Tone = "primary" | "secondary" | "worse";
+
+/** The tone of a stated support word: its segment of the step, with the word beside it. */
+const TONES: Record<Support, Tone> = {
+  Supported: "primary",
+  "Partly supported": "secondary",
+  "Not supported": "worse",
+  "Insufficient evidence": "worse",
 };
 
-type LegendTone = "primary" | "secondary" | "signal" | "prior";
-
-const signed = (amount: string) => (Number(amount) > 0 ? `+${group(amount)}` : group(amount));
-
-function Row({
-  bridge,
-  row,
-  geometry,
-}: {
-  bridge: Bridge;
-  row: ReturnType<typeof bridgeGeometry>["rows"][number];
-  geometry: ReturnType<typeof bridgeGeometry>;
-}) {
-  const { step } = row;
-  const change =
-    row.kind === "change" ? bridge.changes.find((item) => item.line === step.line) : undefined;
-  const support = change?.support ?? null;
-  const split = change?.split ?? null;
-  const parts = split
-    ? ` Accepted ${group(split.accepted)}, not accepted ${group(split.notAccepted)}.`
-    : "";
-  const label =
-    row.kind === "total"
-      ? `${step.label}: ${group(step.amount)} ${bridge.unit}${geometry.truncated ? `, drawn from an axis that starts at ${group(String(geometry.lo))}` : ""}`
-      : `${step.label}: ${signed(step.amount)} ${bridge.unit}. ${support ? `Support stated: ${support}.` : "Support is not stated."}${parts}`;
-  const full = Math.max(2, row.x1 - row.x0);
-  const accepted = split ? (Number(split.accepted) / Number(step.amount)) * full : 0;
-  const text = row.kind === "total" ? group(step.amount) : signed(step.amount);
-  const fill = row.kind === "total" ? "fill-text-secondary" : FILL[support ?? "none"];
-  return (
-    <li className="grid min-w-0 gap-1 sm:grid-cols-[minmax(0,12rem)_minmax(0,1fr)] sm:items-center sm:gap-3">
-      <div className="min-w-0">
-        <p className="text-small text-text-primary wrap-anywhere">{step.label}</p>
-        {row.kind === "change" && (
-          <p className="text-caption text-text-tertiary">
-            {support ?? "Support not stated"}
-            {split &&
-              ` · accepted ${group(split.accepted)}, not accepted ${group(split.notAccepted)}`}
-          </p>
-        )}
-      </div>
-      <>
-        <svg
-          viewBox={`0 0 ${String(BRIDGE.width)} ${String(BRIDGE.height)}`}
-          width="100%"
-          role="img"
-          aria-label={label}
-        >
-          <g data-step={step.label} data-from={row.from} data-to={row.to}>
-            {split ? (
-              <>
-                <rect
-                  data-part="accepted"
-                  x={row.x0}
-                  y="7"
-                  width={accepted}
-                  height="16"
-                  rx="2"
-                  className={fill}
-                />
-                <rect
-                  data-part="not-accepted"
-                  x={row.x0 + accepted}
-                  y="7"
-                  width={full - accepted}
-                  height="16"
-                  rx="2"
-                  className="fill-warning-mark"
-                />
-              </>
-            ) : (
-              <rect x={row.x0} y="7" width={full} height="16" rx="2" className={fill} />
-            )}
-          </g>
-          {row.kind === "total" && geometry.truncated && (
-            <path
-              data-axis-cut
-              d={`M${String(row.x0 + 10)} 3 ${String(row.x0 + 4)} 27M${String(row.x0 + 16)} 3 ${String(row.x0 + 10)} 27`}
-              strokeWidth="1.5"
-              fill="none"
-              className="stroke-surface-card"
-            />
-          )}
-          <text x={row.x1 + 8} y="19" fontSize="12" className="fill-text-primary font-mono">
-            {text}
-          </text>
-        </svg>
-      </>
-    </li>
-  );
-}
-
-function legendOf(bridge: Bridge) {
-  const words = new Set(bridge.changes.flatMap((step) => (step.support ? [step.support] : [])));
-  const tones = {
-    Supported: "primary",
-    "Partly supported": "secondary",
-    "Not supported": "signal",
-    "Insufficient evidence": "signal",
-  } as const;
-  const items: { tone: LegendTone; text: string }[] = (Object.keys(tones) as Support[])
-    .filter((word) => words.has(word))
-    .map((word) => ({ tone: tones[word], text: word }));
-  if (bridge.changes.some((step) => step.split))
-    items.push({ tone: "signal", text: "Not accepted amount" });
-  const unstated = bridge.changes.some((step) => step.support === null);
-  if (unstated)
-    items.push({
-      tone: "prior",
-      text: bridge.supportStated
-        ? "Support not stated for this step"
-        : "Support is not stated per step",
-    });
-  return items;
+function rowsOf(bridge: Bridge): WaterfallRow[] {
+  const someStated = bridge.supportStated;
+  const steps = bridge.changes.map((step): WaterfallRow => {
+    const label =
+      someStated && step.support === null ? `${step.label} (support not stated)` : step.label;
+    const base = { kind: "step" as const, label, value: step.value, text: group(step.amount) };
+    if (step.support === null) return base;
+    const tone = TONES[step.support];
+    if (step.split)
+      return {
+        ...base,
+        split: [
+          {
+            text: `${step.support}, accepted ${group(step.split.accepted)}`,
+            value: Number(step.split.accepted),
+            tone,
+          },
+          {
+            text: `Not accepted ${group(step.split.notAccepted)}`,
+            value: Number(step.split.notAccepted),
+            tone: "worse",
+          },
+        ],
+      };
+    return { ...base, split: [{ text: step.support, value: step.value, tone }] };
+  });
+  return [
+    {
+      kind: "level",
+      label: bridge.opening.label,
+      value: bridge.opening.value,
+      text: group(bridge.opening.amount),
+    },
+    ...steps,
+    {
+      kind: "closing",
+      label: bridge.closing.label,
+      value: bridge.closing.value,
+      text: group(bridge.closing.amount),
+    },
+  ];
 }
 
 function BridgeTile({ props, bridge }: { props: LeadProps; bridge: Bridge }) {
-  const geometry = bridgeGeometry(bridge);
   const unit = bridge.unit;
   return (
     <FigureTile
       props={props}
       span={7}
       label="Earnings quality"
-      kicker={`${unit}${geometry.truncated ? `, both totals cut: axis starts at ${group(String(geometry.lo))}` : ""}`}
+      kicker={unit}
       title="Earnings quality"
       line={bridge.line}
       source="the earnings-quality bridge"
-      legend={legendOf(bridge)}
       notes={[
-        ...(geometry.truncated
-          ? [
-              `The axis starts at ${group(String(geometry.lo))}, not zero; both totals are drawn cut.`,
-            ]
-          : []),
+        ...(!bridge.supportStated ? ["Support is not stated per step."] : []),
         ...bridge.notes,
       ]}
       table={{
@@ -185,16 +114,17 @@ function BridgeTile({ props, bridge }: { props: LeadProps; bridge: Bridge }) {
         ],
       }}
     >
-      <ol className="flex min-w-0 flex-col gap-2">
-        {geometry.rows.map((row) => (
-          <Row
-            key={`${row.step.label}-${String(row.step.line)}`}
-            bridge={bridge}
-            row={row}
-            geometry={geometry}
+      <Measured fallback={640}>
+        {(width) => (
+          <Waterfall
+            width={width}
+            unit={unit}
+            axisStart="auto"
+            rows={rowsOf(bridge)}
+            legend={{ level: bridge.opening.label, step: "Step", closing: bridge.closing.label }}
           />
-        ))}
-      </ol>
+        )}
+      </Measured>
     </FigureTile>
   );
 }
@@ -233,7 +163,7 @@ function Pair({
     <div className="flex min-w-0 flex-col gap-1">
       <h4 className="text-small font-medium text-text-primary">{item.measure}</h4>
       <svg
-        viewBox={`0 0 ${String(width)} ${touching ? 112 : 96}`}
+        viewBox={`0 0 ${String(width)} ${String(touching ? 112 : 96)}`}
         width="100%"
         role="img"
         aria-label={reading}

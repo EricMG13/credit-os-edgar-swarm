@@ -14,14 +14,47 @@ import {
 } from "./parts";
 
 /**
+ * The same row in an earlier period, drawn as a thin bar beneath the row's mark with its figure
+ * written beside it (a level from the axis start, a step from the earlier period's own running
+ * total), or a stated gap with its reason.
+ */
+export type WaterfallPrior = { value: number; text: string } | { gap: string };
+
+/**
+ * One part of a step drawn as consecutive segments (e.g. an add-back's accepted and not accepted
+ * amounts), in order from the step's start. `text` carries the words, so colour is never the only
+ * carrier; `worse` is the signal colour.
+ */
+export type WaterfallSplit = {
+  text: string;
+  value: number;
+  tone: "primary" | "secondary" | "worse";
+};
+
+/**
  * One row of a waterfall, in the handoff's order. A `level` (an opening or a stated intermediate
  * total) and the `closing` are drawn from the axis start; a `step` floats from the running total;
  * a `gap` is a step or level the module did not state, drawn as the hatched slot with its reason.
- * `text` is the figure as stated; the mark only adds the sign a step lacks.
+ * `text` is the figure as stated; the mark only adds the sign a step lacks. Optional: `prior`, the
+ * row in an earlier period; `split`, a step's parts (drawn on a step only); `of`, what a gap row
+ * stands for, so its prior can be placed (without it the prior is written, not placed).
  */
 export type WaterfallRow =
-  | { kind: "level" | "closing" | "step"; label: string; value: number; text: string }
-  | { kind: "gap"; label: string; reason: string };
+  | {
+      kind: "level" | "closing" | "step";
+      label: string;
+      value: number;
+      text: string;
+      prior?: WaterfallPrior;
+      split?: readonly WaterfallSplit[];
+    }
+  | {
+      kind: "gap";
+      label: string;
+      reason: string;
+      prior?: WaterfallPrior;
+      of?: "level" | "step";
+    };
 
 export type WaterfallProps = {
   rows: readonly WaterfallRow[];
@@ -36,13 +69,16 @@ export type WaterfallProps = {
   axisStart?: number | "auto";
   /** The figure's accessible reading; by default every row with its figure, and the axis start. */
   label?: string;
-  /** Legend words, drawn above the mark for the kinds given. */
-  legend?: { level?: string; step?: string; closing?: string; gap?: string };
+  /** Legend words, drawn above the mark for the kinds given; `prior` names the earlier period. */
+  legend?: { level?: string; step?: string; closing?: string; gap?: string; prior?: string };
 };
 
 const BAR = 16;
 const GAP = 14;
 const SLOT = 12;
+/** The prior line under a row: a 5 px bar and its 11 px figure. */
+const PRIOR_LINE = 14;
+const PRIOR_BAR = 5;
 
 type Placed = {
   row: WaterfallRow;
@@ -51,13 +87,23 @@ type Placed = {
   to: number | null;
 };
 
+const finitePrior = (prior: WaterfallPrior | undefined): WaterfallPrior | undefined =>
+  prior && "value" in prior && !Number.isFinite(prior.value) ? { gap: prior.text } : prior;
+
 /** A figure that is not a finite number is drawn as the gap, with its text as written. */
 const finite = (rows: readonly WaterfallRow[]): WaterfallRow[] =>
-  rows.map((row) =>
-    row.kind !== "gap" && !Number.isFinite(row.value)
-      ? { kind: "gap", label: row.label, reason: row.text }
-      : row,
-  );
+  rows.map((row): WaterfallRow => {
+    const prior = finitePrior(row.prior);
+    if (row.kind !== "gap" && !Number.isFinite(row.value))
+      return {
+        kind: "gap",
+        label: row.label,
+        reason: row.text,
+        of: row.kind === "step" ? "step" : "level",
+        ...(prior ? { prior } : {}),
+      };
+    return prior === row.prior ? row : { ...row, prior };
+  });
 
 function place(rows: readonly WaterfallRow[]): Placed[] {
   let running: number | null = 0;
@@ -77,15 +123,62 @@ function place(rows: readonly WaterfallRow[]): Placed[] {
   });
 }
 
+/** The earlier period's walk: where each row's prior bar runs, or why it is not placed. */
+type PriorPlaced =
+  | { kind: "gap"; reason: string }
+  | { kind: "value"; total: boolean; from: number | null; to: number | null; text: string };
+
+const roleOf = (row: WaterfallRow) =>
+  row.kind === "gap" ? row.of : row.kind === "step" ? "step" : "level";
+
+function placePrior(rows: readonly WaterfallRow[]): (PriorPlaced | null)[] {
+  let running: number | null = 0;
+  return rows.map((row): PriorPlaced | null => {
+    const { prior } = row;
+    const role = roleOf(row);
+    if (!prior || "gap" in prior) {
+      running = null;
+      return prior ? { kind: "gap", reason: prior.gap } : null;
+    }
+    if (role === "level") {
+      running = prior.value;
+      return { kind: "value", total: true, from: null, to: prior.value, text: prior.text };
+    }
+    if (role === undefined) {
+      running = null;
+      return { kind: "value", total: false, from: null, to: null, text: prior.text };
+    }
+    const text = signedText(prior.text, prior.value);
+    if (running === null) return { kind: "value", total: false, from: null, to: null, text };
+    const from: number = running;
+    running = from + prior.value;
+    return { kind: "value", total: false, from, to: running, text };
+  });
+}
+
+const priorPositions = (rows: readonly WaterfallRow[]) =>
+  placePrior(rows).flatMap((one) =>
+    one?.kind === "value"
+      ? [one.from, one.to].filter((value): value is number => value !== null)
+      : [],
+  );
+
 const valueText = (row: WaterfallRow) =>
   row.kind === "gap" ? "" : row.kind === "step" ? signedText(row.text, row.value) : row.text;
 
 const UNPLACED = "not placed: an earlier step is not stated";
 
 export function waterfallAxis(rows: readonly WaterfallRow[], axisStart?: number | "auto") {
-  const positions = place(rows).flatMap((one) =>
-    [one.from, one.to].filter((value): value is number => value !== null),
-  );
+  const positions = [
+    ...place(rows).flatMap((one) => [
+      ...[one.from, one.to].filter((value): value is number => value !== null),
+      // Parts that do not add up to their step are drawn as written: the axis holds their ends too.
+      ...(one.row.kind === "step" && one.row.split && one.from !== null
+        ? splitRuns(one.row.split, one.from).map((run) => run.end)
+        : []),
+    ]),
+    ...priorPositions(rows),
+  ];
   if (axisStart === undefined) return niceAxis(positions, { zero: true });
   return niceAxis(positions, {
     zero: false,
@@ -93,16 +186,36 @@ export function waterfallAxis(rows: readonly WaterfallRow[], axisStart?: number 
   });
 }
 
-/** The default reading: every row in order, with its figure, gaps with their reasons. */
-export function waterfallReading(rows: readonly WaterfallRow[], unit: string, axis: NiceAxis) {
-  const parts = rows.map((row) => {
-    if (row.kind === "gap") return `${row.label} not stated: ${row.reason}`;
-    if (row.kind === "step")
-      return row.value < 0
-        ? `less ${row.label} ${signedText(row.text, row.value).slice(1)}`
-        : `plus ${row.label} ${signedText(row.text, row.value).replace(/^\+/, "")}`;
-    return row.kind === "closing" ? `equals ${row.label} ${row.text}` : `${row.label} ${row.text}`;
-  });
+function rowReading(row: WaterfallRow) {
+  if (row.kind === "gap") return `${row.label} not stated: ${row.reason}`;
+  if (row.kind === "step")
+    return row.value < 0
+      ? `less ${row.label} ${signedText(row.text, row.value).slice(1)}`
+      : `plus ${row.label} ${signedText(row.text, row.value).replace(/^\+/, "")}`;
+  return row.kind === "closing" ? `equals ${row.label} ${row.text}` : `${row.label} ${row.text}`;
+}
+
+/** A row's split parts and its earlier period, in brackets after its own reading. */
+function extrasReading(row: WaterfallRow, prior: string) {
+  const split = row.kind === "step" && row.split?.length ? row.split.map((part) => part.text) : [];
+  const earlier = row.prior
+    ? ["gap" in row.prior ? `${prior}: ${row.prior.gap}` : `${prior} ${row.prior.text}`]
+    : [];
+  const extras = [...split, ...earlier];
+  return extras.length ? ` (${extras.join("; ")})` : "";
+}
+
+/**
+ * The default reading: every row in order, with its figure, gaps with their reasons, each row's
+ * split parts and earlier figure (named `prior`) where given.
+ */
+export function waterfallReading(
+  rows: readonly WaterfallRow[],
+  unit: string,
+  axis: NiceAxis,
+  prior = "prior",
+) {
+  const parts = rows.map((row) => `${rowReading(row)}${extrasReading(row, prior)}`);
   const start = axis.ticks[0]?.label ?? "0";
   return `Waterfall, ${unit}: ${parts.join(", ")}. Axis starts at ${start}${axis.cut ? ", cut" : ""}.`;
 }
@@ -115,11 +228,19 @@ type Frame = {
   x: (value: number) => number;
 };
 
-function frame(placed: Placed[], axis: NiceAxis, width: number): Frame {
+function frame(
+  placed: Placed[],
+  priors: readonly (PriorPlaced | null)[],
+  axis: NiceAxis,
+  width: number,
+): Frame {
   const narrow = width < NARROW;
-  const values = placed.map((one) =>
-    one.to === null ? 0 : textWidth(valueText(one.row), SIZE.value),
-  );
+  const values = [
+    ...placed.map((one) => (one.to === null ? 0 : textWidth(valueText(one.row), SIZE.value))),
+    ...priors.map((one) =>
+      one?.kind === "value" && one.to !== null ? textWidth(one.text, SIZE.tick) : 0,
+    ),
+  ];
   const room = Math.max(24, ...values) + 10;
   const longest = Math.max(0, ...placed.map((one) => textWidth(one.row.label)));
   const labelWidth = narrow ? width : Math.min(longest + 16, Math.round(width * 0.34));
@@ -134,17 +255,57 @@ function frame(placed: Placed[], axis: NiceAxis, width: number): Frame {
   };
 }
 
+/** One part of a split's key line: its swatch at `x` and its words. */
+type SplitKey = { part: WaterfallSplit; x: number };
+
+const SPLIT_SWATCH = 10;
+
+/** A split's words flowed into lines from `left`, each part with its swatch, none past `right`. */
+function splitLines(split: readonly WaterfallSplit[], left: number, right: number) {
+  const lines: SplitKey[][] = [];
+  let x = left;
+  for (const part of split) {
+    const size = SPLIT_SWATCH + 5 + textWidth(part.text) + 14;
+    const line = lines.at(-1);
+    if (!line || (x > left && x + size - 14 > right)) {
+      lines.push([{ part, x: left }]);
+      x = left + size;
+    } else {
+      line.push({ part, x });
+      x += size;
+    }
+  }
+  return lines;
+}
+
+/** The prior line's text: its figure where placed, its reason or "not placed" otherwise. */
+function priorLines(prior: PriorPlaced | null, width: number) {
+  if (!prior) return [];
+  if (prior.kind === "gap") return wrap(prior.reason, width - 22, SIZE.tick);
+  return prior.to === null ? wrap(`${prior.text} · ${UNPLACED}`, width, SIZE.tick) : [prior.text];
+}
+
 type Laid = Placed & {
   top: number;
   height: number;
   barY: number;
   labelLines: string[];
   noteLines: string[];
+  split: SplitKey[][];
+  /** The top of the prior line, under the mark and its split key. */
+  priorY: number;
+  prior: PriorPlaced | null;
+  priorText: string[];
 };
 
-function lay(placed: Placed[], f: Frame, top: number): Laid[] {
+function lay(
+  placed: Placed[],
+  priors: readonly (PriorPlaced | null)[],
+  f: Frame,
+  top: number,
+): Laid[] {
   let y = top;
-  return placed.map((one) => {
+  return placed.map((one, at) => {
     const labelLines = wrap(one.row.label, f.labelWidth - (f.narrow ? 0 : 12));
     const labelHeight = labelLines.length * LINE;
     const barY = f.narrow ? y + labelHeight + 2 : y;
@@ -157,18 +318,42 @@ function lay(placed: Placed[], f: Frame, top: number): Laid[] {
           : [];
     const slot = one.row.kind === "gap" ? SLOT + 4 : 0;
     const markHeight = noteLines.length ? slot + noteLines.length * LINE : BAR;
-    const height = f.narrow
-      ? labelHeight + 2 + markHeight + GAP
-      : Math.max(labelHeight, markHeight) + GAP;
-    const laid = { ...one, top: y, height, barY, labelLines, noteLines };
+    const split =
+      one.row.kind === "step" && one.row.split?.length
+        ? splitLines(one.row.split, f.plotLeft, f.plotLeft + noteWidth)
+        : [];
+    const prior = priors[at] ?? null;
+    const priorText = priorLines(prior, noteWidth);
+    const priorY = barY + markHeight + split.length * LINE;
+    const block = markHeight + split.length * LINE + priorText.length * PRIOR_LINE;
+    const height = f.narrow ? labelHeight + 2 + block + GAP : Math.max(labelHeight, block) + GAP;
+    const laid = {
+      ...one,
+      top: y,
+      height,
+      barY,
+      labelLines,
+      noteLines,
+      split,
+      priorY,
+      prior,
+      priorText,
+    };
     y += height;
     return laid;
   });
 }
 
 /** Where a bar's figure goes: beyond its far end, leftward for a fall when it fits there. */
-function valueSpot(left: number, right: number, falls: boolean, text: string, f: Frame) {
-  const size = textWidth(text, SIZE.value);
+function valueSpot(
+  left: number,
+  right: number,
+  falls: boolean,
+  text: string,
+  f: Frame,
+  font: number = SIZE.value,
+) {
+  const size = textWidth(text, font);
   if (falls && left - f.plotLeft >= size + 6) return { x: left - 6, anchor: "end" as const };
   return { x: right + 6, anchor: "start" as const };
 }
@@ -215,6 +400,9 @@ function Bar({ one, f, base, cut }: { one: Laid; f: Frame; base: number; cut: bo
           row.kind === "step" && "fill-surface-card stroke-chart-2",
         )}
       />
+      {row.kind === "step" && one.from !== null && row.split && (
+        <SplitSegments split={row.split} from={one.from} y={one.barY} f={f} />
+      )}
       {total && cut && <BreakMark x={f.x(base)} y={one.barY} />}
       <text
         data-part="value"
@@ -228,6 +416,159 @@ function Bar({ one, f, base, cut }: { one: Laid; f: Frame; base: number; cut: bo
         {text}
       </text>
     </g>
+  );
+}
+
+const SPLIT_TONE = {
+  primary: "fill-chart-1",
+  secondary: "fill-chart-2",
+  worse: "fill-warning-mark",
+} as const;
+
+/** Each part's run, consecutive from the step's start, in the parts' order. */
+function splitRuns(split: readonly WaterfallSplit[], from: number) {
+  return split.reduce<{ part: WaterfallSplit; start: number; end: number }[]>((runs, part) => {
+    const start = runs.at(-1)?.end ?? from;
+    return [...runs, { part, start, end: start + part.value }];
+  }, []);
+}
+
+/** A step's parts as consecutive segments inside its outline, from the step's start. */
+function SplitSegments({
+  split,
+  from,
+  y,
+  f,
+}: {
+  split: readonly WaterfallSplit[];
+  from: number;
+  y: number;
+  f: Frame;
+}) {
+  return (
+    <g>
+      {splitRuns(split, from).map(({ part, start, end }, at) => {
+        const [left, right] = [f.x(Math.min(start, end)), f.x(Math.max(start, end))];
+        return (
+          <rect
+            key={`${String(at)}-${part.text}`}
+            data-split={part.text}
+            data-from={start}
+            data-to={end}
+            x={left}
+            y={y + 2.25}
+            width={Math.max(right - left, 1)}
+            height={BAR - 4.5}
+            rx="1"
+            className={SPLIT_TONE[part.tone]}
+          />
+        );
+      })}
+    </g>
+  );
+}
+
+/** The split's words under the step, each with the swatch of its segment. */
+function SplitKeys({ one }: { one: Laid }) {
+  if (!one.split.length) return null;
+  const first = one.priorY - one.split.length * LINE;
+  return (
+    <g data-part="split-key">
+      {one.split.flatMap((line, row) =>
+        line.map(({ part, x }) => {
+          const y = first + row * LINE;
+          return (
+            <g key={`${String(row)}-${part.text}`}>
+              <rect
+                x={x}
+                y={y + 4}
+                width={SPLIT_SWATCH}
+                height={SPLIT_SWATCH}
+                rx="2"
+                className={SPLIT_TONE[part.tone]}
+              />
+              <text
+                data-part="split"
+                x={x + SPLIT_SWATCH + 5}
+                y={y + 13}
+                fontSize={SIZE.label}
+                {...HALO}
+                className={cx("fill-text-secondary font-body", HALO_CLASS)}
+              >
+                {part.text}
+              </text>
+            </g>
+          );
+        }),
+      )}
+    </g>
+  );
+}
+
+/** The earlier period under the row: a thin bar and its figure, or the stated gap and its reason. */
+function PriorMark({ one, f, base }: { one: Laid; f: Frame; base: number }) {
+  const { prior, priorY } = one;
+  if (!prior) return null;
+  const baseline = priorY + 11;
+  if (prior.kind === "gap")
+    return (
+      <g>
+        <GapSlot x={f.plotLeft} y={priorY + 3} width={16} height={7} reason={prior.reason} />
+        <PriorText lines={one.priorText} x={f.plotLeft + 22} y={baseline} part="prior-reason" />
+      </g>
+    );
+  if (prior.to === null)
+    return <PriorText lines={one.priorText} x={f.plotLeft} y={baseline} part="prior-unplaced" />;
+  const start = prior.from ?? base;
+  const [left, right] = [f.x(Math.min(start, prior.to)), f.x(Math.max(start, prior.to))];
+  const spot = valueSpot(left, right, prior.to < start, prior.text, f, SIZE.tick);
+  return (
+    <g>
+      <rect
+        data-prior={one.row.label}
+        data-from={start}
+        data-to={prior.to}
+        x={left}
+        y={priorY + 3}
+        width={Math.max(right - left, 1)}
+        height={PRIOR_BAR}
+        rx="1"
+        className="fill-chart-3"
+      />
+      <text
+        data-part="prior-value"
+        x={spot.x}
+        y={baseline}
+        textAnchor={spot.anchor}
+        fontSize={SIZE.tick}
+        {...HALO}
+        className={cx("fill-text-secondary font-mono", HALO_CLASS)}
+      >
+        {prior.text}
+      </text>
+    </g>
+  );
+}
+
+function PriorText({
+  lines,
+  x,
+  y,
+  part,
+}: {
+  lines: readonly string[];
+  x: number;
+  y: number;
+  part: string;
+}) {
+  return (
+    <text data-part={part} x={x} y={y} fontSize={SIZE.tick} className="fill-gap-text font-body">
+      {lines.map((line, at) => (
+        <tspan key={`${String(at)}-${line}`} x={x} y={y + at * PRIOR_LINE}>
+          {line}
+        </tspan>
+      ))}
+    </text>
   );
 }
 
@@ -301,6 +642,45 @@ function legendItems(legend: WaterfallProps["legend"], hasGap: boolean): LegendI
   return named.flatMap(([tone, text]) => (text ? [{ tone, text }] : []));
 }
 
+// The legend's flow (parts.tsx `Legend`: 18 px rows, a 12 px swatch, 6 px to the words, 16 px
+// after them), followed here to place the prior key after the last item; parts.tsx has no thin-bar
+// swatch to name the prior bar with.
+const LEGEND_ROW = 18;
+const keySize = (text: string) => 12 + 6 + textWidth(text) + 16;
+
+function priorKeySpot(items: readonly LegendItem[], text: string, width: number) {
+  let [x, y] = [0, 0];
+  for (const size of [...items.map((item) => keySize(item.text)), keySize(text)]) {
+    if (x > 0 && x + size > width) [x, y] = [0, y + LEGEND_ROW];
+    x += size;
+  }
+  return { x: x - keySize(text), y };
+}
+
+function PriorKey({ spot, text }: { spot: { x: number; y: number }; text: string }) {
+  return (
+    <g data-part="legend">
+      <rect
+        x={spot.x}
+        y={spot.y + 5}
+        width="12"
+        height={PRIOR_BAR}
+        rx="1"
+        className="fill-chart-3"
+      />
+      <text
+        data-part="legend-text"
+        x={spot.x + 18}
+        y={spot.y + 13}
+        fontSize={SIZE.label}
+        className="fill-text-secondary font-body"
+      >
+        {text}
+      </text>
+    </g>
+  );
+}
+
 /**
  * The lead waterfall: rows of stated levels and steps on one scale, each figure beside its bar,
  * a fall drawn leftward with its minus sign, a step the module did not state as the hatched slot
@@ -310,13 +690,21 @@ export function Waterfall({ rows: given, unit, width, axisStart, label, legend }
   const rows = finite(given);
   const axis = waterfallAxis(rows, axisStart);
   const placed = place(rows);
-  const f = frame(placed, axis, width);
+  const priors = placePrior(rows);
+  const f = frame(placed, priors, axis, width);
   const items = legendItems(
     legend,
     rows.some((row) => row.kind === "gap"),
   );
-  const legendBlock = legendHeight(items, width);
-  const laid = lay(placed, f, legendBlock + 8);
+  const priorKey =
+    legend?.prior && priors.some((one) => one !== null)
+      ? { text: legend.prior, spot: priorKeySpot(items, legend.prior, width) }
+      : null;
+  const legendBlock = Math.max(
+    legendHeight(items, width),
+    priorKey ? priorKey.spot.y + LEGEND_ROW : 0,
+  );
+  const laid = lay(placed, priors, f, legendBlock + 8);
   const plotTop = legendBlock + 4;
   const plotBottom = (laid.at(-1)?.top ?? plotTop) + (laid.at(-1)?.height ?? 0) - GAP + 6;
   const base = axis.cut ? axis.start : 0;
@@ -331,11 +719,12 @@ export function Waterfall({ rows: given, unit, width, axisStart, label, legend }
       viewBox={`0 0 ${String(width)} ${String(height)}`}
       width="100%"
       role="img"
-      aria-label={label ?? waterfallReading(rows, unit, axis)}
+      aria-label={label ?? waterfallReading(rows, unit, axis, legend?.prior)}
       data-layout={f.narrow ? "narrow" : "wide"}
       className="block"
     >
       <Legend items={items} width={width} />
+      {priorKey && <PriorKey spot={priorKey.spot} text={priorKey.text} />}
       <Grid
         ticks={kept}
         x={f.x}
@@ -373,6 +762,8 @@ export function Waterfall({ rows: given, unit, width, axisStart, label, legend }
           )}
           <Bar one={one} f={f} base={base} cut={axis.cut} />
           <Note one={one} f={f} />
+          <SplitKeys one={one} />
+          <PriorMark one={one} f={f} base={base} />
         </g>
       ))}
       <TickLabels ticks={kept} x={f.x} y={plotBottom + 16} width={width} />

@@ -1,343 +1,337 @@
-// Expected values are written out by hand from the retained TransDigm FY2024 CP-1 handoff
-// (outdated evidence: shape and scope only), not computed by the code under test. The short-ladder
-// case is synthetic, built from the module contract (foundationData.ts cashLadder); not a real handoff.
-// Round 2 (ruling i): the data layer no longer derives the "not itemised" plug, the acquisitions and
-// distributions sum or the end level; the ladder is the handoff's own stated rows. Tests that asserted
-// those derived steps were updated or removed below (each marked "ruling i"); this tile is being
-// rebuilt on foundationData's new contract.
-import { cleanup, render, screen, within } from "@testing-library/react";
+// Expected values are written out by hand from the retained TransDigm CP-1 handoffs (accepted
+// FY2024, relative value draft 1 single period FY2024, distressed draft 1; outdated evidence:
+// shape and scope only), not computed by the code under test. The three-period case and the
+// edited cells are mutations of the accepted handoff (fixtures/mutations.ts), not real handoffs.
+// The ladder is the handoff's own stated rows (ruling i): no plug, no invented end level, no sum.
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
+import { containsReference, type OutputEntry } from "../../../publishedReport";
 import {
-  containsReference,
-  type Block,
-  type OutputEntry,
-  type Table,
-} from "../../../publishedReport";
-import { entry as synthetic, section, table } from "../../overview/rows.fixture";
-import { cp1Entry, leadProps } from "../fixtures/load";
+  cp1Entry,
+  distressedCp1Entry,
+  leadProps,
+  relativeValueCp1Entry,
+} from "../fixtures/load";
+import { dropTable, setLabelled, threePeriodCp1 } from "../fixtures/mutations";
 import { CashLadderTile } from "./CashLadder";
-import { cashLadder } from "./legacyData";
-import { LADDER, ladderConnectors, ladderGeometry, wrapLines } from "./ladderGeometry";
 
 afterEach(cleanup);
 
-const base = cp1Entry();
 const CASH = "T4.5 Cash flow statement";
 
-function edited(change: (table: Table, heading: string) => Table | null): OutputEntry {
-  return {
-    ...base,
-    sections: base.sections.map((part) => ({
-      ...part,
-      blocks: part.blocks.flatMap((block): Block[] => {
-        if (block.type !== "table") return [block];
-        const next = change(block, part.heading);
-        return next ? [next] : [];
-      }),
-    })),
-  };
-}
-/** The handoff with the FY2024 cell of each named statement row replaced. */
-const withCells = (heading: string, cells: Record<string, string>) =>
-  edited((found, at) =>
-    at !== heading
-      ? found
-      : {
-          ...found,
-          rows: found.rows.map((row) => {
-            const text = cells[row.cells[0] ?? ""];
-            return text === undefined
-              ? row
-              : { ...row, cells: row.cells.map((c, m) => (m === 1 ? text : c)) };
-          }),
-        },
-  );
-
 function draw(entry: OutputEntry) {
-  const view = render(<CashLadderTile lead={leadProps(entry)} />);
+  render(<CashLadderTile lead={leadProps(entry)} />);
   const tile = screen.getByRole("region", { name: "Cash conversion" });
-  return { tile, view, mark: (selector: string) => tile.querySelector(selector) };
+  const all = (selector: string) => [...tile.querySelectorAll(selector)];
+  return { tile, all, svg: tile.querySelector("svg[role='img']") };
 }
-const num = (element: Element | null, name: string) => Number(element?.getAttribute(name));
-const right = (element: Element | null) => num(element, "x") + num(element, "width");
 
-// One scale from -4,000 to 6,000 (ticks of 2,000 bracket -2,505 and 4,173) over x 212..468.
-const PER = (468 - 212) / 10000;
-const ZERO = 212 + 4000 * PER;
+const num = (element: Element | undefined, name: string) => Number(element?.getAttribute(name));
+const spans = (elements: Element[]) =>
+  elements.map((bar) => [bar.getAttribute("data-label"), num(bar, "data-from"), num(bar, "data-to")]);
+const parts = (tile: HTMLElement, part: string) =>
+  [...tile.querySelectorAll(`[data-part="${part}"]`)].map((node) => node.textContent);
 
-describe("ladder geometry", () => {
-  it("wraps long labels by words and keeps a long word whole", () => {
-    expect(wrapLines("Free cash flow after acquisitions and distributions", 30)).toEqual([
-      "Free cash flow after",
-      "acquisitions and distributions",
-    ]);
-    expect(wrapLines("Supercalifragilistic word", 5)).toEqual(["Supercalifragilistic", "word"]);
+function openTable(tile: HTMLElement) {
+  fireEvent.click(within(tile).getByRole("button", { name: /Table view/ }));
+  const table = within(tile).getByRole("table");
+  const rows = within(table)
+    .getAllByRole("row")
+    .map((row) => [...row.querySelectorAll("th, td")].map((cell) => cell.textContent));
+  return rows;
+}
+
+/** Nothing the module did not write: no plug, no end level, no sum, no ratio. */
+function expectNoDerived(tile: HTMLElement) {
+  const text = `${tile.textContent} ${tile.querySelector("svg")?.getAttribute("aria-label") ?? ""}`;
+  for (const banned of [
+    /not itemised/i,
+    /derived/i,
+    /\+360/,
+    /÷/,
+    /Other items/i,
+    /after acquisitions/i,
+    /2,347 \+ 2,038/,
+    /2,505/,
+  ])
+    expect(text).not.toMatch(banned);
+}
+
+describe("cash ladder: the accepted CP-1, FY2024 bars and FY2023 beneath", () => {
+  it("titles the tile plainly and names the periods in the kicker", () => {
+    const { tile } = draw(cp1Entry());
+    expect(within(tile).getByRole("heading", { level: 3 }).textContent).toBe("Cash conversion");
+    expect(tile.textContent).toContain("Cash conversion · US$m, FY2024; FY2023 beneath");
+    expect(within(tile).getByRole("link", { name: /Source for cash conversion/ })).toBeTruthy();
   });
 
-  it("places levels from zero and each deduction from the running level, on one scale", () => {
-    const data = cashLadder(base);
-    if (!data) throw new Error("fixture lost the ladder");
-    const geometry = ladderGeometry(data);
-    expect(geometry.ticks.map((tick) => tick.label)).toEqual([
-      "−4,000",
-      "−2,000",
-      "0",
-      "2,000",
-      "4,000",
-      "6,000",
+  it("draws each stated level from zero and each deduction from the bar above it, as written", () => {
+    const { tile, all } = draw(cp1Entry());
+    // Hand: 4,173 − 1,158 = 3,015; 3,015 − 539 = 2,476; 2,045 − 165 = 1,880;
+    // 1,880 − 2,038 = −158; −158 − 2,347 = −2,505 (a bar end, never written).
+    expect(spans(all("rect[data-bar]"))).toEqual([
+      ["EBITDA (Adjusted)", 0, 4173],
+      ["Cash Interest Paid", 4173, 3015],
+      ["Cash taxes paid", 3015, 2476],
+      ["Net Cash from Operating Activities", 0, 2045],
+      ["Capital expenditures", 2045, 1880],
+      ["Levered free cash flow", 0, 1880],
+      ["Dividends and dividend equivalent payments", 1880, -158],
+      ["Discretionary cash flow after distributions", 0, -158],
+      ["Acquisition of businesses, net of cash acquired", -158, -2505],
     ]);
-    expect(geometry.zeroX).toBeCloseTo(ZERO, 6);
-    const spans = geometry.rows.map((row) =>
-      row.current.state === "bar" ? [row.current.span.from, row.current.span.to] : null,
-    );
-    // 4,173 − 1,158 = 3,015; − 539 = 2,476; cash from operations stated 2,045; − 165 = 1,880;
-    // free cash flow 1,880; − 2,038 = −158; repurchases a stated gap; −158 stated; − 2,347.
-    expect(spans).toEqual([
-      [0, 4173],
-      [4173, 3015],
-      [3015, 2476],
-      [0, 2045],
-      [2045, 1880],
-      [0, 1880],
-      [1880, -158],
-      null,
-      [0, -158],
-      [-158, -2505],
+    expect(parts(tile, "value")).toEqual([
+      "4,173",
+      "−1,158",
+      "−539",
+      "2,045",
+      "−165",
+      "1,880",
+      "−2,038",
+      "−158",
+      "−2,347",
     ]);
-    // Ruling i: no plug, so cash from operations (2,045) is not reached from 2,476 by stated steps.
-    expect(geometry.mismatch).toBe(true);
-    expect(ladderConnectors(geometry.rows).length).toBeGreaterThan(0);
-    // Rows never overlap: each starts where the previous one ends.
-    geometry.rows.slice(1).forEach((row, at) => {
-      const above = geometry.rows[at];
-      expect(row.y).toBe((above?.y ?? 0) + (above?.height ?? 0));
+    expect(parts(tile, "label")).toContain("Repurchases of common stock");
+  });
+
+  it("is proportional: one scale for every bar, current and earlier", () => {
+    const { all } = draw(cp1Entry());
+    const bars = all("rect[data-bar]");
+    const perUnit = num(bars[0], "width") / 4173;
+    const sizes = [4173, 1158, 539, 2045, 165, 1880, 2038, 158, 2347];
+    bars.forEach((bar, at) => {
+      expect(num(bar, "width") / (sizes[at] ?? 1)).toBeCloseTo(perUnit, 6);
     });
-    expect(geometry.rows[0]?.y).toBe(LADDER.top);
-  });
-});
-
-describe("CashLadderTile on the retained handoff", () => {
-  it("draws each bar in proportion to its stated amount, deductions hanging from the level above", () => {
-    const { mark } = draw(base);
-    const start = mark('[data-step="start"]');
-    const cfo = mark('[data-step="cfo"]');
-    const interest = mark('[data-step="interest"]');
-    const after = mark('[data-step="afterDistributions"]');
-    expect(num(start, "width") / num(cfo, "width")).toBeCloseTo(4173 / 2045, 6);
-    expect(num(interest, "width") / num(start, "width")).toBeCloseTo(1158 / 4173, 6);
-    expect(num(start, "x")).toBeCloseTo(ZERO, 6);
-    expect(right(interest)).toBeCloseTo(right(start), 6);
-    // The stated negative after-distributions level is drawn left of zero, ending at the zero line.
-    expect(right(after)).toBeCloseTo(ZERO, 6);
-    expect(num(after, "width")).toBeCloseTo(158 * PER, 6);
-    expect(num(mark("[data-zero]"), "x1")).toBeCloseTo(ZERO, 6);
-    // FY2023 levels beneath, on the same scale.
-    expect(num(mark('[data-prior="start"]'), "width") / num(start, "width")).toBeCloseTo(
-      3395 / 4173,
-      6,
-    );
-    expect(num(mark('[data-prior="afterDistributions"]'), "width")).toBeCloseTo(1198 * PER, 6);
-    expect(mark('[data-prior="interest"]')).toBeNull();
+    const prior = all("rect[data-prior]");
+    expect(num(prior[0], "width") / 3395).toBeCloseTo(perUnit, 6);
+    // The stated CFO level is drawn where it is stated, not where the deductions above reach.
+    const [ebitda, , taxes, cfo] = bars;
+    expect(num(cfo, "x")).toBeCloseTo(num(ebitda, "x"), 6);
+    expect(num(cfo, "width")).toBeLessThan(num(taxes, "x"));
   });
 
-  // Ruling i: "hatches the remainder and labels every derived step" is removed; the plug, the
-  // outflow sum ("2,347 + 2,038") and the −2,505 end level are no longer in the data.
-
-  it("titles from the stated levels and states every step in the aria-label", () => {
-    const { tile } = draw(base);
-    expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(
-      /^Cash from operations 2,045 after interest, tax and other items$/,
-    );
+  it("draws FY2023 beneath as thin bars with its stated figures, walking the same way", () => {
+    const { tile, all } = draw(cp1Entry());
+    // Hand: 3,395 − 1,160 = 2,235; 2,235 − 260 = 1,975; 1,375 − 139 = 1,236; 1,236 − 38 = 1,198;
+    // 1,198 − 762 = 436.
     expect(
-      within(tile).getByText(
-        "Cash conversion · US$m, FY2024 from EBITDA As Defined; FY2023 beneath",
-      ),
-    ).toBeVisible();
-    // Ruling i: the reading names the stated rows only, with no derived step.
-    const label = within(tile).getByRole("img").getAttribute("aria-label") ?? "";
-    for (const part of [
-      "EBITDA (Adjusted) 4,173",
-      "Interest Paid 1,158",
-      "cash taxes paid 539",
-      "Cash from Operating Activities 2,045",
-      "levered free cash flow 1,880",
-      "less dividends and dividend equivalent payments 2,038",
-      "repurchases of common stock not stated",
-      "discretionary cash flow after distributions −158, negative",
-      "less acquisition of businesses, net of cash acquired 2,347",
-      "discretionary cash flow after distributions 1,198",
-    ])
-      expect(label).toContain(part);
-    expect(label).not.toMatch(/derived|not itemised|2,505|4,385/);
-    expect(within(tile).getByRole("img")).toHaveAttribute("width", "100%");
-    expect(within(tile).getByRole("img").getAttribute("viewBox")).toMatch(/^0 0 610 \d+/);
-  });
-
-  it("has one trace control, a table view with the basis of each row, and no source reference", () => {
-    const { tile, view } = draw(base);
-    expect(within(tile).getByRole("link", { name: "Source for cash conversion" })).toHaveAttribute(
-      "href",
-      expect.stringContaining("/report/run#evidence/"),
-    );
-    expect(within(tile).getAllByRole("link")).toHaveLength(1);
-    const rows = [...(tile.querySelector("table")?.querySelectorAll("tr") ?? [])].map((row) =>
-      [...row.children].map((cell) => cell.textContent),
-    );
-    expect(rows[0]).toEqual(["Step", "FY2024", "FY2023", "Basis"]);
-    expect(rows[1]).toEqual(["EBITDA (Adjusted)", "4,173", "3,395", "stated"]);
-    expect(rows[4]).toEqual(["Net Cash from Operating Activities", "2,045", "1,375", "stated"]);
-    expect(rows[8]).toEqual([
-      "Repurchases of common stock",
-      "Not supplied: source dash",
-      "Not supplied: source dash",
-      "stated",
+      all("rect[data-prior]").map((bar) => [
+        bar.getAttribute("data-prior"),
+        num(bar, "data-from"),
+        num(bar, "data-to"),
+      ]),
+    ).toEqual([
+      ["EBITDA (Adjusted)", 0, 3395],
+      ["Cash Interest Paid", 3395, 2235],
+      ["Cash taxes paid", 2235, 1975],
+      ["Net Cash from Operating Activities", 0, 1375],
+      ["Capital expenditures", 1375, 1236],
+      ["Levered free cash flow", 0, 1236],
+      ["Dividends and dividend equivalent payments", 1236, 1198],
+      ["Discretionary cash flow after distributions", 0, 1198],
+      ["Acquisition of businesses, net of cash acquired", 1198, 436],
     ]);
-    expect(rows[9]).toEqual([
-      "Discretionary cash flow after distributions",
-      "−158 (negative)",
+    expect(parts(tile, "prior-value")).toEqual([
+      "3,395",
+      "−1,160",
+      "−260",
+      "1,375",
+      "−139",
+      "1,236",
+      "−38",
       "1,198",
-      "stated",
+      "−762",
     ]);
-    const text = view.container.textContent;
-    expect(containsReference(text)).toBe(false);
-    expect(text).not.toMatch(/\.jsonl|page \d|CP-1|T4\.5/);
-    expect(containsReference(within(tile).getByRole("img").getAttribute("aria-label") ?? "")).toBe(
-      false,
-    );
-    // Ruling i: with no plug, the stated steps do not reach the stated cash from operations.
-    expect(within(tile).getAllByText(/do not sum exactly/).length).toBeGreaterThan(0);
+    expect(parts(tile, "legend-text")).toEqual(["FY2024 level", "Deduction", "Not stated", "FY2023"]);
   });
 
-  it("wraps a long stated label onto two lines", () => {
-    const { tile } = draw(base);
-    const lines = [...tile.querySelectorAll("tspan")].map((span) => span.textContent);
-    expect(lines).toContain("Net Cash from Operating");
-    expect(lines).toContain("Activities");
+  it("draws the stated repurchase gap as the hatched slot with its reason, never dropped", () => {
+    const { tile } = draw(cp1Entry());
+    const reason = "Not supplied: source dash (FY2023 and FY2024)";
+    expect(tile.querySelector(`[data-gap="${reason}"] rect`)).not.toBeNull();
+    expect(parts(tile, "reason")).toEqual([reason]);
+    expect(tile.querySelector('[data-step="Repurchases of common stock"]')).toBeNull();
+  });
+
+  it("joins a bar to the next only where the walk continues there", () => {
+    const { tile } = draw(cp1Entry());
+    const path = tile.querySelector("path.stroke-connector")?.getAttribute("d") ?? "";
+    // EBITDA→interest→taxes, CFO→capex→FCF→dividends, after distributions→acquisitions: 6.
+    // Not taxes→CFO (2,476 is not 2,045), nor across the repurchase gap.
+    expect(path.match(/M/g)).toHaveLength(6);
+  });
+
+  it("reads every figure in its aria-label, the earlier in brackets", () => {
+    const { svg } = draw(cp1Entry());
+    expect(svg?.getAttribute("aria-label")).toBe(
+      "Cash conversion, US$m, FY2024, FY2023 in brackets: EBITDA (Adjusted) 4,173 (FY2023 3,395), less Cash Interest Paid 1,158 (FY2023 −1,160), less Cash taxes paid 539 (FY2023 −260), Net Cash from Operating Activities 2,045 (FY2023 1,375), less Capital expenditures 165 (FY2023 −139), Levered free cash flow 1,880 (FY2023 1,236), less Dividends and dividend equivalent payments 2,038 (FY2023 −38), Repurchases of common stock not stated: Not supplied: source dash (FY2023 and FY2024), Discretionary cash flow after distributions −158 (FY2023 1,198), less Acquisition of businesses, net of cash acquired 2,347 (FY2023 −762). Axis starts at −4,000.",
+    );
+  });
+
+  it("opens the table view from the button: every stated figure as written", () => {
+    const { tile } = draw(cp1Entry());
+    expect(openTable(tile)).toEqual([
+      ["Step", "FY2023", "FY2024", "Kind"],
+      ["EBITDA (Adjusted)", "3,395", "4,173", "Level"],
+      ["Cash Interest Paid", "1,160", "1,158", "Deduction, stated as an amount paid"],
+      ["Cash taxes paid", "260", "539", "Deduction, stated as an amount paid"],
+      ["Net Cash from Operating Activities", "1,375", "2,045", "Level"],
+      ["Capital expenditures", "−139", "−165", "Deduction, stated with its sign"],
+      ["Levered free cash flow", "1,236", "1,880", "Level"],
+      [
+        "Dividends and dividend equivalent payments",
+        "−38",
+        "−2,038",
+        "Deduction, stated with its sign",
+      ],
+      [
+        "Repurchases of common stock",
+        "Not supplied: source dash",
+        "Not supplied: source dash",
+        "Deduction, stated with its sign",
+      ],
+      ["Discretionary cash flow after distributions", "1,198", "−158", "Level"],
+      [
+        "Acquisition of businesses, net of cash acquired",
+        "−762",
+        "−2,347",
+        "Deduction, stated with its sign",
+      ],
+    ]);
+  });
+
+  it("writes no plug, no end level, no sum and no source reference", () => {
+    const { tile } = draw(cp1Entry());
+    expectNoDerived(tile);
+    openTable(tile);
+    expectNoDerived(tile);
+    expect(containsReference(tile.textContent)).toBe(false);
+    expect(tile.textContent).not.toMatch(/CP-1|T4\.5|C\d{2}/);
+  });
+
+  it("notes how it is drawn, and no period list when both periods are drawn", () => {
+    const { tile } = draw(cp1Entry());
+    expect(tile.textContent).toContain(
+      "Each level is drawn from zero at its stated figure; a deduction hangs from the bar above it.",
+    );
+    expect(tile.textContent).not.toContain("Drawn:");
   });
 });
 
-describe("CashLadderTile states", () => {
-  it("draws a stated gap hatched with its reason, no bar, and does not derive what depends on it", () => {
-    const { tile, mark } = draw(
-      withCells(CASH, { "Cash taxes paid": "Not supplied: refund netting unclear" }),
-    );
-    expect(mark('[data-step="taxes"]')).toBeNull();
-    expect(mark('[data-gap="taxes"]')).not.toBeNull();
-    // Ruling i: no remainder step exists to derive.
-    expect(mark('[data-step="remainder"]')).toBeNull();
-    expect(
-      within(tile).getByText("Cash taxes paid, FY2024: Not supplied: refund netting unclear."),
-    ).toBeVisible();
-    // Stated levels still draw, from their own figures.
-    expect(num(mark('[data-step="cfo"]'), "width")).toBeCloseTo(2045 * PER, 6);
-    expect(mark('[data-step="interest"]')).not.toBeNull();
-    expect(within(tile).getByRole("img").getAttribute("aria-label")).toContain(
-      "cash taxes paid not stated",
-    );
-    expect(within(tile).getAllByText("Not stated").length).toBeGreaterThan(0);
-  });
-
-  it("does not place a deduction under a gap: the value is shown, the bar is not drawn", () => {
-    const { tile, mark } = draw(
-      withCells(CASH, { "Cash Interest Paid": "Not supplied: not extracted" }),
-    );
-    expect(mark('[data-gap="interest"]')).not.toBeNull();
-    expect(mark('[data-step="taxes"]')).toBeNull();
-    expect(mark('[data-gap="taxes"]')).toBeNull();
-    expect(within(tile).getByText("Not drawn: a step above it is not stated")).toBeInTheDocument();
-    expect(within(tile).getAllByText("−539").length).toBeGreaterThan(0);
-  });
-
-  it("keeps a stated zero as a value", () => {
-    const { tile, mark } = draw(
-      withCells(CASH, { "Capital expenditures": "0", "Levered free cash flow": "2045" }),
-    );
-    const capex = mark('[data-step="capex"]');
-    expect(capex).not.toBeNull();
-    expect([capex?.getAttribute("data-from"), capex?.getAttribute("data-to")]).toEqual([
-      "2045",
-      "2045",
+describe("cash ladder: other real handoffs and mutations", () => {
+  it("relative value, one period: bars only, no earlier ticks, its own label forms", () => {
+    const { tile, all } = draw(relativeValueCp1Entry());
+    expect(tile.textContent).toContain("Cash conversion · US$m, FY2024");
+    expect(tile.textContent).not.toContain("beneath");
+    expect(all("[data-prior]")).toHaveLength(0);
+    expect(spans(all("rect[data-bar]"))).toEqual([
+      ["EBITDA (Adjusted)", 0, 4173],
+      ["Cash Interest Paid", 4173, 3015],
+      ["Cash Taxes Paid", 3015, 2476],
+      ["Net Cash from Operating Activities", 0, 2045],
+      ["Capital expenditures", 2045, 1880],
+      ["Free cash flow, levered after working capital", 0, 1880],
+      ["Dividends and dividend equivalent payments", 1880, -158],
+      ["Discretionary cash flow after dividends and equivalents", 0, -158],
+      ["Acquisition of businesses, net of cash acquired", -158, -2505],
     ]);
-    expect(mark('[data-gap="capex"]')).toBeNull();
-    expect(within(tile).getByRole("img").getAttribute("aria-label")).toContain(
-      "; capital expenditures 0;",
-    );
-    expect(mark('[data-mismatch="fcf"]')).toBeNull();
+    expect(parts(tile, "reason")).toEqual(["Not supplied: source dash"]);
+    expect(parts(tile, "legend-text")).toEqual(["FY2024 level", "Deduction", "Not stated"]);
+    expect(openTable(tile)[0]).toEqual(["Step", "FY2024", "Kind"]);
+    expectNoDerived(tile);
   });
 
-  it("draws levels as stated and marks a step that does not reconcile", () => {
-    const { tile, mark } = draw(withCells(CASH, { "Levered free cash flow": "1885" }));
-    const fcf = mark('[data-step="fcf"]');
-    const gap = mark('[data-mismatch="fcf"]');
-    expect(num(fcf, "width")).toBeCloseTo(1885 * PER, 6);
-    // 2,045 − 165 = 1,880 against 1,885 stated: a hatched step from 1,880 to 1,885, drawn at least 4 wide.
-    expect([gap?.getAttribute("data-from"), gap?.getAttribute("data-to")]).toEqual([
-      "1880",
-      "1885",
+  it("distressed: its tax label as written; the after-distributions row it lacks is a gap with the reason", () => {
+    const { tile, all } = draw(distressedCp1Entry());
+    expect(spans(all("rect[data-bar]")).slice(0, 3)).toEqual([
+      ["EBITDA (Adjusted)", 0, 4173],
+      ["Cash Interest Paid", 4173, 3015],
+      ["Cash taxes paid, net of refunds", 3015, 2476],
     ]);
-    expect(num(gap, "x")).toBeCloseTo(ZERO + 1880 * PER, 6);
-    expect(num(gap, "width")).toBe(4);
-    expect(
-      within(tile).getByText("Levels are drawn as stated; the steps do not sum exactly."),
-    ).toBeVisible();
-    expect(within(tile).getByRole("img").getAttribute("aria-label")).toContain(
-      "Levels are drawn as stated; the steps do not sum exactly.",
-    );
+    // The data layer reads the after-distributions level from the cash flow statement; the
+    // distressed draft states it only in its KPI dashboard (−158), so the row is drawn as a gap.
+    expect(parts(tile, "reason")).toEqual([
+      "Not supplied: source dash (FY2023 and FY2024)",
+      "Cash flow after distributions is not in the handoff.",
+    ]);
+    // Acquisitions follow a level that is not drawn: written, not placed, not dropped.
+    expect(parts(tile, "unplaced")).toEqual(["−2,347 · not placed: an earlier step is not stated"]);
+    expect(tile.querySelector('[data-step^="Acquisition"]')).toBeNull();
+    expectNoDerived(tile);
   });
 
-  it("draws a short ladder: only the anchors stated, every other step a gap with its reason", () => {
-    const unit = "USD millions";
-    const short = synthetic(
-      "CP-1",
-      [],
-      [
-        section(
-          "T4.4 Income statement",
-          9,
-          table(
-            10,
-            ["Line item", "FY2024", "FY2023", "Unit"],
-            [["EBITDA (Adjusted)", "500", "400", unit]],
-          ),
-        ),
-        section(
-          CASH,
-          19,
-          table(
-            20,
-            ["Line item", "FY2024", "FY2023", "Unit"],
-            [["Net Cash from Operating Activities", "-50", "120", unit]],
-          ),
-        ),
-      ],
-    );
-    const { tile, mark } = draw(short);
-    expect(tile.querySelectorAll("[data-step]")).toHaveLength(2);
-    // Ten steps now (round 2): the eight not stated are gaps with their reason.
-    expect(tile.querySelectorAll("[data-gap]")).toHaveLength(8);
-    expect(
-      within(within(tile).getByRole("img")).getByText("Cash interest paid is not in the handoff."),
-    ).toBeInTheDocument();
-    expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(
-      "Cash from operations −50 after interest, tax and other items",
-    );
-    // A negative stated level is drawn left of zero.
-    const cfo = mark('[data-step="cfo"]');
-    expect(right(cfo)).toBeCloseTo(num(mark("[data-zero]"), "x1"), 6);
-    expect(num(mark('[data-step="start"]'), "width") / num(cfo, "width")).toBeCloseTo(500 / 50, 6);
-    expect(within(tile).getByRole("img").getAttribute("aria-label")).toContain(
-      "Cash from Operating Activities −50, negative;",
-    );
+  it("three periods: FY2024 bars only, the other periods named and in the table", () => {
+    const { tile, all } = draw(threePeriodCp1());
+    expect(all("[data-prior]")).toHaveLength(0);
+    expect(tile.textContent).toContain("Cash conversion · US$m, FY2024");
+    expect(tile.textContent).toContain("Drawn: FY2024. FY2022 and FY2023 are in the table view.");
+    expect(num(all("rect[data-bar]")[0], "data-to")).toBe(4173);
+    const rows = openTable(tile);
+    expect(rows[0]).toEqual(["Step", "FY2022", "FY2023", "FY2024", "Kind"]);
+    expect(rows[1]).toEqual([
+      "EBITDA (Adjusted)",
+      "Not supplied: outside the comparison scope",
+      "3,395",
+      "4,173",
+      "Level",
+    ]);
   });
 
-  it("draws the gap tile when the anchors are absent, with no figure and no trace", () => {
-    const { tile } = draw(edited((found, at) => (at === CASH ? null : found)));
-    expect(
-      within(tile).getByText(
-        "The financial foundation does not state EBITDA As Defined and cash from operations in one unit.",
-      ),
-    ).toBeVisible();
-    expect(within(tile).queryByRole("img")).toBeNull();
-    expect(within(tile).queryByRole("link")).toBeNull();
+  it("a stated tax gap in FY2024 is drawn in place; the steps after it are written, not placed", () => {
+    const entry = setLabelled(
+      cp1Entry(),
+      CASH,
+      "Cash taxes paid",
+      "FY2024",
+      "Not supplied: refund netting unclear",
+    );
+    const { tile, all } = draw(entry);
+    expect(tile.querySelector('[data-gap="Not supplied: refund netting unclear"]')).not.toBeNull();
+    expect(spans(all("rect[data-bar]")).slice(0, 3)).toEqual([
+      ["EBITDA (Adjusted)", 0, 4173],
+      ["Cash Interest Paid", 4173, 3015],
+      ["Net Cash from Operating Activities", 0, 2045],
+    ]);
+    // FY2023's 260 is still drawn beneath the gap slot, from FY2023's own walk.
+    const taxes = tile.querySelector('[data-prior="Cash taxes paid"]');
+    expect([num(taxes ?? undefined, "data-from"), num(taxes ?? undefined, "data-to")]).toEqual([
+      2235, 1975,
+    ]);
+  });
+
+  it("an FY2023 gap is written beneath with its period and reason", () => {
+    const entry = setLabelled(cp1Entry(), CASH, "Capital expenditures", "FY2023", "Not supplied: restated");
+    const { tile } = draw(entry);
+    expect(parts(tile, "prior-reason")).toEqual(["FY2023: Not supplied: restated"]);
+    expect(parts(tile, "prior-unplaced")).toEqual(["1,236 · not placed: an earlier step is not stated"].slice(0, 0));
+  });
+
+  it("words where a number is expected are a gap with the words, never zero", () => {
+    const entry = setLabelled(cp1Entry(), CASH, "Capital expenditures", "FY2024", "about 165");
+    const { tile } = draw(entry);
+    expect(tile.querySelector('[data-gap="about 165"]')).not.toBeNull();
+    expect(tile.querySelector('[data-step="Capital expenditures"]')).toBeNull();
+  });
+
+  it("a stated zero stays a figure, and a paid amount of zero is not written −0", () => {
+    const entry = setLabelled(cp1Entry(), CASH, "Cash taxes paid", "FY2024", "0");
+    const { tile } = draw(entry);
+    expect(tile.querySelector('[data-step="Cash taxes paid"]')).not.toBeNull();
+    expect(parts(tile, "value")[2]).toBe("0");
+    expect(tile.textContent).not.toContain("−0");
+  });
+
+  it("a step the handoff does not state is a gap row with the reason, not dropped", () => {
+    const entry = setLabelled(cp1Entry(), CASH, "Capital expenditures", "Unit", "EUR millions");
+    const { tile } = draw(entry);
+    expect(parts(tile, "reason")).toContain("Capital expenditures is stated in another unit.");
+    expect(parts(tile, "label")).toContain("Capital expenditures");
+  });
+
+  it("without a cash flow statement: the one gap tile with the true reason", () => {
+    render(<CashLadderTile lead={leadProps(dropTable(cp1Entry(), CASH))} />);
+    const tile = screen.getByRole("region", { name: "Cash conversion" });
+    expect(tile.textContent).toBe("Cash conversion · Cash flow statement is not in the handoff.");
+    expect(tile.querySelector("svg")).toBeNull();
   });
 });

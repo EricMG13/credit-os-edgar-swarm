@@ -46,6 +46,26 @@
  *       ]}
  *     />
  *
+ *   Optional, per row (additive; a row without them draws as above):
+ *   `prior?: { value, text } | { gap }` — the row in an earlier period: a 5 px bar beneath the
+ *     row's mark with its figure written beside it (`data-prior`, `data-part="prior-value"`); a
+ *     level from the axis start, a step from the earlier period's own running total; a stated gap
+ *     is a small hatched slot with its reason (`prior-reason`); a step after an earlier gap is
+ *     written, not placed (`prior-unplaced`). The axis holds the earlier figures; `legend.prior`
+ *     names the period. On a gap row, `of?: "level" | "step"` says what the row stands for, so its
+ *     prior can be placed. Used by CP-1's cash ladder (FY2023 beneath FY2024).
+ *   `split?: { text, value, tone: "primary" | "secondary" | "worse" }[]` — on a step only: the
+ *     step drawn as consecutive segments from its start, in order (`data-split`), each part's
+ *     words with its swatch under the bar (`data-part="split"`); the step's own figure and running
+ *     total are unchanged, parts that do not add up are drawn as written. For a step whose parts
+ *     the module states, e.g. CP-1D's accepted / not accepted amounts of one add-back.
+ *
+ *     { kind: "level", label: "Free cash flow", value: 1880, text: "1,880",
+ *       prior: { value: 1236, text: "1,236" } },
+ *     { kind: "step", label: "Acquisition costs", value: 200, text: "200", split: [
+ *       { text: "Accepted 120", value: 120, tone: "primary" },
+ *       { text: "Not accepted 80", value: 80, tone: "worse" } ] },
+ *
  * ── Dumbbell ──────────────────────────────────────────────────────────────────────────────
  *   type DumbbellSide = { value: number; text: string } | { gap: string };
  *   type DumbbellRow = { label; prior: DumbbellSide; current: DumbbellSide; change?: string;
@@ -127,7 +147,9 @@ export {
   Waterfall,
   waterfallAxis,
   waterfallReading,
+  type WaterfallPrior,
   type WaterfallProps,
   type WaterfallRow,
+  type WaterfallSplit,
 } from "./Waterfall";
 export { useFigureWidth } from "../useWidth";

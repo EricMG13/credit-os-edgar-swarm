@@ -1,10 +1,10 @@
 // Synthetic, built from the module contract (src/deploy_vii/bindings/cp1d.py and
 // src/deploy_workflow/owners/cp1d.py: T1D.2 assessment, the Step | Amount bridge, T1D.6 leverage);
 // not a real handoff — unproven on a real run. No CP-1D handoff has been retained.
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { entry, section, table } from "../overview/rows.fixture";
-import { bridgeGeometry, readBridge, readLeverage } from "./earningsQualityData";
+import { readBridge, readLeverage } from "./earningsQualityData";
 import { EarningsQualityLead } from "./earningsQuality";
 import { leadProps } from "./fixtures/load";
 
@@ -103,11 +103,11 @@ function quality(
 
 const attr = (element: Element | null | undefined, name: string) =>
   Number(element?.getAttribute(name));
-const bar = (label: string) => document.querySelector(`[data-step="${label}"]`);
-const parts = (label: string) => [...(bar(label)?.querySelectorAll("rect") ?? [])];
-const width = (label: string) => parts(label).reduce((sum, rect) => sum + attr(rect, "width"), 0);
-const left = (label: string) => attr(parts(label)[0], "x");
-const fillOf = (label: string) => parts(label)[0]?.getAttribute("class") ?? "";
+const bar = (label: string) => document.querySelector(`rect[data-bar][data-label="${label}"]`);
+const width = (label: string) => attr(bar(label), "width");
+const left = (label: string) => attr(bar(label), "x");
+const segment = (word: string) => document.querySelector(`rect[data-split="${word}"]`);
+const outline = (label: string) => bar(label)?.getAttribute("class") ?? "";
 
 describe("earningsQualityData", () => {
   it("reads a reconciling bridge, matches support by exact name ignoring case, and sums exactly", () => {
@@ -215,22 +215,6 @@ describe("earningsQualityData", () => {
     expect(readBridge(quality(null)).state).toBe("gap");
   });
 
-  it("draws the axis from a round number below the opening total, and from zero when a level is not above it", () => {
-    const bridge = readBridge(quality());
-    if (bridge.state !== "ready") throw new Error("not ready");
-    const geometry = bridgeGeometry(bridge);
-    expect(geometry).toMatchObject({ lo: 3600, hi: 4200, truncated: true });
-    const small = readBridge(
-      quality([
-        ["Opening", "0", "US$m", ""],
-        ["Add", "5", "US$m", ""],
-        ["Closing", "5", "US$m", ""],
-      ]),
-    );
-    if (small.state !== "ready") throw new Error("not ready");
-    expect(bridgeGeometry(small)).toMatchObject({ lo: 0, truncated: false });
-  });
-
   it("reads reported and restated leverage only where both are stated", () => {
     const leverage = readLeverage(quality());
     if (leverage.state !== "ready") throw new Error(leverage.reason);
@@ -312,53 +296,79 @@ describe("no computed sentence", () => {
 });
 
 describe("EarningsQualityLead", () => {
-  it("draws every bar in proportion on one cut axis, the two totals cut", () => {
+  it("draws every bar in proportion on one cut axis, the two totals cut, as one figure", () => {
     render(<EarningsQualityLead {...leadProps(quality())} />);
     expect(width("Run-rate savings") / width("Integration costs")).toBeCloseTo(2, 6);
     expect(width("Integration costs") / width("Pro forma acquisition")).toBeCloseTo(100 / 60, 6);
     expect(
       width("Adjusted EBITDA, statements") / width("Management financing-case EBITDA"),
     ).toBeCloseTo((3813 - 3600) / (4173 - 3600), 6);
-    expect(document.querySelectorAll("[data-axis-cut]")).toHaveLength(2);
-    // Each add-back starts where the last ended.
+    expect(document.querySelectorAll("[data-axis-break]")).toHaveLength(2);
+    // Each step starts where the last ended.
     const end = (label: string) => left(label) + width(label);
     expect(left("Integration costs")).toBeCloseTo(end("Run-rate savings"), 6);
     expect(left("Pro forma acquisition")).toBeCloseTo(end("Integration costs"), 6);
-    expect(screen.getByText(/The axis starts at 3,600, not zero/)).toBeVisible();
+    expect(screen.getByText(/Axis starts at 3,600/)).toBeVisible();
+    // One figure: one SVG holds the whole bridge.
+    const tile = screen.getByRole("region", { name: "Earnings quality" });
+    expect(tile.querySelectorAll("svg[role=img]")).toHaveLength(1);
   });
 
-  it("colours each step by its stated word with the word beside it; the title is plain", () => {
+  it("starts the axis at zero when the levels do not sit high", () => {
+    render(
+      <EarningsQualityLead
+        {...leadProps(
+          quality(
+            [
+              ["Opening", "0", "US$m", ""],
+              ["Add", "5", "US$m", ""],
+              ["Closing", "5", "US$m", ""],
+            ],
+            null,
+            null,
+          ),
+        )}
+      />,
+    );
+    expect(document.querySelectorAll("[data-axis-break]")).toHaveLength(0);
+    expect(screen.queryByText(/Axis starts at/)).toBeNull();
+  });
+
+  it("colours each step's segment by its stated word with the word beside it; the title is plain", () => {
     render(<EarningsQualityLead {...leadProps(quality())} />);
-    expect(fillOf("Run-rate savings")).toContain("fill-chart-2");
-    expect(fillOf("Integration costs")).toContain("fill-chart-1");
-    expect(fillOf("Pro forma acquisition")).toContain("fill-warning-mark");
+    expect(segment("Partly supported, accepted 120")?.getAttribute("class")).toContain(
+      "fill-chart-2",
+    );
+    expect(segment("Supported")?.getAttribute("class")).toContain("fill-chart-1");
+    expect(segment("Not supported")?.getAttribute("class")).toContain("fill-warning-mark");
     const tile = screen.getByRole("region", { name: "Earnings quality" });
-    expect(within(tile).getByText("Supported", { selector: "p" })).toBeVisible();
+    expect(within(tile).getByText("Supported", { selector: "text" })).toBeVisible();
     expect(within(tile).getByRole("heading", { level: 3 })).toHaveTextContent(/^Earnings quality$/);
   });
 
   it("draws a partly supported step as two parts in proportion to the stated accepted and not accepted amounts", () => {
     render(<EarningsQualityLead {...leadProps(quality())} />);
-    const [accepted, not] = parts("Run-rate savings");
+    const accepted = segment("Partly supported, accepted 120");
+    const not = segment("Not accepted 80");
     expect(attr(accepted, "width") / attr(not, "width")).toBeCloseTo(120 / 80, 6);
     expect(attr(not, "x")).toBeCloseTo(attr(accepted, "x") + attr(accepted, "width"), 6);
-    expect(accepted?.getAttribute("class")).toContain("fill-chart-2");
     expect(not?.getAttribute("class")).toContain("fill-warning-mark");
-    expect(parts("Integration costs")).toHaveLength(1);
-    expect(screen.getByText("Not accepted amount")).toBeVisible();
-    expect(screen.getByText(/Partly supported · accepted 120, not accepted 80/)).toBeVisible();
+    // The two parts fill the step's own bar.
+    expect(attr(accepted, "width") + attr(not, "width")).toBeCloseTo(width("Run-rate savings"), 0);
+    // The step that states no split is one segment.
+    expect(segment("Supported")).not.toBeNull();
+    expect(document.querySelector('rect[data-split^="Not accepted"]')).toBe(not);
   });
 
-  it("never infers support: without the assessment every add-back is neutral and the legend says so", () => {
+  it("never infers support: without the assessment no step is coloured and the tile says so", () => {
     render(<EarningsQualityLead {...leadProps(quality(BRIDGE, null))} />);
+    expect(document.querySelectorAll("rect[data-split]")).toHaveLength(0);
     for (const label of ["Run-rate savings", "Integration costs", "Pro forma acquisition"])
-      expect(fillOf(label)).toContain("fill-chart-3");
-    expect(screen.getByText("Support is not stated per step")).toBeVisible();
-    expect(document.querySelector("[data-by-support]")).toBeNull();
-    expect(screen.getAllByText("Support not stated")).toHaveLength(3);
+      expect(outline(label)).toContain("stroke-chart-2");
+    expect(screen.getByText("Support is not stated per step.")).toBeVisible();
   });
 
-  it("matched add-backs are coloured and the others neutral with their own legend entry", () => {
+  it("matched steps carry their word and the others say support is not stated", () => {
     render(
       <EarningsQualityLead
         {...leadProps(
@@ -366,9 +376,10 @@ describe("EarningsQualityLead", () => {
         )}
       />,
     );
-    expect(fillOf("Integration costs")).toContain("fill-chart-1");
-    expect(fillOf("Run-rate savings")).toContain("fill-chart-3");
-    expect(screen.getByText("Support not stated for this step")).toBeVisible();
+    expect(segment("Supported")).not.toBeNull();
+    expect(document.querySelectorAll("rect[data-split]")).toHaveLength(1);
+    expect(bar("Run-rate savings (support not stated)")).not.toBeNull();
+    expect(bar("Integration costs")).not.toBeNull();
   });
 
   it("draws the gap with the stated steps listed when the bridge does not reconcile", () => {
@@ -433,16 +444,17 @@ describe("EarningsQualityLead", () => {
       screen.getByRole("link", { name: "Source for the earnings-quality bridge" }),
     ).toBeVisible();
     expect(screen.getByRole("link", { name: "Source for restated leverage" })).toBeVisible();
-    expect(screen.getAllByText("Table view")).toHaveLength(2);
+    const buttons = screen.getAllByRole("button", { name: /Table view/ });
+    expect(buttons).toHaveLength(2);
+    for (const button of buttons) fireEvent.click(button);
+    expect(screen.getAllByRole("table")).toHaveLength(2);
     expect(document.body.textContent).not.toMatch(/CP-1D|T1D\.|\.pdf|\.xlsx/);
   });
 
   it("with no tables draws gap tiles in words; a blocked module draws nothing", () => {
     const { unmount } = render(<EarningsQualityLead {...leadProps(quality(null, null, null))} />);
-    expect(
-      screen.getByText(/The handoff has no bridge table with Step and Amount columns\./),
-    ).toBeVisible();
-    expect(screen.getByText(/no table of leverage by earnings basis/)).toBeVisible();
+    expect(screen.getByText(/The handoff has no bridge table\./)).toBeVisible();
+    expect(screen.getByText(/no table of leverage on the statements/)).toBeVisible();
     expect(document.querySelectorAll(".gap-hatch").length).toBeGreaterThan(0);
     unmount();
     const blocked = entry(
@@ -532,7 +544,18 @@ describe("EarningsQualityLead", () => {
       />,
     );
     expect(bar("Reversal")).not.toBeNull();
-    expect(bar("Reversal")?.closest("svg")?.textContent).toBe("−10");
+    expect(bar("Reversal")?.closest("svg")?.textContent).toContain("−10");
     expect(document.body.textContent).not.toMatch(/Add-back/);
+  });
+
+  it("draws the bridge at the measured width: at 390 px the narrow layout, text at 11 px or more, nothing past the edge", () => {
+    measuredAs(390);
+    render(<EarningsQualityLead {...leadProps(quality())} />);
+    const svg = document.querySelector('svg[data-layout="narrow"][role=img]');
+    expect(svg?.getAttribute("viewBox")).toMatch(/^0 0 390 /);
+    for (const text of svg?.querySelectorAll("text") ?? [])
+      expect(Number(text.getAttribute("font-size")), text.textContent).toBeGreaterThanOrEqual(11);
+    for (const rect of svg?.querySelectorAll("rect[data-bar]") ?? [])
+      expect(attr(rect, "x") + attr(rect, "width")).toBeLessThanOrEqual(390);
   });
 });
