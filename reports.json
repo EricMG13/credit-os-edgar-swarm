@@ -86,5 +86,27 @@
       "CP-2": 1
     },
     "notes": "All four modules were accepted on the first launcher attempt and the run finished with exit 0 and a delivery, but each draft was first run through the repo's own checker in a scratch launcher run outside the swarm root, so the 1-attempt counts reflect that pre-check; defects I could not fix: CP-1 (accepted, not replaceable) lists the December 2025 facility-amendment fee as CAD 2.6m while the Dec 2025 MD&A says CAD 2.5m (logged in the CP-1A conflict log and the CP-2 gaps), the source set has no audited annual notes, covenant levels or senior-note ranking (flagged in each Gaps section), and uv 0.12.5 had to be put first on PATH (/usr/local/bin) because /root/.local/bin held 0.11.32."
+  },
+  {
+    "issuer_id": "mtdr-1520006",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Financial foundation answer (CP-1) gives no day for the dividend increase although the Q3 10-Q states 2026-10-21, and it (with Source readiness, CP-0) says Ridge Runner funding is not stated although the Q2 10-Q page 28 states it was expected to come from cash and Credit Agreement borrowings; the answers could not be replaced, and Business & governance (CP-1A) corrects the Ridge Runner funding point in its conflict log."
+  },
+  {
+    "issuer_id": "zip-1617553",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "One defect I saw but could not fix: the CP-1A map tables use relationship and evidence text longer than the 60-character map limit (the automated check does not enforce it, and an accepted answer cannot be replaced). Separately, the scratchpad is shared with sibling agents, and one of my commands ran a colliding gen_cp1a.py that belonged to the mtdr-1520006 agent, which rewrote that agent's CP-1A.md draft from its own generator and printed a few of its figures, which I did not use. uv 0.12.5 had to be put ahead of 0.11.32 on PATH (/usr/local/bin first) for the launcher to run."
   }
 ]
