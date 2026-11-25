@@ -222,7 +222,7 @@ it("C12: the labels whose text overflows are cut, and the open table carries eac
   const whole = labels.filter((label) => label.scrollWidth <= label.clientWidth);
   expect(whole.map((label) => label.textContent)).toEqual(["Rating action", "AGM", "Year end"]);
   for (const label of whole) {
-    const name = label.textContent ?? "";
+    const name = label.textContent;
     expect(within(table).getByRole("rowheader", { name })).toHaveTextContent(name);
   }
 });
@@ -250,7 +250,7 @@ function asOfList(asOf: string, data: string[][]) {
   const list = screen.getByRole("list", { name: "Events in date order" });
   const rows = Array.from(list.children).map((li) => {
     const heading = li.querySelector("h4")?.textContent;
-    return heading ?? (li.textContent?.startsWith("As of") ? "As of" : "event");
+    return heading ?? (li.textContent.startsWith("As of") ? "As of" : "event");
   });
   return { rows, error };
 }
