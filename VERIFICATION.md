@@ -45,10 +45,9 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
 - Not verified: any real or retained issuer run; a desktop browser on the connected foundation
   leads; `tests/test_financial_workflow.py` (exceeds the 5-minute limit); the weekly suite;
   Windows. No paid execution.
-- After merging `main` at `f6cebbd0` (PR 79): quality gate 0 findings; the targeted pytest files
-  above (1,561 passed); whole `tests/test_cpos_launch.py` (1,058 passed, 1 skipped); node 830;
-  web typecheck, lint, format, unused; vitest `connected/report` 2,560, rest of `connected` 2,039,
-  run, components, utils, model, library, styles, App, data 2,869.
+- After merging `main` (`f6cebbd0`, PR 79; `9e6c586`, PR 80): quality gate 0 findings; targeted
+  pytest 1,561; whole `test_cpos_launch.py` 1,058 passed, 1 skipped; node 830; web gates; vitest
+  2,560 + 2,039 + 2,869; `ConnectedApp.test.tsx` 223 (its K6 timeout in CI was fixed by PR 80).
 
 ## 2026-11-25 — Deliverables, Credit Snapshot workbook and recommendations: rulings and methodology
 
