@@ -53,5 +53,38 @@
       "CP-2": 1
     },
     "notes": "The source documents contain defects I could not fix: the annual report schedules the Secured Leverage Ratio maximum at 5.50x for the June and September 2026 tests while the later quarterly reports say less than 5.75x, its exhibit index dates term loan Amendments No. 3 and No. 4 as 2023-10-13 against the debt note's 2024-10-03 and 2025-12-16, and Item 1 prints 2025 operating margins of 16.6% and 8.5% for two segments that its segment note does not support (17.99% and 8.67%)."
+  },
+  {
+    "issuer_id": "zd-1084048",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "CP-0, CP-1 and CP-1A were already accepted at attempt 1 in the resumed folder and CP-2 was accepted on my first submission, so the run finished and delivered with no provider call; defects I could not fix are that the filings give no continuing-basis trailing EBITDA, covenant definitions or 1.75% repayment date (leverage is only a labelled floor and pro forma cash is stated as not established), and separately the shared scratchpad helper pg.py was overwritten by another parallel agent so one of my commands printed part of another issuer's source text, which I did not use, so parallel shards should give helper scripts unique names."
+  },
+  {
+    "issuer_id": "sgi-1206264",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The launcher finished with exit 0 and no module was rejected (CP-0 was already accepted when I resumed). Defects I could not fix: no full-period earnings for Leggett & Platt are printed, so leverage is stated only as a range; the proxy statement, executed debt documents, guarantor names and two covenant test levels are not in the sources."
+  },
+  {
+    "issuer_id": "hri",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Financial foundation and Business & governance answers cite page 10 of the third-quarter earnings release for the free cash flow schedule, which is on page 11 (locator error only, no figure changed, and the Fundamental credit answer records the correction under Gaps); the Source readiness answer also lists 602 and 615 locations but omits the 604 stated in the annual report as of 2026-02-13, which the Business & governance conflict log does record."
   }
 ]
