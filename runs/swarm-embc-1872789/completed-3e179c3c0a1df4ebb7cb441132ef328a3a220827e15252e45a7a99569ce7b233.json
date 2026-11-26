@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Embecta Corp. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/db721b9632dc46d566cfef3628b61f1bcb20b65c1b786761e7d2be427df58792/1.response.md",
+    "CP-1": "requests/CP-1/8e3d233cd4d51dfd606ff32491e9ea7939e9be94ba9a16434e7460a5ed61a4bc/1.response.md",
+    "CP-1A": "requests/CP-1A/2596761fd269f43564ed367a498360d3e700ce0d9155fd8386045cd61de5502f/1.response.md",
+    "CP-2": "requests/CP-2/d6bee9e39e01c83b68023ff82015b9678bd5d4b7f7e1cc84935fbe9e6c6a04f9/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "ff14136851eff1d323f14751d414ac413767c219dfc4fa8e8e985dbe168c32c6",
+  "delivery_sha256": "4e03523c8a50a7d38eacec3ba3c3f5047010a1d74a10acebd024430983c89987"
+}

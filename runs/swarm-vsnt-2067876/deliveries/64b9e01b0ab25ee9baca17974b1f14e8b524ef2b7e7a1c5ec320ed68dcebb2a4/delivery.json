@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Versant Media Group, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "ea405575d5a47bf09ee3adbff0fbf5d4440ac93cc30f71e00a028dce34894b62",
+    "CP-1.md": "98a3566ece1f23a00f1a6eef60cea054757b9ac64ae97c84a617f42f149efc6c",
+    "CP-1A.md": "edd1d4c8a222839d390306cc540666ec457cbf85494e32120beaa57e9237762a",
+    "CP-2.md": "967797a63cfc3dd2dada1c07fd10cf61690d01e24788a909490364cbeb6073c7",
+    "coverage.json": "28067c66e9bb0bde3b20924a18c9d62332c9fb06f892c57ef45c6e658084b6e5",
+    "view.json": "de84b8f6feb166e8256826d20e079f9233df4f3f6f9c0426a7cf007410bd8411",
+    "report-view.json": "61947187835bfe72852aa8d4e3e6f520c5882ddb5c90e5be041b4f9d0484dc0a"
+  }
+}

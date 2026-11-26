@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Elanco Animal Health Inc as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/b36ef364fa5a67c610c7d1c6a7e64ed085e26f9a30967035af04bb91588c3dbc/1.response.md",
+    "CP-1": "requests/CP-1/9135e719cd2d783e5cf54a0ed77619c3446c5c1bb34bcadee8d9c5bdd8bb6e5d/1.response.md",
+    "CP-1A": "requests/CP-1A/ede2d58c060a3478d7af426736c949c706a82c2aab2735e7bb837fb11ff0c29c/1.response.md",
+    "CP-2": "requests/CP-2/2d70193b539d5cf2dd56137133e72f37aaace45c7b88f2b2dce7f4c72ccd750d/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "900de63664e0d78ad41474b75ce6b8ca70e3a069fce59ad1a16997ae550d04b5",
+  "delivery_sha256": "3984ec9063f51bcd3b6524c207debf5052e0be9a9b04056759e4126e87f0d291"
+}

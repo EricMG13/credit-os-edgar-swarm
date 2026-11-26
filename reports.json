@@ -108,5 +108,38 @@
       "CP-2": 1
     },
     "notes": "Business & governance (CP-1A) was accepted before I applied a late fix: its liability-management flag says \"None described\" although the annual report (page 54, page 79) says Wayfair may use exchanges for equity or debt on its convertible notes. An accepted answer cannot be replaced, so Fundamental credit (CP-2) states this plainly in its Limitations and Gaps."
+  },
+  {
+    "issuer_id": "elan",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 0,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Business & governance handoff (CP-1A) treats a United States generic Seresto entrant as a future event, but the 10-K (page 28) says one has been selling since January 2026; accepted answers cannot be edited, so I corrected it in the CP-2 handoff and logged it under Gaps. Separately, the sources lack the credit agreement, indenture, proxy statement, rating reports, and cash interest paid for the half-years and the last twelve months. CP-0 was already in place and accepted when I started, so I did not submit it."
+  },
+  {
+    "issuer_id": "embc-1872789",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Source readiness handoff lists ratings as unavailable although the latest quarterly report states Moody's B3 and S&P B (narrowed in Fundamental credit because the earlier handoff cannot be edited), and that report's management discussion mislabels the USD 167.2 million receivable sale as nine months 2025."
+  },
+  {
+    "issuer_id": "vsnt-2067876",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Financial foundation handoff states debt principal as USD 2,970 million while the debt note's instrument lines add to USD 2,971 million (a one-million rounding difference between the accepted Financial foundation and Business & governance handoffs), which cannot be edited after acceptance and was logged in the CP-2 Gaps table, alongside the unresolved filing differences on the Full Swing price and contingent consideration."
   }
 ]
