@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Ingevity Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/f1646a762692cb87eb374ff41a8e61d3152a46b5511e0c1dd84f719b82c3eced/1.response.md",
+    "CP-1": "requests/CP-1/a40064d19c39b270ace54e188226d85d6d6e493c28a9b3a4d8381e1af6757373/1.response.md",
+    "CP-1A": "requests/CP-1A/8d08f92b59526c16080ef06b8b40e2f91e48e0134170e9203f54356b8b5c4820/1.response.md",
+    "CP-2": "requests/CP-2/a0d71d1bbb7fe892e91d3b755040419b683f735e86fa026f1a24ddc6808400db/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "c5c0f32d122ae7d891cb7f8bce054e7e9c34990f976443a3fb0a2a8975e69520",
+  "delivery_sha256": "6ae091265cff050df9ca2fa2b200f36eaed4c8e796b907aee6805a40038392e7"
+}

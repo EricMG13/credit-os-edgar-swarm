@@ -1,6 +1,6 @@
 {
   "shard": "s02",
-  "partial": true,
+  "partial": false,
   "reports": [
     {
       "issuer_id": "cxt-25445",
@@ -100,6 +100,50 @@
         "CP-2": 1
       },
       "notes": "Resumed after a controller pause by a single Sonnet analyst using the workflow brief; the earlier analyst's CP-0 draft was rewritten after checking its locators, and no module was rejected."
+    },
+    {
+      "issuer_id": "ccs",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The accepted CP-0 answer wrongly says no cash interest paid figure exists (the 10-K debt note and a risk factor on pages 43 and 130 print about USD 78.9 million for 2024 and USD 81.3 million for 2025); it could not be replaced after acceptance, so CP-1 corrects it and later modules use the corrected figures."
+    },
+    {
+      "issuer_id": "ngvt-1653477",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The proxy statement, executed financing agreements (guarantors, security, covenant definitions) and any rating or bond price are not in the supplied sources, so ownership, board, structural-priority and covenant-headroom conclusions remain recorded gaps that could not be fixed from the filings."
+    },
+    {
+      "issuer_id": "unit",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The accepted CP-0 handoff says ownership concentration and major holders are not established although the 10-K risk factors state Elliott at about 25.2% and the two largest holders with insiders at about 36.1%, and the accepted CP-1 handoff calls the 1.5 gap between the full-year and nine-month merger gain unexplained and gives the December 2025 fiber customer count only as more than 500,000; CP-1A and CP-2 correct these in plain words but the earlier accepted answers cannot be edited (separately, while locating repository code I listed other issuers' run folder names, and read no contents)."
+    },
+    {
+      "issuer_id": "brbr-1772016",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The accepted Source readiness (CP-0) answer says the filings give no board list, but the annual report signature pages name seven directors; the Business & governance (CP-1A) answer corrects this in its Gaps section, and the accepted CP-0 text cannot be edited."
     }
   ]
 }

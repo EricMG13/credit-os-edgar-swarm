@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Century Communities, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/cf56c3c4a575ec0c37eea6b0208bf00b444e07830856900e1b2a6ac9518da62a/1.response.md",
+    "CP-1": "requests/CP-1/77461f16f699c0783f97d303b793bfba1843ee6301bc05824df97f6fe6fbb156/1.response.md",
+    "CP-1A": "requests/CP-1A/be72318eddd728ecc4222317889a114c57d79444ad59fe1901b46a96559ab156/1.response.md",
+    "CP-2": "requests/CP-2/7f0d2d7876372760619b7c2d7ccbe550ebf0f6b384deb85aedd9d095714b8884/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "29af97b365b86aecb69d81e70a5873a06a32b93ab876d70d32d905e6f764f0bc",
+  "delivery_sha256": "5dc35e5765c57f3a31cdea3b3b30a5ce23425887067b524a0ce6e884b4eaded5"
+}
