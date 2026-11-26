@@ -986,23 +986,3 @@ Scope: presentation only, all under `web/`; no backend, handoff, provider or mod
   was not regenerated or published; release still requires Chrome and Edge passes
   on the Windows work PC. Oldest complete entries trimmed; git retains them.
 
-## 2026-11-16 — Two requested Fallow findings resolved
-
-- Verified both findings with `fallow inspect --file` for
-  `scripts/connected-proof.mjs` and `src/pages/connected/report/Forecast.tsx`.
-  Separated the forecast's recorded bridge validation from its rendering;
-  split the browser proof into debt, portfolio, forecast and Evidence checks.
-  No suppression or threshold change. Fallow audit against `b3a607f` PASS:
-  zero introduced findings, four inherited findings remain outside this request.
-- Confidence review checked zero versus missing values, unit identity,
-  duplicate or absent rows, nonfinite values, source line identity and proof
-  ordering. Nine new rendering cases plus existing Forecast tests pass (15).
-  AST comparison confirms all 45 assertions/waits from the original checkCharts
-  remain exact. TypeScript, ESLint, Prettier and changed-code quality gate pass.
-- Built staged source tree `ed759e0477d3c685619568dc160b7631368b0dbe` in an isolated
-  directory using installed pinned dependencies. Chrome 157.0.8103.78 run
-  `20261116-023941-01` and Edge 157.0.4341.60 run `20261116-023955-01` each passed
-  all 30 synthetic checks on macOS. Proof: `proof-artifacts/run-z6RLzy/proof.json`.
-  This is source-snapshot proof; the previously held ZIP was not regenerated.
-- RBOT-HTML and pins still match `256101a`; React lock unchanged. Windows work
-  PC acceptance remains pending. No ZIP publication, Signal work or tournaments.
