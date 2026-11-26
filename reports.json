@@ -8,7 +8,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "All four modules were accepted on the first attempt and delivery completed. One defect remains that I cannot fix: the automated checker does not enforce the 60-character limit on map text, and Valaris's October 2026 rig-sale pro forma cash is not stated by any source, so liquidity is shown as at 2026-09-30 only."
+    "notes": "All four modules were accepted on the first attempt and delivery completed. One defect remains that I cannot fix: the automated checker does not enforce the 60-character limit on map text, and Valaris's October 2026 rig-sale pro forma cash is not stated by any source, so liquidity is shown as at 2026-09-30 only.",
+    "verify": "ok"
   },
   {
     "issuer_id": "gtn",
@@ -19,7 +20,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The source set has no proxy statement, executed credit agreement or indentures, or ratings, so ownership percentages, board independence and covenant capacity stay \"not established\", and two source inconsistencies (the Q1 2026 10-Q covenant table differs from its own debt note by USD 6 million and USD 1 million; the 10-K gives both 15 and 16 August 2025 for the Atlanta CBS affiliation end) are logged but cannot be reconciled from the filings."
+    "notes": "The source set has no proxy statement, executed credit agreement or indentures, or ratings, so ownership percentages, board independence and covenant capacity stay \"not established\", and two source inconsistencies (the Q1 2026 10-Q covenant table differs from its own debt note by USD 6 million and USD 1 million; the 10-K gives both 15 and 16 August 2025 for the Atlanta CBS affiliation end) are logged but cannot be reconciled from the filings.",
+    "verify": "ok"
   },
   {
     "issuer_id": "smg-825542",
@@ -30,7 +32,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The accepted Financial foundation and Business & governance answers describe the June 27, 2026 balance sheet as the seasonal peak, but the quarterly reports show liquidity was lowest at December 27, 2025 (USD 988.1 million) and receivables sold peaked at March 28, 2026 (USD 654.1 million), a defect I could not fix because an accepted answer cannot be replaced, so CP-2 states the correction in its own text."
+    "notes": "The accepted Financial foundation and Business & governance answers describe the June 27, 2026 balance sheet as the seasonal peak, but the quarterly reports show liquidity was lowest at December 27, 2025 (USD 988.1 million) and receivables sold peaked at March 28, 2026 (USD 654.1 million), a defect I could not fix because an accepted answer cannot be replaced, so CP-2 states the correction in its own text.",
+    "verify": "ok"
   },
   {
     "issuer_id": "fgpr-922358",
@@ -41,7 +44,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The executed indentures, credit agreement and partnership agreements, the covenant ratios and the first-quarter fiscal 2026 report were not supplied, and the run's \"q3-2026\" current-period label is earlier than the supplied audited FY2026 10-K, so covenant headroom is not calculable and the period label is unresolved. Two small inconsistencies in the filings are logged but not fixable: the 2020 exchanged notes are called secured in the 10-Ks and unsecured in the 10-Qs, and the retail-customer count was restated under a new method."
+    "notes": "The executed indentures, credit agreement and partnership agreements, the covenant ratios and the first-quarter fiscal 2026 report were not supplied, and the run's \"q3-2026\" current-period label is earlier than the supplied audited FY2026 10-K, so covenant headroom is not calculable and the period label is unresolved. Two small inconsistencies in the filings are logged but not fixable: the 2020 exchanged notes are called secured in the 10-Ks and unsecured in the 10-Qs, and the retail-customer count was restated under a new method.",
+    "verify": "ok"
   },
   {
     "issuer_id": "dxpe",
@@ -52,7 +56,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The source documents contain defects I could not fix: the annual report schedules the Secured Leverage Ratio maximum at 5.50x for the June and September 2026 tests while the later quarterly reports say less than 5.75x, its exhibit index dates term loan Amendments No. 3 and No. 4 as 2023-10-13 against the debt note's 2024-10-03 and 2025-12-16, and Item 1 prints 2025 operating margins of 16.6% and 8.5% for two segments that its segment note does not support (17.99% and 8.67%)."
+    "notes": "The source documents contain defects I could not fix: the annual report schedules the Secured Leverage Ratio maximum at 5.50x for the June and September 2026 tests while the later quarterly reports say less than 5.75x, its exhibit index dates term loan Amendments No. 3 and No. 4 as 2023-10-13 against the debt note's 2024-10-03 and 2025-12-16, and Item 1 prints 2025 operating margins of 16.6% and 8.5% for two segments that its segment note does not support (17.99% and 8.67%).",
+    "verify": "ok"
   },
   {
     "issuer_id": "zd-1084048",
@@ -63,7 +68,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "CP-0, CP-1 and CP-1A were already accepted at attempt 1 in the resumed folder and CP-2 was accepted on my first submission, so the run finished and delivered with no provider call; defects I could not fix are that the filings give no continuing-basis trailing EBITDA, covenant definitions or 1.75% repayment date (leverage is only a labelled floor and pro forma cash is stated as not established), and separately the shared scratchpad helper pg.py was overwritten by another parallel agent so one of my commands printed part of another issuer's source text, which I did not use, so parallel shards should give helper scripts unique names."
+    "notes": "CP-0, CP-1 and CP-1A were already accepted at attempt 1 in the resumed folder and CP-2 was accepted on my first submission, so the run finished and delivered with no provider call; defects I could not fix are that the filings give no continuing-basis trailing EBITDA, covenant definitions or 1.75% repayment date (leverage is only a labelled floor and pro forma cash is stated as not established), and separately the shared scratchpad helper pg.py was overwritten by another parallel agent so one of my commands printed part of another issuer's source text, which I did not use, so parallel shards should give helper scripts unique names.",
+    "verify": "ok"
   },
   {
     "issuer_id": "sgi-1206264",
@@ -74,7 +80,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The launcher finished with exit 0 and no module was rejected (CP-0 was already accepted when I resumed). Defects I could not fix: no full-period earnings for Leggett & Platt are printed, so leverage is stated only as a range; the proxy statement, executed debt documents, guarantor names and two covenant test levels are not in the sources."
+    "notes": "The launcher finished with exit 0 and no module was rejected (CP-0 was already accepted when I resumed). Defects I could not fix: no full-period earnings for Leggett & Platt are printed, so leverage is stated only as a range; the proxy statement, executed debt documents, guarantor names and two covenant test levels are not in the sources.",
+    "verify": "ok"
   },
   {
     "issuer_id": "hri",
@@ -85,7 +92,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The accepted Financial foundation and Business & governance answers cite page 10 of the third-quarter earnings release for the free cash flow schedule, which is on page 11 (locator error only, no figure changed, and the Fundamental credit answer records the correction under Gaps); the Source readiness answer also lists 602 and 615 locations but omits the 604 stated in the annual report as of 2026-02-13, which the Business & governance conflict log does record."
+    "notes": "The accepted Financial foundation and Business & governance answers cite page 10 of the third-quarter earnings release for the free cash flow schedule, which is on page 11 (locator error only, no figure changed, and the Fundamental credit answer records the correction under Gaps); the Source readiness answer also lists 602 and 615 locations but omits the 604 stated in the annual report as of 2026-02-13, which the Business & governance conflict log does record.",
+    "verify": "ok"
   },
   {
     "issuer_id": "xyz",
@@ -96,7 +104,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "CP-0 and CP-1 were already accepted at attempt 1 when I started, so I submitted only CP-1A and CP-2 (both accepted at attempt 1); the one defect I could not fix is that the accepted CP-1A answer lists USD 969.2 million of litigation and regulatory accruals in its operating model register as if it were a level when the 10-Q gives it as the nine-month increase, and an accepted answer cannot be replaced, so CP-2 states the correction in its Margin resilience section."
+    "notes": "CP-0 and CP-1 were already accepted at attempt 1 when I started, so I submitted only CP-1A and CP-2 (both accepted at attempt 1); the one defect I could not fix is that the accepted CP-1A answer lists USD 969.2 million of litigation and regulatory accruals in its operating model register as if it were a level when the 10-Q gives it as the nine-month increase, and an accepted answer cannot be replaced, so CP-2 states the correction in its Margin resilience section.",
+    "verify": "ok"
   },
   {
     "issuer_id": "wfrd",
@@ -107,7 +116,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "Defects seen but not fixable: the sources hold no indentures, credit agreement text, proxy statement or market data, so covenant headroom, note ranking and guarantor coverage stay open gaps, and the 2030 notes redemption (planned for 2026-10-30) is unconfirmed by any filing in the set."
+    "notes": "Defects seen but not fixable: the sources hold no indentures, credit agreement text, proxy statement or market data, so covenant headroom, note ranking and guarantor coverage stay open gaps, and the 2030 notes redemption (planned for 2026-10-30) is unconfirmed by any filing in the set.",
+    "verify": "ok"
   },
   {
     "issuer_id": "wh-1722684",
@@ -118,7 +128,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The accepted Financial foundation answer omits the issuer's guarantee program for franchisee construction loans (amount not stated in the filings) from its claims-outside-debt list, which cannot be replaced after acceptance and is flagged as a gap in Fundamental credit; separately, a harness reminder displayed another issuer's scratchpad file (cnm-1856525) that I did not read on purpose or use."
+    "notes": "The accepted Financial foundation answer omits the issuer's guarantee program for franchisee construction loans (amount not stated in the filings) from its claims-outside-debt list, which cannot be replaced after acceptance and is flagged as a gap in Fundamental credit; separately, a harness reminder displayed another issuer's scratchpad file (cnm-1856525) that I did not read on purpose or use.",
+    "verify": "ok"
   },
   {
     "issuer_id": "cnm-1856525",
@@ -129,7 +140,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The fiscal 2025 annual report (year ended 2026-02-01) is missing, so trailing leverage and cover could not be calculated, the fiscal 2024 10-K signature page misprints its date as 2024-03-25 against the auditor's 2025-03-25, and the accepted business-and-governance answer gives the August 2026 repricing without a day (the exhibit list dates the Seventh Amendment 2026-08-11), which only the fundamental-credit answer could note, not correct."
+    "notes": "The fiscal 2025 annual report (year ended 2026-02-01) is missing, so trailing leverage and cover could not be calculated, the fiscal 2024 10-K signature page misprints its date as 2024-03-25 against the auditor's 2025-03-25, and the accepted business-and-governance answer gives the August 2026 repricing without a day (the exhibit list dates the Seventh Amendment 2026-08-11), which only the fundamental-credit answer could note, not correct.",
+    "verify": "ok"
   },
   {
     "issuer_id": "q",
@@ -140,6 +152,7 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "Cash paid for interest is not stated in any filing (the 10-K prints a dash and the 10-Qs omit it), so cash interest cover is shown as not supplied, and the proxy statement and executed credit agreement and indentures were not in the source set, so ownership above 5% and covenant headroom stay unestablished."
+    "notes": "Cash paid for interest is not stated in any filing (the 10-K prints a dash and the 10-Qs omit it), so cash interest cover is shown as not supplied, and the proxy statement and executed credit agreement and indentures were not in the source set, so ownership above 5% and covenant headroom stay unestablished.",
+    "verify": "ok"
   }
 ]
