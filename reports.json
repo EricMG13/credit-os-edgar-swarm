@@ -8,7 +8,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The accepted Financial foundation (CP-1) text says order entry and backlog are carried only in words, but the FY2025 10-K states product backlog of USD 733.1m vs USD 790.1m (the later modules use the stated figures), and an accepted answer cannot be replaced."
+    "notes": "The accepted Financial foundation (CP-1) text says order entry and backlog are carried only in words, but the FY2025 10-K states product backlog of USD 733.1m vs USD 790.1m (the later modules use the stated figures), and an accepted answer cannot be replaced.",
+    "verify": "ok"
   },
   {
     "issuer_id": "tdw-98222",
@@ -19,7 +20,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "All four modules were accepted on the first submission and the run finished with exit 0; the only defect seen and not fixed (no repository edits allowed) is the launcher's UV_NATIVE_TLS deprecation warning, and the sources give no EBITDA, rating or executed covenant agreement, so EBITDA is derived and covenant headroom is left as a stated gap."
+    "notes": "All four modules were accepted on the first submission and the run finished with exit 0; the only defect seen and not fixed (no repository edits allowed) is the launcher's UV_NATIVE_TLS deprecation warning, and the sources give no EBITDA, rating or executed covenant agreement, so EBITDA is derived and covenant headroom is left as a stated gap.",
+    "verify": "ok"
   },
   {
     "issuer_id": "ccl",
@@ -30,7 +32,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "Source gaps remain that I could not fix (no debt agreements, rating levels, fiscal 2025 adjusted EBITDA or interim cash interest, and some filing totals that differ from their parts by USD 1 million to USD 2 million, left as Not supplied), and separately I inadvertently displayed the first 60 lines and a keyword search of another issuer's stray script (gen_cp2.py for dbd-28823) in the shared scratchpad, which I did not use or touch further."
+    "notes": "Source gaps remain that I could not fix (no debt agreements, rating levels, fiscal 2025 adjusted EBITDA or interim cash interest, and some filing totals that differ from their parts by USD 1 million to USD 2 million, left as Not supplied), and separately I inadvertently displayed the first 60 lines and a keyword search of another issuer's stray script (gen_cp2.py for dbd-28823) in the shared scratchpad, which I did not use or touch further.",
+    "verify": "ok"
   },
   {
     "issuer_id": "bdc",
@@ -41,7 +44,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "All four modules were accepted on the first attempt and the run finished with delivery written, but the sources contain no credit agreements or indentures, ratings, interim cash interest or Ruckus pro forma EBITDA, so leverage, covenant headroom and recovery ranking remain recorded gaps that no answer could fix, and the launcher's checks are structural only, so page locators had to be checked by hand against the source text."
+    "notes": "All four modules were accepted on the first attempt and the run finished with delivery written, but the sources contain no credit agreements or indentures, ratings, interim cash interest or Ruckus pro forma EBITDA, so leverage, covenant headroom and recovery ranking remain recorded gaps that no answer could fix, and the launcher's checks are structural only, so page locators had to be checked by hand against the source text.",
+    "verify": "ok"
   },
   {
     "issuer_id": "opch-1014739",
@@ -52,7 +56,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The accepted CP-1 KPI table, which cannot be replaced, labels the ambulatory infusion suite counts (182 against 188) as not comparable although they are probably like-for-like, and the scratchpad was shared with other issuers' runs, so I opened another issuer's builder script by mistake and did not use it."
+    "notes": "The accepted CP-1 KPI table, which cannot be replaced, labels the ambulatory infusion suite counts (182 against 188) as not comparable although they are probably like-for-like, and the scratchpad was shared with other issuers' runs, so I opened another issuer's builder script by mistake and did not use it.",
+    "verify": "ok"
   },
   {
     "issuer_id": "cnx",
@@ -63,7 +68,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The accepted Source readiness answer rates the missing proxy statement a minor gap while the accepted Business & governance answer rates the same gap high, and neither can be edited after acceptance (Fundamental credit treats it as medium and says so)."
+    "notes": "The accepted Source readiness answer rates the missing proxy statement a minor gap while the accepted Business & governance answer rates the same gap high, and neither can be edited after acceptance (Fundamental credit treats it as medium and says so).",
+    "verify": "ok"
   },
   {
     "issuer_id": "jblu",
@@ -74,7 +80,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "I answered CP-1A and CP-2 this session, and each was accepted on its first submission with an empty review. CP-0 and CP-1 were already accepted at attempt 1 in the resumed run folder, so I did not submit them here. The final launcher run exited 0 with delivery written, and the `run_issuer.py verify` check for jblu reported ok. The one defect I saw and could not fix is in CP-1A, which cannot be replaced: its contrary-evidence paragraph states the USD 3.00 per gallon fuel assumption but cites only the Q3 release and the Q3 10-Q, while the figure is on page 2 of the Q2 release."
+    "notes": "I answered CP-1A and CP-2 this session, and each was accepted on its first submission with an empty review. CP-0 and CP-1 were already accepted at attempt 1 in the resumed run folder, so I did not submit them here. The final launcher run exited 0 with delivery written, and the `run_issuer.py verify` check for jblu reported ok. The one defect I saw and could not fix is in CP-1A, which cannot be replaced: its contrary-evidence paragraph states the USD 3.00 per gallon fuel assumption but cites only the Q3 release and the Q3 10-Q, while the figure is on page 2 of the Q2 release.",
+    "verify": "ok"
   },
   {
     "issuer_id": "hbm",
@@ -85,7 +92,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The source documents contain unfixable defects (the Q2 2026 release dates the municipal bonds as due 2 July 2036 while the statements give only an initial mandatory tender date, the same release prints the dividend payment date before its record date, third-quarter 2025 free cash flow is negative 15.2 in one release and negative 16.1 in another, and the Copper World feasibility study slipped from mid-2026 with no restated date), and the audited FY2025 statements, covenant levels and the Copper World venture agreement are absent from the sources, so these are logged as gaps rather than resolved."
+    "notes": "The source documents contain unfixable defects (the Q2 2026 release dates the municipal bonds as due 2 July 2036 while the statements give only an initial mandatory tender date, the same release prints the dividend payment date before its record date, third-quarter 2025 free cash flow is negative 15.2 in one release and negative 16.1 in another, and the Copper World feasibility study slipped from mid-2026 with no restated date), and the audited FY2025 statements, covenant levels and the Copper World venture agreement are absent from the sources, so these are logged as gaps rather than resolved.",
+    "verify": "ok"
   },
   {
     "issuer_id": "chrd-1486159",
@@ -96,7 +104,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The filings print no EBITDA, interim cash interest, covenant ratios, ratings or legal documents, so EBITDA is derived, last-twelve-months cash-interest cover is unsupplied and covenant headroom is not established."
+    "notes": "The filings print no EBITDA, interim cash interest, covenant ratios, ratings or legal documents, so EBITDA is derived, last-twelve-months cash-interest cover is unsupplied and covenant headroom is not established.",
+    "verify": "ok"
   },
   {
     "issuer_id": "ibp-1580905",
@@ -107,7 +116,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The accepted Business & governance (CP-1A) answer includes six registers (source classification, credit translation, T2D.2, T2D.6, T2D.7 and T2D.8) that its Register scope told me not to write, and an accepted answer cannot be replaced, so it stays that way."
+    "notes": "The accepted Business & governance (CP-1A) answer includes six registers (source classification, credit translation, T2D.2, T2D.6, T2D.7 and T2D.8) that its Register scope told me not to write, and an accepted answer cannot be replaced, so it stays that way.",
+    "verify": "ok"
   },
   {
     "issuer_id": "ash-1674862",
@@ -118,7 +128,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The accepted CP-0 handoff wrongly says no company guidance is in the source set, although the June 2026 10-Q carries full-year fiscal 2026 guidance (sales USD 1,835-1,870 million, Adjusted EBITDA USD 385-400 million); this could not be replaced after acceptance, so it is corrected in the CP-1A conflict log and gaps and used in CP-2."
+    "notes": "The accepted CP-0 handoff wrongly says no company guidance is in the source set, although the June 2026 10-Q carries full-year fiscal 2026 guidance (sales USD 1,835-1,870 million, Adjusted EBITDA USD 385-400 million); this could not be replaced after acceptance, so it is corrected in the CP-1A conflict log and gaps and used in CP-2.",
+    "verify": "ok"
   },
   {
     "issuer_id": "dfh-1825088",
@@ -129,7 +140,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The accepted CP-1A answer has ownership and operating-model map relationship and evidence cells longer than the 60-character limit its instructions set, and its 42.07% liquidity fall (on the rounded USD 521 million) differs from the 42.03% in CP-2 (on the unrounded figure, stated in CP-2); neither could be replaced after acceptance."
+    "notes": "The accepted CP-1A answer has ownership and operating-model map relationship and evidence cells longer than the 60-character limit its instructions set, and its 42.07% liquidity fall (on the rounded USD 521 million) differs from the 42.03% in CP-2 (on the unrounded figure, stated in CP-2); neither could be replaced after acceptance.",
+    "verify": "ok"
   },
   {
     "issuer_id": "krmn",
@@ -140,6 +152,7 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "Several source conflicts and gaps could not be fixed from the supplied documents: the term loan principal is printed as USD 767.8 million in the annual report and USD 772 million in the quarterly reports, the 10-K end-market share narrative disagrees with its revenue table, and the credit agreement, proxy statement, stockholder agreements, pro forma acquisition earnings and third-quarter 2026 reports are not supplied."
+    "notes": "Several source conflicts and gaps could not be fixed from the supplied documents: the term loan principal is printed as USD 767.8 million in the annual report and USD 772 million in the quarterly reports, the 10-K end-market share narrative disagrees with its revenue table, and the credit agreement, proxy statement, stockholder agreements, pro forma acquisition earnings and third-quarter 2026 reports are not supplied.",
+    "verify": "ok"
   }
 ]
