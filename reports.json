@@ -10,7 +10,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "The source set lacks the executed credit agreement, indentures and guarantor list, the proxy statement, Celero full-period earnings and any rating or market price, so covenant headroom, ownership detail and market access stayed explicit gaps that I could not fix."
+      "notes": "The source set lacks the executed credit agreement, indentures and guarantor list, the proxy statement, Celero full-period earnings and any rating or market price, so covenant headroom, ownership detail and market access stayed explicit gaps that I could not fix.",
+      "verify": "ok"
     },
     {
       "issuer_id": "tex-97216",
@@ -21,7 +22,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "The session scratchpad is shared between issuer agents and a build script I had saved there was overwritten by another issuer's script, so running it rewrote that other issuer's CP-0 draft from its own script (I then moved all my work to a private subfolder), and I could not undo that."
+      "notes": "The session scratchpad is shared between issuer agents and a build script I had saved there was overwritten by another issuer's script, so running it rewrote that other issuer's CP-0 draft from its own script (I then moved all my work to a private subfolder), and I could not undo that.",
+      "verify": "ok"
     },
     {
       "issuer_id": "vsat",
@@ -32,7 +34,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "CP-0 and CP-1 were already accepted on their first submission when I started, so I only answered CP-1A and CP-2, each accepted first time; one defect I could not fix is that the accepted CP-1A omits that recurring in-flight contracts carry no minimum purchase requirement and that the U.S. Government was 18% of first-quarter fiscal 2027 revenue, so I stated both in CP-2 instead."
+      "notes": "CP-0 and CP-1 were already accepted on their first submission when I started, so I only answered CP-1A and CP-2, each accepted first time; one defect I could not fix is that the accepted CP-1A omits that recurring in-flight contracts carry no minimum purchase requirement and that the U.S. Government was 18% of first-quarter fiscal 2027 revenue, so I stated both in CP-2 instead.",
+      "verify": "ok"
     },
     {
       "issuer_id": "tigo",
@@ -43,7 +46,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "All four modules were accepted on the first submission, and the filings still do not supply any indenture or credit agreement, the revolving facility's availability after 2025, the issuer's pro forma leverage denominator, or an agreed Chile earn-out cap (USD 150 million in the annual report against USD 490 million in the nine-month report)."
+      "notes": "All four modules were accepted on the first submission, and the filings still do not supply any indenture or credit agreement, the revolving facility's availability after 2025, the issuer's pro forma leverage denominator, or an agreed Chile earn-out cap (USD 150 million in the annual report against USD 490 million in the nine-month report).",
+      "verify": "ok"
     },
     {
       "issuer_id": "pds",
@@ -54,7 +58,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "The accepted Financial foundation answer (CP-1) states in its debt-instruments table that the Canadian dollar facility borrowings were repaid in full in the first quarter of 2026, but the first-quarter statements show CAD 3,000 thousand still drawn at March 31, 2026 (nil by September 30), so I could not edit it and instead corrected it in the Gaps table of the Fundamental credit answer (CP-2)."
+      "notes": "The accepted Financial foundation answer (CP-1) states in its debt-instruments table that the Canadian dollar facility borrowings were repaid in full in the first quarter of 2026, but the first-quarter statements show CAD 3,000 thousand still drawn at March 31, 2026 (nil by September 30), so I could not edit it and instead corrected it in the Gaps table of the Fundamental credit answer (CP-2).",
+      "verify": "ok"
     },
     {
       "issuer_id": "axon-1069183",
@@ -65,7 +70,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "Final launcher exit 0 (run finished, delivery written, no provider called); CP-0 and CP-1 were already accepted when I started, each with a single answer file, so I submitted none (0 here, 1 each earlier); known defect I could not fix because an accepted answer cannot be replaced: 20 of 22 rows in the two CP-1A map tables have a node or relationship text over the 60-character limit, which the automated check did not catch. Also, the default PATH put uv 0.11.32 ahead of the required 0.12.5, so I put /usr/local/bin first for each launcher run."
+      "notes": "Final launcher exit 0 (run finished, delivery written, no provider called); CP-0 and CP-1 were already accepted when I started, each with a single answer file, so I submitted none (0 here, 1 each earlier); known defect I could not fix because an accepted answer cannot be replaced: 20 of 22 rows in the two CP-1A map tables have a node or relationship text over the 60-character limit, which the automated check did not catch. Also, the default PATH put uv 0.11.32 ahead of the required 0.12.5, so I put /usr/local/bin first for each launcher run.",
+      "verify": "ok"
     },
     {
       "issuer_id": "aap",
@@ -76,7 +82,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "The launcher finished with exit 0 and delivery was written; it needed uv 0.12.5 (/usr/local/bin) first on PATH, the default 0.11.32 was refused. CP-0 was already accepted from the partial folder (attempt 1, not resubmitted here); CP-1, CP-1A and CP-2 were each accepted on the first launcher submission after an offline dry-run copy of the checks. Defect I could not fix: the Q3 2025 10-Q is not among the sources, so there is no 2025-10-04 balance sheet or prior-year interim store count. The host check also cannot order the form \"FY2025 / 2026-01-03\", so the FY2025 net-debt Period cells use the date alone."
+      "notes": "The launcher finished with exit 0 and delivery was written; it needed uv 0.12.5 (/usr/local/bin) first on PATH, the default 0.11.32 was refused. CP-0 was already accepted from the partial folder (attempt 1, not resubmitted here); CP-1, CP-1A and CP-2 were each accepted on the first launcher submission after an offline dry-run copy of the checks. Defect I could not fix: the Q3 2025 10-Q is not among the sources, so there is no 2025-10-04 balance sheet or prior-year interim store count. The host check also cannot order the form \"FY2025 / 2026-01-03\", so the FY2025 net-debt Period cells use the date alone.",
+      "verify": "ok"
     },
     {
       "issuer_id": "ncl-corp-ltd",
@@ -87,7 +94,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "The 10-K's contingent 17 November 2026 revolver maturity (tied to the 2027 exchangeable notes, plus a 91-day test on senior notes above USD 400 million) is not restated in the Q3 10-Q and the third-amendment text is not supplied, so I flagged it as unverified (MATERIAL) rather than resolving it."
+      "notes": "The 10-K's contingent 17 November 2026 revolver maturity (tied to the 2027 exchangeable notes, plus a 91-day test on senior notes above USD 400 million) is not restated in the Q3 10-Q and the third-amendment text is not supplied, so I flagged it as unverified (MATERIAL) rather than resolving it.",
+      "verify": "ok"
     },
     {
       "issuer_id": "hpp-1482512",
@@ -98,7 +106,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "No defect left unfixed; earlier modules were not edited, and CP-2 states three corrections to them (CP-1 said venture guarantee exposure and the Element LA termination fee amount were not established, although the 10-Q gives USD 190.5 million of carve-out guarantees and the FY2025 10-K attributes a USD 39.7 million revenue increase to the fee; CP-1A read scheduled expiry rent as rollover upside)."
+      "notes": "No defect left unfixed; earlier modules were not edited, and CP-2 states three corrections to them (CP-1 said venture guarantee exposure and the Element LA termination fee amount were not established, although the 10-Q gives USD 190.5 million of carve-out guarantees and the FY2025 10-K attributes a USD 39.7 million revenue increase to the fee; CP-1A read scheduled expiry rent as rollover upside).",
+      "verify": "ok"
     },
     {
       "issuer_id": "lgih-1580670",
@@ -109,7 +118,9 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "The accepted Business & governance answer (CP-1A) prints revenue and balance-sheet shares as decimals with a percent sign (retail 0.86% for 86.49%, inventory 0.89% for 88.59%), which an accepted answer cannot replace, so CP-2 recomputes the percentages and records the difference in its Gaps table."
+      "notes": "The accepted Business & governance answer (CP-1A) prints revenue and balance-sheet shares as decimals with a percent sign (retail 0.86% for 86.49%, inventory 0.89% for 88.59%), which an accepted answer cannot replace, so CP-2 recomputes the percentages and records the difference in its Gaps table.",
+      "verify": "failed: verify lgih-1580670: FAILED, relaunch wrote 12 new file(s), first completed-ead5357f8bdcaacfd99739468f70c54eeed0f282e3dead5b8a44566d5fffd156.json",
+      "verify_note": "The analyst ran only run_issuer.py (which prints the launcher command) after copying its CP-2 answer, so CP-2 was never reviewed; the verify relaunch reviewed and accepted that unchanged answer at attempt 1 and wrote the delivery. A second verify then reported: verify lgih-1580670: ok."
     },
     {
       "issuer_id": "hgv",
@@ -120,7 +131,8 @@
         "CP-1A": 1,
         "CP-2": 2
       },
-      "notes": "The fidelity check requires a bare year in a reader passage (here 2030) to also appear in a table or calculation, which the module instructions do not say (they exempt years from the unit rule), and this caused CP-2's one rejection."
+      "notes": "The fidelity check requires a bare year in a reader passage (here 2030) to also appear in a table or calculation, which the module instructions do not say (they exempt years from the unit rule), and this caused CP-2's one rejection.",
+      "verify": "ok"
     },
     {
       "issuer_id": "gfl",
@@ -131,7 +143,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "The 40-F in the pack was a cover only, so the audited 2025 statements, the AIF and the MD&A were absent; I could not fix this, and it blocks reported-EBITDA leverage and any measure of undrawn liquidity."
+      "notes": "The 40-F in the pack was a cover only, so the audited 2025 statements, the AIF and the MD&A were absent; I could not fix this, and it blocks reported-EBITDA leverage and any measure of undrawn liquidity.",
+      "verify": "ok"
     },
     {
       "issuer_id": "inr-2029118",
@@ -142,7 +155,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "The credit agreement, indenture, certificate of designation and FY2025 proxy statement were not in the source set, so covenant headroom, restricted-payment capacity, guarantor identity and board independence stay unestablished, and the filings carry unremediated internal-control weaknesses and an unreconciled USD 337.1 million versus USD 334.0 million Series A net proceeds difference that I logged but could not resolve."
+      "notes": "The credit agreement, indenture, certificate of designation and FY2025 proxy statement were not in the source set, so covenant headroom, restricted-payment capacity, guarantor identity and board independence stay unestablished, and the filings carry unremediated internal-control weaknesses and an unreconciled USD 337.1 million versus USD 334.0 million Series A net proceeds difference that I logged but could not resolve.",
+      "verify": "ok"
     }
   ]
 }
