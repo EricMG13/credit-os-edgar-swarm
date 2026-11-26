@@ -8,7 +8,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "Unfixable source defects: the filings do not supply revolver availability or letters of credit, interim cash interest, receivable-program balances, executed debt documents or the proxy statement, and the 10-K names the 4.75% notes \"Senior Notes\" in its exhibit index but \"First Priority Senior Secured Notes\" in the debt note, so security and priority are unestablished (I also pre-checked each draft offline with the repository's own read-only check functions before submitting, which used no launcher attempts)."
+    "notes": "Unfixable source defects: the filings do not supply revolver availability or letters of credit, interim cash interest, receivable-program balances, executed debt documents or the proxy statement, and the 10-K names the 4.75% notes \"Senior Notes\" in its exhibit index but \"First Priority Senior Secured Notes\" in the debt note, so security and priority are unestablished (I also pre-checked each draft offline with the repository's own read-only check functions before submitting, which used no launcher attempts).",
+    "verify": "ok"
   },
   {
     "issuer_id": "ual-100517",
@@ -19,7 +20,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "All four modules were accepted on the first submission, but the fixed-header map, confidence and register tables cannot carry a source column, so the library will show \"no page\" markers on those rows, and the shared scratchpad held another issuer's helper scripts, whose first fifty lines I viewed by accident and did not use."
+    "notes": "All four modules were accepted on the first submission, but the fixed-header map, confidence and register tables cannot carry a source column, so the library will show \"no page\" markers on those rows, and the shared scratchpad held another issuer's helper scripts, whose first fifty lines I viewed by accident and did not use.",
+    "verify": "ok"
   },
   {
     "issuer_id": "clh-822818",
@@ -30,7 +32,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "All four modules were accepted on first submission and delivery was written (exit 0); one defect remains unfixed because it sits in the supplied filings, not the answers: figures that do not reconcile across documents (Terra Nova five sites versus four permitted facilities, differing prices for the Depot Connect, Terra Nova and ES&H deals, and repurchase totals that differ from the cash flow statements) are logged as unreconciled in the CP-1A conflict register, while the missing proxy statement, covenant levels and ratings are recorded as gaps."
+    "notes": "All four modules were accepted on first submission and delivery was written (exit 0); one defect remains unfixed because it sits in the supplied filings, not the answers: figures that do not reconcile across documents (Terra Nova five sites versus four permitted facilities, differing prices for the Depot Connect, Terra Nova and ES&H deals, and repurchase totals that differ from the cash flow statements) are logged as unreconciled in the CP-1A conflict register, while the missing proxy statement, covenant levels and ratings are recorded as gaps.",
+    "verify": "ok"
   },
   {
     "issuer_id": "ego",
@@ -41,7 +44,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The file set holds only the 40-F cover with no audited 2025 statements, management discussion or debt documents, so trailing-twelve-month leverage, instrument ranking and covenant headroom stay recorded as gaps rather than fixed, and the library's quote chips will flag unit-restated or calculated table figures as not found on the cited page."
+    "notes": "The file set holds only the 40-F cover with no audited 2025 statements, management discussion or debt documents, so trailing-twelve-month leverage, instrument ranking and covenant headroom stay recorded as gaps rather than fixed, and the library's quote chips will flag unit-restated or calculated table figures as not found on the cited page.",
+    "verify": "ok"
   },
   {
     "issuer_id": "pag-1019849",
@@ -52,7 +56,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The accepted Source readiness answer (CP-0) wrongly says fourth-quarter 2025 revenue is not printed as a quarter (the 2025 10-K prints it on page 157), which could not be edited after acceptance and is corrected in the CP-1 limitations and gaps."
+    "notes": "The accepted Source readiness answer (CP-0) wrongly says fourth-quarter 2025 revenue is not printed as a quarter (the 2025 10-K prints it on page 157), which could not be edited after acceptance and is corrected in the CP-1 limitations and gaps.",
+    "verify": "ok"
   },
   {
     "issuer_id": "cnc",
@@ -63,7 +68,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The accepted Business & governance handoff (CP-1A) calls state-level revenue concentration \"not quantified\" although the 10-K (page 15) states Florida and New York each supplied about 10% or more of Medicaid premium revenues, and it could not be replaced once accepted (CP-2 uses the disclosed figure), while the sources also lack issuer EBITDA, agency ratings, executed debt documents and a proxy statement."
+    "notes": "The accepted Business & governance handoff (CP-1A) calls state-level revenue concentration \"not quantified\" although the 10-K (page 15) states Florida and New York each supplied about 10% or more of Medicaid premium revenues, and it could not be replaced once accepted (CP-2 uses the disclosed figure), while the sources also lack issuer EBITDA, agency ratings, executed debt documents and a proxy statement.",
+    "verify": "ok"
   },
   {
     "issuer_id": "xpo-1166003",
@@ -74,7 +80,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The launcher finished with exit 0 (all four modules accepted on the first submission, delivery written to ROOT/_engine/runs/swarm-xpo-1166003/deliveries/dc94d3e3f3cfd5da197999e823ecbd9b1ff2104f6e73003049818f1503232943). Defects I saw but could not fix: the filings' own rounding leaves Net Cash Change for FY2024, FY2025 and nine months 2025 and FY2024 Total Liabilities as stated gaps, and covenant levels, credit agreements and ownership beyond 49 registered holders are not in the sources. Two process points: the first launcher call failed on uv 0.11.32, so I put /usr/local/bin (uv 0.12.5) first on PATH; the branch's xpo-1166003 folder held only an unanswered CP-0 request, so there were no accepted answers to resume. Before each submission I checked the draft in place with the repo's own text and table check functions; this was not a launcher submission and is not counted above."
+    "notes": "The launcher finished with exit 0 (all four modules accepted on the first submission, delivery written to ROOT/_engine/runs/swarm-xpo-1166003/deliveries/dc94d3e3f3cfd5da197999e823ecbd9b1ff2104f6e73003049818f1503232943). Defects I saw but could not fix: the filings' own rounding leaves Net Cash Change for FY2024, FY2025 and nine months 2025 and FY2024 Total Liabilities as stated gaps, and covenant levels, credit agreements and ownership beyond 49 registered holders are not in the sources. Two process points: the first launcher call failed on uv 0.11.32, so I put /usr/local/bin (uv 0.12.5) first on PATH; the branch's xpo-1166003 folder held only an unanswered CP-0 request, so there were no accepted answers to resume. Before each submission I checked the draft in place with the repo's own text and table check functions; this was not a launcher submission and is not counted above.",
+    "verify": "ok"
   },
   {
     "issuer_id": "crox-1334036",
@@ -85,7 +92,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "Defect seen and not fixable inside the allowed paths: the issuer states no EBITDA or adjusted EBITDA, so every leverage and cover figure uses EBITDA built from operating income plus depreciation and amortization, and the debt-stack and EBITDA-bridge tables had to be partial or \"Not supplied\". (Run folder note: the partial folder on the branch held only the CP-0 request and no accepted answers, so all four modules were answered fresh. The first launcher call printed a uv-version error until /usr/local/bin was put first on PATH.)"
+    "notes": "Defect seen and not fixable inside the allowed paths: the issuer states no EBITDA or adjusted EBITDA, so every leverage and cover figure uses EBITDA built from operating income plus depreciation and amortization, and the debt-stack and EBITDA-bridge tables had to be partial or \"Not supplied\". (Run folder note: the partial folder on the branch held only the CP-0 request and no accepted answers, so all four modules were answered fresh. The first launcher call printed a uv-version error until /usr/local/bin was put first on PATH.)",
+    "verify": "ok"
   },
   {
     "issuer_id": "rlj-1511337",
@@ -96,7 +104,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The already-accepted CP-1A cannot be edited and misstates two things (it says board independence is not established, though the FY2025 10-K pages 14 and 82 state seven of nine trustees are independent, and it calls capital allocation measured, though the common dividend rose from USD 0.36 to USD 0.60 per share FY2023-FY2025 while operating cash flow fell 22.64% and FCF after capex covered distributions only 1.00x in FY2025), so CP-2 states both corrections in its own text and Gaps."
+    "notes": "The already-accepted CP-1A cannot be edited and misstates two things (it says board independence is not established, though the FY2025 10-K pages 14 and 82 state seven of nine trustees are independent, and it calls capital allocation measured, though the common dividend rose from USD 0.36 to USD 0.60 per share FY2023-FY2025 while operating cash flow fell 22.64% and FCF after capex covered distributions only 1.00x in FY2025), so CP-2 states both corrections in its own text and Gaps.",
+    "verify": "ok"
   },
   {
     "issuer_id": "czr",
@@ -107,7 +116,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "No defect left unfixed: CP-0 and CP-1 were already accepted on one attempt each when I resumed, and CP-1A and CP-2 were each accepted first time; the only gaps are source limits stated in the handoffs (merger financing and treatment of existing debt, holder percentages, covenant definitions, no ratings or peers), and the checks are automated only, so the handoffs still need review against the sources."
+    "notes": "No defect left unfixed: CP-0 and CP-1 were already accepted on one attempt each when I resumed, and CP-1A and CP-2 were each accepted first time; the only gaps are source limits stated in the handoffs (merger financing and treatment of existing debt, holder percentages, covenant definitions, no ratings or peers), and the checks are automated only, so the handoffs still need review against the sources.",
+    "verify": "ok"
   },
   {
     "issuer_id": "cars-1683606",
@@ -118,7 +128,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The Q2 2026 10-Q dates its 1.95x Total Net Leverage Ratio as both 30 Jun and 31 Mar 2026 while the Q1 10-Q prints 1.84x for 31 Mar, which no supplied source resolves, and the credit agreement, indenture and proxy statement were not supplied, so covenant headroom and board independence stayed unestablished (recorded as gaps and limitations, not fixed)."
+    "notes": "The Q2 2026 10-Q dates its 1.95x Total Net Leverage Ratio as both 30 Jun and 31 Mar 2026 while the Q1 10-Q prints 1.84x for 31 Mar, which no supplied source resolves, and the credit agreement, indenture and proxy statement were not supplied, so covenant headroom and board independence stayed unestablished (recorded as gaps and limitations, not fixed).",
+    "verify": "ok"
   },
   {
     "issuer_id": "corz-1839341",
@@ -129,7 +140,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The supplied filings do not include the executed customer leases, the notes indenture, finance-subsidiary accounts, the 2026 proxy statement or Adjusted EBITDA on one definition for twelve months, so those gaps stay explicit in the accepted handoffs and the launcher's automated check is structural only."
+    "notes": "The supplied filings do not include the executed customer leases, the notes indenture, finance-subsidiary accounts, the 2026 proxy statement or Adjusted EBITDA on one definition for twelve months, so those gaps stay explicit in the accepted handoffs and the launcher's automated check is structural only.",
+    "verify": "ok"
   },
   {
     "issuer_id": "mdln-2046386",
@@ -140,6 +152,7 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "Unfixable gaps are inputs missing from the eight pinned sources: no executed credit agreement or indentures, ratings, market prices, proxy statement or borrower-group statements; Financial foundation (CP-1) states unconditional purchase obligations of USD 710 million where the 10-K states USD 849 million, which CP-2 corrects in its own answer because an accepted handoff cannot be edited."
+    "notes": "Unfixable gaps are inputs missing from the eight pinned sources: no executed credit agreement or indentures, ratings, market prices, proxy statement or borrower-group statements; Financial foundation (CP-1) states unconditional purchase obligations of USD 710 million where the 10-K states USD 849 million, which CP-2 corrects in its own answer because an accepted handoff cannot be edited.",
+    "verify": "ok"
   }
 ]
