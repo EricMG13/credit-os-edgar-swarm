@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Bausch & Lomb Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "93efafeefba58f7d7010f8901bd5ce70298fb793786add3e8b2bb377ee0af733",
+    "CP-1.md": "9246d9628c7a0fd1811f63773cfc38ea7e84279a81c7ae777d3f0468cc410770",
+    "CP-1A.md": "9ee6bfe9247cb17a7f9c2f42f44da9e8f939d244017c21bc31476f19716d7cc1",
+    "CP-2.md": "a676766803785c730bf3cf98501039f342623108facb42f1d355295e720be88c",
+    "coverage.json": "3357a69b71811557ba017542228861e25a07cf223176be41d7c5d2dbfc1a2cf2",
+    "view.json": "ea86f24698eaf6beed9af493fdf30abe97a4afe9fda91c8c50e2213f41725cc2",
+    "report-view.json": "ed8b9f78beccb045045e4d602974b9a189d0003329c004af2b3574a4015186d9"
+  }
+}

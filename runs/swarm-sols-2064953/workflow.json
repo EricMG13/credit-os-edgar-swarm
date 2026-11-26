@@ -1,0 +1,244 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "sols-2064953-2026-11-18-credit_snapshot-host",
+    "issuer_id": "sols-2064953",
+    "issuer_name": "Solstice Advanced Materials Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2025-12-31_sols.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_sols.htm.jsonl",
+      "sha256": "7c90189e70a6693a7cc324c40b85457fdc856116fd3a16fc8bcdb68065fc95c8"
+    },
+    "10-Q_2026-03-31_sols.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_sols.htm.jsonl",
+      "sha256": "0e9644bfc053ce8beea466130dc15e0ca471878de4ba901a02c5c1aab4722e0d"
+    },
+    "10-Q_2026-06-30_sols.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_sols.htm.jsonl",
+      "sha256": "d2f3784944d0ae597e996d939fde4ad3228ce1aedb334fa1e125a1baba01a5d2"
+    },
+    "10-Q_2026-09-30_sols.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_sols.htm.jsonl",
+      "sha256": "cd58fecc2014e34722b591ed5e78e80d986546bfb738a4bfb7fe8fd47ec0e23f"
+    },
+    "PREDECESSOR_2024_10-12BA_EX99.1_sols.htm.jsonl": {
+      "path": "source-text/PREDECESSOR_2024_10-12BA_EX99.1_sols.htm.jsonl",
+      "sha256": "5c12b6bf98006137ff203cff7f0f47241eeeaf296c5188fe8e8e0a0d507cf928"
+    },
+    "PREDECESSOR_2024_10-12BA_sols.htm.jsonl": {
+      "path": "source-text/PREDECESSOR_2024_10-12BA_sols.htm.jsonl",
+      "sha256": "3273ce7f6c5c6c5fd73175f83fa4f7fecd5f6dd2745ed21c792188f8fbda1c59"
+    },
+    "PREDECESSOR_2024_10-12B_sols.htm.jsonl": {
+      "path": "source-text/PREDECESSOR_2024_10-12B_sols.htm.jsonl",
+      "sha256": "37367516371eebbba1496dcecc3f52d4c3ec8d9ed74e3956b84d7ca7647c38fe"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/2064953-solstice-advanced-materials-inc.json",
+      "sha256": "dd1c08569c8e104a3cf300b48693aa48d949275186219918af6e0e215eb1b9a3"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "634f1e4be247b3d317945f613097635958dd5f41f36b2a1e55b693f455bf27fa"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "3d07e929b9af03cf4159e19b01be8fad2ce5348fd320278aaa7180df2a5db664"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "90dbbdd7c1b2b690baa2f26966fa4a0d3aa46dccdc6c26251b013513940db97a"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "377608576d710db0db6a23a61b65e6055f66171109af421f4fe29e745024941f"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Solstice Advanced Materials Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Solstice Advanced Materials Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

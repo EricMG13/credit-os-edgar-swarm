@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for SunCoke Energy, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/cf31772f5f59cb6a56a6b80e16df913605dbc779169e53f657ce8b153437c40f/1.response.md",
+    "CP-1": "requests/CP-1/c6b93d01a6d86ed0045d702e8378a14041586fb31c2e5844f6d60a35b711f5db/1.response.md",
+    "CP-1A": "requests/CP-1A/8fc8716aab5e1ba9f588b0ea97e6ebd19dc1e4c11cf452beaf2c53c1f46a458d/1.response.md",
+    "CP-2": "requests/CP-2/3a7b92a88712457b34fbee2ff0250cfc526705bc62f297acd3970e5d3c951b11/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "5fa487fb5bbb3141938ce563f3c4722d01f8b6f250516efb6b90061aa43ae04c",
+  "delivery_sha256": "7742ef1e1d7129559e57fdf3d56bf10ce27855eb3126c53aefd3d8bf2c838be4"
+}

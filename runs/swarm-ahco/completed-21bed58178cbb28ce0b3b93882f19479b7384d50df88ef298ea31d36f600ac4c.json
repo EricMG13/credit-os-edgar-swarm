@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for AdaptHealth Corp. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/bf2dc01d6f127e89ccee2d39412675a25a18e352b51cf800d8007d5f7483db91/1.response.md",
+    "CP-1": "requests/CP-1/ef0833a728189fc38a177bb936768dbb84fd64160eae1b32e01ccd8adf19502b/1.response.md",
+    "CP-1A": "requests/CP-1A/7d588d66d7e0e10b075ed4904362c5c256bbaadcbfce36e09e490080778cd996/1.response.md",
+    "CP-2": "requests/CP-2/de81ee4d696cf855f64e26a201b3b890a2f07e58a6911d11890cc5b19237b1d3/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "32c4c0fa31a6dfdf817d5c5ecb81858df24798c2e595d472fd02b1b38dbb9a23",
+  "delivery_sha256": "d9e2f8513c0e3b7f43f925bf589433259e10362043f8e8ead90336e56201cf5a"
+}

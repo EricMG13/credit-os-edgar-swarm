@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Advanced Drainage Systems, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "23f6923d4b99a0feff722a18f22f64453859a913d4b646fe6ecb557b3fd49aa2",
+    "CP-1.md": "549107e832617ce095dba55be6f9c3bd4d4b038565443fad28beaedf48e248d7",
+    "CP-1A.md": "2b5af5bee5c6b4a7ac072074b7d4f7deeb689233debff705ef0b60a6b086a7b2",
+    "CP-2.md": "b09d28fb035a8e11f64fe37c6fea51cbd14212b51f9026f888f4d6691f81561f",
+    "coverage.json": "00d1c3d8f9c3905594cc6f6a7de02dae58d45bd60c43c5dedd8de54c0fb23a50",
+    "view.json": "a5f8c9d13540bb5f3bb73963b9a8a37fcd1b194ae338bdf4e5677791db2c3d8d",
+    "report-view.json": "c3ce5533e8628af70f05f718e9961614f092624a7bd67dafbf6567423e0f6fc3"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for SunCoke Energy, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "3b2ed3704b7c0a0f05315fea4fe0a4ce41d8d9be9131ad940b64e94e0b65bef0",
+    "CP-1.md": "f8634817baae9ef77bbd2eb001841d1de599d99c612268292b14de5b6a7470f7",
+    "CP-1A.md": "922b27be62ce219cc38a49dede372085ba326cdd9e6c7f14edec12223f815064",
+    "CP-2.md": "df835b06d03bf2c6e03938c35d1beb99add43d85e6b1255064c74378154cfb1a",
+    "coverage.json": "70b61fcf07c71ba1951c5b0d532a1349b9398ce30631043aacabdf2e92b608cb",
+    "view.json": "fc151eed69354d113a86a4d923bce60322e7ed732795d4f129f2dc74db6ed301",
+    "report-view.json": "edbd1739a76454599fdd0d8375f712c566c811b7ea388eea4ddab570a2cc555f"
+  }
+}

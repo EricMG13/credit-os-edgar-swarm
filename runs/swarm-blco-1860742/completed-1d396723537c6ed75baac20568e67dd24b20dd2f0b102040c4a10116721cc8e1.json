@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Bausch & Lomb Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/bcadaadec99d3f1c5879874d90d0503f0ccba0f0048564e8d04b592b0eebfe81/1.response.md",
+    "CP-1": "requests/CP-1/ee36295299765f4968420515b28bf62abf39e827058e00988182c526558dd8a0/1.response.md",
+    "CP-1A": "requests/CP-1A/b400d6922650a5eec87ba0c123bde17f42306aef7b238cb0de0bd8256bae39cf/1.response.md",
+    "CP-2": "requests/CP-2/3861d1e65bfaf87dd45903a0b5b3100474c4d0ba6eeed0af4ae9facb5a274e54/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "2a3b7311010cd2b95268ddeb98fcff47cd670e956200f4e52eba95b5599a4160",
+  "delivery_sha256": "98c90ea695348acc9e45d19e90ae5699e97e80617f5bcaff7477970a00e12e39"
+}

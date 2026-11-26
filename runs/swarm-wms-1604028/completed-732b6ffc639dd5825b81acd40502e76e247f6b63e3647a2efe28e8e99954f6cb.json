@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Advanced Drainage Systems, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/30bb549cb18446ec7beb8e47aa495332400cde7ee6313bbabf6126fc82780440/1.response.md",
+    "CP-1": "requests/CP-1/0078434ae5230301dbf0750f57825559c43c781740c24aefc117057e481e92e4/1.response.md",
+    "CP-1A": "requests/CP-1A/c12bd9d077915e0347140b625ddb601d54aaca3754fb85ecaafaf1d4cf53a109/1.response.md",
+    "CP-2": "requests/CP-2/7f7f2ff819b7ae7fb4de7552e384aa4a2ce77645917dac9135c50b67fd1ffce9/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "fb885831a4bb298605aba7b43810ffca7d2dfdc94daf7c2f9d30c90d98114002",
+  "delivery_sha256": "8413e645efcfcfdb41b7793f2b964a6fdf67662b670facccaa7d24ec880a05e3"
+}
