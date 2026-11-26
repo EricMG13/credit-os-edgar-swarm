@@ -1,6 +1,0 @@
-{
-  "issues": [
-    "`### Chart data: EBITDA bridge`: the opening 963.931 plus the stated changes 5,724.427 does not equal the closing 1,154.161; state the missing step or correct the amount. Nothing is filled in for you."
-  ],
-  "response_sha256": "113926cd7d54db900c206384dda63740319b926224fa264854824f31484b9343"
-}
