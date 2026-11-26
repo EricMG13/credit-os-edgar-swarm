@@ -108,5 +108,38 @@
       "CP-2": 1
     },
     "notes": "No defect left unfixed: CP-0 and CP-1 were already accepted on one attempt each when I resumed, and CP-1A and CP-2 were each accepted first time; the only gaps are source limits stated in the handoffs (merger financing and treatment of existing debt, holder percentages, covenant definitions, no ratings or peers), and the checks are automated only, so the handoffs still need review against the sources."
+  },
+  {
+    "issuer_id": "cars-1683606",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The Q2 2026 10-Q dates its 1.95x Total Net Leverage Ratio as both 30 Jun and 31 Mar 2026 while the Q1 10-Q prints 1.84x for 31 Mar, which no supplied source resolves, and the credit agreement, indenture and proxy statement were not supplied, so covenant headroom and board independence stayed unestablished (recorded as gaps and limitations, not fixed)."
+  },
+  {
+    "issuer_id": "corz-1839341",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The supplied filings do not include the executed customer leases, the notes indenture, finance-subsidiary accounts, the 2026 proxy statement or Adjusted EBITDA on one definition for twelve months, so those gaps stay explicit in the accepted handoffs and the launcher's automated check is structural only."
+  },
+  {
+    "issuer_id": "mdln-2046386",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "Unfixable gaps are inputs missing from the eight pinned sources: no executed credit agreement or indentures, ratings, market prices, proxy statement or borrower-group statements; Financial foundation (CP-1) states unconditional purchase obligations of USD 710 million where the 10-K states USD 849 million, which CP-2 corrects in its own answer because an accepted handoff cannot be edited."
   }
 ]

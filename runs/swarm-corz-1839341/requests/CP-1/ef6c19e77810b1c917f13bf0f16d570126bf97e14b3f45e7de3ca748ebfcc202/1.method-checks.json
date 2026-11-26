@@ -1,0 +1,109 @@
+{
+  "checks": [
+    {
+      "figure": "LTM: EBITDA (Reported)",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": -369784.0,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: EBITDA (Reported)",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "-369,784",
+      "status": "agreed",
+      "tolerance": 1.0,
+      "unit": "USD k"
+    },
+    {
+      "figure": "LTM: Cash Interest Paid",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": 19229.0,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Cash Interest Paid",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "19,229",
+      "status": "agreed",
+      "tolerance": 1.0,
+      "unit": "USD k"
+    },
+    {
+      "figure": "LTM: Revenue",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": 592074.0,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Revenue",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "592,074",
+      "status": "agreed",
+      "tolerance": 1.0,
+      "unit": "USD k"
+    },
+    {
+      "figure": "LTM: EBITDA (Adjusted)",
+      "module": "CP-1",
+      "reason": "T4.8 states no currency or scale for this row's figures",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: EBITDA (Adjusted)",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "Not calculable: the full-year component is on the earlier Adjusted EBITDA definition and the stubs on the wider one",
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "Adjusted EBITDA / coupon interest incurred (Q3 2026)",
+      "module": "CP-1",
+      "reason": "Calculated Value = Numerator Value / Denominator Value (the script's ratio), or that x 100 for a percentage; for a change, Numerator / Denominator - 1 (the script's growth); agrees as the ratio",
+      "recomputed": 1.982073959755446,
+      "recomputed_label": null,
+      "register": "T4.9",
+      "row": "Adjusted EBITDA / coupon interest incurred (Q3 2026)",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "1.98",
+      "status": "agreed",
+      "tolerance": 0.010022126149757787,
+      "unit": null
+    },
+    {
+      "figure": "EBITDA (Reported) / coupon interest incurred (Q3 2026)",
+      "module": "CP-1",
+      "reason": "Calculated Value = Numerator Value / Denominator Value (the script's ratio), or that x 100 for a percentage; for a change, Numerator / Denominator - 1 (the script's growth); agrees as the ratio",
+      "recomputed": 1.340550246334659,
+      "recomputed_label": null,
+      "register": "T4.9",
+      "row": "EBITDA (Reported) / coupon interest incurred (Q3 2026)",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "1.34",
+      "status": "agreed",
+      "tolerance": 0.010017366224300578,
+      "unit": null
+    },
+    {
+      "figure": "all",
+      "module": "CP-1",
+      "reason": "its SKILL.md declares no completeness contract: SKILL.md has no `## Output profile` section",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "",
+      "row": "all",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    }
+  ],
+  "kind": "method-script-checks/1",
+  "module": "CP-1",
+  "response_sha256": "d9db635b3c8ab346475108c86b620227c6041bef9006554bc5e78d5d832d58d2",
+  "scripts": {
+    "docs/reuse/selected-methods/scripts/completeness_check.py": "a9841a74e4f851fd565c5f3cabc831835c4bc305ea40c28446790f8165d56056",
+    "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py": "8f90ad05f99ffe09ea6f223cbd67827bb4ab36f4d243e12645eac628dbff9233"
+  }
+}

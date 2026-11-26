@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Core Scientific, Inc./tx as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "303b2e5220de44d97b051cb3aa76172478044db60d6d8818551f25c332a3306c",
+    "CP-1.md": "d9db635b3c8ab346475108c86b620227c6041bef9006554bc5e78d5d832d58d2",
+    "CP-1A.md": "ac5a680373680d376544dfa3dc2277174e0e222d2c5376f7a3b794c15be583f8",
+    "CP-2.md": "ee2842d3b89ada56adf8f7c0108a2ca00219847bf970dd6590b00784e2a5a68c",
+    "coverage.json": "e2c8c2b0f27398ca886153d840b7ba83c7be977dec7a862e3051d740a6f55f60",
+    "view.json": "b213a1eb29e59e6b500bd1c0c0598aa206aa4a07c48543427794a76da4556545",
+    "report-view.json": "e89965641ca01c978e98e1981f64fe1e47f3d8c3778e517fd0118d954e3dbd5f"
+  }
+}

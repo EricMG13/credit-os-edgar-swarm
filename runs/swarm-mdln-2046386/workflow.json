@@ -1,0 +1,248 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "mdln-2046386-2026-11-18-credit_snapshot-host",
+    "issuer_id": "mdln-2046386",
+    "issuer_name": "Medline Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2025-12-31_mdln-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_mdln-20251231.htm.jsonl",
+      "sha256": "cc17cd9e735531219f10a41b8375030c458bb58aa3f93e081f84b0c9fb1428c0"
+    },
+    "10-Q_2026-03-28_mdln-20260328.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-28_mdln-20260328.htm.jsonl",
+      "sha256": "7db0036f079791db470a9bf513f269c7643ce9e613c0cbcde863bbb6d1269fd5"
+    },
+    "10-Q_2026-06-27_mdln-20260627.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-27_mdln-20260627.htm.jsonl",
+      "sha256": "67b0e337eaf9661631fec1dae4e6f3cdd8dbe6c6053cdff24c834a9dc20bcfcb"
+    },
+    "10-Q_2026-09-26_mdln-20260926.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-26_mdln-20260926.htm.jsonl",
+      "sha256": "5861a145ad0299877e35f6bb253c69f28f675cf1ceba9d034f1bda131ff1bc54"
+    },
+    "EX-99.1_2026-05-06_ex9911q26pressrelease.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-05-06_ex9911q26pressrelease.htm.jsonl",
+      "sha256": "90a0427bff3c69a08b24857579c495b4aa322bd6770fac4f07095ff82da0127f"
+    },
+    "EX-99.1_2026-08-05_ex9912q26pressrelease.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-08-05_ex9912q26pressrelease.htm.jsonl",
+      "sha256": "2a4aa54fb379595dc089422b9c59887f55d70af8f675fdf82683194cd31ae829"
+    },
+    "EX-99.1_2026-11-04_ex9913q26pressrelease.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-11-04_ex9913q26pressrelease.htm.jsonl",
+      "sha256": "1398f1a996c445a321c8ff1571c5d140bc20b16920db6e404835b252fb50f485"
+    },
+    "S-1-A_2024-audited-financial-statements_medline.htm.jsonl": {
+      "path": "source-text/S-1-A_2024-audited-financial-statements_medline.htm.jsonl",
+      "sha256": "16fc78ab8910878b9ae19ceda69fd5a5278772166be721d57e1e0197e6604236"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/2046386-medline-inc.json",
+      "sha256": "15d29c0384231713269df06a8b6d3a20e16a70261fd3b3e91b894ad93ebc2a2d"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "6319e0ab180f469cf8000d0b2b236da5ac0f4ceb1ac50abd54a983d437e80777"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "1726d026e98879aaf150f887585f68f462600f2755f4765ef71e71997c0b7707"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "9053e91b6215234e7ba0bb1a2810cb2c51a15a5d74d8d2a5d2d78b2a88c78bb9"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "54822a57d2fb2c4f76432752c40fbab8259c46d7a90ccf6172261c0335600311"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Medline Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Medline Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

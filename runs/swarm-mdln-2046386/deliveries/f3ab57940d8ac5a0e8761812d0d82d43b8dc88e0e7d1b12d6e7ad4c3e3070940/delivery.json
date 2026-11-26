@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Medline Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "26496ce669698876ed41f961f5eb07b0a850e7b80f358a2d009fc30fe93da3f5",
+    "CP-1.md": "7567107f64c4fcb0817f374399e83750cd85a8edcdffdea2f7e5224f6ce728d3",
+    "CP-1A.md": "8d90ef2af52bc5881da1f36519ec21cf3c37169db8c433745486515a5f1425fa",
+    "CP-2.md": "87392e884e966fb71e0b9b6503ffcd9fa39600adbf24a5adcd7cb91d1cab5e7f",
+    "coverage.json": "2420a379d32fe4079c969e4888140812fae29ff22fc13c88a8d56343adfab48f",
+    "view.json": "7eff872b98ebf5848a7793cac4e249d9f2c4f0c05bbafc95440c82b2996cc2ee",
+    "report-view.json": "afab520029d81a82577d90a9bcb82f0084cd3a0f7d488a8a329578e86b36abe4"
+  }
+}

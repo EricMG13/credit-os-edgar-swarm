@@ -1,0 +1,272 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "corz-1839341-2026-11-18-credit_snapshot-host",
+    "issuer_id": "corz-1839341",
+    "issuer_name": "Core Scientific, Inc./tx",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_corz.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_corz.htm.jsonl",
+      "sha256": "ea7f0439e06691604f649c5db755788436158c5a907b2fa14c85b05c8d40e637"
+    },
+    "10-K_2025-12-31_corz.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_corz.htm.jsonl",
+      "sha256": "18a91504caacb05f03cf6ab9a19542d3714481c908683fcf0d97c2645d1ad6ba"
+    },
+    "10-Q_2026-03-31_corz.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_corz.htm.jsonl",
+      "sha256": "c3793bab51353f5c4904187cd4b6f63a7be4c356ce89c7f8a0e73abcebf251a0"
+    },
+    "10-Q_2026-06-30_corz.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_corz.htm.jsonl",
+      "sha256": "9a9ea90edfe6816d55cd7f654032f8b4cd3ea7d4562b76b9a3b02cea7499c908"
+    },
+    "10-Q_2026-09-30_corz.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_corz.htm.jsonl",
+      "sha256": "2bf1b86f2365c5ed4dbef436f960ff8b986625c9581e5676a42b8fde0a9373e8"
+    },
+    "EX99.1_2026-03-31_corz_d149019dex991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_corz_d149019dex991-htm.htm.jsonl",
+      "sha256": "2b0fef835ff2b260afc0eab4c8f7d067065989f2b6dbf706b82633ae996aa69a"
+    },
+    "EX99.1_2026-03-31_corz_d47435dex991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_corz_d47435dex991-htm.htm.jsonl",
+      "sha256": "0baffc3c265482b67617067a4f3805c81cd07bdfaae6409ce5998b3d69d3cb78"
+    },
+    "EX99.1_2026-03-31_corz_exhibit991-pecosexpansio-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_corz_exhibit991-pecosexpansio-htm.htm.jsonl",
+      "sha256": "64bd84a20c6e6e106287eb46ccdded5f1f89cf88162f2d7ce0f82f0008b3df44"
+    },
+    "EX99.1_2026-03-31_corz_exhibit991polarispressre-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_corz_exhibit991polarispressre-htm.htm.jsonl",
+      "sha256": "9129648e90ded84de40e1e48870531e854ae9782bafc48782c4285799b256a6c"
+    },
+    "EX99.1_2026-03-31_corz_q12026corescientificinc-ea-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_corz_q12026corescientificinc-ea-htm.htm.jsonl",
+      "sha256": "b7497672c3fe272df87fb5b98f63c4f7015a13574c9151efaf19f7c9a6c53836"
+    },
+    "EX99.1_2026-06-30_corz_amdpr-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_corz_amdpr-htm.htm.jsonl",
+      "sha256": "3df0ae7312f24c293d768dd7944bcd0bd8eaea20a032c41c3077af53913a79b6"
+    },
+    "EX99.1_2026-06-30_corz_madamsreleasevfpdf-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_corz_madamsreleasevfpdf-htm.htm.jsonl",
+      "sha256": "5bf1cf77879e1d722b7323b3fb3b00ff0a1712d3773e30810aff22516a2c8f6e"
+    },
+    "EX99.1_2026-06-30_corz_q22026corescientificinc-ea-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_corz_q22026corescientificinc-ea-htm.htm.jsonl",
+      "sha256": "676491b256a26fe3e9e8fc003d772f1f7ca2b6094a9040c0b505aa88dc9ca6e9"
+    },
+    "EX99.1_2026-09-30_corz_q32026corescientificinc-ea-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-09-30_corz_q32026corescientificinc-ea-htm.htm.jsonl",
+      "sha256": "4f7c00e26f5c090bed72638476733d2a02b1ef1f28f8642cc1f9079c53d11375"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1839341-core-scientific-inc-tx.json",
+      "sha256": "8fceecb89cc211543562520cb5f4505aae4dcc0689099398e3255a10ac98e014"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "042ba9326d2d62d5a075817719a86a8cc2952b9306dd2df92f26eeac73abbeb3"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "bb793a1f8b669e1b6cb0a01e1152f29f6af90788ae53a3dcd88f505eb5f2e2ca"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "07c7a2b0543342ba9a565d9070bdbfb91cb15ac5a7c1200c9ba75a69915d78f0"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "ac0bb0a50c99d8464f0d300feeef3fbbc74c47cc8202147e6b82a2a38c319162"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Core Scientific, Inc./tx as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Core Scientific, Inc./tx — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}
