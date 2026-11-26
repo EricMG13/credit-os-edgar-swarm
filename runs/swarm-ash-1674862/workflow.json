@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "ash-1674862-2026-11-18-credit_snapshot-host",
+    "issuer_id": "ash-1674862",
+    "issuer_name": "Ashland Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-09-30_ash_ash-20240930.htm.jsonl": {
+      "path": "source-text/10-K_2024-09-30_ash_ash-20240930.htm.jsonl",
+      "sha256": "5e1a481df3781af713f3addf5fd5e6269c46f3eb3a280ab14d7ee80c28e89486"
+    },
+    "10-K_2025-09-30_ash_ash-20250930.htm.jsonl": {
+      "path": "source-text/10-K_2025-09-30_ash_ash-20250930.htm.jsonl",
+      "sha256": "f09d68592cee7e4e673c412620f066ba42ce0020f4ee741d27326171c43cea46"
+    },
+    "10-Q_2025-12-31_ash_ash-20251231.htm.jsonl": {
+      "path": "source-text/10-Q_2025-12-31_ash_ash-20251231.htm.jsonl",
+      "sha256": "f44789fe9df3664ff7eac7dd2aaaa0efa3fa8c1f3866f899fe702f62f0f97767"
+    },
+    "10-Q_2026-03-31_ash_ash-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_ash_ash-20260331.htm.jsonl",
+      "sha256": "dfa86a0d9d2b31e4a724248c6c13b720be49a0f08f548f4898c2688739bf408f"
+    },
+    "10-Q_2026-06-30_ash_ash-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_ash_ash-20260630.htm.jsonl",
+      "sha256": "e052d086570fcb1d4d12840a47830a340abd5b0829f75dd023eceada69cdf858"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1674862-ashland-inc.json",
+      "sha256": "8ffce99308853a5d0b07ab3353bccd3b4470daf273dd234ae9137126ae2a30e0"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "5849d1889592665081317d5de9762f1958d1c33f13cc80562cb06ed41a2ac77e"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "241cf55f542c4263b876d2197f6d93b245497c2feb4661aae78d56c9d62ff722"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "c1c3f7b8a9cc5fc767f0bf304d9691fbfab74ebd8311fecdc2199f5f5c8d26ce"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "36b4c6c6280b58bfa8708305ff724f47b53bac2dda31ea43225c14a671527772"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Ashland Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Ashland Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

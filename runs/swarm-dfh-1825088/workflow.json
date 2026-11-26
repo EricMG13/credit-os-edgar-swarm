@@ -1,0 +1,272 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "dfh-1825088-2026-11-18-credit_snapshot-host",
+    "issuer_id": "dfh-1825088",
+    "issuer_name": "Dream Finders Homes, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_dfh.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_dfh.htm.jsonl",
+      "sha256": "53c2ebdda81ec335f4eae9331d58a9661348cd414f3d77b8436e26128ed320cd"
+    },
+    "10-K_2025-12-31_dfh.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_dfh.htm.jsonl",
+      "sha256": "72942dc6c7e4a134b9bcab03e9b6c9ff65e6bf3d9804b8ffa67841f74784ccc0"
+    },
+    "10-Q_2026-03-31_dfh.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_dfh.htm.jsonl",
+      "sha256": "f870f3ccdb296fe468c38af742e803dcd9ddb54682ea37678f3f559af7325146"
+    },
+    "10-Q_2026-06-30_dfh.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_dfh.htm.jsonl",
+      "sha256": "d8a4fba0cd386dfea7fc5d3110583a31f8df5fbc685b1fa2c76582de217d8332"
+    },
+    "10-Q_2026-09-30_dfh.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_dfh.htm.jsonl",
+      "sha256": "6a0752148bbd4df550af1946cc13777e80f85eb02c169843a0af9668eb55bfc6"
+    },
+    "EX99.1_2026-03-31_dfh_dfh-q12026xer-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_dfh_dfh-q12026xer-htm.htm.jsonl",
+      "sha256": "cb09ce47f547d4fe5fb60140b83804fccac5e294de3d8c0b976fa05258cb6af1"
+    },
+    "EX99.1_2026-03-31_dfh_ex-991pressrelease-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_dfh_ex-991pressrelease-htm.htm.jsonl",
+      "sha256": "8122f49f91d5376ed77168ba5eb335f9a6d1a1fea0f6696fefeaaa82b61545f9"
+    },
+    "EX99.1_2026-06-30_dfh_dfh-q22026xer-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_dfh_dfh-q22026xer-htm.htm.jsonl",
+      "sha256": "bbc444cf8b7546978edaa979529eb61e6d5edf4ccb94c1eb254fea89641d5702"
+    },
+    "EX99.1_2026-06-30_dfh_ex-991pressreleasexmergera-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_dfh_ex-991pressreleasexmergera-htm.htm.jsonl",
+      "sha256": "df5f751b1ac3c1826c1018ec3f050754808873098d7c0184504de597f8792576"
+    },
+    "EX99.1_2026-06-30_dfh_pr-appointmentofbeckwitt-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_dfh_pr-appointmentofbeckwitt-htm.htm.jsonl",
+      "sha256": "22cb1a2d09c7e583dabf51c3336a9cb79949b9882afb9472e2a581e24a3869e4"
+    },
+    "EX99.1_2026-09-30_dfh_dfh-q32026xer-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-09-30_dfh_dfh-q32026xer-htm.htm.jsonl",
+      "sha256": "9bd60935ae81cb30f86afdf5c1d16f5ac011c4d24e727a3ab8c70eb8e77a0643"
+    },
+    "EX99.1_2026-09-30_dfh_ex991closingpr-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-09-30_dfh_ex991closingpr-htm.htm.jsonl",
+      "sha256": "e931fa0b9469fe2d463aa02d3033e9c353c08f8b6fe15a0e93e23c27a857a2eb"
+    },
+    "EX99.1_2026-09-30_dfh_pr-exchangeofferxearlypart-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-09-30_dfh_pr-exchangeofferxearlypart-htm.htm.jsonl",
+      "sha256": "7e3500b62c5357394140f4016657c58158f3d267fc16f6770a1a3e91c8cc10c1"
+    },
+    "EX99.1_2026-09-30_dfh_pr-exchangeofferxlaunch-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-09-30_dfh_pr-exchangeofferxlaunch-htm.htm.jsonl",
+      "sha256": "b26d80affde82f085d2df4853c825da38f91b2dfff27a1321016be76a3d43bf2"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1825088-dream-finders-homes-inc.json",
+      "sha256": "7b3cf7fd4ac62fa7ac046e44227860b36a16763c328039bd925b35e1aef45e17"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "30e70f53d22bdaf018c9cbd60fa5933e97c0d503853a12ea56efc18d68f16664"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "70a3a242a86514c6382a1f6fba0ed015b9e2ebfc678bf6760b068a8e01001b51"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "6c48efdf111091417c85b5b7a6866378e1223fe62e77bd4e6bc91eff3f7f3567"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "f77dcdd037b867f63e524fa16ec486a9e4ce0fed525edd64dba682d40390b22b"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Dream Finders Homes, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Dream Finders Homes, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

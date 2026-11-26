@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Karman Holdings Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/1b8ab8bf96a3f7117afef3c53731ac41f605f2b584abe15eaf292229f292916b/1.response.md",
+    "CP-1": "requests/CP-1/67042bf7bcb0d5f1e747d9a03a0030e03eea239caa22006631bfc4b870815e4e/1.response.md",
+    "CP-1A": "requests/CP-1A/aab59bea5ace79fb555c11921557c6255c02dca336ae0c2cec9ffd94f54b7dc5/1.response.md",
+    "CP-2": "requests/CP-2/4d798872bcf69214655d9b750581fb2b2a9ceff44601df6b89ad8abf5d9a4d19/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "d70373cc1e352d0aefb0a7f4087a4813752da2266db67c456cfe51067cda3f75",
+  "delivery_sha256": "95ced86d02fe707da0ab2b31412f8ddc45ecfbaf7facec2e856e55d03a2b94b9"
+}
