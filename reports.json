@@ -108,5 +108,27 @@
       "CP-2": 1
     },
     "notes": "One defect I saw but could not fix: the CP-1A map tables use relationship and evidence text longer than the 60-character map limit (the automated check does not enforce it, and an accepted answer cannot be replaced). Separately, the scratchpad is shared with sibling agents, and one of my commands ran a colliding gen_cp1a.py that belonged to the mtdr-1520006 agent, which rewrote that agent's CP-1A.md draft from its own generator and printed a few of its figures, which I did not use. uv 0.12.5 had to be put ahead of 0.11.32 on PATH (/usr/local/bin first) for the launcher to run."
+  },
+  {
+    "issuer_id": "esab-1877322",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Business & governance answer calls the asbestos liability \"uncapped beyond 15 years\" (the filing says costs beyond 15 years are not estimated) and its two map tables have cells over 60 characters, which could not be edited after acceptance; Fundamental credit states the asbestos correction."
+  },
+  {
+    "issuer_id": "issuer-1739445",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Financial foundation (CP-1) handoff subtracts the barge segment operating profit of 46.1 instead of the 60.8 the annual report states, which overstates continuing EBITDA by USD 14.7 million (525.3 vs 510.6; net leverage 1.91x vs 1.97x). Source readiness (CP-0) carries the same 46.1, giving a barge operating profit share of 13.48% instead of 17.78%. Accepted answers cannot be replaced, so I corrected both in Business & governance (CP-1A) and Fundamental credit (CP-2), but the CP-0 and CP-1 files still carry the error."
   }
 ]

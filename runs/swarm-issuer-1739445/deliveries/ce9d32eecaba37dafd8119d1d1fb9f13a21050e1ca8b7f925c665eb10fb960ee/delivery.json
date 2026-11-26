@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Arcosa, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "863c814a2ac8eb6e03a56b5e8c78b6c23b3a2f0a2c0445b5518dc17df32d0ec7",
+    "CP-1.md": "4a278046904fc8576632790fdeed1e640ae58ab258e1501f7a55a25ab67ed2d6",
+    "CP-1A.md": "5329c3cfdb20aef223cb72a0d0bff840c21461950a30c5221b4dd77d1d465181",
+    "CP-2.md": "23e75963d803cdc086daaf0b02c99000939766a88baf4925142774697508f266",
+    "coverage.json": "d55dda0768e371c8f32a2fe6e9ce616ac174796a51a96cdddc392ecee28b3f9e",
+    "view.json": "c34eb11b6b54cf2b11e3a4803fa9c1434edab97a0ac808b25b962ed29e3b3ef5",
+    "report-view.json": "4121695141b31635177bee689780df87bec2ed9f38e0cc894a9764f5cf19821d"
+  }
+}

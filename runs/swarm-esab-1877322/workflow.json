@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "esab-1877322-2026-11-18-credit_snapshot-host",
+    "issuer_id": "esab-1877322",
+    "issuer_name": "ESAB Corp",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_esab-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_esab-20241231.htm.jsonl",
+      "sha256": "8ea58a06e8accc5572f57381573170af74734fa165d53e6dd42aa7df44b9974c"
+    },
+    "10-K_2025-12-31_esab-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_esab-20251231.htm.jsonl",
+      "sha256": "39fec53df5558e15951b5a9712fdf352a83a668e1bb520905419999bceca45eb"
+    },
+    "10-Q_2026-04-03_esab-20260403.htm.jsonl": {
+      "path": "source-text/10-Q_2026-04-03_esab-20260403.htm.jsonl",
+      "sha256": "87ed2b5108a9275c938cf55468b93711dfcccf9a434c75d0b03075a2655254b4"
+    },
+    "10-Q_2026-07-03_esab-20260703.htm.jsonl": {
+      "path": "source-text/10-Q_2026-07-03_esab-20260703.htm.jsonl",
+      "sha256": "b2b67b8533ed1d21f5bc50726e68f7ae6a1e19e7d9a11d0bee2594fce20db11c"
+    },
+    "10-Q_2026-10-02_esab-20261002.htm.jsonl": {
+      "path": "source-text/10-Q_2026-10-02_esab-20261002.htm.jsonl",
+      "sha256": "9f0e55c3c7e3a6dbf05c32d8d51df4f5c9c53f67d187880f38c3e9bc80d46598"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1877322-esab-corp-esab.json",
+      "sha256": "2f73448bccc4f2c184108dfb9ef8307afaae4cebe8c21173790d1410e4396d36"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "c54f132a6f41097c9acccd569be6976e6861d8b88087597622eb974e09ac70ff"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "d6f57a3ae876077d57b17f8a508216f90937aaffe41a965c99aef4a8d06b59ab"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "9c81a9ab0f287edd762a2809f23474894c46f6f6bec21120ea1aaf0dcf78528b"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "ed98560aa859f1c1bdedd7af39a21138369cc8a935a77c611ad65cbbb4a98744"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for ESAB Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "ESAB Corp — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

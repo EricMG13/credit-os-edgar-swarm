@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for ESAB Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "085b1f57b6d0014a2e6744f76fadf751c1dd4905c87ca9876730a3326569331f",
+    "CP-1.md": "f6420317d4c0761d0c1a0c3eff3f90e146fe117e424c1d9932f5448aca90f0e1",
+    "CP-1A.md": "efc5cfc96a38909bdaf4c69e7bbcaf5d85535a8d3274fc17bdb4ec73ec6144b9",
+    "CP-2.md": "2289e279f3b0f5c0e8973382f22372631b0352ac50d7fd4f3c25d2681c0dc702",
+    "coverage.json": "959131177f269ea930399c27e1e5f58611cf3d03e3d21ca6290fc6332a43574e",
+    "view.json": "33bfd4a9cbdfd8f4cf2e0dc5104f2bca4e2b8649e70383f49e27079306874e42",
+    "report-view.json": "dbae7a550433ba5ebea8dd1780c13742beb43f7090059ba40c4347dfe116d4c6"
+  }
+}
