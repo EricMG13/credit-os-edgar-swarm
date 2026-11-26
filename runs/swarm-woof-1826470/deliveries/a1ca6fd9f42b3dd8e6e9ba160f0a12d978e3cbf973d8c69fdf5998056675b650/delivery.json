@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Petco Health & Wellness Company, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "458e18d1f92dac5bfc8c980f40aa01d89d9ea66528ad5ba2733c02fefc09dc2b",
+    "CP-1.md": "f2506a271d7b843093faaa57b3186315bb08c1627ce0514d33dfe28c044319b7",
+    "CP-1A.md": "788ed9da88136c88e8735c72b2bf4fcb19d518ebc635374b0f704a4eae42874e",
+    "CP-2.md": "bb46f223323dfe77155fd36ac99401ceb3f0e8f658dfd16c1ffc6459a28edfbe",
+    "coverage.json": "9dc6ece322d337d5c1c7f7aeab10e836ec527e881f33e7506df065a8c8fb6ae4",
+    "view.json": "e03746689cf6603289f0ca80e670cef08b278e8e3826d1878d10c21fc006db97",
+    "report-view.json": "029c97212538720d4a8957a68685e696205526cf9fc4801bb7addb12897ff700"
+  }
+}

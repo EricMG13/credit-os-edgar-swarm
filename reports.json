@@ -1,16 +1,5 @@
 [
   {
-    "issuer_id": "trn-99780",
-    "exit_code": 0,
-    "attempts_by_module": {
-      "CP-0": 1,
-      "CP-1": 1,
-      "CP-1A": 1,
-      "CP-2": 1
-    },
-    "notes": "The filings print no 2026 cash interest paid and no maturity ladder after 2025-12-31, and the proxy statement and executed financing documents are not supplied, so those gaps are recorded in the handoffs and not fixable; CP-2 also corrected two earlier statements, because the 10-Q does state the divested partnerships' operating profit (USD 13.9m for Q3 2025, USD 35.9m for nine months 2025) and their year-end debt."
-  },
-  {
     "issuer_id": "fmc-37785",
     "exit_code": 0,
     "attempts_by_module": {
@@ -22,7 +11,7 @@
     "notes": "The run finished with exit 0 and the delivery was written. CP-0, CP-1 and CP-1A were already accepted at attempt 1 before this session, so I submitted only CP-2, which was accepted first time. The accepted CP-1A says the Project Foundation savings target was not supplied, but the Q3 2026 10-Q (page 79) prints USD 200 million of run-rate savings by end 2027; I corrected this in CP-2 (Gaps G8) because CP-1A cannot be edited."
   },
   {
-    "issuer_id": "issuer-915840",
+    "issuer_id": "trn-99780",
     "exit_code": 0,
     "attempts_by_module": {
       "CP-0": 1,
@@ -30,7 +19,7 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "All four modules were accepted on the first submission; the unfixable limits are the absent covenant levels and merger agreement, which leave liquidity headroom and pro forma net debt and leverage for the Dream Finders merger unestablished and are recorded as gaps."
+    "notes": "The filings print no 2026 cash interest paid and no maturity ladder after 2025-12-31, and the proxy statement and executed financing documents are not supplied, so those gaps are recorded in the handoffs and not fixable; CP-2 also corrected two earlier statements, because the 10-Q does state the divested partnerships' operating profit (USD 13.9m for Q3 2025, USD 35.9m for nine months 2025) and their year-end debt."
   },
   {
     "issuer_id": "cohr",
@@ -42,6 +31,17 @@
       "CP-2": 1
     },
     "notes": "The accepted Business & governance answer (which cannot be replaced) calls customer prepayments small using the USD 63 million year-end contract liabilities although the latest 10-Q shows USD 333 million (corrected in the Fundamental credit answer), and the sources themselves conflict on the August 2026 facility size (USD 945 million versus USD 950 million) and mislabel one borrowing quarter, while no covenant ratios, ratings or proxy statement were supplied."
+  },
+  {
+    "issuer_id": "issuer-915840",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "All four modules were accepted on the first submission; the unfixable limits are the absent covenant levels and merger agreement, which leave liquidity headroom and pro forma net debt and leverage for the Dream Finders merger unestablished and are recorded as gaps."
   },
   {
     "issuer_id": "ati-1018963",
@@ -66,6 +66,17 @@
     "notes": "Source defects I logged as gaps but could not fix: the Q3 2026 release's net leverage of (0.1)x has no stated definition and cannot be reproduced from printed debt and cash, no document prints full-year or trailing adjusted EBITDA so the FY2025 and LTM adjusted figures are house-built estimates, and fiscal 2025 is not recast to the new segments; each draft was also pre-checked offline with the repository's own checker functions before submission."
   },
   {
+    "issuer_id": "nbr",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "All four modules were accepted on first submission, and the sources could not fill these gaps: interim 10-Qs print no cash interest paid, note collateral, guarantor list, class ranking, covenant EBITDA definition, proxy statement and executed agreements are not supplied, and the Quail Tools sale consideration (cash 375.0 plus note 250.0 against stated net 600.0) is unexplained."
+  },
+  {
     "issuer_id": "merc-1333274",
     "exit_code": 0,
     "attempts_by_module": {
@@ -77,7 +88,7 @@
     "notes": "The run finished and the launcher produced its delivery with no provider call; CP-0 was already accepted on attempt 1 in the resumed folder, so I submitted CP-1, CP-1A and CP-2 once each and every one passed first time. I could not fix two source defects, which are logged as conflicts and gaps. The logging operation's ownership is 50% in the FY2024 report but 20% in the FY2025 report. Restructuring equity support is 'approximately 50%' in one place and 'a majority' in another. uv 0.12.5 had to be put first on PATH because ~/.local/bin held 0.11.32."
   },
   {
-    "issuer_id": "nbr",
+    "issuer_id": "bwxt-1486957",
     "exit_code": 0,
     "attempts_by_module": {
       "CP-0": 1,
@@ -85,7 +96,7 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "All four modules were accepted on first submission, and the sources could not fill these gaps: interim 10-Qs print no cash interest paid, note collateral, guarantor list, class ranking, covenant EBITDA definition, proxy statement and executed agreements are not supplied, and the Quail Tools sale consideration (cash 375.0 plus note 250.0 against stated net 600.0) is unexplained."
+    "notes": "The default uv on PATH (0.11.32 at /root/.local/bin) fails the repo's pinned 0.12.5 so the printed launcher command exits 2 until /usr/local/bin is first on PATH (I worked around it, not fixed it), and the already-accepted Financial foundation handoff's reading that customer advances lifted nine-month cash flow cannot be edited, so CP-2 states the correction in its own text."
   },
   {
     "issuer_id": "esi",
@@ -99,7 +110,7 @@
     "notes": "The launcher refused to start under the default uv 0.11.32 (the repo pins 0.12.5), so I ran the identical command with /usr/local/bin first on PATH, which holds uv 0.12.5; no repo file was changed, and the earlier analyst's CP-0 draft was already accepted on its first attempt."
   },
   {
-    "issuer_id": "bwxt-1486957",
+    "issuer_id": "vvv-1674910",
     "exit_code": 0,
     "attempts_by_module": {
       "CP-0": 1,
@@ -107,6 +118,28 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The default uv on PATH (0.11.32 at /root/.local/bin) fails the repo's pinned 0.12.5 so the printed launcher command exits 2 until /usr/local/bin is first on PATH (I worked around it, not fixed it), and the already-accepted Financial foundation handoff's reading that customer advances lifted nine-month cash flow cannot be edited, so CP-2 states the correction in its own text."
+    "notes": "The launcher accepted all four modules on the first attempt and delivered with exit 0; the one defect I could not fix is a conflict in the CP-2 method, which asks for a \"CP-2 Completed\" sign-off and a downstream_use column that the transport rules forbid (I left both out), and the pack still lacks ratings, a proxy statement, the credit agreement, a fiscal 2026 annual report and interim cash interest."
+  },
+  {
+    "issuer_id": "woof-1826470",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted CP-0 handoff still calls the issuer the listed operating company although the annual report says it is a holding company, and the accepted CP-1A handoff rounds the fiscal 2025 prepayment to 95.3 million (total 245.3) where the exact cash flow figure is 95.25 (total 245.25); both are corrected in later handoffs (CP-1A and CP-2 gaps) but the accepted answers cannot be replaced."
+  },
+  {
+    "issuer_id": "prmb",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The supplied sources lack a post-March-2026 maturity schedule, the executed financing documents, the proxy statement and any sponsor holding after August 2026, so the 2028 term loan column in the accepted Financial foundation chart still shows debt that was extended to 2031 (labelled as such), covenant headroom is not calculable, and the 26.51% sponsor stake in Business & governance and Fundamental credit is a derived estimate rather than a disclosed figure."
   }
 ]

@@ -1,0 +1,240 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "woof-1826470-2026-11-18-credit_snapshot-host",
+    "issuer_id": "woof-1826470",
+    "issuer_name": "Petco Health & Wellness Company, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2025-02-01_woof-20250201.htm.jsonl": {
+      "path": "source-text/10-K_2025-02-01_woof-20250201.htm.jsonl",
+      "sha256": "4b9cbe805552cc2b6fe5341190728cc8220b8c4155e05f0680ef5e5946d3435a"
+    },
+    "10-K_2026-01-31_woof-20260131.htm.jsonl": {
+      "path": "source-text/10-K_2026-01-31_woof-20260131.htm.jsonl",
+      "sha256": "5f338c749a0ff5c5818e6e2bb4e592c71a69706677d5d59a98d8e1c11be8e9d9"
+    },
+    "10-Q_2026-05-02_woof-20260502.htm.jsonl": {
+      "path": "source-text/10-Q_2026-05-02_woof-20260502.htm.jsonl",
+      "sha256": "5235eb9bd98ccf02bde0331dd66dc2aaf5cdcac97c3d3073aec8152e5656312e"
+    },
+    "10-Q_2026-08-01_woof-20260801.htm.jsonl": {
+      "path": "source-text/10-Q_2026-08-01_woof-20260801.htm.jsonl",
+      "sha256": "ac35bdfcb928260c8b301e9fffdcebe6eca92c2d5a1caa01a4b46f865d926892"
+    },
+    "EX-99.1_2026-06-03_woof-ex99_1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-06-03_woof-ex99_1.htm.jsonl",
+      "sha256": "a77b49f760a2929a2f0b3d6a0171fdd9f7ccae9f9e837718677008082895ecf5"
+    },
+    "EX-99.1_2026-09-02_woof-ex99_1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-09-02_woof-ex99_1.htm.jsonl",
+      "sha256": "67bfb7efcaf2cee355954b442e615276434f5e69a48dc67f33699af84a0ec725"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1826470-petco-health-wellness-company-inc.json",
+      "sha256": "0199fa4be28dc8bd1346e9c2bab017595842cf912e172bde052a4ac502bffa60"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "8ac471205d0389605ff76f7e7f6ea8ced1dcb7437e5e7fc47b84d19348a9f699"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "36310dfc84ac6225cc1f27f50a4f9f0aa2768229da5d948354112bed38abba3c"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "3ef912e47c1746e5b62cff50e12f0a331a98793e64082f57c35aaaf869bab711"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "98942840d2e6508a8c3417a16243ea43cab97c4d158d291d27a84e40f205614f"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Petco Health & Wellness Company, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Petco Health & Wellness Company, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

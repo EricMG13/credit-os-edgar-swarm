@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Primo Brands Corp as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "d003babaefd975d5cb7039d02f0221ba423eed9c71831eee2353663cf48f9d60",
+    "CP-1.md": "a51808114450884c05dea2d03c1b68386d975c701e35d3f24a7cdd7d3bd23f72",
+    "CP-1A.md": "7104ca29b30dde8e857317425d14aab43ecbf40796a85cd854f2e65ee834cf68",
+    "CP-2.md": "d68e198a6f082575f2b6ba70523c206975ac4b5a925765ee8521602acb016c22",
+    "coverage.json": "7c67c0579664e4f9c95cc532fa2c1b5695e65823b27d083210c0eed08b4cf878",
+    "view.json": "406442e20591cbbed1ec15680efb20be6815f968580023192794b7ba90bd807e",
+    "report-view.json": "07b6855f59c13daf96bac64e072ad4faa7296f61fb8d87e4a58760242743e02f"
+  }
+}
