@@ -1,5 +1,5 @@
 {
-  "partial": true,
+  "partial": false,
   "reports": [
     {
       "issuer_id": "crk-23194",
@@ -24,17 +24,6 @@
       "notes": "The accepted Source readiness answer (CP-0) wrongly said board composition could not be reported, because the 10-K signature page names ten directors and a lead independent director, and an accepted answer cannot be replaced, so I corrected it in the CP-1A text; the filings themselves also conflict on letters of credit, the debt maturity-ladder basis and floating-rate averages, and the issuer states no EBITDA and the proxy statement and credit agreement were not supplied, so those stay open as stated gaps."
     },
     {
-      "issuer_id": "sm",
-      "exit_code": 0,
-      "attempts_by_module": {
-        "CP-0": 1,
-        "CP-1": 1,
-        "CP-1A": 1,
-        "CP-2": 1
-      },
-      "notes": "CP-0 was already accepted (one attempt) when I started, so its attempt count comes from the retained files; the one defect I could not fix is that no comparable twelve-month EBITDA or cash interest exists after the Civitas merger and the South Texas sale, so leverage and interest cover at 2026-09-30 stay as stated gaps and Fundamental credit only brackets leverage with two labelled proxies."
-    },
-    {
       "issuer_id": "ehc",
       "exit_code": 0,
       "attempts_by_module": {
@@ -46,7 +35,7 @@
       "notes": "The accepted CP-1 handoff wrongly says the 2024 hospital count is not in the sources (the 10-K prints 166 at 2024-12-31) and cannot be replaced, so CP-1A and CP-2 each record the correction; CP-0 was already accepted before this session, and its single attempt is counted from the existing record."
     },
     {
-      "issuer_id": "amkr-1047127",
+      "issuer_id": "sm",
       "exit_code": 0,
       "attempts_by_module": {
         "CP-0": 1,
@@ -54,7 +43,7 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "CP-0, CP-1 and CP-1A were already accepted in the partial run (one attempt each) and CP-2 was accepted on its first submission, so the run finished with exit 0; defects seen but not fixable (earlier handoffs cannot be edited): CP-1A lists the non-current split of customer advances as not stated although the September 10-Q notes give it (corrected in CP-2 Gaps), and CP-1's attribution of the net-debt rise mainly to capex omits that cash-only net debt also rose from payouts, the capped call and about USD 160 million of net purchases of short-term investments."
+      "notes": "CP-0 was already accepted (one attempt) when I started, so its attempt count comes from the retained files; the one defect I could not fix is that no comparable twelve-month EBITDA or cash interest exists after the Civitas merger and the South Texas sale, so leverage and interest cover at 2026-09-30 stay as stated gaps and Fundamental credit only brackets leverage with two labelled proxies."
     },
     {
       "issuer_id": "cmco",
@@ -66,6 +55,17 @@
         "CP-2": 1
       },
       "notes": "CP-0 and CP-1 were accepted at attempt 1 in the resumed partial run folder and I did not resubmit them; CP-1A and CP-2 were each accepted at attempt 1 in this session, and the run finished with exit 0 (delivery built, no provider called). One defect I could not fix is that the accepted Source readiness handoff says no document dates the change of principal financial officer, although the June 2026 10-Q exhibit list dates the separation agreement and successor offer letter 2026-07-01; CP-1A states this correction in its conflict log and key findings because the earlier handoff cannot be edited."
+    },
+    {
+      "issuer_id": "amkr-1047127",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "CP-0, CP-1 and CP-1A were already accepted in the partial run (one attempt each) and CP-2 was accepted on its first submission, so the run finished with exit 0; defects seen but not fixable (earlier handoffs cannot be edited): CP-1A lists the non-current split of customer advances as not stated although the September 10-Q notes give it (corrected in CP-2 Gaps), and CP-1's attribution of the net-debt rise mainly to capex omits that cash-only net debt also rose from payouts, the capped call and about USD 160 million of net purchases of short-term investments."
     },
     {
       "issuer_id": "abg-1144980",
@@ -99,6 +99,50 @@
         "CP-2": 1
       },
       "notes": "The CP-1A map tables (accepted on the first attempt, so not replaceable) use node and relationship text longer than the 60-character limit that the instructions ask for; the automated check did not flag it. Separately, while working I accidentally printed the first 20 lines of another agent's helper script in the shared scratchpad, which overwrote my own helper file; it held only a source-text loader and I read no other issuer's folder or draft."
+    },
+    {
+      "issuer_id": "saic-1571123",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "Two accepted statements could not be replaced, and CP-2 corrects them in its own text: the Business & governance map says returns exceeded free cash flow in two periods when in fiscal 2026 they only did so together with the acquisition, and Financial foundation treats the 24.02% first-half EBITDA growth as the case that would ease concern although it was front-loaded (second-quarter adjusted EBITDA grew 4.32%)."
+    },
+    {
+      "issuer_id": "flut",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "All four modules were accepted on the first attempt and delivery completed with no provider charge, but the supplied files lack ratings, an executed credit agreement or indenture and a proxy statement (so covenant headroom and ownership stay gaps), the extract files state original-document hashes that differ from their pinned sha256 values, and in my offline emulation the launcher's last-twelve-months arithmetic check did not flag a deliberately wrong derived value, so those figures were verified by hand."
+    },
+    {
+      "issuer_id": "xrx-1770450",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The filings state no EBITDA and print no 2026 interim cash interest, and executed debt and covenant documents, agency ratings, bond prices and the proxy statement are not supplied, and the 2028 notes exchange expected on 2026-11-13 is unconfirmed, so leverage, coverage and pro forma net leverage rest on analyst-built measures and these gaps could not be filled from the supplied sources."
+    },
+    {
+      "issuer_id": "mrp-2017206",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The accepted Financial foundation (CP-1) says no material litigation is reported and the accepted Source readiness (CP-0) omits the securities class action filed on 2026-10-09 (Q3 2026 10-Q, Part II Item 1), and accepted answers cannot be replaced, so Fundamental credit (CP-2) states the correction in its Limitations, Gaps and source register instead."
     }
   ]
 }

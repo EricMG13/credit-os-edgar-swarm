@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Science Applications International Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/a936ec297e3cd1d2909b4e34bbb8637b49f5469a90cb4d402548a0c40a7a311a/1.response.md",
+    "CP-1": "requests/CP-1/9882b9de9b5d68e083d67e7a9ac5238ed9c4a85a8795c52a742c28b88380763a/1.response.md",
+    "CP-1A": "requests/CP-1A/47469aa4983f34740d40a4a6aae6c6d2ea8ac84153b7ec49c388bb25d4d5f335/1.response.md",
+    "CP-2": "requests/CP-2/dd83ca942db6964567d027fb47cb16e77c4f4f0756dc3665e92da0691ab96999/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "013bbea7b630be339bc7be4289ec74f37d042e8a7506fef63f5921ee9ff2bca4",
+  "delivery_sha256": "d089d80c6472f99e60375f47ad5e8f470161f99093b7f6bb439aba545edaf8c8"
+}

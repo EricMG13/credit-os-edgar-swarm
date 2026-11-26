@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Millrose Properties, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/e0cf733ca3b1ccf2cf6d48fedcb462408d9dd39f35d0eefbe2e0eb29e03ab9a3/1.response.md",
+    "CP-1": "requests/CP-1/2c329fe0afbbccb1224476c694c05efc2e5808e4baf5248f70ec87042afb666b/1.response.md",
+    "CP-1A": "requests/CP-1A/2b114e68c9bf8de04e15db76c32a18fe8110575e39574eebcbc9a80d93dc5344/1.response.md",
+    "CP-2": "requests/CP-2/7c43c96752c79028e0f4a86febdf75d47d067fbcc62640cd18415febbaa956f5/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "edbfceb931f4d411e5c6ad891f7b72a1904790d977e8008ccf12aa361df8974d",
+  "delivery_sha256": "da88872fc9e8e685831d38f1e83f764f13c7c4d67dcd571452174709bd23e57c"
+}

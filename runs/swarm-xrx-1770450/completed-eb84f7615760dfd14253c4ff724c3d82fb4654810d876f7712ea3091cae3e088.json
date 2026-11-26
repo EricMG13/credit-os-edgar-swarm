@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Xerox Holdings Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/ee9a62635461826bcb8836644112752da93b4287e52031b7913b5bae54ab3537/1.response.md",
+    "CP-1": "requests/CP-1/5b8679a40789a18135915932d5c0e743592e5ccb4b25f7809bd9774ba75dc4a0/1.response.md",
+    "CP-1A": "requests/CP-1A/3f68ecd1be99e3ea759cf51eb7761d5d6780960861cbabba503752e8fc05ee2e/1.response.md",
+    "CP-2": "requests/CP-2/2bca165938c621c67169c8c283650c304bbf71de5ec0ca85e5157dca4d0e2ff0/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "20e99e5f8040dbfcd75b5d173439969155a1a885e10640967ae5d978f35ec6eb",
+  "delivery_sha256": "b55bf80b4de4513d6e204f2e748dee4960aff6f0de66c7a910aae1ed4c7b528e"
+}

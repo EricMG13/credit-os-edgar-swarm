@@ -1,0 +1,248 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "mrp-2017206-2026-11-18-credit_snapshot-host",
+    "issuer_id": "mrp-2017206",
+    "issuer_name": "Millrose Properties, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_d931976d10k.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_d931976d10k.htm.jsonl",
+      "sha256": "e685cb45ef45714af1ff77b6071c260056c9bf7629c6ccf8221904612d25d66b"
+    },
+    "10-K_2025-12-31_ck0002017206-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_ck0002017206-20251231.htm.jsonl",
+      "sha256": "616c31e658faf45bda14e3d1fedcd4f03abb77762a4a96655c61315e9524dee6"
+    },
+    "10-Q_2026-03-31_ck0002017206-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_ck0002017206-20260331.htm.jsonl",
+      "sha256": "1603ca30155d7962cf13cbe1efda0aef742e66bf0128cf7a1ad64e5832f40c5f"
+    },
+    "10-Q_2026-06-30_ck0002017206-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_ck0002017206-20260630.htm.jsonl",
+      "sha256": "8bcafc9553b665072308d493d01435a99c8ed68ab391157b2bf9ed4e35bb15b9"
+    },
+    "10-Q_2026-09-30_ck0002017206-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_ck0002017206-20260930.htm.jsonl",
+      "sha256": "5f450549c337801f5ee478bc162b2ba8e8e3ac6ae044144528410d453192f859"
+    },
+    "EX-99.1_2026-05-06_ck0002017206-ex99_1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-05-06_ck0002017206-ex99_1.htm.jsonl",
+      "sha256": "d0fad875bea6407807bfff31fe5ef8577b8b504eac03fc33d12558374693ca67"
+    },
+    "EX-99.1_2026-08-04_ck0002017206-ex99_1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-08-04_ck0002017206-ex99_1.htm.jsonl",
+      "sha256": "77008254d41a40001e7f09a8cd686cfc1e3b7040c9133bbdd32f742dc2abab8e"
+    },
+    "EX-99.1_2026-10-26_ck0002017206-ex99_1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-10-26_ck0002017206-ex99_1.htm.jsonl",
+      "sha256": "af1a4bc377ad60c3319197566b57454eb01d454d76b36112b8706eac8367851a"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/2017206-millrose-properties-inc.json",
+      "sha256": "57f0f36bf5db3d96e10910d35c9576961f676f6ce10bb7eebd720dc62476b00f"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "3c31291ce3046183d01cea933a8511650d1cc69f4579dcce8d84a0683fede551"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "11f90bf960161e8b1a01432aa0ea49004361c96e21b18cf74984c71bd6f541d3"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "9e2e5adfa84bcbaeb9fcc256d3100e415226dc8789964d8d018cba4003018674"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "9002ff48f407137155e27543376bbf5d696e27f04a04d6df0221eb65819c7456"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Millrose Properties, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Millrose Properties, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}
