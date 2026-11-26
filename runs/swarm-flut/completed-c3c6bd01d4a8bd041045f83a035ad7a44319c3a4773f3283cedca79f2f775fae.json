@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Flutter Entertainment plc as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/890148493415652797de053cd569cb9d5771901347e456995f0ef77c972d01c8/1.response.md",
+    "CP-1": "requests/CP-1/a10e2361032c33570868cecab1d64c74e647e24f22c0dbae969d4754a37fc269/1.response.md",
+    "CP-1A": "requests/CP-1A/e58e4c5945d4f5348bbdc6b1b55a1a959492bac4eec051608f403f2e8a3406e8/1.response.md",
+    "CP-2": "requests/CP-2/e4147c1643e98db1b89dd8b725d8b383d8918409c5559c852ddb578f2b95f28f/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "90bcbd06a2fd4f8c00dd9b3d5fa84b78d7a2f514992371c00377928ec1f945ee",
+  "delivery_sha256": "56c652d237fd3fdb0306e8c15b66730099ba0d4ac4977749d53371ab2558c725"
+}

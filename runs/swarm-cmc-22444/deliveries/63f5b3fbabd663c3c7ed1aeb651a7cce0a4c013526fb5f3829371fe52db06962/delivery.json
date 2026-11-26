@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for COMMERCIAL METALS Co as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "98da036e15b11ccea6bcff25b3afd7c64033ec941575bd53275564119f125663",
+    "CP-1.md": "111ddf90afe4cad5f737a4f00e368286fda365f4a681aaf428ffe71d517ba833",
+    "CP-1A.md": "3d8a8bb6787f091c231f7a8eb49c189a19eaf10cdfacb340827d6e460586f373",
+    "CP-2.md": "d07cb9ab02b438ac3c9f7ad17e5e668dc0e33bd2566cfc8fda2f0ee434a048d3",
+    "coverage.json": "2399d64ed7b8514e4ecf4b781bd7a09bc20377105c95a50de4d8f8d78cb9aaea",
+    "view.json": "a37f69acf9beb255ef03f08d6dd9b613efac726777a8d8a444eacad87d5cb40d",
+    "report-view.json": "a5256a5ad7a70db3244d35a955f1e8d28ed28186b4414003a7ccbcb88aaa1611"
+  }
+}

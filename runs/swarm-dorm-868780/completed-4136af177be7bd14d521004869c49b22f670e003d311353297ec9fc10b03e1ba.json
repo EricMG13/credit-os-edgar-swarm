@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Dorman Products, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/e3a87e3726dcae74ed955c5e817257716c6ba76a5d2bc43c2d42606f797f4b94/1.response.md",
+    "CP-1": "requests/CP-1/6962cac5031e9086edc73ab89c6bffec86149a671f449f3d9a6d75876cbb97c6/1.response.md",
+    "CP-1A": "requests/CP-1A/4ff4eda12f276c6b36ba411efada2b22eb62888abf6a76cce5ec153f6753beec/1.response.md",
+    "CP-2": "requests/CP-2/dc59662e0b1ac8b84095ee2c97b537790c25599add4b1bf3b5b954e29ea31301/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "4b52b1251aee7a5ffab319c5937a5b94695f606e0628322b085ddc411c28eefe",
+  "delivery_sha256": "8ac63a9ee4a983a9d89264b274dad75e2a183f44e2fe0a591def2c51f5bd063a"
+}

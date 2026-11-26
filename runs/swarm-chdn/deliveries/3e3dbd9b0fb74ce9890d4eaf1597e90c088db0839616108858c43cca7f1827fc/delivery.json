@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Churchill Downs Inc as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "a20d150d704f5d008c8684b96e49fcecba46243fd2c58c7e36e0d7ffb7a2d1b1",
+    "CP-1.md": "f96512cbf26af3f06eeaad91af25b54ce99a5dfdbd85dbf0711d4aacbbce1c25",
+    "CP-1A.md": "7bcf10f7689591d26ed3fcfb47bee81eda665954c90b2e1ea3e6de0de98d5b22",
+    "CP-2.md": "03de526bafa3447ac22509b32adaff9f1db591291a12f1b0079c2c928aa6cd7d",
+    "coverage.json": "153a66d61b739bd688452863559f2ed99c90d9bd1db951704ad5491d112f6768",
+    "view.json": "287ee68f0c8aa0cc31dd9ef0d014fe37f8a04ba1605718fd9ed92e9d72f6e2f4",
+    "report-view.json": "71b595fc80fcf9d9826262705950a1cb3f4ad3292fab78ad9384b7ad58b502ae"
+  }
+}

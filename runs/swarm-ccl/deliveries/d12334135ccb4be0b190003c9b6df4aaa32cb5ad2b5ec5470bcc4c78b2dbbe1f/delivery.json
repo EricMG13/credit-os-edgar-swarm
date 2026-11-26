@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Carnival Corp Ltd. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "3f0e2a0eef6a88a602752024609b75ea4820e1fa8747bac562c80bc22233ea65",
+    "CP-1.md": "ede79c3ffa750cf0d7280aa64534b46a7717d6c17b871b1b6fce9e1ba7503e6e",
+    "CP-1A.md": "a9324f49b51ecae278545c7f31f042f6e2b12f6936d3fea1aaa1f1d51882ae81",
+    "CP-2.md": "87731291c30ebcb8d2ae479fd4a5f9b36a39d851dac831678b990756dffecc3f",
+    "coverage.json": "7bde3056dbfb9192bb0e062214beb9845768dc4d97b11dcc58e3670c42b39fec",
+    "view.json": "c3ff333f63c2e723b94b73f6fe8198f645afb62c46b62ad6c95167f525b3c740",
+    "report-view.json": "5cdfacfc8e8c5846f73958f2cf076f3bc7bcaef406dc48cf957713e05bcc929e"
+  }
+}

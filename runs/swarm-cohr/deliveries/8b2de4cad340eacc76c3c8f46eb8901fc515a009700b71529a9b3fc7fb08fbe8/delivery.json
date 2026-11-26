@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for COHERENT CORP. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "69f95d0438d1db0fd7aab9cf607dee751fc57dc1aefd2d285b0bce4f7f408e83",
+    "CP-1.md": "9e34fafae593fdf68585f3937d29702cb3aed397d5244db898225ee5c7244ef6",
+    "CP-1A.md": "3e71e1013e43f292a0d0a53e85a817d4185ecb1abb81ee114742e8e278740adf",
+    "CP-2.md": "0ca1e216c1d877393d308b9f836edfa2501c634d3690aca42d87cd66da39197d",
+    "coverage.json": "f75fd181b79a6bbd8944b7556b450f6f2918640ece9a05468312128e20e162e7",
+    "view.json": "3ee4eae4d9b9b9f49f3caf26a54c68cb92daf5f1ca2f535428e77825032f98a9",
+    "report-view.json": "897e7e38da420528dd0845c7ee9ecd7d64d26725fff5930f59ad016405688d95"
+  }
+}

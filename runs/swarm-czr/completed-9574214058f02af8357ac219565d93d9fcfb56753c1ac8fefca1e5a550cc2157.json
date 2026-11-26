@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Caesars Entertainment, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/5323b49c236f4fcbbd1a476ecf73a647daa7d837a7a7f9758cc574eb4cd5c974/1.response.md",
+    "CP-1": "requests/CP-1/394b66f6e06e52afa5d8d3e41981bb96c8792cd183d753fcf092c9394a8a6e81/1.response.md",
+    "CP-1A": "requests/CP-1A/2b7a1129c878c6578007a3aae1536408c72cf060f8a6cb28e863f0b69ff3fc5e/1.response.md",
+    "CP-2": "requests/CP-2/f2f12313222dfb093a36873858adfa7691aca1251151a3bdedaaf5127adae723/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "d15a962a3a04976c8d02f90dfd2266ad9d54d9ce3dad7d3a3ddfc0ca49a6a58a",
+  "delivery_sha256": "fee7097a4b027030e54ba53aaefdf0cc3357d94d594dc53cdf3f09874bcc41ef"
+}

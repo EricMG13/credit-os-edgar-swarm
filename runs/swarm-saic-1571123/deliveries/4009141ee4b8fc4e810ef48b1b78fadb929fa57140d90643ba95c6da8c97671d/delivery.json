@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Science Applications International Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "4f114a892bdecc310206a6f96ea9678c18c99f9a2b84e0104a8d28eb0a0c837a",
+    "CP-1.md": "1613376fe453a00141733341e32a6b4569f6351d6da4cd692e3fa9ed56b0caa5",
+    "CP-1A.md": "5348ce514e8c6dc76fa548124798861ed9b706ef87be409e51df23b384f31f8a",
+    "CP-2.md": "44b41860dc0014fa54527091d362ca684407ea0e360021ca5aab0a418e8f4ab3",
+    "coverage.json": "32d084831410bb594c5ebc1d08a834ccbac10d7de4fa9223792146de3ad862a0",
+    "view.json": "99bf33c8d00e1cfa022e17537f8eb94a170c43bb11e6ee512fd3f6b4c1f28844",
+    "report-view.json": "e9f5cd60b62af016342c18cb488d6af14721becee2d6a6bf8972c0d09e44d32c"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Trinet Group, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/622c37fcd4c7e92bb95b70a7ec763f01e543baf678dfdd7b7ebda58685108fed/1.response.md",
+    "CP-1": "requests/CP-1/a8375cc2b69db3d21f34e31d5e41fe82e9146bb3c0afc281b7be735e60a95a77/1.response.md",
+    "CP-1A": "requests/CP-1A/1676f9da595609722c7c6f3d308a988e6e042b4098477ad3ea8bab20f3c9e7e4/1.response.md",
+    "CP-2": "requests/CP-2/5bbb88837ae797998d4c53152ec0387b944a005c63b14b9a356525c9954f5c93/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "ea6e2a7852b69b9371e48154f3db60ce85bc06b38f374c0324c69a44525ccf45",
+  "delivery_sha256": "b85772884cc2dcb225302748c275ce49caa4c2a877a24a072fa6785d248f079e"
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for DXP ENTERPRISES INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/46a0bf70a2b956501c68798660c68230b1624c747996bbd9bfbeefca7423f3eb/1.response.md",
+    "CP-1": "requests/CP-1/348aa7f990066cd768e41f2782860625ec8452ae64c4191dc98ccb2ef59f2f94/1.response.md",
+    "CP-1A": "requests/CP-1A/a2ae8f7187f0c8760910d53e0d096c0f619a92ac17036556c252ebb09b1569db/1.response.md",
+    "CP-2": "requests/CP-2/faa91017df15c2e8ec0e50d8701bbdfae93a6bbfebe54940a715a22131879bd5/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "e76dcf7df9bc41fb145cbe0aa6813d8316e3665b39c0cddd1ee1873fc1ae1da2",
+  "delivery_sha256": "f375288e71681389ce86779d6a20d4d13a0edd341c591a738c92cb29c15c5a85"
+}

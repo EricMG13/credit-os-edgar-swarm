@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for ATS Corp /ATS as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/4450d3bd0ab3e2233d3272363afe2336aac78bdf4825e53c609e5073b01e6fa5/1.response.md",
+    "CP-1": "requests/CP-1/037bb757a110814127ffb1addc44bad685aba81b445bc973102a7c9dd7ccc51b/1.response.md",
+    "CP-1A": "requests/CP-1A/21c7d9025331d97d311d37f96461d4c7208eba8cd0dd8d6c99daf9da0855c660/1.response.md",
+    "CP-2": "requests/CP-2/4a7b644d85a24c82959ebf133d85a149fa61674ef953a5c51476dbc9b44c0a81/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "cd780e67e77117be342d4a760ab1d19d815c6c3edb127620c489d5a17ad15993",
+  "delivery_sha256": "f3e1bcd013a48fb90d681ac6d6b725976d3b253f0134149f573735dcf09a02f2"
+}

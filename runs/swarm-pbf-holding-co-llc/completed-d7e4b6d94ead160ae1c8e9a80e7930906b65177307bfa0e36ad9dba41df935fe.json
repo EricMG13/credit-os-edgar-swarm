@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for PBF Holding Co LLC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/fc8e4f89d3cd453cea81cb596bfbbe377c997bfeaa8922de3b2385e2d35c2d6e/1.response.md",
+    "CP-1": "requests/CP-1/84a7e23b74e0eb65dfcdfec3a23233c9beceac2def36dd80a42a84a7a77f5cea/1.response.md",
+    "CP-1A": "requests/CP-1A/c483ae770c0b4aedcccb29952741e9cdf6c7647149d3c0da0070897a70ec5e61/1.response.md",
+    "CP-2": "requests/CP-2/d64877c599103dbb144ae5fc2c253443fba7298d717f6b419a50e4f9532cf751/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "15eb995fdb9a8021342dd17167e2bea59942a9d3e10e8355920199555f4b80ab",
+  "delivery_sha256": "7d7f8600100de5d36e53b13cff09a43003f9f63d437033ade0e70d9d79c5f7b9"
+}

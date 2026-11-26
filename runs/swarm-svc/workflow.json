@@ -1,0 +1,244 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "svc-2026-11-05-credit_snapshot-host",
+    "issuer_id": "svc",
+    "issuer_name": "Service Properties Trust",
+    "as_of": "2026-11-05",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2025-12-31_svc-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_svc-20251231.htm.jsonl",
+      "sha256": "15b3016df80eabdf6701b53b9a448339a1d5ae915a5566d3f751538a9f1cf080"
+    },
+    "10-Q_2026-03-31_svc-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_svc-20260331.htm.jsonl",
+      "sha256": "ddc1e35889e90bee1694334ce247e9f387726f16b7ce89bd8b9a51b4f4bc89df"
+    },
+    "10-Q_2026-06-30_svc-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_svc-20260630.htm.jsonl",
+      "sha256": "da660527db0f1353ac545e91f43f35b2233d5df64df735bb0e6f23f04bc598ba"
+    },
+    "10-Q_2026-09-30_svc-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_svc-20260930.htm.jsonl",
+      "sha256": "f0504ddf51d9be829b263ff0aec5ab5ea7aa542d5518e107dbff10e9d9d5c34a"
+    },
+    "EX-99.1_2026-05-06_svc_033126xexhibitx991.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-05-06_svc_033126xexhibitx991.htm.jsonl",
+      "sha256": "2f1a4993f8cd70e48576dc6e794111c2977d7a50e2e8b2ecb75d059468ae6628"
+    },
+    "EX-99.1_2026-08-05_svc_063026xexhibitx991.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-08-05_svc_063026xexhibitx991.htm.jsonl",
+      "sha256": "fb76ab0c1c7105cbf6ef323f85f2c808f256d901d8e982c18e3c61667221ab25"
+    },
+    "EX-99.1_2026-11-04_svc_093026xexhibitx991.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-11-04_svc_093026xexhibitx991.htm.jsonl",
+      "sha256": "865a9819dca5454c3d53aca165a47efc28c6cf0685e35747e559ffc2c9cf026d"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/945394-service-properties-trust-svc.json",
+      "sha256": "a72cf33ce12be07f9ed0051d7ed4f82ab1f3905d4d81ff0fe1a5919c08327fd3"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "2f3a3783b256f1f52dd0ba929cd5fa19cbc958241a5f26628cc96fadad607b2a"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "1bf112aca93b4840dd0d37af0b7b902691be0393f264b6796668155d2d86f02a"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "23e475d9f7960d782b6a2574c2b9ab5f5b555e87ccf2cc5984c6199f796cb3b9"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "a96f7c08806f2828bd5c0c733af1ea8bf3a6020f998c73f1f17110d9444c845f"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Service Properties Trust as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Service Properties Trust — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

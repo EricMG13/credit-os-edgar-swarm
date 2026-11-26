@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Crocs, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "013aa26e0401a1ed8962b804f28847d20544431d635ed6c9499af9a16d72a392",
+    "CP-1.md": "c62d14e320a266090754bc2c88866d9f98ac48718dba7793481769bcad7b40fe",
+    "CP-1A.md": "75e36c7a520093a434abf1a44561163d351894f9640b65d3da284a1903fa8e9d",
+    "CP-2.md": "9d0070de5cc8743ee664359b151e09e1f0ffd52b93fef1cb45e5c04276860f00",
+    "coverage.json": "c9ab5f75a004ab1be67d231a158cf565c501d946f07d8013cd56d4b7daeb98b1",
+    "view.json": "64e9d48de062e08a5aba9977acff0103006876d17f04f24b2b9cec4f6d164889",
+    "report-view.json": "79e601f9ab4d240d57847e0f47c4ce3c00a2eaff0609ebf331cb136000ed71e2"
+  }
+}

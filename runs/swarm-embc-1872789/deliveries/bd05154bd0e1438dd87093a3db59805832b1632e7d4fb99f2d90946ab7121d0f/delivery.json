@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Embecta Corp. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "4414772a5a737f5357533b680349a5f23166e5b9b42d543bbe3b7faefc341d55",
+    "CP-1.md": "f2015207053db9c119b6994b6abc01e35cdbe3ff01c219dda449db25d17fa755",
+    "CP-1A.md": "396e53afe38f6e54776ec81a70b5f0f2705a551bafc92da144de568968089d0b",
+    "CP-2.md": "5e29a3804f1dc97d48daadd3fd0d37d434dbedbf9edf462b31f1c0315debbf5a",
+    "coverage.json": "ba7884b2a7602f2351de50d176b303177cf2c4db9a7f0f086ef58bdc1b13c421",
+    "view.json": "3abfb0e2959f7574581757499368eee706f7f8bdd3d21f61dd8f6c2e4c155139",
+    "report-view.json": "7d25e304a9634669de9955d0de6fc0260cf5c89cca74563deb3890a92f189182"
+  }
+}

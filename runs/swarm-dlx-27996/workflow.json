@@ -1,0 +1,252 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "dlx-27996-2026-11-18-credit_snapshot-host",
+    "issuer_id": "dlx-27996",
+    "issuer_name": "Deluxe Corp",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_dlx.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_dlx.htm.jsonl",
+      "sha256": "67b837bad3689eb57ce7992f50b42dfca6328fb57096d791edfb119f64350c9b"
+    },
+    "10-K_2025-12-31_dlx.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_dlx.htm.jsonl",
+      "sha256": "ef88882c6698cca61424cd4266ad2d1415faefa761efc11835cff37bacdc604f"
+    },
+    "10-Q_2026-03-31_dlx.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_dlx.htm.jsonl",
+      "sha256": "c6188e96c3e25ebda32357958a20d50628042058c0369e7bab137dca4608900b"
+    },
+    "10-Q_2026-06-30_dlx.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_dlx.htm.jsonl",
+      "sha256": "6a449761454530caf50ba1d8051436ea4a62cc2fe61b463317de655ff7e9cacd"
+    },
+    "10-Q_2026-09-30_dlx.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_dlx.htm.jsonl",
+      "sha256": "1a71979ca733787a8d7d440764f230a4c6087a6a46bd4d2a31266efdae557532"
+    },
+    "EX99.1_2026-03-31_dlx_exhibit991050620268-k-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_dlx_exhibit991050620268-k-htm.htm.jsonl",
+      "sha256": "3217064ddd0f8be66f70bf58b3cfa43fb7f3bab05ab19f8cba13be318ddb127f"
+    },
+    "EX99.1_2026-06-30_dlx_exhibit991080520268-k-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_dlx_exhibit991080520268-k-htm.htm.jsonl",
+      "sha256": "a7e482691fc66cd72f252a397273479f8d1cf0baae2887ed394bca26096905f8"
+    },
+    "EX99.1_2026-06-30_dlx_tm2621737d1-ex99-1-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_dlx_tm2621737d1-ex99-1-htm.htm.jsonl",
+      "sha256": "96c47ce241c8b97cc47962d6a8e9dc36a99d834425d3b9e5d0db820b9c76c8e7"
+    },
+    "EX99.1_2026-09-30_dlx_exhibit991110420268-k-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-09-30_dlx_exhibit991110420268-k-htm.htm.jsonl",
+      "sha256": "e21b511b9fd3407ed636f1231d5c628d21b48ef3b99e88c5de6567c6c15ea9e2"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/27996-deluxe-corp.json",
+      "sha256": "514141c4398f6e81f34bc138cc35b835b2a05508480df2ae10778a0781ef5517"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "e4915ed2c547f7c0ab5dcf105b7e75e41bb941fab33d326dd36b443cff65c5b4"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "97abda667fdddc1a9d930070ccbb015e261c01e449818b11bdb0095a16f3bde1"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "c6b23259a752f180ce4aa28735244301a9c864d34a4cc95b132ffadc8e940fb5"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "ccf42fcdf9db938e8ae5d0811572c6c928d44eed71fb8e9f5904ab509917897d"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Deluxe Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Deluxe Corp — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

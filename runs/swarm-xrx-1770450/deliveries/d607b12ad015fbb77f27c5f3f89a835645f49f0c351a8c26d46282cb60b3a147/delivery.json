@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Xerox Holdings Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "f5386ee8f2391c8fb25377fd1a74c87f13676ae084fda194ba544da60b4b2843",
+    "CP-1.md": "a4e1a3e91a40f325cd7ea8069443db81959073c5c4b6e99cab302c18b4abc952",
+    "CP-1A.md": "234ca468c95675c146804f1532b0b36093939e3b599f84efdd1cbec8218e2c36",
+    "CP-2.md": "157556eff8dd033d0732afd42a7ec32223e347f6cd7e3b33d49d66281dbb3e63",
+    "coverage.json": "6f0f62be68917fb89ef5d94fce7aa8a2df0fba4febbdddb84fde5116c89d634f",
+    "view.json": "7c2cb00ed56a28f5a0cdfa0290d4fed5bd84b83ba0d90d5f71eca8a401b25add",
+    "report-view.json": "0c6b60eb608ab7a4a9bed2ca04e78fd2478e563968a3f6b0cb4173616b52f484"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for United Airlines Holdings, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "d3f66b689f594423d0b51b1bfdc63b13a08e2bdb582bff529bcab005d61a0729",
+    "CP-1.md": "38c1be553927a0e60e6101d9b7f65bda48d311f19aa0ca440b0c0136969b80e5",
+    "CP-1A.md": "f0c66723c0210364e0769f62ed4dd30687e8408acb8c122845538e90c36af709",
+    "CP-2.md": "a7d9e3b2bf81a0184cfcf7c419cf72586287bb13675c5b920df42cfeb6dd0edc",
+    "coverage.json": "3fb8406225523860212ed611c5fdd8ee7f971c03c64fe57a5ca1bd9468c82f3c",
+    "view.json": "472680c6e4f821231f083ba79cf4f35f4717b85b928c9a759408678899b2b0c3",
+    "report-view.json": "0b5bfba7a6a6e3dc0a3588fa76b114373865cb5ee73b52190d6a3885f2764f48"
+  }
+}

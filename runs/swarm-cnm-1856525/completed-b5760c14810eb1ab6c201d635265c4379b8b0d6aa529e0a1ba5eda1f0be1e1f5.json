@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Core & Main, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/ebbd98bea4ca5fa8b005f032795caeb6f4cbd00538faa753266f382832d9695a/1.response.md",
+    "CP-1": "requests/CP-1/5921b3520e424c95859af45d031f5d9a9573143e974d3bd2965947dfe84324ef/1.response.md",
+    "CP-1A": "requests/CP-1A/be034b5472e3b758b7c4abafd54027ad02aaba5d7c5b9de01ac8da8d888431ff/1.response.md",
+    "CP-2": "requests/CP-2/4a95c30b3e757f6d1d27549a6403f239268ba1cd761c56a568c7a528ecaa71f4/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "4687dd0aa9d6650fc4bc71a2a11e849f53c62c3149eaffba4b7049b329b3b8e9",
+  "delivery_sha256": "d80e41302d72ffa0d3cc668648a5cd585e39631c39af799765ae2ac6b1f5f6db"
+}

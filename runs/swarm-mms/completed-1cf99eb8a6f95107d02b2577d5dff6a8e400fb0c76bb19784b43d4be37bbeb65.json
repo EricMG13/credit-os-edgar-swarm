@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for MAXIMUS, INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/694c123fe16c3be9b6845a40dc4bb461ff9ba967264628dd3c3995dddcad872d/1.response.md",
+    "CP-1": "requests/CP-1/f91fb4c0dcb5e3f763f9aae4af34c14ec833fa1b2aabe33b99eaffc5a2ae7855/1.response.md",
+    "CP-1A": "requests/CP-1A/c5935362cbdad586912248801311573ac6b8e4a4edfe9842c70296ec7c975d72/1.response.md",
+    "CP-2": "requests/CP-2/4397abef662586fe703e8b88716607e742ed02c0fdb19c47986e5ce154fa5497/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "1131e3e97fe690e7c9e29534b8e08f90b8a49b0565b524f96fd44601f1e2403c",
+  "delivery_sha256": "d02dfb055b54d487b659d94f06d1ec8f908c6ed80723771e8829a66c881b4845"
+}

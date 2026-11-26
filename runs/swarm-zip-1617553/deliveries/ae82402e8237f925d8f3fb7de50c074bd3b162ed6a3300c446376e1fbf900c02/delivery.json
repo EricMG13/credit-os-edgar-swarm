@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Ziprecruiter, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "4e707b7bff84f222add8c3e3e640800cbda009dd7deba9c6b7f2174000e0b825",
+    "CP-1.md": "28073d8b3eef7f5a9f0226700e4a8833d662fb88b296ef541b04572dd261254b",
+    "CP-1A.md": "296610b847ccec57cbbebcad4b74012c89ddb200005f031f33c3e7c9efa5fa3b",
+    "CP-2.md": "e33eebc0428026ae72b007e2512eab31b820c8a6b8e9498f645f3066cd534329",
+    "coverage.json": "0f4732de7c0a45ffb0765ba3fa47a4083cae892a41ae997aec694e49dd3d27de",
+    "view.json": "05f34bfa659993f894d0c05c80e8433596bbeb22291ce17f0f44e2f4f694977f",
+    "report-view.json": "226207aeb4a5191387b897b4dc140763536317db4741d295caa08d453208ccfd"
+  }
+}

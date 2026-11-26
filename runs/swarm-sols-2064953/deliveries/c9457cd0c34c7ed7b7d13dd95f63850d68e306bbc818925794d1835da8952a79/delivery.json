@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Solstice Advanced Materials Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "60f638c62282b8a817a15cc44cacee8ab71e62bac73ca931766853f66415490f",
+    "CP-1.md": "147c27141f77e73c608a2f72da4d2f36a4d3b19bb4200382461fce2c8358b8e4",
+    "CP-1A.md": "bd0576d6afcb9f7e1c9410be165dce9ee37376ff98e364c7674a73a3ebecf673",
+    "CP-2.md": "ff7da4986108c95a5d79e0eb0370fe925b931abddc2a21d9d6a6e74680a25744",
+    "coverage.json": "ba6b0d5e38a0fb861ce3993d328c6640b63105b4ecfb259f2d58b6fb1e2ccbe7",
+    "view.json": "bedb8b94a00b14dc59d23432733acf47abba357e225ca5db56593752ac48892f",
+    "report-view.json": "f9cf5ca68bd635a1b19af5df162ce328bafeab67146aeb466c637025e6cf9e23"
+  }
+}

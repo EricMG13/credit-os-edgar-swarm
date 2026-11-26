@@ -1,0 +1,248 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "orn-1402829-2026-11-18-credit_snapshot-host",
+    "issuer_id": "orn-1402829",
+    "issuer_name": "Orion Group Holdings Inc",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_orn-20241231x10k.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_orn-20241231x10k.htm.jsonl",
+      "sha256": "d7faab2bf24bd8340e9c8e731f5e2dbc752d34855ddd782adc9cdf078b239123"
+    },
+    "10-K_2025-12-31_orn-20251231x10k.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_orn-20251231x10k.htm.jsonl",
+      "sha256": "dd81d935795f3b9fcda4c72f03aefa97259a5cfbc9ce704345b2d59a66c42b81"
+    },
+    "10-Q_2026-03-31_orn-20260331x10q.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_orn-20260331x10q.htm.jsonl",
+      "sha256": "fee5dbc91b9c99fce8d52540bcc10daab0c2dee6c4dcd941365992be419bc92f"
+    },
+    "10-Q_2026-06-30_orn-20260630x10q.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_orn-20260630x10q.htm.jsonl",
+      "sha256": "c691b85e54001b4c8940121e16c890b7ec08a21e47109a7b3382a7796a721417"
+    },
+    "10-Q_2026-09-30_orn-20260930x10q.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_orn-20260930x10q.htm.jsonl",
+      "sha256": "3401dae5d87c531fceb42c5433a44cd55db704e89780d79ff15dc08c97f0a377"
+    },
+    "EX-99.1_2026-04-28_orn-20260428xex99d1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-04-28_orn-20260428xex99d1.htm.jsonl",
+      "sha256": "e6f24327fd5486054a852eaf4bef3d161a147e516546d32cf1413d32f3c6a71e"
+    },
+    "EX-99.1_2026-07-28_orn-20260728xex99d1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-07-28_orn-20260728xex99d1.htm.jsonl",
+      "sha256": "e35fa1a372e990a3f434a4c4f8465ec595674203baa8d95f38608f101812a09f"
+    },
+    "EX-99.1_2026-10-27_orn-ex99d1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-10-27_orn-ex99d1.htm.jsonl",
+      "sha256": "251ac1ca516c72cfda23fce2d58b359df9c1455b6013776f5ce11db56c7db123"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1402829-orion-group-holdings-inc.json",
+      "sha256": "d8e69c520bb717012f4fe934c396f6061c2dc980093227a0d84c99ae2dc79791"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "f6e4c712ab764bc4dff8ddc8ffcd21e16c51a8c924d88eb8ab72d6b439d72f8a"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "b6f63e19a9a0831bdfdea8dfee939de1b8beddb4494b3e4080050cac8f6bed25"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "35ae66a24bd3bc3d55b18774929f2dd57c17f01f70b1d22a4ea34f097058a698"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "6a732793b80a79b56402c0308bbf10e2ecf5e5073bf596fd6a4307ff1db6afc8"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Orion Group Holdings Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Orion Group Holdings Inc — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

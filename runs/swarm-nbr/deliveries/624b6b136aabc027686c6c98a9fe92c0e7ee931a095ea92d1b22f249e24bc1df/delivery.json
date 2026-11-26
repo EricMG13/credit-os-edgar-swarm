@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for NABORS INDUSTRIES LTD as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "bf88f32a1d679801a87d319d605ba38ac36784ca32f138d7aefe3617c7691036",
+    "CP-1.md": "94646a12261adfa4d02379bb2e3ea3152705a44957ea3c4f0b9662b726a9c6aa",
+    "CP-1A.md": "8990129651b44b731c6da20d74b9ace4c56765668b5cbc4e1fba0253eb98794a",
+    "CP-2.md": "344b086132c898448d30d6bc0ca4b5c2ca43dd4f875b1c0b76d1771a32b5e7e4",
+    "coverage.json": "a3bc1737d2a82494e240571696c877fa574f43b35ae3d594488c115902e61268",
+    "view.json": "09a465ae96bc919aa464a803c216c5d92028ab322de6596ff7fea6c5dbf35203",
+    "report-view.json": "5d3a801f1a01fbd20dab53c7fcf8861de613b5ea60e2444fa16eb8b7b7cb2d22"
+  }
+}

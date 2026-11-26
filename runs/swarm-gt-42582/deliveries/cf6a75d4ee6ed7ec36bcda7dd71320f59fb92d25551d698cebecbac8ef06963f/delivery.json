@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Goodyear Tire & Rubber Co /Oh/ as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "cfcc99f5da1add6e47b6bcccab48f2bf46a2c663158ff6a39439940cef3014c0",
+    "CP-1.md": "beefd0e19a6927d600bbe42b2f455754aee4978e48150c23bbcb2b0f25311954",
+    "CP-1A.md": "b3287f5842d075cd5048cda960f4a6128b48a650a5af8e98f910af7f40a12624",
+    "CP-2.md": "0b5e868d386287ef50544628d5aa06c1c4ae63c061c253f05078c5be9a8c2f9f",
+    "coverage.json": "b871533f2f400d7813cdd15d08e4c22c611a0068ea78bde9162ac62373055997",
+    "view.json": "4f9405c2dcdc13aa81c9e122042eb56b0427ad61937ec566e68a2cf4d41ae02b",
+    "report-view.json": "35ed5b3f2156a05cc435db23fc9942d46d106406069f6b2fd3ff440286ec677f"
+  }
+}

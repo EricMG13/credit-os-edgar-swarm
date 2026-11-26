@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Magnera Corp as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/db6042bbb2b3596b34ddd09bbb39ab2471facdb47aaef9e53189eb90ca1267ac/1.response.md",
+    "CP-1": "requests/CP-1/0c319b4f2ad724d8a496d0c8e1dddca682b6c0e3037eb21f58ebc02b46c165da/1.response.md",
+    "CP-1A": "requests/CP-1A/64fce311b672a41429b5dca47661c32ca07c5aa860198fba8d2eb1266bcd33e0/1.response.md",
+    "CP-2": "requests/CP-2/18da90bdc071c69855962ecc7ccc4bf1d35afcf6c82190d1f5574a576ac2a898/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "981e47363bd1e8dd51a4883e5d3290585fd8e97c6aa87684fe202dc2560413f9",
+  "delivery_sha256": "a14a7fe83d47ac40a40af73cf8ac2e5a05d208224562d41a23f5042faade7d30"
+}

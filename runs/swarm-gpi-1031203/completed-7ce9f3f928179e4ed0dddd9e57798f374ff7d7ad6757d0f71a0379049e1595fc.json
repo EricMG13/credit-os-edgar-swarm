@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Group 1 Automotive Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/3030da96ac7a64b295874fd626aeb61a7e1c2346e95b15ec20728823be50de5b/1.response.md",
+    "CP-1": "requests/CP-1/68ed597a121665417180cf65a48741ce851be5561d24304f6886b713e1b5d2c4/1.response.md",
+    "CP-1A": "requests/CP-1A/d355398e5e0a0fc0fa7de29d39523ab552ebf1da18fd6ac9c347e1d5b1031c45/1.response.md",
+    "CP-2": "requests/CP-2/c3c60f70f1bf4974d707be58469a0e58269f22d05f0308b146ab02ee3011614b/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "3f8eec3ff36835434e168d347da43f5805fb3a7eda71f747ce2fbf3dbb6e4fdd",
+  "delivery_sha256": "2a31a1a082072e33d9f986417740bc1663273d04d42f3b97985a4d01dbd7d015"
+}

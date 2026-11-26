@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Scotts Miracle-Gro Co as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/6bc629d2ab4a43c7f1de2ab26a37ce71fe9b3cfbe8b6785bfae29bdb77157ddb/1.response.md",
+    "CP-1": "requests/CP-1/2f496848f6e8a8cfa90cd52d9475ebdd1ed33e8f6de036f5c55e311827fadeba/1.response.md",
+    "CP-1A": "requests/CP-1A/1e7f717bff25c999302c1b457bfa245f4af7b50f386c8ad4a70276973649ad78/1.response.md",
+    "CP-2": "requests/CP-2/2cc967172c914d96333b32a56643ae3ca4ebbf172e369005186218818a18c9f5/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "d4f70236661024e5c95fe20b7d30a8d4a020e0a1c810a134421f5927e2791da9",
+  "delivery_sha256": "6c9bdd29d1dd371419451d9325827fd600bc6c03fe1afefe37ebbd71b436a76b"
+}

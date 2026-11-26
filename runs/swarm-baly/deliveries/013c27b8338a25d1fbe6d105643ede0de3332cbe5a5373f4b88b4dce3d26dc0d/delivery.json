@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Bally's Corp as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "47c109c7345b814b502b6dadb713ce4691508be5d8d280213a61e0e110233dc8",
+    "CP-1.md": "e7a3e9cf487855bd7a2b42ec3ece8aac032598a9acc22508dd6ec94ef190401e",
+    "CP-1A.md": "4fe308823616b4901f9de55068fa514ce71bb9b392950610cb793ff4d47de542",
+    "CP-2.md": "4c9725c74d2a995e64cceebaddea1b133aaeb0099be6371a58d21671cb795fe7",
+    "coverage.json": "ade4208d41b848f44b3a7cedab3f8b38a3004c54962aa8f20efd490012481680",
+    "view.json": "54234adfcb727176c909cf3d354162a62a7c614e440af0221bf23f3b1946e7f4",
+    "report-view.json": "e94c3cdbc27259b67fb3287e3868f256562b6c836cfd834c51b9724bdc1fb03d"
+  }
+}

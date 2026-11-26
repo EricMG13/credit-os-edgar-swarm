@@ -1,0 +1,252 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "embc-1872789-2026-11-18-credit_snapshot-host",
+    "issuer_id": "embc-1872789",
+    "issuer_name": "Embecta Corp.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-09-30_embc.htm.jsonl": {
+      "path": "source-text/10-K_2024-09-30_embc.htm.jsonl",
+      "sha256": "5589b293fe64b9126d94b4c5e2eebf9a4aca79f08691da8a8029e3a871e8dbab"
+    },
+    "10-K_2025-09-30_embc.htm.jsonl": {
+      "path": "source-text/10-K_2025-09-30_embc.htm.jsonl",
+      "sha256": "8c6d61f1340856eb552fea65ce0855b9f9eca00ec71c4a3cd7255164c167749b"
+    },
+    "10-Q_2025-12-31_embc.htm.jsonl": {
+      "path": "source-text/10-Q_2025-12-31_embc.htm.jsonl",
+      "sha256": "44593d75f82cc13e420e7e4ea7346f905bc1e71d3fc226d70a359fd72659df72"
+    },
+    "10-Q_2026-03-31_embc.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_embc.htm.jsonl",
+      "sha256": "7a5f4081db12a4772e8765621895ee97ee47069b9a554895d8295b002e8788f3"
+    },
+    "10-Q_2026-06-30_embc.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_embc.htm.jsonl",
+      "sha256": "9052bf42fe84035248ea87da53d236d2d43804778cfcf4f7a4a90bf17edba707"
+    },
+    "EX99.1_2025-12-31_embc_q12026ex-991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2025-12-31_embc_q12026ex-991-htm.htm.jsonl",
+      "sha256": "324f4fb9741b7a8afb0adc23a0be5fd37017b1da0030cf832f937a495806b8f3"
+    },
+    "EX99.1_2026-03-31_embc_q22026ex-991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_embc_q22026ex-991-htm.htm.jsonl",
+      "sha256": "5b58cfbf6e930a9537dc6014462a646e178b0bcb9284297f546692f20a3ec7e5"
+    },
+    "EX99.1_2026-03-31_embc_ss6329586-ex9901-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_embc_ss6329586-ex9901-htm.htm.jsonl",
+      "sha256": "69d3badc26ffdaedac52f28a4661fd01b3c8466c3ade24698b8905b772ae7493"
+    },
+    "EX99.1_2026-06-30_embc_q32026ex-991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_embc_q32026ex-991-htm.htm.jsonl",
+      "sha256": "4dc8dc96b68b9578ca793606f2ab9d6ac9c2e2cc2c3f4a829e45a0ea6918c11f"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1872789-embecta-corp.json",
+      "sha256": "609b06bef26531254939818dff9bf02ec28866a66c12e96d5977fb0b1f6b0c84"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "de80357d0f9b4c7fe416d2aec21431134b65bce3da758a39ad8eddc1bbe1010c"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "a93310361206e35a345c4d75640501cb5d16ad463230fa09fda2f29dc0099de5"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "87056cd8922c4e7cc555461b31aff8f9c05df237dc4e600a24997aa091b68823"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "3f31e71e4b7a03532e21b0507a542576b30529ea9990d66f4865ef2dccb1e49f"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Embecta Corp. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Embecta Corp. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

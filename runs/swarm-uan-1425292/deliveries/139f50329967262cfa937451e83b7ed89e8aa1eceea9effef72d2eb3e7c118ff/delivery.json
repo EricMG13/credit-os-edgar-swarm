@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Cvr Partners, Lp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "528d9a4165bdaee955ac94e38fa7e2e1e158ce73066b8b521285a7d707c4d4e0",
+    "CP-1.md": "1f88ab99599b8c1be09e2efdcd58486c4319a8ceb1d5e405a3197e1c48cea638",
+    "CP-1A.md": "3a1e271f932fdae5cb871569400d2820a991f033ab5fba375d20a1b181569cad",
+    "CP-2.md": "0af7a72d0e421e2c878700e51d0dc8e220adb35c41c9f3f10627637245feb371",
+    "coverage.json": "a4627c64764a849dacf38fb3e084d68306f02647db6c955b98cb7d0f10c57d4c",
+    "view.json": "e62da823cb642f8a6397187e36da4867fe81953c6cf91c7e90d96c0e8a7dafaa",
+    "report-view.json": "833c66ade3876ab7fc714b3f31891449927bad877c7792054263ff07c0bc5796"
+  }
+}

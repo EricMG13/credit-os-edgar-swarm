@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Asbury Automotive Group Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "f39d412f5b78e57c3d05dca5a53c8a2f1a0d897a79aef8c2ee93a0d425b2e49f",
+    "CP-1.md": "9c633dac78402f1f9d0fd9782c1cecf8fa3107e0a5a2f0bd330a491fc2a9ac58",
+    "CP-1A.md": "a67f76fb2448e189931a59f30df468c3bc10f7197ea024ec9de0a8a703767b36",
+    "CP-2.md": "96159a0aeadd049b934a7b34e82d5d7e16dc9c840d26fd1c37b795d84ffb4e11",
+    "coverage.json": "0eb4e23a2abc0a064095b1b921504299b67a398fd548ebc1f4842a9051882b5a",
+    "view.json": "0fcd5ab81a65c45eb520e6f5c7e570fb8e51970af2c34405f1305b15f41400d6",
+    "report-view.json": "93671b1bf39836224d0820d53aacfd6ce1837f5a42508c34a1648329d3a2f513"
+  }
+}

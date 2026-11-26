@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Qnity Electronics, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "47c46802ce50c3baf8eabe73477d01eed2b624f89e45e6e1ee3e3ba8b02155b0",
+    "CP-1.md": "12587b6f54163125bf5f71f073b5e8f9637ea2b79b8c75b3dce1be2248fdc921",
+    "CP-1A.md": "63df62730a0ff567a28828eca6acc4463439d42f7eae467c82deb130b4af4fe7",
+    "CP-2.md": "757155b88206eaec1a2866f5dabec481e54220ac491613c09db73a1bfa41cc3d",
+    "coverage.json": "ca38c227a3eb4b7dd9e907a52735fc0cfa46791c950d464bcdb7589e2eb201bc",
+    "view.json": "83fe9d6698107849d06fa1f53ec7afd084ad5d6cb1f1f46daf2d44fc26b3da44",
+    "report-view.json": "3359c40075cc9705c4c3c286949eb21b19370cef448c6bdc5da9713f02200bd4"
+  }
+}

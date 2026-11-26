@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Service Properties Trust as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "9377cc0ad89ecfe8608ec14dd7baaabdf02324ec81121c9b006aa8718838c703",
+    "CP-1.md": "9981710c97595262594e76ee5a70d504ff5269f7b5f3541b7cf0ffce26ecb735",
+    "CP-1A.md": "854ef6f11471c57c540145cd3ff7c2eb13e9fa02b0dc98eacc5070078f7d8c05",
+    "CP-2.md": "19a17b8d06a4073c7a66a7d0c36ab874170aeb19dd080d662016fdf6408af765",
+    "coverage.json": "27201b54f8d691f5be2177b499f20b35446d5c449879a18a3e1034dcfb920092",
+    "view.json": "d181e75d22d358af54a3d439599f717f6ec23e27676c85086af15c4b00ef16a2",
+    "report-view.json": "e91f715d972ce1476f2e393a3808ff68bfa9f03a6ae36d26698f7d31020ae08e"
+  }
+}

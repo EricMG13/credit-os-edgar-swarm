@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Bellring Brands, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "f8e938c6b948f5a37402616939c5c7579468d18105f6405d4eabedad9e43fd8b",
+    "CP-1.md": "2832b2be6c48eeec869cc283ea213431e83167253341e8b98c7b02e7d29a8bea",
+    "CP-1A.md": "6ee624684281f90a6793c537b7b66ae3eafbd9464970c1edc88fca698e08a1b4",
+    "CP-2.md": "a04c2595c45e85136ab29a7eff682f22a0a8b3f6ab7dbbc4014350483f8f2e4c",
+    "coverage.json": "fec1995c23150c43e88c62eeae22634e7aa42bc9e7b6652be56b746f50b95221",
+    "view.json": "754894db0cbbdd5266d3a137aa2b6b293b0c5afeb0fb142dd612c726b31477db",
+    "report-view.json": "1a1d0ee5777a270fa03ad881fc721c81265f3d2f0f70f6c85606ab19520b5d54"
+  }
+}

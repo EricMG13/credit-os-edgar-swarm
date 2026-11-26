@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for RLJ Lodging Trust as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "0b7156bbfe6bbd0a5a1438445be388222b1290ba369b19d0a480bfa1379f45cd",
+    "CP-1.md": "36da1c771505ea1307cd781dd904bdcf4c6a88ccb60dfddd788e755b58edab2f",
+    "CP-1A.md": "efed5d02ee2e4bf10d56139cb8b365471ecb2b2506dfedb61a9144b3af347e25",
+    "CP-2.md": "858f7071f850c912c16cbd8b6477b34ceb81af50e2cb1bbeb13310439029b78a",
+    "coverage.json": "66c935f768d1da7d186686531e6977526c212d998efe131a19819c2e24e17f5f",
+    "view.json": "43722d8a85089d503eee48d3f999b91c1b2f97c7e8aea1e063b3085231d52654",
+    "report-view.json": "db835ddea1ed7dd37949402ee65ee5927e373a059b2a798b483879bb42724e93"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Qnity Electronics, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/897cf3bd370740a770f12e9310f957287c43910360fadb895b414307a792b940/1.response.md",
+    "CP-1": "requests/CP-1/b2654e60d60b1d25b6d61fb29436f3fef07b011997748f030b87320b1c1ff2a0/1.response.md",
+    "CP-1A": "requests/CP-1A/eab50f63a901bae90276346473306af097c69c7df6b4a222c1e35ec162b60c3d/1.response.md",
+    "CP-2": "requests/CP-2/f1a542a35e8d27eac68bec6900a48843e1de4f48bd85ecdee1e4390d96701af4/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "301a9321fb538a84b79e8338b2d2499d75848e14a6cf85c5c83f09c228193976",
+  "delivery_sha256": "f8f4c0bcb9b6de657dc889a8861929b73a3c00d2728a59b0cd1b548f4640b8c4"
+}

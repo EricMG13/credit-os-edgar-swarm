@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Chord Energy Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/f4fe87d8d8e3c5a39fa746246f439e83b05999b071a0f6b84850c6f448aa28f0/1.response.md",
+    "CP-1": "requests/CP-1/a19536498ac6f19777c880d44481d3de24dfc86fb41b7fdc78755ccde91ebf08/1.response.md",
+    "CP-1A": "requests/CP-1A/e3236818a7a56c1ac14a41d8d2cec9118bbc08adffaaf1215d4875909fc123c6/1.response.md",
+    "CP-2": "requests/CP-2/adafaaa3c3b3f26b3cbef7adae7f8024195f5151cdda8e92780c16922c5bd19d/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "59aae267ea6707a2ce4ee67ece5d67757b624a2f72f949e496e3ea38f7d89088",
+  "delivery_sha256": "acf76f30e204b78c004e44b323ae217cbe0d34a87a6313563d7674cc84c4f818"
+}

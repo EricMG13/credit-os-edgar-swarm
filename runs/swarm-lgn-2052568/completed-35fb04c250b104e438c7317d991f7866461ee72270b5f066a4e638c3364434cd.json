@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Legence Corp. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/b5dc0985d2059c75e93a261a3b2a84337186345bc11ae3432247e1ee84532695/1.response.md",
+    "CP-1": "requests/CP-1/d6023559872a77d2941f801deb5a5380a94e0c23b815e4d53b1083d86673c64d/1.response.md",
+    "CP-1A": "requests/CP-1A/8ef70c7c2578012258cb95b4bb22b46d95494044f5c7173befff56995db1228c/1.response.md",
+    "CP-2": "requests/CP-2/a8d0294a9b7177be5e8da39eb0adf4d43862a30b77f479a51116294f74514584/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "01020d44455da7cb20e2875ed09b4467fed2c3a2b3c81f363fb9b3cb760656aa",
+  "delivery_sha256": "eedd52ad2f6c2b5de14bc899997d1ba7e6f5679cd3c96a7aa7caea8171bd0c19"
+}

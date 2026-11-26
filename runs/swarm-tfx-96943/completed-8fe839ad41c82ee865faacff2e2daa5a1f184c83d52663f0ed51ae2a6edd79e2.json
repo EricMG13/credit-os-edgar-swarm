@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Teleflex Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/7d0edb0bc931dfed4834b8a026308512865a32754106d9745b4c4d2aafe8bf14/1.response.md",
+    "CP-1": "requests/CP-1/a9e106995b08311a2d6dc5ef1fcf7c52e5aab2bdfd6789c878e3e5cabe53edd4/1.response.md",
+    "CP-1A": "requests/CP-1A/1a140ff647219e04ca2c9c41f7524e71db1fdd2b21da14a10cd9188ef8d82eed/1.response.md",
+    "CP-2": "requests/CP-2/495449f7424474cb283ec6057b01bf80bf02bdaaaa72c1e69f396a1005ed0612/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "9b1916f7e2bc4f95dba197ea32bd650fc27e628f696c6ec7192f2b4ad93ddeda",
+  "delivery_sha256": "1cea1f8b76065265f01499bfcc01fea2cdb447aa3d7c1dfa1d3689a47dc473e3"
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for TRANSALTA CORP as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/09d65c8f51ceda3206c5c2969f712d01893e3509437d982334b15d6d983d1343/1.response.md",
+    "CP-1": "requests/CP-1/1a0e81bbcf9dd57bdcec127c1276142f1ceaa2a0544a4fd32039496b8d19b9f8/1.response.md",
+    "CP-1A": "requests/CP-1A/fa70dfd553fb149eb093fc9f8f9068099c3acda58646cb0377af67f110901fca/1.response.md",
+    "CP-2": "requests/CP-2/68710dd1df0e0f27eedf55548ddf0dd9cdca58027127153d2fa7bb1b043e4cf6/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "3e2974820ae4d758447f3ab6e604252c1e31fed13235fbc089c6f69d4791829c",
+  "delivery_sha256": "8ac99607014c950c51ad64ce70fa30abb82062db95e844c52519e2855b87da5d"
+}

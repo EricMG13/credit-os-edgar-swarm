@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Excelerate Energy, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/5230fb8cab059c2d83bf392b4b66bcc1487abb940d3e00077bc9589b73ff1c99/1.response.md",
+    "CP-1": "requests/CP-1/f1431a1d19e8d4e9cdf664211806ffca4a54e32e8fe8e08c81714183a5be82b3/1.response.md",
+    "CP-1A": "requests/CP-1A/d71a599cfb2a2411e3602b21b647bf8f23a4941120b86e774db5e7450889732f/1.response.md",
+    "CP-2": "requests/CP-2/001cbfeaaf6f354608b84f0b63422f671570f9adcefea931b9dcfd8c05d6e856/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "55b1b030eab5b2109ae254c0ff047814d4e2b23b915b4029e367f2b0da7623f7",
+  "delivery_sha256": "4220a5ec57c97d43cf9fdcda1902b683c131cb95f0b791c1872e0537fda9641d"
+}

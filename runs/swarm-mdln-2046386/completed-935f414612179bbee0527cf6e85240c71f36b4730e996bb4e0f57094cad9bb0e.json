@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Medline Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/4328aad825ffe8f027f071fdfb65082605393231356e825b2b12d698f6c1e1c9/1.response.md",
+    "CP-1": "requests/CP-1/7d8633769e033a66efdadc69def28d9649437d889d966d48c55a7699ea511f55/1.response.md",
+    "CP-1A": "requests/CP-1A/60eebdbe40909689c49ee9efba1de1c43896a99c5652cb2e31f77d8b5347c77d/1.response.md",
+    "CP-2": "requests/CP-2/b164026dcd201eaf766794a2a5944c510738fc2287740c1be987f8b5de4d8e97/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "ca3c14a575fb1cf4544f1c7c453f98068cd5f37cf258abfafd3fb43b31806dea",
+  "delivery_sha256": "0c7f549cc4430a7eaa7348f17c7e64ce441e8bd70867d3e304b2b77bcad6bcfe"
+}

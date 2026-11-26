@@ -1,0 +1,256 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "cxw-1070985-2026-11-18-credit_snapshot-host",
+    "issuer_id": "cxw-1070985",
+    "issuer_name": "CoreCivic, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_cxw.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_cxw.htm.jsonl",
+      "sha256": "e49627d886694319f140605f12f65f3c146d16a0a03c3d2da4438a7ef9205338"
+    },
+    "10-K_2025-12-31_cxw.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_cxw.htm.jsonl",
+      "sha256": "3c4ca650121ded4407d6f4264e9415dc033dfcf44e71eac43a38ec407feb6ba7"
+    },
+    "10-Q_2026-03-31_cxw.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_cxw.htm.jsonl",
+      "sha256": "02c1b4e21901b90cd4ca43a8af9d24ed49089816735568121085f2ae86328b96"
+    },
+    "10-Q_2026-06-30_cxw.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_cxw.htm.jsonl",
+      "sha256": "8c5fdf99a4279727cb428777a5eb2a02a54d23722e3d092d636c22320e640c51"
+    },
+    "10-Q_2026-09-30_cxw.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_cxw.htm.jsonl",
+      "sha256": "4e8ca5d6a964148ff79bd18bbed6f89ae913a049109563530d14565e14a7cb0a"
+    },
+    "EX99.1_2026-03-31_cxw_d302982dex991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_cxw_d302982dex991-htm.htm.jsonl",
+      "sha256": "846a9c2e092ab7557bc667dcd8964502b497f029195c3a105d3a3aafafa76200"
+    },
+    "EX99.1_2026-06-30_cxw_d118761dex991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_cxw_d118761dex991-htm.htm.jsonl",
+      "sha256": "0f4f79a50383206557f8850837bb529048068c0add64d2798475957be2e62c0e"
+    },
+    "EX99.1_2026-06-30_cxw_d173726dex991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_cxw_d173726dex991-htm.htm.jsonl",
+      "sha256": "2c7514cd3089a725e05467f5b81c636fb8ed02e15dd1375d324f7ca8964aff44"
+    },
+    "EX99.1_2026-06-30_cxw_d174637dex991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_cxw_d174637dex991-htm.htm.jsonl",
+      "sha256": "ffd9d55ba0c57c4de148f8c5a149011119c800fb8681076910aff83de3fe55ef"
+    },
+    "EX99.1_2026-09-30_cxw_d165428dex991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-09-30_cxw_d165428dex991-htm.htm.jsonl",
+      "sha256": "276bfa434a926a398713eae4f92f9d5f4b8094103db4184381f241af1dd12351"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1070985-corecivic-inc.json",
+      "sha256": "ab6ba928c9fcdeaa4eef6abfbf81daa97658b5fa3a87b7af7c62e47fc8e2c8d2"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "b86b7fba7c58316bc2772d9c6d2b17d47cb5f47351dab2583c9ec4b724b79cb2"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "77d65fa01a918603b21aae6f36f7bc9edcc723a52a0cc3614f58c631b61e6871"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "69fbb9496c05d396e0b1c5b045ac57bc7b526a6d88786e8b00f0b49709ab8807"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "02ee190fa3e69aaf970a2b12fdaa7bb876e05d0045ffde9267aa4ee8d8297e21"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for CoreCivic, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "CoreCivic, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

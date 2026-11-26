@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Clean Harbors Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "ea625f80332eac34f171a73ff953c50b394289fdcec67f022f02356198906763",
+    "CP-1.md": "c71dbcdbcba505fca0f6ed527ff2f15db7a2392a3d307b3892d1ad6495396d0a",
+    "CP-1A.md": "27aa1348616dc0683b6a3af12c0788f29d56f101439612196ae6ea4d065e4af7",
+    "CP-2.md": "3f59b690dbc852711e9891d41c230b8f89e40e12cda68367af9d3c78bb251040",
+    "coverage.json": "d35191e7027b3af22a680bad150a1273bda9184f8e0f2394666241e47ea6b9de",
+    "view.json": "ba32384fd935675353ac0a594a9a20b9938b6c6a2791c3ff387c7c7085a71d75",
+    "report-view.json": "9d410ec6bf60bd24c9e7e182cb5270d6eb9c156a02d846a997f7f3d399fb5b0d"
+  }
+}

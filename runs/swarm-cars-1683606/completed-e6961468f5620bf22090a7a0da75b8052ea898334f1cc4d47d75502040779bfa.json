@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Cars.com Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/972e24c894fd3bbc7a26516f9db50e96234fde5fccc78693d6cf04a4f33c1076/1.response.md",
+    "CP-1": "requests/CP-1/80e826c5e0a90aa61b6451b00c76f2d58153de180902ac55f7e68623ff1bf34f/1.response.md",
+    "CP-1A": "requests/CP-1A/e52c0af0658080d035f557a31911a4f2e17068db01f41e3cc56f1cd3d22d4fc9/1.response.md",
+    "CP-2": "requests/CP-2/27dec716a4acff9b65b434edfb16a4e02862e7d8a0685f272110e2e09587eae0/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "1814a6b85a38ef46141dba30081956ad6298f3bbef908a3aac7cc22eacd40f32",
+  "delivery_sha256": "3b90a9f75efad1d9d3e6f5f68c23918650b8bbea4424965244167d2e6c94feb8"
+}

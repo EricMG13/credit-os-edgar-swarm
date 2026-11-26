@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Installed Building Products, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "b0c4fcfe23a4a76917b7f6da67197053f764a1c8156a2ccb4fe03a69916503d4",
+    "CP-1.md": "556a939cfbeb79e7b0c1413f20e3f6ea7e17de17808648a0c84b2d6b2818fd48",
+    "CP-1A.md": "58bf243437279a395b5d711e14aaa6551e0c7c78bbc4abb48b96e283daff1e31",
+    "CP-2.md": "c0dddd0fb4a509992ba854e30cb10866df8cfb2639fe4c14c5d68d2f9e8847a0",
+    "coverage.json": "8b92cf399a0c89c87433e8e35ce17216537119f3032382ab94a2288be8d0a19b",
+    "view.json": "b605d2d5abff2beb06c0c70ee74a47d1a19b71d80ae5583fbeb194a5e44143f1",
+    "report-view.json": "4ed46b87af5409ba2470d04643b040de8914ccaa74117dc51aba77c952927403"
+  }
+}

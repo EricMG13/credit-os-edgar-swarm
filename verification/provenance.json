@@ -1,0 +1,1111 @@
+{
+ "crk-23194": {
+  "shard": "s01",
+  "other": [],
+  "own": true
+ },
+ "sci": {
+  "shard": "s01",
+  "other": [],
+  "own": true
+ },
+ "ehc": {
+  "shard": "s01",
+  "other": [],
+  "own": true
+ },
+ "sm": {
+  "shard": "s01",
+  "other": [],
+  "own": true
+ },
+ "cmco": {
+  "shard": "s01",
+  "other": [
+   "session_01EB6ycT1TWeYBLDvSAensYi"
+  ],
+  "own": true
+ },
+ "amkr-1047127": {
+  "shard": "s01",
+  "other": [
+   "session_01EB6ycT1TWeYBLDvSAensYi"
+  ],
+  "own": true
+ },
+ "abg-1144980": {
+  "shard": "s01",
+  "other": [
+   "session_01EB6ycT1TWeYBLDvSAensYi"
+  ],
+  "own": false
+ },
+ "rblx-1315098": {
+  "shard": "s01",
+  "other": [
+   "session_01EB6ycT1TWeYBLDvSAensYi"
+  ],
+  "own": false
+ },
+ "amc": {
+  "shard": "s01",
+  "other": [
+   "session_01EB6ycT1TWeYBLDvSAensYi"
+  ],
+  "own": false
+ },
+ "saic-1571123": {
+  "shard": "s01",
+  "other": [],
+  "own": true
+ },
+ "flut": {
+  "shard": "s01",
+  "other": [],
+  "own": true
+ },
+ "xrx-1770450": {
+  "shard": "s01",
+  "other": [],
+  "own": true
+ },
+ "mrp-2017206": {
+  "shard": "s01",
+  "other": [],
+  "own": true
+ },
+ "cxt-25445": {
+  "shard": "s02",
+  "other": [],
+  "own": true
+ },
+ "tfx-96943": {
+  "shard": "s02",
+  "other": [],
+  "own": true
+ },
+ "mgm-789570": {
+  "shard": "s02",
+  "other": [],
+  "own": true
+ },
+ "byd-906553": {
+  "shard": "s02",
+  "other": [],
+  "own": true
+ },
+ "issuer-1012100": {
+  "shard": "s02",
+  "other": [
+   "session_01EB6ycRmhFv5RSZoDUGzF6y"
+  ],
+  "own": true
+ },
+ "bmrn": {
+  "shard": "s02",
+  "other": [
+   "session_01EB6ycRmhFv5RSZoDUGzF6y"
+  ],
+  "own": true
+ },
+ "podd-1145197": {
+  "shard": "s02",
+  "other": [
+   "session_01EB6ycRmhFv5RSZoDUGzF6y"
+  ],
+  "own": false
+ },
+ "bldr": {
+  "shard": "s02",
+  "other": [
+   "session_01EB6ycRmhFv5RSZoDUGzF6y"
+  ],
+  "own": false
+ },
+ "uan-1425292": {
+  "shard": "s02",
+  "other": [
+   "session_01EB6ycRmhFv5RSZoDUGzF6y"
+  ],
+  "own": false
+ },
+ "ccs": {
+  "shard": "s02",
+  "other": [],
+  "own": true
+ },
+ "ngvt-1653477": {
+  "shard": "s02",
+  "other": [],
+  "own": true
+ },
+ "unit": {
+  "shard": "s02",
+  "other": [],
+  "own": true
+ },
+ "brbr-1772016": {
+  "shard": "s02",
+  "other": [],
+  "own": true
+ },
+ "dlx-27996": {
+  "shard": "s03",
+  "other": [],
+  "own": true
+ },
+ "tex-97216": {
+  "shard": "s03",
+  "other": [],
+  "own": true
+ },
+ "vsat": {
+  "shard": "s03",
+  "other": [],
+  "own": true
+ },
+ "tigo": {
+  "shard": "s03",
+  "other": [],
+  "own": true
+ },
+ "pds": {
+  "shard": "s03",
+  "other": [],
+  "own": true
+ },
+ "axon-1069183": {
+  "shard": "s03",
+  "other": [
+   "session_01EB6ycPbRZGc8G3ymaNuZ4F"
+  ],
+  "own": true
+ },
+ "aap": {
+  "shard": "s03",
+  "other": [
+   "session_01EB6ycPbRZGc8G3ymaNuZ4F"
+  ],
+  "own": true
+ },
+ "ncl-corp-ltd": {
+  "shard": "s03",
+  "other": [
+   "session_01EB6ycPbRZGc8G3ymaNuZ4F"
+  ],
+  "own": false
+ },
+ "hpp-1482512": {
+  "shard": "s03",
+  "other": [
+   "session_01EB6ycPbRZGc8G3ymaNuZ4F"
+  ],
+  "own": false
+ },
+ "lgih-1580670": {
+  "shard": "s03",
+  "other": [],
+  "own": true
+ },
+ "hgv": {
+  "shard": "s03",
+  "other": [],
+  "own": true
+ },
+ "gfl": {
+  "shard": "s03",
+  "other": [],
+  "own": true
+ },
+ "inr-2029118": {
+  "shard": "s03",
+  "other": [],
+  "own": true
+ },
+ "dbd-28823": {
+  "shard": "s04",
+  "other": [],
+  "own": true
+ },
+ "tdw-98222": {
+  "shard": "s04",
+  "other": [],
+  "own": true
+ },
+ "ccl": {
+  "shard": "s04",
+  "other": [],
+  "own": true
+ },
+ "bdc": {
+  "shard": "s04",
+  "other": [],
+  "own": true
+ },
+ "opch-1014739": {
+  "shard": "s04",
+  "other": [],
+  "own": true
+ },
+ "cnx": {
+  "shard": "s04",
+  "other": [],
+  "own": true
+ },
+ "jblu": {
+  "shard": "s04",
+  "other": [
+   "session_01EB6ycQ5hBW4upYjAZdyjv9"
+  ],
+  "own": true
+ },
+ "hbm": {
+  "shard": "s04",
+  "other": [
+   "session_01EB6ycQ5hBW4upYjAZdyjv9"
+  ],
+  "own": true
+ },
+ "chrd-1486159": {
+  "shard": "s04",
+  "other": [
+   "session_01EB6ycQ5hBW4upYjAZdyjv9"
+  ],
+  "own": false
+ },
+ "ibp-1580905": {
+  "shard": "s04",
+  "other": [
+   "session_01EB6ycQ5hBW4upYjAZdyjv9"
+  ],
+  "own": true
+ },
+ "ash-1674862": {
+  "shard": "s04",
+  "other": [],
+  "own": true
+ },
+ "dfh-1825088": {
+  "shard": "s04",
+  "other": [],
+  "own": true
+ },
+ "krmn": {
+  "shard": "s04",
+  "other": [],
+  "own": true
+ },
+ "fmc-37785": {
+  "shard": "s05",
+  "other": [],
+  "own": true
+ },
+ "trn-99780": {
+  "shard": "s05",
+  "other": [],
+  "own": true
+ },
+ "cohr": {
+  "shard": "s05",
+  "other": [],
+  "own": true
+ },
+ "issuer-915840": {
+  "shard": "s05",
+  "other": [],
+  "own": true
+ },
+ "ati-1018963": {
+  "shard": "s05",
+  "other": [],
+  "own": true
+ },
+ "cxw-1070985": {
+  "shard": "s05",
+  "other": [],
+  "own": true
+ },
+ "nbr": {
+  "shard": "s05",
+  "other": [
+   "session_01EB6ycQp389AWGpoG1CLQck"
+  ],
+  "own": true
+ },
+ "merc-1333274": {
+  "shard": "s05",
+  "other": [
+   "session_01EB6ycQp389AWGpoG1CLQck"
+  ],
+  "own": true
+ },
+ "bwxt-1486957": {
+  "shard": "s05",
+  "other": [
+   "session_01EB6ycQp389AWGpoG1CLQck"
+  ],
+  "own": false
+ },
+ "esi": {
+  "shard": "s05",
+  "other": [
+   "session_01EB6ycQp389AWGpoG1CLQck"
+  ],
+  "own": false
+ },
+ "vvv-1674910": {
+  "shard": "s05",
+  "other": [],
+  "own": true
+ },
+ "woof-1826470": {
+  "shard": "s05",
+  "other": [],
+  "own": true
+ },
+ "prmb": {
+  "shard": "s05",
+  "other": [],
+  "own": true
+ },
+ "magn": {
+  "shard": "s06",
+  "other": [],
+  "own": true
+ },
+ "ual-100517": {
+  "shard": "s06",
+  "other": [],
+  "own": true
+ },
+ "clh-822818": {
+  "shard": "s06",
+  "other": [],
+  "own": true
+ },
+ "ego": {
+  "shard": "s06",
+  "other": [],
+  "own": true
+ },
+ "pag-1019849": {
+  "shard": "s06",
+  "other": [],
+  "own": true
+ },
+ "cnc": {
+  "shard": "s06",
+  "other": [],
+  "own": true
+ },
+ "xpo-1166003": {
+  "shard": "s06",
+  "other": [
+   "session_01EB6ycPEvmn4CxMMb11nups"
+  ],
+  "own": true
+ },
+ "crox-1334036": {
+  "shard": "s06",
+  "other": [
+   "session_01EB6ycPEvmn4CxMMb11nups"
+  ],
+  "own": true
+ },
+ "rlj-1511337": {
+  "shard": "s06",
+  "other": [
+   "session_01EB6ycPEvmn4CxMMb11nups"
+  ],
+  "own": false
+ },
+ "czr": {
+  "shard": "s06",
+  "other": [
+   "session_01EB6ycPEvmn4CxMMb11nups"
+  ],
+  "own": false
+ },
+ "cars-1683606": {
+  "shard": "s06",
+  "other": [],
+  "own": true
+ },
+ "corz-1839341": {
+  "shard": "s06",
+  "other": [],
+  "own": true
+ },
+ "mdln-2046386": {
+  "shard": "s06",
+  "other": [],
+  "own": true
+ },
+ "vsec": {
+  "shard": "s07",
+  "other": [],
+  "own": true
+ },
+ "gt-42582": {
+  "shard": "s07",
+  "other": [],
+  "own": true
+ },
+ "chscp": {
+  "shard": "s07",
+  "other": [],
+  "own": true
+ },
+ "penn": {
+  "shard": "s07",
+  "other": [],
+  "own": true
+ },
+ "irm": {
+  "shard": "s07",
+  "other": [],
+  "own": true
+ },
+ "moh": {
+  "shard": "s07",
+  "other": [
+   "session_01EB6ycT6MCEaqMEzKK1xCfe"
+  ],
+  "own": true
+ },
+ "dhc-1075415": {
+  "shard": "s07",
+  "other": [
+   "session_01EB6ycT6MCEaqMEzKK1xCfe"
+  ],
+  "own": true
+ },
+ "kbr": {
+  "shard": "s07",
+  "other": [
+   "session_01EB6ycT6MCEaqMEzKK1xCfe"
+  ],
+  "own": false
+ },
+ "lind-1512499": {
+  "shard": "s07",
+  "other": [
+   "session_01EB6ycT6MCEaqMEzKK1xCfe"
+  ],
+  "own": false
+ },
+ "nmrk-1690680": {
+  "shard": "s07",
+  "other": [],
+  "own": true
+ },
+ "mgni": {
+  "shard": "s07",
+  "other": [],
+  "own": true
+ },
+ "evcm": {
+  "shard": "s07",
+  "other": [],
+  "own": true
+ },
+ "lgn-2052568": {
+  "shard": "s07",
+  "other": [],
+  "own": true
+ },
+ "val": {
+  "shard": "s08",
+  "other": [],
+  "own": true
+ },
+ "gtn": {
+  "shard": "s08",
+  "other": [],
+  "own": true
+ },
+ "smg-825542": {
+  "shard": "s08",
+  "other": [],
+  "own": true
+ },
+ "fgpr-922358": {
+  "shard": "s08",
+  "other": [],
+  "own": true
+ },
+ "dxpe": {
+  "shard": "s08",
+  "other": [],
+  "own": true
+ },
+ "zd-1084048": {
+  "shard": "s08",
+  "other": [
+   "session_01EB6ycQyGzmzvuNXFVaLs3A"
+  ],
+  "own": true
+ },
+ "sgi-1206264": {
+  "shard": "s08",
+  "other": [
+   "session_01EB6ycQyGzmzvuNXFVaLs3A"
+  ],
+  "own": true
+ },
+ "hri": {
+  "shard": "s08",
+  "other": [
+   "session_01EB6ycQyGzmzvuNXFVaLs3A"
+  ],
+  "own": false
+ },
+ "xyz": {
+  "shard": "s08",
+  "other": [
+   "session_01EB6ycQyGzmzvuNXFVaLs3A"
+  ],
+  "own": true
+ },
+ "wfrd": {
+  "shard": "s08",
+  "other": [
+   "session_01EB6ycQyGzmzvuNXFVaLs3A"
+  ],
+  "own": true
+ },
+ "wh-1722684": {
+  "shard": "s08",
+  "other": [],
+  "own": true
+ },
+ "cnm-1856525": {
+  "shard": "s08",
+  "other": [],
+  "own": true
+ },
+ "q": {
+  "shard": "s08",
+  "other": [],
+  "own": true
+ },
+ "issuer-47129": {
+  "shard": "s09",
+  "other": [],
+  "own": true
+ },
+ "rrc-315852": {
+  "shard": "s09",
+  "other": [],
+  "own": true
+ },
+ "trs-842633": {
+  "shard": "s09",
+  "other": [],
+  "own": true
+ },
+ "dva": {
+  "shard": "s09",
+  "other": [],
+  "own": true
+ },
+ "gel": {
+  "shard": "s09",
+  "other": [],
+  "own": true
+ },
+ "epc-1096752": {
+  "shard": "s09",
+  "other": [],
+  "own": true
+ },
+ "ebs-1367644": {
+  "shard": "s09",
+  "other": [
+   "session_01EB6ycQxi1xdG57napvufYh"
+  ],
+  "own": true
+ },
+ "fa-1210677": {
+  "shard": "s09",
+  "other": [
+   "session_01EB6ycQxi1xdG57napvufYh"
+  ],
+  "own": true
+ },
+ "sxc-1514705": {
+  "shard": "s09",
+  "other": [
+   "session_01EB6ycQxi1xdG57napvufYh"
+  ],
+  "own": true
+ },
+ "ahco": {
+  "shard": "s09",
+  "other": [],
+  "own": true
+ },
+ "wms-1604028": {
+  "shard": "s09",
+  "other": [
+   "session_01EB6ycQxi1xdG57napvufYh"
+  ],
+  "own": true
+ },
+ "sols-2064953": {
+  "shard": "s09",
+  "other": [],
+  "own": true
+ },
+ "blco-1860742": {
+  "shard": "s09",
+  "other": [],
+  "own": true
+ },
+ "acco-712034": {
+  "shard": "s10",
+  "other": [
+   "session_01VxgayCboChk9ondBWtdG4U"
+  ],
+  "own": false
+ },
+ "hni-48287": {
+  "shard": "s10",
+  "other": [
+   "session_01VxgayCboChk9ondBWtdG4U"
+  ],
+  "own": false
+ },
+ "slgn-849869": {
+  "shard": "s10",
+  "other": [
+   "session_01VxgayCboChk9ondBWtdG4U"
+  ],
+  "own": false
+ },
+ "upbd-933036": {
+  "shard": "s10",
+  "other": [
+   "session_01VxgayCboChk9ondBWtdG4U"
+  ],
+  "own": false
+ },
+ "lad-1023128": {
+  "shard": "s10",
+  "other": [
+   "session_01VxgayCboChk9ondBWtdG4U"
+  ],
+  "own": false
+ },
+ "crl": {
+  "shard": "s10",
+  "other": [
+   "session_01VxgayCboChk9ondBWtdG4U"
+  ],
+  "own": false
+ },
+ "cvi": {
+  "shard": "s10",
+  "other": [
+   "session_01EB6ycSYT3qjKXeMR77HXVT",
+   "session_01VxgayCboChk9ondBWtdG4U"
+  ],
+  "own": false
+ },
+ "cmp-1227654": {
+  "shard": "s10",
+  "other": [
+   "session_01EB6ycSYT3qjKXeMR77HXVT",
+   "session_01VxgayCboChk9ondBWtdG4U"
+  ],
+  "own": false
+ },
+ "amcx": {
+  "shard": "s10",
+  "other": [
+   "session_01EB6ycSYT3qjKXeMR77HXVT"
+  ],
+  "own": false
+ },
+ "w": {
+  "shard": "s10",
+  "other": [
+   "session_01EB6ycSYT3qjKXeMR77HXVT"
+  ],
+  "own": false
+ },
+ "elan": {
+  "shard": "s10",
+  "other": [
+   "session_01EB6ycSYT3qjKXeMR77HXVT",
+   "session_01VxgayCboChk9ondBWtdG4U"
+  ],
+  "own": false
+ },
+ "embc-1872789": {
+  "shard": "s10",
+  "other": [
+   "session_01VxgayCboChk9ondBWtdG4U"
+  ],
+  "own": false
+ },
+ "vsnt-2067876": {
+  "shard": "s10",
+  "other": [
+   "session_01VxgayCboChk9ondBWtdG4U"
+  ],
+  "own": false
+ },
+ "oii-73756": {
+  "shard": "s11",
+  "other": [],
+  "own": true
+ },
+ "mur": {
+  "shard": "s11",
+  "other": [],
+  "own": true
+ },
+ "ptc-857005": {
+  "shard": "s11",
+  "other": [],
+  "own": true
+ },
+ "cien-936395": {
+  "shard": "s11",
+  "other": [],
+  "own": true
+ },
+ "entg": {
+  "shard": "s11",
+  "other": [],
+  "own": true
+ },
+ "gpi-1031203": {
+  "shard": "s11",
+  "other": [
+   "session_01EB6ycSCocrvpcWrLAWWiGA"
+  ],
+  "own": true
+ },
+ "bte": {
+  "shard": "s11",
+  "other": [
+   "session_01EB6ycSCocrvpcWrLAWWiGA"
+  ],
+  "own": true
+ },
+ "ats": {
+  "shard": "s11",
+  "other": [
+   "session_01EB6ycSCocrvpcWrLAWWiGA"
+  ],
+  "own": false
+ },
+ "mtdr-1520006": {
+  "shard": "s11",
+  "other": [
+   "session_01EB6ycSCocrvpcWrLAWWiGA"
+  ],
+  "own": false
+ },
+ "zip-1617553": {
+  "shard": "s11",
+  "other": [
+   "session_01EB6ycSCocrvpcWrLAWWiGA"
+  ],
+  "own": false
+ },
+ "esab-1877322": {
+  "shard": "s11",
+  "other": [],
+  "own": true
+ },
+ "issuer-1739445": {
+  "shard": "s11",
+  "other": [],
+  "own": true
+ },
+ "tho-730263": {
+  "shard": "s12",
+  "other": [],
+  "own": true
+ },
+ "oln": {
+  "shard": "s12",
+  "other": [],
+  "own": true
+ },
+ "gva-861459": {
+  "shard": "s12",
+  "other": [],
+  "own": true
+ },
+ "tnet-937098": {
+  "shard": "s12",
+  "other": [],
+  "own": true
+ },
+ "mms": {
+  "shard": "s12",
+  "other": [],
+  "own": true
+ },
+ "ttmi-1116942": {
+  "shard": "s12",
+  "other": [
+   "session_01EB6ycQysTeLDKi39ieW74a"
+  ],
+  "own": true
+ },
+ "mxl": {
+  "shard": "s12",
+  "other": [
+   "session_01EB6ycQysTeLDKi39ieW74a"
+  ],
+  "own": true
+ },
+ "opln": {
+  "shard": "s12",
+  "other": [
+   "session_01EB6ycQysTeLDKi39ieW74a"
+  ],
+  "own": false
+ },
+ "alks": {
+  "shard": "s12",
+  "other": [
+   "session_01EB6ycQysTeLDKi39ieW74a"
+  ],
+  "own": false
+ },
+ "brsl": {
+  "shard": "s12",
+  "other": [
+   "session_01EB6ycQysTeLDKi39ieW74a"
+  ],
+  "own": false
+ },
+ "ee-1888447": {
+  "shard": "s12",
+  "other": [],
+  "own": true
+ },
+ "baly": {
+  "shard": "s12",
+  "other": [
+   "session_01EB6ycQysTeLDKi39ieW74a"
+  ],
+  "own": true
+ },
+ "ach-75252": {
+  "shard": "s13",
+  "other": [],
+  "own": true
+ },
+ "achc-1520697": {
+  "shard": "s13",
+  "other": [],
+  "own": true
+ },
+ "altg-1759824": {
+  "shard": "s13",
+  "other": [],
+  "own": true
+ },
+ "avnt-1122976": {
+  "shard": "s13",
+  "other": [
+   "session_01EB6ycTU6eKmdrCBAuUZxYr"
+  ],
+  "own": true
+ },
+ "cc": {
+  "shard": "s13",
+  "other": [],
+  "own": true
+ },
+ "ens-1289308": {
+  "shard": "s13",
+  "other": [
+   "session_01EB6ycTU6eKmdrCBAuUZxYr"
+  ],
+  "own": false
+ },
+ "ese": {
+  "shard": "s13",
+  "other": [],
+  "own": true
+ },
+ "orn-1402829": {
+  "shard": "s13",
+  "other": [
+   "session_01EB6ycTU6eKmdrCBAuUZxYr"
+  ],
+  "own": false
+ },
+ "rxo-1929561": {
+  "shard": "s13",
+  "other": [],
+  "own": true
+ },
+ "sbac-1034054": {
+  "shard": "s13",
+  "other": [
+   "session_01EB6ycTU6eKmdrCBAuUZxYr"
+  ],
+  "own": true
+ },
+ "svc": {
+  "shard": "s13",
+  "other": [],
+  "own": true
+ },
+ "uis-746838": {
+  "shard": "s13",
+  "other": [],
+  "own": true
+ },
+ "tpc-77543": {
+  "shard": "s14",
+  "other": [],
+  "own": true
+ },
+ "lnwo-750004": {
+  "shard": "s14",
+  "other": [],
+  "own": true
+ },
+ "dorm-868780": {
+  "shard": "s14",
+  "other": [],
+  "own": true
+ },
+ "matv": {
+  "shard": "s14",
+  "other": [],
+  "own": true
+ },
+ "issuer-1040765": {
+  "shard": "s14",
+  "other": [
+   "session_01EB6ycQJTNp7tq3yJzQWf1v"
+  ],
+  "own": true
+ },
+ "nxst-1142417": {
+  "shard": "s14",
+  "other": [
+   "session_01EB6ycQJTNp7tq3yJzQWf1v"
+  ],
+  "own": true
+ },
+ "novelis-inc": {
+  "shard": "s14",
+  "other": [
+   "session_01EB6ycQJTNp7tq3yJzQWf1v"
+  ],
+  "own": false
+ },
+ "for-1406587": {
+  "shard": "s14",
+  "other": [
+   "session_01EB6ycQJTNp7tq3yJzQWf1v"
+  ],
+  "own": true
+ },
+ "snap-1564408": {
+  "shard": "s14",
+  "other": [
+   "session_01EB6ycQJTNp7tq3yJzQWf1v"
+  ],
+  "own": false
+ },
+ "cwk-1628369": {
+  "shard": "s14",
+  "other": [],
+  "own": true
+ },
+ "kgs": {
+  "shard": "s14",
+  "other": [],
+  "own": true
+ },
+ "mbc-1941365": {
+  "shard": "s14",
+  "other": [],
+  "own": true
+ },
+ "clf": {
+  "shard": "s15",
+  "other": [],
+  "own": true
+ },
+ "pbi": {
+  "shard": "s15",
+  "other": [],
+  "own": true
+ },
+ "efor-890564": {
+  "shard": "s15",
+  "other": [],
+  "own": true
+ },
+ "otex": {
+  "shard": "s15",
+  "other": [],
+  "own": true
+ },
+ "tac": {
+  "shard": "s15",
+  "other": [],
+  "own": true
+ },
+ "pbf-holding-co-llc": {
+  "shard": "s15",
+  "other": [
+   "session_01EB6ycQz28hRcaSw5WR4oTU"
+  ],
+  "own": false
+ },
+ "wex-1309108": {
+  "shard": "s15",
+  "other": [
+   "session_01EB6ycQz28hRcaSw5WR4oTU"
+  ],
+  "own": true
+ },
+ "alsn": {
+  "shard": "s15",
+  "other": [
+   "session_01EB6ycQz28hRcaSw5WR4oTU"
+  ],
+  "own": false
+ },
+ "crwv": {
+  "shard": "s15",
+  "other": [
+   "session_01EB6ycQz28hRcaSw5WR4oTU"
+  ],
+  "own": false
+ },
+ "sah-1043509": {
+  "shard": "s15",
+  "other": [],
+  "own": true
+ },
+ "enr-1632790": {
+  "shard": "s15",
+  "other": [
+   "session_01EB6ycQz28hRcaSw5WR4oTU"
+  ],
+  "own": true
+ },
+ "amtm": {
+  "shard": "s15",
+  "other": [
+   "session_01EB6ycQz28hRcaSw5WR4oTU"
+  ],
+  "own": true
+ }
+}

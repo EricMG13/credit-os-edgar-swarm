@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "issuer-47129-2026-11-18-credit_snapshot-host",
+    "issuer_id": "issuer-47129",
+    "issuer_name": "Hertz Corp",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_47129-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_47129-20241231.htm.jsonl",
+      "sha256": "4e49a8b2c81fa4e56e6aee01320ececf510585c8b2b7ea18eca358c4a304e313"
+    },
+    "10-K_2025-12-31_47129-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_47129-20251231.htm.jsonl",
+      "sha256": "dc00f78948086d51bf4e70b3017f8b78f525d4f1a59d9f131baee1b70950eee1"
+    },
+    "10-Q_2026-03-31_47129-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_47129-20260331.htm.jsonl",
+      "sha256": "bb0a0311a5fe44ef4d80395134d2d8cf77e92fd0b9805c0b2b5bdc7012068ea0"
+    },
+    "10-Q_2026-06-30_47129-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_47129-20260630.htm.jsonl",
+      "sha256": "9b9c29ce57e2eb96d9896455bf6f9acff0e6b60ed7df4f3643890e55c1414f89"
+    },
+    "10-Q_2026-09-30_47129-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_47129-20260930.htm.jsonl",
+      "sha256": "b93427c355ec6bd1a1cd06d464a2ce80a27216787cacb1dbf9e34d5651aa9668"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/47129-hertz-corp-47129.json",
+      "sha256": "5b7cb1e36c43c2fcc1d720d02ccbe77c9c6596c41baf0b6723fe574ebbc91ccb"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "7a9bd96db5003c94c9370a9300cf73187d8699fe617f4238c816cb8d6cd2563a"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "b50f558daec43f041d3b387dccf92e0254da590565fc2b08cbe737b6b86aabec"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "6bdbff96e8df7437c9a1d7712260a37ecf0a7965f978d2760144ce8ad9a3cafd"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "dbfbd9e18ec404f4908c8f133f5ca9396889119079b0a2b286ded3459cdfabae"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Hertz Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Hertz Corp — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

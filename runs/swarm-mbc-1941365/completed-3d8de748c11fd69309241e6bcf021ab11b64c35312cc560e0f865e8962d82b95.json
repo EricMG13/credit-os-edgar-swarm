@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for MasterBrand, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/4446c4d4f0116e4b2d845e57059db7b3638b5a1937f0603b028a9fe432b2c978/1.response.md",
+    "CP-1": "requests/CP-1/3b3717a4b8b91f7b8b3352e09bb1865e6a649565dc44faa057a63fc173e2948d/1.response.md",
+    "CP-1A": "requests/CP-1A/eb0aed9b763f4bb74a5581b6661b255c6287effb78c3190a0202da095cb9435e/1.response.md",
+    "CP-2": "requests/CP-2/6fbb84ae0d3d33db8ac5c75e66c181e3171e8936990cda3ae4e1a29fe5bb98d8/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "c077ee066143416f2b1b61d220f803e7a0ede3309e635d93286dffbcccb66073",
+  "delivery_sha256": "4e84f7d26bced91f161170a880da00a2b155df3bdab8cb92e285e8ce86641c17"
+}

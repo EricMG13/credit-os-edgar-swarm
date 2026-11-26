@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "ibp-1580905-2026-11-18-credit_snapshot-host",
+    "issuer_id": "ibp-1580905",
+    "issuer_name": "Installed Building Products, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_ibp-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_ibp-20241231.htm.jsonl",
+      "sha256": "43fc427d223aed274776a9d6ca5fde2f55d2cbd24780a26db884964bf5d24025"
+    },
+    "10-K_2025-12-31_ibp-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_ibp-20251231.htm.jsonl",
+      "sha256": "03b8de0e297ca73f1d424064b74b046864a2893576a799a6a3b13af45122b35e"
+    },
+    "10-Q_2026-03-31_ibp-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_ibp-20260331.htm.jsonl",
+      "sha256": "b51cc01569723de4f80fa088d333477b6826156f97750b77d9b78d776c80ed58"
+    },
+    "10-Q_2026-06-30_ibp-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_ibp-20260630.htm.jsonl",
+      "sha256": "0fb52476a0a914dcabac5d2ccf6fcd69e5693e27d34e8893dab18a8ab8d4d520"
+    },
+    "10-Q_2026-09-30_ibp-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_ibp-20260930.htm.jsonl",
+      "sha256": "d00afa049acfbef203a56f297d83bd5f47f5a6c78105d5dbe18860b16e387f13"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1580905-installed-building-products-inc-ibp.json",
+      "sha256": "9cc7eabc4fd4c69070961c00053fdcaed841d2ef027fdddf5dd4d5bcd4d43c3e"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "1b1777fcefaf0f388c19df908d9774870cb45d9de37f0d0ade6723a244b8deec"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "3f9bdfbff1161e77a19301ffed01b43939e59469297fa2adc57fd91241195021"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "58c807e578ac6d957cceebb175472c33b433b057077a0ea8ad7cee616829b412"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "b9be143c11769dc08adca48d3ec35fd587cd365a271a67f1de8c7397e6c63caf"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Installed Building Products, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Installed Building Products, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

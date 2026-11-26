@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Primo Brands Corp as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/b54146a09d1122526b5d46c49e6924b85ad397308f51e296e03044ffec849c4f/1.response.md",
+    "CP-1": "requests/CP-1/ebce884135607d7de3a5190769d6639747c106a65b69ea606ce3f086dc1a4fe5/1.response.md",
+    "CP-1A": "requests/CP-1A/0dccef3a540776dae90657c817a91570f167a9163c541a222269e00dcb6d2d3c/1.response.md",
+    "CP-2": "requests/CP-2/010b87c689437ea7eb4f1cbf15d7ee29a83fb7ae851584a1329c7e27edc9b67a/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "d2668290d5677a9a04baf7840f0773153b6734dc99e748df76b0808284582d43",
+  "delivery_sha256": "290f88ec6fb604613750380fed3e655f905854f018706cbc68cf70a70000a2dc"
+}

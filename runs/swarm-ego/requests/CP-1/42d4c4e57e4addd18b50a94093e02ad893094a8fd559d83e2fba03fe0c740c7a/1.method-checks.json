@@ -1,0 +1,81 @@
+{
+  "checks": [
+    {
+      "figure": "LTM: EBITDA (Reported), last twelve months to 2026-09-30",
+      "module": "CP-1",
+      "reason": "`873.691m (9M 2026)` is not a figure (value: '873.691m (9M 2026)' is not a figure)",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: EBITDA (Reported), last twelve months to 2026-09-30",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "Not calculable: the full-year component is missing, so no last-twelve-months figure is built",
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "LTM: EBITDA (Adjusted), last twelve months to 2026-09-30",
+      "module": "CP-1",
+      "reason": "`892.0m (9M 2026)` is not a figure (value: '892.0m (9M 2026)' is not a figure)",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: EBITDA (Adjusted), last twelve months to 2026-09-30",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "Not calculable: the full-year component is missing, so no last-twelve-months figure is built",
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "LTM: Cash Interest Paid, last twelve months to 2026-09-30",
+      "module": "CP-1",
+      "reason": "`74.554m (9M 2026)` is not a figure (value: '74.554m (9M 2026)' is not a figure)",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Cash Interest Paid, last twelve months to 2026-09-30",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "Not calculable: the full-year component is missing, so no last-twelve-months figure is built",
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "LTM: Metal sales, last twelve months to 2026-09-30",
+      "module": "CP-1",
+      "reason": "`1531.744m (9M 2026)` is not a figure (value: '1531.744m (9M 2026)' is not a figure)",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Metal sales, last twelve months to 2026-09-30",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "Not calculable: the full-year component is missing, so no last-twelve-months figure is built",
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    },
+    {
+      "figure": "all",
+      "module": "CP-1",
+      "reason": "its SKILL.md declares no completeness contract: SKILL.md has no `## Output profile` section",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "",
+      "row": "all",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    }
+  ],
+  "kind": "method-script-checks/1",
+  "module": "CP-1",
+  "response_sha256": "f1a049b40c847c0cebad94275ae2975aa0aeb4fde955076ea4f3d2cf2b8dac73",
+  "scripts": {
+    "docs/reuse/selected-methods/scripts/completeness_check.py": "a9841a74e4f851fd565c5f3cabc831835c4bc305ea40c28446790f8165d56056",
+    "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py": "8f90ad05f99ffe09ea6f223cbd67827bb4ab36f4d243e12645eac628dbff9233"
+  }
+}

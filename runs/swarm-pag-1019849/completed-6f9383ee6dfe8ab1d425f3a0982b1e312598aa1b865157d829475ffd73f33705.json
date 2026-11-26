@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Penske Automotive Group, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/7530ff69b99c0ec67e9fda2ce0e0febbe936906347cbd1397425eca005957c7a/1.response.md",
+    "CP-1": "requests/CP-1/1e855afda1b56ab5422b55e88e9062ce086b4b1dbd5d9d78a9fba8ff33a9fda4/1.response.md",
+    "CP-1A": "requests/CP-1A/f4c95bcae9b5dde1b779e60711058b4c30d30685e15f349b8327023d7be73345/1.response.md",
+    "CP-2": "requests/CP-2/844dc2c1782c0278a9152fd9b916972068928f12501f0f0f13134515aa496f5d/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "9ddf921c40ff92936d38c7dc3397d29de403005429161e41c38445ee706945a8",
+  "delivery_sha256": "6aa22c67774b73bbb0f89bdf3a7c973fb70b514665ce35addc3bc1ab7c14d86d"
+}

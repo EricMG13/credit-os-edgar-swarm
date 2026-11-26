@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Weatherford International plc as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/a4886753a046c5cb2057e39bfd7fc4811997fd7c2187b10f7fc24574b026e199/1.response.md",
+    "CP-1": "requests/CP-1/d3a9f5650b5a741a85fbe5387f6b708c139ef0688258da9d836bab61be0f8c6b/1.response.md",
+    "CP-1A": "requests/CP-1A/8a3e045a26902540b60a1c4e9c2778f22dc3e272c0093f3addd2af797a97d0af/1.response.md",
+    "CP-2": "requests/CP-2/c6642c7ab947dc3df76aee6b7a575cc63e1961212169cee8f37eb19418500701/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "f859999127bf2a36d8b6ddf6f779a5668c10ff9e3610ae2b11638c03c6691fd7",
+  "delivery_sha256": "3a79521c992ce6387d3fefe04523e305869168263c14d9d3ccf2ecb2640bf666"
+}

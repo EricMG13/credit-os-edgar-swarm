@@ -1,0 +1,123 @@
+{
+  "checks": [
+    {
+      "figure": "LTM: EBITDA (Reported)",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": 373.312,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: EBITDA (Reported)",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "373.312",
+      "status": "agreed",
+      "tolerance": 0.001,
+      "unit": "USD m"
+    },
+    {
+      "figure": "LTM: Total revenues",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": 4159.98,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Total revenues",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "4,159.980",
+      "status": "agreed",
+      "tolerance": 0.001,
+      "unit": "USD m"
+    },
+    {
+      "figure": "LTM: Cash Interest Paid",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": 304.30500000000006,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Cash Interest Paid",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "304.305",
+      "status": "agreed",
+      "tolerance": 0.001,
+      "unit": "USD m"
+    },
+    {
+      "figure": "LTM: Interest charged to homebuilding cost of sales",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": 209.601,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Interest charged to homebuilding cost of sales",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "209.601",
+      "status": "agreed",
+      "tolerance": 0.001,
+      "unit": "USD m"
+    },
+    {
+      "figure": "Net homebuilding debt / EBITDA (FY2024 / 2024-12-31)",
+      "module": "CP-1",
+      "reason": "Calculated Value = Numerator Value / Denominator Value (the script's ratio), or that x 100 for a percentage; for a change, Numerator / Denominator - 1 (the script's growth); agrees as the ratio",
+      "recomputed": 1.1465676855895197,
+      "recomputed_label": null,
+      "register": "T4.9",
+      "row": "Net homebuilding debt / EBITDA (FY2024 / 2024-12-31)",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "1.15",
+      "status": "agreed",
+      "tolerance": 0.010001704301457396,
+      "unit": null
+    },
+    {
+      "figure": "Net homebuilding debt / EBITDA (FY2025 / 2025-12-31)",
+      "module": "CP-1",
+      "reason": "Calculated Value = Numerator Value / Denominator Value (the script's ratio), or that x 100 for a percentage; for a change, Numerator / Denominator - 1 (the script's growth); agrees as the ratio",
+      "recomputed": 2.338104227771386,
+      "recomputed_label": null,
+      "register": "T4.9",
+      "row": "Net homebuilding debt / EBITDA (FY2025 / 2025-12-31)",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "2.34",
+      "status": "agreed",
+      "tolerance": 0.010003380783235335,
+      "unit": null
+    },
+    {
+      "figure": "Net homebuilding debt / EBITDA (2026-09-30)",
+      "module": "CP-1",
+      "reason": "Calculated Value = Numerator Value / Denominator Value (the script's ratio), or that x 100 for a percentage; for a change, Numerator / Denominator - 1 (the script's growth); agrees as the ratio",
+      "recomputed": 4.183232791873821,
+      "recomputed_label": null,
+      "register": "T4.9",
+      "row": "Net homebuilding debt / EBITDA (2026-09-30)",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "4.18",
+      "status": "agreed",
+      "tolerance": 0.010006942226330622,
+      "unit": null
+    },
+    {
+      "figure": "all",
+      "module": "CP-1",
+      "reason": "its SKILL.md declares no completeness contract: SKILL.md has no `## Output profile` section",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "",
+      "row": "all",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    }
+  ],
+  "kind": "method-script-checks/1",
+  "module": "CP-1",
+  "response_sha256": "8285390aa0f5174937995f0fab41ca29b44ecd8e50d4dfc119eece6533ba3559",
+  "scripts": {
+    "docs/reuse/selected-methods/scripts/completeness_check.py": "a9841a74e4f851fd565c5f3cabc831835c4bc305ea40c28446790f8165d56056",
+    "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py": "8f90ad05f99ffe09ea6f223cbd67827bb4ab36f4d243e12645eac628dbff9233"
+  }
+}

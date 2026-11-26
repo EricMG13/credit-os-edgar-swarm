@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Uniti Group Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/dd53a72c55416e1e0269bbfbc4910cf678a597911f0df81e1fdf6cc889795a25/1.response.md",
+    "CP-1": "requests/CP-1/a2434731a1b07e4ad5c48a31930d1211b7e78de5ac8ab97d8a117e5790058c15/1.response.md",
+    "CP-1A": "requests/CP-1A/39931c608154d5c1e17ee333964e6803bbbc7ce728332ddf1f0e5d9638221836/1.response.md",
+    "CP-2": "requests/CP-2/20dfe7ff3e0ea1e1b529c2f5c80cd30068f19e669eec8736deae6b6106e2b96f/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "e5cbdd55759c740e4a032fa4dfa450fdc440019a964a2ad3be269552c2a939b3",
+  "delivery_sha256": "8451d5906d274047a76a951de78fdd28229e14716b510c48266af2f9f2ffa9fd"
+}

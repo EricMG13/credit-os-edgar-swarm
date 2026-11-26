@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for EDGEWELL PERSONAL CARE Co as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "86a9b21155b906d765455ab138df5d8ede616d0c8963b7c621d93763ec7b63e1",
+    "CP-1.md": "8e855ba68d814ee5c62fcc59b627b34c2f714aac0cd070309f2634522cfc7524",
+    "CP-1A.md": "85a775b3c03f1cb860107ac5f158842bee5b4203dc132c5a61e503543e6166a9",
+    "CP-2.md": "207bf5f742f21db29b1f7ead66a6f2d45cc8f4d38d6fb18e6b199a06a1d333dc",
+    "coverage.json": "603fb75dcdb89d2002de6d2c71d6639aec47ac5bf83fb43abf27470e11f55fc4",
+    "view.json": "cf510e1d8acee14a3ffdaa60c3c4114bb4e1ac9b631f3d6996a79cc3d33102ad",
+    "report-view.json": "bdec5b1f8d95fe49d20bf740eb9d71af966d3e23f90abedabfc3b6d302b53221"
+  }
+}

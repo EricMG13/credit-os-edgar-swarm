@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for DIEBOLD NIXDORF, Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "a3e994a512009dfbb90af829898f7dcd7fa54fc974d2cc6e787d87f233be04c5",
+    "CP-1.md": "a954b9e4e4cb88fda4219d0e06939d8a290f8e579692d9961d06d8139a77a88a",
+    "CP-1A.md": "cc65abdc2d655cf5013ab5872a6ec86ae0100025dd1c539800ea0b38c68debf1",
+    "CP-2.md": "fc945b9ff2710dd5f3c27e7669c4cf5e18643bf2415132a957b4b038412185be",
+    "coverage.json": "068e86e92c496f16531d06e21d780c1c5ed110ffcaa8b02bae2b3a388e92245e",
+    "view.json": "724dcd3d421fb5fa5f6fb4170fa080120035011ae755207bccb1eb6cd2e8af7d",
+    "report-view.json": "d1fd0de360eae0072f04579aae5ef27754aae5f4d67f1a972182c359efced343"
+  }
+}

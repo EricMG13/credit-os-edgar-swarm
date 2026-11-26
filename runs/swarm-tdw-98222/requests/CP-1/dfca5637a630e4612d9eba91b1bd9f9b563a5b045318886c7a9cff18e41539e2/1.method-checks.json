@@ -1,0 +1,109 @@
+{
+  "checks": [
+    {
+      "figure": "LTM: Revenue",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": 1365.7230000000002,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Revenue",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "1,365.723",
+      "status": "agreed",
+      "tolerance": 0.001,
+      "unit": "USD m"
+    },
+    {
+      "figure": "LTM: EBITDA (Reported)",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": 509.74800000000005,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: EBITDA (Reported)",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "509.748",
+      "status": "agreed",
+      "tolerance": 0.001,
+      "unit": "USD m"
+    },
+    {
+      "figure": "LTM: Cash Interest Paid",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": 63.484,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Cash Interest Paid",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "63.484",
+      "status": "agreed",
+      "tolerance": 0.001,
+      "unit": "USD m"
+    },
+    {
+      "figure": "LTM: Net Cash from Operating Activities",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": 314.403,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Net Cash from Operating Activities",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "314.403",
+      "status": "agreed",
+      "tolerance": 0.001,
+      "unit": "USD m"
+    },
+    {
+      "figure": "LTM: Additions to properties and equipment",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": 44.334999999999994,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Additions to properties and equipment",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "44.335",
+      "status": "agreed",
+      "tolerance": 0.001,
+      "unit": "USD m"
+    },
+    {
+      "figure": "LTM: Deferred drydocking and survey costs paid",
+      "module": "CP-1",
+      "reason": "LTM = Full-Year Component + Current Stub - Prior-Year Stub (REF_CP-1_08; the script's derive_periods)",
+      "recomputed": 101.75100000000002,
+      "recomputed_label": null,
+      "register": "T4.8",
+      "row": "LTM: Deferred drydocking and survey costs paid",
+      "script": "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py",
+      "stated": "101.751",
+      "status": "agreed",
+      "tolerance": 0.001,
+      "unit": "USD m"
+    },
+    {
+      "figure": "all",
+      "module": "CP-1",
+      "reason": "its SKILL.md declares no completeness contract: SKILL.md has no `## Output profile` section",
+      "recomputed": null,
+      "recomputed_label": null,
+      "register": "",
+      "row": "all",
+      "script": "docs/reuse/selected-methods/scripts/completeness_check.py",
+      "stated": null,
+      "status": "not checked",
+      "tolerance": null,
+      "unit": null
+    }
+  ],
+  "kind": "method-script-checks/1",
+  "module": "CP-1",
+  "response_sha256": "1d81608ee8a8e4db2288bdbd80a5cf2c87e457f71a28e8adc9f65a96edebb4fc",
+  "scripts": {
+    "docs/reuse/selected-methods/scripts/completeness_check.py": "a9841a74e4f851fd565c5f3cabc831835c4bc305ea40c28446790f8165d56056",
+    "docs/reuse/selected-methods/skills/cp-1-canonical-data-foundation/scripts/credit_metrics.py": "8f90ad05f99ffe09ea6f223cbd67827bb4ab36f4d243e12645eac628dbff9233"
+  }
+}

@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "cars-1683606-2026-11-18-credit_snapshot-host",
+    "issuer_id": "cars-1683606",
+    "issuer_name": "Cars.com Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_cars_cars-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_cars_cars-20241231.htm.jsonl",
+      "sha256": "29ec913f9aba8f8ee6806465185b8e497359f6f3333cd9243bf528ec696f42fe"
+    },
+    "10-K_2025-12-31_cars_cars-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_cars_cars-20251231.htm.jsonl",
+      "sha256": "6c0dc82761eff68f6b94ce71138107d711ed6a82147d512dde3f8bdcc4c75ca9"
+    },
+    "10-Q_2026-03-31_cars_cars-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_cars_cars-20260331.htm.jsonl",
+      "sha256": "3a4344399cc4663d9641d8ae6c6fd94c56eca0d4b5369ad96a4e540f91da6bb2"
+    },
+    "10-Q_2026-06-30_cars_cars-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_cars_cars-20260630.htm.jsonl",
+      "sha256": "e57c8c4207cd0a76320e6e01813c08d37eb36b363c17e098aab8e1ac6b51d89a"
+    },
+    "10-Q_2026-09-30_cars_cars-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_cars_cars-20260930.htm.jsonl",
+      "sha256": "59760f8792c8eae53d42d00a7dc705e4617f484a5de72e1c93aaafd641a0b442"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1683606-cars-com-inc.json",
+      "sha256": "9487ce37a3e7ef900cf624beb2a1e45005cc759f10d99b2007d0107f01b39d63"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "32d5509625ae6768a292793a2e37dabd68ca4c3cd88cf2b29ded291490ab0f45"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "8d203d3472f7d533d8114ba80eb9afbe3958010dd5b184f13e70b2e9a1588aa7"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "5ec52ba123f8cfe9d802e6045c69bed133871e266254fc5f252c3b03e67ffc0d"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "1c8ed2a80b449c31a06e8a5c48664bd375241b2465ba5dde562e88a2beb8d005"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Cars.com Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Cars.com Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

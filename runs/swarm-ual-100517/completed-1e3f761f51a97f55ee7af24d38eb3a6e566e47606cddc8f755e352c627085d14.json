@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for United Airlines Holdings, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/eba7d411a117294e031d3461e4b54e2ad70dea1c85fc1f73a2e28590f2fd7da6/1.response.md",
+    "CP-1": "requests/CP-1/0c5e5546bc41b4b98a43b3cbe2eee1867ec3a804a4d57a01f55982e0354d0e67/1.response.md",
+    "CP-1A": "requests/CP-1A/ad142e36dc6d565c7ba29f866b5f5d34d9981e165a56cd172c5d408b98ca7e9d/1.response.md",
+    "CP-2": "requests/CP-2/4c211221648720f263db17bd25f715fb252f5cb47f7aaf58d52f0a01a53a530d/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "89eafbaff1d01f9bd2ba2fb24105f428c01083f309e4ff7dbcd6e312bc28c4a6",
+  "delivery_sha256": "bb4b4ca10e9122f6884dc6dee74f16634aeca846da9890da75f2d0e02f68b39b"
+}

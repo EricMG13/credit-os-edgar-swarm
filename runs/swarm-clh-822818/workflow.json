@@ -1,0 +1,260 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "clh-822818-2026-11-18-credit_snapshot-host",
+    "issuer_id": "clh-822818",
+    "issuer_name": "Clean Harbors Inc",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_clh.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_clh.htm.jsonl",
+      "sha256": "1a982be51465787e0b638e9cd389e326f2347bb90dc89684e582545d7974ccf0"
+    },
+    "10-K_2025-12-31_clh.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_clh.htm.jsonl",
+      "sha256": "db05663b0abedc3153c61ba03078ca17064eae77c6206d98f77ec28c9ad3889e"
+    },
+    "10-Q_2026-03-31_clh.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_clh.htm.jsonl",
+      "sha256": "8d4a6b230efcdc9d60ef71f41e69f7c3c68a13b8d49ff369f808cf8e0a4919d4"
+    },
+    "10-Q_2026-06-30_clh.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_clh.htm.jsonl",
+      "sha256": "beb5eba20774f85f991d1e4257eeca734d30de116c4ad65665e451479474aa11"
+    },
+    "10-Q_2026-09-30_clh.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_clh.htm.jsonl",
+      "sha256": "a52a4cfd89dec265646fadb5741962f99a92f0536a98e8a8cb1c56c103da491d"
+    },
+    "EX99.1_2026-03-31_clh_amckimpressrelease-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_clh_amckimpressrelease-htm.htm.jsonl",
+      "sha256": "7b2aec898b4fb1b51fa79a67aa9fe21a9ce07127d975da8c98962c962b4cc3fc"
+    },
+    "EX99.1_2026-03-31_clh_clh-q12026pressrelease-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_clh_clh-q12026pressrelease-htm.htm.jsonl",
+      "sha256": "19df5825c079c9c3f277e8e8370dee50ed5e3771b33ee142e09c050f0e880e9d"
+    },
+    "EX99.1_2026-03-31_clh_terranovapressrelease-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_clh_terranovapressrelease-htm.htm.jsonl",
+      "sha256": "db0e266e0f2754ce584a1eebe1ddb48a38d232ec922a629c54aab823870ab016"
+    },
+    "EX99.1_2026-06-30_clh_clh-q22026pressrelease-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_clh_clh-q22026pressrelease-htm.htm.jsonl",
+      "sha256": "841fbc2af222f1a024918e301aa586c12a7a13d412850ff0f73896654c65ca71"
+    },
+    "EX99.1_2026-06-30_clh_enviroservepressrelease-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_clh_enviroservepressrelease-htm.htm.jsonl",
+      "sha256": "5b9a86a7e63260e909d3e821ba7fe468b850a470c3a2de2ecb3754ffb848b29c"
+    },
+    "EX99.1_2026-09-30_clh_clh-q32026pressrelease-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-09-30_clh_clh-q32026pressrelease-htm.htm.jsonl",
+      "sha256": "e43dce26c8c374c3d67a94dd5297de03aceb770ff9ed2deceffaa24426191545"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/822818-clean-harbors-inc.json",
+      "sha256": "8439774850e88dc11280b386268d691e6275a98c1d4d4be36e9705c5a8183615"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "f02ec45122a319414f5ce7fbf35107f293107b63a045f3eca1e2d6dcfceebeb5"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "0af3d6f001a1b38ddf2bcc936e6fce8dda938ad50bb73c16d2d4c20de6bc6755"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "395aca7c4e4de02a15a478643d8c4ba23e887be0b9f55356ab156d35c26eb53d"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "11ccd7a761b2eb13d27234d8d97e7929c07eb6cfb83ffe04eeb57ef63218e305"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Clean Harbors Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Clean Harbors Inc — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

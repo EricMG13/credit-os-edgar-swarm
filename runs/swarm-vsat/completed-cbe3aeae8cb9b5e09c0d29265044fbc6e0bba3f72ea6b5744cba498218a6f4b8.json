@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for VIASAT INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/5995ed248455ff0a398bb02f10189fdc1f8d94123ea496874ef4326c995e8b27/1.response.md",
+    "CP-1": "requests/CP-1/9f911d0c3af8e82686450112ee187d953f9c7854dd408cb0c5c68b1b5f042670/1.response.md",
+    "CP-1A": "requests/CP-1A/afc028cff3607fa685c9280d1928ab6654e9e2c024d349f243aa9593e2acd8bf/1.response.md",
+    "CP-2": "requests/CP-2/60773b6221c46257cb123895b218c8cfa0d874ecc550796ed89617030713b9ae/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "729c658541560244e3434997e6522304656ad2b990c038dd5814450904a333f8",
+  "delivery_sha256": "5817fffc4a208f4aca51349758a82c7b462e09061d44eb9233b5bfcee67cc1ff"
+}

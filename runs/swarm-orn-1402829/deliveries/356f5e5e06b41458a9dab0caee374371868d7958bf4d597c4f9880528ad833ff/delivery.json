@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Orion Group Holdings Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "c7707a5f5ca910e7f6987f05be2a2c65432942f427ff0958f9e992435fa707da",
+    "CP-1.md": "ea5dda4242aa0323a75e9c4bea4cb2d5edbf4834ddb7d8cf89e041f3148cb1d5",
+    "CP-1A.md": "2122baf7642e648d90c7d249a12f493c2ffc2814ff0c261eb3bd92e248dbd4b8",
+    "CP-2.md": "07a33c847b833bb5611a7a97fef35434ff56c122bf12bb31e0093abfcea7a765",
+    "coverage.json": "bedeeeda4141f7162d9d8effffa0abee94b3fb067f8bd8f0ae0efbc0126ec548",
+    "view.json": "59891342904c37589a77daa9cbeb419e53198d2802fc037f60766a9e6fbf7ece",
+    "report-view.json": "a3bd3a2d184bff432f0c98dff5241cf1c3e09b34dcb49da25f108e6787f3834e"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Petco Health & Wellness Company, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/1349a674d5b75aa7e41dc9bba2263f34330f168eef8e3777cb9dcc6f7b793fb3/1.response.md",
+    "CP-1": "requests/CP-1/2b29aa1c05a2ee96579f5f46181e457004d7ecab5567e198d57687ef71f50396/1.response.md",
+    "CP-1A": "requests/CP-1A/4b104e8d934546b307088a9e77753a21842498d53e2b3a168f87673a2b359c6e/1.response.md",
+    "CP-2": "requests/CP-2/01a1f40265457be47e58fe55556d1c22d2a3daff264097c2684c2edb7d8fbaa4/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "0f594545790f7c22aec3ae8e2d29bc45f98730761c794d077a886cf25b2bfa68",
+  "delivery_sha256": "f9067c8b3831f67e0f55d91c69da3b73229577f70c5810924da718b6fbd10921"
+}

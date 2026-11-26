@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Core Scientific, Inc./tx as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/ecfdef54abab6b59e9a0cc586049df866035b186d94bd5500a76f584a83eb6ac/1.response.md",
+    "CP-1": "requests/CP-1/ef6c19e77810b1c917f13bf0f16d570126bf97e14b3f45e7de3ca748ebfcc202/1.response.md",
+    "CP-1A": "requests/CP-1A/a0db45052ea149ad6dfd7295d44a0f596b14d728e2c2cae3120a4f90d940e15c/1.response.md",
+    "CP-2": "requests/CP-2/518cac9d9b785bb203788849d4ea7473497090e509e6fdeca0fb5c4190a62173/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "c7242f38148003474403270fcbe0453ae4edf9df082ea88593bbeb333fd2d50b",
+  "delivery_sha256": "af35ba477e050871e42f8d94886e85b8f4f5f0793da9e169fb9a7aca957818f5"
+}

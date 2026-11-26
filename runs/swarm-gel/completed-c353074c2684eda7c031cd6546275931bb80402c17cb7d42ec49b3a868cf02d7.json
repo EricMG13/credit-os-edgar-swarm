@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for GENESIS ENERGY LP as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/b92323461a60d2d7dd25cbae29dd19301012fbd230813598091ac3e1afadad74/1.response.md",
+    "CP-1": "requests/CP-1/b286e13aaed2b8d00efbc7cfbcc4c653dea1c023d5c7060f95e1927cdc227c52/1.response.md",
+    "CP-1A": "requests/CP-1A/3eae4e84d8645cd13b7a09466d69b8fe86f2bc8ba2c7ab61c743998585a1ab9e/1.response.md",
+    "CP-2": "requests/CP-2/6aeacd18be40cfde46b1489683e17adc660ff8a89b917413f4f62479604941c7/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "239ea05546ab04692cb0b9aef2d35950d31105c0961d252dbd0db83c2f14b2d5",
+  "delivery_sha256": "869bdf32cb04e3f42be5857c0476afe05281de6ff613e6d444ba676ec216de22"
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Nexstar Media Group, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "7f921b69af9f4a05e9083f1937385b35f0935742ba54d1be8257d8dcb6865c99",
+    "CP-1.md": "220ef85ba9e0ea998e262320407b4340717e148a58033cd8d4f3822d89bb9b28",
+    "CP-1A.md": "f3dfe6f373a7363cef905a220c980e5ac05231222bed8e44e61f34ca17ccdd4b",
+    "CP-2.md": "2339f43d11f3a89b3644fa5f4cf5ef5f775c9b534198831e7d4bff84e1d2d842",
+    "coverage.json": "f580cf56fe65124b44f2b6b092fa69b246ac2d0ed7fb83e1d6b51ee5bf067890",
+    "view.json": "afbfece9f4381bc761aab928b8748e4bb65a6e7ab8ed9f0736b8eed37d1751f3",
+    "report-view.json": "19a3daadbc5c8aafe50f1c924f649931b5050ab3b4735575254b3078b14d629c"
+  }
+}

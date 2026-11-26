@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for XPO, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/361d5726accaca605eb06824a5f4cbbbd29f6043966b8a99d818014f9d659f63/1.response.md",
+    "CP-1": "requests/CP-1/c112cf8a39f11d2d3d346334ab501635586c105ab914ce96808be67f8321ac44/1.response.md",
+    "CP-1A": "requests/CP-1A/303433520af3a465365b16df93f0119438849fbf153c08b59851849a6612066c/1.response.md",
+    "CP-2": "requests/CP-2/4bde5707363475f660ab249a40829526c8fb33831cafb2c5f30cf52b4d442c67/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "66cc7dc7ac6a33b086ad84c53bd906ccd667b095e3317db7d7803fb61e423861",
+  "delivery_sha256": "6372312a0dca42e238a8fde3f0467a457d9a3c284cfa5a4785f3a8d174bb47d2"
+}

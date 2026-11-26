@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for IRON MOUNTAIN INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/1c7051bb1465ee4e3df8a51d0047f29f303e897f76d12299dcda312a74cbefbe/1.response.md",
+    "CP-1": "requests/CP-1/16c1722961123cdbd17b4086067b0cb85d32d186fa0c240cd3375b19e2d21848/1.response.md",
+    "CP-1A": "requests/CP-1A/ccfab74ec10256e5441432e9afe635436bf96154fdf5b975d30fa1876a489849/1.response.md",
+    "CP-2": "requests/CP-2/32e9a0a7186b6e928ecdcae73fc620128e151a7a5851b0c17224323e7efb8ef6/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "d38daa0f7f8e81b3c73404d3333dd6f44c29040bd021b3134c12e87c654aa650",
+  "delivery_sha256": "15d1e541821662ce3121555be86418499b5d7f26d077c98660d4669bb7f66b54"
+}

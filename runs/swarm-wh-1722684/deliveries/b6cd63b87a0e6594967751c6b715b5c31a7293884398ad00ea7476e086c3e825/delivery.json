@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Wyndham Hotels & Resorts, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "18733dd24a8d992d3a184765517370286494b01d457d1f115562bf90c8a530e8",
+    "CP-1.md": "4e541ff41b3cfbb6add5eaf046afc812ab7aa9a142dc05dbee389eb660c7dccd",
+    "CP-1A.md": "e188af0d8ce099cd18e6826870be8c31e5d4f6bdc2f186152819336c10e9b0fc",
+    "CP-2.md": "27b678b516046e4d9f9bb0b11de1fcfa64d0b516f1d85f02a06d6bd24d1a8fb1",
+    "coverage.json": "39ffe89346886e6e225cae44722721cbf25b04ecd21428a3617e515665b740d1",
+    "view.json": "0b576b4229eabaea697f800b39a67a90cbcdfcf6e5af6e6a21593bbb17cd345e",
+    "report-view.json": "06499e9de81d8f5f8ba9ea375088f9e9e780708b8b5f33a63ecf7128b2fb60fa"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Sealed Air Corp/De as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "73526f45cde93ce1074d268f33a8f50a70ffd84b055e9d5b799c5469c307641e",
+    "CP-1.md": "2b4eef6cfb2d0a8b9a09bf393a9591d3e4e5e16a226e72ab7dd52d6441346246",
+    "CP-1A.md": "ca7e05d2224766a314375b782e2ba2bb4b76d1b8681160fa9ed8c14f07343812",
+    "CP-2.md": "968db044f447f8a25f99adeaa79fcfb845f8423db2af5a38eca2ab009ddca2b2",
+    "coverage.json": "035929ed1cf708069770951fdb4e7f023038010aed9464ce33ee2f5ad94daa52",
+    "view.json": "bad78d3bbdb04deac7e3b7dc5c9efb75bd0632dacc69b681929bd4c0e2d9a0fc",
+    "report-view.json": "2ef1cce1b3bbcbcf9632ae5d6fe43780e9757ae8230ba28cf68eb28bba865af2"
+  }
+}

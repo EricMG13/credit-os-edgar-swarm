@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for CHARLES RIVER LABORATORIES INTERNATIONAL, INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/3f789de557bf4cfefd1363b50dda2daea1cba857028ad0856807a7fb12f6f919/1.response.md",
+    "CP-1": "requests/CP-1/920398b0e8ac4ea3cb2775051170304e40e7703a02c6a94b2ed73811509ffb8d/1.response.md",
+    "CP-1A": "requests/CP-1A/225fe49763317761ac606c12feaddbef05314ce6b8e55b28e90ab6bae2ad9422/1.response.md",
+    "CP-2": "requests/CP-2/c7ae67264c512719b1c13e3b057eaac6b7f5afd0ef6c51a2e685f476cb5596e8/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "a8db27caadf4e991dd74db9a5277ab3f2d29953df2ebaadf94b1af67d3fca361",
+  "delivery_sha256": "5fd3c11505bb890d997db7624294b8969cfd7d816e1afc31896544b6a00d0d87"
+}

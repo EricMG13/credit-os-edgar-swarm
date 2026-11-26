@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Beazer Homes Usa Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "5aa3ab8f125a97cbb416d49e184a27675697e07b11f435847f2fd4db2847602a",
+    "CP-1.md": "d6652d4354a3215da7a91cff7c92d7535858298762237e2b8a723dc7d3837f1c",
+    "CP-1A.md": "4cb7af15b08c434ab0e41bdf5007bbf77becb56336c4d27df4c10a4d950614d4",
+    "CP-2.md": "46ff699befec59208337e0573665c7f40a167bbdfa06a5698b4811a53b6f0e73",
+    "coverage.json": "0e22e99b4c9a1948ca3c5ea81a5d17447e7bd4c24198afdf03ee61ea0662eee6",
+    "view.json": "5ef03ecda3a2fd95702fd53c36c5df28c2ad13ae9c8dca510953181f905a3a72",
+    "report-view.json": "51b2029258d64acf453e69fe1b422db5d6daecd9e8a80ade5d762b155eec3cf4"
+  }
+}

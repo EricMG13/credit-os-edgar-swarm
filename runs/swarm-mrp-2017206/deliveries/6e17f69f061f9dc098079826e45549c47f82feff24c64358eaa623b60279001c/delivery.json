@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Millrose Properties, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "c43d157c0ed000fad83c2b44602b77bbfa099626b611996fd7b7c92d667e246c",
+    "CP-1.md": "4ecb68ed0c69dd41c2bc888c4a2f64aa777fbd9666a1dab03f7a8f95a3abec4a",
+    "CP-1A.md": "3c1a2563b3fbbfe9f9ab32b00673eaa81ef7339a84cd5f4825d618d32852b3ac",
+    "CP-2.md": "e362332d2538231f6d6ff2d819909070cf40d8255bbe51975911948c2e76615c",
+    "coverage.json": "10a52f31f962a7a97f8fceb2b8966b0c4e27840da3be7649f3272bb6dbd198e4",
+    "view.json": "4a2d2f1830dbc6d3a327e4f33ff4ddb58ce7a864e947df55b187f750bc77b896",
+    "report-view.json": "0f3aa5a1386b86db59291d71ae88de09e6cc416abdafbf809fbd389862b2da27"
+  }
+}

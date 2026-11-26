@@ -1,0 +1,244 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "moh-2026-11-05-credit_snapshot-host",
+    "issuer_id": "moh",
+    "issuer_name": "MOLINA HEALTHCARE, INC.",
+    "as_of": "2026-11-05",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2025-12-31_moh-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_moh-20251231.htm.jsonl",
+      "sha256": "c9fc11483fb4b7c19a024a1eea5a26db7d569aa891c87974935ef7d58e311c73"
+    },
+    "10-Q_2026-03-31_moh-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_moh-20260331.htm.jsonl",
+      "sha256": "13a11f49b2609a371d7feaaf1fc732c450976bf0759ca520903d8cae2d01480e"
+    },
+    "10-Q_2026-06-30_moh-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_moh-20260630.htm.jsonl",
+      "sha256": "2e116fbc160064a31ee8ffdf3cb7b87c5a30be87614aee212f07d7cf0a47d671"
+    },
+    "10-Q_2026-09-30_moh-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_moh-20260930.htm.jsonl",
+      "sha256": "0eb181a17a96ec54e5242c30d2326e1cb431ceae3183b3fa8dd8bb665798cbdd"
+    },
+    "EX-99.1_2026-04-22_moh1q26_er.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-04-22_moh1q26_er.htm.jsonl",
+      "sha256": "209474d035cda2f89bcc2ac9abfc62e08120c0698a0cff7b05687b4b711891da"
+    },
+    "EX-99.1_2026-07-22_moh2q26_er.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-07-22_moh2q26_er.htm.jsonl",
+      "sha256": "fd72c687dc87193147ac248ab3371c514003ac36c928d56dc905298dfee99d6d"
+    },
+    "EX-99.1_2026-10-21_moh3q26_er.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-10-21_moh3q26_er.htm.jsonl",
+      "sha256": "f0ee0db37cb0340d37b34fde6c6107463ac060309062b86bfa3e7caa6f07a604"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1179929-molina-healthcare-inc-moh.json",
+      "sha256": "038deefd3d0187dee809d7ec7eb3f32548cc8a768b8a64a8e4dfbffc4bec802f"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "355230afbfc09067732c5e137d5ee244616e547dc9b897381af571be6a1a3f97"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "1ee940b691069dd34a5c7beccd02ddcf34f8305775aa5c5a1fbaefec07a5528a"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "8c83e35fff34d681ecce5354d8864fd6031de135c072176933cf8bf486447bb9"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "c474baf8361a122b23b784ba50c0f5f36512b0b9f142f1f681bb3c7b2d77f2d5"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for MOLINA HEALTHCARE, INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "MOLINA HEALTHCARE, INC. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

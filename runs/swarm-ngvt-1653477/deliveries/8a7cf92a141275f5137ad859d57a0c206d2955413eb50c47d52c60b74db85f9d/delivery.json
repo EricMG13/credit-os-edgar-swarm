@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Ingevity Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "d299f8a6fe463d0a3e8fa4a3a1cffa94e660b0f8b3fd06a54c89f1fc1f9f91ac",
+    "CP-1.md": "b8476052ce85e783c7704bba51c78b7b2c644e672a8f4f9fc146af78429fc29b",
+    "CP-1A.md": "aa4d54aa3a3d0dd8581dd74c893961fd823ac00dd8cf2c65741dea1c076e51dd",
+    "CP-2.md": "f9065839cb6143f4ad1ad8b4ffdbaa4f7d8d4582c5481d1e1ea05564059d241a",
+    "coverage.json": "1421ca11f73c9fe5d321e0b6289e4b3d7bc7879294a6053a1bf337ebcfdd041a",
+    "view.json": "17f822fbdb951bc048f40211e10ae9271c84e7923b60cf2b1602d8e979fa1019",
+    "report-view.json": "8414528eaa6902dd111200a62cf721972826ba01032037ec3572798a446c5eed"
+  }
+}

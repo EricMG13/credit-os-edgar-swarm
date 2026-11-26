@@ -1,0 +1,296 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "cwk-1628369-2026-11-18-credit_snapshot-host",
+    "issuer_id": "cwk-1628369",
+    "issuer_name": "Cushman & Wakefield Ltd.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_cwk.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_cwk.htm.jsonl",
+      "sha256": "4de5ce153c2e2017d87f9dcc38a3bd153942757242ebcbec293a2ce9f7988386"
+    },
+    "10-K_2025-12-31_cwk.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_cwk.htm.jsonl",
+      "sha256": "66b3c89d2976a90c6b1c058c752601a8c0d1e881d544355e7ba7832277ac088b"
+    },
+    "10-Q_2026-03-31_cwk.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_cwk.htm.jsonl",
+      "sha256": "208a8b38387b036f5766c47eb1ee68b5e9235a95b743a315e71eebcf3fc63c83"
+    },
+    "10-Q_2026-06-30_cwk.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_cwk.htm.jsonl",
+      "sha256": "6b2f74fabedd676deb6e0f36c48ff0140f010913d0862f6b9325f93083d86114"
+    },
+    "10-Q_2026-09-30_cwk.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_cwk.htm.jsonl",
+      "sha256": "4aba1595e873c64451e89fb25a8100a6cc5bf7ffef15c18d921fc83c3e95f23a"
+    },
+    "EX99.1_2026-03-31_cwk_cwk-ex991q12026-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_cwk_cwk-ex991q12026-htm.htm.jsonl",
+      "sha256": "7ecb0344140bdf72960fe688e0aad255842d3a446e5f28d0e315bbaf5ca5ce43"
+    },
+    "EX99.1_2026-06-30_cwk_cwk-ex991q22026-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_cwk_cwk-ex991q22026-htm.htm.jsonl",
+      "sha256": "6158cbc4a82c99c4cf0f1e04170fdc4aa409ec8aa8741d0eca3a1baa1d50aa88"
+    },
+    "EX99.1_2026-09-30_cwk_cwk-ex991q32026-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-09-30_cwk_cwk-ex991q32026-htm.htm.jsonl",
+      "sha256": "9cd9c11110ea28e4d15226dd0698315da0e01bdb6e124379bd33e1f355ca8878"
+    },
+    "EX99.1_2026-09-30_cwk_exhibit991-october212026re-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-09-30_cwk_exhibit991-october212026re-htm.htm.jsonl",
+      "sha256": "1c8d689d84946064ba1e675f709f4fdf3a735cb8ae7c7e09952237f3900fab0d"
+    },
+    "IR_10-K_2024-12-31_cwk.pdf": {
+      "path": "../../../inputs/packs/1628369-cushman-wakefield-ltd/IR_10-K_2024-12-31_cwk.pdf",
+      "sha256": "2ad12991f3bf829767a3687415d79f4722c9b2c94b293e05f90f722e4f521dc9"
+    },
+    "IR_10-K_2025-12-31_cwk.pdf": {
+      "path": "../../../inputs/packs/1628369-cushman-wakefield-ltd/IR_10-K_2025-12-31_cwk.pdf",
+      "sha256": "c093c7d1a8832087c0b543a96f87e9c42a225c0dc53c4cc81bd718f3dec260d3"
+    },
+    "IR_First-Quarter-2026_10-Q.pdf": {
+      "path": "../../../inputs/packs/1628369-cushman-wakefield-ltd/IR_First-Quarter-2026_10-Q.pdf",
+      "sha256": "5bbc69457288206a8d2e0483473d61b40ce31f7f5522fc28e2337ee6dca9881a"
+    },
+    "IR_First-Quarter-2026_presentation.pdf": {
+      "path": "../../../inputs/packs/1628369-cushman-wakefield-ltd/IR_First-Quarter-2026_presentation.pdf",
+      "sha256": "6aa1c7d422bb03388e650b1930e2267c26188691f046dca19e38ddd032869d16"
+    },
+    "IR_First-Quarter-2026_release.pdf": {
+      "path": "../../../inputs/packs/1628369-cushman-wakefield-ltd/IR_First-Quarter-2026_release.pdf",
+      "sha256": "15867cbde3e322b816cad6718e918c2710ccf48cabba871adfd55709455660be"
+    },
+    "IR_Second-Quarter-2026_10-Q.pdf": {
+      "path": "../../../inputs/packs/1628369-cushman-wakefield-ltd/IR_Second-Quarter-2026_10-Q.pdf",
+      "sha256": "74615535290a69026bff3dc7e94416d219f4976b04182ca6a9a0419bebde4bb7"
+    },
+    "IR_Second-Quarter-2026_presentation.pdf": {
+      "path": "../../../inputs/packs/1628369-cushman-wakefield-ltd/IR_Second-Quarter-2026_presentation.pdf",
+      "sha256": "4d149d738a3cd56402b8e8a8c605e2123c71ba86192bea184a5007defca2a0e9"
+    },
+    "IR_Second-Quarter-2026_release.pdf": {
+      "path": "../../../inputs/packs/1628369-cushman-wakefield-ltd/IR_Second-Quarter-2026_release.pdf",
+      "sha256": "a438350a046d6ccbf0b330ff2603bf1bb1a44871618c4d2e64d7856d1e68e2da"
+    },
+    "IR_Third-Quarter-2026_10-Q.pdf": {
+      "path": "../../../inputs/packs/1628369-cushman-wakefield-ltd/IR_Third-Quarter-2026_10-Q.pdf",
+      "sha256": "c4a32442853d74320b7404b33430186bf7257300ad9f3b7986f740a03d9988cf"
+    },
+    "IR_Third-Quarter-2026_presentation.pdf": {
+      "path": "../../../inputs/packs/1628369-cushman-wakefield-ltd/IR_Third-Quarter-2026_presentation.pdf",
+      "sha256": "141ab26949dc7d88c399fa7118320ac2c2ac132069f16d3394da41bb47c0bfdc"
+    },
+    "IR_Third-Quarter-2026_release.pdf": {
+      "path": "../../../inputs/packs/1628369-cushman-wakefield-ltd/IR_Third-Quarter-2026_release.pdf",
+      "sha256": "84ab7b0e3ee84dfc0952753cdfca3fed8a38165ac3b12ff0b99eea909e614eaf"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1628369-cushman-wakefield-ltd.json",
+      "sha256": "1f906087292956e8c7d59d339e5613e2144e350bdf462fd9d52284db7825f483"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "88a2abba86155eda4236bfd692ce281fe5e308fe44d38fd9f3263fe77c794314"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "f89fbd16419450e1d8de355189a5193716a2ec1a2f7cc1141cab55c92620b19b"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "d802b20de789f06e5941132d92798282247fbb07eef53f5b9eece099493564ff"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "fc372f57292bfe30557013efdaa454225d6a678cc8eb1b1d915f088d2cefc784"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Cushman & Wakefield Ltd. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Cushman & Wakefield Ltd. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

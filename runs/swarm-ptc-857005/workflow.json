@@ -1,0 +1,248 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "ptc-857005-2026-11-18-credit_snapshot-host",
+    "issuer_id": "ptc-857005",
+    "issuer_name": "Ptc Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-09-30_ptc-20240930.htm.jsonl": {
+      "path": "source-text/10-K_2024-09-30_ptc-20240930.htm.jsonl",
+      "sha256": "9ee7956c683d95ba6b10c94da8ef8a42b4fb7c0cf6a2d3073d45ca14ffd6c07d"
+    },
+    "10-K_2025-09-30_ptc-20250930.htm.jsonl": {
+      "path": "source-text/10-K_2025-09-30_ptc-20250930.htm.jsonl",
+      "sha256": "0f0bea326cd4f522417f9002a2055306f8cab5802094bcd3209e072f151e6345"
+    },
+    "10-Q_2025-12-31_ptc-20251231.htm.jsonl": {
+      "path": "source-text/10-Q_2025-12-31_ptc-20251231.htm.jsonl",
+      "sha256": "d74b79e416f9d1d33ce97de2a5f485e8fe0fc9a5b1e5765d6822f98152e6b878"
+    },
+    "10-Q_2026-03-31_ptc-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_ptc-20260331.htm.jsonl",
+      "sha256": "79e08e41ca1fa204cf8df631c4dc7e17702c1d1cf242e833b746013d7130ee35"
+    },
+    "10-Q_2026-06-30_ptc-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_ptc-20260630.htm.jsonl",
+      "sha256": "c624c8c6f1742ca90785c02f0fdf8a1e67b449dda1f4a73561091a921a3a787d"
+    },
+    "EX-99.1_2026-02-04_ptc-ex99_1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-02-04_ptc-ex99_1.htm.jsonl",
+      "sha256": "d32c0319c3504d5da64ddbd3f6b7655cb0925e1311d1884033bc06a51bb72efc"
+    },
+    "EX-99.1_2026-05-06_ptc-ex99_1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-05-06_ptc-ex99_1.htm.jsonl",
+      "sha256": "aa7730822cc571030c34ff0005da009bcafb35f54c50cbba721c509bbe58f7e9"
+    },
+    "EX-99.1_2026-07-29_ptc-ex99_1.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-07-29_ptc-ex99_1.htm.jsonl",
+      "sha256": "7ef6cb22b1d5e049fbebe5de52ba887b18bfcde993787b88c441ea21f93b6ccc"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/857005-ptc-inc.json",
+      "sha256": "e0cad72435b1bff85136ee75eaecfdf3ff16c95e9a9b061e2dd491997788272d"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "2ec4beef3beefc7c1f4ba02428bd5cfe728a7da575831983437a8d580f61e771"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "4597be645ab00e9ca09452243b8fe8f9810491bef4433b44f961b70d89b861aa"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "bb945b905796375d5aebeaf06cf1f16e0da205050c5b40d857d0fdf86b541516"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "1c7de7f13257e58257ed354bd15f3cbcc2e8122b9021d7325690e20f74c89da0"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Ptc Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Ptc Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

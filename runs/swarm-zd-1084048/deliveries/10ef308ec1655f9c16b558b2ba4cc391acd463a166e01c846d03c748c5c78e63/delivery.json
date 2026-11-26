@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Ziff Davis, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "3ecaca04a891dd168fe58b08b6d62a507fe4e2152b59da9b1576a6e624d7f1ed",
+    "CP-1.md": "d0f19f0455da7fc1b20aec60755d0d5f14109bdcab8ac2b6d5fee032d19bc27e",
+    "CP-1A.md": "543d925af151a8adccabd58e57cf4be88e09e1c99b8f36819161e3ce8636a7fc",
+    "CP-2.md": "c615a048267357c7541f0985b3cf83105a1e091bb4cedfc14c236092e5498412",
+    "coverage.json": "307455aa02b620b89f9d89a806be21d4eff0f8d50bb3e40fff4da3d2a8bc0a18",
+    "view.json": "a02db62b96537ba23c96431982e37ee4863ce121bfd3f5eca801d6f131ee1e60",
+    "report-view.json": "fa6787e32fab58f51146127cdd4703ee6578e9ffd95366df0d8e171965dbf34d"
+  }
+}

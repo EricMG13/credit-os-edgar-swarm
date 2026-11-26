@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Energizer Holdings, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/8803a809b65bb8258b992ab77d4a3b7f8420e1596ee3907aff04ef431051ca30/1.response.md",
+    "CP-1": "requests/CP-1/bf657b8adb25cbee5477e125e9d2c7c137d6e2e012bddfe3af02e5e439c215d5/1.response.md",
+    "CP-1A": "requests/CP-1A/a5ab70f5633e76a668d19d0116dce3888e756449587f618133351c40d247dc79/1.response.md",
+    "CP-2": "requests/CP-2/4b8be3e2239c42f620c08ea56c0579ae5b508c3a17c5c33013bb5d5c5592b596/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "1f679f799249bc0402d5dc4dbcfa9262c83785e572246ef7afb32dc7f2f541c8",
+  "delivery_sha256": "fb4057d924c29339f485dfee50112a37a39d12857df04d72964da0d51ba7399f"
+}

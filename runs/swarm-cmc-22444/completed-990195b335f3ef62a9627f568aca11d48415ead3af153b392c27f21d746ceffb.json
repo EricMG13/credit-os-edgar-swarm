@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for COMMERCIAL METALS Co as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/3b3b4e1b2d79263cd63fbc64fdda82c3d2d9d1ee79dbe0932d95b81f4b4fd55c/1.response.md",
+    "CP-1": "requests/CP-1/6ab0e82b9016a27fdba9969cedde71614a543ade7dc171f2ce21ea4727872859/1.response.md",
+    "CP-1A": "requests/CP-1A/0d30480da78cf61fd9fa873bd2daa0e276e5fce2589515a0cc413c7903efe2c8/1.response.md",
+    "CP-2": "requests/CP-2/164869e553460b53178d623582afb8544db97507adf317ca1855d6c3b98ff8a5/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "040a6880d73d97043d3faf25d5fda6367abff40ac0fce6e92a0b1afc889e262a",
+  "delivery_sha256": "50144b572a313d8584e6179e91b8566b0f83ce13c0d5744aa3e79c7d299de201"
+}

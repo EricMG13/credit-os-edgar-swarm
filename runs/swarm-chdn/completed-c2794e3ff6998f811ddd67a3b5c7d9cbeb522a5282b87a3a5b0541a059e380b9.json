@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Churchill Downs Inc as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/4ce85634abae0771b42dd94fa7110a6a3e9924ea7b0291b167190374392c2602/1.response.md",
+    "CP-1": "requests/CP-1/a8eb851c9929b9afab246b51e1e1a14d4e7eca8d1f26156798658379fc29a0db/1.response.md",
+    "CP-1A": "requests/CP-1A/68760914bb7862b00246b5bd26f6bea84d7c5a3c7ccfd931a163e1e097d9b682/1.response.md",
+    "CP-2": "requests/CP-2/6e38174dabffbcb79142e65dc79b9e2eb6f1a67e67710a4339f1986db8b59f5e/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "868c0d86c64eb35029a9a0147df8c694de32ebe88004a14119d6a6de4fe95d27",
+  "delivery_sha256": "d69cb910972639957aeeeb54d58566212bc9bfbf3a46fa3bf1b25ebfb6abd311"
+}

@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Kodiak Gas Services, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "014a825b8e97123f36b4ff2ec73ac2736715bf332e28496a437d17274f1f2640",
+    "CP-1.md": "6fc65b0ab840ec162cb6f30f44aa57e59e37f49c819baf8e6f176f8023ef0c68",
+    "CP-1A.md": "b304e0fa2d4f67b39866a0c652604324761ed3392231dbedc41f59effed4a8d1",
+    "CP-2.md": "cab3f21a008de96e2670544824cfb8296adb600ad9bdb5993bcd24be68096a3e",
+    "coverage.json": "ac82b423aaebb42ef033df730f553477b556dec661fec30140a0686aeeb5a08a",
+    "view.json": "65d8d51d063aa8c3e5cd75135a31ca2378367d360afe7f9586eb57ec337776f3",
+    "report-view.json": "0cb89caf193acb05bb7f373dce89e27495918f810a62bbe9ecbbd195a0ba1a16"
+  }
+}

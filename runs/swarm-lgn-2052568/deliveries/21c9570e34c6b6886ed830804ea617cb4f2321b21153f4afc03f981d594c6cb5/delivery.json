@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Legence Corp. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "d541366fd6a2ba0511d4f8797be030349e1b87952d6758c0dd6a61eb176e5002",
+    "CP-1.md": "9d32222e57ba4d14de805c756c29e9a206370d814085fb6c6c45cc228e19848e",
+    "CP-1A.md": "cd634b1fb85c1339d86f8bf196a290c99a49ad00e9b77402c9d89d987820ee77",
+    "CP-2.md": "df994575e718b570dc9093476a1227b3783cd86acae26c6645583294d653c41a",
+    "coverage.json": "f8d178cc40be8beef3534ff2d0829bbf5970a9dff010b7eacfcf11c5cbe4a912",
+    "view.json": "e01c1a338329f580d53f74130c787d6ed4c94584c356bc5a56c73d54ee39575a",
+    "report-view.json": "92813ba33c6b03a88d0e01bb1e11d7787e9bb6252b67108add6e6d8f307f5fe2"
+  }
+}

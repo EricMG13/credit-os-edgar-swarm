@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Block, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/342b0c22e0beb688cd44b6773ec98dd94876f773060ff2fd84e0a38051522c68/1.response.md",
+    "CP-1": "requests/CP-1/e00bfdc2cabd4ed532fd4b8cac006102e1169ae4b03022a4aef2a74241f1252a/1.response.md",
+    "CP-1A": "requests/CP-1A/70aa0d388c47aafc58a47b32820998246caf2520c41d27b0358cc10239d2ea60/1.response.md",
+    "CP-2": "requests/CP-2/ec65f31a27150e565270d2bc7bdbff7f52eddebf36afa6a4853afc8c7a0050be/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "dcdbbf87a5fb0844eef6c5d91ee1b96b7f6fa3bd2a6f3d1f41bf022d5febb6a6",
+  "delivery_sha256": "0fcbfe0719cbcf188a128483435e38f07ee7377e27f7108c634cdae8b0f8394e"
+}

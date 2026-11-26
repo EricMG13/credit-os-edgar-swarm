@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "slgn-849869-2026-11-18-credit_snapshot-host",
+    "issuer_id": "slgn-849869",
+    "issuer_name": "Silgan Holdings Inc",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_slgn.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_slgn.htm.jsonl",
+      "sha256": "30eda6c1d3a71e5756521f79866728a0525f47e4366ea84f392cee9c4faeaa19"
+    },
+    "10-K_2025-12-31_slgn.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_slgn.htm.jsonl",
+      "sha256": "1738ec14e163b7062f9cd82459b8d89a520eca7467d6d8e67e316124174bc20c"
+    },
+    "10-Q_2026-03-31_slgn.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_slgn.htm.jsonl",
+      "sha256": "7625ce57afab4b3f5fe74b1c75a7ec19775129e89c9c1d858cdee304020fab1c"
+    },
+    "10-Q_2026-06-30_slgn.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_slgn.htm.jsonl",
+      "sha256": "f89bb14bdf363243a81f33f3e2ac7c8bbd35227b94898782b886a92d65175254"
+    },
+    "10-Q_2026-09-30_slgn.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_slgn.htm.jsonl",
+      "sha256": "a5cbd60f027db11798a207adadf0751acd94f38d9e18d90fb57c43685f1736cd"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/849869-silgan-holdings-inc.json",
+      "sha256": "5e688aa28d5494e6038c17adf30d78e24d1f6cbfad419648d732e7e5acb42460"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "c28e7563a6d2e076383872974b25cc54a4ece99fb212ad8f1f1d80ca6eb29547"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "a011f580680e3e5ff507e5c7ffd7b0343e6ec7225553689bc36f97ca7bf8d908"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "2dcd1b19740df13248276d049c2155c22ce4b6bb0efb61bbda1759cd61065c5f"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "5d912bb40ed6f8bbb5d314cc5a9422863d055a264b5e258c6ada9b1d862bc492"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Silgan Holdings Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Silgan Holdings Inc — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

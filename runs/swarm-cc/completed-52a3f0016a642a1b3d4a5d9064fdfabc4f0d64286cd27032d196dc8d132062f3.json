@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Chemours Co as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/db3020f8b823d0c07b45f90a47a7f541554337e091f39ff26bdaf085033031a5/1.response.md",
+    "CP-1": "requests/CP-1/431d3565b4a0bfb6b0a2512be41229a3fe37c19e5cd88169b2e91bf20054e215/1.response.md",
+    "CP-1A": "requests/CP-1A/b8ea4f725d9df89ea2964c5661772e2cc62c7bc2e3fe37eac27e8afb990c78ea/1.response.md",
+    "CP-2": "requests/CP-2/32c62b2e7c8b95e70ccfa6b7dd86b9f6e9bf521ad9d2da5082da704e43e8b244/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "50f5ae7af2146df0edcf0d6f3328c0537a430f0b30369cbdb1a3c0cf72a35534",
+  "delivery_sha256": "2afaafb46be83f039f9031735d46927b75b7705f44439e50f9e0e5b872e73789"
+}

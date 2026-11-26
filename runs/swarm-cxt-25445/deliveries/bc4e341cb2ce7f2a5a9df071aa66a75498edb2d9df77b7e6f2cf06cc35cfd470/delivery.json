@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Crane NXT, Co. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "4f405f62f492bc4b22f6e935c9d7bf41fec9855dafdceeda443d66aee6536a85",
+    "CP-1.md": "eab08a47e27b8f7b373b704fd0de025c72cecd6998cfe35e9bf0f360540e244e",
+    "CP-1A.md": "c44cc75d78b0cd98c2783e0c3ea9e67b3fe6534249df696d2ae9df9265e02d19",
+    "CP-2.md": "aa97d7b9b2e442b3d1b86a6df1c3ae31643fcd9264a43369def03ed82c2693eb",
+    "coverage.json": "b6436b75b8e7ce8c4db77933cd8d5ff527764f48f9f4aa23fdc6f3c153316438",
+    "view.json": "9f369fdcc59b041e70fb2223bb0be53c739af40ba4662a4d9c71347c41a009ad",
+    "report-view.json": "2bd30cd26d1545983857540a914e1bdc1025d2b1263c478ff6fa75b6854eb528"
+  }
+}

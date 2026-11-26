@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Roblox Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "087b160c81389a70866d6511e057782b831759d2f9fe5ff3cdf1b9fe451f9db7",
+    "CP-1.md": "d537d658f91600e8f61515d5aea131bdc1680075dc987a9960c68900116bbe4b",
+    "CP-1A.md": "cf62e1598739235ad9ea2a46efcda2a093855c58447c75a0a60ae4388bc669f4",
+    "CP-2.md": "f00ea33633c96149f3395d94e8154e24d43d7e4117242268b58613ba9c299749",
+    "coverage.json": "950b5da16077d5c0da2ae15201f595047b59af73fcb8d5c3e6990c2e8ed68997",
+    "view.json": "af0842afc42dc037133d286ab3770a2bf455f52532a4e8a4e2e55d7eeb68f695",
+    "report-view.json": "7bf98e9280ac5b6b52d63d90d7c4a95c8e7cf873d4a8acdbab008971e54b8a39"
+  }
+}

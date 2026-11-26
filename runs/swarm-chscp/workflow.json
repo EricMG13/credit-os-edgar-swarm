@@ -1,0 +1,244 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "chscp-2026-11-05-credit_snapshot-host",
+    "issuer_id": "chscp",
+    "issuer_name": "CHS INC",
+    "as_of": "2026-11-05",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2026-08-31_chscp-20260831.htm.jsonl": {
+      "path": "source-text/10-K_2026-08-31_chscp-20260831.htm.jsonl",
+      "sha256": "7af90f68bff1cc427159bcc12ffc87c427ce829f2621b0c4238922f45880492c"
+    },
+    "10-Q_2025-11-30_chscp-20251130.htm.jsonl": {
+      "path": "source-text/10-Q_2025-11-30_chscp-20251130.htm.jsonl",
+      "sha256": "3b343d46b4f667e29be99b08f7d799dc25471f06dbcbf91d62c596b40053bc50"
+    },
+    "10-Q_2026-02-28_chscp-20260228.htm.jsonl": {
+      "path": "source-text/10-Q_2026-02-28_chscp-20260228.htm.jsonl",
+      "sha256": "335ab8ab1983479e957ab5bcc688bac42f2a8847cb6800ad1d72a83671457084"
+    },
+    "10-Q_2026-05-31_chscp-20260531.htm.jsonl": {
+      "path": "source-text/10-Q_2026-05-31_chscp-20260531.htm.jsonl",
+      "sha256": "d9720f91bf0c93fa122637a031df8f3b728863173bc1b8717d0a6e377caf2082"
+    },
+    "EX-99.1_2026-04-08_a2qfy26earningrelease.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-04-08_a2qfy26earningrelease.htm.jsonl",
+      "sha256": "33496a1570da087ac1976522b03589f92cee4a9a2670952160166094e3791034"
+    },
+    "EX-99.1_2026-07-08_a3qfy26earningrelease.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-07-08_a3qfy26earningrelease.htm.jsonl",
+      "sha256": "9732954cd83cfd2faab08d34c8a937435e86ab588c7e99ee653b9179d1961e0c"
+    },
+    "EX-99.1_2026-11-04_a4qfy26earningrelease.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-11-04_a4qfy26earningrelease.htm.jsonl",
+      "sha256": "cae53d4e6b095242a55a168a21c6d1a5d0c45880ba1e0b3a388701114a691f44"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/823277-chs-inc-chscp-chsco-chscn-chscm-chscl.json",
+      "sha256": "7441cd131643680d7cdd1713c448cca9698ae339b2ccfb6c0e8da281781f9451"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "e1958c33c7043fccc9a8784a846bbe337db1f739954b4e8ce23d91fd8bcb4e6f"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "6c1af1bb87ba27887d61b43801a9a2baef59f43fa611e0c0b91acb9b0c2b0259"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "9522d23bd6efdec46df12a68dd37842867524d0c6faabde70f6be534d6d64a2e"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "6ef98d68aa3bf9bc70063df9e98c97d726cf1ec840083ad94d238cccdc7aa380"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for CHS INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "CHS INC — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Carnival Corp Ltd. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/cf3f74f957f9f05bec7261ce5201b2eb65d3569146bd26b48f574a5e7ce024b5/1.response.md",
+    "CP-1": "requests/CP-1/aaac8002ca2891bf2bab403a75ce10b3d99c6db1eae4f1090b935be76f16e9f1/1.response.md",
+    "CP-1A": "requests/CP-1A/6f24273db7acaf3ad73f7ef4a6bc9aed8e19da7dc1fc036c18e94296c17c554c/1.response.md",
+    "CP-2": "requests/CP-2/e8a1ef7deb3b9a1d0c45386b967d3ed23a6e6ba7d8cac11c84b213d9d93c4ba0/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "c9074389cd15305e519894bd3bcb2320f6d921d383729618d4a030164e35b35a",
+  "delivery_sha256": "8996f7c4aa10baf78bd1ae083be6b166c40a0fe090edac27cebc13497f22ee11"
+}

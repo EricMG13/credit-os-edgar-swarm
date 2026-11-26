@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for MAXLINEAR, INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "057b3d96d77e02a9351241fea3d14e7a1359764a78cb3b081dd98f9f697f3029",
+    "CP-1.md": "7273eef330deb9aa61743e839882edf89ca2f0d1bc6cf7f99cb9026b75d23a89",
+    "CP-1A.md": "24bd31ac86f4502e09b55442bbcd3d2ffb0aa09a8f005605bb476b92b7d914ca",
+    "CP-2.md": "492db407f1dbc4e2efc13d4e9b3aebe41dcc4c7713c4793a75993c9e27289291",
+    "coverage.json": "b9700ac0046b7dd3efbc5a6c8473ae4f1869375c1181e703d983110be3b0af84",
+    "view.json": "e2821c1a4fdfe69ffe9fe472a2f9153bf796fb5c88b0f1241c92ea33016c0cf6",
+    "report-view.json": "4900aa4ca353fc5104dc2e526a2b5e9a300497ecdf196afcb9529180258e9a6b"
+  }
+}

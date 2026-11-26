@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Hni Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "f632ef349e019c953917c860fe578c4793192a8e73357caa9d308cec2826073a",
+    "CP-1.md": "1b4a985e00f5e535d8ffe746c1c764936812613ad335f4c9fae8463d663153d1",
+    "CP-1A.md": "b0b601042722742da0ecadf99dea8fe1ff8cb7eff5d58c96baf3457033e63780",
+    "CP-2.md": "aea61ee1b8173305352619488b21a0791a5b601f1c7f552fbbbcf6256decf252",
+    "coverage.json": "53dbd32217f853c74561d032969da2baad64452f1b509029ae3d8fc174f987b0",
+    "view.json": "1669168d2b87ef301cbfa758a5bc6a815bbc04d223bd24912854334d264635a4",
+    "report-view.json": "80c1c1f33b6bda36b2dbbe64ea27adfb7df2ac1345dbf1445aafa0260242f7e3"
+  }
+}

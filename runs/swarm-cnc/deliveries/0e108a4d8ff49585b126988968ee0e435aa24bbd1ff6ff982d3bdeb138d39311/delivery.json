@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for CENTENE CORP as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "d46c0f15aab6565c030b2eb85cad35862c45697f1b8fa34ee2e98db39f333100",
+    "CP-1.md": "0cf861f2a27d330ac12c4369257eb74701e11332cba2c2906c19056bb82b4aa7",
+    "CP-1A.md": "148651f856628cda219bd645c9c79178bca28847ec6a259360d940261bd0c6e2",
+    "CP-2.md": "7014f8e2ac0e9763804936ba447c2528ec8d4f98428a66558196029e8e1dbd71",
+    "coverage.json": "cce68462ae98426d3b2eda93debe1061612c89557dfe680e00f98deaeb3baf2c",
+    "view.json": "bd6980e04198bbffb0ba2e659b438af0a588247394a1acd5d09c8ea22f1fa0f5",
+    "report-view.json": "852fb17c5b0feee625e205691d2b90d4f5223a4ebc543d6753d58ca8df29a6c5"
+  }
+}

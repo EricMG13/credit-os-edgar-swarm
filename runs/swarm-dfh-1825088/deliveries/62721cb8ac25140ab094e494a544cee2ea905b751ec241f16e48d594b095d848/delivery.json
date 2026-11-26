@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Dream Finders Homes, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "f78f38ac7da99cd45d56834f951ba193ec3c53db2b7e31ac199e1afea8d2da9b",
+    "CP-1.md": "8285390aa0f5174937995f0fab41ca29b44ecd8e50d4dfc119eece6533ba3559",
+    "CP-1A.md": "1c1f5311260f15dd539315187bc493233d3ba44d1918e55d820a7450d628b841",
+    "CP-2.md": "1821669f250aba32561a49c5e4afbf8fe01447e1078669dcb6a2e5721b8181cd",
+    "coverage.json": "8805820d6570f970d5b5584e8fdc92d1bf7e4dbce229972cce0605b1df7246d4",
+    "view.json": "571769d776c9f4a1a1f31eb0687d38c0a7d4f4388a42aaf91a9e5742f54170af",
+    "report-view.json": "85c1e83ebb52723b5cbeae5db317b6b4617abfc09a1d221efdeebaded9ed5591"
+  }
+}

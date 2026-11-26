@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Alta Equipment Group Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "2fa906e7e3eeda784933ac4f4c19ffd2190c9cd1a4d7304296ec06c00bf97055",
+    "CP-1.md": "a794f1703f39a9c37bf81cfb989a08050a02c97311682b3850b586e7d1ae7ccb",
+    "CP-1A.md": "46ad9b4ad7d70b91f93ea7fe64b959c204c228cd8c388ca23d09440d444de833",
+    "CP-2.md": "39eb3c3c71edff6f52b64ec9a03eb03be4ddb82ebbc27ab566643d81628a1897",
+    "coverage.json": "f4472375c64737ee859d4215a64010205baf81cd11f9f239abf72283af98d948",
+    "view.json": "652be85424d1a3dd40141eec6d81af0a3e500376d964d5e2e5542c64e032d5d8",
+    "report-view.json": "0521c3c69dbddd516983de08b46e3cc0cafb4b9c3b582a3761da88cc8c937fae"
+  }
+}

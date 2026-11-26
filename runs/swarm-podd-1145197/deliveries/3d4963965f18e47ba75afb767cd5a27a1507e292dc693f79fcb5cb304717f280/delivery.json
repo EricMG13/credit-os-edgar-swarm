@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Insulet Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "633c061d1ac2367bcf6796e6db5eaab8a413292b3e288173f66b5eb40d7be7e0",
+    "CP-1.md": "7c8e6d0a30511c2937d14a50e0dca8321c08cc258e78f3b931523e5c5fa2253f",
+    "CP-1A.md": "ae1903206a0c04c0902afb75df287756330dfb51148fa48eb067485b0d2af695",
+    "CP-2.md": "432984fe7d050f4dc59cf2c3570500d58c35de83bb2efdd55f044b15ab3d8bb6",
+    "coverage.json": "b92469e103d3361318d1aaa25b377673cf5f0c8307547af3c78e5b2c1bfc05b2",
+    "view.json": "5eb83b289d9084bc0424f206d7ba0da2b8bea4ec1cfc2e541d635c5b8afe2518",
+    "report-view.json": "89cab635909784a594323238e9510a28143ea00c71c8bd86da815b12c916e8b5"
+  }
+}

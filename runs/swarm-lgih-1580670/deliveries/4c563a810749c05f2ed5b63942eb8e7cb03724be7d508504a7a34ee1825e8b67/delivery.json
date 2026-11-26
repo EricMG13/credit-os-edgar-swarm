@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for LGI Homes, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "7d02a9888a30b08be081c41152e26fd5720554bebc508fbccae57c4bf4741cc9",
+    "CP-1.md": "9e23c9acebd66ab839a20ea99e82ed3e74bf8adbd7eff5b6cdeca6052da3e5c6",
+    "CP-1A.md": "a30dc6ee757c7fb652fe48a6851fd696576e60284b9de44217ff941715c5149e",
+    "CP-2.md": "7eb24fe9c1912761139636d39b7c42c3fe95fb73dd15b2843d6200e0d8bb3f30",
+    "coverage.json": "73eb115f2ad3f112a18502d7849c889236ebe7c8599068fb4df93f50481fe67e",
+    "view.json": "8768ed84f11da57a3c47949eea1736f418f77f3e63673400a43c6c92b135ec8a",
+    "report-view.json": "74330e1a094c0054327062070d595bc8655f4cf2312d9227f284ea12a46f0913"
+  }
+}

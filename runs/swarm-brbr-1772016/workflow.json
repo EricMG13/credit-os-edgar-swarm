@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "brbr-1772016-2026-11-18-credit_snapshot-host",
+    "issuer_id": "brbr-1772016",
+    "issuer_name": "Bellring Brands, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-09-30_brbr_brbr-20240930.htm.jsonl": {
+      "path": "source-text/10-K_2024-09-30_brbr_brbr-20240930.htm.jsonl",
+      "sha256": "0d7699648a6de5f3dc4b1c74f783b7b01b59fb6dc7dae613f7bba7e14775c530"
+    },
+    "10-K_2025-09-30_brbr_brbr-20250930.htm.jsonl": {
+      "path": "source-text/10-K_2025-09-30_brbr_brbr-20250930.htm.jsonl",
+      "sha256": "1d992a4ac3796cebeb20207ecca7fc988fa05dca4cc6b9a44f1e86dd07ec479d"
+    },
+    "10-Q_2025-12-31_brbr_brbr-20251231.htm.jsonl": {
+      "path": "source-text/10-Q_2025-12-31_brbr_brbr-20251231.htm.jsonl",
+      "sha256": "9bd75d1323b157177d1eb3f1fb08c42ade64d60a22d30439a839169f1ab25edb"
+    },
+    "10-Q_2026-03-31_brbr_brbr-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_brbr_brbr-20260331.htm.jsonl",
+      "sha256": "35127fcb8fbec3ca48e5bd88ac75728a5910c98d213b8557609d37613c7fd420"
+    },
+    "10-Q_2026-06-30_brbr_brbr-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_brbr_brbr-20260630.htm.jsonl",
+      "sha256": "a1d964e48612d42542818098232467c53bcfd67fe1a0b5d72c31cc55046a95be"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1772016-bellring-brands-inc.json",
+      "sha256": "7237b3bb4a2687207f40d538fc88e2df1de5e6df3dff051d6fbc019f02248503"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "875f770a5e26b8d87f18d98e06faa26f72d50d5f265ad724e7522ebd10dbb613"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "ac267ceaf5c95198e2d50c363b4855fb731defb10782c3d7d3c4cf52abc992f2"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "d3be0955ac243cb2804269158af6c2c7a8c78f347ef88abd7318603d27e67058"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "c781c29b0889e53ffc4761b5925037e44e5fe00f0e3a4cc4d67140c7fd67a858"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Bellring Brands, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Bellring Brands, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

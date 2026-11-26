@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for ENTEGRIS INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/267354de9f0c1b9f4f950649e1f9f975e00639650f1e8b153bc7242d3f05f770/1.response.md",
+    "CP-1": "requests/CP-1/2b951cbe260af4fc90f768bac5f397f43a0ced79dd0f145a047f0b55ba33de1e/1.response.md",
+    "CP-1A": "requests/CP-1A/947379859953cc0b30446482b7c9440c92216964f8d2467929051224808290ed/1.response.md",
+    "CP-2": "requests/CP-2/c91e9bb38db5f1b3bd9c02475bb18f6e4ccd5be960dd7001c23c9befbfad93c4/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "e1e966d7fba97d68663674846891fd3ab0d4515ea070082498a66820da4fde18",
+  "delivery_sha256": "f3e9b5b80dc0e73072880990b5d3c3a36e65a47370462fae0b5621e7110aa0b8"
+}

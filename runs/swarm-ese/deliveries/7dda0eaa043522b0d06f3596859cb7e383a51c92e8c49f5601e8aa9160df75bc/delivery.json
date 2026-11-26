@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for ESCO TECHNOLOGIES INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "fbe193dfee5c7348fcd056e3b5fb7934b942cd2c9bbedbc8d3b10784806a39da",
+    "CP-1.md": "7917ecb629abf843ccd4d014bcbf334f933288c8f571a94e9d7d8993a7077ffa",
+    "CP-1A.md": "e40cb9686dfd0fa17c17d3ddaaee229be1b41e62767df28051cc87e15a7ad1c3",
+    "CP-2.md": "e987f75f1b44f07585f3efcca4b81b31f1f0b4fe5dfbf3cd4c7f31c9da3a11c3",
+    "coverage.json": "fca985a41311eeae14d47780b2f8aac59f212703d09011469148bc3528b6ff32",
+    "view.json": "da6dcf26e8d660206c2ff5da5d76012850f080101a96757c8c7835083af55f29",
+    "report-view.json": "00833537485adb1d2d9bb2f19000d995d6e73b8db372f9b38706edf0956b6d4b"
+  }
+}

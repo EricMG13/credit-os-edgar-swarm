@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for CNX Resources Corp as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/a57a5df3d1f29fa54ad7346ba95f5a83f6f5a1a7d79db11da322d61feca90200/1.response.md",
+    "CP-1": "requests/CP-1/c948270719b8594e67f4f1ed4a2e5e907ff764e8c6d3e55fcf7b7c51022eddbe/1.response.md",
+    "CP-1A": "requests/CP-1A/1e7468309716ec9c38c349fdbae3b92edb38a8c975cf6da1f792eb4a3640b955/1.response.md",
+    "CP-2": "requests/CP-2/c1fc4c082b3a539299b7df9469f6ceed4152c01fb6aa5a2ba5148a2df4d0c657/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "eec838ca4dd7f613073d956f83b12b9f6620fcae43f9388ddb85120e305d0022",
+  "delivery_sha256": "9c96f7415050227609af4e774f01c42c94dcd507874e98e0e9344e847889ba3e"
+}

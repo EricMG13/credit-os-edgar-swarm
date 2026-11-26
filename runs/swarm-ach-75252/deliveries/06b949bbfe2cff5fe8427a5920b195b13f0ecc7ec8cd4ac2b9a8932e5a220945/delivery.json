@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Accendra Health Inc/Va/ as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "ec961d7a311f6091900ef7071bcc4a93c4e051d4d4cb47ddee17a664128e8f1b",
+    "CP-1.md": "9419597178b3bce997f6da0048f7fc13b7e680cc14660d11f63c047b17cfdffd",
+    "CP-1A.md": "bf117541e6d019f78829ffb05320049459dfd3ae13211e339e2938be102e617d",
+    "CP-2.md": "1632eeffe34027220a72b721094503703ec6dca5862f7d6aa0ad0c81f25978e5",
+    "coverage.json": "f9330eef3028c84cfe2da28be0a8561435a29c9976baed911ede64a653f853b0",
+    "view.json": "12cda9ad754ff90d8e57adc40ad7e77bf8c20183d2ba360979a2c3f113de0720",
+    "report-view.json": "adcb1ca93b5dc2ed38e8923d368bb162badf9b9f9015f4eabda25a725bc29103"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Valvoline Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/0b10277081c925b70c5a121eef95d4dde4f87c8840c8aefce96fa9a32aee8398/1.response.md",
+    "CP-1": "requests/CP-1/d3d45d484081cbf3e6ec5423da49561bc34b87255f8c54b5e1b469b170bfa737/1.response.md",
+    "CP-1A": "requests/CP-1A/8a29c0c4ca218287ef7cb6b5463d2c15b2953728928ae4b9d1621754b7845a34/1.response.md",
+    "CP-2": "requests/CP-2/35d39caa2025130ebdb044d652f9555a5ce5911c819fe1f34d598eaaf40ec2ae/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "bc2591f1bc9d023828103e42c705f0f8d60f40a3659e58720c4b201848adc094",
+  "delivery_sha256": "015d468ec51749b980931d2447c16d23d44c4b5a44b09c2b6229e2a0bbf65d51"
+}

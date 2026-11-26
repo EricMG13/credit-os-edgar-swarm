@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Compass Minerals International Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/33634396fe20640663b0ee41df55a729734a77eb5238de7f82549475924c3201/1.response.md",
+    "CP-1": "requests/CP-1/3ef50dc605bc517037767b9352918c0fbb71804ca87a378643df8722a867f4a7/1.response.md",
+    "CP-1A": "requests/CP-1A/2b4d4dddc157cf50cd9ecc2e42acddbace6309af5038505ddf00a9b74a1769a2/1.response.md",
+    "CP-2": "requests/CP-2/4ab70c403b2d59cb2fb03b4a060f88c0d713ec0afe97accba3942dfaa5ffc60c/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "fa7e0a37672a78d855bc58ad2c73b1b7f8752f88226948acd5a2918f2ba595a2",
+  "delivery_sha256": "960da88ba352e28393ef9b2473dbe6f846ca08748285e3efa69acd3be60bcd26"
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Alkermes plc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/3fd010b42928bec119b2146eae08c54f10bfb2e28fdd0476e8b1a3d5aaa7810d/1.response.md",
+    "CP-1": "requests/CP-1/b4b1b8c467e9f8c97df744dc9c3578d76f359564cd0ca854249e355f95278efb/1.response.md",
+    "CP-1A": "requests/CP-1A/dd90140609fd0a95236a6f780558ffd46b530cc832a44d673e8b7de117d04d0f/1.response.md",
+    "CP-2": "requests/CP-2/9aa21b829a09f6584a934a8a7a43e52b853106cbfec49615cc37e5dbce2f4a17/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "098820a2895788323c30c0b77f513992c2e182a561dcf53cd0638a02c1572ffa",
+  "delivery_sha256": "6e6958882fa2d47e9fd932dae2c2167e8effee96a5a5ef3a5ec05fc3dff79988"
+}

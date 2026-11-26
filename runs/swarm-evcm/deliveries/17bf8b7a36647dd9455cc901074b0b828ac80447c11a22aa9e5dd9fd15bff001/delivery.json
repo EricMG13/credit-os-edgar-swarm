@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for EverCommerce Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "9448208a60e848a76b931828eb110228749dbfdc43f95720c61e95a5090c2647",
+    "CP-1.md": "894dd7e145d484cba4bc5a7dd4e08f0b4ebf48970c8ca63c159749296a83b098",
+    "CP-1A.md": "1ab640b30659c1fb1941182bf3aaa43064f2b50476d77ce291c7ef8ab9af1233",
+    "CP-2.md": "c0aee78b1557446157811f1fe32cd49425ea7726ef6f5339c02ebfb04f9238c9",
+    "coverage.json": "a1ef9963fe0542a128c285266d9934168419e3801bf120e3d8bf6804eaf9e600",
+    "view.json": "786ab203c82c56c6e39b5457f89976519485d321f3db6115bcb2b18a205c629b",
+    "report-view.json": "4a8ba236be66e93d70d292ad21a0fae70b2204002ed79395bff98585268b02db"
+  }
+}

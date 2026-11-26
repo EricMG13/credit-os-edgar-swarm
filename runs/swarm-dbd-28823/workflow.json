@@ -1,0 +1,248 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "dbd-28823-2026-11-18-credit_snapshot-host",
+    "issuer_id": "dbd-28823",
+    "issuer_name": "DIEBOLD NIXDORF, Inc",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_dbd.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_dbd.htm.jsonl",
+      "sha256": "82b5edab10f4f813e3b4d95a80c3c0627242d316b939ab218b16f3c218f9ccb2"
+    },
+    "10-K_2025-12-31_dbd.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_dbd.htm.jsonl",
+      "sha256": "7641f45f66e6bb590327958da55ee836901e6672d3c467b402d1e057797f6161"
+    },
+    "10-Q_2026-03-31_dbd.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_dbd.htm.jsonl",
+      "sha256": "d14c4c75d7e7036511acdb3c6a1ea4f7aa72816ebd32ae181aeae1345a3423ed"
+    },
+    "10-Q_2026-06-30_dbd.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_dbd.htm.jsonl",
+      "sha256": "be3005fde030914c092675638e58083f5bd569aef809dd88176c99a5802b0b65"
+    },
+    "10-Q_2026-09-30_dbd.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_dbd.htm.jsonl",
+      "sha256": "ab5fbb8597a516f00d41b9a42678d2893cbfb39f1cbb48bc07cfe58441998f87"
+    },
+    "EX99.1_2026-03-31_dbd_ex-991q12026erlive-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-03-31_dbd_ex-991q12026erlive-htm.htm.jsonl",
+      "sha256": "31eb72a7175324ebe8b5a1e57506fa026b597f82d76bb2705fcdbd13bda8c2b2"
+    },
+    "EX99.1_2026-06-30_dbd_ex-991q22026erlive-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-06-30_dbd_ex-991q22026erlive-htm.htm.jsonl",
+      "sha256": "f28d196c4cda0f5731b58f8f50ae61f75618bdc7f7a9578d744a2c5bdeb4869b"
+    },
+    "EX99.1_2026-09-30_dbd_ex-991q32026erlive-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-09-30_dbd_ex-991q32026erlive-htm.htm.jsonl",
+      "sha256": "643961e5258f40afd65d75fdd4e39253686cdc5da0f39ecaf18145b33422072f"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/28823-diebold-nixdorf-inc.json",
+      "sha256": "5a809495b4c89a14bed4461895e0b2b30143ae5d72b1c7e0406d491b4d4720de"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "487b9783f81d134fa0c3aa54a9dfc5d5b845a5ecae3b62a7061bff03c993b3f2"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "6af6f6e9eb67cf53771f946ebf9e9f158d06a412a88008b37bec5d776c4bc622"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "bc98b481eb73245d9173ce4dbf147704d5497601bc1df2764799dfb13f3b758a"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "1580d9886c2952a9d4fa650272510099a3a930593d6a3bfe1e0b2ff09bf40139"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for DIEBOLD NIXDORF, Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "DIEBOLD NIXDORF, Inc — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

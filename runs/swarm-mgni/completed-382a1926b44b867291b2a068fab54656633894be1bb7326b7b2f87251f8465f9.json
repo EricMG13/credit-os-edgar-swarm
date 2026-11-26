@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for MAGNITE, INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/6f28f0a0903ddb52a60fa21028d5f31a2476d5a400e20001e19bdb62fc4c412e/1.response.md",
+    "CP-1": "requests/CP-1/ed8d90c4f2bf0d04941c242901d2f57b010129861c916bf9a36656502b27e465/1.response.md",
+    "CP-1A": "requests/CP-1A/c86b5e9fecd3a9e3ef744847356ac82c6fbf2e4fdce817d866827d1b8a6f80c7/1.response.md",
+    "CP-2": "requests/CP-2/6d578065dca5d5d044e1f886667e91b2b35d074a592362af8a83825e89799132/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "58f22eefd4e26846f375c7fa9421c20a6daa8d8f5b6bbd0b6514ce9b47eae2de",
+  "delivery_sha256": "45d6b5200c628dfb71d2e100918981ea815a815773921db3f4daab837b8c27f4"
+}

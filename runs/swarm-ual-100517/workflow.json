@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "ual-100517-2026-11-18-credit_snapshot-host",
+    "issuer_id": "ual-100517",
+    "issuer_name": "United Airlines Holdings, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_ual-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_ual-20241231.htm.jsonl",
+      "sha256": "89fa392fe7eb2a294387f69339ffa545dba85a7888d9d39cd8f2d940a1321330"
+    },
+    "10-K_2025-12-31_ual-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_ual-20251231.htm.jsonl",
+      "sha256": "29dc7a34807976b899fceafaaddd2c577982a3cf7444b235eb0dec011959c8c9"
+    },
+    "10-Q_2026-03-31_ual-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_ual-20260331.htm.jsonl",
+      "sha256": "f1b4f1fa3579d48f479b3746a57b0d1267b53ffe1832da889788ac7052cbcc96"
+    },
+    "10-Q_2026-06-30_ual-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_ual-20260630.htm.jsonl",
+      "sha256": "5a12d1f6dc2f9e87602e235254490c517ef68d60746d8a4a8ff3b10e7549903a"
+    },
+    "10-Q_2026-09-30_ual-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_ual-20260930.htm.jsonl",
+      "sha256": "bcbe9a076089dc30c0d260b5046c66be95c2e0f0a3bfb36adcd6a3562352b7d5"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/100517-united-airlines-holdings-inc-ual.json",
+      "sha256": "7f6a497e5656a3632ad13bfddadd893feffcb364944289fe7a344dc03b5a794d"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "599ba155902869b86a9bbd61ae71b4714bcbf9cfc515e02191d5e3dec588c722"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "b05958d3cf00a7aae99d203a891094b319b396aceef9bebdab3ef9a98acdd338"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "0046f8fab8cdc3364f1d41f585127e60dfa8732bc69b6d0fa1695858ef95e316"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "58d38a41868ec9d05727ac407b9c7b78316fc338f0c91323181cb28ba932d099"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for United Airlines Holdings, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "United Airlines Holdings, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

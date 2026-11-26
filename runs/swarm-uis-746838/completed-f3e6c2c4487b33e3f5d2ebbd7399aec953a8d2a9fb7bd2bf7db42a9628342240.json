@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Unisys Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/d73bbbcf3e48cc43c58f55f18e4a1ef11674a4d79984978692048387f391c28c/1.response.md",
+    "CP-1": "requests/CP-1/84254c2cfd144c4c75684b5474cb3c8e65023c259f5e01e5a3b0c406db091618/1.response.md",
+    "CP-1A": "requests/CP-1A/9273ce54fabdedcee29f39775894b5663e84062b5dccb32fbb740959624e8fab/1.response.md",
+    "CP-2": "requests/CP-2/cec812101ce5aab63ef7d27c26e5b897db561f336d3b5286406f83f76bc75126/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "8be2865655d393a4d77479cc1594e26425a1bc4718f84537a48e404b151c7fde",
+  "delivery_sha256": "3f06ff0616c0852386bc60bcaa8cac80d235f98093128ec4a467e6656e24a7d3"
+}

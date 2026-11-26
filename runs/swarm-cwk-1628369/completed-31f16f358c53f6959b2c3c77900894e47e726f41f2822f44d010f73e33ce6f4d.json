@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Cushman & Wakefield Ltd. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/4454a7211d86639b34417d4fda09a4af2a8e00779927a4505cf0e468af1dd89f/1.response.md",
+    "CP-1": "requests/CP-1/23f7d8d197567c64e1568f74b2216a66cac76b3f541d7b56be9f121e12bca60f/1.response.md",
+    "CP-1A": "requests/CP-1A/7ce04cdc1bef4ab092aa05ae324a3eacce3d6c2631c9018e24664509cbc1867e/1.response.md",
+    "CP-2": "requests/CP-2/3579875d75cf626520b8abed8344866503c3faa4c60aff79c08d2286164e657b/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "1e154df8afed953bdffccf6eb90d8b81726a22f3e1ea275f431acd26aaa8e2ac",
+  "delivery_sha256": "c6e3496d60673e0c1a87763fb370f797746c640a9032f69d5fb4796374ae20c1"
+}

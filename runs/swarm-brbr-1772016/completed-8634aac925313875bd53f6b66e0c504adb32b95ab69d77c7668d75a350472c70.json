@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Bellring Brands, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/d16150959afb51b355aebed83e2b812683c9847aa827b9cee4d7040b2b3d4a15/1.response.md",
+    "CP-1": "requests/CP-1/2efccb2eb2a4758778420a67874b7219e358583705cd33ff7a0d8e679a2b0948/1.response.md",
+    "CP-1A": "requests/CP-1A/915f8d087f245356d28809bcdf09858e445c6512b6ef2edc85109eb35093fe75/1.response.md",
+    "CP-2": "requests/CP-2/10dd30cf43c5f071819121a7079fed1ed2fa7ff07137b695087bb362064aa6d9/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "501e3567f2632fe4bef814de019028cb6f66cd4e3615de2916e57a72d439d63f",
+  "delivery_sha256": "d015e575e6a704b4553c878b064f6fa22a33daa4f1adec4fe256194252c1c5fc"
+}

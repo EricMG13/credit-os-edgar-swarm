@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Block, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "e2fef1f2e8cd622f6df897a62ac10760012c962b492b10cb3d5cd60b05a9546c",
+    "CP-1.md": "b47a7cd902509115a36c58582c00de8a4ac740511c51c94babf37260fad597e2",
+    "CP-1A.md": "9deb34fb090ff53e265083b2785117306eccbb65c85cec2437cb5adda5a906fb",
+    "CP-2.md": "0af8c3abb552343f843ed66e3875232dcc94014dc059a030e9b27346e6524cd1",
+    "coverage.json": "0bcc45e31b210ba8e73086408ae33d4db2ff0b7b41da9076c8abb4441a1e0f23",
+    "view.json": "41ebb58c8bb2bebe9b498ffdbc9ae8ba4c89e2c6421beb498e1e2bdf902d277e",
+    "report-view.json": "e698c183842fc5a77f29db9a2d8f0b0085d6b0689a8eac15d44ce5200301b21d"
+  }
+}

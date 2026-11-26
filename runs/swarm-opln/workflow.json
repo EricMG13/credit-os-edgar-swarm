@@ -1,0 +1,244 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "opln-2026-11-05-credit_snapshot-host",
+    "issuer_id": "opln",
+    "issuer_name": "OPENLANE, Inc.",
+    "as_of": "2026-11-05",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2025-12-31_opln-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_opln-20251231.htm.jsonl",
+      "sha256": "26a1eb6e044eb7884447c1771579bc95b55527d93c8454714335cfb05faebcc7"
+    },
+    "10-Q_2026-03-31_opln-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_opln-20260331.htm.jsonl",
+      "sha256": "c46e877ea2548ae22544a835acae1b3618984f266ca5c5f8d9f1ce170a2f3661"
+    },
+    "10-Q_2026-06-30_opln-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_opln-20260630.htm.jsonl",
+      "sha256": "47753528b639818941177074a5796fb5ee4c271e3e7cb89f9ddc4bf548a73b8f"
+    },
+    "10-Q_2026-09-30_opln-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_opln-20260930.htm.jsonl",
+      "sha256": "9682e191d9ec651d5722722ac8ff03e1ea87ff7ece0722d12fcb449d04d13357"
+    },
+    "EX-99.3_2026-05-05_q12026openlaneearningssl.htm.jsonl": {
+      "path": "source-text/EX-99.3_2026-05-05_q12026openlaneearningssl.htm.jsonl",
+      "sha256": "2fc56068f78381bd02bfbe329da47d9ab40d86ee26db869d39406949616dc5f0"
+    },
+    "EX-99.3_2026-08-04_q22026openlaneearningssl.htm.jsonl": {
+      "path": "source-text/EX-99.3_2026-08-04_q22026openlaneearningssl.htm.jsonl",
+      "sha256": "458d3c1fac99aaeefe126a46b683e88ca11580e6032ddf67da49e980bf2bff5d"
+    },
+    "EX-99.3_2026-11-04_q32026openlaneearningssl.htm.jsonl": {
+      "path": "source-text/EX-99.3_2026-11-04_q32026openlaneearningssl.htm.jsonl",
+      "sha256": "bc88d193632549ac9eb968d3349190fc1ffa3b0842d97894dce16151e37cfd9a"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1395942-openlane-inc-opln.json",
+      "sha256": "2fd2835b16fcd6e36fa06485261ee15d20c3a0b3f6cb56cfce407e6993d9ef70"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "dcf96c36d98b08632d5245aeae5c84fe1046627ac01c35e80c6c97e90655548f"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "fc803f50d9135d1a0a7f17b425eb4c85c7824e5faae8974eaa1f3fb07a5b1f55"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "80a84a4d5862b35849915016ab8c5ef0d47e6e5d56cbf2824fc57f4d28068a4d"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "1faec8ea0e0c1bd5500995ae1772c6f4541f40ce4f0a500797d68d2036be2812"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for OPENLANE, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "OPENLANE, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

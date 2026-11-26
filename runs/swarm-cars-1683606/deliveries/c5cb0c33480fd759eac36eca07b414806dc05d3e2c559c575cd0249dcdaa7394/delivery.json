@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Cars.com Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "17142d795f3e64b9aaae6cf2d6803983ede07492de5804d8adc07b81886738ad",
+    "CP-1.md": "4a556b7e9de6cb0033bf1259ae5574330462f8ae2030221855294e56c1e0baf6",
+    "CP-1A.md": "d10cdb6d74fdf70a2ae8a207e13593aa73e597cf81ba7dde22c6c598b326d972",
+    "CP-2.md": "0cb9bb1dd6b2063b5f25dcc24e92cb502e9ce9f530e112cffa6d08215c1b89de",
+    "coverage.json": "6e54e33ac1b8fd42e4efdea3fbea4a043b357b6e2500594f640cb45724da9080",
+    "view.json": "c4517789d22b4d69d307cfb23c7948c24fde72c473c636aad311094efc8e5bcf",
+    "report-view.json": "d9a49ce8b0ce6372023b0079a111edbcdaa2e58ad37bfc46cbf9834e5a9a1981"
+  }
+}

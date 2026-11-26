@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for ESAB Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/b2a7408c2dd5a85601e6610dd314465bb2c68a09c5d363bce4ba2de048d52a46/1.response.md",
+    "CP-1": "requests/CP-1/302eb1a4bd0997a423a862c3c014e7a3da6ad70ec583e382fefd33cc0ffda231/1.response.md",
+    "CP-1A": "requests/CP-1A/5503ca8e5f03d759b78cf24ee1081e8b22f7b669bb606501ffb9829ddccc9b94/1.response.md",
+    "CP-2": "requests/CP-2/3ae9db457a25d5c2fc21eaf363e5f41d06a4c1956ab65f56f7bbf63038502c48/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "6f3c5dba378814001cabe3c0aa111d660111486bd236f8138fd50add21070cd2",
+  "delivery_sha256": "ca845737db2fd12d9ffd79be6123b7d8a60affd8aee8f386ee978e49edaa4799"
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for BAYTEX ENERGY CORP. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/5a4e3086d18f6c80a311e954d3a6580bd33605b302e0aa06739f519cf3bd3c5f/1.response.md",
+    "CP-1": "requests/CP-1/e42b4f22fc7f00e2641e3a9eccc2669f95eda31f3a01a95fb5231ef62f390cf8/1.response.md",
+    "CP-1A": "requests/CP-1A/6a7db76db9272c1d163bff40772c057dabfc8141f0c3584ef2a74b5bd811142a/1.response.md",
+    "CP-2": "requests/CP-2/74e2460b0e06dcf616f9e49d73d1c18c9cecad8a62a1acc5edb016c1ef0f4335/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "e601bf474877a445662e2c0714a7fc61edc92fc7d355b5c574b39ce66a3c7056",
+  "delivery_sha256": "4780e24600b014de16ed55ddc51293ad7c9b7cbc572d61a2e88673b3a50d45cb"
+}

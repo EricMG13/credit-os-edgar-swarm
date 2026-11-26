@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Penske Automotive Group, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "275f374714b59f400843e5be252521b97597c7e72502565c09b3c9e4fae62cbe",
+    "CP-1.md": "fcdf568c83bfe8844319be96837c7cbabaf232c76a0369161377fcbeeae77920",
+    "CP-1A.md": "6ebc8fbe6ca76cb55be9c4b4f99ae7809df9d610823272741ad4de00422ccd9a",
+    "CP-2.md": "33b6a1e6adefedc94091670e5445bc3a24abe64c6f95061bdb7aa80650f474f7",
+    "coverage.json": "3324fe8f60ea72eca29163f9e1f38fcbab4123b89971c5a457c6f394fbe2d0e2",
+    "view.json": "96fba628acbe124e2c90db0c54297942f07a1f0b248b3ddd327cb5b826ff10eb",
+    "report-view.json": "2397f679d1b15f5d74f405f6e38bd5c6f5f6cccbcb643c101011337555130b4a"
+  }
+}

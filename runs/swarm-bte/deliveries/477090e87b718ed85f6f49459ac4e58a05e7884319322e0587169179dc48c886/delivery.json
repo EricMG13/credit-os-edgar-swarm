@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for BAYTEX ENERGY CORP. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "b9b8d94ef07c95ba0cc4221d1b096672dabe2cc8fe6a29a64a2eefd57fec6726",
+    "CP-1.md": "5b7427b5b910a17bcfbe63ca3af8a4d332f7fdc933d2bd1e689bf60401b23126",
+    "CP-1A.md": "9f5b007f0563a904052218c37ae09f54bf7f8b9b21570bd062950b788d79d2c6",
+    "CP-2.md": "f6e3e94a96cb61ac413f9793ac85da53e17924e822a96ede28040bb563db1558",
+    "coverage.json": "900f3fbcec22ed3c51d170b033b5f5325d3b95a2fc053f41babb252af56af264",
+    "view.json": "3eba81321f93e99048dac4d076904da6a5a1303fea204ef8bb13261ca138e0c0",
+    "report-view.json": "601da5d9817becad84a90d791040040e7704ad1c8dc203288229210794ec6c63"
+  }
+}

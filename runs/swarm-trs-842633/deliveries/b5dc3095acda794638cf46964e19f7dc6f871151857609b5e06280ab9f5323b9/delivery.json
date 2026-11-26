@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Trimas Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "4b81bbaaa7bcdd92027ef047598529b3b785c95f9e7c4827c0754e1820d60dc7",
+    "CP-1.md": "ca8a1fff866aba3b89530af1d6768fbab9b4f882c24b01166b4c9e7e46285a72",
+    "CP-1A.md": "529b83f0b7d89c42164fd4f27c0840ff7ecc3890bae40bddaa7a24afebd5e71c",
+    "CP-2.md": "090e232ecd1e858af9b658acb1657d1886a892b92bfb0d00f7c434e647046082",
+    "coverage.json": "689250bfd86c0ca0b4269771c82969193e5a34893042701b4f21218cfca1ea6f",
+    "view.json": "056ac925c374cb9141655872efa3a30ce615aafb6f86b024d47e141398fca805",
+    "report-view.json": "4e16749391488a769b4e3c135bf55d627ceb305cbc6d9d4b120e7a74da827ddf"
+  }
+}

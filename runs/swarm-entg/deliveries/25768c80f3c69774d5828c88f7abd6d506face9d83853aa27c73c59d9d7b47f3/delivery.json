@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for ENTEGRIS INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "ba3a775d3800350778736b10ab6b6cdeb19ade0b14b26c4f98e86059e9de2e38",
+    "CP-1.md": "8d07d18b2ba6fabaef828bc24d8cf3f74af5ebb6f7411ef4a5763b716bd591c5",
+    "CP-1A.md": "5a28c00ad23dcbe0e2314a1885d954f7fcfb63f30cac7f6976fcaec5fd33298c",
+    "CP-2.md": "af7a82abe29921779540f0866bd460f4742232c8a048241b2e191215756195da",
+    "coverage.json": "0ee3c0ad53b37eb799dc143e7a3d490632833826fc8e59ec05422df102fd1fe0",
+    "view.json": "b7a9493eb085a3a7d6549757751009acdf182965f56380a8345060deb2a37b45",
+    "report-view.json": "345dc2b5928cd484a599b646e59f10837d892a56cbddae3aac9c210979f8b76e"
+  }
+}

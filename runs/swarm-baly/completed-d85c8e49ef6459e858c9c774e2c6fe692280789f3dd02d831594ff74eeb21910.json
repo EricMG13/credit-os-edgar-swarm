@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Bally's Corp as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/5a005bfeacf7410b5fd62a6a7eedbd2e006ab07925aa4e915075fac5c4b98d00/1.response.md",
+    "CP-1": "requests/CP-1/46cd647f7a6d3cccb038dcf7101bb92db4ae338f34f32c326aa24d9bc1ea24de/1.response.md",
+    "CP-1A": "requests/CP-1A/00986dab05c7135302e66e02e2956fdb4d1a8ec6a5bce084aa3cf9481c32fd86/1.response.md",
+    "CP-2": "requests/CP-2/c2017acea0835c263ef4184fa1153aef53b2281679278557906ff64d7759a75c/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "f77f471526fb9dc7010a7591bc233cba5f13d36b3104561098466d4653361df5",
+  "delivery_sha256": "3f8dd0c5f1b13ec4d8afe4b6d5b4b1f50530f3e249b90c8c0fc5fbdb4a88d441"
+}

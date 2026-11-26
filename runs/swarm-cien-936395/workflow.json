@@ -1,0 +1,256 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "cien-936395-2026-11-18-credit_snapshot-host",
+    "issuer_id": "cien-936395",
+    "issuer_name": "Ciena Corp",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-11-02_cien.htm.jsonl": {
+      "path": "source-text/10-K_2024-11-02_cien.htm.jsonl",
+      "sha256": "f73d0fe097a176e29ec5f9cb46fe568ec7e1b7f0070ae90ef9b6c6f76ad93e84"
+    },
+    "10-K_2025-11-01_cien.htm.jsonl": {
+      "path": "source-text/10-K_2025-11-01_cien.htm.jsonl",
+      "sha256": "969655cb2051bf9145ce47572a3a2917fdfefd8bc504d0d87187a04e45058c11"
+    },
+    "10-Q_2026-01-31_cien.htm.jsonl": {
+      "path": "source-text/10-Q_2026-01-31_cien.htm.jsonl",
+      "sha256": "34885d26da07d676bd72576fc0dfc35b080dd12c42bf9e261149f6ca76e50719"
+    },
+    "10-Q_2026-05-02_cien.htm.jsonl": {
+      "path": "source-text/10-Q_2026-05-02_cien.htm.jsonl",
+      "sha256": "712801c6111004d51dce46ee62274d8d8c683938768a6da17b7242eefe091359"
+    },
+    "10-Q_2026-08-01_cien.htm.jsonl": {
+      "path": "source-text/10-Q_2026-08-01_cien.htm.jsonl",
+      "sha256": "048487d19a5c01e1fa3b24ba0a6c396245a7c909c0b2ca66b155456d724292fb"
+    },
+    "EX99.1_2026-01-31_cien_ex9912026q1earningspressre-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-01-31_cien_ex9912026q1earningspressre-htm.htm.jsonl",
+      "sha256": "56fb4707bd9740ecd5cda0110189ba6dc7c288e24ac32950faaf931d0a375531"
+    },
+    "EX99.1_2026-05-02_cien_d118604dex991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-05-02_cien_d118604dex991-htm.htm.jsonl",
+      "sha256": "239dea54de43af89faeb28e29eca0e9d7bf340f6680d6ee274c43b6ec79aa181"
+    },
+    "EX99.1_2026-05-02_cien_d125730dex991-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-05-02_cien_d125730dex991-htm.htm.jsonl",
+      "sha256": "a06247e6203600e5d6cb469adf3b8d0fb741a32c80320fc3ee0111c3d16dcdcd"
+    },
+    "EX99.1_2026-05-02_cien_ex9912026q2earningspressre-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-05-02_cien_ex9912026q2earningspressre-htm.htm.jsonl",
+      "sha256": "645ac315dfe83e4f01c44754494aa43a9ec228fd4508010585fb5f46d951793b"
+    },
+    "EX99.1_2026-08-01_cien_ex9912026q3earningspressre-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-08-01_cien_ex9912026q3earningspressre-htm.htm.jsonl",
+      "sha256": "03a0adda2fe6e14b562d30a411fa9a6850f6b2039495b7c6f1c53fbe7c86cbbc"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/936395-ciena-corp.json",
+      "sha256": "cf6720ed82cfcc9dc3a4267e36bfd88bd5f17c43ca0938d78f9964f60ce37b57"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "ac65ec65f54e4fdff01bfae31c6272c3c337ba663df80706120a142675309824"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "a4f43125250af4524a1ff184d2922a1cc6dcb1e6e4c5b3ddd491e531cdc347e5"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "08b33a96831a7c865d3e5f8b4f43dd3c51656f2f7cf029f10e643d3dad25d691"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "baf98ef2f7efa670d881645593696c4b3bce6d4acf32b2b25f9ab9d3a498c754"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Ciena Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Ciena Corp — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

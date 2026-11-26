@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Karman Holdings Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "37fd0b5051f394bd8165964c892a92c06850a8fb9c2fba7da508697ce0ebf54a",
+    "CP-1.md": "e316f525666f60f3a9389e83d4b21f2c15e3beb6b3db0d88a718d52a758be183",
+    "CP-1A.md": "090dd4a17a5ed3728feea7198c5d3c14b75922dc8eb5c9f4dd5dc21886b38a47",
+    "CP-2.md": "0a550fd752684081225b83b90ee480cc219e0e18d61ea9d692c57c70aab0ec86",
+    "coverage.json": "539c1a187c6ae26317231d180375fb5b0ac0d46d9869730e09aa015201783a83",
+    "view.json": "ef9418163c8f3308f644312ea952eba005336b84310c7cb0c17de738a47eac2e",
+    "report-view.json": "96e997f140a823e06a588ce29e474303d5ae4c1054d78b8990f989b3a05cc778"
+  }
+}

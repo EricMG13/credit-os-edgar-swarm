@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for RXO, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "10aa21e3faf3127d9c7d04a6658c79a340f04e68c59b6756218820d99bb407e1",
+    "CP-1.md": "205062a60e53fc90e0a2069dea56ad19ee602f4b4defee46930be2fef3ab5a42",
+    "CP-1A.md": "d250a35200cc339773427fd3cf73fb910e585ca7762d451bf801773162282e53",
+    "CP-2.md": "3bc83576a8131b8442fa764f328fd50a7bd20bc7b538c6db4b27ce6b3d06b7cd",
+    "coverage.json": "b1c7175a0ff5bcdf274d3be63f90b2fe61ea80043cd0fee6d67c79804e3dccc7",
+    "view.json": "484c9e3a11422caf053d4522ec7ccfc6a0ccc19b5eae372a77413ea06f90d7d5",
+    "report-view.json": "822d9022eab760d8269bbb12df7e6325a4958efe079396cdc63c9c74640394b0"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Ziff Davis, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/f81a4ff4b111ecf05e0e57e53df1f5bc388986276a74d6f77c1eca04bf1bdfbb/1.response.md",
+    "CP-1": "requests/CP-1/34331defe0aa8d00b6029af1c1e9052c5d248611e7839ffad60993730899ef60/1.response.md",
+    "CP-1A": "requests/CP-1A/0bd86847fe6793596518c86247f85b5a8ce058bbec66e74fbcd1e25c6ae248cb/1.response.md",
+    "CP-2": "requests/CP-2/c97bcd5f254be4cf240c85d7389fd0f2aaf94980ad83a15d0798352e704e38e6/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "f1e9013680c3a3e7a1dd8a34a88aa5925578800fb2956bba4e346f0526ff7629",
+  "delivery_sha256": "815c87a06667180af0f1c47bb1da12505aed53bbc9fe232ed60768801afcedab"
+}

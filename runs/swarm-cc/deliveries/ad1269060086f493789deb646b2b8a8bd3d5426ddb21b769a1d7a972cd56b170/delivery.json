@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Chemours Co as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "b24b4904b55ecf2403f7a8ea82234e910f8aa934874f9a1576daecfc2617c1b4",
+    "CP-1.md": "ad869fb2a7b9fef91c7fcbad7a5a9c55d4a476c0b5b51d9f754e756a36962cec",
+    "CP-1A.md": "b2f4b1d9289772d6e2af279ed0cf37808937334b66320b0ba03d62da0cf30439",
+    "CP-2.md": "dfa562631336195025f5dc1a95af31b7f11de11c455782680b01d3850d361b78",
+    "coverage.json": "bb7f3b50c94d2e003dc318a029c12019254c483ce60448152fc80e3ab81ac3a5",
+    "view.json": "b3bd8220ce6d291bbf10de58d8b0970d77e6325699570f3e683bc0e53209571b",
+    "report-view.json": "548bf892b5038b8682ac5dbccf7cb917b4cbf4805538d07a37cd5ab65df97209"
+  }
+}

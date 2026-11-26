@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for CLEVELAND-CLIFFS INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/be75c5ff05964057e035e7daa1df1ef210ffeebca54d42ccf04a61d7cd03225a/1.response.md",
+    "CP-1": "requests/CP-1/dafd0ffe7189b797f1cdc780efe1727fc4cc5be2601a596b05ae6053154251cb/1.response.md",
+    "CP-1A": "requests/CP-1A/1e329e0bb9a7b3b0b1f5bc0cc1d08b9554b57d8a53a168abd967a59bc223828e/1.response.md",
+    "CP-2": "requests/CP-2/818b469ae64c036e1c7937c23d5308f2a14c9bed44ae6ca5c44f55aac1bc869e/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "13236989feea67d1f88fa13903498786d4b9b5efb404c789a9d613b095682df8",
+  "delivery_sha256": "0983dcd43e710efc878b6e82811ce025de5c69d55f35ed7c4616af0a9ac8c337"
+}

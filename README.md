@@ -1,23 +1,26 @@
-# EDGAR swarm checkpoint for the Nov 18 issuer list
+# EDGAR swarm results for the Nov 18 issuer list (complete, Nov 26)
 
-This Nov 24 checkpoint combines the 16 source shards listed in `source-shards.json`.
-The ledger records 242 issuers, with 50 published, 192 pending and zero running.
-Offline verification recovered the retained Constellium and Thryv deliveries from shard 11.
-The 14 other interrupted claims returned to pending. Snap and PBF Holding retain their partial
-run folders. The library lists the 50 completed runs and their four handoffs per issuer.
+All 242 issuers in the ledger (`plan.json`) are `published`: 0 pending, 0 failed, 0 skipped.
 
-- `plan.json` is the resumable ledger. The source snapshots are pinned by commit.
-- `runs/` preserves the 52 retained run folders from the source shards.
-- `library/` contains the combined publication and downloads.
+- 50 were published by the Nov 24 checkpoint (`codex/swarm-results-2026-11-18-consolidated`).
+- 190 were analysed Nov 24–26 by 15 shard sessions (`claude/swarm-results-2026-11-24-s01` to `-s15`,
+  list in `tools/swarm/shards-2026-11-24.json` on `claude/epic-pascal-3x3mra`), Sonnet analysts at
+  xhigh effort, CP-OS host mode through CP-2, analysis only (`tools/swarm/analyse.workflow.js`).
+- Churchill Downs and Commercial Metals were completed by the Nov 24 pilot at high effort.
 
-To restore the checkpoint in a fresh host session, use the exact `swarm-inputs-20261118`
-prerelease as described in the code repository's swarm runbook. Verify the release checksum
-and its input hashes. Extract its `inputs/` tree under the new run root. Copy this checkpoint's
-`runs/` into `ROOT/_engine/runs/` and its `plan.json` into `ROOT/swarm/plan.json`. Run the current
-`tools/swarm/prepare.py` against the restored inputs to refresh paths and check that the ledger
-reports 50 published and 192 pending. Use a dedicated worktree of this branch for batch saves.
+Verification (central, this commit): each shard folder was copied into the central root and
+`run_issuer.py ID verify` run twice; all 192 passed the second run, and no first run wrote any file
+other than the restored `inputs/` and `source-text/` copies (`verification/central-verify.tsv`).
+Ledger `done` used the controlling session's claims; attempts per module match the run folders' request
+records for all 242. Engine: `claude/nice-gates-xwsl4g` (credit-os2 `2e48875`, method `deploy-v-r14`).
 
-Run directories exclude raw filing copies and converted source text. The launcher restores
-those copies from the verified inputs when reopening a retained run. If the combined index
-outgrows GitHub's file limit, the workflow keeps the ledger, runs and downloads so the index
-can be rebuilt offline.
+Limits:
+- Answers are checked by the launcher's format and method checks only. Analysts logged defects they
+  could not fix in accepted answers (`verification/shard-reports.json`, `notes`).
+- 78 issuers have accepted answers committed by sessions other than their shard's own session (42 of
+  them only by such sessions, the `01EB6yc...` sessions whose origin is unresolved); see
+  `verification/provenance.json`. Where both analysed an issuer, the branch version was kept.
+- `library/data.js` (331 MB) exceeds GitHub's limit and is not committed. Rebuild it with
+  `uv run python apps/issuer-library/update_library.py --workspace ROOT/_engine` after restoring `runs/`.
+- Run folders exclude filing copies (`inputs/`, `source-text/`); the launcher restores them from the
+  verified `swarm-inputs-20261118` release.

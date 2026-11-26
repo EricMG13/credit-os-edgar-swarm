@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Silgan Holdings Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/daa82d27c42b51d2d16fb222d1e09907a1d0d2480d2bfcf04016157b07187d85/1.response.md",
+    "CP-1": "requests/CP-1/e71e4e60ef8ab5058bacce6500755402a451284cb00b02b8052bfd77d7afd2cc/1.response.md",
+    "CP-1A": "requests/CP-1A/290b965894f7942ee6f15e347f009de9ae98c5fe3b48da2eb3bcd70b2bd96d0a/1.response.md",
+    "CP-2": "requests/CP-2/5651cd2ae2fd3de6d993d24f476a5df9f758ec0ac429d3355c69a0a2afe56781/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "b0568633b225ea6d3f6ef9e10c9a0b466833e7a04f5d13995f53483128631e7d",
+  "delivery_sha256": "ce4e04566836599ab59d4a09c5590492f6863773bb4bbae8080bc5397dd973eb"
+}

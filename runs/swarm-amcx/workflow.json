@@ -1,0 +1,244 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "amcx-2026-11-05-credit_snapshot-host",
+    "issuer_id": "amcx",
+    "issuer_name": "AMC Global Media Inc.",
+    "as_of": "2026-11-05",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2025-12-31_amcx-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_amcx-20251231.htm.jsonl",
+      "sha256": "2eac087a9c91970955c65f61340e91bd48ad2f9f3f6c57f58dc32a71147af2c1"
+    },
+    "10-Q_2025-09-30_amcx-20250930.htm.jsonl": {
+      "path": "source-text/10-Q_2025-09-30_amcx-20250930.htm.jsonl",
+      "sha256": "36dd5126a4c9060458356b29d3eb4aa03633caa5f0871dc91ad5f4dc8adcd0a9"
+    },
+    "10-Q_2026-03-31_amcx-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_amcx-20260331.htm.jsonl",
+      "sha256": "938a57939d24ffa99772ad28c4268837c8cd2e9d6c83313cdce5d4f6457a019b"
+    },
+    "10-Q_2026-06-30_amcx-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_amcx-20260630.htm.jsonl",
+      "sha256": "709e51b6dc542ca6e875192527a94179627534ebb9b979b24ab34c983b10c21a"
+    },
+    "EX-99.1_2026-02-11_amcx-21126xex991.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-02-11_amcx-21126xex991.htm.jsonl",
+      "sha256": "d86abe17fb554149efdc3f1d1068cea9305b7eb4d0b53b4922cda0c2c6548e87"
+    },
+    "EX-99.1_2026-05-08_amcx-50826ex991.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-05-08_amcx-50826ex991.htm.jsonl",
+      "sha256": "baaebb0b7ed064d963f5f351d5426dc6837acb54bc54b02caebdf8169997d96e"
+    },
+    "EX-99.1_2026-07-30_amcx-73026ex991.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-07-30_amcx-73026ex991.htm.jsonl",
+      "sha256": "2c28473b42400a7535aa74f85a20a041b1e3d1cc8d274b85c2e5db3c449c0a4b"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1514991-amc-global-media-inc-amcx.json",
+      "sha256": "95e365e5dede6bf5d3238dc431d8121ca3ba426646f866c4518f2a27b51f7e19"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "c7eb6f7973eb235910d0e63c1fb709fa07048b081cfc33da6caa716924f79d0b"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "f1d37b02d2d4fdd5851d27ae97df329baef60c191920969c5dd3a8e6d49e768d"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "5972115282d3324b6973ce10fc60e3af56853bd30f725500a31ebb1fd7956a08"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "13381dbb434e0d449e25aa37bb8dbe8c1b016a6878766583432541a234c68b2c"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for AMC Global Media Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "AMC Global Media Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

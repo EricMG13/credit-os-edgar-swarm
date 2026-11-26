@@ -1,0 +1,248 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "oii-73756-2026-11-18-credit_snapshot-host",
+    "issuer_id": "oii-73756",
+    "issuer_name": "Oceaneering International Inc",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_oii-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_oii-20241231.htm.jsonl",
+      "sha256": "de3bd0b20bd2488d37f56543f4c099a957532f58ad5111936c1a2176da59d3c6"
+    },
+    "10-K_2025-12-31_oii-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_oii-20251231.htm.jsonl",
+      "sha256": "d6ee6a30c0135190f54de5124e176b3dc36008b7a976ce80389dbc3c265c6010"
+    },
+    "10-Q_2026-03-31_oii-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_oii-20260331.htm.jsonl",
+      "sha256": "4db43214ce56f7c4cb8aab15c9f0deb06723e36dbf6c36c1dcecd39d6a6ae01a"
+    },
+    "10-Q_2026-06-30_oii-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_oii-20260630.htm.jsonl",
+      "sha256": "a86f6ab66e1537ac9830b15086c246ccf5d2ee47d0f47cf2c14029d6b627bfd0"
+    },
+    "10-Q_2026-09-30_oii-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_oii-20260930.htm.jsonl",
+      "sha256": "028ab11d83911ad306bcf987843915d4c0449b6baaa8eee85d0a9259ee7ecb1c"
+    },
+    "EX-99.1_2026-04-22_exhibit_991x8kx1qx2026.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-04-22_exhibit_991x8kx1qx2026.htm.jsonl",
+      "sha256": "ea36b91fd611ed4292354162e1e2d5ba0becaa72012dd5f6d2d355d39d854fbc"
+    },
+    "EX-99.1_2026-07-22_exhibit_991x8kx2qx2026.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-07-22_exhibit_991x8kx2qx2026.htm.jsonl",
+      "sha256": "9bbc3d59fd91ec28fd70848c793ceafd0bac0311a49532e5d12af4a1b6938522"
+    },
+    "EX-99.1_2026-10-21_exhibit_991x8kx3qx2026.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-10-21_exhibit_991x8kx3qx2026.htm.jsonl",
+      "sha256": "1454fe28f7ac5c260d3c8611beaf85f77f49d44ee7b25bdff4bf979140148d76"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/73756-oceaneering-international-inc.json",
+      "sha256": "eb8e1cec24ea9ed229cd06c9dd9b65cefe9540a110fead5110382ab8656c415f"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "8c3968c2b2c6e71f3aaf86850d6815440641d7fe9fc2a2eb7a37055e183872ea"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "ac6d498ce5c9304e21dcf87aabdea93e6598cb6e91d6cc1cefe358313fda0ccf"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "1b0da7f6ab317c6d8544402f0bbeb9e0e058ae2eddb5dc9b472b6c3d3b4cd257"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "b89e55425c0910990e862bda50fc3108d77b5958285f26baf326f910e4f4c101"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Oceaneering International Inc as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Oceaneering International Inc — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

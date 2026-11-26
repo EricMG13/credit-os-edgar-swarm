@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for EnerSys as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "4898f1c023a18e62f4b6acec1788732822c4eda7d5460cb8ce9334420e96f41d",
+    "CP-1.md": "52a40dbceb86b8857db6f691cca02e74142742f8dfe8e3c8968b701ec549a315",
+    "CP-1A.md": "b22e491fac2ad590a0843aec24db78b25326cdd9188505fa2abc97a84611e3ae",
+    "CP-2.md": "68f13d4843d8749eb759ff9461312269e06aa5a7417c65e629c22223c63823f7",
+    "coverage.json": "8510fb6208f272ee97d0a1113ada2d1b3d835269b6c006abe73259bb90f9a793",
+    "view.json": "248628238f106e0b7b5bf2cfaf9ba2e76736ad8caae1643b0c22354f2461beff",
+    "report-view.json": "d2c1d4cb8e052e62447bd627e8c14a7c06c3fa81f18bc849eaa6c3d693cbe44f"
+  }
+}

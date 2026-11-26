@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Range Resources Corp as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/20c13055a842433d55c5bb60fda98d64a9f83d67c2c2dd6c087d07293542cc49/1.response.md",
+    "CP-1": "requests/CP-1/6a70091b777e61d40b35ffe31d5a7d1e5c9c45fc02b23729717b7e6d1576a219/1.response.md",
+    "CP-1A": "requests/CP-1A/af21c24642c79fe7146605822890a9e248846969054b09865e24781ece204f92/1.response.md",
+    "CP-2": "requests/CP-2/e0e8dc0444dcf0dce41f7d2e0ea9900c5243fe8bc3f123d06c2942c9a40f20ac/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "96120508a9f60d85458cb026510de8ac2ea120f292c8d811a11e07f7b857e594",
+  "delivery_sha256": "59d2cfa270c8ecd003a186c326b8efd99d507b9e4c48c0032b85c59f1e1318aa"
+}

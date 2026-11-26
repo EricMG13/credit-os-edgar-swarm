@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for DXP ENTERPRISES INC as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "69fa01cceaaf10466a0146bbb22884307f5d270a0c1dbefebc6142e13a9c6b85",
+    "CP-1.md": "097a8be94edcda67862789493f4c207b4e1d2b277a053144e53a8cdac9c155c7",
+    "CP-1A.md": "0430b3777919d049378c00c19d14c96fb4ad1322a5e46615e759cb27dda85a51",
+    "CP-2.md": "47156550e0cbd47d256686acdfec244b5bdad9b4d64c69cfe49c65b0d8cd94cd",
+    "coverage.json": "14c2f0eddfd15286488a1a1bbc9eb997e74f0fe539bef973cd40cf7928c10ea2",
+    "view.json": "f129e27ac09c066842289849f94eac9bdc7f92e657d8302341cef9233af47dbf",
+    "report-view.json": "fc789af1e3465f114f72a5a9b2186337ee592d5d3ffd681acd8f2a944bc76576"
+  }
+}

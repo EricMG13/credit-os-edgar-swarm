@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Hilton Grand Vacations Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "c75b075a7f15378fcffc89e81e7281263bbd9e6694fe95c7eaf13641419dd828",
+    "CP-1.md": "4489e7ddf5c2e19b51316652beb28024b0b820ce7e449e642b91fc658aa419fe",
+    "CP-1A.md": "287b729b1b68aa6cdf6bfa6923a983dbee8d71c49e509038f4f3fee6c9a05963",
+    "CP-2.md": "e928445c871771bd5c9ee92cb19e60640905d7bf313ee8bd20b4eaf53deef7c9",
+    "coverage.json": "d2a73904f10376a7435148ec53e2fa1215966a2762f4b9c33cca12cb73a70ee7",
+    "view.json": "7cd6ebc71479555863a7d4de9360349a7f6bdd53cc7f536d20b41bb615fb8eb8",
+    "report-view.json": "52d76762bbcaf4d13bfb92a22ad679496c39aedae9d10a134c31f8fd8a3c2bc5"
+  }
+}
