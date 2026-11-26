@@ -20,6 +20,21 @@ engine is in [EricMG13/final-workflow](https://github.com/EricMG13/final-workflo
   small-again cases. It left both filing directories out and preserved the ledger, run files
   and downloads when the generated index was 100 MiB plus one byte.
 
+## 2026-11-26 — EDGAR swarm: all 242 HY-list issuers published (CP-0 to CP-2)
+
+- Scope: host-mode CP-OS through CP-2 only; no forecast, HTML Model or calculation JSON. Engine
+  `claude/nice-gates-xwsl4g` (credit-os2 `2e48875`, `deploy-v-r14`); credit-os2 main `26e84b1` diffed:
+  its 54 newer commits touch no method source. Inputs: release `swarm-inputs-20261118`, 2,223 hashes checked.
+- 190 issuers analysed by 15 shard sessions (Sonnet analysts, xhigh), resumed once after the weekly
+  usage limit stopped them; 2 issuers from the high-effort pilot; 50 from the Nov 24 checkpoint.
+- Central check: every shard folder relaunched twice in one root; 192 of 192 passed the second run and
+  no first run wrote anything but restored filing copies. Ledger 242 published, 0 failed; attempts match
+  the request records. Results on `claude/swarm-results-2026-11-24` (`80dde07`); `library/data.js`
+  (331 MB) not committed.
+- Not verified: answer content beyond the launcher checks. Analysts logged unfixable defects in
+  accepted answers (e.g. a stated net leverage that does not reproduce). 78 issuers carry commits from
+  sessions other than their shard's own; 42 only from `01EB6yc...` sessions of unresolved origin.
+
 ## 2026-11-18 — Codex issuer swarm and local library
 
 - Six reports delivered through Fundamental credit (CP-0, CP-1, CP-1A and CP-2):
