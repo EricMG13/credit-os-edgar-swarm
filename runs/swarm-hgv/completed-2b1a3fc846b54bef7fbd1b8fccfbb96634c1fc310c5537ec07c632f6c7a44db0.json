@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Hilton Grand Vacations Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/7c109bdd6f909a7cc83ce670f61854bdf7aae11b1e290db7107c369a0ad65f9e/1.response.md",
+    "CP-1": "requests/CP-1/1e3aabddf8cff475f4f872dc0a66133cda34c75e16691d5724d2c49a5025b2ab/1.response.md",
+    "CP-1A": "requests/CP-1A/baffa9834e36bcb159339aaed558ed19f8d9abdd2fe21d142e1f4a2f38a49557/1.response.md",
+    "CP-2": "requests/CP-2/ed42d66dae8655e87a2724ecc5f23e11537b024cb5cd6a2942fa2b94ddf5a860/2.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "45529f45ecb4250908c89d03207ccfbabc4595393aa3a961ed7d947faf2683bf",
+  "delivery_sha256": "0d5e293d0455881e99c61f660526d59d3857135c44ce5c458f031b0bfa32ca60"
+}

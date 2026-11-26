@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Infinity Natural Resources, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/6bd6e569339345d9600a506d8850fc68626f7adea7e6a4a2fe44aed0743d3efa/1.response.md",
+    "CP-1": "requests/CP-1/e7311b9007f741b319f50c86eea8267ec8fbf4549d1251e2901fb8333d9114ae/1.response.md",
+    "CP-1A": "requests/CP-1A/7b9ca51b491e335b3d71b7d3270fc37f0e65d80e9b96e847b1b8e005c5b467e8/1.response.md",
+    "CP-2": "requests/CP-2/1737a9568dfe13b9caa4d36fc81d5938e657c4d738309636897eb055120ba99a/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "f7b74c5f44127cc75473669ea200de233aa5cef3f8767b8d297ce421c0a4afac",
+  "delivery_sha256": "88f4d04aa92bacf61fe3dc04f5752fc834158cedaea2367d74fb0da2501a8781"
+}

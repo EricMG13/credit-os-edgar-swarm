@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for GFL Environmental Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "b4a8deb03623311474748cea4bbf7ce6dfef9d744a2c0a8cae9113f1bcdacf96",
+    "CP-1.md": "69d869a9e54486798be543a0b19afb3b807e2b032060da4e6cc734896e00a614",
+    "CP-1A.md": "bd0c3c84b468ec08ef5bed8bb204ac50bf277513919a1615e567c79524e156b4",
+    "CP-2.md": "b1b034318e4cc3c2e29773b188c08e96a81786f5bc5f2580a83776f734aff659",
+    "coverage.json": "976a8f2f7b34f83b4096cfc08fad73a778fff7dd70e00d92dffb926297259cc8",
+    "view.json": "c57b449073c59e8e89e287dd7402e1c2baf7def2d4edb14e290d8fb1480d578d",
+    "report-view.json": "8bb41e8cc19acb4afc158fcc9edc1dfac8df661c6e5521f9bc3c13332649cfc2"
+  }
+}

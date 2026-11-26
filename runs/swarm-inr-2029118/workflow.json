@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "inr-2029118-2026-11-18-credit_snapshot-host",
+    "issuer_id": "inr-2029118",
+    "issuer_name": "Infinity Natural Resources, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_inr-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_inr-20241231.htm.jsonl",
+      "sha256": "1cb7455c470f30bcf5f5944b621159d05d037438e784ee053ec8c0e74b593083"
+    },
+    "10-K_2025-12-31_inr-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_inr-20251231.htm.jsonl",
+      "sha256": "db579b7eb57233a012be9ce192e6a38521f9dca61dea8a1f175d8d37869feefe"
+    },
+    "10-Q_2026-03-31_inr-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_inr-20260331.htm.jsonl",
+      "sha256": "91b058747d489866e5bb566d9da5930262299b9d2493fb63dda178c2b5d61000"
+    },
+    "10-Q_2026-06-30_inr-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_inr-20260630.htm.jsonl",
+      "sha256": "75a7b39ba5f2604275d51b2d561bd018355e80c3189585c6040aecd2044aa3f5"
+    },
+    "10-Q_2026-09-30_inr-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_inr-20260930.htm.jsonl",
+      "sha256": "25a5adeb060340ef4172ddbef31a18549d4277efc0c871efcb43505dd69b18fa"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/2029118-infinity-natural-resources-inc-inr.json",
+      "sha256": "7edb9a57f5f889cf189f6dbbe2c0a21bedae41f6f527d7278c9a4dfa81a33676"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "d9a90c346f46fd1dc89ee7958eb791bc7da4acde985007c5e877602dbf906b62"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "cc3ceaf7adb58ee5cb3d1ffd47e4bc40a2d09b568361177b5794e175402ddae3"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "8f76911b30c561b24d0c1dabf17e8f4102fbb7d4712851d3be9f06fe61f9df1b"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "48510c5ec2cb413bea4469331374aa6787ff041caacad38cd7cc2c3a34213437"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Infinity Natural Resources, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Infinity Natural Resources, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

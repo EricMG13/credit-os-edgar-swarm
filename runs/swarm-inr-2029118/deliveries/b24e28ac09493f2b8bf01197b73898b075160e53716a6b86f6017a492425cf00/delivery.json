@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Infinity Natural Resources, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "9e755310af1c371a5b1901a8a3dabf8b7f6fc3edf6730b111c18f921c5a7c67e",
+    "CP-1.md": "21ccbc462b0c26161151dbb47da674d7b2123a565c9a4938f9ad66fb30658732",
+    "CP-1A.md": "e3622b8a97af750a2039147048fa4f77ad64b59e2b467d6814c1ac77012f1b84",
+    "CP-2.md": "3227c90e43d6b73e034adfbc191e0de01c873a134b466900c6f130b1dad24a22",
+    "coverage.json": "e0e866dc33121256737eaa01612d48ce7ad5fa712e860b862f75eff2e2d0b463",
+    "view.json": "21227d39894e330fa7bc492d2ca7b624137011c5a0bc8f5ace07b52f6b908a6c",
+    "report-view.json": "72de66594174a587aec458ef000ebdfb03e0b27ebbf2e708e8558804a2846af0"
+  }
+}

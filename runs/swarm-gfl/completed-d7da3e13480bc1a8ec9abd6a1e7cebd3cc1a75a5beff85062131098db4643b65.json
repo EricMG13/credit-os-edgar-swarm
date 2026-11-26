@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for GFL Environmental Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/702eb07eb996231b3ef4ec98dcf2103b022b6f1c71ae8d1d06d06368ae8e4d30/1.response.md",
+    "CP-1": "requests/CP-1/1c853fb8e39ffe220f4cb9999fe1d4eb17cc841308d204d9a2b0d7814b461ba5/1.response.md",
+    "CP-1A": "requests/CP-1A/8ba05d89baf431e604a183d7f33cc2422f2d4cb9eb642ead7eb0afa1bd028bc6/1.response.md",
+    "CP-2": "requests/CP-2/f00e2efe4b11481fabee93254264ed5c3ff2704538f37be7eaa19f90d853a149/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "65f7e0c14c15d84733b6e4a5357f6a540b00da51277d5d7078c4b5df3c7dfc25",
+  "delivery_sha256": "577976089ee0c9773c46f4fc99e5f7eb559550c9346609d3abe9f766f16b72f4"
+}

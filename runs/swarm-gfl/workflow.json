@@ -1,0 +1,244 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "gfl-2026-11-05-credit_snapshot-host",
+    "issuer_id": "gfl",
+    "issuer_name": "GFL Environmental Inc.",
+    "as_of": "2026-11-05",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "40-F_2025-12-31_gfl-20251231x40f.htm.jsonl": {
+      "path": "source-text/40-F_2025-12-31_gfl-20251231x40f.htm.jsonl",
+      "sha256": "b934765df3e7c34910af8387591b8fa09e1dab95cdcc8ca06bb6c968dd003ae6"
+    },
+    "6-K-EX-99.1_2026-03-31_tm2612685d3_ex99-1.htm.jsonl": {
+      "path": "source-text/6-K-EX-99.1_2026-03-31_tm2612685d3_ex99-1.htm.jsonl",
+      "sha256": "cb537fb74c382c1d0201e410842d4660c8613b15a362445d11ff422e5b399f25"
+    },
+    "6-K-EX-99.1_2026-04-29_tm2612685d2_ex99-1.htm.jsonl": {
+      "path": "source-text/6-K-EX-99.1_2026-04-29_tm2612685d2_ex99-1.htm.jsonl",
+      "sha256": "3df073d71665ee940b9aad03ce71f25168457a8b67f443c14d9006bb7687f437"
+    },
+    "6-K-EX-99.1_2026-06-30_tm2619744d3_ex99-1.htm.jsonl": {
+      "path": "source-text/6-K-EX-99.1_2026-06-30_tm2619744d3_ex99-1.htm.jsonl",
+      "sha256": "f263228fdadc42723c2dcd6496cb1b52232f1a5fd2b7778ad4e13cf2111721c2"
+    },
+    "6-K-EX-99.1_2026-07-29_tm2619744d2_ex99-1.htm.jsonl": {
+      "path": "source-text/6-K-EX-99.1_2026-07-29_tm2619744d2_ex99-1.htm.jsonl",
+      "sha256": "5fa07feeac05724810518cb847015c4db9d05aa3ab7046fa5917870573c8a1c3"
+    },
+    "6-K-EX-99.1_2026-10-28_tm2626649d2_ex99-1.htm.jsonl": {
+      "path": "source-text/6-K-EX-99.1_2026-10-28_tm2626649d2_ex99-1.htm.jsonl",
+      "sha256": "ee28f5cf135f3ebbb50b3dfc34b1ac6447600e4aae341e5faea9d8d69de358cb"
+    },
+    "6-K-EX-99.1_2026-10-30_tm2626649d1_ex99-1.htm.jsonl": {
+      "path": "source-text/6-K-EX-99.1_2026-10-30_tm2626649d1_ex99-1.htm.jsonl",
+      "sha256": "21de76c788e5b3fc408d84e05a80d6dd1586537f33922ada67131193bae391d4"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1780232-gfl-environmental-inc-gfl.json",
+      "sha256": "8fcb7a42287c8f6efb39cea12a8c3d3db65bfbc11e1653a358aafe84da574912"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "a0e939f05c636fc64e8d8b1cc91c25d4a67dae4865cb4c92f2d44b9eaa687b19"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "a186f6639d76c0adcc36ec50639f445e04d42ad9613922c37aff9cb6a1c67f90"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "71f517b3caf29e430bd3fdf88174986ea8f70e8b10d6662cf6272ec8a47887e6"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "f4570ce6377c7fe8d71adecedeb4d041ad56ede99f79b75bf30911c343776399"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for GFL Environmental Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "GFL Environmental Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

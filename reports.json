@@ -79,6 +79,17 @@
       "notes": "The launcher finished with exit 0 and delivery was written; it needed uv 0.12.5 (/usr/local/bin) first on PATH, the default 0.11.32 was refused. CP-0 was already accepted from the partial folder (attempt 1, not resubmitted here); CP-1, CP-1A and CP-2 were each accepted on the first launcher submission after an offline dry-run copy of the checks. Defect I could not fix: the Q3 2025 10-Q is not among the sources, so there is no 2025-10-04 balance sheet or prior-year interim store count. The host check also cannot order the form \"FY2025 / 2026-01-03\", so the FY2025 net-debt Period cells use the date alone."
     },
     {
+      "issuer_id": "ncl-corp-ltd",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The 10-K's contingent 17 November 2026 revolver maturity (tied to the 2027 exchangeable notes, plus a 91-day test on senior notes above USD 400 million) is not restated in the Q3 10-Q and the third-amendment text is not supplied, so I flagged it as unverified (MATERIAL) rather than resolving it."
+    },
+    {
       "issuer_id": "hpp-1482512",
       "exit_code": 0,
       "attempts_by_module": {
@@ -90,7 +101,7 @@
       "notes": "No defect left unfixed; earlier modules were not edited, and CP-2 states three corrections to them (CP-1 said venture guarantee exposure and the Element LA termination fee amount were not established, although the 10-Q gives USD 190.5 million of carve-out guarantees and the FY2025 10-K attributes a USD 39.7 million revenue increase to the fee; CP-1A read scheduled expiry rent as rollover upside)."
     },
     {
-      "issuer_id": "ncl-corp-ltd",
+      "issuer_id": "lgih-1580670",
       "exit_code": 0,
       "attempts_by_module": {
         "CP-0": 1,
@@ -98,8 +109,40 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "The 10-K's contingent 17 November 2026 revolver maturity (tied to the 2027 exchangeable notes, plus a 91-day test on senior notes above USD 400 million) is not restated in the Q3 10-Q and the third-amendment text is not supplied, so I flagged it as unverified (MATERIAL) rather than resolving it."
+      "notes": "The accepted Business & governance answer (CP-1A) prints revenue and balance-sheet shares as decimals with a percent sign (retail 0.86% for 86.49%, inventory 0.89% for 88.59%), which an accepted answer cannot replace, so CP-2 recomputes the percentages and records the difference in its Gaps table."
+    },
+    {
+      "issuer_id": "hgv",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 2
+      },
+      "notes": "The fidelity check requires a bare year in a reader passage (here 2030) to also appear in a table or calculation, which the module instructions do not say (they exempt years from the unit rule), and this caused CP-2's one rejection."
+    },
+    {
+      "issuer_id": "gfl",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The 40-F in the pack was a cover only, so the audited 2025 statements, the AIF and the MD&A were absent; I could not fix this, and it blocks reported-EBITDA leverage and any measure of undrawn liquidity."
+    },
+    {
+      "issuer_id": "inr-2029118",
+      "exit_code": 0,
+      "attempts_by_module": {
+        "CP-0": 1,
+        "CP-1": 1,
+        "CP-1A": 1,
+        "CP-2": 1
+      },
+      "notes": "The credit agreement, indenture, certificate of designation and FY2025 proxy statement were not in the source set, so covenant headroom, restricted-payment capacity, guarantor identity and board independence stay unestablished, and the filings carry unremediated internal-control weaknesses and an unreconciled USD 337.1 million versus USD 334.0 million Series A net proceeds difference that I logged but could not resolve."
     }
-  ],
-  "partial": true
+  ]
 }
