@@ -8,7 +8,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The accepted Source readiness answer (CP-0) understates the equity price evidence in the sources (it omits the USD 33.15 close on 2026-02-13 and the Q4 2025 buyback prices of about USD 24) and cannot be replaced, so the later Business & governance answer (CP-1A) records the correction in its conflict log and Gaps."
+    "notes": "The accepted Source readiness answer (CP-0) understates the equity price evidence in the sources (it omits the USD 33.15 close on 2026-02-13 and the Q4 2025 buyback prices of about USD 24) and cannot be replaced, so the later Business & governance answer (CP-1A) records the correction in its conflict log and Gaps.",
+    "verify": "ok"
   },
   {
     "issuer_id": "mur",
@@ -19,7 +20,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "Source defects I could not fix from the supplied documents are logged as open conflicts and gaps: the 2042 notes coupon (5.125%, 5.875% and 6.375% across documents), the 2025 segment-note revenue totals against the statement of operations (about USD 2.4 million), and the 2025 repurchase cost with excise tax (USD 100.8 million in the annual report against USD 100.9 million in the quarterly reports), plus the missing proxy statement, executed indentures, credit agreement and ratings."
+    "notes": "Source defects I could not fix from the supplied documents are logged as open conflicts and gaps: the 2042 notes coupon (5.125%, 5.875% and 6.375% across documents), the 2025 segment-note revenue totals against the statement of operations (about USD 2.4 million), and the 2025 repurchase cost with excise tax (USD 100.8 million in the annual report against USD 100.9 million in the quarterly reports), plus the missing proxy statement, executed indentures, credit agreement and ratings.",
+    "verify": "ok"
   },
   {
     "issuer_id": "ptc-857005",
@@ -30,7 +32,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The CP-2 method's required closing line \"CP-2 Completed. Top Risk\" conflicts with the rule against module codes in reader sentences (I wrote \"Top risk:\" instead), and the issuer states no EBITDA or covenant levels, so leverage rests on derived EBITDA that still includes the divested businesses; neither could be fixed without editing the repository."
+    "notes": "The CP-2 method's required closing line \"CP-2 Completed. Top Risk\" conflicts with the rule against module codes in reader sentences (I wrote \"Top risk:\" instead), and the issuer states no EBITDA or covenant levels, so leverage rests on derived EBITDA that still includes the divested businesses; neither could be fixed without editing the repository.",
+    "verify": "ok"
   },
   {
     "issuer_id": "cien-936395",
@@ -41,7 +44,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "All four modules were accepted on the first attempt and the delivery was built; the one defect I saw but could not fix, because an accepted answer cannot be replaced, is that the Relationship cells of the two maps in the Business & governance handoff run well past the 60-character limit the instructions give for map text, which the launcher does not check."
+    "notes": "All four modules were accepted on the first attempt and the delivery was built; the one defect I saw but could not fix, because an accepted answer cannot be replaced, is that the Relationship cells of the two maps in the Business & governance handoff run well past the 60-character limit the instructions give for map text, which the launcher does not check.",
+    "verify": "ok"
   },
   {
     "issuer_id": "entg",
@@ -52,7 +56,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "Unfixed source defects: the 10-K note tables are captioned \"in thousands\" but print millions, the covenant ratio is \"secured net leverage\" in the 10-K but \"first lien net leverage 5.20x\" in the 10-Qs, the 10-K signature date (2026-02-10) differs from its filing date (2026-02-11), and CP-1's \"no rank stated\" note for secured debt is refined in CP-2 by the exhibit-index intercreditor agreement (not supplied). Separately, the scratchpad held a leftover launcher printout from another issuer (cien) that I opened by mistake and did not use."
+    "notes": "Unfixed source defects: the 10-K note tables are captioned \"in thousands\" but print millions, the covenant ratio is \"secured net leverage\" in the 10-K but \"first lien net leverage 5.20x\" in the 10-Qs, the 10-K signature date (2026-02-10) differs from its filing date (2026-02-11), and CP-1's \"no rank stated\" note for secured debt is refined in CP-2 by the exhibit-index intercreditor agreement (not supplied). Separately, the scratchpad held a leftover launcher printout from another issuer (cien) that I opened by mistake and did not use.",
+    "verify": "ok"
   },
   {
     "issuer_id": "gpi-1031203",
@@ -63,7 +68,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The CP-1 cash-conversion KPIs divide by unadjusted EBITDA, which carries about USD 124.6 million of non-cash nine-month 2025 impairments and so overstates the fall in conversion; CP-2 states the before-impairment figures (free cash flow 22.62% of EBITDA against 39.44%) and says so, but the accepted CP-1 handoff cannot be edited."
+    "notes": "The CP-1 cash-conversion KPIs divide by unadjusted EBITDA, which carries about USD 124.6 million of non-cash nine-month 2025 impairments and so overstates the fall in conversion; CP-2 states the before-impairment figures (free cash flow 22.62% of EBITDA against 39.44%) and says so, but the accepted CP-1 handoff cannot be edited.",
+    "verify": "ok"
   },
   {
     "issuer_id": "bte",
@@ -74,7 +80,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "Source defects left unfixed: the set has no audited 2025 statements, annual information form or executed debt documents, and the Q2 2026 release prints dividend per share as 0.225 against 0.0225, Q1 2026 WCS as 49.28 against 79.28, and covenant ratios with colons (0:0:1.0, 4:0:1.0), all logged as gaps and not resolved."
+    "notes": "Source defects left unfixed: the set has no audited 2025 statements, annual information form or executed debt documents, and the Q2 2026 release prints dividend per share as 0.225 against 0.0225, Q1 2026 WCS as 49.28 against 79.28, and covenant ratios with colons (0:0:1.0, 4:0:1.0), all logged as gaps and not resolved.",
+    "verify": "ok"
   },
   {
     "issuer_id": "ats",
@@ -85,7 +92,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "All four modules were accepted on the first launcher attempt and the run finished with exit 0 and a delivery, but each draft was first run through the repo's own checker in a scratch launcher run outside the swarm root, so the 1-attempt counts reflect that pre-check; defects I could not fix: CP-1 (accepted, not replaceable) lists the December 2025 facility-amendment fee as CAD 2.6m while the Dec 2025 MD&A says CAD 2.5m (logged in the CP-1A conflict log and the CP-2 gaps), the source set has no audited annual notes, covenant levels or senior-note ranking (flagged in each Gaps section), and uv 0.12.5 had to be put first on PATH (/usr/local/bin) because /root/.local/bin held 0.11.32."
+    "notes": "All four modules were accepted on the first launcher attempt and the run finished with exit 0 and a delivery, but each draft was first run through the repo's own checker in a scratch launcher run outside the swarm root, so the 1-attempt counts reflect that pre-check; defects I could not fix: CP-1 (accepted, not replaceable) lists the December 2025 facility-amendment fee as CAD 2.6m while the Dec 2025 MD&A says CAD 2.5m (logged in the CP-1A conflict log and the CP-2 gaps), the source set has no audited annual notes, covenant levels or senior-note ranking (flagged in each Gaps section), and uv 0.12.5 had to be put first on PATH (/usr/local/bin) because /root/.local/bin held 0.11.32.",
+    "verify": "ok"
   },
   {
     "issuer_id": "mtdr-1520006",
@@ -96,7 +104,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The accepted Financial foundation answer (CP-1) gives no day for the dividend increase although the Q3 10-Q states 2026-10-21, and it (with Source readiness, CP-0) says Ridge Runner funding is not stated although the Q2 10-Q page 28 states it was expected to come from cash and Credit Agreement borrowings; the answers could not be replaced, and Business & governance (CP-1A) corrects the Ridge Runner funding point in its conflict log."
+    "notes": "The accepted Financial foundation answer (CP-1) gives no day for the dividend increase although the Q3 10-Q states 2026-10-21, and it (with Source readiness, CP-0) says Ridge Runner funding is not stated although the Q2 10-Q page 28 states it was expected to come from cash and Credit Agreement borrowings; the answers could not be replaced, and Business & governance (CP-1A) corrects the Ridge Runner funding point in its conflict log.",
+    "verify": "ok"
   },
   {
     "issuer_id": "zip-1617553",
@@ -107,7 +116,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "One defect I saw but could not fix: the CP-1A map tables use relationship and evidence text longer than the 60-character map limit (the automated check does not enforce it, and an accepted answer cannot be replaced). Separately, the scratchpad is shared with sibling agents, and one of my commands ran a colliding gen_cp1a.py that belonged to the mtdr-1520006 agent, which rewrote that agent's CP-1A.md draft from its own generator and printed a few of its figures, which I did not use. uv 0.12.5 had to be put ahead of 0.11.32 on PATH (/usr/local/bin first) for the launcher to run."
+    "notes": "One defect I saw but could not fix: the CP-1A map tables use relationship and evidence text longer than the 60-character map limit (the automated check does not enforce it, and an accepted answer cannot be replaced). Separately, the scratchpad is shared with sibling agents, and one of my commands ran a colliding gen_cp1a.py that belonged to the mtdr-1520006 agent, which rewrote that agent's CP-1A.md draft from its own generator and printed a few of its figures, which I did not use. uv 0.12.5 had to be put ahead of 0.11.32 on PATH (/usr/local/bin first) for the launcher to run.",
+    "verify": "ok"
   },
   {
     "issuer_id": "esab-1877322",
@@ -118,7 +128,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The accepted Business & governance answer calls the asbestos liability \"uncapped beyond 15 years\" (the filing says costs beyond 15 years are not estimated) and its two map tables have cells over 60 characters, which could not be edited after acceptance; Fundamental credit states the asbestos correction."
+    "notes": "The accepted Business & governance answer calls the asbestos liability \"uncapped beyond 15 years\" (the filing says costs beyond 15 years are not estimated) and its two map tables have cells over 60 characters, which could not be edited after acceptance; Fundamental credit states the asbestos correction.",
+    "verify": "ok"
   },
   {
     "issuer_id": "issuer-1739445",
@@ -129,6 +140,7 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The accepted Financial foundation (CP-1) handoff subtracts the barge segment operating profit of 46.1 instead of the 60.8 the annual report states, which overstates continuing EBITDA by USD 14.7 million (525.3 vs 510.6; net leverage 1.91x vs 1.97x). Source readiness (CP-0) carries the same 46.1, giving a barge operating profit share of 13.48% instead of 17.78%. Accepted answers cannot be replaced, so I corrected both in Business & governance (CP-1A) and Fundamental credit (CP-2), but the CP-0 and CP-1 files still carry the error."
+    "notes": "The accepted Financial foundation (CP-1) handoff subtracts the barge segment operating profit of 46.1 instead of the 60.8 the annual report states, which overstates continuing EBITDA by USD 14.7 million (525.3 vs 510.6; net leverage 1.91x vs 1.97x). Source readiness (CP-0) carries the same 46.1, giving a barge operating profit share of 13.48% instead of 17.78%. Accepted answers cannot be replaced, so I corrected both in Business & governance (CP-1A) and Fundamental credit (CP-2), but the CP-0 and CP-1 files still carry the error.",
+    "verify": "ok"
   }
 ]
