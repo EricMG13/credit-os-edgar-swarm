@@ -1,0 +1,248 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "nmrk-1690680-2026-11-18-credit_snapshot-host",
+    "issuer_id": "nmrk-1690680",
+    "issuer_name": "Newmark Group, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_nmrk-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_nmrk-20241231.htm.jsonl",
+      "sha256": "c6b11e9dd04fb471f1a5822008f0079818e871cc12a802f9ab9d89acf691fbd5"
+    },
+    "10-K_2025-12-31_nmrk-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_nmrk-20251231.htm.jsonl",
+      "sha256": "22a5aacf7096eb3dc4b4c8223c5e2be4d10d69343c4c3da2b094b0da4440b6ee"
+    },
+    "10-Q_2026-03-31_nmrk-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_nmrk-20260331.htm.jsonl",
+      "sha256": "9d42ee2a7d64c79213ec29d3852d82675fcd0b6ca1162de8641bc1a7316a57ce"
+    },
+    "10-Q_2026-06-30_nmrk-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_nmrk-20260630.htm.jsonl",
+      "sha256": "a0edff3260d7d93d0cca139e34b3a89b90c43cf836241c61b6b6defad440183f"
+    },
+    "10-Q_2026-09-30_nmrk-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_nmrk-20260930.htm.jsonl",
+      "sha256": "7bcaad668dfadfc424a92b6e8f9c4b42aee62b7ff912c13a987477ae5eb61d36"
+    },
+    "EX-99.1_2026-04-30_nmrkex991043026-secversion.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-04-30_nmrkex991043026-secversion.htm.jsonl",
+      "sha256": "b2ae5042797965a9e2d658652478295428fe572872279c56780d106e60a3ce32"
+    },
+    "EX-99.1_2026-07-29_nmrkex991-secversion.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-07-29_nmrkex991-secversion.htm.jsonl",
+      "sha256": "2f35928c24c665e176df0535eed421f74981dcfe38a84f7e4898e35d5bc2f8e0"
+    },
+    "EX-99.1_2026-10-29_nmrkex991secversion.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-10-29_nmrkex991secversion.htm.jsonl",
+      "sha256": "11847a8b2a4e67e7db1d2de1466afd57547ae954b82ddfb89c4b0330afcd210e"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1690680-newmark-group-inc.json",
+      "sha256": "307dbb9dde62525ed6577cab1c2581080c5c64834ec65ec244698d9ee7de63f6"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "bdda846073e8c01daea87959846242cee553cf3ac9b8ebf2f729f2eb124ff041"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "460e5a8db3800b92d1c48e19629f18c0531328af078cbd9869c8506e35b3cc10"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "0bfc4b316667402e9d526423c54c58f75e21d10662efb118f70d9ad874679ed0"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "b36a393da8b7f541d945416f85a88534723b88ae9f754d13944cefd11c10776a"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Newmark Group, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Newmark Group, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

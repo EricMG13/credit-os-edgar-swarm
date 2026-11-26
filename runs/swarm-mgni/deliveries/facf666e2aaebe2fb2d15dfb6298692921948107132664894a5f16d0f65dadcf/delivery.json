@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for MAGNITE, INC. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "1b7ec4d4873fedd516ff9a2a75039c974d52a8cfbb6fbace91c4c149a6bcd455",
+    "CP-1.md": "8445bba10049556cdb8e89eea683f4b2a295d08ef01a9b028ad362cd86a3cf2d",
+    "CP-1A.md": "14ec6c18497bfc03ce7a22fd68d05b3093e2c5e71d60c9bfcec5be5f9b549014",
+    "CP-2.md": "59c3ca022706106c9cc34912767c5453307cbf84584e8cb3174d4cfc93db4981",
+    "coverage.json": "ceda95ce7ace9ac312780b60f6257e6ee5e2420ced9de5db76811cd3f0e0431e",
+    "view.json": "9bc3b0cd9b2b3c42556870ca32957c80506f90ae8b1d5bf86386af65051a0abd",
+    "report-view.json": "b65137ba5e9d5d08a7ade40fb494ee8e22154b951555406dcd0fa29615086253"
+  }
+}

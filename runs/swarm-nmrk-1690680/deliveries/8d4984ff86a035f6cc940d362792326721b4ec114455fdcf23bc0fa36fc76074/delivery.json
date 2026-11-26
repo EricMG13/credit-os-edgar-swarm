@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Newmark Group, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "be229ebf7f4fb5b3529bd10ca31bea172f7374c82c911329bdd48532cf0f83cb",
+    "CP-1.md": "b5406379546869927dedab414ed5b222509e4fae26b605c6e2eee58521fb94e2",
+    "CP-1A.md": "d7d34fd5ec4407982adf54347c19a46ea1080c2c13a0a54f95379950e956f66b",
+    "CP-2.md": "7690544dfa18ca45a2b7c12f7beb0cdb5ae000c9180430e53ecefb05fcae5bf4",
+    "coverage.json": "9c2d144a55fada9084d2f1878c527cd4df61694002f27058be146dbb80ac592b",
+    "view.json": "b9d9017e3d782547b5421123aa9501bfc6698373c5bbbb22e35bf02a77007e8d",
+    "report-view.json": "3f98366460336c12f59aeb43eee461cb49adc46aa8b98c45dc4815e0f8fd5fa8"
+  }
+}

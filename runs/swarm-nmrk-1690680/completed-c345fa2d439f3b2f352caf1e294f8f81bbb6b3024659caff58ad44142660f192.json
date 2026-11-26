@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Newmark Group, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/61cce0939b2e02b6618ebd8c8a770148759108946e0a0da79ee1b593ca753165/1.response.md",
+    "CP-1": "requests/CP-1/2b753d4d7cc81a571a726b166f6d0d1cfc5437d3229737e9b0194f2aef454057/1.response.md",
+    "CP-1A": "requests/CP-1A/9fa604588cf9599646034b008ae96888949db01134a9ef7dfa772cf73f1a1d70/1.response.md",
+    "CP-2": "requests/CP-2/6d5df7a5b9773c812a8ebef84ac258fd3f1c94d7f602d312e511d0f0f2ce5efe/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "3c6d3793123745b77f6e358eae66a1b623c2c554a179ebb83eee5a8853537592",
+  "delivery_sha256": "ba00d34f8d40f139a44c0d81735b7049e5b481841b0fb6d43733e0c7acae61b0"
+}

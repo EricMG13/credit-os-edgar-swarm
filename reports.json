@@ -97,5 +97,49 @@
       "CP-2": 1
     },
     "notes": "The indenture, credit agreement, guarantor list and covenant levels, the proxy statement, and the put-option exercise prices are not in the supplied pack, so those gaps are recorded in the handoffs rather than fixed, and the accepted Business & governance handoff still says fuel hedging is not stated (the 10-K says it is generally unhedged), which CP-2 corrects in its text because an accepted answer cannot be replaced."
+  },
+  {
+    "issuer_id": "nmrk-1690680",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "Not fixed: the Q3 2026 release and 10-Q print different nine-month cash-flow totals (the 10-Q was used); debt covenant levels, executed debt documents and the proxy are not in the sources; and the accepted Financial foundation and Business & governance handoffs omit the Fannie Mae net worth margin and the roughly USD 12.1 billion loss-sharing exposure, which CP-2 added (the earlier handoffs cannot be edited)."
+  },
+  {
+    "issuer_id": "mgni",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The supplied sources lack the proxy statement and the credit agreement, so ownership, board independence, restricted-payment capacity and covenant headroom stayed recorded gaps that I could not fix, and separately a helper file in the shared scratchpad was overwritten by another agent mid-run, which I replaced with my own helper and did not use any other issuer's content."
+  },
+  {
+    "issuer_id": "evcm",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The pinned sources lack the credit agreement, letters-of-credit amounts, the proxy statement and any bridge from first-half results to the full-year guidance, so covenant headroom, sponsor distribution capacity and the guidance step-up are stated as gaps, and cash flows still include the sold marketing business."
+  },
+  {
+    "issuer_id": "lgn-2052568",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The 424B4 prospectus file name carries 2024-12-31 though the document is dated 2025-09-11, and the supplied filings give no executed credit agreement or covenant EBITDA definition, no rating levels and no client-level revenue split, so covenant headroom, ratings and client concentration could not be established."
   }
 ]

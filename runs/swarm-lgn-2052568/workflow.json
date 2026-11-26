@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "lgn-2052568-2026-11-18-credit_snapshot-host",
+    "issuer_id": "lgn-2052568",
+    "issuer_name": "Legence Corp.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2025-12-31_lgn-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_lgn-20251231.htm.jsonl",
+      "sha256": "51dc065b4728d53abfadd26e7a544b5e8afa84ae0d38cfe57ccdd1cae9a4ba25"
+    },
+    "10-Q_2026-03-31_lgn-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_lgn-20260331.htm.jsonl",
+      "sha256": "e9bb19a3ee6e67552e9c2e2a2db4c61621dd70d771e80363fc95d69bd81a80bd"
+    },
+    "10-Q_2026-06-30_lgn-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_lgn-20260630.htm.jsonl",
+      "sha256": "5663e478749a37f05ecffc8c145485144ab952d3f1330a50222ed966ae9935ba"
+    },
+    "10-Q_2026-09-30_lgn-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_lgn-20260930.htm.jsonl",
+      "sha256": "0379f5f78c4f331b131b8c9b66339b4af128d1d950ec3226705e4e638fba33b9"
+    },
+    "424B4_2024-12-31_lgn-20241231.htm.jsonl": {
+      "path": "source-text/424B4_2024-12-31_lgn-20241231.htm.jsonl",
+      "sha256": "65389676403a6d4dfa57c216a53333cae3fea6fcf986c17e10e3c24bee694310"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/2052568-legence-corp-lgn.json",
+      "sha256": "6e0dbf7acee5417cd1e39da1e57ea71550bdbccbba1cc185ec4cdf5bf17d0c1b"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "19cc273ba0cb5319432bcfcf1f25c78448ed7b3e027c609cd0bbd98423eae32c"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "7bf1544a3fd2f5c7c027427c15c94369ff9d8e3fffafd61f09cb3abab3a44474"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "39322fa9dac709da69f13a131e7544c71758f677b92d7a7e2b24a7069c6e0319"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "4023b54da08cb719a9f86eebea0c4ef074ae21d221d4333e2f8880428d196165"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Legence Corp. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Legence Corp. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}
