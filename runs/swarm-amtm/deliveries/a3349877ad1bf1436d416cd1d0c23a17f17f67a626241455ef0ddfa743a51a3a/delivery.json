@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Amentum Holdings, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "95a8497735ccb0e6eef9c6a563094da6ff5999ab9dc4e50ba0232d99b76e210d",
+    "CP-1.md": "8dca4140fa1f0388c04eb91531c1c7e54e79c52752866d32d6577b39c0bf97ad",
+    "CP-1A.md": "098986f9180ceb0760af269cdb4249f5a68dbbe66e435f1a4bc147eadd372117",
+    "CP-2.md": "30fd37fbeab83a193780f8e0ae991ff83afef86af3118a833e65c3c4301d40f6",
+    "coverage.json": "ac3031695dcc83c91e60b2380a002746a3ac141529ba52861f2cc31ba04ac20b",
+    "view.json": "3d660fa433471aedd9e67b5ad684dbd99c6c92670220be078a7a224ce7222234",
+    "report-view.json": "0b2a2dd24fd552688d53f258477bcbdf3ead1d620b5519f91e903a0555087871"
+  }
+}

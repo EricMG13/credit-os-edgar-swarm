@@ -108,5 +108,27 @@
       "CP-2": 1
     },
     "notes": "Page locators in the source text are extraction chunk numbers (about 3,000 characters each) rather than printed filing pages, and the credit agreements, indentures, ratings and proxy statement are not supplied, so covenant headroom after 2024-12-31 and restricted-payments capacity after 2026-03-31 stay not established."
+  },
+  {
+    "issuer_id": "enr-1632790",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The earlier Business & governance (CP-1A) answer, already accepted and not editable, gives the fiscal 2025 pricing decline as 2.2% (that is the fiscal 2024 figure; the 10-K shows 0.8%), and the CP-2 answer corrects it in its Key findings and Gaps. CP-0, CP-1 and CP-1A were already accepted at attempt 1 when this session began, so those counts come from the retained request folders."
+  },
+  {
+    "issuer_id": "amtm",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The supplied set has no proxy statement, executed credit agreement or 2026 amendment, so the sponsor's current stake and post-amendment covenant headroom stay explicit gaps, and the first-quarter release headline (Moody's \"upgraded\" to Ba3 from Ba1) contradicts itself and was logged as a conflict, not resolved."
   }
 ]

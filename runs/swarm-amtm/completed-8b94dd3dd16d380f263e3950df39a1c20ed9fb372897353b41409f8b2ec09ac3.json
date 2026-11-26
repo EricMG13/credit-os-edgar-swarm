@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Amentum Holdings, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/886eacf07faa2ff4b7a8fcdb084666d0faae58098ba9450ed26ade2053332977/1.response.md",
+    "CP-1": "requests/CP-1/8adf331b1ead94f938a6a49afbb54debd04f58e1e2feb36f08af8da353db04de/1.response.md",
+    "CP-1A": "requests/CP-1A/3444e6a164e69e1808ef65de2312265ab96e536eab9da9a3e72556886536c457/1.response.md",
+    "CP-2": "requests/CP-2/8771ac87412aa5a422b1a8c409ed925813623a394c0bef6a9eb2ac4500bea333/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "4d8a470ff8981b638da3bb326ee40f20b8b5ca12b119673dfdbd9a02aaa1881a",
+  "delivery_sha256": "33444f4ac06d0d11c1a93e174de9cdf8344345ca3afb5272f2fba89069d75bcb"
+}
