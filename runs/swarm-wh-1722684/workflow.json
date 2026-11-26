@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "wh-1722684-2026-11-18-credit_snapshot-host",
+    "issuer_id": "wh-1722684",
+    "issuer_name": "Wyndham Hotels & Resorts, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_wh-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_wh-20241231.htm.jsonl",
+      "sha256": "1def3d3e9b462ae4f99bf9553b0291c5a6e111b2b6e80433fe52556f7b7c81f7"
+    },
+    "10-K_2025-12-31_wh-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_wh-20251231.htm.jsonl",
+      "sha256": "bf23c08b8985448e4bd0f757b4ea908e78ef28c8ed0b2c56d8a8f4b1ddc709b4"
+    },
+    "10-Q_2026-03-31_wh-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_wh-20260331.htm.jsonl",
+      "sha256": "ec4e55c1d8ec46f19c8f69810ecdcc7d295244c7a26df43ad257523dc6a39d4b"
+    },
+    "10-Q_2026-06-30_wh-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_wh-20260630.htm.jsonl",
+      "sha256": "c0df439ca94fc2c62af7d4633e49dcc810e242d334d39741d0400828da07d705"
+    },
+    "10-Q_2026-09-30_wh-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_wh-20260930.htm.jsonl",
+      "sha256": "5c1f67a7544141fcecfe0ebfd3ff1d3f5a8e11673329bc26f573127ecd1ba14e"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1722684-wyndham-hotels-resorts-inc-wh.json",
+      "sha256": "441dcbe585a594ef4de97ae96d4fc15edd699684a2f3da06e7acb61159ec5b8e"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "c567dfe29ede85fb9882771ac8536b76c0e6ffb9439441201452c9fff7657c74"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "451d377b27e5252196dd37cf5d149463755f4f16ef63309abb1137a7ba9d9524"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "3613636f0a96bc2325542ff6f5bea5bf4c4d6758cf754e08ee4ab94ad7380c68"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "54de064bc2705a3b05faa23c04756488ad42cd01b7adf1090f0396320b73ce03"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Wyndham Hotels & Resorts, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Wyndham Hotels & Resorts, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

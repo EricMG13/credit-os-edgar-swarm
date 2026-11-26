@@ -1,0 +1,244 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "cnm-1856525-2026-11-18-credit_snapshot-host",
+    "issuer_id": "cnm-1856525",
+    "issuer_name": "Core & Main, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-01-28_cnm.htm.jsonl": {
+      "path": "source-text/10-K_2024-01-28_cnm.htm.jsonl",
+      "sha256": "7d49a2886a7b87956b9b3c00170119569c12f68ef6f9901dc1e2c0c33d36ab4a"
+    },
+    "10-K_2025-02-02_cnm.htm.jsonl": {
+      "path": "source-text/10-K_2025-02-02_cnm.htm.jsonl",
+      "sha256": "e22a4f864a5fbd988927e6678e529c0188660ca06badc8d8df757277e51e3278"
+    },
+    "10-Q_2026-05-03_cnm.htm.jsonl": {
+      "path": "source-text/10-Q_2026-05-03_cnm.htm.jsonl",
+      "sha256": "e961340eaef56046003419c49345b8385cc4758b7ed1e0f6ebe7c011c8ca7772"
+    },
+    "10-Q_2026-08-02_cnm.htm.jsonl": {
+      "path": "source-text/10-Q_2026-08-02_cnm.htm.jsonl",
+      "sha256": "28b726b3f6668bcdd97245f0621ab2882b59eb8ea624fb56e28ade1353c29582"
+    },
+    "EX99.1_2026-05-03_cnm_cnmq12026earningspressrele-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-05-03_cnm_cnmq12026earningspressrele-htm.htm.jsonl",
+      "sha256": "477e5f3e43d234f37f42b280aadf2b1519060085427091f1fc6c99c4a3062f24"
+    },
+    "EX99.1_2026-05-03_cnm_jun2026seniornoteslaunchpr-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-05-03_cnm_jun2026seniornoteslaunchpr-htm.htm.jsonl",
+      "sha256": "cb8f146c390230ebda3e60db4c869cf724b254ec5081fea6559ffb69b3f490ec"
+    },
+    "EX99.1_2026-08-02_cnm_cnmq22026earningspressrele-htm.htm.jsonl": {
+      "path": "source-text/EX99.1_2026-08-02_cnm_cnmq22026earningspressrele-htm.htm.jsonl",
+      "sha256": "da395e9c6715bf9c1e1ddee4a29d0807fc00729e5c3b140e2d774d335674b8b5"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1856525-core-main-inc.json",
+      "sha256": "91791d154f258f1016bc5a2d7d7c6aa55032ad94f7f0441d53cb561afa588c2e"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "eefd44285fe6e619534f550a3ee9d6235eec3b886577370fe0b1e92937aee56e"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "ace5c72950930f08176596445aff8a0309cf47ef87a1181f50fa1e1f8ac72c7e"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "38395dae4946094a77dfe13977773e5d5dcf1d4f0b25427e5bdc4400ddf823aa"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "e354649def1d1496e2d141ff4a08b108400e443317ca7847c21a5572882edecd"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Core & Main, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Core & Main, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

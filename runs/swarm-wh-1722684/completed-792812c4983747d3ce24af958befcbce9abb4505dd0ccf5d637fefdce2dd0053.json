@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Wyndham Hotels & Resorts, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/b8ea6a6d1a47b7cce7862ed358d5ca3737c94cf7fa23fda2e13be7e813e0ec5b/1.response.md",
+    "CP-1": "requests/CP-1/8ab6bef3cbe57980faded0a41977d1112e6272be9c52faf19f271f84df6a6150/1.response.md",
+    "CP-1A": "requests/CP-1A/f71b78630a901a9bd94dee7caa0865b81a320363d3f7fab58f38de266c701df2/1.response.md",
+    "CP-2": "requests/CP-2/86858275699ccf83238c6fdeedf64fd845b247a188e28d3e3a750275e2823507/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "f36fc15b59145378a355c952be9fcc3b164c46c270eac709f3f586cc79a484e4",
+  "delivery_sha256": "85962edcae1c11215550726f914bcc169f76a500c19cd1f261500a92efd75f65"
+}

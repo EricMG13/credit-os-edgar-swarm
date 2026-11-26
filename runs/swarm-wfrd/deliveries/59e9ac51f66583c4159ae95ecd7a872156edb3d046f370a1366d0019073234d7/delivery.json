@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Weatherford International plc as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "855ac2f1f1d176f5a027e7f65aeb849da9fdfdffbb2289f0d9dcf592344eca1f",
+    "CP-1.md": "419daec13af95398eb1bcd2f2f178ccc359f028381f7da7d27d27a573247b5db",
+    "CP-1A.md": "1eebedb75391434035af77251d32cff41bbe9b1e01dbdbac12e6e746e0f21245",
+    "CP-2.md": "dae1f5b765a1b24b6530bca12ccc1b5521bd92b1361b92a9c58f8d8992cad4c7",
+    "coverage.json": "91819c28dec3bd2d769e1bd8475bf21065135352ee255e620d87bb7ce9293207",
+    "view.json": "fbc66141461c72d553279b687d371075c8fb24d6fda0c7d659f1f8a90fd49a4f",
+    "report-view.json": "4b4cbc43fcd611bf158796c968bc63ceb3b8d6462926447862580e234d6fe46f"
+  }
+}

@@ -86,5 +86,60 @@
       "CP-2": 1
     },
     "notes": "The accepted Financial foundation and Business & governance answers cite page 10 of the third-quarter earnings release for the free cash flow schedule, which is on page 11 (locator error only, no figure changed, and the Fundamental credit answer records the correction under Gaps); the Source readiness answer also lists 602 and 615 locations but omits the 604 stated in the annual report as of 2026-02-13, which the Business & governance conflict log does record."
+  },
+  {
+    "issuer_id": "xyz",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "CP-0 and CP-1 were already accepted at attempt 1 when I started, so I submitted only CP-1A and CP-2 (both accepted at attempt 1); the one defect I could not fix is that the accepted CP-1A answer lists USD 969.2 million of litigation and regulatory accruals in its operating model register as if it were a level when the 10-Q gives it as the nine-month increase, and an accepted answer cannot be replaced, so CP-2 states the correction in its Margin resilience section."
+  },
+  {
+    "issuer_id": "wfrd",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "Defects seen but not fixable: the sources hold no indentures, credit agreement text, proxy statement or market data, so covenant headroom, note ranking and guarantor coverage stay open gaps, and the 2030 notes redemption (planned for 2026-10-30) is unconfirmed by any filing in the set."
+  },
+  {
+    "issuer_id": "wh-1722684",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Financial foundation answer omits the issuer's guarantee program for franchisee construction loans (amount not stated in the filings) from its claims-outside-debt list, which cannot be replaced after acceptance and is flagged as a gap in Fundamental credit; separately, a harness reminder displayed another issuer's scratchpad file (cnm-1856525) that I did not read on purpose or use."
+  },
+  {
+    "issuer_id": "cnm-1856525",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The fiscal 2025 annual report (year ended 2026-02-01) is missing, so trailing leverage and cover could not be calculated, the fiscal 2024 10-K signature page misprints its date as 2024-03-25 against the auditor's 2025-03-25, and the accepted business-and-governance answer gives the August 2026 repricing without a day (the exhibit list dates the Seventh Amendment 2026-08-11), which only the fundamental-credit answer could note, not correct."
+  },
+  {
+    "issuer_id": "q",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "Cash paid for interest is not stated in any filing (the 10-K prints a dash and the 10-Qs omit it), so cash interest cover is shown as not supplied, and the proxy statement and executed credit agreement and indentures were not in the source set, so ownership above 5% and covenant headroom stay unestablished."
   }
 ]
