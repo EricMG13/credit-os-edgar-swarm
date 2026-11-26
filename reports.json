@@ -9,7 +9,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "The accepted Business & governance answer (CP-1A, which cannot be replaced) says the split of claims and unapproved change orders is not stated although the third-quarter report prints it (claims 319,986 thousand, unapproved change orders 367,930 thousand), and it reports one customer at 10.8% although the report names a second at 13.3% (24.1% together); CP-2 states both corrections in its text and gaps."
+      "notes": "The accepted Business & governance answer (CP-1A, which cannot be replaced) says the split of claims and unapproved change orders is not stated although the third-quarter report prints it (claims 319,986 thousand, unapproved change orders 367,930 thousand), and it reports one customer at 10.8% although the report names a second at 13.3% (24.1% together); CP-2 states both corrections in its text and gaps.",
+      "verify": "ok"
     },
     {
       "issuer_id": "lnwo-750004",
@@ -20,7 +21,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "The accepted Business & governance handoff (CP-1A) calls the 4.50x first lien maintenance covenant inactive while the revolver is undrawn, but the 2025 10-K (page 167) says the Term Loan A carries it every quarter; CP-2 states this correction, and CP-1A cannot be edited."
+      "notes": "The accepted Business & governance handoff (CP-1A) calls the 4.50x first lien maintenance covenant inactive while the revolver is undrawn, but the 2025 10-K (page 167) says the Term Loan A carries it every quarter; CP-2 states this correction, and CP-1A cannot be edited.",
+      "verify": "ok"
     },
     {
       "issuer_id": "dorm-868780",
@@ -31,7 +33,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "The source set lacks the executed credit agreement and indenture and the 2026 proxy statement, so covenant headroom, the ranking and security of the senior notes and board independence stay unestablished (logged as gaps), and two source conflicts (the Hunt-related lease expiry date and the 2025 repurchase quantum) are unresolvable from the files; CP-0 and CP-1 were already accepted when I started, each with one submission on record."
+      "notes": "The source set lacks the executed credit agreement and indenture and the 2026 proxy statement, so covenant headroom, the ranking and security of the senior notes and board independence stay unestablished (logged as gaps), and two source conflicts (the Hunt-related lease expiry date and the 2025 repurchase quantum) are unresolvable from the files; CP-0 and CP-1 were already accepted when I started, each with one submission on record.",
+      "verify": "ok"
     },
     {
       "issuer_id": "matv",
@@ -42,7 +45,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "CP-0 and CP-1 were already accepted at attempt 1 when I launched, so I counted one attempt each from the retained request files; the one defect I could not fix is that the CP-1A map tables have cells longer than the 60-character limit in its instructions, which the launcher accepted and which cannot be replaced."
+      "notes": "CP-0 and CP-1 were already accepted at attempt 1 when I launched, so I counted one attempt each from the retained request files; the one defect I could not fix is that the CP-1A map tables have cells longer than the 60-character limit in its instructions, which the launcher accepted and which cannot be replaced.",
+      "verify": "ok"
     },
     {
       "issuer_id": "issuer-1040765",
@@ -53,7 +57,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "The accepted Financial foundation and Business & governance handoffs say no source totals the debt of unconsolidated joint ventures, but the market-risk table in all five filings prints it (USD 2,732.55 million at 2026-09-30), so I stated that correction in the CP-2 answer because the earlier handoffs cannot be edited; separately, a shared-scratchpad helper file of another parallel session overwrote mine and, when I ran it once, opened that other issuer's source-text file but printed only \"(none)\", so I read none of its content and moved my helpers to an issuer-specific subfolder."
+      "notes": "The accepted Financial foundation and Business & governance handoffs say no source totals the debt of unconsolidated joint ventures, but the market-risk table in all five filings prints it (USD 2,732.55 million at 2026-09-30), so I stated that correction in the CP-2 answer because the earlier handoffs cannot be edited; separately, a shared-scratchpad helper file of another parallel session overwrote mine and, when I ran it once, opened that other issuer's source-text file but printed only \"(none)\", so I read none of its content and moved my helpers to an issuer-specific subfolder.",
+      "verify": "ok"
     },
     {
       "issuer_id": "nxst-1142417",
@@ -64,7 +69,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "The accepted Financial foundation answer says the first coupons on both the 2033 and 2034 notes fell after the nine-month cash flow statement, but the filing shows the 2033 coupon was due 2026-09-15, inside it. The CP-2 answer states this correction, and also adds the August 2026 CW put exercise (USD 110 million) and Nexstar's own pension deficit (USD 154 million), which the earlier answers omit. The earlier answers cannot be edited."
+      "notes": "The accepted Financial foundation answer says the first coupons on both the 2033 and 2034 notes fell after the nine-month cash flow statement, but the filing shows the 2033 coupon was due 2026-09-15, inside it. The CP-2 answer states this correction, and also adds the August 2026 CW put exercise (USD 110 million) and Nexstar's own pension deficit (USD 154 million), which the earlier answers omit. The earlier answers cannot be edited.",
+      "verify": "ok"
     },
     {
       "issuer_id": "novelis-inc",
@@ -75,7 +81,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "The workflow was stopped on the controller's pause after CP-1A was accepted, and a separate analyst at the same model and effort finished CP-2, accepted at the first submission. Defect I could not fix: the accepted CP-1A uses non-standard Basis page lists (\"pages 190 and 188\") that the library's Basis parser will not recognise. The earlier answers also missed that the 10-K exhibit index names the term loan borrower as Novelis Holdings Inc. and AV Minerals (Netherlands) N.V. as a third-party security provider under the ABL; CP-2's Gaps flag this because accepted answers cannot be edited."
+      "notes": "The workflow was stopped on the controller's pause after CP-1A was accepted, and a separate analyst at the same model and effort finished CP-2, accepted at the first submission. Defect I could not fix: the accepted CP-1A uses non-standard Basis page lists (\"pages 190 and 188\") that the library's Basis parser will not recognise. The earlier answers also missed that the 10-K exhibit index names the term loan borrower as Novelis Holdings Inc. and AV Minerals (Netherlands) N.V. as a third-party security provider under the ABL; CP-2's Gaps flag this because accepted answers cannot be edited.",
+      "verify": "ok"
     },
     {
       "issuer_id": "for-1406587",
@@ -86,7 +93,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "Forestar prints no EBITDA, cash interest paid, covenant levels, borrowing-base amount or credit ratings, and the sources stop at the 2026-07-22 quarterly report, so EBITDA and interest cover are labelled analyst calculations or accrual proxies and covenant headroom and fiscal 2026 results stay explicit gaps (CP-0 was accepted in an earlier session, so its attempt count of 1 is inferred from the launcher's attempt 1/3 sequence)."
+      "notes": "Forestar prints no EBITDA, cash interest paid, covenant levels, borrowing-base amount or credit ratings, and the sources stop at the 2026-07-22 quarterly report, so EBITDA and interest cover are labelled analyst calculations or accrual proxies and covenant headroom and fiscal 2026 results stay explicit gaps (CP-0 was accepted in an earlier session, so its attempt count of 1 is inferred from the launcher's attempt 1/3 sequence).",
+      "verify": "ok"
     },
     {
       "issuer_id": "snap-1564408",
@@ -97,7 +105,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "All four modules were accepted on the first submission and the last launcher run finished with exit 0 and a delivery. CP-0 and CP-1 were already accepted in the resumed folder, so I did not resubmit them. Defect I could not fix: the CP-2 method asks for the phrase \"Quantitative threshold not available in provided materials\" where a threshold is unsupported, but the same method's completeness rules disqualify that phrase in a critical cell, so I wrote observable signals tied to reported values instead. The launcher needed uv 0.12.5 first on PATH (it was at /usr/local/bin, behind a 0.11.32 copy), and I had to prepend that directory myself. The uv-version failure was not counted as an attempt because no module request was written."
+      "notes": "All four modules were accepted on the first submission and the last launcher run finished with exit 0 and a delivery. CP-0 and CP-1 were already accepted in the resumed folder, so I did not resubmit them. Defect I could not fix: the CP-2 method asks for the phrase \"Quantitative threshold not available in provided materials\" where a threshold is unsupported, but the same method's completeness rules disqualify that phrase in a critical cell, so I wrote observable signals tied to reported values instead. The launcher needed uv 0.12.5 first on PATH (it was at /usr/local/bin, behind a 0.11.32 copy), and I had to prepend that directory myself. The uv-version failure was not counted as an attempt because no module request was written.",
+      "verify": "ok"
     },
     {
       "issuer_id": "cwk-1628369",
@@ -108,7 +117,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "The supplied sources lack the credit agreement, indentures, proxy statement, rating documents and a discrete Q4 2025 report, so covenant headroom, debt ranking, ownership and the net-debt effect of the October 21, 2026 notes redemption could not be established and are recorded as gaps."
+      "notes": "The supplied sources lack the credit agreement, indentures, proxy statement, rating documents and a discrete Q4 2025 report, so covenant headroom, debt ranking, ownership and the net-debt effect of the October 21, 2026 notes redemption could not be established and are recorded as gaps.",
+      "verify": "ok"
     },
     {
       "issuer_id": "kgs",
@@ -119,7 +129,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "The accepted CP-1A cites the year-end remaining contract revenue to 10-K page 117 although the figures are printed on page 116 (it cannot be replaced, and CP-2 cites the correct page and records the correction in its Gaps)."
+      "notes": "The accepted CP-1A cites the year-end remaining contract revenue to 10-K page 117 although the figures are printed on page 116 (it cannot be replaced, and CP-2 cites the correct page and records the correction in its Gaps).",
+      "verify": "ok"
     },
     {
       "issuer_id": "mbc-1941365",
@@ -130,7 +141,8 @@
         "CP-1A": 1,
         "CP-2": 1
       },
-      "notes": "The accepted Business & governance (CP-1A) map cells exceed the 60-character limit, which the automated check does not enforce, so the answer was accepted and cannot be replaced; separately, Financial foundation (CP-1) calls the issuer's USD 78.6 million of American Woodmark EBITDA pre-merger earnings, while the release table implies it is a full twelve-month figure with only about USD 42.3 million pre-merger, a difference I stated in the Fundamental credit (CP-2) answer but could not correct upstream."
+      "notes": "The accepted Business & governance (CP-1A) map cells exceed the 60-character limit, which the automated check does not enforce, so the answer was accepted and cannot be replaced; separately, Financial foundation (CP-1) calls the issuer's USD 78.6 million of American Woodmark EBITDA pre-merger earnings, while the release table implies it is a full twelve-month figure with only about USD 42.3 million pre-merger, a difference I stated in the Fundamental credit (CP-2) answer but could not correct upstream.",
+      "verify": "ok"
     }
   ]
 }
