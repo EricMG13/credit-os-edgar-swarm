@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Alta Equipment Group Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/d3c06d742dd0bfc3f525030d77865fe14e2c16119b07ca75bb0ca6dd6b9c4272/1.response.md",
+    "CP-1": "requests/CP-1/deb26d97f8e06050293c6f868f0f6944af10cab934488d44c501f9f4f1aad332/1.response.md",
+    "CP-1A": "requests/CP-1A/11221b2fb1cba737dae2b57ea91fb96292774f17782e7c21c3f3718a27498e1f/1.response.md",
+    "CP-2": "requests/CP-2/2901cde5bfcee674265fb24ce969cd13071ce49989da905edde74074d7a6e850/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "2f8b52a666be2c15e38b86d1c4395ebbf3bb5b6b6303c5cfc0a7faa94fa07984",
+  "delivery_sha256": "80463265413c99b0b004c240cd792f5b806a97488eef9b999d55908cd0038660"
+}

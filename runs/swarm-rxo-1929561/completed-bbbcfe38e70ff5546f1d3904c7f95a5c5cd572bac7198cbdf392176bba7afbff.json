@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for RXO, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/04636eb1b64240508c47710ffe98122d28b9195767f6cdcf7fc8d3916fc155cf/1.response.md",
+    "CP-1": "requests/CP-1/59a7ce51ced9aac3a0e7ef6e2b82bd73f5d486ebe3b91ef1db6657b50cb744c3/1.response.md",
+    "CP-1A": "requests/CP-1A/e75d9e06255bbcda56586b7ccdd22f188f5a365e758562c19f69d6dfb710834c/1.response.md",
+    "CP-2": "requests/CP-2/98fbf3aab7daee74346747fb5a9b8ee2826407f76eb5f8e7673ada239ad8d9a6/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "2c44e1630f7a6107ea24241d1eaf5a1ccad5df607e1ced9e909398bb9d3ae19c",
+  "delivery_sha256": "2eb316f8e84cb74ad175150fe2f2b14d3d1a846f2323a6b6bfdef8b718d9e75b"
+}

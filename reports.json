@@ -11,6 +11,61 @@
     "notes": "The accepted Business & governance answer, which cannot be replaced, wrongly says the sale-proceeds use and the 2026 payor mix are not stated (the Q1 and Q3 filings do state them) and misses the debt fair-value discount (second lien notes at 35.81% of principal), so those three points are corrected only in the Fundamental credit answer's Gaps."
   },
   {
+    "issuer_id": "achc-1520697",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "No unfixed defect remains, but the launcher's automated checks cover structure only, and Acadia prints no EBITDA, so the leverage figures use a labelled house-normalised measure and covenant headroom is not inferred."
+  },
+  {
+    "issuer_id": "altg-1759824",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The supplied filings omit covenant levels, the ABL borrowing base, the credit agreements and the proxy statement (ownership, board and compensation), and the library may show \"numeric cell not found on page\" chips for CP-1 statement rows that draw on several sources; neither could be fixed from within this run."
+  },
+  {
+    "issuer_id": "avnt-1122976",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The accepted Source readiness (CP-0) records the 2024 annual report's filing date as not stated although the 2025 annual report states it was filed 2025-02-18, which CP-1A states as a correction because the accepted CP-0 cannot be edited. In addition, CP-0 and CP-1 were accepted on one attempt each in the earlier partial run and resumed unchanged. CP-1A and CP-2 were each accepted on their first submission, after a read-only pre-check of the draft with the repository's own acceptance functions. The shell's default uv was 0.11.32, so /usr/local/bin (uv 0.12.5) was put first on PATH for every launcher call."
+  },
+  {
+    "issuer_id": "cc",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The source pack lacks the 10-K/A filed 2026-11-03, the 2026 proxy statement and the executed credit agreement and indentures, so controls, board independence and covenant headroom stay open gaps in the accepted answers that no draft could fill."
+  },
+  {
+    "issuer_id": "ens-1289308",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The fiscal 2026 annual report, credit agreement, indentures, proxy statement and Ultralife merger agreement are not in the pack, so covenant headroom, distribution capacity and Ultralife's effect on net debt are marked not established. The release's dividend change column is arithmetically wrong (printed 0.015 and 0.0375 against 0.025 and 0.0475 from the printed rates), and the quarterly report's 100 basis point sensitivity of about USD 0.2 million looks too low for the drawn revolver and was not used."
+  },
+  {
     "issuer_id": "ese",
     "exit_code": 0,
     "attempts_by_module": {
@@ -20,6 +75,39 @@
       "CP-2": 1
     },
     "notes": "All four modules were accepted on the first attempt and the launcher exited 0, but the supplied sources end with filings dated 2026-08-10 and omit the proxy statement, the credit agreements and Megger's financials, so the Megger closing, covenant headroom and pro forma leverage could not be established, and the filings' two wordings of the USD 20 million current portion (non-contractual versus obligated) cannot be resolved from the documents."
+  },
+  {
+    "issuer_id": "orn-1402829",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The pinned sources hold no executed UMB credit agreement, no term-loan repayment schedule and no FY2025 adjusted-EBITDA reconciliation, so covenant headroom, the maturity wall and adjusted leverage are written as explicit gaps rather than figures (also: `uv` 0.12.5 sits at /usr/local/bin and had to be put first on PATH because /root/.local/bin holds 0.11.32)."
+  },
+  {
+    "issuer_id": "rxo-1929561",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "All four modules were accepted on the first submission and the launcher finished with delivery, and the defects left unfixed are source gaps that no answer can close: the supplied filings print no ABL covenant levels or borrowing-base inputs, no merger agreement, note indenture or proxy statement was supplied, the non-U.S. facility commitment differs between the June and September reports (about USD 21 million versus USD 20 million), and the September report's nine-month truck brokerage volume sentence contradicts itself."
+  },
+  {
+    "issuer_id": "sbac-1034054",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "Two source conflicts could not be resolved and are logged in the CP-1A conflict log (the REIT NOL balance, USD 343.8m in the FY2025 10-K against USD 298.5m in the Q3 10-Q, and the Millicom agreement date, Q3 against Q4 2024), and the outcome of the 2021-1C Tower Securities date on 2026-11-09 is not in the supplied filings. The default PATH carried uv 0.11.32 ahead of the required 0.12.5, so I put /usr/local/bin first to run the launcher."
   },
   {
     "issuer_id": "svc",
@@ -42,49 +130,5 @@
       "CP-2": 1
     },
     "notes": "The five filings contain no credit agreement, indenture, covenant level, ABL borrowing base, proxy statement or issuer-defined EBITDA, so covenant headroom, board and holder data and issuer EBITDA are not established (CP-1 uses a house-derived EBITDA) and the delivery carries the launcher's \"automated checks only\" caveat."
-  },
-  {
-    "issuer_id": "sbac-1034054",
-    "exit_code": 0,
-    "attempts_by_module": {
-      "CP-0": 1,
-      "CP-1": 1,
-      "CP-1A": 1,
-      "CP-2": 1
-    },
-    "notes": "Two source conflicts could not be resolved and are logged in the CP-1A conflict log (the REIT NOL balance, USD 343.8m in the FY2025 10-K against USD 298.5m in the Q3 10-Q, and the Millicom agreement date, Q3 against Q4 2024), and the outcome of the 2021-1C Tower Securities date on 2026-11-09 is not in the supplied filings. The default PATH carried uv 0.11.32 ahead of the required 0.12.5, so I put /usr/local/bin first to run the launcher."
-  },
-  {
-    "issuer_id": "avnt-1122976",
-    "exit_code": 0,
-    "attempts_by_module": {
-      "CP-0": 1,
-      "CP-1": 1,
-      "CP-1A": 1,
-      "CP-2": 1
-    },
-    "notes": "The accepted Source readiness (CP-0) records the 2024 annual report's filing date as not stated although the 2025 annual report states it was filed 2025-02-18, which CP-1A states as a correction because the accepted CP-0 cannot be edited. In addition, CP-0 and CP-1 were accepted on one attempt each in the earlier partial run and resumed unchanged. CP-1A and CP-2 were each accepted on their first submission, after a read-only pre-check of the draft with the repository's own acceptance functions. The shell's default uv was 0.11.32, so /usr/local/bin (uv 0.12.5) was put first on PATH for every launcher call."
-  },
-  {
-    "issuer_id": "ens-1289308",
-    "exit_code": 0,
-    "attempts_by_module": {
-      "CP-0": 1,
-      "CP-1": 1,
-      "CP-1A": 1,
-      "CP-2": 1
-    },
-    "notes": "The fiscal 2026 annual report, credit agreement, indentures, proxy statement and Ultralife merger agreement are not in the pack, so covenant headroom, distribution capacity and Ultralife's effect on net debt are marked not established. The release's dividend change column is arithmetically wrong (printed 0.015 and 0.0375 against 0.025 and 0.0475 from the printed rates), and the quarterly report's 100 basis point sensitivity of about USD 0.2 million looks too low for the drawn revolver and was not used."
-  },
-  {
-    "issuer_id": "orn-1402829",
-    "exit_code": 0,
-    "attempts_by_module": {
-      "CP-0": 1,
-      "CP-1": 1,
-      "CP-1A": 1,
-      "CP-2": 1
-    },
-    "notes": "The pinned sources hold no executed UMB credit agreement, no term-loan repayment schedule and no FY2025 adjusted-EBITDA reconciliation, so covenant headroom, the maturity wall and adjusted leverage are written as explicit gaps rather than figures (also: `uv` 0.12.5 sits at /usr/local/bin and had to be put first on PATH because /root/.local/bin holds 0.11.32)."
   }
 ]
