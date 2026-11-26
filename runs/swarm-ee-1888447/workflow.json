@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "ee-1888447-2026-11-18-credit_snapshot-host",
+    "issuer_id": "ee-1888447",
+    "issuer_name": "Excelerate Energy, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-31_ee-20241231.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-31_ee-20241231.htm.jsonl",
+      "sha256": "092c7b5959d8fdd2870ce56d8b907dd50e478b94c19ee8f8dab24cbf5447d68c"
+    },
+    "10-K_2025-12-31_ee-20251231.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-31_ee-20251231.htm.jsonl",
+      "sha256": "44f4467217019052423cca82114393555851a3f2490f7ab94f067cd1010d7570"
+    },
+    "10-Q_2026-03-31_ee-20260331.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-31_ee-20260331.htm.jsonl",
+      "sha256": "44ffe5cf156a472e59b75df29a47e50a10141804ae4663a185a7eb6568b32b86"
+    },
+    "10-Q_2026-06-30_ee-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_ee-20260630.htm.jsonl",
+      "sha256": "5ba230489f112e0a4054c4e55766dcb0449aa15bea18c0bc0bdd1c2ef96651a5"
+    },
+    "10-Q_2026-09-30_ee-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_ee-20260930.htm.jsonl",
+      "sha256": "515190c356e4198e7910e91dc74c994c3c49d0608fdcaf86cf980e8867e897ce"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1888447-excelerate-energy-inc-ee.json",
+      "sha256": "a0d1a224351b5ec090e366b074d2305ae7b1f59aff5bc243c575279a15a06384"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "76d707cf2bcbf0499f3b234330c417db0ef430ca6d66983ba978af9b77851655"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "a6e325d0a7a987418cdcd7d5c77c082158393e355b27f027d40ea0e70ffc7a47"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "056d360f555a24d1a5ce6a7c49ee1b61f09dd879aaa778a6393080a047c1233b"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "71c9ede77b1c2ea64af689b06c3ed0f2eb74dd0d67a1853d7625e536b27ed14b"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Excelerate Energy, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Excelerate Energy, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

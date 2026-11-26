@@ -108,5 +108,27 @@
       "CP-2": 1
     },
     "notes": "Filing rounding left Net Cash Change as Not supplied for FY2025, H1 2025 and Q1 2026, and the issuer's FY2025 net debt (2,723) is not reconcilable to the balance sheet (2,732); both are logged as gaps and not plugged."
+  },
+  {
+    "issuer_id": "ee-1888447",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 1,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "The extracted filing text omits the terminal contract-expiry and related-party income tables and does not describe the Seventh Amendment to the credit agreement dated 2025-12-31, so covenant headroom and renewal timing are recorded as gaps and could not be fixed from the supplied sources."
+  },
+  {
+    "issuer_id": "baly",
+    "exit_code": 0,
+    "attempts_by_module": {
+      "CP-0": 0,
+      "CP-1": 1,
+      "CP-1A": 1,
+      "CP-2": 1
+    },
+    "notes": "CP-1A is supplied only the Source readiness handoff, so I recomputed its segment-based figures from the sources instead of taking them from the accepted Financial foundation handoff. The launcher reported CP-0 as already accepted when I started, so I submitted nothing for it."
   }
 ]

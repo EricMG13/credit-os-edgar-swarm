@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Excelerate Energy, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "597613fd2b7944fab50d82663d00c54778b81583432e82ca97a133e23bae897a",
+    "CP-1.md": "5e90bca081e34b712a808d62f42a40bf4083293b635c8996a1da30e521f1c012",
+    "CP-1A.md": "19106868ec55e56581dd55f4e79aee94fcc3a8864e5ed4f999c56777760b07a1",
+    "CP-2.md": "122262d023026767f1ca2df879085ee75a52f27db6105273ff3bf79e4c755c3a",
+    "coverage.json": "312a7fcffe2659353182e91636dbbf8a66af8d553b9d36e884fc386383fbb0ae",
+    "view.json": "c3825ee174127e425cc12d6299fb9fa063a78e1d11ad948e48d2c628196a9600",
+    "report-view.json": "e4a8e269234e0a455d69c00c5daa36d1ce484d11c109ccbdab89e4a26b4a8d43"
+  }
+}
