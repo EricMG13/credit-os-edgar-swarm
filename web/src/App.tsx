@@ -70,10 +70,16 @@ function bareHome(route: string, table: RouteTable): string | null {
   return table.routes.find((r) => areaOf(r.path) === group && r.home !== undefined)?.home ?? null;
 }
 
-function Page({ result, table, route }: { result: LoadResult; table: RouteTable; route: string }) {
-  const home = bareHome(route, table);
-  const matched = matchRoute(home ?? route, table.routes);
-  if (matched !== null && result.kind !== "ok") {
+function MatchedPage({
+  result,
+  matched,
+  table,
+}: {
+  result: LoadResult;
+  matched: NonNullable<ReturnType<typeof matchRoute>>;
+  table: RouteTable;
+}) {
+  if (result.kind !== "ok") {
     return (
       <Shell current={areaOf(matched.route.path)}>
         <PageHeader title={matched.route.title} />
@@ -81,41 +87,37 @@ function Page({ result, table, route }: { result: LoadResult; table: RouteTable;
       </Shell>
     );
   }
-  if (matched !== null && result.kind === "ok") {
-    const area = areaOf(matched.route.path);
-    const slice = table.readers[area](result.data[area]);
-    if (slice.kind === "invalid") {
-      return (
-        <Shell current={area}>
-          <PageHeader title={matched.route.title} />
-          <p className="mt-6 text-text-secondary">This part of the library could not be read</p>
-          <p className="mt-2 text-text-secondary">{slice.reason}</p>
-        </Shell>
-      );
-    }
-    // Signal keeps its own frame, and the model pages own the top of main, so they draw the note in
-    // their own frame. A group with no slice has no sample to label.
-    const sample = slice.kind === "ok" && (area === "library" || area === "run");
-    if (matched.route.layout === "bleed") {
-      return (
-        <Shell current={area} bleed>
-          <SourceContext.Provider value={result.data}>
-            {sample ? <DesignReference bleed /> : null}
-            {matched.route.render(matched.params)}
-          </SourceContext.Provider>
-        </Shell>
-      );
-    }
+  const area = areaOf(matched.route.path);
+  const slice = table.readers[area](result.data[area]);
+  if (slice.kind === "invalid") {
     return (
       <Shell current={area}>
-        <SourceContext.Provider value={result.data}>
-          {sample ? <DesignReference /> : null}
-          <PageHeader title={matched.route.title} />
-          <div className="mt-6">{matched.route.render(matched.params)}</div>
-        </SourceContext.Provider>
+        <PageHeader title={matched.route.title} />
+        <p className="mt-6 text-text-secondary">This part of the library could not be read</p>
+        <p className="mt-2 text-text-secondary">{slice.reason}</p>
       </Shell>
     );
   }
+  const sample = slice.kind === "ok" && (area === "library" || area === "run");
+  return matched.route.layout === "bleed" ? (
+    <Shell current={area} bleed>
+      <SourceContext.Provider value={result.data}>
+        {sample ? <DesignReference bleed /> : null}
+        {matched.route.render(matched.params)}
+      </SourceContext.Provider>
+    </Shell>
+  ) : (
+    <Shell current={area}>
+      <SourceContext.Provider value={result.data}>
+        {sample ? <DesignReference /> : null}
+        <PageHeader title={matched.route.title} />
+        <div className="mt-6">{matched.route.render(matched.params)}</div>
+      </SourceContext.Provider>
+    </Shell>
+  );
+}
+
+function UnmatchedPage({ result, route }: { result: LoadResult; route: string }) {
   if (route.replace(/\/$/, "") === "/kit") {
     return (
       <Shell current="kit">
@@ -139,6 +141,16 @@ function Page({ result, table, route }: { result: LoadResult; table: RouteTable;
         Back to the library
       </a>
     </Shell>
+  );
+}
+
+function Page({ result, table, route }: { result: LoadResult; table: RouteTable; route: string }) {
+  const home = bareHome(route, table);
+  const matched = matchRoute(home ?? route, table.routes);
+  return matched === null ? (
+    <UnmatchedPage result={result} route={route} />
+  ) : (
+    <MatchedPage result={result} matched={matched} table={table} />
   );
 }
 

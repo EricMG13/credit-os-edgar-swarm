@@ -2,7 +2,7 @@ import { useState, type ComponentProps, type ReactElement } from "react";
 import { ClockRewind, Hourglass01 } from "@untitledui/icons";
 import { EmptyState } from "@/components/application/empty-state/empty-state";
 import { ButtonGroup, ButtonGroupItem } from "@/components/base/button-group/button-group";
-import type { Changes as ChangesData } from "./slice";
+import type { LibraryChangesData } from "./slice";
 import { Button } from "@/components/base/buttons/button";
 import { ChangeCard } from "./parts/ChangeCard";
 import { ChangesTable } from "./parts/ChangesTable";
@@ -19,7 +19,7 @@ function Compared({
   issuer,
   run,
 }: {
-  data: Extract<ChangesData, { kind: "compared" }>;
+  data: Extract<LibraryChangesData, { kind: "compared" }>;
   issuer: string;
   run: string;
 }) {
@@ -99,7 +99,7 @@ function NoEarlierRun({
   issuer,
   run,
 }: {
-  data: Extract<ChangesData, { kind: "none" }>;
+  data: Extract<LibraryChangesData, { kind: "none" }>;
   issuer: string;
   run: string;
 }) {
@@ -120,7 +120,7 @@ function NotYetCompared({
   issuer,
   run,
 }: {
-  data: Extract<ChangesData, { kind: "pending" }>;
+  data: Extract<LibraryChangesData, { kind: "pending" }>;
   issuer: string;
   run: string;
 }) {
@@ -141,7 +141,7 @@ function ChangesState({
   issuer,
   run,
 }: {
-  changes: ChangesData;
+  changes: LibraryChangesData;
   issuer: string;
   run: string;
 }): ReactElement {
@@ -156,7 +156,13 @@ function ChangesState({
 }
 
 /** The Changes page of a run: what changed since the earlier run, as cards or a table, and per module. */
-export function Changes({ issuer, run }: { issuer: string | undefined; run: string | undefined }) {
+export function LibraryChanges({
+  issuer,
+  run,
+}: {
+  issuer: string | undefined;
+  run: string | undefined;
+}) {
   return (
     <RunFrame issuer={issuer} run={run} tab="changes">
       {({ changes, id: runId }, issuerId) => (

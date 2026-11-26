@@ -5,7 +5,7 @@ import path from "node:path";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { LibraryData } from "@/data";
 import { SourceContext } from "../../source";
-import { routes } from "../routes";
+import { libraryRoutes as routes } from "../routes";
 
 type Json = Record<string, unknown>;
 

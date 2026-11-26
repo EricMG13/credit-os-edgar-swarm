@@ -8,6 +8,7 @@ import json
 import os
 import shutil
 import threading
+from collections import OrderedDict
 from http.client import HTTPConnection
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -20,6 +21,7 @@ from credit_os import store
 from deploy_workflow import http_base
 from deploy_workflow.inbox import runs
 from deploy_workflow.inbox.layout import Layout
+from deploy_workflow.model import handoff
 from deploy_workflow.model.handoff import _pages
 from react_frontend import _visible_publication, make_server, sources
 from tests.test_pdf_form_text import make as form_pdf
@@ -95,6 +97,33 @@ def test_exact_original_and_native_page_identity(published: tuple[Layout, dict[s
     assert "sandbox" in response.headers["Content-Security-Policy"]
     page = sources.reply(urlsplit(chip["pageHref"]), layout.runs, enriched)
     assert page.body == _pages(NAME, RAW)[1].encode() == RAW[12000:]
+
+
+def test_a_source_is_extracted_once_and_its_hash_is_still_checked_on_every_request(
+    published: tuple[Layout, dict[str, Any]], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    layout, original = published
+    extracted: list[str] = []
+    read = handoff._read_pages
+
+    def counted(name: str, raw: bytes) -> list[str]:
+        extracted.append(hashlib.sha256(raw).hexdigest())
+        return read(name, raw)
+
+    monkeypatch.setattr(handoff, "_read_pages", counted)
+    monkeypatch.setattr(handoff, "_PAGE_TEXT", OrderedDict())
+    first = sources.enrich(original, layout.runs)
+    assert sources.enrich(original, layout.runs) == first
+    page = sources.reply(urlsplit(_link() + "?page=2"), layout.runs, first)
+    assert page.body == RAW[12000:] and extracted == [SHA]
+    # Changed bytes fail the hash check; the pages kept for the recorded bytes are not served.
+    (layout.runs / FOLDER / "inputs" / SHA).write_bytes(b"changed after the pages were kept")
+    with pytest.raises(http_base.Reply) as refused:
+        sources.reply(urlsplit(_link() + "?page=2"), layout.runs, first)
+    assert refused.value.status == 404
+    stale = sources.enrich(original, layout.runs)
+    [source] = stale["workspace"]["runs"]["run-key"]["evidence"]["sources"]
+    assert source["sourceWarning"] and "href" not in source and extracted == [SHA]
 
 
 def test_confidence_sources_survive_the_bridge_refresh_after_generic_parse_failure(

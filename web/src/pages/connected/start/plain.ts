@@ -32,7 +32,7 @@ export const CASE_KINDS = {
 };
 export const MODELS = { gpt: "GPT Sol", claude: "Claude Opus", luna: "GPT-6 Luna" };
 export const EFFORTS = { fast: "Fast", balanced: "Balanced", high: "High", xhigh: "Extra high" };
-export const LEGACY_COPILOT_MODELS = {
+const LEGACY_COPILOT_MODELS = {
   gpt: ["fast", "balanced", "high"],
   claude: ["fast", "balanced", "high"],
 } as const;
@@ -230,9 +230,17 @@ function valuationParts(
   index: (token?: string) => number | undefined,
 ): Resolved | null {
   const [first, ...more] = rest;
-  const top = [PEER_SOURCE_FIELD, BASIS_FIELD].find((item) => item.key === first);
   if (first === undefined) return { parts: [VALUATION_TITLE] };
+  const top = [PEER_SOURCE_FIELD, BASIS_FIELD].find((item) => item.key === first);
   if (top) return more.length ? null : { parts: [VALUATION_TITLE, top.label], field: top };
+  return valuationDetailParts(first, more, index);
+}
+
+function valuationDetailParts(
+  first: string,
+  more: string[],
+  index: (token?: string) => number | undefined,
+): Resolved | null {
   if (first === "peers" || first === "precedents") {
     const found = rowParts(first, more, ROW_SPECS[first].section);
     return found && { ...found, parts: [VALUATION_TITLE, ...found.parts] };
@@ -402,6 +410,8 @@ export function refusalLines(error: string): string[] {
 type ControlKey =
   | "issuer_name"
   | "cutoff"
+  | "current_period"
+  | "prior_period"
   | "legal_documents"
   | "deal_terms"
   | "quotes"
@@ -418,6 +428,8 @@ const CONTROL_ROOTS =
 const CONTROL_PATHS: Readonly<Record<string, ControlKey>> = {
   "identity.issuer_name": "issuer_name",
   "run.cutoff": "cutoff",
+  "run.current_period": "current_period",
+  "run.prior_period": "prior_period",
   "attachments.legal_documents": "legal_documents",
 };
 

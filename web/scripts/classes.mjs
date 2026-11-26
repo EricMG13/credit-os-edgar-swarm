@@ -61,39 +61,54 @@ function readTemplate(text, i, out) {
   return i;
 }
 
+function skipComment(text, i, pair) {
+  const end = text.indexOf(pair === "//" ? "\n" : "*/", i + 2);
+  return end < 0 ? text.length : end + (pair === "//" ? 0 : 2);
+}
+
+function readQuotedString(text, i, out) {
+  const pattern = QUOTED[text[i]];
+  pattern.lastIndex = i;
+  const match = pattern.exec(text);
+  // A quote with no partner on its line (an apostrophe in JSX text) is not a string.
+  if (match) out.push(match[1]);
+  return match ? i + match[0].length : i + 1;
+}
+
 // Pushes the content of every string and template literal found in code from `start`, skipping
 // comments. In an interpolation it stops after the brace that closes it and returns that index.
+function readCodeToken(text, i, inInterpolation, depth, out) {
+  const ch = text[i];
+  const pair = text.slice(i, i + 2);
+  if (pair === "//" || pair === "/*") return { next: skipComment(text, i, pair) };
+  if (ch === "`") return { next: readTemplate(text, i + 1, out) };
+  if (ch === '"' || ch === "'") return { next: readQuotedString(text, i, out) };
+  if (inInterpolation && ch === "{") return { next: i + 1, depth: depth + 1 };
+  if (inInterpolation && ch === "}") {
+    return depth === 0 ? { next: i + 1, done: true } : { next: i + 1, depth: depth - 1 };
+  }
+  return { next: i + 1 };
+}
+
 function scanCode(text, start, inInterpolation, out) {
   let depth = 0;
   let i = start;
   while (i < text.length) {
     const ch = text[i];
-    const pair = text.slice(i, i + 2);
-    if (pair === "//") {
-      const end = text.indexOf("\n", i);
-      i = end < 0 ? text.length : end;
-    } else if (pair === "/*") {
-      const end = text.indexOf("*/", i + 2);
-      i = end < 0 ? text.length : end + 2;
-    } else if (ch === "`") {
-      i = readTemplate(text, i + 1, out);
-    } else if (ch === '"' || ch === "'") {
-      const pattern = QUOTED[ch];
-      pattern.lastIndex = i;
-      const m = pattern.exec(text);
-      // A quote with no partner on its line (an apostrophe in JSX text) is not a string.
-      if (m) out.push(m[1]);
-      i = m ? i + m[0].length : i + 1;
-    } else if (inInterpolation && ch === "{") {
-      depth++;
+    if (
+      ch !== "/" &&
+      ch !== "`" &&
+      ch !== '"' &&
+      ch !== "'" &&
+      (!inInterpolation || (ch !== "{" && ch !== "}"))
+    ) {
       i++;
-    } else if (inInterpolation && ch === "}") {
-      if (depth === 0) return i + 1;
-      depth--;
-      i++;
-    } else {
-      i++;
+      continue;
     }
+    const token = readCodeToken(text, i, inInterpolation, depth, out);
+    if (token.done) return token.next;
+    depth = token.depth ?? depth;
+    i = token.next;
   }
   return i;
 }
@@ -129,7 +144,7 @@ function sourceFiles(dir) {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) return sourceFiles(full);
-    return /\.tsx?$/.test(entry.name) && !/\.test\.tsx?$/.test(entry.name) ? [full] : [];
+    return /\.tsx?$/.test(entry.name) && !/\.(test|fixture)\.tsx?$/.test(entry.name) ? [full] : [];
   });
 }
 

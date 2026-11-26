@@ -3,7 +3,7 @@ import path from "node:path";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import type { LibraryData } from "@/data";
 import { SourceContext } from "../source";
-import { routes } from "./routes";
+import { libraryRoutes as routes } from "./routes";
 
 type Json = Record<string, unknown>;
 
@@ -233,7 +233,8 @@ describe("Overview, fix round 1", () => {
       "text-h2",
     );
     expect(screen.getByRole("heading", { level: 2, name: /^Stable credit/ })).toHaveClass(
-      "text-h3",
+      "text-h2",
+      "sm:text-h1",
     );
   });
 

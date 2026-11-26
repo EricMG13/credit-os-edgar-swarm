@@ -107,7 +107,11 @@ node --test apps/issuer-library/credit_os/web/reader.test.cjs apps/issuer-librar
 - `checks.yml`, on every pull request and by hand: the changed-code gate and the import
   direction above; the fast tests (`-m "not live and not browser"`, the files listed in the
   workflow) with the known failures in `tests/known-failures.txt` deselected; and the page logic
-  under Node.
+  under Node. The fast tests include the connected server's (`tests/test_react_*.py`) and the
+  synthetic end-to-end run (`proof/test_launcher.py`). A `web` job runs the connected
+  application's gates from `web/package.json`: lint, format, types, unused code, duplication,
+  the component tests, the build and the script tests. `npm audit` and the browser file check
+  stay local (`npm --prefix web run gates`).
 - `weekly-tests.yml`, every Sunday at 01:00 UTC and by hand: the whole suite, slow files
   included, with the same markers and deselections. A failure there that is not in
   `tests/known-failures.txt` is new.

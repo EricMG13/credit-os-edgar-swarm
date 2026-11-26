@@ -1,6 +1,9 @@
+import { LIBRARY_ADDRESS, request, snapshotAddress } from "./ahead";
 import { moduleName, pathwayName, RequestError } from "./api";
 import { asOfDate } from "./runFigures";
 import { changeText } from "./signal";
+import { withUnit } from "./moneyUnits";
+export { unitLabel, withUnit } from "./moneyUnits";
 
 export type Row = { line: number; cells: string[] };
 export type Table = { type: "table"; line: number; headers: string[]; rows: Row[] };
@@ -120,7 +123,7 @@ type ModuleComparison = {
   prior_bottom_line: string | null;
   current_bottom_line: string | null;
 };
-export type Changes = {
+export type PublishedChanges = {
   first_run?: boolean | null;
   note?: string | null;
   problem?: string | null;
@@ -175,8 +178,29 @@ export type ScriptCheckRecord = {
   outcomes: ScriptCheckOutcome[];
 };
 
+export type PublishedLead = {
+  module: string;
+  output: string;
+  sha256: string;
+  line: number;
+  text: string;
+};
+type AssessmentScope = "standard" | "partial" | "unverified";
+type ActionTreatment = {
+  output: string;
+  sha256: string;
+  state: "withheld";
+  scope: "committee" | "instrument";
+  reason: string;
+};
+
 export type PublishedRun = {
   history?: { modules: string[]; earlierFormat: boolean; earlierMethods: boolean };
+  publicationVerified?: boolean;
+  lead?: PublishedLead | null;
+  assessmentScope?: AssessmentScope;
+  publishedAt?: string | null;
+  actionTreatment?: Partial<Record<"CP-6" | "CP-3", ActionTreatment>>;
   folder: string;
   issuer: string;
   issuerKey?: string | null;
@@ -189,7 +213,7 @@ export type PublishedRun = {
   record?: {
     steps: { module: string; started?: string | null; accepted?: string | null }[];
   } | null;
-  changes?: Changes | null;
+  changes?: PublishedChanges | null;
   /** The methods that changed since this run ran, one "<module>: <detail>" line each (the store's
    * `method_changes`); none or empty when the run is on today's methods. */
   methodChanges?: string[] | null;
@@ -237,6 +261,7 @@ export type CatalogueRun = {
   id: string;
   name: string;
   issuer: string;
+  ticker?: string | null;
   title: string;
   date: string;
   sector: string;
@@ -253,6 +278,7 @@ export type PlannedIssuer = {
   status_text: string;
 };
 export type Snapshot = {
+  reportFolder?: string;
   catalogue: { real: CatalogueRun[] };
   workspace: {
     runs: Record<string, PublishedRun>;
@@ -267,26 +293,38 @@ export type Snapshot = {
 export type LibraryIndex = {
   catalogue: Snapshot["catalogue"] & { planned?: PlannedIssuer[] };
   workspace: {
-    runs: Record<
-      string,
-      Pick<PublishedRun, "folder" | "issuerKey" | "pathway"> & {
-        /** Exact selected credit-view paragraph; its Basis line and original source identity remain intact. */
-        lead?: { module: string; output: string; sha256: string; line: number; text: string };
-      }
-    >;
+    runs: Record<string, LibraryRun>;
   };
   preview?: Snapshot["preview"];
 };
 
+export type LibraryRun = Pick<
+  PublishedRun,
+  | "folder"
+  | "issuerKey"
+  | "pathway"
+  | "publicationVerified"
+  | "lead"
+  | "assessmentScope"
+  | "publishedAt"
+>;
+
+export function publishedRunForFolder<Run extends { folder: string }>(
+  runs: Record<string, Run>,
+  folder: string,
+) {
+  const exact = Object.entries(runs).filter(([, run]) => run.folder === folder);
+  return exact.length === 1 ? exact[0] : undefined;
+}
+
 export async function getLibraryIndex(signal: AbortSignal): Promise<LibraryIndex | null> {
-  const response = await fetch("/connected/library", { cache: "no-store", signal });
+  const response = await request(LIBRARY_ADDRESS, signal);
   if (!response.ok) throw new Error("The published library could not be loaded.");
   return (await response.json()) as LibraryIndex | null;
 }
 
 export async function getSnapshot(signal: AbortSignal, folder?: string): Promise<Snapshot | null> {
-  const query = folder === undefined ? "" : `?run=${encodeURIComponent(folder)}`;
-  const response = await fetch(`/connected/snapshot${query}`, { cache: "no-store", signal });
+  const response = await request(snapshotAddress(folder), signal);
   if (!response.ok)
     throw new RequestError("The published report could not be loaded.", response.status);
   return (await response.json()) as Snapshot | null;
@@ -337,28 +375,6 @@ export function runTiming(run: Pick<PublishedRun, "asOf" | "period">) {
     );
   const date = run.asOf ? `As of ${asOfDate(run.asOf)}` : "";
   return [date, run.period !== run.asOf ? run.period : ""].filter(Boolean).join(" · ");
-}
-
-const moneyUnit = /^(USD|US\$|[A-Z]{3})(?: millions|m)$/;
-const moneySymbol = (code: string) => (code === "USD" || code === "US$" ? "US$" : `${code} `);
-
-export function unitLabel(unit: string) {
-  const code = moneyUnit.exec(unit)?.[1];
-  return code ? `${code === "USD" || code === "US$" ? "US$" : code}m` : unit;
-}
-
-export function withUnit(value: string | number, unit?: string | null) {
-  const code = unit ? moneyUnit.exec(unit)?.[1] : undefined;
-  if (code) {
-    const text = String(value);
-    if (!/^-?(\d+|\d{1,3}(,\d{3})+)(\.\d+)?$/.test(text)) return text;
-    const [plain = "", fraction] = text.replace(/^-/, "").split(".");
-    const integer = plain.replace(/,/g, "");
-    const grouped = integer.replace(/\B(?=(\d{3})+$)/g, ",");
-    const sign = text.startsWith("-") ? "-" : "";
-    return `${sign}${moneySymbol(code)}${grouped}${fraction === undefined ? "" : `.${fraction}`}m`;
-  }
-  return unit ? `${String(value)}${/^[x%]$/.test(unit) ? "" : " "}${unit}` : String(value);
 }
 
 export function comparisonForRun(run: PublishedRun, runs: Record<string, PublishedRun>) {
@@ -421,7 +437,10 @@ function comparisonDifference(
   return { revision, delta };
 }
 
-export function comparisonRows(changes: Changes, purpose: "evidence" | "reader" = "evidence") {
+export function comparisonRows(
+  changes: PublishedChanges,
+  purpose: "evidence" | "reader" = "evidence",
+) {
   const side = (item: Side | null | undefined) =>
     item?.value == null
       ? "Not stated"
@@ -603,6 +622,10 @@ const FILE_REFERENCE = new RegExp(
   "i",
 );
 const LONG_HASH = /\b(?=[0-9a-f]*[a-f])[0-9a-f]{32,}\b/i;
+// A drive, `file:` or other scheme written with one slash (`C:/x`, `file:/x`) is an address: a
+// letter, a colon and a slash with no space. A share written with forward slashes is `//host/path`.
+const ADDRESS_REFERENCE =
+  /(?:\b[a-z][a-z0-9+.-]*:\/\/|[a-z]:\/\S|\bwww\.|(?:^|[\s(`"':])(?:(?:~|\.{1,2})\/\S|\/{1,2}[^\s/]+\/\S|[a-z]:\\\S|\\\\\S))/i;
 const REGISTER_ID = /\bCP-[A-Z0-9]+-(?:GAP|MON|FACT|CALC|EVID|SRC|ASSUMPTION)-[A-Z0-9-]+\b/i;
 
 // A gap id as the modules spell a gap, the report-wide id after the empty-set mark ("∅ G12",
@@ -614,10 +637,20 @@ const REGISTER_ID = /\bCP-[A-Z0-9]+-(?:GAP|MON|FACT|CALC|EVID|SRC|ASSUMPTION)-[A
 const GAP_ID = /∅\s*\[?G\d+\b/;
 const RUN_CODE = /\b\d{8}-\d{6}-\d{2}\b/;
 
-function parenthesizedGap(text: string) {
-  return [...text.matchAll(/\(G\d+\)/gi)].some((match) => {
+function contextualMatch(
+  text: string,
+  pattern: RegExp,
+  classify: (match: RegExpMatchArray, before: string, after: string) => boolean,
+) {
+  return [...text.matchAll(pattern)].some((match) => {
     const before = text.slice(0, match.index);
     const after = text.slice(match.index + match[0].length);
+    return classify(match, before, after);
+  });
+}
+
+function parenthesizedGap(text: string) {
+  return contextualMatch(text, /\(G\d+\)/gi, (_match, before, after) => {
     const namedLabel =
       /(?:\bgroup of \p{L}+(?:-\p{L}+)?|\b(?:economies|currencies)|\b(?:series|class|gen|tranche)\s+[\w-]+(?:\s+[\w-]+)?)\s*$/iu.test(
         before,
@@ -635,26 +668,29 @@ function parenthesizedGap(text: string) {
 // have no preceding quantity. Explicit locator cues take precedence. Word fragments, S&P and
 // p.p. are excluded at the token boundary; "front page 2025" is a headline, not a locator.
 function pageCitation(text: string) {
-  return [...text.matchAll(/(?<![\w&.-])(p|pg|pp|pages?)\.?\s*(\d+)\b/gi)].some((match) => {
-    const before = text.slice(0, match.index);
-    const after = text.slice(match.index + match[0].length);
-    const marker = match[1]?.toLowerCase();
-    if (/\b(?:see|at|on|as)\s*$/i.test(before)) return true;
-    if (marker === "pp") {
-      if (/\d\s*$/.test(before)) return false;
-      if (
-        /\p{L}\s*$/u.test(before) &&
-        /^\s+(?:\p{L}+(?:-\p{L}+)*\s+)*(?:days?|weeks?|months?|quarters?|years?)\b/iu.test(after)
-      )
-        return false;
-    }
-    return !(marker === "page" && /\bfront\s+$/i.test(before));
-  });
+  return contextualMatch(
+    text,
+    /(?<![\w&.-])(p|pg|pp|pages?)\.?\s*(:\s*)?(\d+)\b/gi,
+    (match, before, after) => {
+      const marker = match[1]?.toLowerCase();
+      if (match[2] || /\b(?:see|at|on|as)\s*$/i.test(before)) return true;
+      if (marker === "pp") {
+        if (/\d\s*$/.test(before)) return false;
+        if (
+          /\p{L}\s*$/u.test(before) &&
+          /^\s+(?:\p{L}+(?:-\p{L}+)*\s+)*(?:days?|weeks?|months?|quarters?|years?)\b/iu.test(after)
+        )
+          return false;
+      }
+      return !(marker === "page" && /\bfront\s+$/i.test(before));
+    },
+  );
 }
 
 export function containsReference(text: string) {
   return (
     FILE_REFERENCE.test(text) ||
+    ADDRESS_REFERENCE.test(text) ||
     LONG_HASH.test(text) ||
     REGISTER_ID.test(text) ||
     GAP_ID.test(text) ||
@@ -667,7 +703,7 @@ export function containsReference(text: string) {
 const INTERMODULE =
   /^(?:supplied handoff|use in this module|effect on this module|consumer|downstream module|receiving module|responsible module|command|required consumer action|escalation consequence|next commands?|next modules?|downstream consumers?|downstream modules? affected|downstream handoff impact|downstream owners|affected consumers|affected modules|downstream_use|consumer_module_id)$|^consequence for cp-/;
 const SOURCE_COLUMN =
-  /\bid$|^linked pathway row$|^(?:(?:sources?|evidence)(?:\s*\/\s*(?:clause|limitation)|\s+(?:trace|locator|register|document|file|sha|hash|page|reference|ref|link)s?)?|sha256|source document name|source and basis|source\(s\)|source row\/section\/quote|sha256 hash|where found)$|\b(?:hash(?:es)?|sha|sha256|locators?|citations?|file ?names?)\b/;
+  /\bid$|^linked pathway row$|^(?:(?:sources?|evidence)(?:\s*\/\s*(?:clause|limitation)|\s+(?:trace|locator|register|document|file|sha|hash|page|reference|ref|link)s?)?|sha256|source document name|source and basis|basis and source|source\(s\)|source row\/section\/quote|sha256 hash|where found)$|\b(?:hash(?:es)?|sha|sha256|locators?|citations?|file ?names?)\b/;
 
 export function displayColumns(headers: string[], evidence: boolean, rows: Row[] = []) {
   return headers.flatMap((text, index) => {
@@ -701,7 +737,7 @@ export function publishedHref(href: string | null | undefined, folder: string) {
   }
 }
 
-export function evidenceToken(entry: OutputEntry, line?: number) {
+export function evidenceToken(entry: { output: Pick<Output, "id" | "sha256"> }, line?: number) {
   const { id, sha256 } = entry.output;
   return `${encodeURIComponent(id)}~${sha256}${line === undefined ? "" : `-${String(line)}`}`;
 }

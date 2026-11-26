@@ -1,4 +1,4 @@
-// EDGAR swarm: batches of Sonnet analysts take planned issuers through CP-OS host mode to CP-2.
+// EDGAR swarm: batches of Sonnet analysts take planned issuers through CP-OS host mode (through CP-2, or the Layer 1 and CP-DR set).
 //
 // Launch: Workflow({scriptPath: 'tools/swarm/swarm.workflow.js', args: {...}})
 //   args.root          shared root holding swarm/plan.json (written by tools/swarm/prepare.py)
@@ -9,7 +9,7 @@
 //   args.stale_seconds running claims older than this return to pending; default 3600
 //   args.results       optional: a git worktree on a results branch; after each batch the run
 //                      folders (without inputs/ and source-text/, the filing copies), the library
-//                      and plan.json are copied there, committed and pushed
+//                      and plan.json (the ledger) are copied there, committed and pushed
 //   args.trailer       optional: the closing lines of each results commit message
 //   args.effort        analyst effort: low, medium, high, xhigh or max; default high
 //
@@ -19,7 +19,7 @@
 export const meta = {
   name: 'edgar-swarm',
   description:
-    'Run planned issuers through cpos_launch host mode to CP-2 in batches of Sonnet analysts',
+    'Run planned issuers through cpos_launch host mode in batches of Sonnet analysts',
   phases: [
     { title: 'Claim', detail: 'ledger next' },
     { title: 'Analyse', detail: 'one Sonnet analyst per issuer' },
@@ -74,13 +74,9 @@ const REPORT_SCHEMA = {
     exit_code: { type: 'integer' },
     attempts_by_module: {
       type: 'object',
-      properties: {
-        'CP-0': { type: 'integer' },
-        'CP-1': { type: 'integer' },
-        'CP-1A': { type: 'integer' },
-        'CP-2': { type: 'integer' },
-      },
-      required: ['CP-0', 'CP-1', 'CP-1A', 'CP-2'],
+      // Any module CP-OS asked; none when the launch was refused before a request.
+      minProperties: 0,
+      additionalProperties: { type: 'integer', minimum: 1 },
     },
     notes: { type: 'string' },
   },
@@ -102,7 +98,7 @@ const run = (label, phaseTitle, command) =>
     },
   )
 
-const brief = (c) => `You answer CP-OS modules for one issuer, ${c.name} (issuer id ${c.id}).
+const brief = (c) => `You answer the CP-OS modules asked of one issuer, ${c.name} (issuer id ${c.id}).
 No provider is called; you are the model. Follow this order exactly.
 
 1. Read ${repo}/docs/templates/host-analyst-checklist.md and follow it for every answer.
@@ -118,7 +114,7 @@ No provider is called; you are the model. Follow this order exactly.
    do not read any other issuer's folder or draft; do not touch ${root}/swarm/plan.json (the
    ledger; the controller writes it). An accepted answer cannot be replaced.
 5. Reply with: issuer_id ${c.id}; exit_code, the last launcher exit code; attempts_by_module for
-   CP-0, CP-1, CP-1A and CP-2; notes, one sentence on any defect you saw but could not fix.`
+   each module CP-OS asked you to answer (leave out a module it did not ask); notes, one sentence on any defect you saw but could not fix.`
 
 let claimed = 0
 let published = 0

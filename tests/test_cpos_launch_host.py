@@ -68,6 +68,7 @@ def snapshot(folder: Path) -> dict[str, str]:
         ("--balanced",),
         ("--high-modules", "CP-2"),
         ("--web-lookup", "on"),
+        ("--parallel-modules", "2"),
     ],
     ids=lambda e: e[0],
 )
@@ -84,7 +85,7 @@ def test_host_is_a_config_choice_beside_the_provider_configs():
 
 
 def test_the_named_set_expands_in_place_once_each_and_combines():
-    assert MODULE_SETS == {"through-cp2": THROUGH_CP2}
+    assert MODULE_SETS["through-cp2"] == THROUGH_CP2
     assert expand_modules(None) is None
     assert expand_modules(("CP-4", "through-cp2", "CP-1", "CP-2A")) == (
         "CP-4",
@@ -306,3 +307,57 @@ def test_a_finished_host_run_is_published_to_the_library_unless_no_library(
     out = capsys.readouterr()
     assert "Library:" in out.out, out
     assert (tmp_path / "library/data.js").is_file()  # main's library publishes data.js
+
+
+LAYER1_DR = ("CP-0", "CP-1", "CP-1A", "CP-1B", "CP-DR", "CP-1C", "CP-1D", "CP-2")
+
+
+def drive(tmp_path: Path, capsys, argv: list[str], modules: tuple[str, ...]) -> list[str]:
+    """Answer the launcher until it stops asking; returns the modules it asked, in order."""
+    routes = prepare(
+        tmp_path / "context.json",
+        tmp_path / "issuer",
+        tmp_path / f"preview-{len(modules)}",
+        config="host",
+        cap=0,
+        modules=modules,
+    ).plan.layout.routes
+    asked_modules: list[str] = []
+    while (code := main(argv)) == ANSWER_NEEDED:
+        asked, answer_path = asked_of(capsys.readouterr().out)
+        asked_modules.append(asked["module_id"])
+        answer_path.write_text(answer_for(asked, routes))
+    assert code == 0, capsys.readouterr().err
+    capsys.readouterr()
+    return asked_modules
+
+
+def args_of(tmp_path: Path, *extra: str) -> list[str]:
+    """`host_argv` without an `--out`; the issuer files are written once."""
+    if not (tmp_path / "issuer").exists():
+        context_file(tmp_path, "credit_snapshot"), issuer_folder(tmp_path)
+    return [
+        *("--context", str(tmp_path / "context.json"), "--sources", str(tmp_path / "issuer")),
+        *("--config", "host", *extra),
+    ]
+
+
+def test_layer1_dr_is_a_named_set_in_the_priority_order():
+    assert MODULE_SETS["layer1-dr"] == LAYER1_DR
+
+
+def test_layer1_dr_asks_every_one_of_its_eight_modules_itself(tmp_path, capsys):
+    argv = args_of(
+        tmp_path,
+        *("--modules", "layer1-dr", "--no-library", "--prior", "none"),
+        *("--out", str(tmp_path / "run")),
+    )
+    assert drive(tmp_path, capsys, argv, LAYER1_DR) == list(LAYER1_DR)
+    before = snapshot(tmp_path / "run")
+    assert main(argv) == 0
+    assert snapshot(tmp_path / "run") == before
+
+
+def test_a_bad_parallel_variable_does_not_refuse_a_host_launch(tmp_path, capsys, monkeypatch):
+    monkeypatch.setenv("CREDIT_OS_PARALLEL_MODULES", "99")
+    assert main(host_argv(tmp_path, "--modules", "CP-1", "--prior", "none")) == ANSWER_NEEDED

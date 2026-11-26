@@ -31,6 +31,7 @@ read is left out with its reason, like a run folder.
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import json
 import os
@@ -38,11 +39,13 @@ import re
 import stat
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from pathlib import Path, PurePosixPath
 from typing import Any
 from urllib.parse import quote
 
+from deploy_workflow.derived import derived
 from deploy_workflow.reader_summary import TABLES, reader_tables
 
 REPORT_KIND = "cpos-markdown-delivery/1"
@@ -82,7 +85,7 @@ class Library:
     # every reader treats as having a delivery.
     planned: list[dict[str, str]] = field(default_factory=list)
     excluded: list[tuple[str, str]] = field(default_factory=list)  # (run folder, reason)
-    # Run id -> the delivery this build verified (folder, files, parsed view). Per-build state,
+    # Run id -> the delivery this build verified (folder, files, view fields). Per-build state,
     # shared read-only so later readers need not verify and parse the same delivery again; a
     # Library built by hand has none and its readers verify for themselves.
     deliveries: dict[str, dict[str, Any]] = field(default_factory=dict, repr=False)
@@ -199,6 +202,16 @@ def delivery_folder(
     raise Refused("no delivery folder holds the delivery the completion record names")
 
 
+# What a reader of a verified delivery takes from its view.json. The file is megabytes of report
+# data; these fields are the run it names and how the report qualifies itself.
+VIEW_FIELDS = ("run", "mode", "analytical_qualification")
+
+
+def view_fields(view: dict[str, Any]) -> dict[str, Any]:
+    """The ``VIEW_FIELDS`` a parsed view.json states."""
+    return {key: view[key] for key in VIEW_FIELDS if key in view}
+
+
 def run_identity(run: Mapping[str, Any]) -> dict[str, str]:
     """The run's identity from ``workflow.json``: each part a non-empty string."""
     for key in _IDENTITY:
@@ -216,7 +229,8 @@ def same_identity(other: object, identity: Mapping[str, str], what: str) -> None
 
 
 def verified_delivery(folder: Path, completion: Mapping[str, Any]) -> dict[str, Any]:
-    """The checked delivery: its manifest, folder, receipt or report hash and handoffs."""
+    """The checked delivery: its manifest, folder, receipt or report hash, handoffs and the
+    ``VIEW_FIELDS`` of its view.json."""
     manifest_sha = completion.get("delivery_manifest_sha256")
     delivery_sha = completion.get("delivery_sha256")
     report_sha = completion.get("report_sha256")
@@ -232,7 +246,11 @@ def verified_delivery(folder: Path, completion: Mapping[str, Any]) -> dict[str, 
     relative, files = delivery_folder(folder, stated, checked, receipt_hash=by_receipt)
     if "view.json" not in checked:  # The folder holds exactly its listed files, so it is missing.
         raise Refused(f"{relative}/view.json is missing")
-    view = json_object(checked["view.json"], "view.json")
+    # The bytes have the hash the delivery lists (delivery_folder), so their fields are that hash's.
+    view = derived(
+        ("delivery-view", files["view.json"]),
+        lambda: view_fields(json_object(checked["view.json"], "view.json")),
+    )
     handoffs, modules = manifest.get("handoffs"), completion.get("modules")
     execution = completion.get("module_execution")
     if not isinstance(handoffs, dict) or not isinstance(modules, dict) or not modules:
@@ -457,6 +475,51 @@ def changes_record(delivered: Mapping[str, Any], completion: Mapping[str, Any]) 
     }
 
 
+def _module_set(value: object) -> set[str] | None:
+    if not isinstance(value, list) or not value:
+        return None
+    if any(not isinstance(code, str) or not code.strip() for code in value):
+        return None
+    selected = set(value)
+    return selected if len(selected) == len(value) else None
+
+
+def assessment_scope(workflow: Mapping[str, Any], delivered: Mapping[str, Any]) -> str:
+    """Compare the frozen submission plan and the receipts' verified handoff pins."""
+    requested = _module_set(workflow["run"].get("requested_modules"))
+    published = _module_set(delivered["manifest"]["run"].get("requested_modules"))
+    if requested is None or requested != published or delivered["delivery_sha256"] is None:
+        return "unverified"
+    comparison = {"CP-8"}
+    modules = set(delivered["handoffs"])
+    if requested == comparison or modules == comparison:
+        return "partial"
+    instructions = workflow.get("instructions")
+    if not isinstance(instructions, dict) or not requested <= instructions.keys():
+        return "unverified"
+    selection = workflow.get("selection")
+    planned = set(instructions)
+    required = planned - comparison
+    if selection == "explicit" or not (required <= modules <= planned):
+        return "partial"
+    preset = _module_set(workflow.get("preset_requested_modules"))
+    if selection != "preset" or preset is None:
+        return "unverified"
+    return "standard" if requested - comparison == preset else "partial"
+
+
+def publication_time(completion: Mapping[str, Any]) -> str | None:
+    """The time CP-OS recorded in the digest-addressed completion, when available."""
+    value = completion.get("published_at")
+    if not isinstance(value, str) or "T" not in value:
+        return None
+    try:
+        published = datetime.fromisoformat(value)
+        return published.astimezone(UTC).isoformat() if published.tzinfo is not None else None
+    except (ValueError, OverflowError):
+        return None
+
+
 def admit_run(
     folder: Path,
     page_dir: Path,
@@ -468,12 +531,14 @@ def admit_run(
     When ``deliveries`` is given, the verified delivery of an admitted run is kept in it."""
     if not os.path.lexists(folder / "workflow.json"):
         raise Refused("not a CP-OS launcher run (no workflow.json)")
-    workflow = json_object(read_inside(folder, "workflow.json"), "workflow.json")
+    workflow_raw = read_inside(folder, "workflow.json")
+    workflow = json_object(workflow_raw, "workflow.json")
     run = workflow.get("run")
     if not isinstance(run, dict):
         raise Refused("workflow.json names no run")
     identity = run_identity(run)
     completion = report_completion(folder)
+    workflow_pin = completion.get("workflow_sha256")
     delivered = verified_delivery(folder, completion)
     same_identity(delivered["manifest"].get("run"), identity, "the delivery manifest")
     same_identity(delivered["view"].get("run"), identity, "the delivered report")
@@ -499,6 +564,10 @@ def admit_run(
         if delivered["report_sha256"] is not None
         else None,
         "delivery_sha256": delivered["delivery_sha256"],
+        "assessmentScope": assessment_scope(workflow, delivered)
+        if workflow_pin == sha256(workflow_raw)
+        else "unverified",
+        "publishedAt": publication_time(completion) if delivered["delivery_sha256"] else None,
         "execution": execution_record(folder),
         "method_changes": method_changes,
         "changes": changes_record(delivered, completion),
@@ -592,7 +661,9 @@ def build_library(
     workspace: Path, page_dir: Path, method: tuple[MethodText, MethodHeadings] | None = None
 ) -> Library:
     """Every run folder in ``workspace/runs``, listed or left out with its reason."""
-    method = method or current_method()
+    # Each run is compared with the same method texts, read once for the build.
+    text, headings = method or current_method()
+    method = functools.cache(text), functools.cache(headings)
     library = Library()
     runs_dir = workspace / "runs"
     names = sorted(os.listdir(runs_dir)) if runs_dir.is_dir() else []

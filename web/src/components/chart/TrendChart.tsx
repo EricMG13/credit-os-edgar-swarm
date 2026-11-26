@@ -1,4 +1,12 @@
-import { checkDistinctSeries, seriesKey as keyOf, periodSeriesData } from "./seriesData";
+import { useChartPlotHeight } from "./ChartPrintContext";
+import {
+  atPositions,
+  checkDistinctSeries,
+  seriesKey as keyOf,
+  periodGapNote,
+  periodPositions,
+  periodSeriesData,
+} from "./seriesData";
 import {
   CartesianGrid,
   LineChart,
@@ -146,11 +154,12 @@ function check({ periods, series, table }: Pick<TrendChartProps, "periods" | "se
 }
 
 function Chart({ title, periods, series, table, yTicks }: Omit<TrendChartProps, "note" | "as">) {
+  const height = useChartPlotHeight(HEIGHT);
   const styles = assignSeries(series.map((s) => s.name));
   const data = periodSeriesData(periods, series);
   return (
     <div className="flex flex-col gap-3 [&_.recharts-surface:focus-visible]:outline-2 [&_.recharts-surface:focus-visible]:outline-solid [&_.recharts-surface:focus-visible]:outline-offset-2 [&_.recharts-surface:focus-visible]:outline-focus">
-      <ResponsiveContainer width="100%" height={HEIGHT}>
+      <ResponsiveContainer width="100%" height={height}>
         <LineChart title={title} data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
           <CartesianGrid vertical={false} stroke="var(--color-border-hairline)" />
           <XAxis dataKey="period" tickLine={false} axisLine={BASELINE} tick={TICK} tickMargin={8} />
@@ -174,21 +183,34 @@ function Chart({ title, periods, series, table, yTicks }: Omit<TrendChartProps, 
   );
 }
 
-/** A line chart over periods, with the Chart or Table toggle on the same data. */
+/**
+ * A line chart over periods, with the Chart or Table toggle on the same data. The periods are drawn
+ * in the one period order whatever order they are given in, each value and cell with its own
+ * period; a label that order cannot place is drawn last and named under the chart.
+ */
 export function TrendChart({
   title,
   as,
   note,
-  periods,
-  series,
-  table,
+  periods: given,
+  series: givenSeries,
+  table: givenTable,
   yTicks,
   actions,
   detailTable,
 }: TrendChartProps) {
-  check({ periods, series, table });
+  check({ periods: given, series: givenSeries, table: givenTable });
+  const { order, gaps } = periodPositions(given);
+  const periods = atPositions(given, order);
+  const series = givenSeries.map((item) => ({ ...item, values: atPositions(item.values, order) }));
+  const table = givenTable.map((row) => ({ ...row, cells: atPositions(row.cells, order) }));
   return (
-    <ChartFrame title={title} as={as} note={note} actions={actions}>
+    <ChartFrame
+      title={title}
+      as={as}
+      note={periodGapNote(gaps, note, gaps.length === given.length)}
+      actions={actions}
+    >
       {(view) =>
         view === "chart" ? (
           <Chart title={title} periods={periods} series={series} table={table} yTicks={yTicks} />

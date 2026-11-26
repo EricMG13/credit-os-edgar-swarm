@@ -318,3 +318,31 @@ def test_shard_leaves_finished_issuers_and_refuses_a_bad_index(tmp_path: Path) -
     assert _statuses(path)["co0"] == "published"
     with pytest.raises(ledger.LedgerError):
         ledger.shard(tmp_path, 2, 2)
+
+
+THROUGH_CP2_ARGV = [
+    *("uv", "run", "python", "-m", "deploy_workflow.owners.cpos_launch"),
+    *("--context", "C", "--sources", "P", "--config", "host", "--modules", "through-cp2"),
+    *("--prior", "none", "--no-library", "--out", "R"),
+]  # Written out by hand: the answer key for an entry without `modules`.
+
+
+def test_an_entry_without_modules_keeps_the_through_cp2_argv_byte_for_byte() -> None:
+    assert run_issuer.command({"context": "C", "pack": "P", "run_folder": "R"}) == THROUGH_CP2_ARGV
+
+
+def test_a_layer1_dr_entry_names_the_set() -> None:
+    entry = {"context": "C", "pack": "P", "run_folder": "R", "modules": "layer1-dr"}
+    swapped = [("layer1-dr" if a == "through-cp2" else a) for a in THROUGH_CP2_ARGV]
+    assert run_issuer.command(entry) == swapped
+
+
+def test_done_accepts_a_run_that_names_only_some_modules(
+    tmp_path: Path,
+) -> None:
+    path = _plan(tmp_path, 1)
+    claimed = ledger.claim(tmp_path, 1)
+    asked = {"CP-1B": 1, "CP-DR": 1, "CP-1C": 1, "CP-1D": 1, "CP-2": 1}
+    ledger.done(tmp_path, "co0", asked, claim=claimed[0]["claims"])
+    issuer = json.loads(path.read_text())["issuers"][0]
+    assert issuer["status"] == "published" and issuer["attempts"] == 5

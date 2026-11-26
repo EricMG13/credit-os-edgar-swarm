@@ -4,7 +4,7 @@
 // Rendered through App on the real route table, with the data the shipped build carries.
 import { render, screen, within } from "@testing-library/react";
 import { App } from "@/App";
-import { routes } from "../routes";
+import { libraryRoutes as routes } from "../routes";
 
 const params: Record<string, string> = {
   issuer: "halden-aerostructures",

@@ -78,7 +78,7 @@ def launcher(root: Path, issuer_id: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(argv, cwd=REPO, capture_output=True, text=True, check=False)
 
 
-def routes_for(issuer: dict, scratch: Path) -> list:
+def routes_for(issuer: dict, scratch: Path, modules: str = "through-cp2") -> list:
     return list(
         cpos_launch.prepare(
             Path(issuer["context"]),
@@ -86,7 +86,7 @@ def routes_for(issuer: dict, scratch: Path) -> list:
             scratch,
             config="host",
             cap=0,
-            modules=("through-cp2",),
+            modules=(modules,),
         ).plan.layout.routes
     )
 
@@ -97,7 +97,7 @@ def drive(root: Path, issuer_id: str, reject: dict[str, int]) -> tuple[int, dict
     Returns the final exit code and the launcher attempts each module took.
     """
     issuer = plan_of(root)[issuer_id]
-    routes = routes_for(issuer, root / f"preview-{issuer_id}")
+    routes = routes_for(issuer, root / f"preview-{issuer_id}", issuer.get("modules", "through-cp2"))
     attempts: dict[str, int] = {}
     while True:
         run = launcher(root, issuer_id)
@@ -234,5 +234,44 @@ def test_resubmissions_within_the_cap_publish_and_beyond_it_fail_then_second_pas
         assert [i["issuer_id"] for i in second] == ["beta"]
         assert (second[0]["status"], second[0]["claims"]) == ("running", 2)
         assert plan_of(root)["alph"]["status"] == "published"
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_layer1_dr_root_runs_all_eight_modules_and_the_library_lists_the_run():
+    root = two_issuer_root()
+    try:
+        # A root of its own: replace the through-cp2 plan by the layer1-dr one (nothing run yet).
+        (root / "swarm/plan.json").unlink()
+        prepared = uv(
+            str(SWARM / "prepare.py"),
+            *("--approved", str(root / "in/approved.md"), "--packs", str(root / "in/packs")),
+            *("--contexts", str(root / "in/contexts"), "--root", str(root)),
+            *("--set", "layer1-dr"),
+        )
+        assert prepared.returncode == 0, prepared.stderr
+        entry = plan_of(root)["alph"]
+        assert entry["modules"] == "layer1-dr" and entry["run_folder"].endswith("swarm-alph-l1")
+        code, attempts = drive(root, "alph", {})
+        # Written by hand: all eight modules of the set, each asked once.
+        assert code == 0
+        assert list(attempts) == [
+            "CP-0",
+            "CP-1",
+            "CP-1A",
+            "CP-1B",
+            "CP-DR",
+            "CP-1C",
+            "CP-1D",
+            "CP-2",
+        ]
+        folder = Path(entry["run_folder"])
+        before = files_under(folder)
+        check = uv(str(SWARM / "run_issuer.py"), "alph", "--root", str(root), "verify")
+        assert check.returncode == 0, check.stderr
+        assert files_under(folder) == before
+        library = build_library(root / "_engine", root / "_engine/library")
+        assert library.excluded == []
+        assert [r["id"] for r in library.runs] == ["swarm-alph-l1"]
     finally:
         shutil.rmtree(root, ignore_errors=True)

@@ -151,3 +151,43 @@ def test_optional_rating_column_is_read_by_name():
     assert rows == [
         {"#": "1", "Issuer": "X Corp", "Ticker": "XC", "CIK": "0000042", "Rating": "BB"}
     ]
+
+
+def layer1(inputs: dict[str, Path]) -> dict[str, Any]:
+    return prepare.prepare(**inputs, set_name="layer1-dr")
+
+
+def test_layer1_dr_plan_has_its_own_run_folder_for_every_issuer(inputs):
+    entries = {i["cik"]: i for i in layer1(inputs)["issuers"]}
+
+    runs = inputs["root"] / "_engine" / "runs"
+    assert {c: i["modules"] for c, i in entries.items()} == dict.fromkeys(OK_IDS, "layer1-dr")
+    assert entries["1000001"]["run_folder"] == str(runs / "swarm-alph-l1")
+    assert entries["1000002"]["run_folder"] == str(runs / "swarm-beta-l1")
+    assert entries["1000001"]["status"] == "pending"
+    on_disk = inputs["root"] / "swarm" / "plan.json"
+    assert json.loads(on_disk.read_text(encoding="utf-8"))["issuers"][0] == entries["1000001"]
+
+
+def test_the_default_set_adds_no_modules_key(inputs):
+    assert all("modules" not in i for i in run(inputs)["issuers"])
+
+
+def test_layer1_dr_cli_flag_plans_the_set(inputs, capsys):
+    assert prepare.main([*[f"--{k}={v}" for k, v in inputs.items()], "--set", "layer1-dr"]) == 0
+    plan = json.loads((inputs["root"] / "swarm" / "plan.json").read_text(encoding="utf-8"))
+    assert {i["modules"] for i in plan["issuers"]} == {"layer1-dr"}
+
+
+@pytest.mark.parametrize("first", ["through-cp2", "layer1-dr"])
+def test_a_plan_of_the_other_set_is_refused_and_left_unchanged(inputs, capsys, first):
+    prepare.prepare(**inputs, set_name=first)
+    path = inputs["root"] / "swarm" / "plan.json"
+    before = path.read_bytes()
+    other = "through-cp2" if first == "layer1-dr" else "layer1-dr"
+    with pytest.raises(ValueError, match=first):
+        prepare.prepare(**inputs, set_name=other)
+    argv = [f"--{k}={v}" for k, v in inputs.items()]
+    assert prepare.main([*argv, "--set", other]) == 2
+    assert first in capsys.readouterr().err
+    assert path.read_bytes() == before

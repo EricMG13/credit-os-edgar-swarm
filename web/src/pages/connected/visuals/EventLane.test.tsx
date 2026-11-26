@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, it } from "vitest";
-import { EVENT_HEADERS, eventLane } from "./EventLane";
+import { EVENT_HEADERS, eventLane, eventRecords } from "./EventLane";
 import { KEY_EVENTS, KEY_GAPS, KEY_ORDER, KEY_YEARS, type KeyEvent } from "./EventLane.fixture";
 
 const cells = (e: KeyEvent) => [
@@ -40,6 +40,18 @@ function markerOf(index: number) {
 const strip = () => screen.getByRole("group", { name: "Events by year" });
 const list = () => screen.getByRole("group", { name: "Events in date order" });
 const yearLabel = (n: number) => (n === 1 ? "1 event" : `${String(n)} events`);
+
+it.each(["constructor", "toString", "valueOf"])(
+  "ignores inherited precision name %s safely",
+  (precision) => {
+    const table = {
+      line: 1,
+      headers: EVENT_HEADERS,
+      rows: [["2026-01-01", precision, "2025-12-01", "Event", "Historical", "Source", "Relevant"]],
+    };
+    expect(eventRecords(table)).toEqual([]);
+  },
+);
 
 it("draws one marker and one list item per event, each marker pointing at a distinct row", () => {
   draw();
@@ -318,14 +330,16 @@ it("draws the same shape in each legend toggle", () => {
 });
 
 // D-41 (WCAG 2.5.8): a pointer target is at least 24 by 24 CSS px; Tailwind's size-6 is 1.5rem.
-it("draws every year marker as a 24 px target that is wide enough for four in a row", () => {
+it("draws every year marker as a 24 px mark, 32 px to a pointer, four to a row", () => {
   draw();
   const markers = Array.from(strip().querySelectorAll<HTMLElement>("button[aria-controls]"));
   expect(markers.length).toBeGreaterThan(0);
   for (const marker of markers) {
     expect(marker).toHaveClass("size-6");
     expect(marker).not.toHaveClass("size-3.5");
-    // Four 24 px markers and three 2 px gaps are 102 px, so the row's cap is 104 px (6.5rem).
-    expect(marker.parentElement).toHaveClass("max-w-[6.5rem]");
+    // Each mark's pointer area reaches 4 px past it, so 8 px gaps keep neighbours' areas apart;
+    // four 24 px markers and three 8 px gaps are 120 px, the row's cap (7.5rem).
+    expect(marker).toHaveClass("after:-inset-1");
+    expect(marker.parentElement).toHaveClass("gap-2", "max-w-[7.5rem]");
   }
 });

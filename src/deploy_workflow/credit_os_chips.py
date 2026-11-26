@@ -15,6 +15,8 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any, Literal, NamedTuple, TypedDict, cast
 
+from deploy_workflow.derived import derived
+
 EXCERPT = 600
 NOT_SUPPLIED = "Not supplied"
 NO_PAGE = "no page"
@@ -525,6 +527,17 @@ def chip(loc: Locator, line: int, **fields: Any) -> dict[str, Any]:
     return base
 
 
+def source_bytes(path: Path) -> tuple[bytes | None, str | None, str | None]:
+    """(bytes, their sha256, None) of a source-text file, or (None, None, why it was not read)."""
+    try:
+        raw = path.read_bytes()
+    except FileNotFoundError:
+        return None, None, "source text file not found"
+    except OSError as error:
+        return None, None, f"source text unreadable: {type(error).__name__}: {error}"
+    return raw, hashlib.sha256(raw).hexdigest(), None
+
+
 class Pages:
     """Source-text files of one run, read once each, with the run's inventory."""
 
@@ -547,14 +560,11 @@ class Pages:
 
     @staticmethod
     def read(path: Path) -> tuple[dict[int, str], str | None, str | None]:
-        try:
-            raw = path.read_bytes()
-        except FileNotFoundError:
-            return {}, None, "source text file not found"
-        except OSError as error:
-            return {}, None, f"source text unreadable: {type(error).__name__}: {error}"
+        raw, digest, problem = source_bytes(path)
+        if raw is None:
+            return {}, None, problem
         pages, problem = read_pages(raw)
-        return pages, hashlib.sha256(raw).hexdigest(), problem
+        return pages, digest, problem
 
 
 def is_file_name(name: str) -> bool:
@@ -663,7 +673,13 @@ def chips_for_output(
     inv: dict[str, tuple[str, str]],
 ) -> dict[str, list[dict[str, Any]]]:
     """Chips of one handoff, keyed ``<output id>:<line>`` for each row or paragraph with any."""
-    pages = Pages(run_dir, inv)
+    return chips_with(Pages(run_dir, inv), output_id, module, sections)
+
+
+def chips_with(
+    pages: Pages, output_id: str, module: str, sections: list[dict[str, Any]]
+) -> dict[str, list[dict[str, Any]]]:
+    """``chips_for_output`` reading the run's source text through ``pages``."""
     result: dict[str, list[dict[str, Any]]] = {}
     findings = False
     for section in sections:
@@ -682,8 +698,56 @@ def chips_for_output(
     return result
 
 
+SourceState = tuple[str | None, str | None]  # (sha256, None) as read, or (None, why not read)
+
+
+class RunChips:
+    """The chips of one run's outputs, kept between publications by what they were made from.
+
+    Chips are a function of the output's id and module, its sections (the handoff's sha256 and
+    which of its sections), the run's inventory and the source-text files the citations opened.
+    The first four are the key. The files are only known once the chips are made, so they are kept
+    beside the chips with the sha256 of the bytes read (or why none were); kept chips are used
+    only when each of those files, read again in this build, is in the same state."""
+
+    def __init__(self, run_dir: Path, inv: dict[str, tuple[str, str]]) -> None:
+        self.run_dir = run_dir
+        self.inv = inv
+        alternates: frozenset[str] = getattr(inv, "alternates", frozenset())
+        self.inventory = (tuple(inv.items()), tuple(sorted(alternates)))
+        self.states: dict[str, SourceState] = {}
+
+    def state(self, name: str) -> SourceState:
+        """The state of one source-text file, read once per build."""
+        if name not in self.states:
+            _, digest, problem = source_bytes(self.run_dir / "source-text" / name)
+            self.states[name] = (digest, problem)
+        return self.states[name]
+
+    def of(
+        self, output_id: str, module: str, sections: list[dict[str, Any]], which: tuple[str, str]
+    ) -> dict[str, list[dict[str, Any]]]:
+        """Chips of ``sections``, which are the ``which`` (part, handoff sha256) of the output."""
+
+        def make() -> tuple[dict[str, list[dict[str, Any]]], dict[str, SourceState]]:
+            pages = Pages(self.run_dir, self.inv)
+            found = chips_with(pages, output_id, module, sections)
+            # A file that was read and could not be parsed has a sha256: its bytes say why.
+            opened = {
+                name: (digest, None if digest else problem)
+                for name, (_, digest, problem) in pages.cache.items()
+            }
+            return found, opened
+
+        def current(kept: tuple[dict[str, list[dict[str, Any]]], dict[str, SourceState]]) -> bool:
+            return all(self.state(name) == state for name, state in kept[1].items())
+
+        return derived(("chips", output_id, module, which, self.inventory), make, current)[0]
+
+
 def chips(workspace: Path, store: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
-    """Chips for every output of the store, keyed like the page's evidence keys."""
+    """Chips for every output of the store, keyed like the page's evidence keys. The store is
+    `workspace_store`'s: `handoffs` holds each output's sections by the sha256 of its bytes."""
     outputs: dict[str, Any] = store["outputs"]
     parsed: dict[str, Any] = store["handoffs"]
     by_run: dict[str, dict[str, tuple[str, str]]] = {}
@@ -695,25 +759,19 @@ def chips(workspace: Path, store: dict[str, Any]) -> dict[str, list[dict[str, An
             available = {p.name for p in texts.iterdir()} if texts.is_dir() else set()
             by_run[folder] = inventory(parsed.get(record["sha256"]) or [], available)
     result: dict[str, list[dict[str, Any]]] = {}
+    runs: dict[str, RunChips] = {}
     for output_id, record in outputs.items():
         folder = output_id.split("/", 1)[0]
+        if folder not in runs:
+            runs[folder] = RunChips(workspace / "runs" / folder, by_run.get(folder, {}))
         sections = parsed.get(record["sha256"]) or []
-        result |= chips_for_output(
-            workspace / "runs" / folder,
-            output_id,
-            record["module"],
-            sections,
-            by_run.get(folder, {}),
-        )
+        module, digest = record["module"], record["sha256"]
+        result |= runs[folder].of(output_id, module, sections, ("handoff", digest))
         confidence_section = record.get("confidenceTrace", {}).get("section")
         if confidence_section and not any(
             section["heading"] == confidence_section["heading"] for section in sections
         ):
-            result |= chips_for_output(
-                workspace / "runs" / folder,
-                output_id,
-                record["module"],
-                [confidence_section],
-                by_run.get(folder, {}),
+            result |= runs[folder].of(
+                output_id, module, [confidence_section], ("confidence", digest)
             )
     return result

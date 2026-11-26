@@ -13,6 +13,10 @@ must be at most ``MAX_ISSUER_ID`` characters, as the run start page requires. A 
 pack, no usable pack folder content, no context, an invalid context, an over-long or duplicate
 issuer ID is listed under ``skipped`` with the reason and registers nothing. A rerun keeps the
 ledger state for each unchanged issuer ID and refreshes its paths.
+
+``--set layer1-dr`` plans the Layer 1 and CP-DR module set instead of ``through-cp2``: run folders
+end ``-l1`` and each entry names its set. Use it on a root of its own (the library lists one run
+per issuer there); a plan that already holds the other set is refused, nothing written.
 """
 
 from __future__ import annotations
@@ -32,6 +36,8 @@ from deploy_workflow.inbox.layout import MAX_ISSUER_ID, ensure_layout
 
 SCHEMA = "swarm-plan/1"
 PLAN_RELATIVE = Path("swarm") / "plan.json"
+SETS = ("through-cp2", "layer1-dr")
+LAYER1_SUFFIX = "-l1"
 RUN_PREFIX = "swarm-"  # Run folders sit in ``<root>/_engine/runs``, where the library lists them.
 _CIK_PREFIX = re.compile(r"(\d+)-")
 
@@ -133,14 +139,27 @@ def _load_plan(path: Path) -> dict[str, Any]:
     return plan
 
 
-def prepare(approved: Path, packs: Path, contexts: Path, root: Path) -> dict[str, Any]:
+def _refuse_mixed(earlier: list[dict[str, Any]], set_name: str) -> None:
+    """Refuse a plan that already holds entries of another set: one root plans one set."""
+    if other := {i.get("modules", SETS[0]) for i in earlier} - {set_name}:
+        raise ValueError(
+            f"{PLAN_RELATIVE} holds {', '.join(sorted(other))} entries: "
+            f"--set {set_name} would mix two sets on one root"
+        )
+
+
+def prepare(
+    approved: Path, packs: Path, contexts: Path, root: Path, *, set_name: str = SETS[0]
+) -> dict[str, Any]:
     """Register the issuers and write the plan; return it."""
     layout = ensure_layout(root)
     rows = parse_approved(approved.read_text(encoding="utf-8"))
     pack_dirs = _by_cik(packs, files=False)
     context_files = _by_cik(contexts, files=True)
     plan_path = layout.root / PLAN_RELATIVE
-    previous = {i["cik"]: i for i in _load_plan(plan_path)["issuers"]}
+    earlier = _load_plan(plan_path)["issuers"]
+    _refuse_mixed(earlier, set_name)
+    previous = {i["cik"]: i for i in earlier}
     issuers: list[dict[str, Any]] = []
     skipped: list[dict[str, str]] = []
     taken: dict[str, str] = {}
@@ -179,6 +198,9 @@ def prepare(approved: Path, packs: Path, contexts: Path, root: Path) -> dict[str
             "status": kept.get("status", "pending"),
             "attempts": kept.get("attempts", 0),
         }
+        if set_name != SETS[0]:
+            entry["modules"] = set_name
+            entry["run_folder"] += LAYER1_SUFFIX
         issuers.append(entry)
 
     # Issuers in an earlier plan that this run no longer lists keep their record.
@@ -199,9 +221,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--packs", type=Path, required=True)
     parser.add_argument("--contexts", type=Path, required=True)
     parser.add_argument("--root", type=Path, required=True)
+    parser.add_argument("--set", dest="set_name", choices=SETS, default=SETS[0])
     args = parser.parse_args(argv)
     try:
-        plan = prepare(args.approved, args.packs, args.contexts, args.root)
+        plan = prepare(args.approved, args.packs, args.contexts, args.root, set_name=args.set_name)
     except (ValueError, OSError) as error:
         print(f"prepare: {error}", file=sys.stderr)
         return 2

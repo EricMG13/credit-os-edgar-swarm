@@ -2,11 +2,60 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 from typing import Any
 
+from deploy_workflow import http_base
 from deploy_workflow.inbox import runs
 from deploy_workflow.inbox.layout import Layout
+
+EXPORT_PREFIX = "window.CREDIT_OS_DATA="
+EXPORT_KEYS = ("catalogue", "workspace", "activity", "chips")
+# The last publication parsed, with the sha256 of the bytes it was parsed from. One service reads
+# one publication, and parsing it on every request grew with every run it lists
+# (VERIFICATION.md 2026-11-18). The file is read and hashed on every request: its timestamps do
+# not show every change (a rewrite in place under a restored time, a write through a mapping).
+_kept: tuple[str, dict[str, Any]] | None = None
+
+
+def _invalid_json(constant: str) -> None:
+    raise ValueError(f"invalid JSON constant {constant}")
+
+
+def _decoded(raw: bytes) -> dict[str, Any]:
+    """The assignment's JSON object; anything else is refused."""
+    assignment = raw.decode("utf-8").rstrip()
+    if not assignment.startswith(EXPORT_PREFIX) or not assignment.endswith(";"):
+        raise ValueError("invalid issuer library export")
+    snapshot = json.loads(assignment[len(EXPORT_PREFIX) : -1], parse_constant=_invalid_json)
+    if not isinstance(snapshot, dict):
+        raise TypeError("invalid issuer library snapshot")
+    if any(not isinstance(snapshot.get(key), dict) for key in EXPORT_KEYS):
+        raise ValueError("invalid issuer library snapshot")
+    return snapshot
+
+
+def published(layout: Layout, *, limit: int | None = None) -> dict[str, Any] | None:
+    """The service's publication as its JSON object; None when there is none.
+
+    The object is shared between requests while the file's bytes stay the same: callers read it
+    and build their replies from copies. ``limit`` refuses a publication of more bytes."""
+    global _kept
+    path = layout.engine / "library" / "data.js"
+    raw = http_base.read_regular(path, limit=None if limit is None else limit + 1)
+    if raw is None:
+        return None
+    if limit is not None and len(raw) > limit:
+        raise ValueError("issuer library export is over the size limit")
+    digest = hashlib.sha256(raw).hexdigest()
+    kept = _kept
+    if kept is not None and kept[0] == digest:
+        return kept[1]
+    snapshot = _decoded(raw)
+    _kept = (digest, snapshot)
+    return snapshot
 
 
 def admitted(snapshot: dict[str, Any], layout: Layout) -> dict[str, Any]:

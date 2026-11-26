@@ -10,30 +10,66 @@ const NOT_FOUND = "Page not found";
 const NOT_BUILT = "Not built yet";
 const UNREADABLE = "This part of the library could not be read";
 
+function visitsForPattern(pattern, params, group, visits, failures) {
+  const sets = pattern.includes(":") ? (params[pattern] ?? []) : [{}];
+  if (sets.length === 0)
+    failures.push(`${pattern} is parameterised and fixtures/${group}.json has no params for it`);
+  for (const set of sets) {
+    const { hash, missing } = fillParams(pattern, set);
+    for (const name of missing)
+      failures.push(`${pattern}: a parameter set in fixtures/${group}.json lacks "${name}"`);
+    visits.push({
+      label: hash === pattern ? pattern : `${pattern} as ${hash}`,
+      hash: `#${hash}`,
+    });
+  }
+}
+
+function bareAddressVisit(group, pages) {
+  if (!groupDeclaresHome(path.join(pages, group))) return null;
+  const bare = group === "library" ? "/" : `/${group}`;
+  return { label: `bare address ${bare}`, hash: `#${bare}`, bare: true };
+}
+
+function printFailures(group, failures) {
+  for (const failure of failures) console.log(`FAIL route ${group}: ${failure}`);
+  return failures.map(() => false);
+}
+
+function checkVisit({ browser, copy, group, label, hash, bare, dumpPage, problems }) {
+  const { dom, log } = dumpPage(browser, copy, hash);
+  const found = problems(log);
+  const present = domProblems(dom, bare === true);
+  const rendered = dom.includes("<main");
+  const ok = found.length === 0 && present.length === 0 && rendered;
+  console.log(`${ok ? "PASS" : "FAIL"} route ${group} ${label}`);
+  if (ok) return true;
+  if (!rendered) console.log("  the page rendered no <main> region");
+  for (const needle of found) console.log(`  stderr contains "${needle}"`);
+  for (const problem of present) console.log(`  ${problem}`);
+  console.log(`  stderr:\n${log}\n  dom:\n${dom}`);
+  return false;
+}
+
+function checkUnknownRoute(browser, copy, dumpPage, problems) {
+  const unknown = dumpPage(browser, copy, "#/no-such-page");
+  const ok = unknown.dom.includes(NOT_FOUND) && problems(unknown.log).length === 0;
+  console.log(`${ok ? "PASS" : "FAIL"} route visits: an unknown hash expects "${NOT_FOUND}"`);
+  if (!ok) console.log(`  stderr:\n${unknown.log}\n  dom:\n${unknown.dom}`);
+  return ok;
+}
+
 /** The visits for one group; `pages` and `fixtures` default to the real folders, a test passes stubs. */
 export function visitsFor(group, pages = pagesDir, fixtures = undefined) {
   const params = readFixture(group, fixtures).params ?? {};
   const visits = [];
   const failures = [];
   for (const pattern of declaredPaths(path.join(pages, group))) {
-    const sets = pattern.includes(":") ? (params[pattern] ?? []) : [{}];
-    if (sets.length === 0)
-      failures.push(`${pattern} is parameterised and fixtures/${group}.json has no params for it`);
-    for (const set of sets) {
-      const { hash, missing } = fillParams(pattern, set);
-      for (const name of missing)
-        failures.push(`${pattern}: a parameter set in fixtures/${group}.json lacks "${name}"`);
-      visits.push({
-        label: hash === pattern ? pattern : `${pattern} as ${hash}`,
-        hash: `#${hash}`,
-      });
-    }
+    visitsForPattern(pattern, params, group, visits, failures);
   }
   // A group that declares a home also owns its bare address, which must draw that page.
-  if (groupDeclaresHome(path.join(pages, group))) {
-    const bare = group === "library" ? "/" : `/${group}`;
-    visits.push({ label: `bare address ${bare}`, hash: `#${bare}`, bare: true });
-  }
+  const bare = bareAddressVisit(group, pages);
+  if (bare) visits.push(bare);
   return { visits, failures };
 }
 
@@ -77,35 +113,15 @@ export function checkRoutes({ browser, folder, work, dumpPage, problems }) {
   writeDataFile(copy);
   const all = GROUPS.map((group) => ({ group, ...visitsFor(group) }));
   const results = [];
-  for (const { group, failures } of all) {
-    for (const failure of failures) console.log(`FAIL route ${group}: ${failure}`);
-    results.push(...failures.map(() => false));
-  }
+  for (const { group, failures } of all) results.push(...printFailures(group, failures));
   const visits = all.flatMap(({ group, visits }) => visits.map((visit) => ({ group, ...visit })));
   if (visits.length === 0 && results.length === 0) {
     console.log("PASS route visits: zero routes were declared by the page groups");
     results.push(true);
   }
   for (const { group, label, hash, bare } of visits) {
-    const { dom, log } = dumpPage(browser, copy, hash);
-    const found = problems(log);
-    const present = domProblems(dom, bare === true);
-    const rendered = dom.includes("<main");
-    const ok = found.length === 0 && present.length === 0 && rendered;
-    console.log(`${ok ? "PASS" : "FAIL"} route ${group} ${label}`);
-    if (!ok) {
-      if (!rendered) console.log("  the page rendered no <main> region");
-      for (const needle of found) console.log(`  stderr contains "${needle}"`);
-      for (const problem of present) console.log(`  ${problem}`);
-      console.log(`  stderr:\n${log}\n  dom:\n${dom}`);
-    }
-    results.push(ok);
+    results.push(checkVisit({ browser, copy, group, label, hash, bare, dumpPage, problems }));
   }
-  const unknown = dumpPage(browser, copy, "#/no-such-page");
-  const unknownOk = unknown.dom.includes(NOT_FOUND) && problems(unknown.log).length === 0;
-  console.log(
-    `${unknownOk ? "PASS" : "FAIL"} route visits: an unknown hash expects "${NOT_FOUND}"`,
-  );
-  if (!unknownOk) console.log(`  stderr:\n${unknown.log}\n  dom:\n${unknown.dom}`);
-  return [...results, unknownOk].every(Boolean);
+  results.push(checkUnknownRoute(browser, copy, dumpPage, problems));
+  return results.every(Boolean);
 }

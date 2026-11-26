@@ -344,8 +344,11 @@ def contained_file(
     return Reply(200, data, {"Content-Type": kind, **headers})
 
 
-def read_regular(path: Path, logger: logging.Logger = log) -> bytes | None:
-    """The bytes of ``path`` read from one handle, or None when it is not a regular file.
+def read_regular(
+    path: Path, logger: logging.Logger = log, *, limit: int | None = None
+) -> bytes | None:
+    """The bytes of ``path`` read from one handle, or None when it is not a regular file; with
+    ``limit``, at most that many of them.
 
     The handle is opened by ``platform_io.regular_open`` (binary where the platform has the flag,
     without following a link, without waiting on a FIFO) and its own ``fstat`` decides, so a file
@@ -360,7 +363,7 @@ def read_regular(path: Path, logger: logging.Logger = log) -> bytes | None:
         logger.info("library file %s not served: %s", path.name, error)
         return None
     with os.fdopen(fd, "rb") as handle:  # the handle owns the descriptor now
-        return handle.read()
+        return handle.read() if limit is None else handle.read(limit)
 
 
 def listed_file(entry: tuple[Path, str] | None) -> Reply:

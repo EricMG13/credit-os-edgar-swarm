@@ -222,10 +222,13 @@ from credit_os.handoff_fields import (
     STATED_GAP,
     STEP_HEADERS,
     WORD_GROUPS,
+    path_series,
+    period_columns,
     placements,
     reader_fields,
     report_fields,
     section_words,
+    visual_periods,
 )
 from credit_os.source import (
     CHUNK,
@@ -251,6 +254,8 @@ from credit_os.source import (
     valid_date,
 )
 from deploy_workflow import confidence as confidence_score
+from deploy_workflow.derived import derived
+from deploy_workflow.library_index import view_fields
 
 # The names moved to the sibling modules, re-exported: callers and tests read and patch them here.
 __all__ = [
@@ -613,14 +618,21 @@ def delivery_json(folder: Path) -> dict[str, Any]:
 
 
 def listed_view(folder: Path, delivery: dict[str, Any]) -> dict[str, Any]:
-    """folder/view.json when a plain file with the hash delivery.json lists; raises otherwise."""
+    """The fields read from folder/view.json (`library_index.VIEW_FIELDS`) when it is a plain
+    file with the hash delivery.json lists; raises otherwise. A view that is not a JSON object is
+    returned as it is, so its readers fail on it as they did."""
     if not isinstance(delivery.get("files"), dict):
         raise TypeError("files is not an object")
     raw = listed_bytes(folder, delivery, "view.json")
     if raw is None:
         raise UnreadableFile("view.json is not the plain file its delivery record lists")
-    view: dict[str, Any] = json.loads(raw.decode("utf-8"))
-    return view
+
+    def read() -> dict[str, Any]:
+        view: dict[str, Any] = json.loads(raw.decode("utf-8"))
+        return view_fields(view) if isinstance(view, dict) else view
+
+    # The bytes have the listed hash, so what is read from them is that hash's.
+    return derived(("listed-view", delivery["files"]["view.json"]), read)
 
 
 def locate_quote(
@@ -705,17 +717,38 @@ def pinned_fields(
         fields["basis"] = locate_row(sections, config["basis"], module)
     visual = config.get("visual")
     if visual:
-        if not any(
-            b["type"] == "table" and b["line"] == visual["table"]
+        fields["visual"] = pinned_visual(sections, visual, module)
+    return fields
+
+
+def pinned_visual(
+    sections: list[dict[str, Any]], visual: dict[str, Any], module: str
+) -> dict[str, Any]:
+    """A curated visual with its quote located and, where it is drawn over periods, their order
+    by the one rule (the page draws what it is given and orders nothing)."""
+    table = next(
+        (
+            b
             for s in sections
             for b in s["blocks"]
-        ):
-            raise ValueError(f"{module}: visual table locator no longer matches")
-        quote = visual.get("noteQuote")
-        fields["visual"] = (
-            {**visual, "quote": locate_quote(sections, quote, module)} if quote else visual
-        )
-    return fields
+            if b["type"] == "table" and b["line"] == visual["table"]
+        ),
+        None,
+    )
+    if table is None:
+        raise ValueError(f"{module}: visual table locator no longer matches")
+    drawn = dict(visual)
+    if visual.get("noteQuote"):
+        drawn["quote"] = locate_quote(sections, visual["noteQuote"], module)
+    if visual["kind"] == "paths":
+        try:
+            drawn["paths"] = path_series(table)
+        except ValueError as error:
+            raise ValueError(f"{module}: {error}") from error
+    periods = visual_periods(visual, table)
+    if periods:
+        drawn["periods"] = periods
+    return drawn
 
 
 def linked(folder: Path) -> bool:
@@ -853,17 +886,39 @@ def confidence_fields(raw: bytes) -> dict[str, Any]:
     }
 
 
+def handoff_parts(
+    raw: bytes, strict: bool
+) -> tuple[list[dict[str, Any]], str | None, dict[str, Any]]:
+    """Everything read from a handoff's bytes alone: its sections, its parse problem and the
+    reader, report and confidence fields of an output holding it."""
+    sections, problem = structured(raw, strict)
+    for block in (b for s in sections for b in s["blocks"] if b["type"] == "table"):
+        periods = period_columns(block["headers"])
+        if periods:
+            block["periods"] = periods
+    fields = reader_fields(sections)
+    fields.update(report_fields(sections, fields["summary"]))
+    fields.update(confidence_fields(raw))
+    return sections, problem, fields
+
+
 class Handoffs:
     """Each distinct handoff parsed once, by digest, however many runs hold the same bytes."""
 
     def __init__(self, strict: bool) -> None:
         self.strict = strict
         self.parsed: dict[str, tuple[list[dict[str, Any]], str | None]] = {}
+        self.fields: dict[str, dict[str, Any]] = {}
 
     def read(self, digest: str, raw: bytes) -> tuple[list[dict[str, Any]], str | None]:
-        """The sections and parse problem of these bytes; the problem is each output's to report."""
+        """The sections and parse problem of these bytes; the problem is each output's to report.
+        `digest` is the sha256 of `raw`, so inside a publication the parts are that hash's."""
         if digest not in self.parsed:
-            self.parsed[digest] = structured(raw, self.strict)
+            sections, problem, fields = derived(
+                ("handoff", self.strict, digest), lambda: handoff_parts(raw, self.strict)
+            )
+            self.parsed[digest] = sections, problem
+            self.fields[digest] = fields
         return self.parsed[digest]
 
 
@@ -931,9 +986,7 @@ def collect_runs(
                     "scope": "Retained module output",
                     "firstHeading": config.get("firstHeading"),
                 }
-                record.update(reader_fields(sections))
-                record.update(report_fields(sections, record["summary"]))
-                record.update(confidence_fields(read[path].raw))
+                record.update(handoffs.fields[digest])
                 if record["issue"]:
                     issues.append(f"{output_id}: {record['issue']}")
                 if problem:
@@ -985,6 +1038,7 @@ def collect_runs(
             "sector": sector,
             "period": period,
             "pathway": recorded.get("pathway") or None,
+            "requested": requested_modules(run_dir),
             "asOf": recorded.get("as_of") or None,
             "first": first or (with_outputs[0] if with_outputs else "W-Overview"),
             "modules": modules,
@@ -1405,6 +1459,19 @@ def recorded_run(run_dir: Path, issues: list[str] | None = None) -> dict[str, st
         return {}
 
 
+def requested_modules(run_dir: Path) -> list[str] | None:
+    """The modules the launcher's manifest says the run asked for; None when it records none or
+    cannot be read (`recorded_run` names an unreadable manifest in the issues)."""
+    try:
+        raw = b"".join(regular_chunks(run_dir / "workflow.json", follow=False))
+        asked = json.loads(raw.decode("utf-8"))["run"]["requested_modules"]
+    except (OSError, ValueError, KeyError, TypeError, AttributeError, RecursionError, MemoryError):
+        return None
+    if isinstance(asked, list) and all(isinstance(module, str) for module in asked):
+        return asked
+    return None
+
+
 def delivery_identity(folder: str, manifest: dict[str, Any]) -> dict[str, Any] | str:
     """A deliverable's recorded run and issuer, or the reason its view.json states none."""
     try:
@@ -1640,7 +1707,39 @@ def shown_runs(
     return shown, recorded
 
 
-def workspace_store(root: str | Path, catalogue: dict[str, Any]) -> dict[str, Any]:
+def designate_published_outputs(
+    runs: dict[str, Any], outputs: dict[str, Any], published: dict[str, dict[str, str]]
+) -> None:
+    """Select the exact verified handoff; keep every collected output in the Evidence inventory."""
+    for key, run in runs.items():
+        if (digests := published.get(run["folder"])) is None:
+            continue
+        resolved = set()
+        for code, module in run["modules"].items():
+            digest = digests.get(code)
+            matches = [
+                oid
+                for oid in module["outputs"]
+                if (
+                    outputs[oid]["id"],
+                    outputs[oid]["run"],
+                    outputs[oid]["module"],
+                    outputs[oid]["sha256"],
+                )
+                == (oid, key, code, digest)
+            ]
+            module["default"] = matches[0] if len(matches) == 1 else None
+            if module["default"] is not None:
+                resolved.add(code)
+        run["publicationVerified"] = bool(digests) and resolved == digests.keys()
+
+
+def workspace_store(
+    root: str | Path,
+    catalogue: dict[str, Any],
+    *,
+    published: dict[str, dict[str, str]] | None = None,
+) -> dict[str, Any]:
     """Everything the app reads. A curated pin that stopped matching is dropped, not fatal."""
     root = Path(root)
     catalog = json.loads((HERE / "catalog.json").read_text(encoding="utf-8"))
@@ -1669,6 +1768,8 @@ def workspace_store(root: str | Path, catalogue: dict[str, Any]) -> dict[str, An
         inputs |= part[2]
         pins |= part[3]
         found += part[4]
+    if published is not None:
+        designate_published_outputs(runs, outputs, published)
     # A recorded earlier run is linked only when the library holds a run with that id.
     by_id = {run["runId"]: key for key, run in runs.items() if run["runId"]}
     for run in runs.values():

@@ -105,23 +105,21 @@ const line = (v: unknown, path: string): ActivityLine => {
   };
 };
 // A live run (Queued, Running) holds no "Not run" module; an ended run holds no live one.
-const wordFor =
-  (state: RunState) =>
-  (o: Obj, path: string): ModuleWord => {
-    const word = oneOf(o, "state", path, MODULE_WORDS);
-    const live = state === "Queued" || state === "Running";
-    if (live && word === "Not run") fail(`${path}.state`, "a module word a live run can carry");
-    if (!live && (word === "Queued" || word === "Running"))
-      fail(`${path}.state`, "a module word an ended run can carry");
-    return word;
-  };
+function wordFor(state: RunState, o: Obj, path: string): ModuleWord {
+  const word = oneOf(o, "state", path, MODULE_WORDS);
+  const live = state === "Queued" || state === "Running";
+  if (live && word === "Not run") fail(`${path}.state`, "a module word a live run can carry");
+  if (!live && (word === "Queued" || word === "Running"))
+    fail(`${path}.state`, "a module word an ended run can carry");
+  return word;
+}
 const moduleOf =
   (state: RunState) =>
   (v: unknown, path: string): Module => {
     const o = obj(v, path);
     return {
       name: text(o, "name", path),
-      state: wordFor(state)(o, path),
+      state: wordFor(state, o, path),
       detail: strOrNull(o, "detail", path),
     };
   };
@@ -141,7 +139,7 @@ const stepOf =
     return {
       kind: "group",
       title: text(o, "title", path),
-      state: wordFor(state)(o, path),
+      state: wordFor(state, o, path),
       showAll: text(o, "showAll", path),
       modules: members,
     };

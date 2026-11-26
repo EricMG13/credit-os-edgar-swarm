@@ -64,6 +64,76 @@ function Reactions({
   );
 }
 
+function MessageText({ comment, quote }: { comment: SignalComment; quote: string | null }) {
+  if (comment.removed) {
+    return (
+      <p className="rounded-ds-sm border border-border-hairline bg-surface-card px-3 py-2 text-text-tertiary">
+        This comment was removed by its author.
+      </p>
+    );
+  }
+  return (
+    <div
+      className={cx(
+        "rounded-ds-sm border border-border-hairline px-3 py-2 whitespace-pre-wrap break-words text-text-primary",
+        comment.own ? "bg-surface-card" : "bg-surface-subtle",
+      )}
+    >
+      {quote === null ? null : (
+        <blockquote className="mb-1.5 rounded-ds-sm border border-border-hairline border-l-[3px] border-l-action bg-surface-card px-3 py-2 text-sm text-text-tertiary">
+          {quote}
+        </blockquote>
+      )}
+      {comment.text}
+    </div>
+  );
+}
+
+function MessageActions({
+  comment,
+  author,
+  isReply,
+  onReply,
+  isPressed,
+  onToggle,
+}: {
+  comment: SignalComment;
+  author: string;
+  isReply: boolean;
+} & Pick<ListProps, "onReply" | "isPressed" | "onToggle">) {
+  if (comment.removed) return null;
+  return (
+    <div className="flex items-center justify-between gap-2">
+      {onReply === null || isReply ? (
+        <span />
+      ) : (
+        <button
+          type="button"
+          aria-label={`Reply to ${author}`}
+          onClick={() => {
+            onReply(comment);
+          }}
+          className={cx("rounded-ds-xs text-sm font-semibold text-text-link", FOCUS)}
+        >
+          Reply
+        </button>
+      )}
+      <Reactions comment={comment} isPressed={isPressed} onToggle={onToggle} />
+    </div>
+  );
+}
+
+function Replies({ comment, ...rest }: { comment: SignalComment } & Omit<ListProps, "comments">) {
+  if (comment.replies.length === 0) return null;
+  return (
+    <ol aria-label={`Replies to ${authorOf(comment)}`} className="mt-2 flex flex-col gap-4">
+      {comment.replies.map((reply) => (
+        <Message key={reply.id} comment={reply} quote={comment.text} isReply {...rest} />
+      ))}
+    </ol>
+  );
+}
+
 function Message({
   comment,
   quote,
@@ -96,59 +166,16 @@ function Message({
           </cite>
           {when === "" ? null : <span className="text-xs text-text-tertiary">{when}</span>}
         </header>
-        {comment.removed ? (
-          <p className="rounded-ds-sm border border-border-hairline bg-surface-card px-3 py-2 text-text-tertiary">
-            This comment was removed by its author.
-          </p>
-        ) : (
-          <div
-            className={cx(
-              "rounded-ds-sm border border-border-hairline px-3 py-2 whitespace-pre-wrap break-words text-text-primary",
-              comment.own ? "bg-surface-card" : "bg-surface-subtle",
-            )}
-          >
-            {quote === null ? null : (
-              <blockquote className="mb-1.5 rounded-ds-sm border border-border-hairline border-l-[3px] border-l-action bg-surface-card px-3 py-2 text-sm text-text-tertiary">
-                {quote}
-              </blockquote>
-            )}
-            {comment.text}
-          </div>
-        )}
-        {comment.removed ? null : (
-          <div className="flex items-center justify-between gap-2">
-            {onReply === null || isReply ? (
-              <span />
-            ) : (
-              <button
-                type="button"
-                aria-label={`Reply to ${author}`}
-                onClick={() => {
-                  onReply(comment);
-                }}
-                className={cx("rounded-ds-xs text-sm font-semibold text-text-link", FOCUS)}
-              >
-                Reply
-              </button>
-            )}
-            <Reactions comment={comment} isPressed={isPressed} onToggle={onToggle} />
-          </div>
-        )}
-        {comment.replies.length === 0 ? null : (
-          <ol aria-label={`Replies to ${author}`} className="mt-2 flex flex-col gap-4">
-            {comment.replies.map((reply) => (
-              <Message
-                key={reply.id}
-                comment={reply}
-                quote={comment.text}
-                isReply
-                onReply={onReply}
-                isPressed={isPressed}
-                onToggle={onToggle}
-              />
-            ))}
-          </ol>
-        )}
+        <MessageText comment={comment} quote={quote} />
+        <MessageActions
+          comment={comment}
+          author={author}
+          isReply={isReply}
+          onReply={onReply}
+          isPressed={isPressed}
+          onToggle={onToggle}
+        />
+        <Replies comment={comment} onReply={onReply} isPressed={isPressed} onToggle={onToggle} />
       </article>
     </li>
   );

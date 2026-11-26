@@ -40,7 +40,7 @@ def load_issuer(root: Path, issuer_id: str) -> dict[str, Any]:
 
 
 def command(issuer: dict[str, Any]) -> list[str]:
-    """The launcher argument vector for one plan entry."""
+    """The launcher argument vector for one plan entry: `through-cp2` unless it names a set."""
     return [
         *LAUNCHER,
         "--context",
@@ -50,7 +50,7 @@ def command(issuer: dict[str, Any]) -> list[str]:
         "--config",
         "host",
         "--modules",
-        "through-cp2",
+        issuer.get("modules", "through-cp2"),
         "--prior",
         "none",
         "--no-library",

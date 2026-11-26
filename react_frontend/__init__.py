@@ -19,7 +19,7 @@ from deploy_workflow.inbox.scheduler import Scheduler, Settings
 from deploy_workflow.run_start import service
 from deploy_vii.contracts import PATHWAY_CAP_USD, PathwayId
 
-from . import admission, artifacts, portfolio, run_activity, sources
+from . import admission, artifacts, coverage, portfolio, run_activity, sources
 from .library_cards import lead_summary, not_assessable_modules
 
 PROJECT = Path(__file__).resolve().parent.parent
@@ -31,8 +31,7 @@ REPORT_FOLDER = re.compile(r"[\w. -]+")
 REPORT_PREFIX = "/connected/report/"
 STATIC_FILES = {"/data.js", "/symbol.svg", "/THIRD-PARTY-NOTICES.md"}
 STATIC_DIRS = ("/assets/", "/connected-assets/", "/fonts/")
-EXPORT_PREFIX = "window.CREDIT_OS_DATA="
-EXPORT_KEYS = ("catalogue", "workspace", "activity", "chips")
+STABLE_NAME_CACHE = "public, max-age=86400"
 
 
 def _valid_report_folder(folder: str) -> bool:
@@ -46,33 +45,6 @@ def _report_page(path: str) -> bool:
     return _valid_report_folder(folder)
 
 
-def _invalid_json(constant: str) -> None:
-    raise ValueError(f"invalid JSON constant {constant}")
-
-
-def _read_publication(path: Path) -> tuple[bytes, dict[str, Any] | None]:
-    """Decode the published assignment as JSON and retain the original JSON bytes."""
-    raw = http_base.read_regular(path)
-    if raw is None:
-        return b"null", None
-    encoded, snapshot = _decode_publication(raw)
-    if any(not isinstance(snapshot.get(key), dict) for key in EXPORT_KEYS):
-        raise ValueError("invalid issuer library snapshot")
-    return encoded, snapshot
-
-
-def _decode_publication(raw: bytes) -> tuple[bytes, dict[str, Any]]:
-    """The assignment's JSON object and its original bytes; anything else is refused."""
-    assignment = raw.decode("utf-8").rstrip()
-    if not assignment.startswith(EXPORT_PREFIX) or not assignment.endswith(";"):
-        raise ValueError("invalid issuer library export")
-    encoded = assignment[len(EXPORT_PREFIX) : -1]
-    snapshot = json.loads(encoded, parse_constant=_invalid_json)
-    if not isinstance(snapshot, dict):
-        raise TypeError("invalid issuer library snapshot")
-    return encoded.encode("utf-8"), snapshot
-
-
 def _visible_publication(layout: Layout) -> tuple[bytes, dict[str, Any] | None]:
     return _visible_scope(layout, None)
 
@@ -82,6 +54,15 @@ def _visible_scope(layout: Layout, folder: str | None) -> tuple[bytes, dict[str,
     if admitted is None:
         return b"null", None
     visible = sources.enrich(admitted, layout.runs)
+    # This identity belongs to the HTTP projection, not the stored publication.
+    visible.pop("reportFolder", None)
+    if folder is not None:
+        visible["reportFolder"] = folder
+    workspace = visible["workspace"]
+    for key, record in workspace["runs"].items():
+        record.update(_report_metadata(workspace, record, key))
+        if not record["publicationVerified"]:
+            record.pop("actionTreatment", None)
     visible["catalogue"] = _without_workspace(visible["catalogue"])
     return json.dumps(visible, ensure_ascii=False).encode("utf-8"), visible
 
@@ -93,8 +74,7 @@ def _without_workspace(catalogue: dict[str, Any]) -> dict[str, Any]:
 
 
 def _admitted_scope(layout: Layout, folder: str | None) -> dict[str, Any] | None:
-    payload, snapshot = _read_publication(layout.engine / "library" / "data.js")
-    del payload
+    snapshot = admission.published(layout)
     if snapshot is None:
         if folder is not None:
             raise http_base.refuse(404, "unknown report")
@@ -108,8 +88,20 @@ def _admitted_scope(layout: Layout, folder: str | None) -> dict[str, Any] | None
     return admitted
 
 
+def _report_metadata(workspace: dict[str, Any], record: dict[str, Any], key: str) -> dict[str, Any]:
+    verified = record.get("publicationVerified") is True
+    return {
+        "publicationVerified": verified,
+        "lead": lead_summary(workspace, record, key) if verified else None,
+        "assessmentScope": (record.get("assessmentScope") or "unverified")
+        if verified
+        else "unverified",
+        "publishedAt": record.get("publishedAt") if verified else None,
+    }
+
+
 def _library_index(layout: Layout) -> http_base.Reply:
-    _, snapshot = _read_publication(layout.engine / "library" / "data.js")
+    snapshot = admission.published(layout)
     if snapshot is None:
         return http_base.Reply(200, None)
     visible = admission.admitted(snapshot, layout)
@@ -118,15 +110,19 @@ def _library_index(layout: Layout) -> http_base.Reply:
         kept = {
             field: record[field] for field in ("folder", "issuerKey", "pathway") if field in record
         }
-        lead = lead_summary(visible["workspace"], record, key)
-        if lead is not None:
-            kept["lead"] = lead
+        kept.update(_report_metadata(visible["workspace"], record, key))
         runs[key] = kept
+    # Without each run's ``files``: every file of its run folder (about 40 kB a run, 95% of this
+    # reply), which no page of the library reads.
+    listed = [
+        {field: value for field, value in run.items() if field != "files"}
+        for run in visible["catalogue"].get("real", [])
+    ]
     return http_base.Reply(
         200,
         {
             "catalogue": {
-                "real": visible["catalogue"].get("real", []),
+                "real": listed,
                 "planned": visible["catalogue"].get("planned", []),
             },
             "workspace": {"runs": runs},
@@ -263,9 +259,21 @@ def _asset_path(dist: Path, path: str) -> tuple[Path, str, bool] | None:
     return None
 
 
+def _static_cache(path: str, relative: str) -> str | None:
+    """The Cache-Control of a static file: a hash-named build file never changes; a font or the
+    symbol keeps its name across releases, so it is fresh for a day only; any other gets none."""
+    if path.startswith(("/assets/", "/connected-assets/")) and re.search(
+        r"-[A-Za-z0-9_-]{8,}\.", relative
+    ):
+        return "public, max-age=31536000, immutable"
+    if path == "/symbol.svg" or (path.startswith("/fonts/") and relative.endswith(".woff2")):
+        return STABLE_NAME_CACHE
+    return None
+
+
 def _app_page(path: str) -> bool:
     return bool(
-        path in {"/", "/index.html", "/start", "/runs"}
+        path in {"/", "/index.html", "/start", "/runs", "/coverage"}
         or RUN_PAGE.fullmatch(path)
         or _report_page(path)
     )
@@ -316,6 +324,9 @@ def _connected_reply(
 
 
 def _connected_report_reply(layout: Layout, path: str, url: SplitResult) -> http_base.Reply | None:
+    if path == "/connected/coverage":
+        body = coverage.coverage(_admitted_scope(layout, None))
+        return http_base.Reply(200, body, {"Cache-Control": "no-store"})
     if match := artifacts.GRAPH.fullmatch(path):
         snapshot = _admitted_scope(layout, None)
         return artifacts.reply(match, layout.engine / "runs", REPORT_FOLDER, snapshot)
@@ -325,7 +336,7 @@ def _connected_report_reply(layout: Layout, path: str, url: SplitResult) -> http
         return http_base.Reply(200, {"basis": basis}, {"Cache-Control": "no-store"})
     if path == "/connected/reports" or path.startswith(REPORT_PREFIX):
         listing, run_id = _report_request(path)
-        _, snapshot = _read_publication(layout.engine / "library" / "data.js")
+        snapshot = admission.published(layout)
         if snapshot is not None:
             snapshot = admission.admitted(snapshot, layout)
         return _report_response(_report_entries(snapshot), listing, run_id)
@@ -406,10 +417,8 @@ def _handler(
             if asset := _asset_path(dist, path):
                 base, relative, direct = asset
                 response = self._file(base, relative, direct=direct)
-                if path.startswith(("/assets/", "/connected-assets/")) and re.search(
-                    r"-[A-Za-z0-9_-]{8,}\.", relative
-                ):
-                    response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+                if cache := _static_cache(path, relative):
+                    response.headers["Cache-Control"] = cache
                 raise response
             super()._get(url)
 

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { ComparisonChart, type ComparisonPanel } from "./ComparisonChart";
+import { ComparisonChart, type ChartComparisonPanel as ComparisonPanel } from "./ComparisonChart";
 
 // Values and strings are copied from the mock's script block (Model 3 Model, "The two cases side by
 // side"): each panel's max is the larger of its two values, as the mock's own widths use.

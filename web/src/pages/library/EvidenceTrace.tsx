@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useId, useRef, useState } from "react";
+import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { ChevronRight } from "@untitledui/icons";
 import { Alert } from "@/components/alert/Alert";
 import { Badge } from "@/components/base/badges/badges";
@@ -17,6 +17,125 @@ import {
 } from "./parts/RegisterTable";
 
 type Column = "id" | "module";
+
+function TraceRows({
+  rows,
+  open,
+  panels,
+  target,
+  toggle,
+  land,
+}: {
+  rows: readonly TraceRow[];
+  open: ReadonlySet<string>;
+  panels: string;
+  target: TraceRow | null;
+  toggle: (id: string) => void;
+  land: (element: HTMLElement | null) => void;
+}) {
+  return (
+    <tbody>
+      {rows.map((row) => {
+        const isOpen = open.has(row.id);
+        const panel = `${panels}-${row.id}`;
+        const here = row.id === target?.id;
+        return (
+          <Fragment key={row.id}>
+            <tr
+              ref={here && row.calc === null ? land : undefined}
+              tabIndex={here && row.calc === null ? -1 : undefined}
+              className={cx(
+                "border-b border-border-hairline outline-focus-ring focus-visible:outline-2 focus-visible:-outline-offset-2",
+                here && "bg-surface-subtle",
+              )}
+            >
+              <td className="w-9 py-3 pl-3">
+                {row.calc === null ? null : (
+                  <button
+                    type="button"
+                    ref={here ? land : undefined}
+                    aria-expanded={isOpen}
+                    aria-controls={isOpen ? panel : undefined}
+                    aria-label={`Show how ${row.item} was derived`}
+                    onClick={() => {
+                      toggle(row.id);
+                    }}
+                    className="rounded-ds-xs p-1 text-text-tertiary outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
+                  >
+                    <ChevronRight
+                      aria-hidden="true"
+                      className={cx(
+                        "size-4 transition-transform duration-150 motion-reduce:transition-none",
+                        isOpen && "rotate-90",
+                      )}
+                    />
+                  </button>
+                )}
+              </td>
+              <th
+                scope="row"
+                className={cx(REGISTER_CELL, "font-mono text-left font-normal whitespace-nowrap")}
+              >
+                {row.id}
+              </th>
+              <td className={cx(REGISTER_CELL, "text-text-primary")}>
+                {row.item}
+                {row.note === null ? null : (
+                  <p className="mt-1 text-small text-text-secondary">{row.note}</p>
+                )}
+              </td>
+              <td className={REGISTER_CELL}>{row.module}</td>
+              <td className={REGISTER_CELL}>
+                <Badge size="sm" color="gray">
+                  {row.kind}
+                </Badge>
+              </td>
+              <td className={cx(REGISTER_CELL, "text-right tabular-nums")}>{row.sources}</td>
+            </tr>
+            {row.calc !== null && isOpen ? (
+              <tr id={panel} className="border-b border-border-hairline">
+                <td colSpan={6} className="px-5 py-3">
+                  <DerivationTree node={row.calc} label={`How ${row.item} was derived`} />
+                </td>
+              </tr>
+            ) : null}
+          </Fragment>
+        );
+      })}
+    </tbody>
+  );
+}
+
+function UnknownAddress({
+  item,
+  target,
+  emptyText,
+}: {
+  item: string | null;
+  target: TraceRow | null;
+  emptyText: string | null;
+}) {
+  if (item === null || target !== null) return null;
+  return (
+    <Alert tone="warning" title="No item has this address">
+      {emptyText === null
+        ? "The table lists every traced item of this run."
+        : "This run lists no traced item."}
+    </Alert>
+  );
+}
+
+function EmptyTrace({ unknown, emptyText }: { unknown: ReactNode; emptyText: string }) {
+  return (
+    <EmptyRegister unknown={unknown} title="Nothing is traced in this run">
+      {emptyText}
+    </EmptyRegister>
+  );
+}
+
+function rowsFor(table: TraceTable, module: Reader | null): readonly TraceRow[] {
+  return module === null ? table.rows : table.rows.filter((row) => row.moduleId === module.id);
+}
 
 /** What each sortable column is ordered by: the delivered id or module name. */
 function keyOf(row: TraceRow, column: Column): SortKey {
@@ -56,23 +175,11 @@ export function EvidenceTrace({
     landed.current?.scrollIntoView({ block: "center" });
     landed.current?.focus({ preventScroll: true });
   }, []);
-  const unknown =
-    item !== null && target === null ? (
-      <Alert tone="warning" title="No item has this address">
-        {table.emptyText === null
-          ? "The table lists every traced item of this run."
-          : "This run lists no traced item."}
-      </Alert>
-    ) : null;
+  const unknown = <UnknownAddress item={item} target={target} emptyText={table.emptyText} />;
   if (table.emptyText !== null) {
-    return (
-      <EmptyRegister unknown={unknown} title="Nothing is traced in this run">
-        {table.emptyText}
-      </EmptyRegister>
-    );
+    return <EmptyTrace unknown={unknown} emptyText={table.emptyText} />;
   }
-  const held =
-    module === null ? table.rows : table.rows.filter((row) => row.moduleId === module.id);
+  const held = rowsFor(table, module);
   if (module !== null && held.length === 0) {
     return (
       <NothingForModule
@@ -108,75 +215,14 @@ export function EvidenceTrace({
         </>
       }
     >
-      <tbody>
-        {rows.map((row) => {
-          const isOpen = open.has(row.id);
-          const panel = `${panels}-${row.id}`;
-          const here = row.id === target?.id;
-          return (
-            <Fragment key={row.id}>
-              <tr
-                ref={here && row.calc === null ? land : undefined}
-                tabIndex={here && row.calc === null ? -1 : undefined}
-                className={cx(
-                  "border-b border-border-hairline outline-focus-ring focus-visible:outline-2 focus-visible:-outline-offset-2",
-                  here && "bg-surface-subtle",
-                )}
-              >
-                <td className="w-9 py-3 pl-3">
-                  {row.calc === null ? null : (
-                    <button
-                      type="button"
-                      ref={here ? land : undefined}
-                      aria-expanded={isOpen}
-                      aria-controls={isOpen ? panel : undefined}
-                      aria-label={`Show how ${row.item} was derived`}
-                      onClick={() => {
-                        toggle(row.id);
-                      }}
-                      className="rounded-ds-xs p-1 text-text-tertiary outline-hidden focus-visible:ring-2 focus-visible:ring-brand"
-                    >
-                      <ChevronRight
-                        aria-hidden="true"
-                        className={cx(
-                          "size-4 transition-transform duration-150 motion-reduce:transition-none",
-                          isOpen && "rotate-90",
-                        )}
-                      />
-                    </button>
-                  )}
-                </td>
-                <th
-                  scope="row"
-                  className={cx(REGISTER_CELL, "font-mono text-left font-normal whitespace-nowrap")}
-                >
-                  {row.id}
-                </th>
-                <td className={cx(REGISTER_CELL, "text-text-primary")}>
-                  {row.item}
-                  {row.note === null ? null : (
-                    <p className="mt-1 text-small text-text-secondary">{row.note}</p>
-                  )}
-                </td>
-                <td className={REGISTER_CELL}>{row.module}</td>
-                <td className={REGISTER_CELL}>
-                  <Badge size="sm" color="gray">
-                    {row.kind}
-                  </Badge>
-                </td>
-                <td className={cx(REGISTER_CELL, "text-right tabular-nums")}>{row.sources}</td>
-              </tr>
-              {row.calc !== null && isOpen ? (
-                <tr id={panel} className="border-b border-border-hairline">
-                  <td colSpan={6} className="px-5 py-3">
-                    <DerivationTree node={row.calc} label={`How ${row.item} was derived`} />
-                  </td>
-                </tr>
-              ) : null}
-            </Fragment>
-          );
-        })}
-      </tbody>
+      <TraceRows
+        rows={rows}
+        open={open}
+        panels={panels}
+        target={target}
+        toggle={toggle}
+        land={land}
+      />
     </RegisterPage>
   );
 }

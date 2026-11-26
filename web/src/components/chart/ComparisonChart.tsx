@@ -5,7 +5,7 @@ import { ChartFrame } from "./ChartFrame";
 import { ChartTable, type TableRowData } from "./ChartTable";
 import { assignSeries, type SeriesStyle } from "./series";
 
-export interface ComparisonPanel {
+export interface ChartComparisonPanel {
   measure: string;
   /** The panel's own axis maximum, delivered; a bar's width is its value over it. */
   max: number;
@@ -27,7 +27,7 @@ interface ComparisonChartProps {
   cases: [string, string];
   /** The names beside each bar when shorter than the cases' names; the cases' names otherwise. */
   rowLabels?: [string, string];
-  panels: ComparisonPanel[];
+  panels: ChartComparisonPanel[];
   /** One row per panel, in order, with one cell per case; its labels may be shorter than the measures. */
   table: { head: string[]; rows: TableRowData[]; endHeading?: string };
 }

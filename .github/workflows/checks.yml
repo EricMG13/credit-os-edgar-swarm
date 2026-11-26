@@ -62,4 +62,27 @@ jobs:
             tests/test_method_scripts_rest.py tests/test_cpos_register_scope.py \
             tests/test_http_base.py tests/test_methodology_selection.py \
             tests/test_portfolio_workbook.py tests/test_portfolio_export.py \
-            tests/test_pathway_tiers.py
+            tests/test_pathway_tiers.py \
+            tests/test_react_*.py proof/test_launcher.py \
+            tests/test_publication_reuse.py tests/test_cpos_parallel.py
+
+  web:
+    name: connected application (lint, types, tests, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm --prefix web ci
+      - run: npm --prefix web run lint
+      - run: npm --prefix web run format:check
+      - run: npm --prefix web run typecheck
+      - run: npm --prefix web run unused
+      - run: npm --prefix web run duplication
+      - run: npm --prefix web test
+      - run: npm --prefix web run build
+      - run: npm --prefix web run test:scripts

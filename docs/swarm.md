@@ -54,6 +54,35 @@ launcher command (`--config host --modules through-cp2 --prior none --no-library
 exit 3 means write the answer at the printed `Answer:` path and rerun it; `... verify` reruns it and
 passes only on exit 0 with no new file.
 
+## Layer 1 and CP-DR extension
+
+Takes every issuer through CP-0, CP-1, CP-1A, CP-1B, CP-DR, CP-1C, CP-1D and CP-2 (the `layer1-dr`
+module set). Each run answers all eight modules itself: the library refuses a run that reuses
+modules of an earlier one, so nothing is retained from the `through-cp2` runs.
+
+It runs on a root of its own, so the library lists one run per issuer there (two runs of one issuer
+share a `run_id`, and the index would show the narrower one). Never copy the `through-cp2` run
+folders or `plan.json` into it:
+
+1. Restore only the verified inputs under a new root (as in "Sub-session shards", step 1).
+2. Prepare with the set: `uv run python tools/swarm/prepare.py --approved ROOT/inputs/hy-list.md --packs ROOT/inputs/packs/ --contexts ROOT/inputs/contexts/ --root ROOT --set layer1-dr`.
+   Run folders are `swarm-<id>-l1` and each plan entry carries `"modules": "layer1-dr"`; a plan that
+   already holds the other set is refused, nothing written.
+3. Run the workflow as before (`swarm.workflow.js` or `analyse.workflow.js`) and build the library there.
+
+`run_issuer.py` reads `modules` from the entry (an entry without it keeps the `through-cp2`
+command). Host mode makes no web lookup (`--config host` refuses `--web-lookup`), so CP-DR and CP-1C
+state peer and web gaps instead of fetching them; no peer pack is supplied. The analyst reports the
+attempts of each module it was asked.
+
+## Engine of the published runs
+
+The 242 published `through-cp2` runs (`claude/swarm-results-2026-11-24`) were made before the
+merge of the PR #81 engine. Their relaunch check (`run_issuer.py ID verify`) passes only with the
+engine at `86ac1a2a`: the merged engine's CP-2 instructions and layout scope differ, so it refuses
+(writing nothing). All extension runs use the merged engine. To re-verify the published folders,
+use a `git worktree` at `86ac1a2a`.
+
 ## Ledger statuses
 
 | Status | Meaning |

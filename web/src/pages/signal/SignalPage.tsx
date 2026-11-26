@@ -113,162 +113,173 @@ function emptyContext(
   };
 }
 
-/** What the address draws: the channel to mark current and the page body (a plain function, not a component). */
-function pageFor({
-  scene,
-  kind,
-  params,
-  follow,
-  save,
-}: {
+type PageFor = {
   scene: SignalScene;
   kind: SignalPageKind;
   params: Record<string, string>;
   follow: SignalFollow;
   save: SignalSave;
-}): {
-  current: SignalCurrent;
-  body: ReactNode;
-} {
-  const back = (
+};
+
+type PageContent = { current: SignalCurrent; body: ReactNode };
+
+function missing(title: string, back: ReactNode): PageContent {
+  return {
+    current: { kind: "none" },
+    body: (
+      <Empty page title={title}>
+        {back}
+      </Empty>
+    ),
+  };
+}
+
+function feedFor(
+  scene: SignalScene,
+  params: Record<string, string>,
+  follow: SignalFollow,
+  save: SignalSave,
+  writer: boolean,
+): PageContent {
+  const view = Object.keys(VIEWS).find((id) => id === params["view"]);
+  if (view === undefined) return missing("No such view", <BackToFeed scene={scene} />);
+  const id = view as keyof typeof VIEWS;
+  return {
+    current: { kind: "view", id },
+    body: (
+      <FeedPage
+        scene={scene}
+        key={`${scene.id}/feed/${id}`}
+        title={VIEWS[id]}
+        freshness={scene.snapshot.feed.freshness}
+        entries={entriesOf(scene, scene.snapshot.feed.views[id])}
+        startOn={id === "for-you" ? "top" : "latest"}
+        switchable={id === "for-you"}
+        writer={writer}
+        save={save}
+        loading={scene.snapshot.feed.status === "loading"}
+        error={scene.snapshot.feed.error}
+        empty={emptyContext(scene, id, follow, writer)}
+        topic={null}
+      />
+    ),
+  };
+}
+
+function topicFor(
+  scene: SignalScene,
+  params: Record<string, string>,
+  follow: SignalFollow,
+  save: SignalSave,
+  writer: boolean,
+): PageContent {
+  const topic = scene.snapshot.channels.topics.find((t) => t.id === params["topic"]);
+  if (topic === undefined) return missing("No such topic", <BackToFeed scene={scene} />);
+  return {
+    current: { kind: "topic", id: topic.id },
+    body: (
+      <FeedPage
+        scene={scene}
+        key={`${scene.id}/topic/${topic.id}`}
+        title={topic.name}
+        freshness={scene.snapshot.feed.freshness}
+        entries={entriesOf(scene, topicView(scene, topic.id))}
+        startOn="top"
+        switchable
+        writer={writer}
+        save={save}
+        loading={scene.snapshot.feed.status === "loading"}
+        error={scene.snapshot.feed.error}
+        empty={emptyContext(scene, "topic", follow, writer)}
+        topic={{
+          on: follow.on(topic),
+          onToggle: () => {
+            follow.toggle(topic);
+          },
+          keywords: topic.keywords,
+        }}
+      />
+    ),
+  };
+}
+
+function BackToFeed({ scene }: { scene: SignalScene }) {
+  return (
     <EmptyState.Footer>
       <a className="text-sm font-semibold text-text-link" href={sceneHref(scene, "feed/for-you")}>
         Back to For you
       </a>
     </EmptyState.Footer>
   );
+}
+
+function groupFor(
+  scene: SignalScene,
+  params: Record<string, string>,
+  kind: SignalPageKind,
+  save: SignalSave,
+  writer: boolean,
+): PageContent {
+  const id = param(params, "group");
+  const group = scene.snapshot.groups.find((item) => item.id === id);
+  if (group === undefined)
+    return missing(
+      "This group does not exist or is not open to you.",
+      <BackToFeed scene={scene} />,
+    );
+  const threadId = kind === "thread" ? param(params, "thread") : null;
+  const thread =
+    threadId === null
+      ? undefined
+      : (scene.snapshot.threads.find((item) => item.groupId === id && item.id === threadId) ??
+        null);
+  return {
+    current: { kind: "group", id },
+    body: (
+      <>
+        <GroupPage key={group.id} scene={scene} group={group} writer={writer} save={save} />
+        {thread === undefined ? null : (
+          <ThreadPanel scene={scene} group={group} thread={thread} writer={writer} />
+        )}
+      </>
+    ),
+  };
+}
+
+function digestFor(
+  scene: SignalScene,
+  params: Record<string, string>,
+  writer: boolean,
+): PageContent {
+  const id = param(params, "digest");
+  const digest = scene.snapshot.digests.find((item) => item.id === id);
+  if (digest === undefined)
+    return missing("No such digest in this sample", <BackToFeed scene={scene} />);
+  return {
+    current: { kind: "digest", id },
+    body: (
+      <DigestPage
+        scene={scene}
+        digest={digest}
+        writer={writer}
+        none={<Empty title="No digest yet" />}
+      />
+    ),
+  };
+}
+
+function pageFor({ scene, kind, params, follow, save }: PageFor): PageContent {
   const writer = scene.snapshot.viewer.role === "writer";
   switch (kind) {
-    case "feed": {
-      const view = Object.keys(VIEWS).find((id) => id === params["view"]);
-      if (view === undefined) {
-        return {
-          current: { kind: "none" },
-          body: (
-            <Empty page title="No such view">
-              {back}
-            </Empty>
-          ),
-        };
-      }
-      const id = view as keyof typeof VIEWS;
-      return {
-        current: { kind: "view", id },
-        body: (
-          <FeedPage
-            scene={scene}
-            key={`${scene.id}/feed/${id}`}
-            title={VIEWS[id]}
-            freshness={scene.snapshot.feed.freshness}
-            entries={entriesOf(scene, scene.snapshot.feed.views[id])}
-            startOn={id === "for-you" ? "top" : "latest"}
-            switchable={id === "for-you"}
-            writer={writer}
-            save={save}
-            loading={scene.snapshot.feed.status === "loading"}
-            error={scene.snapshot.feed.error}
-            empty={emptyContext(scene, id, follow, writer)}
-            topic={null}
-          />
-        ),
-      };
-    }
-    case "topic": {
-      const topic = scene.snapshot.channels.topics.find((t) => t.id === params["topic"]);
-      if (topic === undefined) {
-        return {
-          current: { kind: "none" },
-          body: (
-            <Empty page title="No such topic">
-              {back}
-            </Empty>
-          ),
-        };
-      }
-      return {
-        current: { kind: "topic", id: topic.id },
-        body: (
-          <FeedPage
-            scene={scene}
-            key={`${scene.id}/topic/${topic.id}`}
-            title={topic.name}
-            freshness={scene.snapshot.feed.freshness}
-            entries={entriesOf(scene, topicView(scene, topic.id))}
-            startOn="top"
-            switchable
-            writer={writer}
-            save={save}
-            loading={scene.snapshot.feed.status === "loading"}
-            error={scene.snapshot.feed.error}
-            empty={emptyContext(scene, "topic", follow, writer)}
-            topic={{
-              on: follow.on(topic),
-              onToggle: () => {
-                follow.toggle(topic);
-              },
-              keywords: topic.keywords,
-            }}
-          />
-        ),
-      };
-    }
+    case "feed":
+      return feedFor(scene, params, follow, save, writer);
+    case "topic":
+      return topicFor(scene, params, follow, save, writer);
     case "group":
-    case "thread": {
-      const id = param(params, "group");
-      const group = scene.snapshot.groups.find((g) => g.id === id);
-      if (group === undefined) {
-        return {
-          current: { kind: "none" },
-          body: (
-            <Empty page title="This group does not exist or is not open to you.">
-              {back}
-            </Empty>
-          ),
-        };
-      }
-      const thread =
-        kind === "thread"
-          ? (scene.snapshot.threads.find(
-              (t) => t.groupId === group.id && t.id === param(params, "thread"),
-            ) ?? null)
-          : undefined;
-      return {
-        current: { kind: "group", id },
-        body: (
-          <>
-            <GroupPage key={group.id} scene={scene} group={group} writer={writer} save={save} />
-            {thread === undefined ? null : (
-              <ThreadPanel scene={scene} group={group} thread={thread} writer={writer} />
-            )}
-          </>
-        ),
-      };
-    }
-    case "digest": {
-      const id = param(params, "digest");
-      const digest = scene.snapshot.digests.find((d) => d.id === id);
-      if (digest === undefined) {
-        return {
-          current: { kind: "none" },
-          body: (
-            <Empty page title="No such digest in this sample">
-              {back}
-            </Empty>
-          ),
-        };
-      }
-      return {
-        current: { kind: "digest", id },
-        body: (
-          <DigestPage
-            scene={scene}
-            digest={digest}
-            writer={writer}
-            none={<Empty title="No digest yet" />}
-          />
-        ),
-      };
-    }
+    case "thread":
+      return groupFor(scene, params, kind, save, writer);
+    case "digest":
+      return digestFor(scene, params, writer);
     case "settings":
       return {
         current: { kind: "settings" },

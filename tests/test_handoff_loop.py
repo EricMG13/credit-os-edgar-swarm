@@ -2,6 +2,7 @@
 
 import json
 import time
+from collections import OrderedDict
 from dataclasses import replace
 from datetime import date
 from decimal import Decimal
@@ -13,6 +14,7 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from deploy_vii.contracts import Run
+from deploy_workflow.model import handoff
 from deploy_workflow.model.adapter import AdapterReply
 from deploy_workflow.model.handoff import REDACTION_FAILED, HandoffExecutor, ModuleTools
 from deploy_workflow.model.providers import WEB_SEARCH_BLOCK
@@ -75,6 +77,45 @@ class Adapter:
         if isinstance(reply, Exception):
             raise reply
         return reply
+
+
+def test_a_source_is_read_into_pages_once_for_the_same_bytes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    read: list[tuple[str, bytes]] = []
+    reader = handoff._read_pages
+
+    def counted(name: str, raw: bytes) -> list[str]:
+        read.append((name, raw))
+        return reader(name, raw)
+
+    monkeypatch.setattr(handoff, "_read_pages", counted)
+    monkeypatch.setattr(handoff, "_PAGE_TEXT", OrderedDict())
+    monkeypatch.setattr(handoff, "_PAGE_TEXT_CHARS", 2 * 200)
+    files = {name: name.encode() * 40 for name in ("a.txt", "b.txt", "c.txt")}  # 200 chars each
+    for name in ("a.txt", "b.txt", "a.txt", "renamed-a.txt"):
+        assert handoff._pages(name, files["a.txt" if "a" in name else name]) == [
+            files["a.txt" if "a" in name else name].decode()
+        ]
+    assert read == [("a.txt", files["a.txt"]), ("b.txt", files["b.txt"])]
+    # The pages handed out are the caller's own: editing them changes no later read.
+    handoff._pages("a.txt", files["a.txt"]).append("edited")
+    assert handoff._pages("a.txt", files["a.txt"]) == [files["a.txt"].decode()]
+    # Past the limit the least recently read file goes (b: a was read again after it).
+    assert handoff._pages("c.txt", files["c.txt"]) == [files["c.txt"].decode()]
+    assert [raw for _, raw in read[2:]] == [files["c.txt"]]
+    handoff._pages("a.txt", files["a.txt"])
+    handoff._pages("b.txt", files["b.txt"])
+    assert [name for name, _ in read] == ["a.txt", "b.txt", "c.txt", "b.txt"]
+    # The same bytes under a .jsonl name are page records, read apart from the plain text.
+    rows = b'{"page": 1, "text": "one"}\n{"page": 2, "text": "two"}\n'
+    assert handoff._pages("rows.txt", rows) == [rows.decode()]
+    assert handoff._pages("rows.jsonl", rows) == ["one", "two"]
+    # A file that cannot be read is tried again: its failure is not kept.
+    for _ in range(2):
+        with pytest.raises(UnicodeDecodeError):
+            handoff._pages("bad.txt", b"\xff\xfe")
+    assert [name for name, _ in read].count("bad.txt") == 2
 
 
 def test_read_reject_edit_retains_exchange_and_current_handoff(tmp_path: Path) -> None:
