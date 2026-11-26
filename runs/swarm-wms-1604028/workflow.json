@@ -1,0 +1,236 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "wms-1604028-2026-11-18-credit_snapshot-host",
+    "issuer_id": "wms-1604028",
+    "issuer_name": "Advanced Drainage Systems, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2025-03-31_wms_wms-20250331.htm.jsonl": {
+      "path": "source-text/10-K_2025-03-31_wms_wms-20250331.htm.jsonl",
+      "sha256": "7738155f6b90e060aa80bade5690ced698896e0d6f8802b9a0d6b5708fc05047"
+    },
+    "10-K_2026-03-31_wms_wms-20260331.htm.jsonl": {
+      "path": "source-text/10-K_2026-03-31_wms_wms-20260331.htm.jsonl",
+      "sha256": "d0a01784f7d26a22d30c6bced0450a0239cbb5e9fdf3e56fb600c8168c7dc5f5"
+    },
+    "10-Q_2025-12-31_wms_wms-20251231.htm.jsonl": {
+      "path": "source-text/10-Q_2025-12-31_wms_wms-20251231.htm.jsonl",
+      "sha256": "530363203ab9ae869009bbb4db893878492f1a2cc0c101272c7e8ccebfcfab27"
+    },
+    "10-Q_2026-06-30_wms_wms-20260630.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-30_wms_wms-20260630.htm.jsonl",
+      "sha256": "230618b2db59600f370f73a215e64d4c403e9892dc30332a678c9b2fad81ca9c"
+    },
+    "10-Q_2026-09-30_wms_wms-20260930.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-30_wms_wms-20260930.htm.jsonl",
+      "sha256": "738b2967c5c65047381d822e847c6976d9a7f7d8cb9904e0d100acf29a5d7200"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1604028-advanced-drainage-systems-inc.json",
+      "sha256": "650bde3517a668978915bb5401e66249b66cf5da1f3779b36defd1571db61fc6"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "0955c37cb9725c063320e80f53d2f48ed7444696b8462d9a89bc9fbb0c401ff7"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "be2f6a6fdcfe68415d7581f7782cf47843f62c70f894a943da6b890dc949bb49"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "e291fc1ccbe24341ec732f0c98fe995a21f3737564996c4ea0244febb0b31164"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "f80ebe9eb9081918bb61e9645fb3de6cbfaab220623c1590e914d773a7220f82"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for Advanced Drainage Systems, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "Advanced Drainage Systems, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

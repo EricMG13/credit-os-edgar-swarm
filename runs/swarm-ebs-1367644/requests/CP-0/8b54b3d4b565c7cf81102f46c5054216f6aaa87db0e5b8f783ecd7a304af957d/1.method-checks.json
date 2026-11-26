@@ -227,7 +227,7 @@
   ],
   "kind": "method-script-checks/1",
   "module": "CP-0",
-  "response_sha256": "ed6e91a2ed2fff39c3622ab9f5bb16b13d165a4847e68efcae11f9bda166a1c4",
+  "response_sha256": "4b164824bf0d2d60e52045c62d05847d930adf07da49ee025465f22536e8fcbf",
   "scripts": {
     "docs/reuse/selected-methods/scripts/completeness_check.py": "a9841a74e4f851fd565c5f3cabc831835c4bc305ea40c28446790f8165d56056"
   }
