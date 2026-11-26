@@ -8,7 +8,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "Source defects I could not fix: the supplied documents contain no credit agreement, indentures, agency ratings or proxy statement, and the July and October releases word the leverage target differently, so the covenant, ratings and ownership conclusions are logged as gaps."
+    "notes": "Source defects I could not fix: the supplied documents contain no credit agreement, indentures, agency ratings or proxy statement, and the July and October releases word the leverage target differently, so the covenant, ratings and ownership conclusions are logged as gaps.",
+    "verify": "ok"
   },
   {
     "issuer_id": "pbi",
@@ -19,7 +20,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "Defects seen but not fixable from the supplied sources: the Form 10-K/A that the 2026 filings cite, the proxy statement, the executed credit agreement and indentures, ratings and market data, a full-year 2025 adjusted EBITDA and any finance-versus-industrial split are not supplied, and the second- and third-quarter reports state different months (March and May 2031) for the term loan and revolver maturity."
+    "notes": "Defects seen but not fixable from the supplied sources: the Form 10-K/A that the 2026 filings cite, the proxy statement, the executed credit agreement and indentures, ratings and market data, a full-year 2025 adjusted EBITDA and any finance-versus-industrial split are not supplied, and the second- and third-quarter reports state different months (March and May 2031) for the term loan and revolver maturity.",
+    "verify": "ok"
   },
   {
     "issuer_id": "efor-890564",
@@ -30,7 +32,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "I could not fix one defect: CP-0 was already accepted when I started, so I did not write it, and its source-readiness handoff still says letters of credit are stated only at 2025-12-31 although the 2024 and 2025 annual reports state USD 3.7 million at each year-end from 2023 (CP-1 and CP-1A correct this in their own text)."
+    "notes": "I could not fix one defect: CP-0 was already accepted when I started, so I did not write it, and its source-readiness handoff still says letters of credit are stated only at 2025-12-31 although the 2024 and 2025 annual reports state USD 3.7 million at each year-end from 2023 (CP-1 and CP-1A correct this in their own text).",
+    "verify": "ok"
   },
   {
     "issuer_id": "otex",
@@ -41,7 +44,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "Defects seen but not fixable from the supplied documents: the Acquisition Term Loan maturity date is not printed (so 1,500.675 sits outside the dated debt ladder), cash used in the October 2026 refinancing is not stated (so pro forma net debt and leverage are not established), and the covenant ratio at 2026-09-30 and letters of credit are not printed; all are logged as gaps."
+    "notes": "Defects seen but not fixable from the supplied documents: the Acquisition Term Loan maturity date is not printed (so 1,500.675 sits outside the dated debt ladder), cash used in the October 2026 refinancing is not stated (so pro forma net debt and leverage are not established), and the covenant ratio at 2026-09-30 and letters of credit are not printed; all are logged as gaps.",
+    "verify": "ok"
   },
   {
     "issuer_id": "tac",
@@ -52,7 +56,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "I could not fix that several Relationship cells in the accepted CP-1A \"Map: operating model to credit\" table run past the 60-character map-text guideline, which the launcher does not enforce and an accepted answer cannot be replaced."
+    "notes": "I could not fix that several Relationship cells in the accepted CP-1A \"Map: operating model to credit\" table run past the 60-character map-text guideline, which the launcher does not enforce and an accepted answer cannot be replaced.",
+    "verify": "ok"
   },
   {
     "issuer_id": "pbf-holding-co-llc",
@@ -63,7 +68,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "CP-0 and CP-1 were already accepted in the resumed folder and I submitted CP-1A and CP-2 once each, both accepted first time. One defect I could not fix: the Relationship text in the two CP-1A map tables is longer than the 60-character guidance, the checker does not enforce it, and an accepted answer cannot be replaced. The default uv on PATH was 0.11.32, so I put /usr/local/bin (uv 0.12.5) first to run the launcher."
+    "notes": "CP-0 and CP-1 were already accepted in the resumed folder and I submitted CP-1A and CP-2 once each, both accepted first time. One defect I could not fix: the Relationship text in the two CP-1A map tables is longer than the 60-character guidance, the checker does not enforce it, and an accepted answer cannot be replaced. The default uv on PATH was 0.11.32, so I put /usr/local/bin (uv 0.12.5) first to run the launcher.",
+    "verify": "ok"
   },
   {
     "issuer_id": "wex-1309108",
@@ -74,7 +80,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The filings print no EBITDA, executed Credit Agreement or Indenture, ratings or interim cash interest, so leverage and cover use calculated EBITDA, and CP-1A's \"raising corporate debt by USD 1,000.0 million\" is the gross issue (net rise was USD 452.5 million), which CP-2 states plainly; I also used /usr/local/bin uv 0.12.5 because the first uv on PATH was 0.11.32, and another agent overwrote a shared scratchpad helper file whose contents I did not use."
+    "notes": "The filings print no EBITDA, executed Credit Agreement or Indenture, ratings or interim cash interest, so leverage and cover use calculated EBITDA, and CP-1A's \"raising corporate debt by USD 1,000.0 million\" is the gross issue (net rise was USD 452.5 million), which CP-2 states plainly; I also used /usr/local/bin uv 0.12.5 because the first uv on PATH was 0.11.32, and another agent overwrote a shared scratchpad helper file whose contents I did not use.",
+    "verify": "ok"
   },
   {
     "issuer_id": "alsn",
@@ -85,7 +92,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "No defect left unfixed; the launcher's own checker is format-only, so CP-1 and CP-2 are not independently reviewed. Source limits recorded in the handoffs: no pro forma EBITDA for the Dana off-highway business before 2026-01-01 (CP-1 leverage ratios mix perimeters), and no credit agreement, indentures or proxy statement."
+    "notes": "No defect left unfixed; the launcher's own checker is format-only, so CP-1 and CP-2 are not independently reviewed. Source limits recorded in the handoffs: no pro forma EBITDA for the Dana off-highway business before 2026-01-01 (CP-1 leverage ratios mix perimeters), and no credit agreement, indentures or proxy statement.",
+    "verify": "ok"
   },
   {
     "issuer_id": "crwv",
@@ -96,7 +104,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "Defects seen but not fixed: (1) the plan.json in the swarm root had no crwv entry, so I printed the launcher command from the crwv entry in /home/user/plan.json.bak and used it unchanged, without writing plan.json; (2) the first launcher call failed because /root/.local/bin/uv 0.11.32 came ahead of /usr/local/bin/uv 0.12.5 on PATH, so I put /usr/local/bin first for my shell; (3) the two month-only August 2026 borrowings (DDTL 5.5, the 1,200 revolver draw) have no stated net-debt effect, so CP-1's post-balance-sheet table gives no pro forma figure for them."
+    "notes": "Defects seen but not fixed: (1) the plan.json in the swarm root had no crwv entry, so I printed the launcher command from the crwv entry in /home/user/plan.json.bak and used it unchanged, without writing plan.json; (2) the first launcher call failed because /root/.local/bin/uv 0.11.32 came ahead of /usr/local/bin/uv 0.12.5 on PATH, so I put /usr/local/bin first for my shell; (3) the two month-only August 2026 borrowings (DDTL 5.5, the 1,200 revolver draw) have no stated net-debt effect, so CP-1's post-balance-sheet table gives no pro forma figure for them.",
+    "verify": "ok"
   },
   {
     "issuer_id": "sah-1043509",
@@ -107,7 +116,8 @@
       "CP-1A": 2,
       "CP-2": 1
     },
-    "notes": "Page locators in the source text are extraction chunk numbers (about 3,000 characters each) rather than printed filing pages, and the credit agreements, indentures, ratings and proxy statement are not supplied, so covenant headroom after 2024-12-31 and restricted-payments capacity after 2026-03-31 stay not established."
+    "notes": "Page locators in the source text are extraction chunk numbers (about 3,000 characters each) rather than printed filing pages, and the credit agreements, indentures, ratings and proxy statement are not supplied, so covenant headroom after 2024-12-31 and restricted-payments capacity after 2026-03-31 stay not established.",
+    "verify": "ok"
   },
   {
     "issuer_id": "enr-1632790",
@@ -118,7 +128,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The earlier Business & governance (CP-1A) answer, already accepted and not editable, gives the fiscal 2025 pricing decline as 2.2% (that is the fiscal 2024 figure; the 10-K shows 0.8%), and the CP-2 answer corrects it in its Key findings and Gaps. CP-0, CP-1 and CP-1A were already accepted at attempt 1 when this session began, so those counts come from the retained request folders."
+    "notes": "The earlier Business & governance (CP-1A) answer, already accepted and not editable, gives the fiscal 2025 pricing decline as 2.2% (that is the fiscal 2024 figure; the 10-K shows 0.8%), and the CP-2 answer corrects it in its Key findings and Gaps. CP-0, CP-1 and CP-1A were already accepted at attempt 1 when this session began, so those counts come from the retained request folders.",
+    "verify": "ok"
   },
   {
     "issuer_id": "amtm",
@@ -129,6 +140,7 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The supplied set has no proxy statement, executed credit agreement or 2026 amendment, so the sponsor's current stake and post-amendment covenant headroom stay explicit gaps, and the first-quarter release headline (Moody's \"upgraded\" to Ba3 from Ba1) contradicts itself and was logged as a conflict, not resolved."
+    "notes": "The supplied set has no proxy statement, executed credit agreement or 2026 amendment, so the sponsor's current stake and post-amendment covenant headroom stay explicit gaps, and the first-quarter release headline (Moody's \"upgraded\" to Ba3 from Ba1) contradicts itself and was logged as a conflict, not resolved.",
+    "verify": "ok"
   }
 ]
