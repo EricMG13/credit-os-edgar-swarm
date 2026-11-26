@@ -8,7 +8,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The credit agreements, 2029 notes indenture with guarantor list, subsidiary list and proxy statement are not in the supplied sources, so legal capacity, guarantor coverage, covenant headroom and ownership detail are unsupportable; the run label \"q3-2026\" also conflicts with the later fiscal 2026 10-K."
+    "notes": "The credit agreements, 2029 notes indenture with guarantor list, subsidiary list and proxy statement are not in the supplied sources, so legal capacity, guarantor coverage, covenant headroom and ownership detail are unsupportable; the run label \"q3-2026\" also conflicts with the later fiscal 2026 10-K.",
+    "verify": "ok"
   },
   {
     "issuer_id": "oln",
@@ -19,7 +20,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The launcher accepted all four modules on the first submission (exit 0), but the pinned sources lack covenant levels, indentures, the merger agreement, Huntsman's statements, the proxy statement and peer data, so those remain logged MATERIAL or MINOR gaps, and one grep of the shared scratchpad briefly displayed lines from another issuer's generator scripts, which I did not use and then moved my work to a private directory."
+    "notes": "The launcher accepted all four modules on the first submission (exit 0), but the pinned sources lack covenant levels, indentures, the merger agreement, Huntsman's statements, the proxy statement and peer data, so those remain logged MATERIAL or MINOR gaps, and one grep of the shared scratchpad briefly displayed lines from another issuer's generator scripts, which I did not use and then moved my work to a private directory.",
+    "verify": "ok"
   },
   {
     "issuer_id": "gva-861459",
@@ -30,7 +32,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "Covenant levels, the credit agreement and indentures, the proxy statement, ratings and a peer set are absent from the five filings so headroom, structural ranking and control remain not established (and EBITDA had to be calculated because Granite reports none); separately, each draft was pre-checked offline by a read-only dry run of the launcher's own checker, which consumed no launcher attempt."
+    "notes": "Covenant levels, the credit agreement and indentures, the proxy statement, ratings and a peer set are absent from the five filings so headroom, structural ranking and control remain not established (and EBITDA had to be calculated because Granite reports none); separately, each draft was pre-checked offline by a read-only dry run of the launcher's own checker, which consumed no launcher attempt.",
+    "verify": "ok"
   },
   {
     "issuer_id": "tnet-937098",
@@ -41,7 +44,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The covenant level, letters of credit at 2026-09-30, executed debt documents and proxy statement are absent from the sources, and the accepted Business & governance answer lists a top-client share as missing although the 2025 annual report (page 112) says no client exceeded 10% of revenue, which the CP-2 answer corrects in its Gaps because accepted answers cannot be edited; separately, the scratchpad was shared with other issuers' runs and I briefly viewed the opening lines of two of their helper scripts, using nothing from them."
+    "notes": "The covenant level, letters of credit at 2026-09-30, executed debt documents and proxy statement are absent from the sources, and the accepted Business & governance answer lists a top-client share as missing although the 2025 annual report (page 112) says no client exceeded 10% of revenue, which the CP-2 answer corrects in its Gaps because accepted answers cannot be edited; separately, the scratchpad was shared with other issuers' runs and I briefly viewed the opening lines of two of their helper scripts, using nothing from them.",
+    "verify": "ok"
   },
   {
     "issuer_id": "mms",
@@ -52,7 +56,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "All four modules were accepted on the first submission and the launcher finished with exit 0 and a delivery; the one defect I could not fix is that the pack lacks the credit agreement, the 2026 proxy statement and any result after 2026-06-30, so covenant headroom, legal rank, governance detail and the fiscal 2026 year-end position remain unassessed (logged under Gaps in each handoff)."
+    "notes": "All four modules were accepted on the first submission and the launcher finished with exit 0 and a delivery; the one defect I could not fix is that the pack lacks the credit agreement, the 2026 proxy statement and any result after 2026-06-30, so covenant headroom, legal rank, governance detail and the fiscal 2026 year-end position remain unassessed (logged under Gaps in each handoff).",
+    "verify": "ok"
   },
   {
     "issuer_id": "ttmi-1116942",
@@ -63,7 +68,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The launcher finished with exit 0 and all four modules were accepted on their first launcher attempt (CP-0 and CP-1 were already accepted in the earlier partial run; I answered CP-1A and CP-2). One defect I could not fix: the two CP-1A Map tables have Relationship and Evidence cells over the prompt's 60-character map-text limit, which the launcher does not check and cannot be changed after acceptance."
+    "notes": "The launcher finished with exit 0 and all four modules were accepted on their first launcher attempt (CP-0 and CP-1 were already accepted in the earlier partial run; I answered CP-1A and CP-2). One defect I could not fix: the two CP-1A Map tables have Relationship and Evidence cells over the prompt's 60-character map-text limit, which the launcher does not check and cannot be changed after acceptance.",
+    "verify": "ok"
   },
   {
     "issuer_id": "mxl",
@@ -74,7 +80,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The source set has no executed credit agreement, proxy statement, ratings or letters-of-credit amount, so covenant headroom, board independence and revolver availability stay explicit gaps in CP-1A and CP-2, and the session's default uv 0.11.32 failed the repository's 0.12.5 pin until /usr/local/bin was put first on PATH. CP-0 and CP-1 were already accepted on attempt 1 in the retained folder, and I submitted CP-1A and CP-2 once each, both accepted first time."
+    "notes": "The source set has no executed credit agreement, proxy statement, ratings or letters-of-credit amount, so covenant headroom, board independence and revolver availability stay explicit gaps in CP-1A and CP-2, and the session's default uv 0.11.32 failed the repository's 0.12.5 pin until /usr/local/bin was put first on PATH. CP-0 and CP-1 were already accepted on attempt 1 in the retained folder, and I submitted CP-1A and CP-2 once each, both accepted first time.",
+    "verify": "ok"
   },
   {
     "issuer_id": "opln",
@@ -85,7 +92,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "Each module was accepted on its first real launcher submission, after I checked the draft against a scratch copy of the run outside the repository; the one defect I saw and could not fix is that the two map tables in the accepted CP-1A answer have cells longer than the 60-character guidance, which the launcher does not enforce and which cannot be changed once accepted."
+    "notes": "Each module was accepted on its first real launcher submission, after I checked the draft against a scratch copy of the run outside the repository; the one defect I saw and could not fix is that the two map tables in the accepted CP-1A answer have cells longer than the 60-character guidance, which the launcher does not enforce and which cannot be changed once accepted.",
+    "verify": "ok"
   },
   {
     "issuer_id": "alks",
@@ -96,7 +104,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The accepted CP-0 handoff cites page 7 instead of page 6 of the Q3 2026 earnings release for the cash and investments totals (figures are correct; later modules cite the right page and log the correction); separately, an unrelated untracked file .response.md for another issuer appeared in the repository root and was left untouched."
+    "notes": "The accepted CP-0 handoff cites page 7 instead of page 6 of the Q3 2026 earnings release for the cash and investments totals (figures are correct; later modules cite the right page and log the correction); separately, an unrelated untracked file .response.md for another issuer appeared in the repository root and was left untouched.",
+    "verify": "ok"
   },
   {
     "issuer_id": "brsl",
@@ -107,7 +116,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "Filing rounding left Net Cash Change as Not supplied for FY2025, H1 2025 and Q1 2026, and the issuer's FY2025 net debt (2,723) is not reconcilable to the balance sheet (2,732); both are logged as gaps and not plugged."
+    "notes": "Filing rounding left Net Cash Change as Not supplied for FY2025, H1 2025 and Q1 2026, and the issuer's FY2025 net debt (2,723) is not reconcilable to the balance sheet (2,732); both are logged as gaps and not plugged.",
+    "verify": "ok"
   },
   {
     "issuer_id": "ee-1888447",
@@ -118,7 +128,8 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "The extracted filing text omits the terminal contract-expiry and related-party income tables and does not describe the Seventh Amendment to the credit agreement dated 2025-12-31, so covenant headroom and renewal timing are recorded as gaps and could not be fixed from the supplied sources."
+    "notes": "The extracted filing text omits the terminal contract-expiry and related-party income tables and does not describe the Seventh Amendment to the credit agreement dated 2025-12-31, so covenant headroom and renewal timing are recorded as gaps and could not be fixed from the supplied sources.",
+    "verify": "ok"
   },
   {
     "issuer_id": "baly",
@@ -129,6 +140,7 @@
       "CP-1A": 1,
       "CP-2": 1
     },
-    "notes": "CP-1A is supplied only the Source readiness handoff, so I recomputed its segment-based figures from the sources instead of taking them from the accepted Financial foundation handoff. The launcher reported CP-0 as already accepted when I started, so I submitted nothing for it."
+    "notes": "CP-1A is supplied only the Source readiness handoff, so I recomputed its segment-based figures from the sources instead of taking them from the accepted Financial foundation handoff. The launcher reported CP-0 as already accepted when I started, so I submitted nothing for it.",
+    "verify": "ok"
   }
 ]
