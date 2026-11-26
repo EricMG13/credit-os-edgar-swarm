@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Cushman & Wakefield Ltd. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "e7578605818121fde3efa5513f8eac007f5153418241dd2688af42e3e030ea22",
+    "CP-1.md": "515de8747ec8e7eee5d7108403ddd8a058187eb7d6fe7c57d2a26e893cc1918b",
+    "CP-1A.md": "5ebe39d49e38f5f46f1ac2c938921cee38c10f32f2b5138a64d5246b0da10e98",
+    "CP-2.md": "d957169383f06babb9f44dc33e7c305c670de6c33dd9240ffe2fd0298f8d8e6f",
+    "coverage.json": "2a719b2224bda9dc6ade234a9a0ac2653813faa9993568700c018f46db448c7d",
+    "view.json": "340bce79cc4be8f3e203f7ccaf2456b2bce484fcd002c5ee6a18fb8b29141f93",
+    "report-view.json": "c44cf628472338ad08c0f0defa15e3386752b2eb4e5873617eec2d3719e4261a"
+  }
+}

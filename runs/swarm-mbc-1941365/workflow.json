@@ -1,0 +1,248 @@
+{
+  "run": {
+    "schema_version": "run/2",
+    "run_id": "mbc-1941365-2026-11-18-credit_snapshot-host",
+    "issuer_id": "mbc-1941365",
+    "issuer_name": "MasterBrand, Inc.",
+    "as_of": "2026-11-18",
+    "method_version": "deploy-v-r14",
+    "case_kind": "public",
+    "pathway": "credit_snapshot",
+    "requested_modules": [
+      "CP-0",
+      "CP-1",
+      "CP-1A",
+      "CP-2"
+    ]
+  },
+  "sources": {
+    "10-K_2024-12-29_mbc-20241229.htm.jsonl": {
+      "path": "source-text/10-K_2024-12-29_mbc-20241229.htm.jsonl",
+      "sha256": "4a06d15036f2b0d16b6b3245fd33777cf4f2fe25e55c90d199c512ecef1f2c22"
+    },
+    "10-K_2025-12-28_mbc-20251228.htm.jsonl": {
+      "path": "source-text/10-K_2025-12-28_mbc-20251228.htm.jsonl",
+      "sha256": "780c6c4cf493983b2f3fc6aeb7f51830d982a7918879f3d055a2e053058b9641"
+    },
+    "10-Q_2026-03-29_mbc-20260329.htm.jsonl": {
+      "path": "source-text/10-Q_2026-03-29_mbc-20260329.htm.jsonl",
+      "sha256": "124d5274f2d21d85dd69b4fccfb176d2011b708881bca2e1e6b1177a3e1dcbd7"
+    },
+    "10-Q_2026-06-28_mbc-20260628.htm.jsonl": {
+      "path": "source-text/10-Q_2026-06-28_mbc-20260628.htm.jsonl",
+      "sha256": "2527768c2b57c2e7f67b04a2af0914ec33d817a31980006052a20aa8c9a5d11a"
+    },
+    "10-Q_2026-09-27_mbc-20260927.htm.jsonl": {
+      "path": "source-text/10-Q_2026-09-27_mbc-20260927.htm.jsonl",
+      "sha256": "24f5e6ea10b93926b12430342ee3ece2bd772d5b103b90d3b04617e021f1d273"
+    },
+    "EX-99.1_2026-05-05_q12026earningspressrelease.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-05-05_q12026earningspressrelease.htm.jsonl",
+      "sha256": "c1c7687c5831826527aa879f60bcb393c0ae911e98cbdf62caf939d3bbc598f6"
+    },
+    "EX-99.1_2026-08-04_q22026earningspressrelease.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-08-04_q22026earningspressrelease.htm.jsonl",
+      "sha256": "859f5c50411d998e1076d9f74fdfcc37303daa1b7aba3647fe2a834aca93a1da"
+    },
+    "EX-99.1_2026-11-05_q32026earningspressrelease.htm.jsonl": {
+      "path": "source-text/EX-99.1_2026-11-05_q32026earningspressrelease.htm.jsonl",
+      "sha256": "29576c90ef823c04d664c8877b3afbc4429ca62f9c4b9348557845a636534eba"
+    },
+    "context": {
+      "path": "../../../inputs/contexts/1941365-masterbrand-inc.json",
+      "sha256": "3d9cc41ca14b43e31f8e979a21f6cda348b5f128b1d086bc3fee532d7445223e"
+    }
+  },
+  "instructions": {
+    "CP-0": {
+      "path": "instructions/CP-0.md",
+      "sha256": "cd649214fe8c1ebc7f494fa19a010832e9f3598c3b806f5a5405920da63494c0"
+    },
+    "CP-1": {
+      "path": "instructions/CP-1.md",
+      "sha256": "c9280e69cd669c5ee1198cba4b5ae67ca130c2bffc6ae5e72ee2f1fe8f014a53"
+    },
+    "CP-1A": {
+      "path": "instructions/CP-1A.md",
+      "sha256": "e9f5db062f1ae9f9946c4b50781521a8acac250b60ebe342df5a3aac70e6abf1"
+    },
+    "CP-2": {
+      "path": "instructions/CP-2.md",
+      "sha256": "f1a3d15cead60a8e6be31754fcab99796b9b93c715ec810f9e3b6d8b5ad3a449"
+    }
+  },
+  "retained_handoffs": {},
+  "model": null,
+  "layout": {
+    "blocks": [
+      "key-findings",
+      "company-operating-model",
+      "model-chart-strip",
+      "financials-credit-metrics",
+      "strengths-weaknesses",
+      "company-profile",
+      "transaction-summary"
+    ],
+    "routes": [
+      {
+        "module_id": "CP-2",
+        "heading": "Key findings",
+        "kind": "prose",
+        "block_id": "key-findings",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company and operating model",
+        "kind": "table",
+        "block_id": "company-operating-model",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: leverage",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.1",
+        "value_columns": [
+          "Total debt / EBITDA",
+          "Net debt / EBITDA"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: interest cover",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.2",
+        "value_columns": [
+          "EBITDA / cash interest"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "x"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: liquidity",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.3",
+        "value_columns": [
+          "Cash",
+          "Undrawn committed facilities"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Chart data: debt maturities",
+        "kind": "chart",
+        "block_id": "model-chart-strip",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": "S.4",
+        "value_columns": [
+          "Debt maturing"
+        ],
+        "row_labels": [],
+        "orientation": "period-rows",
+        "chart_unit": "US$m"
+      },
+      {
+        "module_id": "CP-1",
+        "heading": "Financials and credit metrics",
+        "kind": "table",
+        "block_id": "financials-credit-metrics",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-2",
+        "heading": "Strengths and weaknesses",
+        "kind": "prose",
+        "block_id": "strengths-weaknesses",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Company profile",
+        "kind": "table",
+        "block_id": "company-profile",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      },
+      {
+        "module_id": "CP-1A",
+        "heading": "Transaction summary and new debt issues",
+        "kind": "prose",
+        "block_id": "transaction-summary",
+        "table_header": null,
+        "prefix": null,
+        "label": null,
+        "figure_id": null,
+        "value_columns": [],
+        "row_labels": [],
+        "orientation": "period-columns",
+        "chart_unit": null
+      }
+    ],
+    "scope": "User-launched Full credit assessment run for MasterBrand, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+    "title": "MasterBrand, Inc. — Full credit assessment",
+    "question": null,
+    "issuer_aliases": []
+  },
+  "changes_note": "changes: first run of this pathway",
+  "selection": "explicit",
+  "execution": "host-session",
+  "max_attempts": 3,
+  "provider_cap_usd": "0"
+}

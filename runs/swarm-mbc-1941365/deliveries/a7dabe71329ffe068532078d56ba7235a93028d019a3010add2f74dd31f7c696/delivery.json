@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for MasterBrand, Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "7d0b06345596a76fe8ad1c1fd6cd8e74de80abd40604d7f84a8f22d2a1ae8f21",
+    "CP-1.md": "f985cde17c07fd45c1bd023c3c05d06e5bb451345162c5bca28ae78a38a84362",
+    "CP-1A.md": "c2d7fa33aca1347d4883804ccf32f8f1ca1504f4fad08aa335010a41d881fd19",
+    "CP-2.md": "8aa4848c4d1be561586ede7776403bdb48dd052326b52af9de51a99ec7dd7208",
+    "coverage.json": "b665804889e89a9f40e382fd241954a2f4fb12c14bb6d832dd0b64da17213566",
+    "view.json": "da4eba3942578dc554a6d96212d738858c2f0f85b9b35f17345b7cf614a33f8a",
+    "report-view.json": "60f20fdc547ddea2687b14d0c5e37cdd63cdd71e252e5be11a11e200f81f9699"
+  }
+}

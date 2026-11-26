@@ -1,0 +1,24 @@
+{
+  "kind": "cpos-markdown-delivery/1",
+  "execution": "host-session",
+  "scope": "User-launched Full credit assessment run for Kodiak Gas Services, Inc. as of 2026-11-05, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "provider_cap_usd": 0,
+  "modules": {
+    "CP-0": "requests/CP-0/d012ce611adccfa883efe757b3c0ebe220ac3362170684138149e383ed18f785/1.response.md",
+    "CP-1": "requests/CP-1/0b7063f28dea455fff4543822b98001fb2663d91b8b610047e157f69ab4e2c4b/1.response.md",
+    "CP-1A": "requests/CP-1A/b12dbdb43136bf1eb6e75d552b7409ce2c8ecf03a19a1679978dc26632ada7cc/1.response.md",
+    "CP-2": "requests/CP-2/644ead0ab4b3197dcf27b8a03d16b6f8c354d3166fac9247d0033ed570f11cf2/1.response.md"
+  },
+  "module_execution": {
+    "CP-0": "host-session",
+    "CP-1": "host-session",
+    "CP-1A": "host-session",
+    "CP-2": "host-session"
+  },
+  "cp_model_published": false,
+  "cp_forecast_published": false,
+  "forecast_failure": null,
+  "changes": "changes: first run of this pathway",
+  "delivery_manifest_sha256": "befad60bbe3018c0c3f17867cfd533b5c8476ec0ee980c9b9dcc97a26c9c9ecd",
+  "delivery_sha256": "7204403adc89158506a9a6ffce99d5b0263ece5bab3bde9881a9153d06838458"
+}

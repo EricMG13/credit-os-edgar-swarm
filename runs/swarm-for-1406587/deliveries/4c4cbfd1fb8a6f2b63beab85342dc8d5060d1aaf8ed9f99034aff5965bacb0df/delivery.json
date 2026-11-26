@@ -1,0 +1,16 @@
+{
+  "kind": "literal_handoff_delivery",
+  "scope": "User-launched Full credit assessment run for Forestar Group Inc. as of 2026-11-18, using a host session, with no provider call, on the selected issuer folder. Automated checks cover handoff structure, issuer and date anchors, source and upstream references and issuer-report section selectors; analytical accuracy has not been independently reviewed. The HTML Model and calculation JSON are not published by this launcher. Sections not produced: capital-structure, relative-value, portfolio-fit, committee-challenge, what-changed.",
+  "analytical_runtime_executed": false,
+  "cp_model_published": false,
+  "excel_output": false,
+  "files": {
+    "CP-0.md": "e2f2fb4196cc15f2815e8ef1b06d7329366496aa18ce798bce561f7b4f16b34f",
+    "CP-1.md": "c1e0aace509c5e23f4d80b394d3146aee829a0f4b77083626c0c7fff4cd2bdee",
+    "CP-1A.md": "d3c43201d1d6befef19f42cfeba285f0ab67971c2226c56fcb1ba2f2444a6e9c",
+    "CP-2.md": "f108e8d2d502a8eae461781dcd7f0d25766be7251ab7f2930a0e1681399eda08",
+    "coverage.json": "cabe06d723839277d1ec4e81d8de47a5f0eb2a83207c39fe255db26541550363",
+    "view.json": "9ffe225ef07eec0cfb5125892fef329beb077477301f62fd86b62dd550bbf408",
+    "report-view.json": "f24a0b2a1b14b0255db1a723d0f65f48b0ceec1463c95fd655dcb5177f35a878"
+  }
+}
