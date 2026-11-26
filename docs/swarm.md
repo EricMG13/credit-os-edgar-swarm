@@ -77,11 +77,11 @@ attempts of each module it was asked.
 
 ## Engine of the published runs
 
-The 187 published `through-cp2` runs were made before the merge of the PR #81 engine. Their
-relaunch check (`run_issuer.py ID verify`) passes only with the engine at `86ac1a2a`: the merged
-engine's CP-2 instructions and layout scope differ, so it refuses (writing nothing). The 55
-unfinished issuers and all extension runs use the merged engine. To fold pre-merge folders in or
-re-verify them, use a `git worktree` at `86ac1a2a`.
+The 242 published `through-cp2` runs (`claude/swarm-results-2026-11-24`) were made before the
+merge of the PR #81 engine. Their relaunch check (`run_issuer.py ID verify`) passes only with the
+engine at `86ac1a2a`: the merged engine's CP-2 instructions and layout scope differ, so it refuses
+(writing nothing). All extension runs use the merged engine. To re-verify the published folders,
+use a `git worktree` at `86ac1a2a`.
 
 ## Ledger statuses
 
@@ -127,14 +127,13 @@ analysis only and never writes a ledger:
 2. Use uv 0.12.5 (`pip install uv==0.12.5`; put it first on `PATH`), `uv sync`, then
    `uv run python tools/swarm/prepare.py --approved ROOT/inputs/hy-list.md --packs ROOT/inputs/packs/ --contexts ROOT/inputs/contexts/ --root ROOT`.
 3. Run `Workflow({scriptPath: 'tools/swarm/analyse.workflow.js', args: {root: ROOT, repo: REPO, issuers: [...shard ids], effort: 'xhigh'}})`.
-4. Only after the whole shard's analysis is finished: run
-   `uv run python tools/swarm/run_issuer.py ID verify --root ROOT` once for every shard issuer
-   whose analyst reported exit 0, and add `verify` (`ok`, or `failed: <last line>`) to its report.
-   Then build the shard library with
-   `uv run python apps/issuer-library/update_library.py --workspace ROOT/_engine`.
-5. Save: on branch `claude/swarm-results-2026-11-24-sNN`, commit `runs/swarm-<id>/` for the shard
-   (from `ROOT/_engine/runs/`, without `inputs/` and `source-text/`), `library/` (from
-   `ROOT/_engine/library/`) and `reports.json` (the reports with `verify`), and push.
+4. Save first: when the shard's analysis is finished, commit and push `runs/swarm-<id>/` for the
+   shard (from `ROOT/_engine/runs/`, without `inputs/` and `source-text/`) and `reports.json` (the
+   workflow's returned reports) to `claude/swarm-results-2026-11-24-sNN`, before any verify.
+5. Then run `uv run python tools/swarm/run_issuer.py ID verify --root ROOT` for every exit-0 issuer
+   (twice for a folder restored from git; record the second), add `verify` to its report, build the
+   shard library (`apps/issuer-library/update_library.py --workspace ROOT/_engine`; `library/` is in
+   `.gitignore`, so add it with `-f`), commit and push again.
 
 The controlling session then fetches every shard branch, copies the run folders into its
 `ROOT/_engine/runs/`, runs `run_issuer.py ID verify` twice for each (the first restores the
